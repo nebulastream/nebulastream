@@ -18,14 +18,13 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
-#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Phases/DeploymentPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -41,6 +40,8 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/IncrementalPlacementUtils.hpp>
 
@@ -150,16 +151,18 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         auto amendmentStartTime =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         std::vector<std::future<bool>> completedAmendments;
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         for (const auto& sharedQueryPlan : sharedQueryPlans) {
             const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
                                                                                           globalExecutionPlan,
                                                                                           topology,
                                                                                           typeInferencePhase,
                                                                                           coordinatorConfiguration,
-                                                                                          queryCatalog);
+                                                                                          deploymentPhase);
             completedAmendments.emplace_back(amendmentInstance->getFuture());
             placementAmendmentHandler->enqueueRequest(amendmentInstance);
         }
+
         uint64_t numOfFailedPlacements = 0;
         // Wait for all amendment runners to finish processing
         for (auto& completedAmendment : completedAmendments) {

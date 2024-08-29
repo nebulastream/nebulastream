@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
+#define NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
 
+#include <Util/RequestType.hpp>
 #include <future>
 #include <memory>
 
@@ -26,15 +27,13 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
+class DeploymentPhase;
+using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
+
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 }// namespace Configurations
-
-namespace Catalogs::Query {
-class QueryCatalog;
-using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -50,24 +49,36 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
+class PlacementAmendmentHandler;
+
 /**
  * @brief class representing the placement amendment instance
  */
 class PlacementAmendmentInstance {
   public:
+    /** Create placement amendment instance
+     * @brief
+     * @param sharedQueryPlan
+     * @param globalExecutionPlan
+     * @param topology
+     * @param typeInferencePhase
+     * @param coordinatorConfiguration
+     * @param deploymentPhase
+     * @return a shared pointer to the placement amendment instance
+     */
     static PlacementAmendmentInstancePtr create(SharedQueryPlanPtr sharedQueryPlan,
                                                 Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                                                 TopologyPtr topology,
                                                 TypeInferencePhasePtr typeInferencePhase,
                                                 Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                Catalogs::Query::QueryCatalogPtr queryCatalog);
+                                                DeploymentPhasePtr deploymentPhase);
 
     PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
                                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                                TopologyPtr topology,
                                TypeInferencePhasePtr typeInferencePhase,
                                Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                               Catalogs::Query::QueryCatalogPtr queryCatalog);
+                               DeploymentPhasePtr deploymentPhase);
 
     /**
      * @brief Get promise to check if the amendment instance was processed
@@ -75,6 +86,12 @@ class PlacementAmendmentInstance {
      */
     std::future<bool> getFuture();
 
+    /**
+     * @warning only used by the mocks for testing purposes
+     */
+    void setPromise(bool promise);
+
+  protected:
     /**
      * @brief Perform the placement amendment
      * @return true if success else false
@@ -87,9 +104,12 @@ class PlacementAmendmentInstance {
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    Catalogs::Query::QueryCatalogPtr queryCatalog;
+    DeploymentPhasePtr deploymentPhase;
     std::promise<bool> completionPromise;
+
+    //declare as friend to allow accessing execute method
+    friend PlacementAmendmentHandler;
 };
 }// namespace Optimizer
 }// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTINSTANCE_HPP_

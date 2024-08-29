@@ -167,13 +167,13 @@ bool SourceCatalog::removePhysicalSource(const std::string& logicalSourceName,
     return false;
 }
 
-size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId) {
+size_t SourceCatalog::removeAllPhysicalSourcesByWorker(WorkerId workerId) {
     size_t removedElements = 0;
 
     for (auto& [logicalSource, physicalSources] : logicalToPhysicalSourceMapping) {
-        std::erase_if(physicalSources, [topologyNodeId, &removedElements](const auto& mappingEntry) {
-            removedElements += mappingEntry->getTopologyNodeId() == topologyNodeId;
-            return mappingEntry->getTopologyNodeId() == topologyNodeId;
+        std::erase_if(physicalSources, [workerId, &removedElements](const auto& mappingEntry) {
+            removedElements += mappingEntry->getTopologyNodeId() == workerId;
+            return mappingEntry->getTopologyNodeId() == workerId;
         });
     }
 

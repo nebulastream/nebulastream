@@ -34,8 +34,8 @@
 #include <Optimizer/Exceptions/SharedQueryPlanNotFoundException.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/PlacementAmendment/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/StatisticIdInferencePhase.hpp>
@@ -54,6 +54,8 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -67,7 +69,8 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context,
-                                 const QueryParsingServicePtr& queryParsingService)
+                                 const QueryParsingServicePtr& queryParsingService,
+                                 const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -78,12 +81,13 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(queryParsingService) {}
+      z3Context(z3Context), queryParsingService(queryParsingService), placementAmendmentHandler(placementAmendmentHandler) {}
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
                                  const uint8_t maxRetries,
-                                 const z3::ContextPtr& z3Context)
+                                 const z3::ContextPtr& z3Context,
+                                 const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -94,21 +98,28 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(nullptr) {}
+      z3Context(z3Context), queryParsingService(nullptr), placementAmendmentHandler(placementAmendmentHandler) {}
 
 AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context,
-                                           const QueryParsingServicePtr& queryParsingService) {
-    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context, queryParsingService);
+                                           const QueryParsingServicePtr& queryParsingService,
+                                           const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler) {
+    return std::make_shared<AddQueryRequest>(queryPlan,
+                                             queryPlacementStrategy,
+                                             maxRetries,
+                                             z3Context,
+                                             queryParsingService,
+                                             placementAmendmentHandler);
 }
 
 AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
                                            const uint8_t maxRetries,
-                                           const z3::ContextPtr& z3Context) {
-    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context);
+                                           const z3::ContextPtr& z3Context,
+                                           const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler) {
+    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context, placementAmendmentHandler);
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -194,7 +205,6 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
                                                                                             topology,
                                                                                             typeInferencePhase,
                                                                                             coordinatorConfiguration);
-        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
@@ -330,47 +340,16 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //Link both catalogs
         queryCatalog->linkSharedQuery(queryId, sharedQueryId);
 
-        //21. Perform placement of updated shared query plan
-        NES_DEBUG("Performing Operator placement for shared query plan");
-        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
-
-        //22. Perform deployment of re-placed shared query plan
-        deploymentPhase->execute(deploymentContexts, RequestType::AddQuery);
-        //23. Update the shared query plan as deployed
-        sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
-
-        // Iterate over deployment context and update execution plan
-        for (const auto& deploymentContext : deploymentContexts) {
-            auto WorkerId = deploymentContext->getWorkerId();
-            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
-            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
-            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-            switch (decomposedQueryPlanState) {
-                case QueryState::MARKED_FOR_REDEPLOYMENT:
-                case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::RUNNING);
-                    break;
-                }
-                case QueryState::MARKED_FOR_MIGRATION: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::STOPPED);
-                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
-                                                                   sharedQueryId,
-                                                                   decomposedQueryPlanId,
-                                                                   decomposedQueryPlanVersion);
-                    break;
-                }
-                default:
-                    NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
-            }
-        }
+        //21. Perform placement amendment and deployment of updated shared query plan
+        NES_DEBUG("Performing Operator placement amendment and deployment for shared query plan");
+        auto deploymentPhase = DeploymentPhase::create(queryCatalog);
+        const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
+                                                                                      globalExecutionPlan,
+                                                                                      topology,
+                                                                                      typeInferencePhase,
+                                                                                      coordinatorConfiguration,
+                                                                                      deploymentPhase);
+        placementAmendmentHandler->enqueueRequest(amendmentInstance);
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);

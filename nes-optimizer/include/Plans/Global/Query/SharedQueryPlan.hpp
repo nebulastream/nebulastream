@@ -263,6 +263,15 @@ class SharedQueryPlan {
      */
     void updateHashBasedSignature(size_t hashValue, const std::string& stringSignature);
 
+    /**
+     * @brief Checks if every element in the `first` vector is also contained in the `second` vector.
+     *
+     * @param first: The vector containing the query IDs to check.
+     * @param second: The vector to search for the query IDs.
+     * @return true if all query IDs in `first` are found in `second`, false otherwise.
+     */
+    bool containsAllQueryIds(std::vector<QueryId>& first, std::vector<QueryId>& second);
+
     SharedQueryId sharedQueryId;
     SharedQueryPlanStatus sharedQueryPlanStatus;
     QueryPlanPtr queryPlan;

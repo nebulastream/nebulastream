@@ -274,7 +274,7 @@ checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& q
             NES_DEBUG("checkStoppedOrTimeout: status for {} reached stopped", queryId);
             return true;
         }
-        NES_WARNING("checkStoppedOrTimeout: status not reached for {} as status is={}",
+        NES_WARNING("checkStoppedOrTimeout: status Stopped not reached for {} as status is={}",
                     queryId,
                     magic_enum::enum_name(queryState));
         std::this_thread::sleep_for(sleepDuration);

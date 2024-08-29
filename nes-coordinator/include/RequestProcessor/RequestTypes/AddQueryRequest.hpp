@@ -97,6 +97,9 @@ using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentP
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
 namespace RequestProcessor {
@@ -119,12 +122,14 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string queries
+     * @param placementAmendmentHandler: the placement amendment handler
      */
     AddQueryRequest(const std::string& queryString,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context,
-                    const QueryParsingServicePtr& queryParsingService);
+                    const QueryParsingServicePtr& queryParsingService,
+                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief Constructor
@@ -132,11 +137,13 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param queryPlacementStrategy: the placement strategy
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param placementAmendmentHandler: the placement amendment handler
      */
     AddQueryRequest(const QueryPlanPtr& queryPlan,
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                     const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context);
+                    const z3::ContextPtr& z3Context,
+                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -144,11 +151,13 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param queryPlacementStrategy: the placement strategy
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
+     * @param placementAmendmentHandler: the placement amendment handler
      */
     static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
                                      const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context);
+                                     const z3::ContextPtr& z3Context,
+                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -157,12 +166,14 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string query
+     * @param placementAmendmentHandler: the placement amendment handler
      */
     static AddQueryRequestPtr create(const std::string& queryPlan,
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context,
-                                     const QueryParsingServicePtr& queryParsingService);
+                                     const QueryParsingServicePtr& queryParsingService,
+                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
   protected:
     /**
@@ -208,6 +219,8 @@ class AddQueryRequest : public AbstractUniRequest {
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
+
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
 };

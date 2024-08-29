@@ -34,6 +34,10 @@ using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
+
 }// namespace NES::Optimizer
 
 namespace NES {
@@ -99,16 +103,21 @@ class StopQueryRequest : public AbstractUniRequest {
      * @brief Construct a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
      * @param maxRetries maximal number of retries to stop a query
+     * @param placementAmendmentHandler: placement amendment handler for updating and un-deploying the operators of the stopped query
      */
-    StopQueryRequest(QueryId queryId, uint8_t maxRetries);
+    StopQueryRequest(QueryId queryId,
+                     uint8_t maxRetries,
+                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief creates a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
      * @param maxRetries maximal number of retries to stop a query
+     * @param placementAmendmentHandler: the placement amendment handler
      * @return a smart pointer to the newly created object
      */
-    static StopQueryRequestPtr create(QueryId queryId, uint8_t maxRetries);
+    static StopQueryRequestPtr
+    create(QueryId queryId, uint8_t maxRetries, const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     std::string toString();
 
@@ -160,10 +169,9 @@ class StopQueryRequest : public AbstractUniRequest {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-    DeploymentPhasePtr deploymentPhase;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
-    Optimizer::QueryPlacementAmendmentPhasePtr queryPlacementAmendmentPhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };
 }// namespace RequestProcessor

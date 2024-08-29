@@ -41,6 +41,7 @@
 #include <RequestProcessor/RequestTypes/AddQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
 #include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
@@ -129,8 +130,14 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
 
     EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::REGISTERED);
 
+    // initialize but not start the placement amendment handler
+    auto placementAmendmentHandler = std::make_shared<Optimizer::PlacementAmendmentHandler>(0);
     // Create add request
-    auto addQueryRequest = RequestProcessor::AddQueryRequest::create(queryPlan, TEST_PLACEMENT_STRATEGY, ZERO_RETRIES, z3Context);
+    auto addQueryRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
+                                                                     TEST_PLACEMENT_STRATEGY,
+                                                                     ZERO_RETRIES,
+                                                                     z3Context,
+                                                                     placementAmendmentHandler);
     addQueryRequest->setId(requestId);
 
     // Execute add request until deployment phase

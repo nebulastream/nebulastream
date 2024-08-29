@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
-#define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
+#ifndef NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
+#define NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
 
 #include <folly/concurrency/UnboundedQueue.h>
 #include <future>
@@ -42,7 +42,7 @@ class PlacementAmendmentHandler {
     /**
      * @brief Dtor
      */
-    ~PlacementAmendmentHandler();
+    virtual ~PlacementAmendmentHandler();
 
     /**
      * @brief Start processing amendment instances
@@ -59,7 +59,7 @@ class PlacementAmendmentHandler {
      * @param placementAmendmentInstance : the object containing required payload and execution logic for amending invalid or
      * missing placements of a shared query plan
      */
-    void enqueueRequest(const NES::Optimizer::PlacementAmendmentInstancePtr& placementAmendmentInstance);
+    virtual void enqueueRequest(const NES::Optimizer::PlacementAmendmentInstancePtr& placementAmendmentInstance);
 
   private:
     /**
@@ -76,4 +76,4 @@ class PlacementAmendmentHandler {
 };
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_
+#endif// NES_COORDINATOR_INCLUDE_SERVICES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_

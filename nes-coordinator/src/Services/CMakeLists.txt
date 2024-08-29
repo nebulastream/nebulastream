@@ -16,3 +16,5 @@ add_source_files(nes-coordinator
         QueryParsingService.cpp
         CoordinatortHealthCheckService.cpp
 )
+
+add_subdirectory(PlacementAmendment)

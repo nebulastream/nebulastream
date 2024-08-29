@@ -135,6 +135,9 @@ add_nes_unit_test(query-catalog-tests "Services/QueryCatalogTest.cpp")
 ### LocationService Tests ###
 add_nes_unit_test(location-service-tests "Services/LocationServiceTest.cpp")
 
+### Placement Amendment Handler Tests ###
+add_nes_unit_test(placement-amendment-handler-tests "Services/PlacementAmendment/PlacementAmendmentHandlerTest.cpp")
+
 ### LogicalExpressionTest ###
 add_nes_unit_test(logical-expression-test "Query/LogicalExpressionTest.cpp")
 

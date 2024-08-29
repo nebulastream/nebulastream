@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentHandler.hpp>
-#include <Optimizer/Phases/PlacementAmendment/PlacementAmendmentInstance.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentInstance.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Optimizer {
@@ -73,7 +73,9 @@ void PlacementAmendmentHandler::handleRequest() {
             std::unique_lock lock(mutex);
             // Note: we do not care about spurious starts as we use a concurrent queue and do not require to lock the mutex
             // to perform the read operation. This also simplifies this code.
-            cv.wait(lock);
+            if (running) {// check if system is still running
+                cv.wait(lock);
+            }
             continue;
         }
         placementAmendmentInstance->execute();

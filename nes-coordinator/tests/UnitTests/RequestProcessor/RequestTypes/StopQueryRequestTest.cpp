@@ -23,7 +23,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
+#include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
 #include <gtest/gtest.h>
 
 namespace z3 {
@@ -46,8 +46,9 @@ class StopQueryRequestTest : public Testing::BaseIntegrationTest {
 TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
     constexpr auto queryId = QueryId(1);
     const uint8_t retries = 0;
+    auto placementAmendmentHandler = std::make_shared<Optimizer::PlacementAmendmentHandler>(1);
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto stopQueryRequest = StopQueryRequest::create(queryId, retries);
+    auto stopQueryRequest = StopQueryRequest::create(queryId, retries, placementAmendmentHandler);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + queryId.toString() + "}");
 }
 }// namespace NES::RequestProcessor

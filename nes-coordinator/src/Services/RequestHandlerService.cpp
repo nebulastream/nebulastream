@@ -85,7 +85,8 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
                                                                 placementStrategy,
                                                                 RequestProcessor::DEFAULT_RETRIES,
                                                                 z3Context,
-                                                                queryParsingService);
+                                                                queryParsingService,
+                                                                placementAmendmentHandler);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -94,8 +95,11 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan,
                                                                const Optimizer::PlacementStrategy placementStrategy) {
 
-    auto addRequest =
-        RequestProcessor::AddQueryRequest::create(queryPlan, placementStrategy, RequestProcessor::DEFAULT_RETRIES, z3Context);
+    auto addRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
+                                                                placementStrategy,
+                                                                RequestProcessor::DEFAULT_RETRIES,
+                                                                z3Context,
+                                                                placementAmendmentHandler);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
@@ -113,7 +117,8 @@ nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const 
 bool RequestHandlerService::validateAndQueueStopQueryRequest(QueryId queryId) {
 
     try {
-        auto stopRequest = RequestProcessor::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES);
+        auto stopRequest =
+            RequestProcessor::StopQueryRequest::create(queryId, RequestProcessor::DEFAULT_RETRIES, placementAmendmentHandler);
         asyncRequestExecutor->runAsync(stopRequest);
         auto future = stopRequest->getFuture();
         auto response = future.get();
@@ -132,7 +137,8 @@ bool RequestHandlerService::validateAndQueueFailQueryRequest(SharedQueryId share
     auto failRequest = RequestProcessor::FailQueryRequest::create(sharedQueryId,
                                                                   decomposedQueryPlanId,
                                                                   failureReason,
-                                                                  RequestProcessor::DEFAULT_RETRIES);
+                                                                  RequestProcessor::DEFAULT_RETRIES,
+                                                                  placementAmendmentHandler);
     asyncRequestExecutor->runAsync(failRequest);
     auto future = failRequest->getFuture();
     auto returnedSharedQueryId = std::static_pointer_cast<RequestProcessor::FailQueryResponse>(future.get())->sharedQueryId;

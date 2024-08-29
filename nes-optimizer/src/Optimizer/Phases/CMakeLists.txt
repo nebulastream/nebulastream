@@ -11,15 +11,14 @@
 # limitations under the License.
 
 add_source_files(nes-optimizer
-        SignatureInferencePhase.cpp
-        TopologySpecificQueryRewritePhase.cpp
-        QueryMergerPhase.cpp
-        QueryPlacementRefinementPhase.cpp
-        TypeInferencePhase.cpp
-        QueryRewritePhase.cpp
         MemoryLayoutSelectionPhase.cpp
         OriginIdInferencePhase.cpp
+        QueryMergerPhase.cpp
+        QueryPlacementAmendmentPhase.cpp
+        QueryPlacementRefinementPhase.cpp
+        QueryRewritePhase.cpp
+        SignatureInferencePhase.cpp
         StatisticIdInferencePhase.cpp
+        TopologySpecificQueryRewritePhase.cpp
+        TypeInferencePhase.cpp
 )
-
-add_subdirectory(PlacementAmendment)

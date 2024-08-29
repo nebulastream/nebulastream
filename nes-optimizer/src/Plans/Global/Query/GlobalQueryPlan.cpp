@@ -66,15 +66,6 @@ void GlobalQueryPlan::removeQuery(QueryId queryId, RequestType requestType) {
                                 queryId,
                                 sharedQueryId));
             }
-
-            if (sharedQueryPlan->isEmpty()) {
-                // Mark SQP as stopped if all queries are removed post stop
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::STOPPED);
-            } else {
-                // Mark SQP as updated if after stop more queries are remaining
-                sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
-            }
-
             //Remove from the queryId to shared query id map
             queryIdToSharedQueryIdMap.erase(queryId);
         } else {
@@ -193,7 +184,6 @@ bool GlobalQueryPlan::createNewSharedQueryPlan(const QueryPlanPtr& queryPlan) {
     } else {
         sourceNamesAndPlacementStrategyToSharedQueryPlanMap[sourceNameAndPlacementStrategy] = {sharedQueryPlan};
     }
-
     return true;
 }
 

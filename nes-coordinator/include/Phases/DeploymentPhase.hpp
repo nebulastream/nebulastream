@@ -66,7 +66,9 @@ class DeploymentPhase {
      * @param requestType: request type
      * @throws ExecutionNodeNotFoundException: Unable to find ExecutionNodes where the query {sharedQueryId} is deployed
      */
-    void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
+    virtual void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
+
+    virtual ~DeploymentPhase() = default;
 
   private:
     /**

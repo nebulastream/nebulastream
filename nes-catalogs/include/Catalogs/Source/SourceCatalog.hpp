@@ -74,10 +74,10 @@ class SourceCatalog {
 
     /**
      * @brief method to remove all physical sources of a single worker
-     * @param topologyNodeId worker node identifier
+     * @param workerId worker node identifier
      * @return number of sucessfully removed physical sources
      */
-    size_t removeAllPhysicalSourcesByWorker(WorkerId topologyNodeId);
+    size_t removeAllPhysicalSourcesByWorker(WorkerId workerId);
 
     /**
      * @brief method to get the schema from the given logical source

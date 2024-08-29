@@ -255,6 +255,13 @@ bool SharedQueryPlan::markQueryForRemoval(QueryId queryId) {
         changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
     queriesMarkedForRemoval.emplace_back(queryId);
+    if (containsAllQueryIds(runningQueryIds, queriesMarkedForRemoval)) {
+        // Mark SQP as stopped if all queries are removed post stop
+        setStatus(SharedQueryPlanStatus::STOPPED);
+    } else {
+        // Mark SQP as updated if after stop more queries are remaining
+        setStatus(SharedQueryPlanStatus::UPDATED);
+    }
     return true;
 }
 
@@ -517,6 +524,16 @@ void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorPtr>& update
         operatorInQueryPlan->addProperty(Optimizer::PINNED_WORKER_ID, topologyNodeId);
         placedOperator->setOperatorState(OperatorState::PLACED);
     }
+}
+
+bool SharedQueryPlan::containsAllQueryIds(std::vector<QueryId>& first, std::vector<QueryId>& second) {
+    for (const auto& queryId : first) {
+        // If a query id from first is not in the second
+        if (std::find(second.begin(), second.end(), queryId) == second.end()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 }// namespace NES

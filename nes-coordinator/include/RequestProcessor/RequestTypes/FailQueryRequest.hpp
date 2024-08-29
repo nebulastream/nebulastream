@@ -29,6 +29,9 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
 namespace RequestProcessor {
@@ -49,11 +52,13 @@ class FailQueryRequest : public AbstractUniRequest {
      * @param failedDecomposedPlanId: The id of the decomposed plan that caused the failure
      * @param failureReason: the failure reason
      * @param maxRetries: Maximum number of retry attempts for the request
+     * @param placementAmendmentHandler: placement amendment handler for updating and un-deploying the operators of the failed shared query
      */
     FailQueryRequest(SharedQueryId sharedQueryId,
                      DecomposedQueryPlanId failedDecomposedPlanId,
                      const std::string& failureReason,
-                     uint8_t maxRetries);
+                     uint8_t maxRetries,
+                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
     * @brief creates a new FailQueryRequest object
@@ -66,7 +71,8 @@ class FailQueryRequest : public AbstractUniRequest {
     static FailQueryRequestPtr create(SharedQueryId sharedQueryId,
                                       DecomposedQueryPlanId failedDecomposedQueryId,
                                       const std::string& failureReason,
-                                      uint8_t maxRetries);
+                                      uint8_t maxRetries,
+                                      const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
   protected:
     /**
@@ -116,6 +122,7 @@ class FailQueryRequest : public AbstractUniRequest {
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
 };
 }// namespace RequestProcessor
 }// namespace NES
