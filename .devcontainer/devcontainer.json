@@ -11,6 +11,7 @@
   },
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/ls-1801/av/av:latest": {}
+    "ghcr.io/ls-1801/av/av:latest": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   }
 }
