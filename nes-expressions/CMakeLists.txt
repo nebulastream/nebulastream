@@ -20,9 +20,3 @@ target_link_libraries(nes-expressions PUBLIC nes-data-types)
 target_include_directories(nes-expressions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-#Add the nes expressions and headers to cpack
-install(TARGETS nes-expressions
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

@@ -21,9 +21,3 @@ target_link_libraries(nes-window-types PUBLIC nes-expressions)
 target_include_directories(nes-window-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-#Add the nes window types and headers to cpack
-install(TARGETS nes-window-types
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

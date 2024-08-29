@@ -15,7 +15,8 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
-set(CLANG_FORMAT_MAJOR_VERSION 18)
+SET(LLVM_MAJOR_VERSION 18)
+set(CLANG_FORMAT_MAJOR_VERSION ${LLVM_MAJOR_VERSION})
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
@@ -421,60 +422,6 @@ if (NES_USE_GPU)
     set(NES_TEST_TIMEOUT 300)
     add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 endif ()
-
-install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
-
-include(CMakePackageConfigHelpers)
-# Create the Config.cmake files, which enables find_package(NebulaStream) from external CMAKE projects.
-configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        INSTALL_DESTINATION NebulaStream/cmake)
-
-# Create Targets.cmake file, which exposes NebulaStream targets to external CMAKE projects
-export(EXPORT NebulaStreamTargets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
-        NAMESPACE NebulaStream::)
-
-# Create version_file to enable specific version imports
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}"
-        COMPATIBILITY AnyNewerVersion)
-
-# Install NebulaStreamConfig, NebulaStreamConfigVersion, and NebulaStreamTargets to exported package
-set(ConfigPackageLocation lib/NebulaStream/cmake)
-install(EXPORT NebulaStreamTargets
-        FILE
-        NebulaStreamTargets.cmake
-        NAMESPACE
-        NebulaStream::
-        EXPORT_LINK_INTERFACE_LIBRARIES
-        DESTINATION
-        ${ConfigPackageLocation}
-)
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${ConfigPackageLocation})
-
-# Configure CPackage
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_PACKAGE_NAME "NebulaStream")
-set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
-set(CPACK_PACKAGE_DESCRIPTION "NebulaStream is a general purpose, end-to-end data management system for the IoT. It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.")
-set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
-set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, liblz4-dev")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
-
-##This allows call to ldconfig to load the configuration after installation
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/cmake/triggers")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
-INCLUDE(CPack)
 
 #Other configurations
 project_enable_clang_format()

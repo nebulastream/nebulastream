@@ -32,9 +32,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-data-types
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
