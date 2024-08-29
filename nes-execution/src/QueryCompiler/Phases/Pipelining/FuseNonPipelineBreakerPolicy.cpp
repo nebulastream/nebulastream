@@ -12,10 +12,8 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperatorsForwardDeclaration.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
@@ -37,7 +35,6 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
         || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>());
 }
 } /// namespace NES::QueryCompilation

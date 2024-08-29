@@ -13,9 +13,6 @@
 # We disable the tests for now, as they are not ported to the new nautilus-lib yet
 #add_subdirectory(Expressions)
 #add_subdirectory(Operators)
-
-# We disable the tests for now, as they are not ported to the new nautilus-lib yet
-#add_subdirectory(Aggregation)
 add_subdirectory(PipelineExecution)
 
 if(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
