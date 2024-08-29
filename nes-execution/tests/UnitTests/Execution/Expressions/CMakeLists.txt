@@ -11,6 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(Functions)
-add_subdirectory(TextFunctions)
 add_subdirectory(LogicalExpressions)
