@@ -17,5 +17,4 @@ add_source_files(nes-execution
         Scan.cpp
         ExecutionContext.cpp)
 
-add_subdirectory(Relational)
 add_subdirectory(Streaming)
