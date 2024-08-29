@@ -16,7 +16,6 @@
 #include <variant>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>

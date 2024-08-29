@@ -72,7 +72,7 @@ public:
      * @brief Returns the thread-local buffer provider singleton.
      * This can be accessed at any point in time also without the pointer to the context.
      * Calling this method from a non worker thread results in undefined behaviour.
-     * @return raw pointer to AbstractBufferProvider
+     * @return WorkerContextBufferProviderRawPtr
      */
     static WorkerContextBufferProviderRawPtr getBufferProviderTLS();
 
@@ -102,10 +102,6 @@ public:
      */
     uint32_t decreaseObjectRefCnt(void* object);
 
-    /**
-     * @brief get the queue id of the the current worker
-     * @return current queue id
-     */
     uint32_t getQueueId() const;
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;

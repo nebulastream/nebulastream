@@ -23,9 +23,7 @@ namespace NES::Runtime
 {
 
 /**
- * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
- * @Limitations:
- *    -
+ * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers)
  */
 class alignas(64) Task
 {

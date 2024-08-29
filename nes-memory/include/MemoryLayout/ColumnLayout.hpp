@@ -33,19 +33,7 @@ class ColumnLayout;
 class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
 {
 public:
-    /**
-     * @brief Constructor to create a ColumnLayout according to a specific schema and a buffer size.
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     */
     ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
-
-    /**
-     * @brief Factory to create a ColumnLayout
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     * @return ColumnLayoutPtr
-     */
     static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
@@ -59,10 +47,6 @@ public:
      */
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
-    /**
-     * Get the column offset vector
-     * @return columnOffset
-     */
     const std::vector<uint64_t>& getColumnOffsets() const;
 
 private:

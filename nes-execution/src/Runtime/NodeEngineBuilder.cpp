@@ -15,8 +15,6 @@
 #include <memory>
 #include <utility>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Exceptions/SignalHandling.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>

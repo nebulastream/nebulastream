@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include <Runtime/RuntimeForwardRefs.hpp>
-
 namespace NES::Runtime
 {
 /**
@@ -25,31 +23,12 @@ class NodeEngineBuilder
 {
 public:
     NodeEngineBuilder() = delete;
-    /**
-     * Creates a default NodeEngineBuilder
-     * @param workerConfiguration contains values that configure aspects of the NodeEngine
-     * @return NodeEngineBuilder
-     */
+
     explicit NodeEngineBuilder(const Configurations::WorkerConfiguration& workerConfiguration);
 
-    /**
-     * setter used to pass a vector of buffer managers to NodeEngineBuilder. Optional
-     * @param bufferManagers list of BufferProvider
-     * @return NodeEngineBuilder&
-     */
     NodeEngineBuilder& setBufferManagers(std::vector<Memory::BufferManagerPtr> bufferManagers);
-
-    /**
-     * setter used to pass a query manager to NodeEngineBuilder. Optional
-     * @param queryManager
-     * @return NodeEngineBuilder&
-     */
     NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
 
-    /**
-     * performs safety checks and returns a NodeEngine
-     * @return NodeEnginePtr
-     */
     std::unique_ptr<NodeEngine> build();
 
 private:
