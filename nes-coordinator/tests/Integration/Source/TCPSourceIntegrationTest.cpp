@@ -257,7 +257,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("onTime", BasicType::BOOLEAN);
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -350,7 +350,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -443,7 +443,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -536,7 +536,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -629,7 +629,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -722,7 +722,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -815,7 +815,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
@@ -908,7 +908,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
                          ->addField("value", BasicType::FLOAT32)
                          ->addField("name", DataTypeFactory::createFixedChar(5));
 
-    crd->getSourceCatalogService()->registerLogicalSource("tcpStream", tcpSchema);
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
     NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
 
     NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");

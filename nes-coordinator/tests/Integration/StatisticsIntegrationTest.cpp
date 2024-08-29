@@ -93,7 +93,7 @@ class StatisticsIntegrationTest : public Testing::BaseIntegrationTest,
         EXPECT_NE(coordinatorRPCPort, 0UL);
         requestHandlerService = nesCoordinator->getRequestHandlerService();
         probeHandler = nesCoordinator->getStatisticProbeHandler();
-        nesCoordinator->getSourceCatalogService()->registerLogicalSource(logicalSourceName, testInputSchema);
+        requestHandlerService->queueRegisterLogicalSourceRequest(logicalSourceName, testInputSchema);
         NES_DEBUG("Coordinator started successfully");
 
         // Create workers

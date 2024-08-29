@@ -35,9 +35,6 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-class SourceCatalogService;
-using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
@@ -63,14 +60,12 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @brief Create coordinator RPC server
      * @param requestHandlerService: the instance of Query Service
      * @param topology : the instance of the topology
-     * @param sourceCatalogService : the instance of the steam catalog service
      * @param queryCatalog : the instance of query catalog
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
     explicit CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
                                   TopologyPtr topology,
-                                  SourceCatalogServicePtr sourceCatalogService,
                                   Catalogs::Query::QueryCatalogPtr queryCatalog,
                                   Monitoring::MonitoringManagerPtr monitoringManager,
                                   QueryParsingServicePtr queryParsingService,
@@ -264,7 +259,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   private:
     RequestHandlerServicePtr requestHandlerService;
     TopologyPtr topology;
-    SourceCatalogServicePtr sourceCatalogService;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Monitoring::MonitoringManagerPtr monitoringManager;
     QueryParsingServicePtr queryParsingService;

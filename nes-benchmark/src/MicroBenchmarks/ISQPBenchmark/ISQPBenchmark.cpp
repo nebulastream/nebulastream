@@ -40,6 +40,7 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/BenchmarkUtils.hpp>
@@ -82,7 +83,7 @@ class ErrorHandler : public Exceptions::ErrorListener {
  * @brief Set up the physical sources for the benchmark
  * @param leafWorkerIds: leaf worker ids
  */
-void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr sourceCatalogService) {
+void setupSources(std::vector<WorkerId> leafWorkerIds, RequestHandlerServicePtr requestHandlerService) {
 
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
@@ -131,8 +132,10 @@ void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr s
         for (uint16_t counter = 1; counter <= noOfPhySourcePerWorker; counter++) {
             const auto& logicalSourceName = "example" + leafWorkerId.toString() + "-" + std::to_string(counter);
             auto physicalSourceName = "phy_" + logicalSourceName;
-            sourceCatalogService->registerLogicalSource(logicalSourceName, schema3);
-            sourceCatalogService->registerPhysicalSource(physicalSourceName, logicalSourceName, leafWorkerId);
+            std::vector<RequestProcessor::PhysicalSourceDefinition> additions;
+            additions.emplace_back(logicalSourceName, physicalSourceName);
+            requestHandlerService->queueRegisterLogicalSourceRequest(logicalSourceName, schema3);
+            requestHandlerService->queueRegisterPhysicalSourceRequest(additions, leafWorkerId);
         }
     }
 }
@@ -143,7 +146,6 @@ void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr s
  * @param numOfIntermediateNodes : number of intermediate nodes
  * @param numOfSourceNodes : number of source nodes
  * @param requestHandlerService : request handler to launch ISQP requests
- * @param sourceCatalogService : the source catalog service
  * @param topology : the topology
  * @param globalExecutionPlan : the global execution plan
  */
@@ -151,7 +153,6 @@ void setupTopology(uint16_t numOfRootNodes,
                    uint16_t numOfIntermediateNodes,
                    uint16_t numOfSourceNodes,
                    RequestHandlerServicePtr requestHandlerService,
-                   SourceCatalogServicePtr sourceCatalogService,
                    TopologyPtr topology,
                    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
 
@@ -293,7 +294,7 @@ void setupTopology(uint16_t numOfRootNodes,
     }
 
     //12. create logical and physical sources
-    setupSources(leafWorkerIds, sourceCatalogService);
+    setupSources(leafWorkerIds, requestHandlerService);
 };
 
 /**
@@ -302,7 +303,6 @@ void setupTopology(uint16_t numOfRootNodes,
   * @param numOfIntermediateNodes : number of intermediate nodes
   * @param numOfSourceNodes : number of source nodes
   * @param requestHandlerService : request handler to launch ISQP requests
-  * @param sourceCatalogService : the source catalog service
   * @param topology : the topology
   * @param globalExecutionPlan : the global execution plan
   */
@@ -310,16 +310,9 @@ void setUp(uint16_t numOfRootNodes,
            uint16_t numOfIntermediateNodes,
            uint16_t numOfSourceNodes,
            RequestHandlerServicePtr requestHandlerService,
-           SourceCatalogServicePtr sourceCatalogService,
            TopologyPtr topology,
            Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
-    setupTopology(numOfRootNodes,
-                  numOfIntermediateNodes,
-                  numOfSourceNodes,
-                  requestHandlerService,
-                  sourceCatalogService,
-                  topology,
-                  globalExecutionPlan);
+    setupTopology(numOfRootNodes, numOfIntermediateNodes, numOfSourceNodes, requestHandlerService, topology, globalExecutionPlan);
 }
 
 /**
@@ -532,12 +525,11 @@ int main(int argc, const char* argv[]) {
                 auto nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
                 nesCoordinator->startCoordinator(false);
                 auto requestHandlerService = nesCoordinator->getRequestHandlerService();
-                auto sourceCatalogService = nesCoordinator->getSourceCatalogService();
                 auto topology = nesCoordinator->getTopology();
                 auto globalExecutionPlan = nesCoordinator->getGlobalExecutionPlan();
                 std::cout << "Setting up the topology." << std::endl;
                 //Setup topology and source catalog
-                setUp(63, 64, 640, requestHandlerService, sourceCatalogService, topology, globalExecutionPlan);
+                setUp(63, 64, 640, requestHandlerService, topology, globalExecutionPlan);
 
                 auto placement = magic_enum::enum_cast<Optimizer::PlacementStrategy>(placementStrategy).value();
 

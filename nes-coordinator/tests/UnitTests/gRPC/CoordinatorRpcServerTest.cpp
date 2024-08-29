@@ -51,11 +51,13 @@ class CoordinatorRPCServerTest : public Testing::BaseUnitTest {
         NES_DEBUG("Setup ExpressionNodeTest test class.");
     }
     static std::tuple<std::unique_ptr<CoordinatorRPCServer>, std::shared_ptr<Catalogs::Source::SourceCatalog>> defaultUUT() {
-        auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-        auto catalog = std::make_shared<SourceCatalogService>(sourceCatalog);
+        CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+        NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+        auto requestHandlerService = crd->getRequestHandlerService();
+        auto sourceCatalog = crd->getSourceCatalog();
 
         return std::make_tuple(
-            std::make_unique<CoordinatorRPCServer>(nullptr, nullptr, std::move(catalog), nullptr, nullptr, nullptr, nullptr),
+            std::make_unique<CoordinatorRPCServer>(requestHandlerService, nullptr, nullptr, nullptr, nullptr, nullptr),
             sourceCatalog);
     }
 };

@@ -15,7 +15,6 @@
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -34,7 +33,7 @@ using namespace std;
 using namespace NES;
 using namespace Configurations;
 
-class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
+class SourceCatalogRequestTest : public Testing::BaseIntegrationTest {
   public:
     std::string queryString =
         R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
@@ -43,7 +42,7 @@ class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::Logger::setupLogging("SourceCatalogServiceTest.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("SourceCatalogRequestTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup NES SourceCatalogService test class.");
     }
 
@@ -67,34 +66,32 @@ class SourceCatalogServiceTest : public Testing::BaseIntegrationTest {
     //std::string sensor_type = "default";
 };
 
-TEST_F(SourceCatalogServiceTest, testRegisterUnregisterLogicalSource) {
+TEST_F(SourceCatalogRequestTest, testRegisterUnregisterLogicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string logicalSourceName = "testStream";
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    bool successRegisterLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
+    bool successRegisterLogicalSource = sourceCatalog->addLogicalSource(logicalSourceName, testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);
 
     //test register existing source
-    bool successRegisterExistingLogicalSource = sourceCatalogService->registerLogicalSource(logicalSourceName, testSchema);
+    bool successRegisterExistingLogicalSource = sourceCatalog->addLogicalSource(logicalSourceName, testSchema);
     EXPECT_TRUE(!successRegisterExistingLogicalSource);
 
     //test unregister not existing node
-    bool successUnregisterNotExistingLogicalSource = sourceCatalogService->unregisterLogicalSource("asdasd");
+    bool successUnregisterNotExistingLogicalSource = sourceCatalog->removeLogicalSource("asdasd");
     EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingLogicalSource = sourceCatalogService->unregisterLogicalSource(logicalSourceName);
+    bool successUnregisterExistingLogicalSource = sourceCatalog->removeLogicalSource(logicalSourceName);
     EXPECT_TRUE(successUnregisterExistingLogicalSource);
 }
 
-TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
+TEST_F(SourceCatalogRequestTest, testRegisterUnregisterPhysicalSource) {
     std::string address = ip + ":" + std::to_string(publish_port);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
-    SourceCatalogServicePtr sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
 
     std::string physicalSourceName = "testStream";
 
@@ -115,38 +112,34 @@ TEST_F(SourceCatalogServiceTest, testRegisterUnregisterPhysicalSource) {
 
     //setup test
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    bool successRegisterLogicalSource =
-        sourceCatalogService->registerLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
+    bool successRegisterLogicalSource = sourceCatalog->addLogicalSource(physicalSource->getLogicalSourceName(), testSchema);
     EXPECT_TRUE(successRegisterLogicalSource);
 
     // common case
     bool successRegisterPhysicalSource =
-        sourceCatalogService
-            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+        sourceCatalog->addPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
             .first;
     EXPECT_TRUE(successRegisterPhysicalSource);
 
     //test register existing source
     bool successRegisterExistingPhysicalSource =
-        sourceCatalogService
-            ->registerPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
+        sourceCatalog->addPhysicalSource(physicalSource->getPhysicalSourceName(), physicalSource->getLogicalSourceName(), nodeId)
             .first;
     EXPECT_TRUE(!successRegisterExistingPhysicalSource);
 
     //test unregister not existing physical source
     bool successUnregisterNotExistingPhysicalSource =
-        sourceCatalogService->unregisterPhysicalSource("asd", physicalSource->getLogicalSourceName(), nodeId);
+        sourceCatalog->removePhysicalSource("asd", physicalSource->getLogicalSourceName(), nodeId);
     EXPECT_TRUE(!successUnregisterNotExistingPhysicalSource);
 
     //test unregister not existing local source
     bool successUnregisterNotExistingLogicalSource =
-        sourceCatalogService->unregisterPhysicalSource(physicalSource->getPhysicalSourceName(), "asd", nodeId);
+        sourceCatalog->removePhysicalSource(physicalSource->getPhysicalSourceName(), "asd", nodeId);
     EXPECT_TRUE(!successUnregisterNotExistingLogicalSource);
 
     //test unregister existing node
-    bool successUnregisterExistingPhysicalSource =
-        sourceCatalogService->unregisterPhysicalSource(physicalSource->getPhysicalSourceName(),
-                                                       physicalSource->getLogicalSourceName(),
-                                                       nodeId);
+    bool successUnregisterExistingPhysicalSource = sourceCatalog->removePhysicalSource(physicalSource->getLogicalSourceName(),
+                                                                                       physicalSource->getPhysicalSourceName(),
+                                                                                       nodeId);
     EXPECT_TRUE(successUnregisterExistingPhysicalSource);
 }

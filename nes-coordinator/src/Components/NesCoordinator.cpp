@@ -15,7 +15,6 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Catalogs/Topology/Index/LocationIndex.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -86,7 +85,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
-    sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
     coordinatorHealthCheckService =
         std::make_shared<CoordinatorHealthCheckService>(topology, HEALTH_SERVICE_NAME, this->coordinatorConfiguration);
@@ -138,7 +136,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
 NesCoordinator::~NesCoordinator() {
     stopCoordinator(true);
     NES_DEBUG("NesCoordinator::~NesCoordinator() map cleared");
-    sourceCatalogService->reset();
+    sourceCatalog->reset();
     queryCatalog.reset();
 }
 
@@ -173,7 +171,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator: Register Logical sources");
     for (const auto& logicalSourceType : coordinatorConfiguration->logicalSourceTypes.getValues()) {
         auto schema = Schema::createFromSchemaType(logicalSourceType.getValue()->getSchemaType());
-        sourceCatalogService->registerLogicalSource(logicalSourceType.getValue()->getLogicalSourceName(), schema);
+        NES_ASSERT(requestHandlerService->queueRegisterLogicalSourceRequest(logicalSourceType.getValue()->getLogicalSourceName(),
+                                                                            schema),
+                   "Could not create logical source");
     }
     NES_DEBUG("NesCoordinator: Finished Registering Logical source");
 
@@ -206,7 +206,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
                                               restPort,
                                               this->inherited0::weak_from_this(),
                                               queryCatalog,
-                                              sourceCatalogService,
                                               topology,
                                               globalExecutionPlan,
                                               requestHandlerService,
@@ -302,12 +301,10 @@ bool NesCoordinator::stopCoordinator(bool force) {
 
 void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<bool>>& prom) {
     grpc::ServerBuilder builder;
-    NES_ASSERT(sourceCatalogService, "null sourceCatalogService");
     NES_ASSERT(topology, "null topology");
 
     CoordinatorRPCServer service(requestHandlerService,
                                  topology,
-                                 sourceCatalogService,
                                  queryCatalog,
                                  monitoringService->getMonitoringManager(),
                                  queryParsingService,
@@ -361,8 +358,6 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
-
-SourceCatalogServicePtr NesCoordinator::getSourceCatalogService() const { return sourceCatalogService; }
 
 LocationServicePtr NesCoordinator::getLocationService() const { return locationService; }
 

@@ -43,7 +43,6 @@ RestServer::RestServer(std::string host,
                        uint16_t port,
                        NesCoordinatorWeakPtr coordinator,
                        Catalogs::Query::QueryCatalogPtr queryCatalog,
-                       SourceCatalogServicePtr sourceCatalogService,
                        TopologyPtr topology,
                        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                        RequestHandlerServicePtr requestHandlerService,
@@ -55,10 +54,9 @@ RestServer::RestServer(std::string host,
                        std::optional<std::string> corsAllowedOrigin)
     : host(std::move(host)), port(port), coordinator(std::move(coordinator)), queryCatalog(std::move(queryCatalog)),
       globalExecutionPlan(std::move(globalExecutionPlan)), requestHandlerService(std::move(requestHandlerService)),
-      globalQueryPlan(std::move(globalQueryPlan)), sourceCatalogService(std::move(sourceCatalogService)),
-      topology(std::move(topology)), udfCatalog(std::move(udfCatalog)), monitoringService(std::move(monitoringService)),
-      queryParsingService(std::move(queryParsingService)), bufferManager(std::move(bufferManager)),
-      corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
+      globalQueryPlan(std::move(globalQueryPlan)), topology(std::move(topology)), udfCatalog(std::move(udfCatalog)),
+      monitoringService(std::move(monitoringService)), queryParsingService(std::move(queryParsingService)),
+      bufferManager(std::move(bufferManager)), corsAllowedOrigin(std::move(corsAllowedOrigin)) {}
 
 bool RestServer::start() {
     NES_INFO("Starting Oatpp Server on {}:{}", host, std::to_string(port));
@@ -119,7 +117,7 @@ void RestServer::run() {
     auto udfCatalogController =
         REST::Controller::UDFCatalogController::create(objectMapper, udfCatalog, "/udfCatalog", errorHandler);
     auto sourceCatalogController = REST::Controller::SourceCatalogController::create(objectMapper,
-                                                                                     sourceCatalogService,
+                                                                                     requestHandlerService,
                                                                                      queryParsingService,
                                                                                      errorHandler,
                                                                                      "/sourceCatalog");

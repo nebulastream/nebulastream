@@ -55,7 +55,7 @@ endforeach ()
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PRIVATE  nes-coordinator)
+target_link_libraries(nesCoordinator PRIVATE nes-coordinator)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

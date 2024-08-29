@@ -20,6 +20,7 @@
 #include <deque>
 #include <map>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 #include <vector>
@@ -135,6 +136,24 @@ class SourceCatalog {
     std::map<std::string, std::string> getAllLogicalSourceAsString();
 
     /**
+     * @brief Get a json containing all logical sources with their schema as string
+     * @return json containing logical source name to schema as string
+     */
+    nlohmann::json getAllLogicalSourcesAsJson();
+
+    /**
+     * @brief Get a json containing all physical sources belonging to a physical source
+     * @return json containing the physical sources
+     */
+    nlohmann::json getPhysicalSourcesAsJson(std::string logicalSourceName);
+
+    /**
+     * @brief Get a json containing the schema of a logical source
+     * @return json containing the schema of the source
+     */
+    nlohmann::json getLogicalSourceAsJson(std::string logicalSourceName);
+
+    /**
      * @brief method to return the physical source and the associated schemas
      * @return string containing the content of the catalog
      */
@@ -154,6 +173,30 @@ class SourceCatalog {
      * @return bool indicating if update was successful
      */
     bool updateLogicalSource(const std::string& logicalSourceName, SchemaPtr schema);
+
+    /**
+     * @brief method to register a physical source
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
+     * @param physicalSourceTypeName: string representation of the physical source type
+     * @param topologyNodeId : the topology node id
+     * @return bool indicating success
+     */
+    std::pair<bool, std::string> addPhysicalSource(const std::string& physicalSourceName,
+                                                   const std::string& logicalSourceName,
+                                                   const std::string& physicalSourceTypeName,
+                                                   WorkerId topologyNodeId);
+
+    /**
+     * @brief method to register a physical source
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
+     *
+     * @param topologyNodeId : the topology node id
+     * @return bool indicating success
+     */
+    std::pair<bool, std::string>
+    addPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
     /**
      * Gets the key distribution for a given source catalog entry.
@@ -178,7 +221,6 @@ class SourceCatalog {
      */
     bool testIfLogicalSourceExistsInLogicalToPhysicalMapping(const std::string& logicalSourceName);
 
-    std::recursive_mutex catalogMutex;
     //map logical source to schema
     std::map<std::string, SchemaPtr> logicalSourceNameToSchemaMapping;
     //map logical source to physical source

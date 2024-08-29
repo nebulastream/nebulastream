@@ -70,7 +70,7 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
     NES_INFO("ArrowIntegrationTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-    crd->getSourceCatalogService()->registerLogicalSource("arrow_data", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("arrow_data", testSchema);
 
     EXPECT_NE(port, 0UL);
     NES_DEBUG("ArrowIntegrationTest: Coordinator started successfully");

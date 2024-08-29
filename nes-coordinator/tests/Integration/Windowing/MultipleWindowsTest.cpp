@@ -54,7 +54,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -123,8 +123,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -216,7 +216,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
     const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -297,8 +297,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -392,8 +392,8 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -472,8 +472,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -571,8 +571,8 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -688,8 +688,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");
@@ -843,8 +843,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
-    const auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
-    crd->getSourceCatalogService()->registerLogicalSource("window", testSchema);
+    auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
+    crd->getSourceCatalog()->addLogicalSource("window", testSchema);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("WindowDeploymentTest: Start worker 1");

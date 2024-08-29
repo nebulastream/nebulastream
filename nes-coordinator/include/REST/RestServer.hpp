@@ -104,7 +104,6 @@ class RestServer {
                uint16_t port,
                NesCoordinatorWeakPtr coordinator,
                Catalogs::Query::QueryCatalogPtr queryCatalog,
-               SourceCatalogServicePtr sourceCatalogService,
                TopologyPtr topology,
                Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
                RequestHandlerServicePtr requestHandlerService,
@@ -141,7 +140,6 @@ class RestServer {
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     RequestHandlerServicePtr requestHandlerService;
     GlobalQueryPlanPtr globalQueryPlan;
-    SourceCatalogServicePtr sourceCatalogService;
     TopologyPtr topology;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     MonitoringServicePtr monitoringService;

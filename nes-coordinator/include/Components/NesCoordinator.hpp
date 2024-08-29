@@ -15,7 +15,6 @@
 #ifndef NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -73,9 +72,6 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
-
-class SourceCatalogService;
-using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
@@ -197,12 +193,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     bool isCoordinatorRunning();
 
     /**
-     * getter for the sourceCatalogService
-     * @return
-     */
-    SourceCatalogServicePtr getSourceCatalogService() const;
-
-    /**
      * getter for the locationService
      * @return
      */
@@ -233,7 +223,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
     NesWorkerPtr worker;
-    SourceCatalogServicePtr sourceCatalogService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

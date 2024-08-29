@@ -31,6 +31,18 @@
 #include <RequestProcessor/RequestTypes/ExplainRequest.hpp>
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/GetSourceCatalogRequest.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddKeyDistributionEntryEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetAllLogicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetPhysicalSourcesEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/GetSchemaEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveAllPhysicalSourcesByWorkerEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemoveLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/RemovePhysicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
+#include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -41,6 +53,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <llvm/Support/MathExtras.h>
 #include <nlohmann/json.hpp>
 
 namespace NES {
@@ -210,4 +223,89 @@ RequestHandlerService::trackStatisticRequest(const Statistic::CharacteristicPtr&
                                  nullptr);
 }
 
+bool RequestHandlerService::queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
+                                                               WorkerId workerId) const {
+    NES_DEBUG("request to register Physical source");
+    auto event = RequestProcessor::AddPhysicalSourcesEvent::create(additions, workerId);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    NES_DEBUG("request to register logical source");
+    auto event = RequestProcessor::AddLogicalSourceEvent::create(logicalSourceName, schema);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                                                 const std::string& logicalSourceName,
+                                                                 WorkerId workerId) const {
+    NES_DEBUG("request to unregister physical source");
+    auto event = RequestProcessor::RemovePhysicalSourceEvent::create(logicalSourceName, physicalSourceName, workerId);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueUnregisterAllPhysicalSourcesByWorkerRequest(WorkerId workerId) const {
+    NES_DEBUG("SourceCatalogService::unregisterAllPhysicalSourcesByWorker: remove all physical sources for worker: {}", workerId);
+    auto event = RequestProcessor::RemoveAllPhysicalSourcesByWorkerEvent::create(workerId);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueAddKeyDistributionEntryRequest(const std::string& logicalSourceName,
+                                                                const std::string& physicalSourceName,
+                                                                WorkerId workerId,
+                                                                const std::string& value) const {
+    NES_DEBUG("request to add key distribution entry");
+    auto event = RequestProcessor::AddKeyDistributionEntryEvent::create(logicalSourceName, physicalSourceName, workerId, value);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const {
+    NES_DEBUG("request to unregister logical source");
+    auto event = RequestProcessor::RemoveLogicalSourceEvent::create(logicalSourceName);
+    return handleCatalogUpdateRequest(event);
+}
+
+bool RequestHandlerService::queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const {
+    NES_DEBUG("request to update logical source");
+    auto event = RequestProcessor::UpdateLogicalSourceEvent::create(logicalSourceName, schema);
+    return handleCatalogUpdateRequest(event);
+}
+
+nlohmann::json RequestHandlerService::queueGetAllLogicalSourcesRequest() const {
+    NES_DEBUG("request to get all logical sources");
+    auto event = RequestProcessor::GetAllLogicalSourcesEvent::create();
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::BaseGetSourceJsonResponse>(response)->getJson();
+}
+
+nlohmann::json RequestHandlerService::queueGetPhysicalSourcesRequest(std::string logicelSourceName) const {
+    NES_DEBUG("request to get physical source");
+    auto event = RequestProcessor::GetPhysicalSourcesEvent::create(logicelSourceName);
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::BaseGetSourceJsonResponse>(response)->getJson();
+}
+
+SchemaPtr RequestHandlerService::queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const {
+    NES_DEBUG("request to get logical source schema");
+    auto event = RequestProcessor::GetSchemaEvent::create(logicelSourceName);
+    auto request = RequestProcessor::GetSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(request);
+    auto future = request->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::GetSchemaResponse>(response)->getSchema();
+}
+
+bool RequestHandlerService::handleCatalogUpdateRequest(RequestProcessor::UpdateSourceCatalogEventPtr event) const {
+    auto updateRequest = RequestProcessor::UpdateSourceCatalogRequest::create(event, RequestProcessor::DEFAULT_RETRIES);
+    asyncRequestExecutor->runAsync(updateRequest);
+    auto future = updateRequest->getFuture();
+    auto response = future.get();
+    return std::static_pointer_cast<RequestProcessor::BaseUpdateSourceCatalogResponse>(response)->success;
+}
 }// namespace NES

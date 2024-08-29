@@ -60,6 +60,9 @@ class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -97,6 +100,14 @@ using ISQPRequestResponsePtr = std::shared_ptr<ISQPRequestResponse>;
 
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
+
+class BaseUpdateSourceCatalogEvent;
+using UpdateSourceCatalogEventPtr = std::shared_ptr<BaseUpdateSourceCatalogEvent>;
+
+class AddPhysicalSourcesEvent;
+using AddPhysicalSourcesEventPtr = std::shared_ptr<AddPhysicalSourcesEvent>;
+
+struct PhysicalSourceDefinition;
 
 }// namespace RequestProcessor
 
@@ -211,7 +222,96 @@ class RequestHandlerService {
     std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
                                                                const Windowing::WindowTypePtr& window);
 
+    /**
+      * @brief register one or multiple new physical sources
+      * @param additions a vector of physical source additions
+      * @param workerId the id of the worker hosting the physical source
+      * @return true on success
+      */
+    bool queueRegisterPhysicalSourceRequest(std::vector<RequestProcessor::PhysicalSourceDefinition> additions,
+                                            WorkerId workerId) const;
+
+    /**
+      * @brief register a new logical source
+      * @param logicalSourceName the name of the logical source
+      * @param schema the schema of the logical source
+      * @return true on success
+      */
+    bool queueRegisterLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
+
+    /**
+      * @brief unregister an existing physical source
+      * @param physicalSourceName the name of the physical source to unregister
+      * @param logicalSourceName the name of the logical source to which the physical source belongs
+      * @param workerId the id of the worker hosting the physical source
+      * @return true on success
+      */
+    bool queueUnregisterPhysicalSourceRequest(const std::string& physicalSourceName,
+                                              const std::string& logicalSourceName,
+                                              WorkerId workerId) const;
+
+    /**
+      * @brief unregister all existing physical sources
+      * @param additions a vector of physical source additions
+      * @param workerId the id of the worker hosting the physical source
+      * @return true on success
+      */
+    bool queueUnregisterAllPhysicalSourcesByWorkerRequest(WorkerId workerId) const;
+
+    /**
+      * @brief add key distribution entry
+      * @param logicalSourceName the name of the logical source to which the physical source belongs
+      * @param physicalSourceName the name of the physical source to unregister
+      * @param workerId the id of the worker hosting the physical source
+      * @param value the statistics from request
+      * @return true on success
+      */
+    bool queueAddKeyDistributionEntryRequest(const std::string& logicalSourceName,
+                                             const std::string& physicalSourceName,
+                                             WorkerId workerId,
+                                             const std::string& value) const;
+
+    /**
+      * @brief unregister an existing logical source
+      * @param logicalSourceName the name of the logical source
+      * @return true on success
+      */
+    bool queueUnregisterLogicalSourceRequest(const std::string& logicalSourceName) const;
+
+    /**
+      * @brief update an existing logical source
+      * @param logicalSourceName the name of the logical source
+      * @param schema the new schema of the logical source
+      * @return true on success
+      */
+    bool queueUpdateLogicalSourceRequest(const std::string& logicalSourceName, SchemaPtr schema) const;
+
+    /**
+     * @brief get all logical sources
+     * @return json object containing all logical sources
+     */
+    nlohmann::json queueGetAllLogicalSourcesRequest() const;
+
+    /**
+     * @brief get all physical sources belonging to a logical source
+     * @return json object containing the sources
+     */
+    nlohmann::json queueGetPhysicalSourcesRequest(std::string logicelSourceName) const;
+
+    /**
+     * @brief get the schema of a logical source
+     * @return json object containing the schema
+     */
+    SchemaPtr queueGetLogicalSourceSchemaRequest(std::string logicelSourceName) const;
+
   private:
+    /**
+     * @brief helper function to create a request to modify the query catalog
+     * @param sourceActions a vector containing the modifications to make to the catalog
+     * @return true on successfull execution of the request
+     */
+    bool handleCatalogUpdateRequest(RequestProcessor::UpdateSourceCatalogEventPtr event) const;
+
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process

@@ -61,7 +61,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
                      ->addField("ysb$d2", BasicType::UINT64)
                      ->addField("ysb$d3", BasicType::UINT32)
                      ->addField("ysb$d4", BasicType::UINT16);
-    ASSERT_TRUE(crd->getSourceCatalogService()->registerLogicalSource("ysb", input));
+    ASSERT_TRUE(crd->getSourceCatalog()->addLogicalSource("ysb", input));
     NES_DEBUG("YSBDeploymentTest: Coordinator started successfully");
 
     NES_DEBUG("YSBDeploymentTest: Start worker 1");

@@ -198,7 +198,7 @@ TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSu
     ASSERT_NE(port, 0u);
     //register logical source
     auto testSchema = Schema::create()->addField(createField("campaign_id", BasicType::UINT64));
-    crd->getSourceCatalogService()->registerLogicalSource("testStream", testSchema);
+    crd->getSourceCatalog()->addLogicalSource("testStream", testSchema);
     NES_INFO("MillisecondIntervalTest: Coordinator started successfully");
 
     NES_INFO("MillisecondIntervalTest: Start worker 1");
