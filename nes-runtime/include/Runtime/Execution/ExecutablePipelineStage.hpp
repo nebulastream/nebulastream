@@ -37,10 +37,6 @@ public:
         /// nop
     }
 
-    /**
-     * @brief Returns the arity of this pipeline
-     * @return the arity of this pipeline
-     */
     [[nodiscard]] PipelineStageArity getArity() const { return arity; }
 
     /**

@@ -130,16 +130,10 @@ private:
     void initialize(uint32_t withAlignment);
 
 public:
-    /**
-     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
-     * @return a new buffer
-     */
+    /// This blocks until a buffer is available.
     TupleBuffer getBufferBlocking() override;
 
-    /**
-     * @brief Returns a new TupleBuffer wrapped in an optional or an invalid option if there is no buffer.
-     * @return a new buffer
-     */
+    /// invalid optional if there is no buffer.
     std::optional<TupleBuffer> getBufferNoBlocking() override;
 
     /**
@@ -158,29 +152,11 @@ public:
      */
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
 
-    /**
-     * @return Configured size of the buffers
-     */
+
     size_t getBufferSize() const override;
-
-    /**
-     * @return Number of total buffers in the pool
-     */
     size_t getNumOfPooledBuffers() const override;
-
-    /**
-     * @return number of unpooled buffers
-     */
     size_t getNumOfUnpooledBuffers() const override;
-
-    /**
-     * @return Number of available buffers in the pool
-     */
     size_t getAvailableBuffers() const override;
-
-    /**
-    * @return Number of available buffers in the fixed size pool
-    */
     size_t getAvailableBuffersInFixedSizePools() const;
 
     /**

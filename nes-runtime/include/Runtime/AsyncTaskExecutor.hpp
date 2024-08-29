@@ -21,7 +21,6 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime
