@@ -13,8 +13,8 @@
 */
 #include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
@@ -54,7 +54,7 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
         case NautilusBackend::INTERPRETER: {
             return "PipelineInterpreter";
         };
-        case NautilusBackend::MLIR_COMPILER_BACKEND: {
+        case NautilusBackend::COMPILER: {
             return "PipelineCompiler";
         };
         default: {
@@ -70,21 +70,17 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
 
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = NES::Util::as<NautilusPipelineOperator>(rootOperator);
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getPipelineId());
-    options.identifier = identifier;
 
-    /// enable dump to console if the compiler options are set
-    options.dumpToConsole = compilerOptions->dumpMode == DumpMode::CONSOLE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE;
-
-    /// enable dump to file if the compiler options are set
-    options.dumpToFile = compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE;
-
-    options.proxyInlining = compilerOptions->compilationStrategy == CompilationStrategy::PROXY_INLINING;
+    /// enable dump to console or file if the compiler options are set
+    options.setOption(
+        "toConsole", compilerOptions->dumpMode == DumpMode::CONSOLE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
+    options.setOption("toFile", compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName);
