@@ -13,7 +13,7 @@
 */
 
 #include <Execution/Operators/Relational/Selection.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <../../../../../nes-nautilus/include/Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
