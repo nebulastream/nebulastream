@@ -24,6 +24,17 @@ namespace NES::Runtime::Execution::Expressions
 class EqualsExpressionTest : public Testing::BaseUnitTest
 {
 public:
+
+    /// Defining some constexpr values for more readable tests
+    static constexpr auto someMagicNumber = 23.0;
+    static constexpr auto minI8Minus1 = static_cast<int16_t>(std::numeric_limits<int8_t>::min()) - 1;
+    static constexpr auto minI16Minus1 = static_cast<int32_t>(std::numeric_limits<int16_t>::min()) - 1;
+    static constexpr auto minI32Minus1 = static_cast<int64_t>(std::numeric_limits<int32_t>::min()) - 1;
+    static constexpr auto maxUI8Plus1 = static_cast<uint16_t>(std::numeric_limits<uint8_t>::max()) + 1;
+    static constexpr auto maxUI16Plus1 = static_cast<uint32_t>(std::numeric_limits<uint16_t>::max()) + 1;
+    static constexpr auto maxUI32Plus1 = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1;
+
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
@@ -33,221 +44,130 @@ public:
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down EqualsExpressionTest test class."); }
+
+    const BinaryExpressionWrapper<EqualsExpression> expression;
+
+    template <typename LHS, typename RHS>
+    void testEqualsExpression(const LHS& leftValue, const RHS& rightValue)
+    {
+        const auto left = VarVal(nautilus::val<LHS>(leftValue));
+        const auto right = VarVal(nautilus::val<RHS>(rightValue));
+        auto resultValue = expression.eval(left, right);
+        EXPECT_EQ(resultValue.cast<nautilus::val<bool>>(), leftValue == rightValue);
+
+        resultValue = expression.eval(right, left);
+        EXPECT_EQ(resultValue.cast<nautilus::val<bool>>(), rightValue == leftValue);
+    }
 };
+
 
 TEST_F(EqualsExpressionTest, signedIntegers)
 {
-    auto expression = BinaryExpressionWrapper<EqualsExpression>();
+    testEqualsExpression<int8_t, int8_t>(rand(), rand());
+    testEqualsExpression<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testEqualsExpression<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testEqualsExpression<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testEqualsExpression<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testEqualsExpression<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testEqualsExpression<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testEqualsExpression<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testEqualsExpression<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    /// equal values
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<int16_t, int16_t>(rand(), rand());
+    testEqualsExpression<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testEqualsExpression<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testEqualsExpression<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testEqualsExpression<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testEqualsExpression<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testEqualsExpression<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>((int16_t)-42), Value<Int16>((int16_t)-42));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(-42), Value<Int32>(-42));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>((int64_t)-42), Value<Int64>((int64_t)-42));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<int32_t, int32_t>(rand(), rand());
+    testEqualsExpression<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testEqualsExpression<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testEqualsExpression<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    /// larger case
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>((int8_t)-4));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>((int16_t)-4));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(42), Value<Int32>(-4));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>(42_s64), Value<Int64>((int64_t)-4));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// smaller case
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<Int8>((int8_t)-2), Value<Int8>(4_s8));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<Int16>((int16_t)-2), Value<Int16>(4_s16));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<Int32>(-2), Value<Int32>(4));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<Int64>((int64_t)-2), Value<Int64>(4_s64));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<int64_t, int64_t>(rand(), rand());
+    testEqualsExpression<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testEqualsExpression<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
 TEST_F(EqualsExpressionTest, UnsignedIntegers)
 {
-    auto expression = BinaryExpressionWrapper<EqualsExpression>();
+    testEqualsExpression<uint8_t, uint8_t>(rand(), rand());
+    testEqualsExpression<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testEqualsExpression<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testEqualsExpression<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testEqualsExpression<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testEqualsExpression<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testEqualsExpression<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testEqualsExpression<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testEqualsExpression<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    /// equal values
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<uint16_t, uint16_t>(rand(), rand());
+    testEqualsExpression<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testEqualsExpression<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testEqualsExpression<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testEqualsExpression<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testEqualsExpression<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testEqualsExpression<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(42_u32));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<uint32_t, uint32_t>(rand(), rand());
+    testEqualsExpression<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testEqualsExpression<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testEqualsExpression<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    /// larger case
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(4_u8));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(4_u16));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<UInt32>(42_u32), Value<UInt32>(4_u32));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(4_u64));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// smaller case
-    /// Int8
-    {
-        auto resultValue = expression.eval(Value<UInt8>(2_u8), Value<UInt8>(4_u8));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// Int16
-    {
-        auto resultValue = expression.eval(Value<UInt16>(2_u16), Value<UInt16>(4_u16));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    } /// Int32
-    {
-        auto resultValue = expression.eval(Value<UInt32>(2_u32), Value<UInt32>(4_u32));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// Int64
-    {
-        auto resultValue = expression.eval(Value<UInt64>(2_u64), Value<UInt64>(4_u64));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<uint64_t, uint64_t>(rand(), rand());
+    testEqualsExpression<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testEqualsExpression<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
 TEST_F(EqualsExpressionTest, FloatingPoints)
 {
-    auto expression = BinaryExpressionWrapper<EqualsExpression>();
+    testEqualsExpression<float, float>(rand(), rand());
+    testEqualsExpression<float, float>(someMagicNumber, someMagicNumber);
+    testEqualsExpression<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testEqualsExpression<float, double>(someMagicNumber, someMagicNumber);
+    testEqualsExpression<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    /// equal values
-    /// float
-    {
-        auto resultValue = expression.eval(Value<Float>((float)42), Value<Float>((float)42));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// double
-    {
-        auto resultValue = expression.eval(Value<Double>((double)42), Value<Double>((double)42));
-        ASSERT_EQ(resultValue, (bool)true);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-    /// larger case
-    /// float
-    {
-        auto resultValue = expression.eval(Value<Float>((float)42), Value<Float>((float)2.3));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// double
-    {
-        auto resultValue = expression.eval(Value<Double>((double)42), Value<Double>((double)2.3));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// smaller case
-    /// float
-    {
-        auto resultValue = expression.eval(Value<Float>((float)1.8), Value<Float>((float)2.3));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
-
-    /// double
-    {
-        auto resultValue = expression.eval(Value<Double>((double)1.8), Value<Double>((double)2.3));
-        ASSERT_EQ(resultValue, (bool)false);
-        ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
-    }
+    testEqualsExpression<double, double>(rand(), rand());
+    testEqualsExpression<double, double>(someMagicNumber, someMagicNumber);
+    testEqualsExpression<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
-} /// namespace NES::Runtime::Execution::Expressions
+TEST_F(EqualsExpressionTest, VariableSizedDataTest)
+{
+    auto createVariableSizedRandomData = [](const uint32_t size)
+    {
+        constexpr auto sizeOfLengthInBytes = 4;
+        std::vector<int8_t> content(sizeOfLengthInBytes + size);
+        for (uint32_t i = 0; i < size; i++)
+        {
+            content[sizeOfLengthInBytes + i] = rand() % 256;
+        }
+
+        std::memcpy(content.data(), &size, sizeOfLengthInBytes);
+        return content;
+    };
+
+    /// Creating a variable sized data of size 1KiB
+    auto variableSizedData = createVariableSizedRandomData(1024);
+    const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
+    const VarVal varSizedData1K = VariableSizedData(ptrToVariableSized);
+
+    /// Creating a variable sized data of size 0B
+    auto variableSizedDataEmpty = createVariableSizedRandomData(0);
+    const nautilus::val<int8_t*> ptrToVariableSizedEmpty(variableSizedDataEmpty.data());
+    const VarVal varSizedDataEmpty = VariableSizedData(ptrToVariableSizedEmpty);
+
+
+    /// As we test the equals in VariableSizedDataTest, we perform here a simple test to see if we have implemented the call to the underlying
+    /// operator==() correctly.
+    const auto result = expression.eval(varSizedData1K, varSizedData1K);
+    EXPECT_EQ(result.cast<nautilus::val<bool>>(), true);
+
+    const auto resultEmpty = expression.eval(varSizedData1K, varSizedDataEmpty);
+    EXPECT_EQ(resultEmpty.cast<nautilus::val<bool>>(), false);
+}
+
+
+}
