@@ -9,6 +9,7 @@
       }
     }
   },
+  "mounts": ["source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"],
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/ls-1801/av/av:latest": {},
