@@ -25,15 +25,17 @@ namespace NES
 class GRPCServer final : public WorkerRPCService::Service
 {
 public:
-    grpc::Status RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* response) override;
+    grpc::Status RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest*, RegisterQueryReply*) override;
 
-    grpc::Status UnregisterQuery(grpc::ServerContext*, const UnregisterQueryRequest* request, google::protobuf::Empty*) override;
+    grpc::Status UnregisterQuery(grpc::ServerContext*, const UnregisterQueryRequest*, google::protobuf::Empty*) override;
 
-    grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest* request, google::protobuf::Empty*) override;
+    grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, google::protobuf::Empty*) override;
 
-    grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest* request, google::protobuf::Empty*) override;
+    grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
 
-    grpc::Status QueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*) override;
+    grpc::Status RequestQuerySummary(grpc::ServerContext*, const QuerySummaryRequest*, QuerySummaryReply*) override;
+
+    grpc::Status RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* response) override;
 
     explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
 

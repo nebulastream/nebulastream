@@ -46,7 +46,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
             /// source already exists, add qep to source set if not there
             OriginId sourceOperatorId = source->getSourceId();
 
-            NES_DEBUG("QueryManager: Source  {}  not found. Creating new element with with qep ", sourceOperatorId);
+            NES_DEBUG("QueryManager: Source {}  not found. Creating new element with with qep ", sourceOperatorId);
             ///If source sharing is active and this is the first query for this source, init the map
             if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end())
             {
@@ -56,6 +56,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
             ///bookkeep which qep is now reading from this source
             sourceToQEPMapping[sourceOperatorId].push_back(qep);
         }
+        notifyQueryStatusChange(qep, Execution::QueryStatus::Registered);
     }
 
     NES_DEBUG("queryToStatisticsMap add for= {}", qep->getQueryId());
@@ -66,8 +67,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_ASSERT2_FMT(
         queryManagerStatus.load() == QueryManagerStatus::Running,
         "QueryManager::startQuery: cannot accept new query id " << qep->getQueryId());
-    NES_ASSERT(
-        qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created, "Invalid status for starting the QEP " << qep->getQueryId());
+    NES_ASSERT(qep->getStatus() == Execution::QueryStatus::Registered, "Invalid status for starting the QEP " << qep->getQueryId());
 
     /// 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start())
@@ -139,23 +139,24 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
-
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Running);
     return true;
 }
 
-bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
+bool QueryManager::unregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
 {
-    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query {}", qep->getQueryId());
+    NES_DEBUG("QueryManager::unregisterAndUndeployQuery: query {}", qep->getQueryId());
     std::unique_lock lock(queryMutex);
     auto qepStatus = qep->getStatus();
     NES_ASSERT2_FMT(
-        qepStatus == Execution::ExecutableQueryPlanStatus::Finished || qepStatus == Execution::ExecutableQueryPlanStatus::ErrorState
-            || qepStatus == Execution::ExecutableQueryPlanStatus::Stopped,
-        "Cannot deregisterQuery query " << qep->getQueryId() << " as it is not stopped/failed");
+        qepStatus == Execution::QueryStatus::Finished || qepStatus == Execution::QueryStatus::Failed
+            || qepStatus == Execution::QueryStatus::Stopped,
+        "Cannot unregister query " << qep->getQueryId() << " as it is not stopped/failed");
     for (auto const& source : qep->getSources())
     {
         sourceToQEPMapping.erase(source->getSourceId());
     }
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Unregistered);
     return true;
 }
 
@@ -165,12 +166,12 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_DEBUG("QueryManager::failQuery: query= {}", qep->getQueryId());
     switch (qep->getStatus())
     {
-        case Execution::ExecutableQueryPlanStatus::ErrorState:
-        case Execution::ExecutableQueryPlanStatus::Finished:
-        case Execution::ExecutableQueryPlanStatus::Stopped: {
+        case Execution::QueryStatus::Failed:
+        case Execution::QueryStatus::Finished:
+        case Execution::QueryStatus::Stopped: {
             return true;
         }
-        case Execution::ExecutableQueryPlanStatus::Invalid: {
+        case Execution::QueryStatus::Invalid: {
             NES_ASSERT2_FMT(false, "not supported yet " << qep->getQueryId());
         }
         default: {
@@ -187,7 +188,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::Fail)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be failed", qep->getQueryId());
                 ret = false;
@@ -209,6 +210,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
             true);
     }
     NES_DEBUG("QueryManager::failQuery: query {} was {}", qep->getQueryId(), (ret ? "successful" : " not successful"));
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Failed);
     return true;
 }
 
@@ -219,13 +221,13 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     bool ret = true;
     switch (qep->getStatus())
     {
-        case Execution::ExecutableQueryPlanStatus::ErrorState:
-        case Execution::ExecutableQueryPlanStatus::Finished:
-        case Execution::ExecutableQueryPlanStatus::Stopped: {
+        case Execution::QueryStatus::Failed:
+        case Execution::QueryStatus::Finished:
+        case Execution::QueryStatus::Stopped: {
             NES_DEBUG("QueryManager::stopQuery: query sub-plan id  {}  is already stopped", qep->getQueryId());
             return true;
         }
-        case Execution::ExecutableQueryPlanStatus::Invalid: {
+        case Execution::QueryStatus::Invalid: {
             NES_ASSERT2_FMT(false, "not supported yet " << qep->getQueryId());
             break;
         }
@@ -262,7 +264,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::Ok)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be stopped", qep->getQueryId());
                 ret = false;
@@ -283,6 +285,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
             true);
     }
     NES_DEBUG("QueryManager::stopQuery: query {} was {}", qep->getQueryId(), (ret ? "successful" : " not successful"));
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Stopped);
     return ret;
 }
 

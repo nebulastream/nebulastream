@@ -11,18 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <SingleNodeWorker.hpp>
-
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorker.hpp>
 
 namespace NES
 {
@@ -106,20 +104,30 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
         return INVALID_QUERY_ID;
     }
 }
+
 void SingleNodeWorker::startQuery(QueryId queryId)
 {
     nodeEngine->startQuery(queryId);
 }
+
 void SingleNodeWorker::stopQuery(QueryId queryId, Runtime::QueryTerminationType type)
 {
     nodeEngine->stopQuery(queryId, type);
 }
+
 void SingleNodeWorker::unregisterQuery(QueryId queryId)
 {
     nodeEngine->unregisterQuery(queryId);
 }
-QueryStatus SingleNodeWorker::queryStatus(QueryId) const
+
+std::optional<Runtime::QuerySummary> SingleNodeWorker::getQuerySummary(QueryId queryId) const
 {
-    return {};
+    return nodeEngine->getQueryLog()->getQuerySummary(queryId);
 }
+
+std::optional<Runtime::QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
+{
+    return nodeEngine->getQueryLog()->getLogForQuery(queryId);
+}
+
 } /// namespace NES

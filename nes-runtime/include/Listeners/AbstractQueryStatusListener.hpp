@@ -13,25 +13,21 @@
 */
 #pragma once
 
-#include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <ErrorHandling.hpp>
+
 namespace NES
 {
-
-class AbstractQueryStatusListener
+struct AbstractQueryStatusListener
 {
-public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
     virtual bool notifySourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(QueryId queryId, std::string errorMsg) = 0;
+    virtual bool notifyQueryFailure(QueryId queryId, Exception exception) = 0;
 
-    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
-
-    virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
+    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus Status) = 0;
 };
-using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 } /// namespace NES
