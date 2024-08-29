@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.174](https://github.com/nebulastream/nebulastream/tree/v0.6.174) (2024-08-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.173...v0.6.174)
+
+**Implemented enhancements:**
+
+- \[TASK\] Integrate placement amendment handler with add query request [\#5016](https://github.com/nebulastream/nebulastream/issues/5016)
+
 ## [v0.6.173](https://github.com/nebulastream/nebulastream/tree/v0.6.173) (2024-08-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.172...v0.6.173)
