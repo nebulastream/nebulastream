@@ -42,26 +42,6 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
     return *this;
 }
 
-class SimpleQueryStatusListener : public AbstractQueryStatusListener
-{
-public:
-    bool notifySourceTermination(QueryId, OriginId, Runtime::QueryTerminationType) override
-    {
-        NES_INFO("Source has terminated");
-        return true;
-    }
-
-    bool notifyQueryFailure(QueryId, std::string errorMsg) override
-    {
-        NES_FATAL_ERROR("Query Failure: {}", errorMsg);
-        return true;
-    }
-
-    bool notifyQueryStatusChange(QueryId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
-
-    bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
-};
-
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     try
@@ -80,13 +60,14 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                 "Error while building NodeEngine : no BufferManager provided", NES::collectAndPrintStacktrace());
         }
 
+        auto queryLog = std::make_shared<QueryLog>();
+
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager)
         {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
             std::vector<uint64_t> workerToCoreMappingVec = NES::Util::splitWithStringDelimiter<uint64_t>("", ",");
-            queryManager = std::make_shared<QueryManager>(
-                std::make_shared<SimpleQueryStatusListener>(), bufferManagers, WorkerId(0), numOfThreads, 100, workerToCoreMappingVec);
+            queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numOfThreads, 100, workerToCoreMappingVec);
         }
         if (!queryManager)
         {
@@ -95,7 +76,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                 "Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
         }
 
-        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager));
+        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager), std::move(queryLog));
     }
     catch (std::exception& err)
     {
