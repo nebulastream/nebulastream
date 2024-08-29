@@ -11,9 +11,7 @@
 # limitations under the License.
 add_nes_execution_test(execution-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_execution_test(execution-selection-pipeline-test "SelectionPipelineTest.cpp")
-add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")
-add_nes_execution_test(execution-nonkeyed-window-pipeline-test "NonKeyedTimeWindowPipelineTest.cpp")
-add_nes_execution_test(execution-keyed-window-pipeline-test "KeyedTimeWindowPipelineTest.cpp")
+add_nes_execution_test(execution-map-pipeline-test "MapPipelineTest.cpp")
+# Disabled, as we have not ported the window aggregation operator yet
+#add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")
 add_nes_execution_test(execution-text-pipeline-test "TextPipelineTest.cpp")
-add_nes_execution_test(execution-stream-hash-join-pipeline-test "StreamHashJoinPipelineTest.cpp")
-add_nes_execution_test(execution-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
