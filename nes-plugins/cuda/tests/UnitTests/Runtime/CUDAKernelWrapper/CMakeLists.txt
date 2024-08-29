@@ -11,5 +11,6 @@
 # limitations under the License.
 
 ### CUDA Kernel Wrapper Tests ###
+### TODO enable after fix 5067
 #add_nes_runtime_test(cuda-kernel-wrapper-unit-test-gpu "CUDAKernelWrapperUnitTest.cpp")
 #target_link_libraries(cuda-kernel-wrapper-unit-test-gpu nes-cuda)

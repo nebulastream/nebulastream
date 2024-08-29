@@ -19,6 +19,18 @@
 
 namespace NES::Runtime::Execution::Aggregation {
 
+/**
+ * Current implementation of the avg function returns a uint64 for all integer data types, because count is uint64.
+ * From traditional Database perspective that is wrong, it should be the input data type, e.g., see SQL Server
+ * https://learn.microsoft.com/en-us/sql/t-sql/functions/avg-transact-sql?view=sql-server-ver16
+ * Implementation of sum div count is accordingly, the problem is in the compiler that always casts to the largest integer type.
+ * One could argue uint64 is fine as it is still an integer.
+ * However, from the logical perspective, the average of two ints can be (and usually is) a float.
+ * One solution would be that if the user wants another data type the attribute has to be casted.
+ * This this is not possible either: .apply(Avg(Attribute("int_field"))->as(Attribute("output_field", BasicType::FLOAT32))
+ * and task of #4090.
+ */
+
 AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
                                                const PhysicalTypePtr& resultType,
                                                const Expressions::ExpressionPtr& inputExpression,

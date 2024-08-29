@@ -27,12 +27,18 @@
 #include <gtest/gtest.h>
 
 namespace NES::Runtime::Execution::Expressions {
+
+/**
+ * Test if AggregationFunction work for all data types and return results with the data type as expected, i.e.,
+ * it checks whether the input and output type are the same.
+ * Note: the AvgFunction is not tested in this class (see AvgAggregation.cpp for more details)
+ */
 class AggregationFunctionDataTypeTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::string> {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddExpressionTest test class.");
+        NES_INFO("Setup AggregationFunctionDataTypeTest class.");
     }
 
     static PhysicalTypePtr getDataType(std::string dataTypeString, DefaultPhysicalTypeFactory factory) {
@@ -251,36 +257,6 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
     sumAgg.combine(memref, memref);
     auto result = Record();
     sumAgg.lower(memref, result);
-
-    EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
-}
-
-/**
- * Tests the lift, combine, lower and reset functions of the Avg Aggregation
- */
-// TODO #3602 Disabled because this test checks that the output type is the same as the input type.
-// However, the average of two ints can be a float.
-TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg) {
-    physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
-    std::string aggFunctionType = "avg";
-    PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
-
-    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType, readFieldExpression, "result");
-
-    // create an aggregation value based on the aggregation function type and data type
-    auto avgValue = getAggregationValue(aggFunctionType, testParam);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) avgValue.get());
-
-    // create an incoming value using the selected data type
-    auto incomingValue = getIncomingValue(testParam);
-    auto inputRecord = Record({{"value", incomingValue}});
-    avgAgg.lift(memref, inputRecord);
-    avgAgg.combine(memref, memref);
-    auto result = Record();
-    avgAgg.lower(memref, result);
 
     EXPECT_EQ(result.read("result")->getType()->toString(), testParam);// Check if the type corresponds to the input type
 }
