@@ -19,7 +19,7 @@
 
 namespace NES
 {
-class AbstractQueryStatusListener;
+struct AbstractQueryStatusListener;
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 
 namespace Configurations

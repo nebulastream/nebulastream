@@ -29,10 +29,10 @@
 
 namespace NES::Runtime
 {
-void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus status)
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::QueryStatus status)
 {
     NES_ASSERT(qep, "Invalid query plan object");
-    if (status == Execution::ExecutableQueryPlanStatus::Finished)
+    if (status == Execution::QueryStatus::Finished)
     {
         for (const auto& source : qep->getSources())
         {
@@ -43,22 +43,19 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
             qep->getQueryId(),
             ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
-
-        queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), Execution::ExecutableQueryPlanStatus::Finished);
     }
-    else if (status == Execution::ExecutableQueryPlanStatus::ErrorState)
+    else if (status == Execution::QueryStatus::Failed)
     {
         addReconfigurationMessage(
             qep->getQueryId(),
             ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
-
-        queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), Execution::ExecutableQueryPlanStatus::ErrorState);
     }
+    queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), status);
 }
-void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, const std::string reason)
+void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, const Exception& exception)
 {
-    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSourceOriginId, reason);
+    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSourceOriginId, exception.what());
     std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
     {
         std::unique_lock lock(queryMutex);
@@ -70,13 +67,13 @@ void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, cons
     for (auto qepToFail : plansToFail)
     {
         auto future = asyncTaskExecutor->runAsync(
-            [this, reason, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr
+            [this, exception, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr
             {
                 NES_DEBUG("Going to fail query id={}", qepToFail->getQueryId());
                 if (failQuery(qepToFail))
                 {
                     NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
-                    queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), reason);
+                    queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
                     return qepToFail;
                 }
                 return nullptr;
@@ -115,7 +112,9 @@ void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipe
             if (failQuery(qepToFail))
             {
                 NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
-                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), errorMessage);
+                auto exception = UnknownException();
+                exception.what() += errorMessage;
+                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
                 return qepToFail;
             }
             return nullptr;

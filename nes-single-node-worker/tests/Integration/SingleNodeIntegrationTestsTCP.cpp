@@ -143,7 +143,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     /// Todo (#166) : stop query might be called to early, leading to no received data.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
+    IntegrationTestUtil::stopQuery(queryId, StopQueryRequest::HardStop, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();

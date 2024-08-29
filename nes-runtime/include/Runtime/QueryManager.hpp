@@ -17,9 +17,10 @@
 #include <mutex>
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryStatusListener.hpp>
+#include <Listeners/AbstractQueryStatusListener.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
@@ -80,28 +81,14 @@ public:
 
     ~QueryManager() NES_NOEXCEPT(false) override;
 
-    /**
-    * @brief register a query by extracting sources, windows and sink and add them to
-    * respective map
-    * @param QueryExecutionPlan to be deployed
-    */
+    /// Register a query by extracting sources, windows and sink and add them to respective map
     bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /**
-     * @brief deregister a query by extracting sources, windows and sink and remove them
-     * from respective map
-     * @param QueryExecutionPlan to be deployed
-     * @return bool indicating if register was successful
-    */
-    bool deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
+    /// Unregister a query by extracting sources, windows and sink and remove them from respective map
+    bool unregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /**
-     * @brief process task from task queue
-     * @param bool indicating if the thread pool is still running
-     * @param worker context
-     * @return an execution result
-     */
-    ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
+    /// Process task from task queue
+    ExecutionResult processNextTask(bool ThreadPoolRunning, WorkerContext& workerContext);
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -112,64 +99,23 @@ public:
      */
     void addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable);
 
-    /**
-     * This method posts a reconfig callback task
-     * @param task task to call
-     */
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    /**
-     * This methods triggers the reconfiguration
-     * @param context workercontext
-     */
     void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
 
-    /**
-     * @brief retrieve the execution status of a given query
-     * @param id : the query plan id
-     * @return status of the query sub plan
-     */
-    [[nodiscard]] Execution::ExecutableQueryPlanStatus getQepStatus(QueryId id);
+    [[nodiscard]] Execution::QueryStatus getQueryStatus(QueryId id) const;
 
-    /**
-     * @brief Provides the QEP object for an id
-     * @param id the plan to lookup
-     * @return the QEP or null, if not found
-     */
-    [[nodiscard]] Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QueryId id) const;
 
-    /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @return bool indicating success
-     */
     [[nodiscard]] bool startQuery(const Execution::ExecutableQueryPlanPtr& qep);
-
-    /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @param graceful stop the query gracefully or not
-     * @return bool indicating success
-     */
     [[nodiscard]] bool stopQuery(
         const Execution::ExecutableQueryPlanPtr& qep,
         Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
-
-    /**
-    * @brief method to fail a query
-    * @param qep of the query to fail
-    * @return bool indicating success
-    */
     bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /**
-     * @brief notify all waiting threads in getWork() to wake up and finish up
-     */
+    /// notify all waiting threads in getWork() to wake up and finish up
     void poisonWorkers();
 
-    /**
-     * @brief reset query manager. After this call, it wont be possible to use the query manager.
-     */
+    /// reset query manager. After this call, it wont be possible to use the query manager.
     void destroy();
 
     /**
@@ -214,35 +160,20 @@ private:
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param queryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(QueryId queryId, Memory::TupleBuffer&& buffer, bool blocking = false);
 
 public:
-    /**
-     * @brief This method informs the QueryManager that a task has failed
-     * @param pipeline the enclosed pipeline or sink
-     * @param message the reason of the feature
-     */
-    void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
-
-    /**
-     * @brief Returns the numberOfBuffersPerEpoch
-     * @return numberOfBuffersPerEpoch
-     */
-    [[nodiscard]] uint64_t getNumberOfBuffersPerEpoch() const;
+    /// Informs the query manager that a task has failed
+    void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& faultReason);
 
     /// This method informs the QueryManager that a source has failed
     void notifySourceFailure(const OriginId failedSourceOriginId, const Exception& exception);
 
-    /**
-     * @brief Informs the query manager about a status change in a sub query plan
-     * @param qep the sub query plan
-     * @param newStatus the new status of the query plan
-     */
-    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus newStatus);
+    /// Informs the query manager about a status change in a query plan
+    void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::QueryStatus newStatus);
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
@@ -263,56 +194,22 @@ public:
      */
     bool isThreadPoolRunning() const;
 
-    /**
-     * @brief get number of tasks in the queue
-     * @return task count
-     */
     [[nodiscard]] uint64_t getNumberOfTasksInWorkerQueues() const;
 
-    /**
-     * Return the current occupation of the task queue
-     * @return number of tasks in the queue
-     */
     [[nodiscard]] uint64_t getCurrentTaskSum() const;
 
-    /**
-     * Returns the current number of worker threads
-     * @return thread cnt
-     */
     [[nodiscard]] uint64_t getNumberOfWorkerThreads();
 
-    /**
-     * @brief Notifies that a source operator is done with its execution
-     * @param source the completed source
-     * @param terminationType the type of termination (e.g., failure, soft)
-     */
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
 
-    /**
-     * @brief Notifies that a pipeline is done with its execution
-     * @param queryId the plan the pipeline belongs to
-     * @param pipeline the terminated pipeline
-     * @param terminationType the type of termination (e.g., failure, soft)
-     */
     void notifyPipelineCompletion(QueryId queryId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
-    /**
-     * @brief Notifies that a sink operator is done with its execution
-     * @param queryId the plan the sink belongs to
-     * @param sink the terminated sink
-     * @param terminationType the type of termination (e.g., failure, soft)
-     */
     void notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType);
 
 private:
     friend class ThreadPool;
     friend class NodeEngine;
-    /**
-    * @brief method to start the thread pool
-    * @param nodeEngineId the id of the owning node engine
-    * @param numberOfBuffersPerWorker
-    * @return bool indicating success
-    */
+
     bool startThreadPool(uint64_t numberOfBuffersPerWorker);
 
     folly::MPMCQueue<Task> taskQueue;
@@ -327,46 +224,15 @@ protected:
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-protected:
-    /**
-     * @brief Method to update the statistics
-     * @param task
-     * @param queryId
-     * @param workerContext
-     */
     void updateStatistics(const Task& task, QueryId queryId, PipelineId pipelineId, WorkerContext& workerContext);
 
-    /**
-     * @brief Executes cleaning up logic on the task queue
-     * @return an ExecutionResult
-     */
+    /// Executes cleaning up logic on the task queue
     ExecutionResult terminateLoop(WorkerContext&);
 
-    /**
-     * @brief Triggers a soft end of stream for a source
-     * @param source the source for which to trigger the soft end of stream
-     * @return true if successful
-     */
     bool addSoftEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
-
-    /**
-     * @brief Triggers a hard end of stream for a source
-     * @param source the source for which to trigger the hard end of stream
-     * @return true if successful
-     */
     bool addHardEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
-
-    /**
-     * @brief Triggers a failure end of stream for a source
-     * @param source the source for which to trigger the failure end of stream
-     * @return true if successful
-     */
     bool addFailureEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 
-    /**
-     * @brief Returns the next free task id
-     * @return next task id
-     */
     uint64_t getNextTaskId();
 
 protected:
@@ -384,7 +250,7 @@ protected:
 
     std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
-    ///TODO:check if it would be better to put it in the thread context
+    /// TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
     libcuckoo::cuckoohash_map<QueryId, QueryStatisticsPtr> queryToStatisticsMap;
 
@@ -403,11 +269,11 @@ protected:
     std::unordered_map<OriginId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
     uint64_t numberOfBuffersPerEpoch;
+
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
 };
-
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 } /// namespace Runtime

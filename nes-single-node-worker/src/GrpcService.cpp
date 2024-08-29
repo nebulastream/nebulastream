@@ -69,7 +69,77 @@ grpc::Status NES::GRPCServer::StopQuery(grpc::ServerContext*, const StopQueryReq
         return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
     }
 }
-grpc::Status NES::GRPCServer::QueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*)
+
+grpc::Status NES::GRPCServer::RequestQuerySummary(grpc::ServerContext*, const QuerySummaryRequest* request, QuerySummaryReply* reply)
 {
-    return {grpc::StatusCode::UNIMPLEMENTED, "Query Status is not implemented"};
+    try
+    {
+        auto queryId = QueryId(request->queryid());
+        auto summary = delegate.getQuerySummary(queryId);
+        if (summary.has_value())
+        {
+            reply->set_status(QueryStatus(summary->currentStatus));
+            reply->set_numberofrestarts(summary->numberOfRestarts);
+            for (const auto& exception : summary->exceptions)
+            {
+                Error error;
+                error.set_message(exception.what());
+                error.set_stacktrace(exception.stack());
+                error.set_code(exception.code());
+                error.set_location(std::string(exception.where().file_name()) + ":" + std::to_string(exception.where().line()));
+                reply->add_error()->CopyFrom(error);
+            }
+        }
+        else
+        {
+            reply->set_status(QueryStatus::Invalid);
+            reply->set_numberofrestarts(0);
+            reply->clear_error();
+        }
+        return grpc::Status::OK;
+    }
+    catch (...)
+    {
+        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+    }
+}
+
+grpc::Status NES::GRPCServer::RequestQueryLog(grpc::ServerContext*, const QueryLogRequest* request, QueryLogReply* reply)
+{
+    try
+    {
+        auto queryId = QueryId(request->queryid());
+        auto log = delegate.getQueryLog(queryId);
+        if (log.has_value())
+        {
+            for (const auto& entry : *log)
+            {
+                QueryLogEntry logEntry;
+                logEntry.set_status((QueryStatus)entry.state);
+                logEntry.set_unixtimeinms(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
+                if (entry.exception.has_value())
+                {
+                    Error error;
+                    error.set_message(entry.exception.value().what());
+                    error.set_stacktrace(entry.exception.value().stack());
+                    error.set_code(entry.exception.value().code());
+                    error.set_location(
+                        std::string(entry.exception.value().where().file_name()) + ":"
+                        + std::to_string(entry.exception.value().where().line()));
+                    logEntry.mutable_error()->CopyFrom(error);
+                }
+                reply->add_entries()->CopyFrom(logEntry);
+            }
+        }
+        else
+        {
+            reply->clear_entries();
+        }
+        return grpc::Status::OK;
+    }
+    catch (...)
+    {
+        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+    }
 }

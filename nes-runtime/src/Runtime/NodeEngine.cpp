@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-
 #include <string>
 #include <utility>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -25,8 +24,11 @@
 namespace NES::Runtime
 {
 
-NodeEngine::NodeEngine(std::vector<Memory::BufferManagerPtr>&& bufferManagers, QueryManagerPtr&& queryManager)
-    : bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager))
+NodeEngine::NodeEngine(
+    std::vector<std::shared_ptr<Memory::BufferManager>>&& bufferManagers,
+    std::shared_ptr<QueryManager>&& queryManager,
+    std::shared_ptr<QueryLog>&& queryLog)
+    : bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryLog(std::move(queryLog))
 {
     this->queryManager->startThreadPool(100);
 }
