@@ -11,90 +11,53 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Backends/CompilationBackend.hpp>
-#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Runtime::Execution
 {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
-    const std::string& compilationBackend,
-    const CompilationOptions& options)
-    : NautilusExecutablePipelineStage(physicalOperatorPipeline)
-    , compilationBackend(compilationBackend)
-    , options(options)
-    , pipelineFunction(nullptr)
+    const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline, nautilus::engine::Options options)
+    : options(std::move(options)), pipelineFunction(nullptr), physicalOperatorPipeline(physicalOperatorPipeline)
 {
 }
 
 ExecutionResult CompiledExecutablePipelineStage::execute(
     Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
-    /// wait till pipeline is ready
-    executablePipeline.wait();
-
-    pipelineFunction((void*)&pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
+    // we call the compiled pipeline function with an input buffer and the execution context
+    pipelineFunction(
+        reinterpret_cast<int8_t*>(&workerContext),
+        reinterpret_cast<int8_t*>(&pipelineExecutionContext),
+        reinterpret_cast<int8_t*>(std::addressof(inputTupleBuffer)));
     return ExecutionResult::Ok;
 }
 
-std::shared_ptr<IR::IRGraph> CompiledExecutablePipelineStage::createIR(DumpHelper& dumpHelper, Timer<>& timer)
+auto CompiledExecutablePipelineStage::compilePipeline()
 {
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*)nullptr);
-    pipelineExecutionContextRef.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
-    auto workerContextRef = Value<MemRef>((int8_t*)nullptr);
-    workerContextRef.ref = Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
-    auto memRef = Nautilus::Value<MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
-    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, IR::Types::StampFactory::createAddressStamp());
-    auto recordBuffer = RecordBuffer(memRef);
-
-    auto rootOperator = physicalOperatorPipeline->getRootOperator();
-    /// generate trace
-    auto executionTrace = Nautilus::Tracing::traceFunction(
-        [&]()
-        {
-            auto traceContext = Tracing::TraceContext::get();
-            traceContext->addTraceArgument(pipelineExecutionContextRef.ref);
-            traceContext->addTraceArgument(workerContextRef.ref);
-            traceContext->addTraceArgument(recordBuffer.getReference().ref);
-            auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
-            rootOperator->open(ctx, recordBuffer);
-            rootOperator->close(ctx, recordBuffer);
-        });
-    dumpHelper.dump("O. AfterTracing.trace", executionTrace->toString());
-
-    Tracing::SSACreationPhase ssaCreationPhase;
-    executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
-    dumpHelper.dump("1. AfterTracing.trace", executionTrace->toString());
-    timer.snapshot("Trace Generation");
-
-    Tracing::TraceToIRConversionPhase irCreationPhase;
-    auto ir = irCreationPhase.apply(executionTrace);
-    timer.snapshot("IR Generation");
-    dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
-    return ir;
-}
-
-std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline()
-{
-    /// compile after setup
-    auto dumpHelper = DumpHelper(options.identifier, options.dumpToConsole, options.dumpToFile, options.dumpOutputPath);
-    Timer timer("CompilationBasedPipelineExecutionEngine " + options.identifier);
+    // compiler after setup
+    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getOptionOrDefault<std::string>("engine_backend", ""));
     timer.start();
-    auto compiler = Nautilus::Backends::CompilationBackendRegistry::instance().create(compilationBackend);
-    auto ir = createIR(dumpHelper, timer);
-    auto executable = compiler->compile(ir, options, dumpHelper);
+
+    std::function<void(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction
+        = [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef)
+    {
+        auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
+        RecordBuffer recordBuffer(recordBufferRef);
+        physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
+        physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
+    };
+
+    engine = std::make_shared<nautilus::engine::NautilusEngine>(options);
+    auto executable = engine->registerFunction(compiledFunction);
     timer.snapshot("Compilation");
     std::stringstream timerAsString;
     timerAsString << timer;
@@ -102,12 +65,39 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     return executable;
 }
 
+uint32_t CompiledExecutablePipelineStage::start(PipelineExecutionContext&)
+{
+    /// nop as we don't need this function in nautilus
+    return 0;
+}
+
+uint32_t CompiledExecutablePipelineStage::open(Execution::PipelineExecutionContext&, WorkerContext&)
+{
+    /// nop as we don't need this function in nautilus
+    return 0;
+}
+uint32_t CompiledExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&)
+{
+    /// nop as we don't need this function in nautilus
+    return 0;
+}
+
+uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
+{
+    auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
+    auto workerContextRef = nautilus::val<int8_t*>((int8_t*)nullptr);
+    auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    physicalOperatorPipeline->getRootOperator()->terminate(ctx);
+    return 0;
+}
+
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext)
 {
-    NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
-    /// TODO enable async compilation #3357
-    executablePipeline = std::async(std::launch::deferred, [this] { return this->compilePipeline(); }).share();
-    pipelineFunction = executablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
+    const auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
+    const auto workerContextRef = nautilus::val<int8_t*>(nullptr);
+    auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    physicalOperatorPipeline->getRootOperator()->setup(ctx);
+    pipelineFunction = this->compilePipeline();
     return 0;
 }
 
