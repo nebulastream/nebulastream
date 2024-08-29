@@ -147,10 +147,10 @@ endif ()
 
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_BENCHMARKS_FLAG_MODE=1")
-    message("Build with all flags on, only use for benchmarking")
+    message(STATUS "Build with all flags on, only use for benchmarking")
     if (NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
-        message("use latency measurement")
+        message(STATUS "Use latency measurement")
     endif ()
     #-fno-omit-frame-pointer
 endif ()
