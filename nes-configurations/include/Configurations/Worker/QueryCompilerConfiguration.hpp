@@ -55,9 +55,9 @@ public:
 
     EnumOption<QueryCompilation::NautilusBackend> nautilusBackend
         = {QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
-           QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND,
+           QueryCompilation::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
-           "[MLIR_COMPILER_BACKEND|INTERPRETER|BC_INTERPRETER_BACKEND|FLOUNDER_COMPILER_BACKEND]."};
+           "[COMPILER|INTERPRETER]."};
 
     BoolOption useCompilationCache
         = {ENABLE_USE_COMPILATION_CACHE_CONFIG, "false", "Enable use compilation caching", {std::make_shared<BooleanValidation>()}};
