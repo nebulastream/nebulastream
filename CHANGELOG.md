@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.175](https://github.com/nebulastream/nebulastream/tree/v0.6.175) (2024-08-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.174...v0.6.175)
+
+**Implemented enhancements:**
+
+- \[TASK\] AggregationFunctionDataTypeTest disabled tests [\#4547](https://github.com/nebulastream/nebulastream/issues/4547)
+
 ## [v0.6.174](https://github.com/nebulastream/nebulastream/tree/v0.6.174) (2024-08-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.173...v0.6.174)
