@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.173](https://github.com/nebulastream/nebulastream/tree/v0.6.173) (2024-08-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.172...v0.6.173)
+
+**Implemented enhancements:**
+
+- \[TASK\] Use new request executor for modifyingsource catalog [\#4763](https://github.com/nebulastream/nebulastream/issues/4763)
+
+### Bug Fixes 🐛
+
+- Enable Join tests [\#1668](https://github.com/nebulastream/nebulastream/issues/1668)
+
 ## [v0.6.172](https://github.com/nebulastream/nebulastream/tree/v0.6.172) (2024-08-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.171...v0.6.172)
