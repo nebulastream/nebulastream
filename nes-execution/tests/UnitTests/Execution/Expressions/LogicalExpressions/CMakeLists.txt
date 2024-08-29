@@ -10,10 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_execution_test(execution-greater-than-expression-test "GreaterThanExpressionTest.cpp")
-add_nes_execution_test(execution-greater-equals-expression-test "GreaterEqualsExpressionTest.cpp")
-add_nes_execution_test(execution-less-than-expression-test "LessThanExpressionTest.cpp")
-add_nes_execution_test(execution-less-equals-expression-test "LessEqualsExpressionTest.cpp")
-add_nes_execution_test(execution-equals-expression-test "EqualsExpressionTest.cpp")
-add_nes_execution_test(execution-negate-expression-test "NegateExpressionTest.cpp")
-add_nes_execution_test(execution-or-expression-test "OrExpressionTest.cpp")
+add_nes_execution_test(logical-expression-tests "EqualsExpressionTest.cpp" "NotEqualsExpressionTest.cpp")

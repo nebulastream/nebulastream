@@ -15,8 +15,3 @@ add_source_files(nes-execution
         WriteFieldExpression.cpp
         ConstantValueExpression.cpp
         )
-
-add_subdirectory(ArithmeticExpressions)
-add_subdirectory(LogicalExpressions)
-add_subdirectory(Functions)
-add_subdirectory(TextFunctions)
