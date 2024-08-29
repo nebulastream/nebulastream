@@ -12,17 +12,22 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Relational/Map.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/Relational/Selection.hpp>
+#include <../../../../../nes-nautilus/include/Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 
-void Map::execute(ExecutionContext& ctx, Record& record) const
+void Selection::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// assume that map expression performs a field write
-    mapExpression->execute(record);
-    /// call next operator
-    child->execute(ctx, record);
+    /// evaluate expression and call child operator if expression is valid
+    if (expression->execute(record))
+    {
+        if (child != nullptr)
+        {
+            child->execute(ctx, record);
+        }
+    }
 }
 
 } /// namespace NES::Runtime::Execution::Operators
