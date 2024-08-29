@@ -18,7 +18,6 @@
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>

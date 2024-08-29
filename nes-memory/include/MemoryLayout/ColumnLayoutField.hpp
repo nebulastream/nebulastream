@@ -15,8 +15,7 @@
 #pragma once
 
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 

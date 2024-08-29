@@ -204,10 +204,7 @@ public:
      */
     bool addReconfigurationMessage(QueryId queryId, const ReconfigurationMessage& reconfigurationMessage, bool blocking = false);
 
-    /**
-     * method to get the first buffer manger
-     * @return first buffer manager
-     */
+    /// Gives the first buffer manager
     [[nodiscard]] NES::Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
 private:
@@ -238,7 +235,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfBuffersPerEpoch() const;
 
     /// This method informs the QueryManager that a source has failed
-    void notifySourceFailure(OriginId failedSourceOriginId, std::string errorMessage);
+    void notifySourceFailure(const OriginId failedSourceOriginId, const Exception& exception);
 
     /**
      * @brief Informs the query manager about a status change in a sub query plan

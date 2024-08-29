@@ -18,8 +18,7 @@
 #include <future>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -32,14 +31,6 @@ class ReconfigurationMessage;
 }
 namespace NES::Runtime::Execution
 {
-
-enum class ExecutableQueryPlanResult : uint8_t
-{
-    /// query was completed successfully
-    Ok,
-    /// query failed
-    Fail
-};
 
 /**
  * @brief Represents an executable plan of an particular query.
@@ -85,22 +76,8 @@ public:
         Memory::BufferManagerPtr bufferManager);
     ~ExecutableQueryPlan() override;
 
-    /**
-     * @brief
-     * @param source
-     */
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
-
-    /**
-     * @brief
-     * @param pipeline
-     */
     void notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
-
-    /**
-     * @brief
-     * @param sink
-     */
     void notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType);
 
     /**
@@ -119,11 +96,17 @@ public:
      */
     bool stop();
 
+    enum class Result : uint8_t
+    {
+        Ok,
+        Fail
+    };
+
     /**
      * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
      * @return a shared future that eventually indicates how the qep terminated
      */
-    std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
+    std::shared_future<Result> getTerminationFuture();
 
     /**
      * @brief Fail the query plan and free all associated resources.
@@ -131,40 +114,12 @@ public:
      */
     bool fail();
 
-    [[nodiscard]] ExecutableQueryPlanStatus getStatus();
-
-    /**
-     * @brief Get data sources.
-     */
+    [[nodiscard]] QueryStatus getStatus() const;
     [[nodiscard]] const std::vector<Sources::SourceHandlePtr>& getSources() const;
-
-    /**
-     * @brief Get data sinks.
-     */
     [[nodiscard]] const std::vector<DataSinkPtr>& getSinks() const;
-
-    /**
-     * @brief Get pipelines.
-     * @return
-     */
     [[nodiscard]] const std::vector<ExecutablePipelinePtr>& getPipelines() const;
-
-    /**
-     * @brief Returns a reference to the query manager
-     * @return QueryManagerPtr
-     */
-    [[nodiscard]] QueryManagerPtr getQueryManager();
-
-    /**
-     * @brief Returns a reference to the buffer manager
-     * @return BufferManagerPtr
-     */
-    [[nodiscard]] Memory::BufferManagerPtr getBufferManager();
-
-    /**
-     * @brief Get the query id
-     * @return the query id
-     */
+    [[nodiscard]] QueryManagerPtr getQueryManager() const;
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() const;
     [[nodiscard]] QueryId getQueryId() const;
 
     /**
@@ -199,13 +154,13 @@ private:
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
     Memory::BufferManagerPtr bufferManager;
-    std::atomic<ExecutableQueryPlanStatus> qepStatus;
+    std::atomic<QueryStatus> queryStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfTerminationTokens;
     /// promise that indicates how a qep terminates
-    std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
+    std::promise<Result> qepTerminationStatusPromise;
     /// future that indicates how a qep terminates
-    std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
+    std::future<Result> qepTerminationStatusFuture;
 };
 
 } /// namespace NES::Runtime::Execution
