@@ -371,9 +371,6 @@ add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
-# Documentation
-add_subdirectory(cmake/docs)
-
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
 set(GPU_TEST_SUFFIX "__GPU$$")
