@@ -23,7 +23,7 @@ namespace NES::Compiler::ExecutablePath
 std::string UNIX_INSTALL_BIN_DIR = "/usr/local/bin";
 std::string DEFAULT_PUBLIC_INCLUDE_DIR_UNIX_INSTALL = "/usr/local/include/nebulastream";
 std::string DEFAULT_LIB_UNIX_INSTALL = "/usr/local/lib";
-std::string DEFAULT_CLANG_PATH_UNIX_INSTALL = "/usr/local/bin/nes-clang";
+std::string DEFAULT_CLANG_PATH_UNIX_INSTALL = "/usr/bin/c++";
 
 bool isInBuildDir()
 {
