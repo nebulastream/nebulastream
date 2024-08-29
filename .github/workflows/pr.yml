@@ -13,9 +13,6 @@ name: NES PR CI
 
 on:
   pull_request:
-    branches:
-      - "main"
-      - "feature/**"
     # The ready_for_review event is used when a draft pr is changed into a non-draft version. If we did
     # not use the ready_for_review the ci would not be triggered and appear to have passed.
     types: [ ready_for_review, synchronize, opened, reopened ]
