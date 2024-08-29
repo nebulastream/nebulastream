@@ -44,7 +44,7 @@ struct QueryCompilerOptions
     uint64_t numSourceLocalBuffers = 64;
     CompilationStrategy compilationStrategy = CompilationStrategy::OPTIMIZE;
     FilterProcessingStrategy filterProcessingStrategy = FilterProcessingStrategy::BRANCHED;
-    NautilusBackend nautilusBackend = NautilusBackend::MLIR_COMPILER_BACKEND;
+    NautilusBackend nautilusBackend = NautilusBackend::COMPILER;
     DumpMode dumpMode = DumpMode::FILE_AND_CONSOLE;
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
