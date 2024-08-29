@@ -37,7 +37,6 @@ jobs:
     # If we find a development image matching the hash we skip building new docker images.
     # This job also determines the development image tag used for building and testing
     name: Detect changes to dependencies
-    if: ${{ !github.event.act }}
     outputs:
       build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
       tag: ${{ steps.hash-and-lookup.outputs.tag }}
@@ -45,11 +44,6 @@ jobs:
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USER_NAME }}
-          password: ${{ secrets.DOCKER_SECRET }}
       - name: Calculate and lookup hash
         id: hash-and-lookup
         run: |
