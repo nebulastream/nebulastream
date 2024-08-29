@@ -14,9 +14,8 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -33,8 +32,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
@@ -196,10 +193,6 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
     {
         lowerUnionOperator(operatorNode);
     }
-    else if (NES::Util::instanceOf<LogicalJoinOperator>(operatorNode))
-    {
-        lowerJoinOperator(operatorNode);
-    }
 }
 
 void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPtr& operatorNode)
@@ -263,132 +256,6 @@ OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
         return demultiplexOperator;
     }
     return children[0];
-}
-
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode)
-{
-    lowerNautilusJoin(operatorNode);
-}
-
-void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr& operatorNode)
-{
-    using namespace Runtime::Execution::Operators;
-
-    auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
-    const auto& joinDefinition = joinOperator->getJoinDefinition();
-
-    /// returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
-    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
-
-    const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());
-    const auto& windowSize = windowType->getSize().getTime();
-    const auto& windowSlide = windowType->getSlide().getTime();
-    if (!(Util::instanceOf<Windowing::TumblingWindow>(windowType) || Util::instanceOf<Windowing::SlidingWindow>(windowType)))
-    {
-        throw UnknownWindowType();
-    }
-
-    const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
-    const auto leftInputOperator
-        = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
-    const auto rightInputOperator
-        = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = options->joinStrategy;
-
-    const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
-    const StreamJoinConfigs streamJoinConfig(
-        equiJoinKeyNames.first, equiJoinKeyNames.second, windowSize, windowSlide, timeStampFieldLeft, timeStampFieldRight, joinStrategy);
-
-    StreamJoinOperatorHandlerPtr joinOperatorHandler;
-    switch (joinStrategy)
-    {
-        case StreamJoinStrategy::HASH_JOIN_LOCAL:
-        case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-        case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-        case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-            joinOperatorHandler = lowerStreamingHashJoin(streamJoinOperators, streamJoinConfig);
-            break;
-        case StreamJoinStrategy::NESTED_LOOP_JOIN:
-            joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
-            break;
-    }
-
-    auto createBuildOperator = [&](const SchemaPtr& inputSchema,
-                                   JoinBuildSideType buildSideType,
-                                   const TimestampField& timeStampField,
-                                   const std::string& joinFieldName)
-    {
-        return PhysicalOperators::PhysicalStreamJoinBuildOperator::create(
-            inputSchema,
-            joinOperator->getOutputSchema(),
-            joinOperatorHandler,
-            buildSideType,
-            timeStampField,
-            joinFieldName,
-            options->joinStrategy);
-    };
-
-    const auto leftJoinBuildOperator = createBuildOperator(
-        joinOperator->getLeftInputSchema(),
-        JoinBuildSideType::Left,
-        streamJoinConfig.timeStampFieldLeft,
-        streamJoinConfig.joinFieldNameLeft);
-    const auto rightJoinBuildOperator = createBuildOperator(
-        joinOperator->getRightInputSchema(),
-        JoinBuildSideType::Right,
-        streamJoinConfig.timeStampFieldRight,
-        streamJoinConfig.joinFieldNameRight);
-    const auto joinProbeOperator = PhysicalOperators::PhysicalStreamJoinProbeOperator::create(
-        joinOperator->getLeftInputSchema(),
-        joinOperator->getRightInputSchema(),
-        joinOperator->getOutputSchema(),
-        joinOperator->getJoinExpression(),
-        joinOperator->getWindowStartFieldName(),
-        joinOperator->getWindowEndFieldName(),
-        joinOperatorHandler,
-        options->joinStrategy);
-
-    streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
-    streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
-    streamJoinOperators.operatorNode->replace(joinProbeOperator);
-}
-
-Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig)
-{
-    using namespace Runtime::Execution;
-    const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
-
-    Operators::NLJOperatorHandlerPtr joinOperatorHandler;
-    return Operators::NLJOperatorHandlerSlicing::create(
-        joinOperator->getAllInputOriginIds(),
-        joinOperator->getOutputOriginIds()[0],
-        streamJoinConfig.windowSize,
-        streamJoinConfig.windowSlide,
-        joinOperator->getLeftInputSchema(),
-        joinOperator->getRightInputSchema(),
-        Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
-        Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
-}
-
-Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(
-    const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig)
-{
-    using namespace Runtime::Execution;
-    const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
-    Operators::HJOperatorHandlerPtr joinOperatorHandler;
-    return Operators::HJOperatorHandlerSlicing::create(
-        joinOperator->getAllInputOriginIds(),
-        joinOperator->getOutputOriginIds()[0],
-        streamJoinConfig.windowSize,
-        streamJoinConfig.windowSlide,
-        joinOperator->getLeftInputSchema(),
-        joinOperator->getRightInputSchema(),
-        streamJoinConfig.joinStrategy,
-        options->hashJoinOptions.totalSizeForDataStructures,
-        options->hashJoinOptions.preAllocPageCnt,
-        options->hashJoinOptions.pageSize,
-        options->hashJoinOptions.numberOfPartitions);
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(
