@@ -13,7 +13,7 @@
 */
 #pragma once
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/options.hpp>
 namespace NES::Runtime::Execution
 {
 
@@ -24,6 +24,6 @@ class CompilationPipelineProvider : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage>
-    create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions& options) override;
+    create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) override;
 };
 } /// namespace NES::Runtime::Execution

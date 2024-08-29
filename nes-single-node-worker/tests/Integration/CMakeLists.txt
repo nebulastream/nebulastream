@@ -18,7 +18,6 @@ target_link_libraries(
         nes-grpc
         nes-runtime
         nes-execution
-        nes-execution-test-util
         nes-single-node-worker-test-util
 )
 
@@ -29,7 +28,6 @@ target_link_libraries(
         nes-grpc
         nes-runtime
         nes-execution
-        nes-execution-test-util
         Boost::asio
         nes-single-node-worker-test-util
 )
@@ -41,7 +39,6 @@ target_link_libraries(
         nes-grpc
         nes-runtime
         nes-execution
-        nes-execution-test-util
         Boost::asio
         nes-single-node-worker-test-util
 )
@@ -53,7 +50,6 @@ target_link_libraries(
         nes-grpc
         nes-runtime
         nes-execution
-        nes-execution-test-util
         Boost::asio
         nes-single-node-worker-test-util
 )

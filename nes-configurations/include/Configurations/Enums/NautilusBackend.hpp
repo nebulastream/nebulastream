@@ -22,7 +22,7 @@ enum class NautilusBackend : uint8_t
 {
     /// Uses the interpretation based nautilus backend.
     INTERPRETER,
-    /// Uses the mlir based nautilus backend.
-    MLIR_COMPILER_BACKEND,
+    /// Uses the compilation based nautilus backend.
+    COMPILER
 };
 }
