@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
 namespace NES::Nautilus::Interface
@@ -40,13 +40,13 @@ public:
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, Value<>& value) override;
+    HashValue calculate(HashValue& hash, VarVal& value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(Value<>& value);
+    HashValue calculate(VarVal& value);
 };
 } /// namespace NES::Nautilus::Interface

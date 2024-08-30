@@ -46,6 +46,28 @@ public:
         return lh.v <=> rh.v;
     }
 
+    [[nodiscard]] friend constexpr NESStrongType operator+(const NESStrongType& lh, const NESStrongType& rh) noexcept
+    {
+        return NESStrongType(lh.v + rh.v);
+    }
+
+    template <typename U>
+    [[nodiscard]] friend constexpr NESStrongType operator+(const NESStrongType& lh, const U& rh) noexcept
+    {
+        return NESStrongType(lh.v + rh);
+    }
+
+    [[nodiscard]] friend constexpr NESStrongType operator-(const NESStrongType& lh, const NESStrongType& rh) noexcept
+    {
+        return NESStrongType(lh.v - rh.v);
+    }
+
+    template <typename U>
+    [[nodiscard]] friend constexpr NESStrongType operator-(const NESStrongType& lh, const U& rh) noexcept
+    {
+        return NESStrongType(lh.v - rh);
+    }
+
     [[nodiscard]] friend constexpr bool operator==(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v == rh.v; }
 
     [[nodiscard]] friend constexpr bool operator!=(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v != rh.v; }
@@ -84,7 +106,7 @@ static constexpr Ident INVALID = Ident(Ident::INVALID);
 template <NESIdentifier Ident>
 static constexpr Ident INITIAL = Ident(Ident::INITIAL);
 
-} /// namespace NES
+}
 
 namespace std
 {

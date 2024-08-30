@@ -19,6 +19,7 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
 namespace NES::Runtime::Execution
 {

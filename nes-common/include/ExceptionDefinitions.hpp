@@ -48,6 +48,7 @@ EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
+EXCEPTION(UnsupportedOperation, 2117, "tried to execute an unsupported operation")
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
 EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")
