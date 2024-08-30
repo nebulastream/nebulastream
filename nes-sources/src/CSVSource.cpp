@@ -45,11 +45,11 @@ void CSVSource::open()
     {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
-    const auto realCSVPath = realpath(filePath.c_str(), nullptr); /// realpath: canonical absolute name of file
-    const auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
-    if (path == nullptr)
+    const auto realCSVPath = realpath(filePath.c_str(), nullptr);
+    const auto path = std::unique_ptr<const char, Deleter>(realCSVPath);
+    if (realCSVPath == nullptr)
     {
-        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
+        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str() << " - " << std::strerror(errno));
     }
 
     input.open(path.get());

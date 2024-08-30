@@ -294,7 +294,6 @@ void ExecutableQueryPlan::destroy()
     {
         NES_ASSERT(!pipeline->isRunning(), "Pipeline " << pipeline->getPipelineId() << " is still running");
     }
-    sources.clear(); /// ~DataSource() asserts that the DataSource is not 'running' anymore.
     pipelines.clear();
     sinks.clear();
     bufferManager.reset();
