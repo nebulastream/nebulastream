@@ -11,23 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 namespace NES::Nautilus::Interface
 {
-HashFunction::HashValue HashFunction::calculate(VarVal value)
-{
-    auto hash = init();
-    return calculate(hash, value);
-};
-
-HashFunction::HashValue HashFunction::calculate(std::vector<VarVal>& values)
-{
-    auto hash = init();
-    for (auto& value : values)
-    {
-        hash = calculate(hash, value);
-    }
-    return hash;
 }
-} /// namespace NES::Nautilus::Interface
