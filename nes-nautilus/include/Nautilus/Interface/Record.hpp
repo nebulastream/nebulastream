@@ -33,14 +33,12 @@ public:
     explicit Record();
     explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
     ~Record() = default;
-    Value<>& read(RecordFieldIdentifier fieldName);
-    void write(RecordFieldIdentifier fieldName, const Value<>& value);
-    uint64_t numberOfFields();
-    bool hasField(RecordFieldIdentifier fieldName);
-    std::vector<RecordFieldIdentifier> getAllFields();
-    std::string toString();
-    bool operator==(const Record& rhs) const;
-    bool operator!=(const Record& rhs) const;
+
+    const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
+    void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType);
+    nautilus::val<uint64_t> getNumberOfFields() const;
+
+    friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
 
 private:
     std::map<RecordFieldIdentifier, Value<>> fields;

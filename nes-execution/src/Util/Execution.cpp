@@ -13,12 +13,16 @@
 */
 
 #include <tuple>
+
 #include <API/AttributeField.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
+#include <nautilus/std/string.h>
+#include <magic_enum.hpp>
+
 
 namespace NES::QueryCompilation::Util
 {
@@ -44,4 +48,34 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
     }
 }
+
+void logProxy(const char* message, const LogLevel logLevel)
+{
+    /// Calling the logger with the message and the log level
+    switch (logLevel)
+    {
+        case LogLevel::LOG_NONE:
+            break;
+        case LogLevel::LOG_FATAL_ERROR:
+            NES_FATAL_ERROR("{}", message);
+            break;
+        case LogLevel::LOG_ERROR:
+            NES_ERROR("{}", message);
+            break;
+        case LogLevel::LOG_WARNING:
+            NES_WARNING("{}", message);
+            break;
+        case LogLevel::LOG_INFO:
+            NES_INFO("{}", message);
+            break;
+        case LogLevel::LOG_DEBUG:
+            NES_DEBUG("{}", message);
+            break;
+        case LogLevel::LOG_TRACE:
+            NES_TRACE("{}", message);
+            break;
+    }
+
+}
+
 } /// namespace NES::QueryCompilation::Util
