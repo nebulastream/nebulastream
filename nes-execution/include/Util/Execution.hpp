@@ -24,6 +24,17 @@
 namespace NES::QueryCompilation::Util
 {
 
+void logProxy(const char* message, const LogLevel logLevel);
+
+/// Allows to use our general logging calls from nautilus-land
+#define NES_LOG_EXEC(TEXT, LOG_LEVEL) \
+    { \
+        nautilus::stringstream ss; \
+        ss << TEXT; \
+        nautilus::val<LogLevel> logLevel = (LOG_LEVEL); \
+        nautilus::invoke(QueryCompilation::Util::logProxy, ss.str().c_str(), logLevel); \
+    }
+
 /**
  * @brief Get the windowing parameter (size, slide, and time function) for the given window type
  * @param windowType
@@ -32,4 +43,4 @@ namespace NES::QueryCompilation::Util
 std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
-} /// namespace NES::QueryCompilation::Util
+}

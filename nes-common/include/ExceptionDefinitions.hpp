@@ -51,6 +51,7 @@ EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
 EXCEPTION(UnknownInvocationType, 2117, "unknown invocation type")
 EXCEPTION(UnknownExecutablePipelineProviderType, 2118, "unknown executable pipeline provider type")
 EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
+EXCEPTION(UnsupportedOperation, 2120, "tried to execute an unsupported operation")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

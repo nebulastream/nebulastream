@@ -11,23 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Nautilus::Interface
-{
-HashFunction::HashValue HashFunction::calculate(VarVal value)
-{
-    auto hash = init();
-    return calculate(hash, value);
-};
+#pragma once
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
-HashFunction::HashValue HashFunction::calculate(std::vector<VarVal>& values)
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
+
+namespace NES::Nautilus::Util
 {
-    auto hash = init();
-    for (auto& value : values)
-    {
-        hash = calculate(hash, value);
-    }
-    return hash;
+
+template <typename T>
+nautilus::val<T> readValueFromMemRef(nautilus::val<int8_t*> memRef)
+{
+    return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
 }
-} /// namespace NES::Nautilus::Interface
+
+}
