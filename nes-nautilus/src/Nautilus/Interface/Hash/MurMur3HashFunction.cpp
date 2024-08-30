@@ -11,31 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <nautilus/function.hpp>
 
 namespace NES::Nautilus::Interface
 {
-
 HashFunction::HashValue MurMur3HashFunction::init()
 {
     return SEED;
 }
 
-/**
- * @brief Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
- * https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
- * @param x
- * @return
- */
-uint64_t hashInt(uint64_t x)
+/// Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
+/// https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
+VarVal hashVarVal(const VarVal& input)
 {
-    x ^= x >> 33U;
-    x *= UINT64_C(0xff51afd7ed558ccd);
-    x ^= x >> 33U;
-    x *= UINT64_C(0xc4ceb9fe1a85ec53);
-    x ^= x >> 33U;
+    /// We are not using the input variable here but rather are creating a new one, as otherwise, the underlying value of the input could change.
+    auto x = input ^ (input >> VarVal(33));
+    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
+    x = x ^ (x >> VarVal(33));
+    x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xc4ceb9fe1a85ec53)));
+    x = x ^ (x >> VarVal(33));
     return x;
 }
 
@@ -72,26 +67,26 @@ uint64_t hashBytes(void* data, uint64_t length)
     {
         case 7:
             h ^= static_cast<uint64_t>(data8[6]) << 48U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 6:
             h ^= static_cast<uint64_t>(data8[5]) << 40U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 5:
             h ^= static_cast<uint64_t>(data8[4]) << 32U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 4:
             h ^= static_cast<uint64_t>(data8[3]) << 24U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 3:
             h ^= static_cast<uint64_t>(data8[2]) << 16U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 2:
             h ^= static_cast<uint64_t>(data8[1]) << 8U;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         case 1:
             h ^= static_cast<uint64_t>(data8[0]);
             h *= m;
-            /// FALLTHROUGH
+        /// FALLTHROUGH
         default:
             break;
     }
@@ -104,83 +99,22 @@ uint64_t hashBytes(void* data, uint64_t length)
     return h;
 }
 
-template <typename T>
-uint64_t hashValue(uint64_t seed, T value)
+HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, VarVal& value)
 {
-    /// Combine two hashes by XORing them
-    /// As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashInt(value);
+    return value
+        .customVisit(
+            [&]<typename T>(const T& val) -> VarVal
+            {
+                if constexpr (std::is_same_v<T, VariableSizedData>)
+                {
+                    const auto& varSizedContent = val;
+                    return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
+                }
+                else
+                {
+                    return VarVal(hash) ^ hashVarVal(val);
+                }
+            })
+        .cast<HashValue>();
 }
-
-uint64_t hashTextValue(uint64_t seed, TextValue* value)
-{
-    /// Combine two hashes by XORing them
-    /// As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
-    return seed ^ hashBytes((void*)value->c_str(), value->length());
-}
-
-HashFunction::HashValue MurMur3HashFunction::calculate(Value<>& value)
-{
-    auto hash = init();
-    return calculate(hash, value);
-}
-
-HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>& value)
-{
-    if (value->isType<Int8>())
-    {
-        return FunctionCall("hashValueI8", hashValue<typename Int8::RawType>, hash, value.as<Int8>());
-    }
-    else if (value->isType<Int16>())
-    {
-        return FunctionCall("hashValueI16", hashValue<typename Int16::RawType>, hash, value.as<Int16>());
-    }
-    else if (value->isType<Int32>())
-    {
-        return FunctionCall("hashValueI32", hashValue<typename Int32::RawType>, hash, value.as<Int32>());
-    }
-    else if (value->isType<Int64>())
-    {
-        return FunctionCall("hashValueI64", hashValue<typename Int64::RawType>, hash, value.as<Int64>());
-    }
-    else if (value->isType<UInt8>())
-    {
-        return FunctionCall("hashValueUI8", hashValue<typename UInt8::RawType>, hash, value.as<UInt8>());
-    }
-    else if (value->isType<UInt16>())
-    {
-        return FunctionCall("hashValueUI16", hashValue<typename UInt16::RawType>, hash, value.as<UInt16>());
-    }
-    else if (value->isType<UInt32>())
-    {
-        return FunctionCall("hashValueUI32", hashValue<typename UInt32::RawType>, hash, value.as<UInt32>());
-    }
-    else if (value->isType<UInt64>())
-    {
-        return FunctionCall("hashValueUI64", hashValue<typename UInt64::RawType>, hash, value.as<UInt64>());
-    }
-    else if (value->isType<Float>())
-    {
-        return FunctionCall("hashValueF", hashValue<typename Float::RawType>, hash, value.as<Float>());
-    }
-    else if (value->isType<Double>())
-    {
-        return FunctionCall("hashValueD", hashValue<typename Double::RawType>, hash, value.as<Double>());
-    }
-    else if (value->isType<Text>())
-    {
-        return FunctionCall("hashTextValue", hashTextValue, hash, value.as<Text>()->getReference());
-    }
-    else if (value->isType<List>())
-    {
-        auto list = value.as<List>();
-        for (auto listValue : list.getValue())
-        {
-            calculate(hash, listValue);
-        }
-        return hash;
-    }
-    NES_NOT_IMPLEMENTED();
-}
-
 } /// namespace NES::Nautilus::Interface
