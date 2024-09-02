@@ -16,7 +16,6 @@
 
 #include <fstream>
 #include <string>
-#include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
@@ -31,10 +30,14 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public Source
 {
 public:
-    explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
+    static inline const std::string PLUGIN_NAME = "CSV";
+    ///-Todo: improve
+    CSVSource(const Schema& schema, CSVSourceTypePtr&& csvSourceType);
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::TupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+        std::shared_ptr<Schema> schema) override;
 
     void open() override;
     void close() override;
@@ -57,7 +60,6 @@ private:
     CSVParserPtr inputParser;
 
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
-    SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };

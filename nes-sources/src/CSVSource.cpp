@@ -18,6 +18,8 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,16 +29,23 @@
 namespace NES::Sources
 {
 
-CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
-    : fileEnded(false)
-    , filePath(csvSourceType->getFilePath()->getValue())
-    , tupleSize(schema->getSchemaSizeInBytes())
-    , numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue())
-    , delimiter(csvSourceType->getDelimiter()->getValue())
-    , skipHeader(csvSourceType->getSkipHeader()->getValue())
-    , numberOfBuffersToProduce(csvSourceType->getNumberOfBuffersToProduce()->getValue())
-    , schema(schema)
+/// Todo #72: remove schema from CSVSource (only required by parser).
+CSVSource::CSVSource(const Schema& schema, CSVSourceTypePtr&& csvSourceType) : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
 {
+    this->filePath = csvSourceType->getFilePath()->getValue();
+    this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
+    this->delimiter = csvSourceType->getDelimiter()->getValue();
+    this->skipHeader = csvSourceType->getSkipHeader()->getValue();
+    this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr& field : schema.fields)
+    {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
+
+    this->inputParser = std::make_shared<CSVParser>(schema.getSize(), physicalTypes, delimiter);
 }
 
 void CSVSource::open()
@@ -70,15 +79,6 @@ void CSVSource::open()
     }
 
     NES_DEBUG("CSVSource: tupleSize={} numBuff={}", this->tupleSize, this->numberOfTuplesToProducePerBuffer);
-
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : schema->fields)
-    {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-    }
-
-    this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
 void CSVSource::close()
@@ -87,7 +87,9 @@ void CSVSource::close()
 }
 
 bool CSVSource::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+    NES::Memory::TupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+    std::shared_ptr<Schema> schema)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
@@ -149,7 +151,7 @@ bool CSVSource::fillTupleBuffer(
 
 std::string CSVSource::toString() const
 {
-    return fmt::format("CSV_SOURCE(SCHEMA({}), FILE={} numBuff={})", schema->toString(), filePath, this->numberOfTuplesToProducePerBuffer);
+    return fmt::format("FILE={} numBuff={})", filePath, this->numberOfTuplesToProducePerBuffer);
 }
 
 SourceType CSVSource::getType() const
