@@ -46,9 +46,9 @@ SourceHandlePtr SourceProvider::lower(
     if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
     {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
-        const auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
+        auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
 
-        auto csvSource = std::make_unique<CSVSource>(schema, csvSourceType);
+        auto csvSource = std::make_unique<CSVSource>(schema, std::move(csvSourceType));
         return std::make_shared<SourceHandle>(
             std::move(originId),
             std::move(schema),
@@ -60,8 +60,8 @@ SourceHandlePtr SourceProvider::lower(
     if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
     {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
-        const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
-        auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
+        auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
+        auto tcpSource = std::make_unique<TCPSource>(schema, std::move(tcpSourceType));
         return std::make_shared<SourceHandle>(
             std::move(originId),
             std::move(schema),

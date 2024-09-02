@@ -12,9 +12,10 @@
     limitations under the License.
 */
 #include <sstream>
-#include <utility>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

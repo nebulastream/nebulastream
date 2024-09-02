@@ -42,10 +42,14 @@ class TCPSource : public Source
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
 
 public:
-    explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
+    static inline const std::string PLUGIN_NAME = "TCP";
+    ///-Todo: improve
+    TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType);
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::TupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+        std::shared_ptr<Schema> schema) override;
 
     std::string toString() const override;
 
@@ -57,7 +61,10 @@ public:
     void close() override;
 
 private:
-    bool fillBuffer(NES::Memory::TupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>&);
+    bool fillBuffer(
+        NES::Memory::TupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+        std::shared_ptr<Schema> schema);
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize

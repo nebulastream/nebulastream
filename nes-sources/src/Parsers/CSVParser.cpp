@@ -37,7 +37,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
     NES::Memory::TupleBuffer& tupleBuffer,
-    const SchemaPtr& schema,
+    std::shared_ptr<Schema> schema,
     const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);

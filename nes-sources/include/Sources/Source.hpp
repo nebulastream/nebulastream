@@ -35,7 +35,8 @@ public:
     virtual bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer,
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+        std::shared_ptr<Schema> schema)
         = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
