@@ -2,18 +2,7 @@
 
 set -eo pipefail
 
-# cd to dir the script is located in (i.e. <nes_root>/scripts)
-SOURCE="${BASH_SOURCE[0]}"
-if [ -h "$SOURCE" ]
-then
-    # c.f. https://stackoverflow.com/a/246128/65678 for handling symlinks
-    echo "this script cannot be called via a symlink (yet)"
-    exit 1
-fi
-cd "$(dirname "$SOURCE")"
-
-# cd to <nes_root>, so that script can be invoked from anywhere
-cd ..
+cd "$(git rev-parse --show-toplevel)"
 
 
 if ! [ -x "$(command -v clang-format-18)" ]
@@ -32,13 +21,32 @@ fi
 
 if [ "${1-}" = "-i" ]
 then
-    ARGS=(-i)
+    # clang-format
+    git ls-files -- '*.cpp' '*.hpp' \
+      | xargs --max-args=10 --max-procs="$(nproc)" clang-format-18 -i
+
+    # newline at eof
+    #
+    # list files in repo
+    #   remove filenames ending with .bin or .png
+    #   if len(last char) > 0 (i.e.: not '\n'): append newline
+    git ls-files \
+      | grep --invert-match -e "\.bin$" -e "\.png$" \
+      | xargs --max-procs="$(nproc)" -I {} sh -c '[ -n "$(tail -c 1 {})" ] && echo "" >> {}'
+
 else
-    ARGS=(--dry-run -Werror)
+    # clang-format
+    git ls-files -- '*.cpp' '*.hpp' \
+      | xargs --max-args=10 --max-procs="$(nproc)" clang-format-18 --dry-run -Werror
+
+    # newline at eof
+    #
+    # list files in repo
+    #   remove filenames ending with .bin or .png
+    #   take last char of the files, count lines and chars,
+    #   fail if not equal (i.e. not every char is a newline)
+    git ls-files \
+      | grep --invert-match -e "\.bin$" -e "\.png$" \
+      | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
+      | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }'
 fi
-
-
-# list all cpp, hpp files known to git
-#   run `nproc` clang-format processes in parallel on 10 files each
-git ls-files -- '*.cpp' '*.hpp' \
-  | xargs --max-args=10 --max-procs="$(nproc)" clang-format-18 "${ARGS[@]}"
