@@ -29,7 +29,7 @@ public:
         std::string_view csvInput,
         uint64_t tupleCount,
         NES::Memory::TupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
+        std::shared_ptr<Schema> schema,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
 private:

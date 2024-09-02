@@ -33,28 +33,27 @@
 namespace NES::Sources
 {
 
-TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
-    : tupleSize(schema->getSchemaSizeInBytes())
-    , circularBuffer(getpagesize() * 2)
-    , schema(schema)
-    , inputFormat(tcpSourceType->getInputFormat()->getValue())
-    , socketHost(tcpSourceType->getSocketHost()->getValue())
-    , socketPort(std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue())))
-    , socketType(static_cast<int>(tcpSourceType->getSocketType()->getValue()))
-    , socketDomain(static_cast<int>(tcpSourceType->getSocketDomain()->getValue()))
-    , decideMessageSize(tcpSourceType->getDecideMessageSize()->getValue())
-    , tupleSeparator(tcpSourceType->getTupleSeparator()->getValue())
-    , socketBufferSize(static_cast<size_t>(tcpSourceType->getSocketBufferSize()->getValue()))
-    , bytesUsedForSocketBufferSizeTransfer(static_cast<size_t>(tcpSourceType->getBytesUsedForSocketBufferSizeTransfer()->getValue()))
-    , flushIntervalInMs(tcpSourceType->getFlushIntervalMS()->getValue())
+TCPSource::TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType)
+    : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
 {
+    this->inputFormat = tcpSourceType->getInputFormat()->getValue();
+    this->socketHost = tcpSourceType->getSocketHost()->getValue();
+    this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
+    this->socketType = static_cast<int>(tcpSourceType->getSocketType()->getValue());
+    this->socketDomain = static_cast<int>(tcpSourceType->getSocketDomain()->getValue());
+    this->decideMessageSize = tcpSourceType->getDecideMessageSize()->getValue();
+    this->tupleSeparator = tcpSourceType->getTupleSeparator()->getValue();
+    this->socketBufferSize = static_cast<size_t>(tcpSourceType->getSocketBufferSize()->getValue());
+    this->bytesUsedForSocketBufferSizeTransfer = static_cast<size_t>(tcpSourceType->getBytesUsedForSocketBufferSizeTransfer()->getValue());
+    this->flushIntervalInMs = tcpSourceType->getFlushIntervalMS()->getValue();
+
     /// init physical types
     std::vector<std::string> schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
     /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (const auto& field : schema->fields)
+    for (const auto& field : schema.fields)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
@@ -66,7 +65,7 @@ TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
     switch (inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<CSVParser>(schema.getSize(), physicalTypes, ",");
             break;
         default:
             NES_ERROR("InputFormat not supported.")
@@ -80,7 +79,6 @@ std::string TCPSource::toString() const
 {
     std::stringstream ss;
     ss << "TCPSOURCE(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
     ss << "Tuplesize:" << this->tupleSize;
     ss << "Generated tuples: " << this->generatedTuples;
     ss << "Generated buffers: " << this->generatedBuffers;
@@ -154,13 +152,15 @@ void TCPSource::open()
 }
 
 bool TCPSource::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+    NES::Memory::TupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+    std::shared_ptr<Schema> schema)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager))
+        while (fillBuffer(tupleBuffer, bufferManager, schema))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -205,7 +205,10 @@ size_t TCPSource::parseBufferSize(std::span<const char> data) const
     return asciiBufferSize(data);
 }
 
-bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+bool TCPSource::fillBuffer(
+    NES::Memory::TupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
+    std::shared_ptr<Schema> schema)
 {
     /// determine how many tuples fit into the buffer
     const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
@@ -354,5 +357,4 @@ SourceType TCPSource::getType() const
 {
     return SourceType::TCP_SOURCE;
 }
-
 }

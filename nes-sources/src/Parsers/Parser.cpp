@@ -35,7 +35,7 @@ void Parser::writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     NES::Memory::TupleBuffer& tb,
-    const SchemaPtr& schema,
+    std::shared_ptr<Schema> schema,
     uint64_t tupleCount,
     const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
