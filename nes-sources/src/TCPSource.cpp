@@ -24,6 +24,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/TCPSource.hpp>
@@ -160,7 +161,7 @@ bool TCPSource::fillTupleBuffer(
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager, schema))
+        while (fillBuffer(tupleBuffer, bufferManager, std::move(schema)))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -221,6 +222,11 @@ bool TCPSource::fillBuffer(
     bool flushIntervalPassed = false;
     /// receive data until tupleBuffer capacity reached or flushIntervalPassed
     bool isEoS = false;
+
+    /// Todo #72: remove TestTupleBuffer creation.
+    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
+    /// TestTupleBuffer for the same TupleBuffer.
+    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
     while (tupleCount < tuplesThisPass && !flushIntervalPassed)
     {
         /// if circular buffer is not full obtain data from socket
@@ -320,7 +326,7 @@ bool TCPSource::fillBuffer(
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
                 NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, testTupleBuffer, schema, bufferManager);
                 tupleCount++;
             }
         }
@@ -335,11 +341,11 @@ bool TCPSource::fillBuffer(
             flushIntervalPassed = true;
         }
     }
-    tupleBuffer.setNumberOfTuples(tupleCount);
+    testTupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
     /// Return false, if there are tuples in the buffer, or the EoS was reached.
-    return tupleBuffer.getNumberOfTuples() == 0 && !isEoS;
+    return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
 void TCPSource::close()
