@@ -38,10 +38,10 @@ public:
 
     /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
     virtual bool writeInputTupleToTupleBuffer(
-        std::string_view inputTuple,
+        std::string_view csvInput,
         uint64_t tupleCount,
         NES::Memory::TupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
+        std::shared_ptr<Schema> schema,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
         = 0;
 
@@ -50,7 +50,7 @@ public:
         std::string value,
         uint64_t schemaFieldIndex,
         NES::Memory::TupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
+        std::shared_ptr<Schema> schema,
         uint64_t tupleCount,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
 
