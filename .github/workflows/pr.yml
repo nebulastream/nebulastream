@@ -51,7 +51,8 @@ jobs:
           echo "Calculating checksum for dependency files:"
           find vcpkg/ docker/dependency/ -type f
           
-          HASH=$(find vcpkg/ docker/dependency/ -type f -exec sha256sum {} \; | sort -k 2 | cut -d ' ' -f1 | sha256sum | cut -d ' ' -f1)
+          # we set LC_ALL to override the system-specific locale, to have consistent sort order
+          HASH=$(find vcpkg/ docker/dependency/ -type f -exec sha256sum {} \; | LC_ALL=C sort -k 2 | cut -d ' ' -f1 | sha256sum | cut -d ' ' -f1)
           echo "Using Hash: $HASH"
           
           # Check if the Docker manifest exists for the computed hash
