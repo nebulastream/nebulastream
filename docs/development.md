@@ -106,7 +106,8 @@ Lastly, you need to create a new CMake profile which uses the newly created dock
 
 The relevant CI Jobs will be executed in the development container. This means in order to reproduce CI results, it is
 essential to replicate the development environment built into the base docker image. Note that NebulaStream uses llvm
-for its query compilation, which will take a while to build locally.
+for its query compilation, which will take a while to build locally. You can follow the instructions of the instructions
+of the [base.dockerfile](../docker/dependency/Base.dockerfile) to replicate on Ubuntu or Debian systems.
 
 The compiler toolchain is based on `llvm-18` and libc++-18, and we use the mold linker for its better performance.
 Follow the [llvm documentation](https://apt.llvm.org/) to install a recent toolchain via your package manager.
