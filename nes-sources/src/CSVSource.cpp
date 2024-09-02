@@ -23,6 +23,7 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -123,6 +124,10 @@ bool CSVSource::fillTupleBuffer(
         currentPositionInFile = input.tellg();
     }
 
+    /// Todo #72: remove TestTupleBuffer creation.
+    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
+    /// TestTupleBuffer for the same TupleBuffer.
+    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
     while (tupleCount < generatedTuplesThisPass)
     {
         ///Check if EOF has reached
@@ -137,12 +142,12 @@ bool CSVSource::fillTupleBuffer(
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, tupleBuffer, schema, bufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
         tupleCount++;
     } ///end of while
 
     currentPositionInFile = input.tellg();
-    tupleBuffer.setNumberOfTuples(tupleCount);
+    testTupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
