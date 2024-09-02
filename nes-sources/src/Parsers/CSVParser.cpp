@@ -13,12 +13,15 @@
 */
 
 #include <string>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include "Sources/Parsers/Parser.hpp"
 
 namespace NES::Sources
@@ -26,17 +29,14 @@ namespace NES::Sources
 using namespace std::string_literals;
 
 CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
-    : Parser(physicalTypes)
-    , numberOfSchemaFields(numberOfSchemaFields)
-    , physicalTypes(std::move(physicalTypes))
-    , delimiter(std::move(delimiter))
+    : numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)), delimiter(std::move(delimiter))
 {
 }
 
 bool CSVParser::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
-    NES::Memory::TupleBuffer& tupleBuffer,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
     std::shared_ptr<Schema> schema,
     const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
@@ -69,7 +69,23 @@ bool CSVParser::writeInputTupleToTupleBuffer(
     {
         auto field = physicalTypes[j];
         NES_TRACE("Current value is:  {}", values[j]);
-        writeFieldValueToTupleBuffer(values[j], j, tupleBuffer, schema, tupleCount, bufferManager);
+
+        const auto dataType = schema->fields[j]->getDataType();
+        const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+        auto testTupleBufferDynamicField = testTupleBuffer[tupleCount][j];
+        if (physicalType->isBasicType())
+        {
+            const auto basicPhysicalType = std::dynamic_pointer_cast<const BasicPhysicalType>(physicalType);
+            Parser::writeBasicTypeToTupleBuffer(values[j], testTupleBufferDynamicField, *basicPhysicalType);
+        }
+        else
+        {
+            NES_TRACE(
+                "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
+                "to tuple buffer",
+                values[j]);
+            testTupleBuffer[tupleCount].writeVarSized(j, values[j], *bufferManager);
+        }
     }
     return true;
 }
