@@ -100,10 +100,7 @@ void CSVSource::close()
     input.close();
 }
 
-bool CSVSource::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-    std::shared_ptr<Schema> schema)
+bool CSVSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider& bufferManager, const Schema& schema)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)

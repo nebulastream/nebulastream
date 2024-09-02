@@ -354,8 +354,9 @@ std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
     return memoryLayout;
 }
 
-TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema)
+TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffer, const Schema& bufferSchema)
 {
+    auto schema = bufferSchema.copy();
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());

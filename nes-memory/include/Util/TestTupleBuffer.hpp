@@ -305,7 +305,7 @@ public:
      * @param schema
      * @return TestTupleBuffer
      */
-    static TestTupleBuffer createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema);
+    static TestTupleBuffer createTestTupleBuffer(Memory::TupleBuffer buffer, const Schema& schema);
 
     /**
     * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.

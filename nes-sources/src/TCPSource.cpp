@@ -163,10 +163,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-bool TCPSource::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-    std::shared_ptr<Schema> schema)
+bool TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, Memory::AbstractBufferProvider& bufferManager, const Schema& schema)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     NES_DEBUG("TCPSource buffer allocated ");
@@ -217,10 +214,7 @@ size_t TCPSource::parseBufferSize(std::span<const char> data) const
     return asciiBufferSize(data);
 }
 
-bool TCPSource::fillBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-    std::shared_ptr<Schema> schema)
+bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const Schema& schema)
 {
     /// determine how many tuples fit into the buffer
     const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;

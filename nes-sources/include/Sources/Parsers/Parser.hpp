@@ -41,15 +41,15 @@ public:
     virtual bool writeInputTupleToTupleBuffer(
         std::string_view inputString,
         uint64_t tupleCount,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-        std::shared_ptr<Schema> schema,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+        Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+        const Schema& schema,
+        Memory::AbstractBufferProvider& bufferManager)
         = 0;
 
     /// casts a value in string format to the correct type and writes it to the TupleBuffer
     static void writeBasicTypeToTupleBuffer(
         std::string inputString,
-        NES::Memory::MemoryLayouts::DynamicField& testTupleBufferDynamicField,
+        Memory::MemoryLayouts::DynamicField& testTupleBufferDynamicField,
         const BasicPhysicalType& basicPhysicalType);
 };
 

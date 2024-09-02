@@ -37,8 +37,8 @@ public:
         NES::Memory::TupleBuffer& tupleBuffer,
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
         /// passing schema by value to create a new TestTupleBuffer in the Parser.
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-        std::shared_ptr<Schema> schema)
+        Memory::AbstractBufferProvider& bufferManager,
+        const Schema& schema)
         = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
