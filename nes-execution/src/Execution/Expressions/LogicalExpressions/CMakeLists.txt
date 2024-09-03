@@ -11,10 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        ReadFieldExpression.cpp
-        WriteFieldExpression.cpp
-        ConstantValueExpression.cpp
+        EqualsExpression.cpp
+        NotEqualsExpression.cpp
         )
-
-add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(LogicalExpressions)

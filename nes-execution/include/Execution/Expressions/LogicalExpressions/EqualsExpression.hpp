@@ -11,23 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <utility>
+
+#pragma once
+
+#include <Execution/Expressions/Expression.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
-WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
-    : field(std::move(field)), subExpression(subExpression)
-{
-}
 
-VarVal WriteFieldExpression::execute(Record& record) const
+/// Returns true if the left and right subexpressions are equal, otherwise false.
+class EqualsExpression final : public Expression
 {
-    VarVal newValue = subExpression->execute(record);
-    record.write(field, newValue);
-    return newValue;
-}
+public:
+    EqualsExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
+    VarVal execute(Record& record) const override;
 
-} /// namespace NES::Runtime::Execution::Expressions
+private:
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
+};
+}

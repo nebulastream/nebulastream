@@ -10,11 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        ReadFieldExpression.cpp
-        WriteFieldExpression.cpp
-        ConstantValueExpression.cpp
-        )
-
-add_subdirectory(ArithmeticalExpressions)
-add_subdirectory(LogicalExpressions)
+add_nes_execution_test(arithmetical-expression-tests "AddExpressionTest.cpp" "SubExpressionTest.cpp" "MulExpressionTest.cpp" "DivExpressionTest.cpp")
