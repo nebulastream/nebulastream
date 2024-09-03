@@ -22,31 +22,32 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-class EmitState : public OperatorState
-{
+class EmitState : public OperatorState {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) { }
-    Value<UInt64> outputIndex = 0_u64;
+    explicit EmitState(const RecordBuffer& resultBuffer)
+        : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
+    nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
-    Value<MemRef> bufferReference;
+    nautilus::val<int8_t*> bufferReference;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 {
-    /// initialize state variable and create new buffer
-    auto resultBufferRef = ctx.allocateBuffer();
-    auto resultBuffer = RecordBuffer(resultBufferRef);
-    ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
+    // initialize state variable and create new buffer
+    const auto resultBufferRef = ctx.allocateBuffer();
+    const auto resultBuffer = RecordBuffer(resultBufferRef);
+    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    ctx.setLocalOperatorState(this, std::move(emitState));
 }
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
-    auto emitState = (EmitState*)ctx.getLocalState(this);
-    /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer)
-    {
+    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
+    // emit buffer if it reached the maximal capacity
+    const auto result = emitState->outputIndex >= maxRecordsPerBuffer;
+    if (result) {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
-        auto resultBufferRef = ctx.allocateBuffer();
+        const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferReference = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = 0_u64;
@@ -56,19 +57,19 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
      * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
      * to the brim, i.e., have no more space left.
      */
-    memoryProvider->write(emitState->outputIndex, emitState->bufferReference, record);
-    emitState->outputIndex = emitState->outputIndex + 1_u64;
+    memoryProvider->writeRecord(emitState->outputIndex, emitState->bufferReference, record);
+    emitState->outputIndex = emitState->outputIndex + 1;
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
-    auto emitState = (EmitState*)ctx.getLocalState(this);
+    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
 }
 
 void Emit::emitRecordBuffer(
-    ExecutionContext& ctx, RecordBuffer& recordBuffer, const Value<UInt64>& numRecords, const Value<Boolean>& lastChunk) const
+    ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk)
 {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
@@ -85,7 +86,7 @@ void Emit::emitRecordBuffer(
     }
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
+Emit::Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider))
 {
 }

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -33,13 +33,13 @@ public:
      * @param projections projection vector
      */
     Scan(
-        std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+        std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
         std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+    const std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 

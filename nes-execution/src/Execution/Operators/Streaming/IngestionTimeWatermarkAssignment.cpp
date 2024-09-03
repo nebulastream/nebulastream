@@ -23,13 +23,6 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-class WatermarkState : public OperatorState
-{
-public:
-    explicit WatermarkState() { }
-    Value<> currentWatermark = Value<UInt64>(0_u64);
-};
-
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -37,10 +30,10 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
     Operator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
-    Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    if (tsField > executionCtx.getWatermarkTs())
-    {
-        executionCtx.setWatermarkTs(tsField.as<UInt64>());
+    const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
+    const auto currentWatermark = executionCtx.getWatermarkTs();
+    if (tsField > currentWatermark) {
+        executionCtx.setWatermarkTs(tsField);
     }
 }
 

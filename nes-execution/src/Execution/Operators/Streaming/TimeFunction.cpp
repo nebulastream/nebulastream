@@ -17,8 +17,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -33,11 +32,11 @@ EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpress
 {
 }
 
-Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
+nautilus::val<uint64_t> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
 {
-    Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
-    auto timeMultiplier = Value<UInt64>(unit.getMillisecondsConversionMultiplier());
-    auto tsInMs = (ts * timeMultiplier).as<UInt64>();
+    const auto ts = this->timestampExpression->execute(record);
+    const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
+    const auto tsInMs = (ts * timeMultiplier).cast<nautilus::val<uint64_t>>();
     ctx.setCurrentTs(tsInMs);
     return tsInMs;
 }
@@ -47,7 +46,7 @@ void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::Re
     ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
-Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
+nautilus::val<uint64_t> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
 {
     return ctx.getCurrentTs();
 }

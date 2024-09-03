@@ -27,7 +27,7 @@ class WatermarkState : public OperatorState
 {
 public:
     explicit WatermarkState() { }
-    Value<> currentWatermark = Value<UInt64>(0_u64);
+    nautilus::val<uint64_t> currentWatermark = 0;
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
@@ -41,19 +41,19 @@ void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBu
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const
 {
-    auto state = (WatermarkState*)ctx.getLocalState(this);
-    Value<> tsField = timeFunction->getTs(ctx, record);
-    if (tsField > state->currentWatermark)
-    {
+    const auto state = static_cast<WatermarkState*>(ctx.getLocalState(this));
+    const auto tsField = timeFunction->getTs(ctx, record);
+    if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;
     }
-    /// call next operator
+    // call next operator
     child->execute(ctx, record);
 }
+
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto state = (WatermarkState*)executionCtx.getLocalState(this);
-    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
+    const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
+    executionCtx.setWatermarkTs(state->currentWatermark);
     Operator::close(executionCtx, recordBuffer);
 }
 
