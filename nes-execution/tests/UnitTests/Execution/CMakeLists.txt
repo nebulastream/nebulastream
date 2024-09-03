@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # We disable the tests for now, as they are not ported to the new nautilus-lib yet
-#add_subdirectory(Expressions)
+add_subdirectory(Expressions)
 #add_subdirectory(Operators)
 add_subdirectory(PipelineExecution)
 

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Relational/Map.hpp>
-#include <../../../../../nes-nautilus/include/Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/Streaming/Map.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -25,4 +25,4 @@ void Map::execute(ExecutionContext& ctx, Record& record) const
     child->execute(ctx, record);
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

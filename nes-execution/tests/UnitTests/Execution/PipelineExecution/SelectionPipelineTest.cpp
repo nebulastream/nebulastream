@@ -19,7 +19,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
@@ -44,7 +44,7 @@ public:
     std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {

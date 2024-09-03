@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Relational/Selection.hpp>
-#include <../../../../../nes-nautilus/include/Nautilus/Interface/Record.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -21,12 +21,9 @@ namespace NES::Runtime::Execution::Operators
 void Selection::execute(ExecutionContext& ctx, Record& record) const
 {
     /// evaluate expression and call child operator if expression is valid
-    if (expression->execute(record))
+    if (expression->execute(record) && child != nullptr)
     {
-        if (child != nullptr)
-        {
-            child->execute(ctx, record);
-        }
+        child->execute(ctx, record);
     }
 }
 
