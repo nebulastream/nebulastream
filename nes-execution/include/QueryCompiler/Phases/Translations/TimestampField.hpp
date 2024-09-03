@@ -19,7 +19,7 @@
 #include <utility>
 #include <API/TimeUnit.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
 
 namespace NES::QueryCompilation
 {

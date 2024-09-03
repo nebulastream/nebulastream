@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/Streaming/Map.hpp>
+#include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// assume that map expression performs a field write
+    /// assume that map function performs a field write
     mapFunction->execute(record);
     /// call next operator
     child->execute(ctx, record);
