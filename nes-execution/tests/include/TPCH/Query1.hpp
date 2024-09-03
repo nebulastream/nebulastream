@@ -38,7 +38,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>

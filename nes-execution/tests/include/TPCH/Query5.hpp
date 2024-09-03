@@ -39,7 +39,7 @@
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>

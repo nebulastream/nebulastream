@@ -33,7 +33,7 @@
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
