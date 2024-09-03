@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <sstream>
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators

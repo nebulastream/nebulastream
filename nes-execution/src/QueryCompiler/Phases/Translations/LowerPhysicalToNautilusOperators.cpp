@@ -24,11 +24,11 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Project.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/Map.hpp>
-#include <Execution/Operators/Streaming/Selection.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Map.hpp>
+#include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -198,7 +198,8 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto assignmentField = mapOperator->getMapExpression()->getField();
     auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
     auto expression = expressionProvider->lowerExpression(assignmentExpression);
-    auto writeField = std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
+    auto writeField = std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(
+        assignmentField->getFieldName(), expression);
     return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
 

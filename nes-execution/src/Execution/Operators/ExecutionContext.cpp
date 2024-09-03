@@ -25,7 +25,6 @@
 
 namespace NES::Runtime::Execution
 {
-
 ExecutionContext::ExecutionContext(const nautilus::val<int8_t*>& workerContext, const nautilus::val<int8_t*>& pipelineContext)
     : workerContext(workerContext)
     , pipelineContext(pipelineContext)
@@ -44,7 +43,7 @@ void* allocateBufferProxy(void* workerContextPtr)
     {
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
-    auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
+    const auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
     /// We allocate a new tuple buffer for the runtime.
     /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
     /// This increases the reference counter in the buffer.
@@ -127,7 +126,7 @@ void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index)
 
 nautilus::val<int8_t*> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
 {
-    nautilus::val<uint64_t> handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
+    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
@@ -155,7 +154,7 @@ const nautilus::val<uint64_t>& ExecutionContext::getSequenceNumber() const
     return sequenceNumber;
 }
 
-void ExecutionContext::setSequenceNumber(nautilus::val<uint64_t> sequenceNumber)
+void ExecutionContext::setSequenceNumber(const nautilus::val<uint64_t>& sequenceNumber)
 {
     this->sequenceNumber = sequenceNumber;
 }
@@ -165,7 +164,7 @@ const nautilus::val<uint64_t>& ExecutionContext::getOriginId() const
     return origin;
 }
 
-void ExecutionContext::setOrigin(nautilus::val<uint64_t> origin)
+void ExecutionContext::setOriginId(const nautilus::val<uint64_t>& origin)
 {
     this->origin = origin;
 }
@@ -175,7 +174,7 @@ const nautilus::val<uint64_t>& ExecutionContext::getCurrentTs() const
     return currentTs;
 }
 
-void ExecutionContext::setCurrentTs(nautilus::val<uint64_t> currentTs)
+void ExecutionContext::setCurrentTs(const nautilus::val<uint64_t>& currentTs)
 {
     this->currentTs = currentTs;
 }
@@ -185,7 +184,7 @@ const nautilus::val<uint64_t>& ExecutionContext::getChunkNumber() const
     return chunkNumber;
 }
 
-void ExecutionContext::setChunkNumber(nautilus::val<uint64_t> chunkNumber)
+void ExecutionContext::setChunkNumber(const nautilus::val<uint64_t>& chunkNumber)
 {
     this->chunkNumber = chunkNumber;
 }
@@ -195,7 +194,7 @@ const nautilus::val<bool>& ExecutionContext::getLastChunk() const
     return lastChunk;
 }
 
-void ExecutionContext::setLastChunk(nautilus::val<bool> lastChunk)
+void ExecutionContext::setLastChunk(const nautilus::val<bool>& lastChunk)
 {
     this->lastChunk = lastChunk;
 }

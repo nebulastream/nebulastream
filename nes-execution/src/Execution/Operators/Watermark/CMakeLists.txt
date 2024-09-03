@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 add_source_files(nes-execution
-        ReadFieldExpression.cpp
-        WriteFieldExpression.cpp
-        ConstantValueExpression.cpp
-        )
+        EventTimeWatermarkAssignment.cpp
+        IngestionTimeWatermarkAssignment.cpp
+        MultiOriginWatermarkProcessor.cpp
+        TimeFunction.cpp
+)
