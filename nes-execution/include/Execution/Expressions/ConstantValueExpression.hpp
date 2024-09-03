@@ -14,7 +14,7 @@
 #pragma once
 #include <type_traits>
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -28,7 +28,7 @@ class ConstantValueExpression : public Expression
 {
 public:
     explicit ConstantValueExpression(T value);
-    Value<> execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
 private:
     const T value;
