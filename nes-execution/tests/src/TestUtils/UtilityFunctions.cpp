@@ -17,7 +17,6 @@
 #include <random>
 #include <set>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
@@ -54,21 +53,21 @@ void writeNautilusRecord(
     SchemaPtr schema,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
-    Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
+    nautilus::val<uint64_t> nautilusRecordIndex(recordIndex);
+    nautilus::val<int8_t*> nautilusBufferPtr(baseBufferPtr);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
-        auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+        auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
 
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
+        memoryProviderPtr->writeRecord(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferProvider.getBufferSize());
-        auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
+        auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
 
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
+        memoryProviderPtr->writeRecord(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
     }
     else
     {

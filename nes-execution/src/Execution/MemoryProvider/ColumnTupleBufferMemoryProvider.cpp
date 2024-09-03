@@ -12,41 +12,45 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-ColumnMemoryProvider::ColumnMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayoutPtr(columnMemoryLayoutPtr) {};
+ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
+    : columnMemoryLayoutPtr(std::move(std::move(columnMemoryLayoutPtr))) {};
 
-std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnMemoryProvider::getMemoryLayoutPtr()
+Memory::MemoryLayouts::MemoryLayoutPtr ColumnTupleBufferMemoryProvider::getMemoryLayoutPtr()
 {
     return columnMemoryLayoutPtr;
 }
 
-Nautilus::Value<Nautilus::MemRef> ColumnMemoryProvider::calculateFieldAddress(
-    Nautilus::Value<Nautilus::MemRef>& bufferAddress, Nautilus::Value<Nautilus::UInt64>& recordIndex, uint64_t fieldIndex) const
+nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
+    nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const
 {
     auto& fieldSize = columnMemoryLayoutPtr->getFieldSizes()[fieldIndex];
     auto& columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[fieldIndex];
     auto fieldOffset = recordIndex * fieldSize + columnOffset;
     auto fieldAddress = bufferAddress + fieldOffset;
-    return fieldAddress.as<Nautilus::MemRef>();
+    return fieldAddress;
 }
 
-Nautilus::Record ColumnMemoryProvider::read(
+Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(
     const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-    Nautilus::Value<Nautilus::MemRef>& bufferAddress,
-    Nautilus::Value<Nautilus::UInt64>& recordIndex) const
+    nautilus::val<int8_t*>& bufferAddress,
+    nautilus::val<uint64_t>& recordIndex) const
 {
     auto& schema = columnMemoryLayoutPtr->getSchema();
     /// read all fields
     Nautilus::Record record;
-    for (uint64_t i = 0; i < schema->getSize(); i++)
+    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i)
     {
         auto& fieldName = schema->fields[i]->getName();
         if (!includesField(projections, fieldName))
@@ -54,23 +58,23 @@ Nautilus::Record ColumnMemoryProvider::read(
             continue;
         }
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = load(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress);
+        auto value = loadValue(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress);
         record.write(fieldName, value);
     }
     return record;
 }
 
-void ColumnMemoryProvider::write(
-    Nautilus::Value<NES::Nautilus::UInt64>& recordIndex, Nautilus::Value<Nautilus::MemRef>& bufferAddress, NES::Nautilus::Record& rec) const
+void ColumnTupleBufferMemoryProvider::writeRecord(
+    nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const
 {
     auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
     auto& schema = columnMemoryLayoutPtr->getSchema();
-    for (uint64_t i = 0; i < fieldSizes.size(); i++)
+    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = rec.read(schema->fields[i]->getName());
-        store(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
+        const auto& value = rec.read(schema->fields[i]->getName());
+        storeValue(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
     }
 }
 
-} /// namespace NES::Runtime::Execution::MemoryProvider
+}
