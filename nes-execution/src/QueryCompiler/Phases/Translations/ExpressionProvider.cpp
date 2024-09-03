@@ -12,27 +12,16 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/NegateExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/OrExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -56,93 +45,24 @@ using namespace Runtime::Execution::Expressions;
 std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode)
 {
     NES_INFO("Lower Expression {}", expressionNode->toString())
-    if (auto andNode = NES::Util::as_if<AndExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(andNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(andNode->getRight());
-        return std::make_shared<AndExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto orNode = NES::Util::as_if<OrExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(orNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(orNode->getRight());
-        return std::make_shared<OrExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto lessNode = NES::Util::as_if<LessExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(lessNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(lessNode->getRight());
-        return std::make_shared<LessThanExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto equalsNode = NES::Util::as_if<EqualsExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(equalsNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(equalsNode->getRight());
-        return std::make_shared<EqualsExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto greaterNode = NES::Util::as_if<GreaterExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(greaterNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(greaterNode->getRight());
-        return std::make_shared<GreaterThanExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto greaterEqualsNode = NES::Util::as_if<GreaterEqualsExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(greaterEqualsNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(greaterEqualsNode->getRight());
-        return std::make_shared<GreaterEqualsExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto lessEqualsNode = NES::Util::as_if<LessEqualsExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(lessEqualsNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(lessEqualsNode->getRight());
-        return std::make_shared<LessEqualsExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto negateNode = NES::Util::as_if<NegateExpressionNode>(expressionNode))
-    {
-        auto child = lowerExpression(NES::Util::as<ExpressionNode>(negateNode->getChildren()[0]));
-        return std::make_shared<NegateExpression>(child);
-    }
-    else if (auto mulNode = NES::Util::as_if<MulExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(mulNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(mulNode->getRight());
-        return std::make_shared<MulExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto addNode = NES::Util::as_if<AddExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(addNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(addNode->getRight());
-        return std::make_shared<AddExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto subNode = NES::Util::as_if<SubExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(subNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(subNode->getRight());
-        return std::make_shared<SubExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto divNode = NES::Util::as_if<DivExpressionNode>(expressionNode))
-    {
-        auto leftNautilusExpression = lowerExpression(divNode->getLeft());
-        auto rightNautilusExpression = lowerExpression(divNode->getRight());
-        return std::make_shared<DivExpression>(leftNautilusExpression, rightNautilusExpression);
-    }
-    else if (auto functionExpression = NES::Util::as_if<FunctionExpression>(expressionNode))
-    {
-        return lowerFunctionExpression(functionExpression);
-    }
-    else if (auto constantValue = NES::Util::as_if<ConstantValueExpressionNode>(expressionNode))
+    if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>())
     {
         return lowerConstantExpression(constantValue);
     }
-    else if (auto fieldAccess = NES::Util::as_if<FieldAccessExpressionNode>(expressionNode))
+    if (auto fieldAccess = NES::Util::as_if<FieldAccessExpressionNode>(expressionNode))
     {
         return std::make_shared<ReadFieldExpression>(fieldAccess->getFieldName());
     }
-    else
+    if (auto fieldWrite = expressionNode->as_if<FieldAssignmentExpressionNode>())
     {
-        throw UnknownExpressionType();
+        return std::make_shared<WriteFieldExpression>(fieldWrite->getField()->getFieldName(), lowerExpression(fieldWrite->getAssignment()));
     }
+    else if (auto functionExpression = expressionNode->as_if<FunctionExpression>())
+    {
+        return lowerFunctionExpression(functionExpression);
+    }
+
+    throw UnknownExpressionType();
 }
 
 ExpressionPtr ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& constantExpression)
