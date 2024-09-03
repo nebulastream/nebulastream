@@ -14,21 +14,14 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
-
-class WatermarkState : public OperatorState
-{
-public:
-    explicit WatermarkState() { }
-    Value<> currentWatermark = Value<UInt64>(0_u64);
-};
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
 
@@ -37,10 +30,11 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
     Operator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
-    Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    if (tsField > executionCtx.getWatermarkTs())
+    const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
+    const auto currentWatermark = executionCtx.getWatermarkTs();
+    if (tsField > currentWatermark)
     {
-        executionCtx.setWatermarkTs(tsField.as<UInt64>());
+        executionCtx.setWatermarkTs(tsField);
     }
 }
 
