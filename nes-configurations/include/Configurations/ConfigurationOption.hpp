@@ -22,7 +22,6 @@
 #include <utility>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
 

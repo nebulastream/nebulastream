@@ -20,4 +20,3 @@ add_source_files(nes-common
         ThreadNaming.cpp
 )
 add_subdirectory(Logger)
-add_subdirectory(yaml)
