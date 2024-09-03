@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.176](https://github.com/nebulastream/nebulastream/tree/v0.6.176) (2024-09-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.175...v0.6.176)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add constant values to PSL parser [\#5062](https://github.com/nebulastream/nebulastream/issues/5062)
+
 ## [v0.6.175](https://github.com/nebulastream/nebulastream/tree/v0.6.175) (2024-08-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.174...v0.6.175)
