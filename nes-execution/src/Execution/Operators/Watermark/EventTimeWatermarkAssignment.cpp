@@ -14,10 +14,11 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -27,7 +28,7 @@ class WatermarkState : public OperatorState
 {
 public:
     explicit WatermarkState() { }
-    Value<> currentWatermark = Value<UInt64>(0_u64);
+    nautilus::val<uint64_t> currentWatermark = 0;
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
@@ -41,8 +42,8 @@ void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBu
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const
 {
-    auto state = (WatermarkState*)ctx.getLocalState(this);
-    Value<> tsField = timeFunction->getTs(ctx, record);
+    const auto state = static_cast<WatermarkState*>(ctx.getLocalState(this));
+    const auto tsField = timeFunction->getTs(ctx, record);
     if (tsField > state->currentWatermark)
     {
         state->currentWatermark = tsField;
@@ -50,11 +51,15 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
     /// call next operator
     child->execute(ctx, record);
 }
+
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto state = (WatermarkState*)executionCtx.getLocalState(this);
-    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
+    PRECONDITION(
+        NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(this)),
+        "Expects the local state to be of type WatermarkState");
+    const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
+    executionCtx.setWatermarkTs(state->currentWatermark);
     Operator::close(executionCtx, recordBuffer);
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}
