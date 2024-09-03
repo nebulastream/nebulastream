@@ -14,8 +14,7 @@
 #pragma once
 
 #include <API/TimeUnit.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
 {
@@ -50,7 +49,7 @@ class TimeFunction
 {
 public:
     virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
-    virtual Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
+    virtual nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
 
@@ -62,7 +61,7 @@ class EventTimeFunction final : public TimeFunction
 public:
     explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) override;
+    nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
 private:
     Windowing::TimeUnit unit;
@@ -76,7 +75,7 @@ class IngestionTimeFunction final : public TimeFunction
 {
 public:
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    Nautilus::Value<UInt64> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
+    nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

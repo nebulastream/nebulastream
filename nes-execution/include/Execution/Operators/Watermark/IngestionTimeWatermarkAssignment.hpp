@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -27,7 +27,7 @@ class IngestionTimeWatermarkAssignment : public ExecutableOperator
 {
 public:
     /**
-     * @brief Creates a IngestionTimeWatermarkAssignment operator without expression
+     * @brief Creates a IngestionTimeWatermarkAssignment operator without function
      */
     IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

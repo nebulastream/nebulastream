@@ -13,12 +13,12 @@
 */
 
 #include <utility>
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -28,16 +28,16 @@ void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuff
     /// nop
 }
 
-EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
-    : unit(unit), timestampExpression(std::move(timestampExpression))
+EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit)
+    : unit(unit), timestampFunction(std::move(timestampFunction))
 {
 }
 
-Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
+nautilus::val<WatermarkTs> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
 {
-    Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
-    auto timeMultiplier = Value<UInt64>(unit.getMillisecondsConversionMultiplier());
-    auto tsInMs = (ts * timeMultiplier).as<UInt64>();
+    const auto ts = this->timestampFunction->execute(record);
+    const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
+    const auto tsInMs = (ts * timeMultiplier).cast<nautilus::val<uint64_t>>();
     ctx.setCurrentTs(tsInMs);
     return tsInMs;
 }
@@ -47,9 +47,9 @@ void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::Re
     ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
-Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
+nautilus::val<uint64_t> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
 {
     return ctx.getCurrentTs();
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}
