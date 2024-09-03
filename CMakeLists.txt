@@ -337,9 +337,7 @@ add_subdirectory(nes-execution)
 add_subdirectory(nes-nautilus)
 add_subdirectory(nes-functions)
 add_subdirectory(nes-window-types)
-
 add_subdirectory(nes-memory)
-
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
