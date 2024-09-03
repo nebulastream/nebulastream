@@ -96,15 +96,15 @@ private:
     std::vector<ExpressionNodePtr> fetchCommutativeFields(const ExpressionNodePtr& expression)
     {
         std::vector<ExpressionNodePtr> commutativeFields;
-        if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>())
+        if (NES::Util::instanceOf<FieldAccessExpressionNode>(expression) || NES::Util::instanceOf<ConstantValueExpressionNode>(expression))
         {
             commutativeFields.push_back(expression);
         }
-        else if (expression->template instanceOf<ExpressionType>())
+        else if (NES::Util::instanceOf<ExpressionType>(expression))
         {
             for (const auto& child : expression->getChildren())
             {
-                auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
+                auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(NES::Util::as<ExpressionNode>(child));
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }

@@ -14,8 +14,10 @@
 
 #include <utility>
 #include <Expressions/WhenExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 
 namespace NES
 {
@@ -55,9 +57,9 @@ void WhenExpressionNode::inferStamp(SchemaPtr schema)
 
 bool WhenExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<WhenExpressionNode>())
+    if (NES::Util::instanceOf<WhenExpressionNode>(rhs))
     {
-        auto otherWhenNode = rhs->as<WhenExpressionNode>();
+        auto otherWhenNode = NES::Util::as<WhenExpressionNode>(rhs);
         return getLeft()->equal(otherWhenNode->getLeft()) && getRight()->equal(otherWhenNode->getRight());
     }
     return false;
@@ -72,7 +74,7 @@ std::string WhenExpressionNode::toString() const
 
 ExpressionNodePtr WhenExpressionNode::copy()
 {
-    return WhenExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return WhenExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

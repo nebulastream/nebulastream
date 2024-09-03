@@ -14,11 +14,13 @@
 
 #include <cmath>
 #include <Expressions/ArithmeticalExpressions/RoundExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+
 
 namespace NES
 {
@@ -48,9 +50,9 @@ void RoundExpressionNode::inferStamp(SchemaPtr schema)
 
 bool RoundExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<RoundExpressionNode>())
+    if (NES::Util::instanceOf<RoundExpressionNode>(rhs))
     {
-        auto otherRoundNode = rhs->as<RoundExpressionNode>();
+        auto otherRoundNode = NES::Util::as<RoundExpressionNode>(rhs);
         return child()->equal(otherRoundNode->child());
     }
     return false;
@@ -65,7 +67,7 @@ std::string RoundExpressionNode::toString() const
 
 ExpressionNodePtr RoundExpressionNode::copy()
 {
-    return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return RoundExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

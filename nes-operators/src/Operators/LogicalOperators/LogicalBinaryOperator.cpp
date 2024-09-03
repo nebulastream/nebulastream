@@ -15,8 +15,10 @@
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+
 
 namespace NES
 {
@@ -38,7 +40,7 @@ bool LogicalBinaryOperator::inferSchema()
     /// Infer schema of all child operators
     for (const auto& child : children)
     {
-        if (!child->as<LogicalOperator>()->inferSchema())
+        if (!NES::Util::as<LogicalOperator>(child)->inferSchema())
         {
             NES_ERROR("BinaryOperator: failed inferring the schema of the child operator");
             throw TypeInferenceException("BinaryOperator: failed inferring the schema of the child operator");
@@ -48,7 +50,7 @@ bool LogicalBinaryOperator::inferSchema()
     ///Identify different type of schemas from children operators
     for (const auto& child : children)
     {
-        auto childOutputSchema = child->as<Operator>()->getOutputSchema();
+        auto childOutputSchema = NES::Util::as<Operator>(child)->getOutputSchema();
         auto found = std::find_if(
             distinctSchemas.begin(),
             distinctSchemas.end(),
@@ -74,7 +76,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
     std::vector<OperatorPtr> operators;
     for (const auto& child : getChildren())
     {
-        auto childOperator = child->as<Operator>();
+        auto childOperator = NES::Util::as<Operator>(child);
         if (childOperator->getOutputSchema()->equals(schema, false))
         {
             operators.emplace_back(childOperator);
@@ -99,7 +101,7 @@ void LogicalBinaryOperator::inferInputOrigins()
     std::vector<OriginId> leftInputOriginIds;
     for (auto child : this->getLeftOperators())
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         leftInputOriginIds.insert(leftInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());
@@ -109,7 +111,7 @@ void LogicalBinaryOperator::inferInputOrigins()
     std::vector<OriginId> rightInputOriginIds;
     for (auto child : this->getRightOperators())
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         rightInputOriginIds.insert(rightInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

@@ -14,9 +14,11 @@
 
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 namespace NES
 {
 
@@ -53,9 +55,9 @@ void PowExpressionNode::inferStamp(SchemaPtr schema)
 
 bool PowExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<PowExpressionNode>())
+    if (NES::Util::instanceOf<PowExpressionNode>(rhs))
     {
-        auto otherAddNode = rhs->as<PowExpressionNode>();
+        auto otherAddNode = NES::Util::as<PowExpressionNode>(rhs);
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
@@ -70,7 +72,7 @@ std::string PowExpressionNode::toString() const
 
 ExpressionNodePtr PowExpressionNode::copy()
 {
-    return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return PowExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

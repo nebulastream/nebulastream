@@ -128,7 +128,8 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     for (const auto& node : nodes)
     {
         NES_INFO("Lowering node: {}", node->toString());
-        parentOperator = lower(*pipeline, parentOperator, node->as<PhysicalOperators::PhysicalOperator>(), bufferSize, operatorHandlers);
+        parentOperator
+            = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (auto& root : rootOperators)
@@ -148,39 +149,41 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
-    if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>())
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
         auto scan = lowerScan(pipeline, operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
         return scan;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalEmitOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
         auto emit = lowerEmit(pipeline, operatorNode, bufferSize);
         parentOperator->setChild(emit);
         return emit;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFilterOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalFilterOperator>(operatorNode))
     {
         auto filter = lowerFilter(pipeline, operatorNode);
         parentOperator->setChild(filter);
         return filter;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalLimitOperator>(operatorNode))
     {
         auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(limit);
         return limit;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(operatorNode))
     {
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>(operatorNode))
     {
-        auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
+        auto aggs = NES::Util::as<PhysicalOperators::PhysicalThresholdWindowOperator>(operatorNode)
+                        ->getWindowDefinition()
+                        ->getWindowAggregation();
 
         std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
         /// iterate over all aggregation functions
@@ -198,37 +201,37 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(thresholdWindow);
         return thresholdWindow;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>(operatorNode))
     {
         auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(preAggregationOperator);
         return preAggregationOperator;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>(operatorNode))
     {
         return lowerSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>(operatorNode))
     {
         return lowerWindowSinkOperator(pipeline, operatorNode, operatorHandlers);
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(operatorNode))
     {
         auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(watermarkOperator);
         return watermarkOperator;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(operatorNode))
     {
-        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
+        auto projectOperator = NES::Util::as<PhysicalOperators::PhysicalProjectOperator>(operatorNode);
         auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
             projectOperator->getInputSchema()->getFieldNames(), projectOperator->getOutputSchema()->getFieldNames());
         parentOperator->setChild(projection);
         return projection;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode))
     {
-        auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinProbeOperator>();
+        auto probeOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode);
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
         operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
@@ -275,11 +278,11 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         pipeline.setRootOperator(joinProbeNautilus);
         return joinProbeNautilus;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {
         using namespace Runtime::Execution;
 
-        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
+        auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
         auto buildOperatorHandler = buildOperator->getJoinOperatorHandler();
 
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
@@ -365,7 +368,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto sinkOperator = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+    auto sinkOperator = NES::Util::as<PhysicalOperators::PhysicalWindowSinkOperator>(physicalOperator);
     if (sinkOperator->getWindowDefinition()->isKeyed())
     {
         return lowerKeyedWindowSinkOperator(pipeline, physicalOperator, operatorHandlers);
@@ -381,7 +384,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+    auto physicalSWS = NES::Util::as<PhysicalOperators::PhysicalWindowSinkOperator>(physicalOperator);
 
     auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
@@ -433,7 +436,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+    auto physicalSWS = NES::Util::as<PhysicalOperators::PhysicalWindowSinkOperator>(physicalOperator);
 
     auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
@@ -460,7 +463,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto sliceMerging = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+    auto sliceMerging = NES::Util::as<PhysicalOperators::PhysicalSliceMergingOperator>(physicalOperator);
     if (sliceMerging->getWindowDefinition()->isKeyed())
     {
         return lowerKeyedSliceMergingOperator(pipeline, physicalOperator, operatorHandlers);
@@ -476,7 +479,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+    auto physicalGSMO = NES::Util::as<PhysicalOperators::PhysicalSliceMergingOperator>(physicalOperator);
     auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
     operatorHandlers.emplace_back(handler);
     auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
@@ -499,7 +502,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else
     {
-        const auto timeBasedWindowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto timeBasedWindowType
+            = NES::Util::as<Windowing::TimeBasedWindowType>(physicalGSMO->getWindowDefinition()->getWindowType());
         const auto& [windowSize, windowSlide, _] = Util::getWindowingParameters(*timeBasedWindowType);
         auto actionHandler = std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
         operatorHandlers.emplace_back(actionHandler);
@@ -517,7 +521,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+    auto physicalGSMO = NES::Util::as<PhysicalOperators::PhysicalSliceMergingOperator>(physicalOperator);
 
     auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
 
@@ -566,7 +570,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else
     {
-        const auto windowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto windowType = NES::Util::as<Windowing::TimeBasedWindowType>(physicalGSMO->getWindowDefinition()->getWindowType());
         const auto& [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
         auto actionHandler = std::make_shared<Runtime::Execution::Operators::KeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
         operatorHandlers.emplace_back(actionHandler);
@@ -606,7 +610,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalPreAggregation = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    auto physicalPreAggregation = NES::Util::as<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator);
     if (physicalPreAggregation->getWindowDefinition()->isKeyed())
     {
         return lowerKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
@@ -622,11 +626,11 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    auto physicalGTLPAO = NES::Util::as<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator);
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+    auto timeWindow = NES::Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     auto timeFunction = lowerTimeFunction(timeWindow);
 
     auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
@@ -643,12 +647,12 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    auto physicalGTLPAO = NES::Util::as<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator);
 
     auto windowDefinition = physicalGTLPAO->getWindowDefinition();
     auto aggregations = windowDefinition->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+    auto timeWindow = NES::Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
     PRECONDITION(!keys.empty(), "expected at least one key field for keyed pre-aggregation operator");
@@ -680,18 +684,19 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
     std::vector<Runtime::Execution::OperatorHandlerPtr>&)
 {
-    auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
+    auto wao = NES::Util::as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(operatorPtr);
 
     ///Add either event time or ingestion time watermark strategy
-    if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>())
+    if (NES::Util::instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>(wao->getWatermarkStrategyDescriptor()))
     {
-        auto eventTimeWatermarkStrategy = wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+        auto eventTimeWatermarkStrategy
+            = NES::Util::as<Windowing::EventTimeWatermarkStrategyDescriptor>(wao->getWatermarkStrategyDescriptor());
         auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
         auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression, eventTimeWatermarkStrategy->getTimeUnit()));
         return watermarkAssignmentOperator;
     }
-    else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>())
+    else if (NES::Util::instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>(wao->getWatermarkStrategyDescriptor()))
     {
         auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(
             std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>());
@@ -730,7 +735,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerFilter(
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
-    auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
+    auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalFilterOperator>(operatorPtr);
     auto expression = expressionProvider->lowerExpression(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
 }
@@ -740,7 +745,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    auto limitOperator = operatorPtr->as<PhysicalOperators::PhysicalLimitOperator>();
+    auto limitOperator = NES::Util::as<PhysicalOperators::PhysicalLimitOperator>(operatorPtr);
     const auto handler = std::make_shared<Runtime::Execution::Operators::LimitOperatorHandler>(limitOperator->getLimit());
     operatorHandlers.push_back(handler);
     return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
@@ -749,7 +754,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerMap(
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
-    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
+    auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
     auto assignmentField = mapOperator->getMapExpression()->getField();
     auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
     auto expression = expressionProvider->lowerExpression(assignmentExpression);
@@ -761,8 +766,9 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr, uint64_t handlerIndex)
 {
     NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
-    auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
-    auto contentBasedWindowType = thresholdWindowOperator->getWindowDefinition()->getWindowType()->as<Windowing::ContentBasedWindowType>();
+    auto thresholdWindowOperator = NES::Util::as<PhysicalOperators::PhysicalThresholdWindowOperator>(operatorPtr);
+    auto contentBasedWindowType
+        = NES::Util::as<Windowing::ContentBasedWindowType>(thresholdWindowOperator->getWindowDefinition()->getWindowType());
     auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
     NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
     auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());

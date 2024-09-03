@@ -14,7 +14,9 @@
 
 #include <utility>
 #include <Expressions/ExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp))
@@ -41,7 +43,7 @@ void ExpressionNode::inferStamp(SchemaPtr schema)
     /// infer stamp on all children nodes
     for (const auto& node : children)
     {
-        node->as<ExpressionNode>()->inferStamp(schema);
+        NES::Util::as<ExpressionNode>(node)->inferStamp(schema);
     }
 }
 

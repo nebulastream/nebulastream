@@ -15,7 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -34,9 +36,9 @@ ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr& left, const
 
 bool DivExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<DivExpressionNode>())
+    if (NES::Util::instanceOf<DivExpressionNode>(rhs))
     {
-        auto otherDivNode = rhs->as<DivExpressionNode>();
+        auto otherDivNode = NES::Util::as<DivExpressionNode>(rhs);
         return getLeft()->equal(otherDivNode->getLeft()) && getRight()->equal(otherDivNode->getRight());
     }
     return false;
@@ -51,7 +53,7 @@ std::string DivExpressionNode::toString() const
 
 ExpressionNodePtr DivExpressionNode::copy()
 {
-    return DivExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return DivExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
-} /// namespace NES
+}

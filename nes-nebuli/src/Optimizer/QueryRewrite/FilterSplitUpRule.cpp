@@ -67,17 +67,17 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(expression1 && expression2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(expression1)->filter(expression2)->childOperator.
-    if (filterOperator->getPredicate()->instanceOf<AndExpressionNode>())
+    if (NES::Util::instanceOf<AndExpressionNode>(filterOperator->getPredicate()))
     {
         /// create filter that contains expression1 of the andExpression
-        auto child1 = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto child1 = NES::Util::as<LogicalFilterOperator>(filterOperator->copy());
         child1->setId(getNextOperatorId());
-        child1->setPredicate(filterOperator->getPredicate()->getChildren()[0]->as<ExpressionNode>());
+        child1->setPredicate(NES::Util::as<ExpressionNode>(filterOperator->getPredicate()->getChildren()[0]));
 
         /// create filter that contains expression2 of the andExpression
-        auto child2 = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto child2 = NES::Util::as<LogicalFilterOperator>(filterOperator->copy());
         child2->setId(getNextOperatorId());
-        child2->setPredicate(filterOperator->getPredicate()->getChildren()[1]->as<ExpressionNode>());
+        child2->setPredicate(NES::Util::as<ExpressionNode>(filterOperator->getPredicate()->getChildren()[1]));
 
         /// insert new filter with expression1 of the andExpression
         if (!filterOperator->insertBetweenThisAndChildNodes(child1))
@@ -103,26 +103,27 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
         splitUpFilters(child2);
     }
     /// it might be possible to reformulate negated expressions
-    else if (filterOperator->getPredicate()->instanceOf<NegateExpressionNode>())
+    else if (NES::Util::instanceOf<NegateExpressionNode>(filterOperator->getPredicate()))
     {
         /// In the case that the predicate is of the form !( expression1 || expression2 ) it can be reformulated to ( !expression1 && !expression2 ).
         /// The reformulated predicate can be used to apply the split up filter rule again.
-        if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<OrExpressionNode>())
+        if (NES::Util::instanceOf<OrExpressionNode>(filterOperator->getPredicate()->getChildren()[0]))
         {
             auto orExpression = filterOperator->getPredicate()->getChildren()[0];
-            auto negatedChild1 = NegateExpressionNode::create(orExpression->getChildren()[0]->as<ExpressionNode>());
-            auto negatedChild2 = NegateExpressionNode::create(orExpression->getChildren()[1]->as<ExpressionNode>());
+            auto negatedChild1 = NegateExpressionNode::create(NES::Util::as<ExpressionNode>(orExpression->getChildren()[0]));
+            auto negatedChild2 = NegateExpressionNode::create(NES::Util::as<ExpressionNode>(orExpression->getChildren()[1]));
 
             auto equivalentAndExpression = AndExpressionNode::create(negatedChild1, negatedChild2);
             filterOperator->setPredicate(equivalentAndExpression); /// changing predicate to equivalent AndExpression
             splitUpFilters(filterOperator); /// splitting up the filter
         }
         /// Reformulates predicates in the form (!!expression) to (expression)
-        else if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<NegateExpressionNode>())
+        else if (NES::Util::instanceOf<NegateExpressionNode>(filterOperator->getPredicate()->getChildren()[0]))
         {
             /// getPredicate() is the first NegateExpression; first getChildren()[0] is the second NegateExpression;
             /// second getChildren()[0] is the expressionNode that was negated twice. copy() only copies children of this expressionNode. (probably not mandatory but no reference to the negations needs to be kept)
-            filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->copy());
+            filterOperator->setPredicate(
+                NES::Util::as<ExpressionNode>(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0])->copy());
             splitUpFilters(filterOperator);
         }
     }

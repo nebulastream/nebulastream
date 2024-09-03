@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 LessExpressionNode::LessExpressionNode(LessExpressionNode* other) : LogicalBinaryExpressionNode(other)
@@ -30,9 +32,9 @@ ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr& left, cons
 
 bool LessExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LessExpressionNode>())
+    if (NES::Util::instanceOf<LessExpressionNode>(rhs))
     {
-        auto other = rhs->as<LessExpressionNode>();
+        auto other = NES::Util::as<LessExpressionNode>(rhs);
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;
@@ -47,7 +49,7 @@ std::string LessExpressionNode::toString() const
 
 ExpressionNodePtr LessExpressionNode::copy()
 {
-    return LessExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return LessExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

@@ -17,7 +17,9 @@
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES::Windowing
 {
@@ -32,11 +34,11 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeU
 
 TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionNodePtr fieldValue, const TimeUnit& unit)
 {
-    if (!fieldValue->instanceOf<FieldAccessExpressionNode>())
+    if (!NES::Util::instanceOf<FieldAccessExpressionNode>(fieldValue))
     {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", fieldValue->toString());
     }
-    auto fieldAccess = fieldValue->as<FieldAccessExpressionNode>();
+    auto fieldAccess = NES::Util::as<FieldAccessExpressionNode>(fieldValue);
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }

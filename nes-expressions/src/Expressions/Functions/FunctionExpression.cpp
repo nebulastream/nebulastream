@@ -14,6 +14,8 @@
 #include <utility>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Util/Common.hpp>
+
 
 namespace NES
 {
@@ -54,9 +56,9 @@ std::string FunctionExpression::toString() const
 
 bool FunctionExpression::equal(const NodePtr& rhs) const
 {
-    if (rhs->instanceOf<FunctionExpression>())
+    if (NES::Util::instanceOf<FunctionExpression>(rhs))
     {
-        auto otherAddNode = rhs->as<FunctionExpression>();
+        auto otherAddNode = NES::Util::as<FunctionExpression>(rhs);
         return functionName == otherAddNode->functionName;
     }
     return false;
@@ -75,7 +77,7 @@ std::vector<ExpressionNodePtr> FunctionExpression::getArguments() const
     std::vector<ExpressionNodePtr> arguments;
     for (const auto& child : getChildren())
     {
-        arguments.emplace_back(child->as<ExpressionNode>());
+        arguments.emplace_back(NES::Util::as<ExpressionNode>(child));
     }
     return arguments;
 }

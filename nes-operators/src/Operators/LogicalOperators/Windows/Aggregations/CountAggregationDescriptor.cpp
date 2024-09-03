@@ -16,7 +16,9 @@
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/CountAggregationDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 
 namespace NES::Windowing
 {
@@ -40,23 +42,23 @@ CountAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAc
 WindowAggregationDescriptorPtr CountAggregationDescriptor::on()
 {
     auto countField = FieldAccessExpressionNode::create("count");
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(countField->as<FieldAccessExpressionNode>()));
+    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(NES::Util::as<FieldAccessExpressionNode>(countField)));
 }
 
 void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
 {
     auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+    auto asFieldName = NES::Util::as<FieldAccessExpressionNode>(asField)->getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
 
     /// a count aggregation is always on an uint 64

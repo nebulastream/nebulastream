@@ -15,7 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -34,9 +36,9 @@ ExpressionNodePtr AddExpressionNode::create(ExpressionNodePtr const& left, Expre
 
 bool AddExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<AddExpressionNode>())
+    if (NES::Util::instanceOf<AddExpressionNode>(rhs))
     {
-        auto otherAddNode = rhs->as<AddExpressionNode>();
+        auto otherAddNode = NES::Util::as<AddExpressionNode>(rhs);
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
@@ -51,7 +53,7 @@ std::string AddExpressionNode::toString() const
 
 ExpressionNodePtr AddExpressionNode::copy()
 {
-    return AddExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return AddExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

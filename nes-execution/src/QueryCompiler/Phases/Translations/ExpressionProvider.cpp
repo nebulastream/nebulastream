@@ -100,7 +100,7 @@ std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const Expression
     }
     else if (auto negateNode = expressionNode->as_if<NegateExpressionNode>())
     {
-        auto child = lowerExpression(negateNode->getChildren()[0]->as<ExpressionNode>());
+        auto child = lowerExpression(NES::Util::as<ExpressionNode>(negateNode->getChildren()[0]));
         return std::make_shared<NegateExpression>(child);
     }
     else if (auto mulNode = expressionNode->as_if<MulExpressionNode>())

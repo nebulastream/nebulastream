@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 GreaterExpressionNode::GreaterExpressionNode(GreaterExpressionNode* other) : LogicalBinaryExpressionNode(other)
@@ -30,9 +32,9 @@ ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr& left, c
 
 bool GreaterExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<GreaterExpressionNode>())
+    if (NES::Util::instanceOf<GreaterExpressionNode>(rhs))
     {
-        auto other = rhs->as<GreaterExpressionNode>();
+        auto other = NES::Util::as<GreaterExpressionNode>(rhs);
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;
@@ -47,7 +49,7 @@ std::string GreaterExpressionNode::toString() const
 
 ExpressionNodePtr GreaterExpressionNode::copy()
 {
-    return GreaterExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return GreaterExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

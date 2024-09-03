@@ -21,7 +21,9 @@
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -38,14 +40,14 @@ std::vector<ExpressionNodePtr> LogicalProjectionOperator::getExpressions() const
 
 bool LogicalProjectionOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalProjectionOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
 }
 
 bool LogicalProjectionOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalProjectionOperator>())
+    if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
-        auto projection = rhs->as<LogicalProjectionOperator>();
+        auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
         return outputSchema->equals(projection->outputSchema);
     }
     return false;
@@ -72,14 +74,14 @@ bool LogicalProjectionOperator::inferSchema()
         expression->inferStamp(inputSchema);
 
         /// Build the output schema
-        if (expression->instanceOf<FieldRenameExpressionNode>())
+        if (NES::Util::instanceOf<FieldRenameExpressionNode>(expression))
         {
-            auto fieldRename = expression->as<FieldRenameExpressionNode>();
+            auto fieldRename = NES::Util::as<FieldRenameExpressionNode>(expression);
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
         }
-        else if (expression->instanceOf<FieldAccessExpressionNode>())
+        else if (NES::Util::instanceOf<FieldAccessExpressionNode>(expression))
         {
-            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+            auto fieldAccess = NES::Util::as<FieldAccessExpressionNode>(expression);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else
@@ -120,13 +122,13 @@ OperatorPtr LogicalProjectionOperator::copy()
 
 void LogicalProjectionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
@@ -141,7 +143,7 @@ void LogicalProjectionOperator::inferStringSignature()
     {
         signatureStream << " " << field << " ";
     }
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature

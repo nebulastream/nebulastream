@@ -40,7 +40,7 @@ ExpressionNodePtr BinaryExpressionNode::getLeft() const
     {
         NES_FATAL_ERROR("A binary expression always should have two children, but it had: {}", children.size());
     }
-    return children[0]->as<ExpressionNode>();
+    return Util::as<ExpressionNode>(children[0]);
 }
 
 ExpressionNodePtr BinaryExpressionNode::getRight() const
@@ -49,7 +49,7 @@ ExpressionNodePtr BinaryExpressionNode::getRight() const
     {
         NES_FATAL_ERROR("A binary expression always should have two children, but it had: {}", children.size());
     }
-    return children[1]->as<ExpressionNode>();
+    return Util::as<ExpressionNode>(children[1]);
 }
 
 } /// namespace NES

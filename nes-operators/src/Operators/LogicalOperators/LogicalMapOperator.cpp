@@ -17,7 +17,9 @@
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES
 {
 
@@ -33,14 +35,14 @@ FieldAssignmentExpressionNodePtr LogicalMapOperator::getMapExpression() const
 
 bool LogicalMapOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalMapOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalMapOperator>(rhs)->getId() == id;
 }
 
 bool LogicalMapOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalMapOperator>())
+    if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
     {
-        auto mapOperator = rhs->as<LogicalMapOperator>();
+        auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
         return mapExpression->equal(mapOperator->mapExpression);
     }
     return false;
@@ -86,7 +88,7 @@ std::string LogicalMapOperator::toString() const
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(mapExpression->copy()->as<FieldAssignmentExpressionNode>(), id);
+    auto copy = LogicalOperatorFactory::createMapOperator(NES::Util::as<FieldAssignmentExpressionNode>(mapExpression->copy()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -105,7 +107,7 @@ void LogicalMapOperator::inferStringSignature()
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
     ///Infer query signatures for child operator
-    auto child = children[0]->as<LogicalOperator>();
+    auto child = NES::Util::as<LogicalOperator>(children[0]);
     child->inferStringSignature();
     /// Infer signature for this operator.
     std::stringstream signatureStream;

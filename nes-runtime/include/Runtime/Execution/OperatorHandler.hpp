@@ -66,7 +66,6 @@ public:
      * @brief Default deconstructor
      */
     virtual ~OperatorHandler() override = default;
-
     /**
      * @brief Checks if the current operator handler is of type OperatorHandlerType
      * @tparam OperatorHandlerType

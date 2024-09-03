@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <Util/Common.hpp>
 
 namespace NES
 {
@@ -358,9 +359,9 @@ private:
     template <class NodeType>
     void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes)
     {
-        if (this->instanceOf<NodeType>())
+        if (NES::Util::instanceOf<NodeType>(this))
         {
-            foundNodes.push_back(this->as<NodeType>());
+            foundNodes.push_back(NES::Util::as<NodeType>(this));
         }
         for (auto& successor : this->children)
         {

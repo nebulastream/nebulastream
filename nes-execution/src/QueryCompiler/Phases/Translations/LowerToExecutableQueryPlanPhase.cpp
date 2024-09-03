@@ -34,8 +34,10 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
+
 
 namespace NES::QueryCompilation
 {
@@ -116,7 +118,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
+    auto sourceOperator = NES::Util::as<PhysicalOperators::PhysicalSourceOperator>(rootOperator);
     PRECONDITION(
         !dynamic_cast<const LogicalSourceDescriptor*>(&sourceOperator->getSourceDescriptorRef()),
         "Logical source name lookup is not supported");
@@ -143,7 +145,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan)
 {
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
+    auto sinkOperator = NES::Util::as<PhysicalOperators::PhysicalSinkOperator>(rootOperator);
     auto numOfProducers = pipeline->getPredecessors().size();
     auto sink = sinkProvider->lower(
         sinkOperator->getId(),
@@ -166,7 +168,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto executableOperator = rootOperator->as<ExecutableOperator>();
+    auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
@@ -240,11 +242,11 @@ LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, Physic
     switch (sourceType)
     {
         case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
+            auto csvSourceType = NES::Util::as<CSVSourceType>(physicalSourceType);
             return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
+            auto tcpSourceType = NES::Util::as<TCPSourceType>(physicalSourceType);
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
         }
         default: {

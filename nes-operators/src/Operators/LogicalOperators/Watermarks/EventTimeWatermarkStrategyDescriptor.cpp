@@ -21,7 +21,9 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES::Windowing
 {
@@ -56,7 +58,7 @@ TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() const
 
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other)
 {
-    auto eventTimeWatermarkStrategyDescriptor = other->as<EventTimeWatermarkStrategyDescriptor>();
+    auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
     return eventTimeWatermarkStrategyDescriptor->onField->equal(onField)
         && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
 }
@@ -82,7 +84,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
 {
-    auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
+    auto fieldAccessExpression = NES::Util::as<FieldAccessExpressionNode>(onField);
     auto fieldName = fieldAccessExpression->getFieldName();
     ///Check if the field exists in the schema
     auto existingField = schema->getField(fieldName);

@@ -14,7 +14,9 @@
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES
 {
 
@@ -27,7 +29,7 @@ bool LogicalUnaryOperator::inferSchema()
     /// We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children)
     {
-        if (!child->as<LogicalOperator>()->inferSchema())
+        if (!NES::Util::as<LogicalOperator>(child)->inferSchema())
         {
             return false;
         }
@@ -38,15 +40,15 @@ bool LogicalUnaryOperator::inferSchema()
         NES_THROW_RUNTIME_ERROR("UnaryOperator: this operator should have at least one child operator");
     }
 
-    auto childSchema = children[0]->as<Operator>()->getOutputSchema();
+    auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();
     for (const auto& child : children)
     {
-        if (!child->as<Operator>()->getOutputSchema()->equals(childSchema))
+        if (!NES::Util::as<Operator>(child)->getOutputSchema()->equals(childSchema))
         {
             NES_ERROR(
                 "UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
                 "this op schema= {} child schema={}",
-                child->as<Operator>()->getOutputSchema()->toString(),
+                NES::Util::as<Operator>(child)->getOutputSchema()->toString(),
                 childSchema->toString());
             return false;
         }
@@ -68,7 +70,7 @@ void LogicalUnaryOperator::inferInputOrigins()
     std::vector<OriginId> inputOriginIds;
     for (auto child : this->children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         inputOriginIds.insert(inputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

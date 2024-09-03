@@ -110,7 +110,7 @@ std::string BinaryOperator::toString() const
         leftInputSchema->toString(),
         rightInputSchema->toString(),
         outputSchema->toString(),
-        Util::concatenateVectorAsString(distinctSchemas),
+        ::Util::concatenateVectorAsString(distinctSchemas),
         fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
         fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
 }

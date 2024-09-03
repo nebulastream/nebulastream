@@ -50,7 +50,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
         auto pipeline = OperatorPipeline::createSinkPipeline();
         pipeline->prependOperator(sinkOperators->copy());
         pipelinePlan->addPipeline(pipeline);
-        processSink(pipelinePlan, pipelineOperatorMap, pipeline, sinkOperators->as<PhysicalOperators::PhysicalOperator>());
+        processSink(pipelinePlan, pipelineOperatorMap, pipeline, NES::Util::as<PhysicalOperators::PhysicalOperator>(sinkOperators));
     }
     return pipelinePlan;
 }
@@ -74,7 +74,7 @@ void DefaultPipeliningPhase::processMultiplex(
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline, node->as<PhysicalOperators::PhysicalOperator>());
+        process(pipelinePlan, pipelineOperatorMap, newPipeline, NES::Util::as<PhysicalOperators::PhysicalOperator>(node));
     }
 }
 
@@ -103,7 +103,10 @@ void DefaultPipeliningPhase::processDemultiplex(
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         process(
-            pipelinePlan, pipelineOperatorMap, newPipeline, currentOperator->getChildren()[0]->as<PhysicalOperators::PhysicalOperator>());
+            pipelinePlan,
+            pipelineOperatorMap,
+            newPipeline,
+            NES::Util::as<PhysicalOperators::PhysicalOperator>(currentOperator->getChildren()[0]));
         pipelineOperatorMap[currentOperator] = newPipeline;
     }
 }
@@ -115,14 +118,14 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
     /// for pipeline breakers we create a new pipeline
-    currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
+    currentPipeline->prependOperator(NES::Util::as<PhysicalOperators::PhysicalOperator>(currentOperator)->copy());
 
     for (const auto& node : currentOperator->getChildren())
     {
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline, node->as<PhysicalOperators::PhysicalOperator>());
+        process(pipelinePlan, pipelineOperatorMap, newPipeline, NES::Util::as<PhysicalOperators::PhysicalOperator>(node));
     }
 }
 
@@ -136,7 +139,7 @@ void DefaultPipeliningPhase::processFusibleOperator(
     currentPipeline->prependOperator(currentOperator->copy());
     for (const auto& node : currentOperator->getChildren())
     {
-        process(pipelinePlan, pipelineOperatorMap, currentPipeline, node->as<PhysicalOperators::PhysicalOperator>());
+        process(pipelinePlan, pipelineOperatorMap, currentPipeline, NES::Util::as<PhysicalOperators::PhysicalOperator>(node));
     }
 }
 
@@ -151,7 +154,7 @@ void DefaultPipeliningPhase::processSink(
         auto cp = OperatorPipeline::create();
         pipelinePlan->addPipeline(cp);
         cp->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, cp, child->as<PhysicalOperators::PhysicalOperator>());
+        process(pipelinePlan, pipelineOperatorMap, cp, NES::Util::as<PhysicalOperators::PhysicalOperator>(child));
     }
 }
 
@@ -180,23 +183,23 @@ void DefaultPipeliningPhase::process(
     const PhysicalOperators::PhysicalOperatorPtr& currentOperators)
 {
     PRECONDITION(
-        currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>(),
+        NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(currentOperators),
         "expected a PhysicalOperator, but got " + currentOperators->toString());
 
     /// Depending on the operator we apply different pipelining strategies
-    if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>())
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalSourceOperator>(currentOperators))
     {
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
-    else if (currentOperators->instanceOf<PhysicalOperators::PhysicalSinkOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalSinkOperator>(currentOperators))
     {
         processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
-    else if (currentOperators->instanceOf<PhysicalOperators::PhysicalUnionOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalUnionOperator>(currentOperators))
     {
         processMultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
-    else if (currentOperators->instanceOf<PhysicalOperators::PhysicalDemultiplexOperator>())
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalDemultiplexOperator>(currentOperators))
     {
         processDemultiplex(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
