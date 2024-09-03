@@ -32,7 +32,7 @@ public:
      * @param subExpression the input expression that generates a value that is written to the field.
      */
     WriteFieldExpression(Nautilus::Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
 private:
     const Nautilus::Record::RecordFieldIdentifier field;

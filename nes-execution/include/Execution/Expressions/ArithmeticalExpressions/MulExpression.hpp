@@ -11,18 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ReadFieldExpression.hpp>
 
-namespace NES::Runtime::Execution::Expressions
-{
+#pragma once
 
-ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field) : field(field)
-{
+#include <Execution/Expressions/Expression.hpp>
+
+namespace NES::Runtime::Execution::Expressions {
+
+/// Performs leftSubExpression * rightSubExpression
+class MulExpression : public Expression {
+  public:
+    MulExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+    VarVal execute(Record& record) const override;
+
+  private:
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
+};
+
 }
-
-VarVal ReadFieldExpression::execute(Record& record) const
-{
-    return record.read(field);
-}
-
-} /// namespace NES::Runtime::Execution::Expressions

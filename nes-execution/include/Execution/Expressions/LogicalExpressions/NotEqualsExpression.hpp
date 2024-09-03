@@ -11,31 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Runtime::Execution::Expressions
-{
+namespace NES::Runtime::Execution::Expressions {
 
-/**
- * @brief This expression reads a specific field from the input record and returns its value.
- */
-class ReadFieldExpression : public Expression
-{
+/// Returns true if the left and right subexpressions are NOT equal, otherwise false.
+class NotEqualsExpression final : public Expression {
 public:
-    /**
-     * @brief Creates a new ReadFieldExpression.
-     * @param field the field name that is read from the record.
-     */
-    ReadFieldExpression(Nautilus::Record::RecordFieldIdentifier field);
+    NotEqualsExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
     VarVal execute(Record& record) const override;
 
 private:
-    const Nautilus::Record::RecordFieldIdentifier field;
+    const ExpressionPtr leftSubExpression;
+    const ExpressionPtr rightSubExpression;
 };
-using ReadFieldExpressionPtr = std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>;
-
-} /// namespace NES::Runtime::Execution::Expressions
+}
