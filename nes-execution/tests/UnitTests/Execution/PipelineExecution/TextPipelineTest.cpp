@@ -78,7 +78,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     schema->addField("f1", DataTypeFactory::createText());
     auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
@@ -87,7 +87,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsFunction);
     scanOperator->setChild(selectionOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
 
