@@ -13,90 +13,56 @@
 */
 
 #include <algorithm>
+#include <numeric>
 #include <sstream>
-#include <Nautilus/Exceptions/InterpreterException.hpp>
+
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util.hpp>
+#include <ErrorHandling.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 
 namespace NES::Nautilus
 {
-
-Record::Record()
+Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : recordFields(fields)
 {
 }
 
-Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields))
+const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) const
 {
-}
-
-Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier)
-{
-    auto fieldsMapIterator = fields.find(fieldIdentifier);
-    if (fieldsMapIterator == fields.end())
+    if (not recordFields.contains(recordFieldIdentifier))
     {
-        std::stringstream ss;
-        std::for_each(
-            fields.begin(),
-            fields.end(),
-            [&ss](const auto& entry)
-            {
-                ss << entry.first;
-                ss << ", ";
-            });
-        throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
+        const std::string allFields = std::accumulate(
+            recordFields.begin(),
+            recordFields.end(),
+            std::string{},
+            [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
+        throw InvalidFieldException(fmt::format("Field {} not found in record {}.", recordFieldIdentifier, allFields));
     }
-    else
+    return recordFields.at(recordFieldIdentifier);
+}
+
+void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType)
+{
+    /// We can not use the insert_or_assign method, as we otherwise run into a nautilus tracing exception.
+    if (const auto [hashMapIterator, inserted] = recordFields.insert({recordFieldIdentifier, dataType}); not inserted)
     {
-        return fieldsMapIterator->second;
+        hashMapIterator->second = dataType;
     }
 }
 
-uint64_t Record::numberOfFields()
+nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record)
 {
-    return fields.size();
-}
-
-void Record::write(RecordFieldIdentifier fieldIndex, const Value<Any>& value)
-{
-    fields.insert_or_assign(fieldIndex, value);
-}
-
-bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName)
-{
-    return fields.contains(fieldName);
-}
-
-std::vector<Record::RecordFieldIdentifier> Record::getAllFields()
-{
-    std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
-    for (auto& [fieldIdentifier, value] : fields)
+    for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(record.recordFields))
     {
-        fieldIdentifierVec.emplace_back(fieldIdentifier);
+        os << fieldIdentifier.c_str() << ": " << value << ", ";
     }
-
-    return fieldIdentifierVec;
+    return os;
 }
 
-std::string Record::toString()
+nautilus::val<uint64_t> Record::getNumberOfFields() const
 {
-    std::ostringstream stringStream;
-    for (auto& [fieldIdentifier, value] : fields)
-    {
-        stringStream << fieldIdentifier << ": " << value << ", ";
-    }
-    auto tmpStr = stringStream.str();
-    tmpStr.pop_back();
-    tmpStr.pop_back();
-
-    return tmpStr;
+    return recordFields.size();
 }
 
-bool Record::operator==(const Record& rhs) const
-{
-    return fields == rhs.fields;
-}
 
-bool Record::operator!=(const Record& rhs) const
-{
-    return !(rhs == *this);
 }
-} /// namespace NES::Nautilus
