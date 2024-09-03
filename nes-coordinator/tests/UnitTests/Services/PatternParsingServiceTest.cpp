@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -342,5 +344,35 @@ TEST_F(PatternParsingServiceTest, simplePatternFail) {
     EXPECT_ANY_THROW(QueryPlanPtr queryPlan = patternParsingService->createPatternFromCodeString(patternString2));
 }
 
-//   std::string patternString =
-//        "PATTERN test:= (A[2] OR B*) FROM default_logical AS A, default_logical AS B  WHERE A.currentSpeed< A.allowedSpeed RETURN ce := [name=TU] INTO Print :: testSink ";    QueryPtr query = queryParsingService->createQueryFromCodeString(patternString);
+TEST_F(PatternParsingServiceTest, SimpleWhereConstantValueRight) {
+    //pattern string as received from the NES UI
+    std::string patternString = "PATTERN test := (A SEQ B) FROM default_logical AS A, default_logical_b AS B WHERE A.id >= 400 "
+                                "WITHIN [3 MINUTE] INTO Print :: outStream";
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
+
+    // create query plan for A
+    QueryPlanPtr queryPlanA = QueryPlan::create();
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    queryPlanA->addRootOperator(source1);
+    // create query plan for B
+    QueryPlanPtr queryPlanB = QueryPlan::create();
+    LogicalOperatorPtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    // add SEQ and window
+    queryPlanB->addRootOperator(source2);
+    NES::Query qSEQ = NES::Query(queryPlanA)
+                          .seqWith(NES::Query(queryPlanB))
+                          .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
+    queryPlanA = qSEQ.getQueryPlan();
+    // add filter for WHERE clause
+    LogicalOperatorPtr filter = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(GreaterEqualsExpressionNode::create(NES::Attribute("id").getExpressionNode(),
+                                                              NES::ExpressionItem(400).getExpressionNode())));
+    queryPlanA->appendOperatorAsNewRoot(filter);
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    queryPlanA->appendOperatorAsNewRoot(sink);
+
+    //Comparison of the expected and the actual generated query plan
+    EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan));
+}

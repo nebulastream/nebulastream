@@ -190,6 +190,13 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
                                                       std::basic_string<char> rightSourceName,
                                                       QueryPlanPtr queryPlan) const;
+    /**
+     * @brief: Parse the expression node of one side (either left or right) from the ANTLR provided context
+     * @param contextValueAsString as string
+     * @param currentExpression as string
+     * @return the ExpressionNodePtr of the created expression node (ExpressionItem for constant values, Attribute node else)
+     */
+    ExpressionNodePtr getExpressionItem(std::string contextValueAsString, std::string currentExpression);
 
   private:
     // pointers to track relationship of AST elements while retrieving pattern specification

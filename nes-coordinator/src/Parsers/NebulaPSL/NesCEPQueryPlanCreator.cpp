@@ -163,8 +163,10 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
 void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) {
     //retrieve the ExpressionNode for the filter and save it in the pattern expressionList
     std::string comparisonOperator = context->comparisonOperator()->getText();
-    auto leftExpressionNode = NES::Attribute(this->currentLeftExp).getExpressionNode();
-    auto rightExpressionNode = NES::Attribute(this->currentRightExp).getExpressionNode();
+    // get left and right expression node
+    auto leftExpressionNode = getExpressionItem(context->left->getText(), this->currentLeftExp);
+    auto rightExpressionNode = getExpressionItem(context->right->getText(), this->currentRightExp);
+
     NES::ExpressionNodePtr expression;
     NES_DEBUG("NesCEPQueryPlanCreator: exitBinaryComparisonPredicate: add filters {} {} {}",
               this->currentLeftExp,
@@ -475,6 +477,19 @@ QueryPlanPtr NesCEPQueryPlanCreator::checkIfSourceIsAlreadyConsumedSource(std::b
         return rightQueryPlan = QueryPlanBuilder::createQueryPlan(rightSourceName);
     }
     return rightQueryPlan;
+}
+
+ExpressionNodePtr NesCEPQueryPlanCreator::getExpressionItem(std::string contextValueAsString, std::string currentExpression) {
+    ExpressionNodePtr expressionNode;
+    // check if context value is a number (guaranteed by grammar if first symbol is - or a digit)
+    // and if so, create ConstantExpressionNode
+    if (contextValueAsString.at(0) == '-' || isdigit(contextValueAsString.at(0))) {
+        auto constant = std::stoi(contextValueAsString);
+        expressionNode = NES::ExpressionItem(constant).getExpressionNode();
+    } else {// else FieldExpressionNode
+        expressionNode = NES::Attribute(currentExpression).getExpressionNode();
+    }
+    return expressionNode;
 }
 
 }// namespace NES::Parsers
