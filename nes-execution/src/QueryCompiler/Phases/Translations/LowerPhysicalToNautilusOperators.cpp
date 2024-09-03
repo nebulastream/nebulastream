@@ -19,8 +19,10 @@
 #include <API/TimeUnit.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/Map.hpp>
+#include <Execution/Operators/Project.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
@@ -118,7 +120,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+    std::vector<Runtime::Execution::OperatorHandlerPtr>&)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
@@ -145,8 +147,16 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(map);
         return map;
     }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(operatorNode))
+    {
+        auto projectOperator = NES::Util::as<PhysicalOperators::PhysicalProjectOperator>(operatorNode);
+        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
+            projectOperator->getInputSchema()->getFieldNames(), projectOperator->getOutputSchema()->getFieldNames());
+        parentOperator->setChild(projection);
+        return projection;
+    }
 
-    throw UnknownPhysicalOperator();
+    throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", operatorNode->toString()));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerScan(
@@ -156,9 +166,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
-        = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+        = std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
@@ -168,8 +178,8 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
-        = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+        = std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
 }
 
