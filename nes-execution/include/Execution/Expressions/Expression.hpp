@@ -13,7 +13,7 @@
 */
 #pragma once
 #include <memory>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
 {
@@ -37,9 +37,9 @@ public:
     /**
      * @brief Evaluates the expressions on a record.
      * @param record
-     * @return Value<>
+     * @return VarVal
      */
-    virtual Value<> execute(Record& record) const = 0;
+    virtual VarVal execute(Record& record) const = 0;
     virtual ~Expression() = default;
 };
 

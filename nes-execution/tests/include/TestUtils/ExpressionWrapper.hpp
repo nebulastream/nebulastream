@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/StdInt.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
@@ -29,7 +29,7 @@ public:
         auto input = std::make_shared<ReadFieldExpression>("value");
         expression = std::make_shared<ExpressionType>(input);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> value)
+    VarVal eval(VarVal value) const
     {
         auto record = Record({{"value", value}});
         return expression->execute(record);
@@ -48,7 +48,7 @@ public:
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, rightExpression);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right)
+    [[nodiscard]] VarVal eval(VarVal left, VarVal right) const
     {
         auto record = Record({{"left", left}, {"right", right}});
         return expression->execute(record);
@@ -56,24 +56,4 @@ public:
 
     std::shared_ptr<ExpressionType> expression;
 };
-
-template <typename ExpressionType>
-class TernaryExpressionWrapper
-{
-public:
-    TernaryExpressionWrapper()
-    {
-        auto leftExpression = std::make_shared<ReadFieldExpression>("left");
-        auto midExpression = std::make_shared<ReadFieldExpression>("mid");
-        auto rightExpression = std::make_shared<ReadFieldExpression>("right");
-        expression = std::make_shared<ExpressionType>(leftExpression, midExpression, rightExpression);
-    }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> mid, Nautilus::Value<> right)
-    {
-        auto record = Record({{"left", left}, {"mid", mid}, {"right", right}});
-        return expression->execute(record);
-    }
-    std::shared_ptr<ExpressionType> expression;
-};
-
 } /// namespace NES::Runtime::Execution::Expressions
