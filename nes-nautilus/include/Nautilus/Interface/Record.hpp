@@ -14,10 +14,8 @@
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <ostream>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <unordered_map>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
 {
@@ -30,8 +28,8 @@ class Record
 {
 public:
     using RecordFieldIdentifier = std::string;
-    explicit Record();
-    explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
+    explicit Record() = default;
+    explicit Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& recordFields);
     ~Record() = default;
 
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
@@ -41,7 +39,7 @@ public:
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
 
 private:
-    std::map<RecordFieldIdentifier, Value<>> fields;
+    std::unordered_map<RecordFieldIdentifier, VarVal> recordFields;
 };
 
-} /// namespace NES::Nautilus
+}
