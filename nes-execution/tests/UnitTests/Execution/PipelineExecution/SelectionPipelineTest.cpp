@@ -17,7 +17,7 @@
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -79,7 +79,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
@@ -88,7 +88,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
 
@@ -168,7 +168,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
@@ -177,7 +177,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
 

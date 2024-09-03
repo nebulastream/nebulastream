@@ -16,13 +16,9 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>

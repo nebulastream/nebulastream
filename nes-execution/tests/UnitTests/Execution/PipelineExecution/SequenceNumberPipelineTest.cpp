@@ -22,7 +22,7 @@
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>

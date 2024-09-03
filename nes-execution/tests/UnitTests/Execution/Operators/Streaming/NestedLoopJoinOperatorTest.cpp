@@ -22,7 +22,7 @@
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>

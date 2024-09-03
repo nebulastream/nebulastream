@@ -14,7 +14,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -37,7 +37,7 @@ namespace NES::Runtime::Execution
 class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     std::unique_ptr<ExecutablePipelineProvider> provider{};
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
@@ -58,8 +58,6 @@ public:
         {
             GTEST_SKIP();
         }
-        options.dumpToConsole = true;
-        options.dumpToFile = true;
         provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
@@ -87,8 +85,8 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
     schema->addField("f11", BasicType::BOOLEAN);
     auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     scanOperator->setChild(emitOperator);

@@ -26,9 +26,9 @@
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
