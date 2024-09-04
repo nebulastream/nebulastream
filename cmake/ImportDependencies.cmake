@@ -37,7 +37,7 @@ elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
             OUTPUT_VARIABLE VCPKG_HASH
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if (NOT DEFINED ENV{VCPKG_DEPENDENCY_HASH} OR NOT $ENV{VCPKG_DEPENDENCY_HASH} STREQUAL ${VCPKG_HASH})
+    if ((NOT DEFINED $ENV{VCPKG_DEPENDENCY_HASH}) OR (NOT $ENV{VCPKG_DEPENDENCY_HASH} STREQUAL "${VCPKG_HASH}"))
         message(WARNING
                 "VCPKG Hash does not match, this is most likely due to an outdated development image."
                 "Make sure to update the current development image."
