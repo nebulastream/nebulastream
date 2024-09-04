@@ -87,6 +87,9 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<TimeStampInvocationPlugin> cPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterTimeStampInvocationPlugin()
+{
+    return std::make_unique<TimeStampInvocationPlugin>();
+}
 
 } /// namespace NES::Nautilus

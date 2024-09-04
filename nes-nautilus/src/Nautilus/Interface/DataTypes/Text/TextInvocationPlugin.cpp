@@ -50,5 +50,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<TextInvocationPlugin> TextInvocationPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterTextInvocationPlugin()
+{
+    return std::make_unique<TextInvocationPlugin>();
+}
 } /// namespace NES::Nautilus
