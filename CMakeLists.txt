@@ -37,7 +37,6 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
