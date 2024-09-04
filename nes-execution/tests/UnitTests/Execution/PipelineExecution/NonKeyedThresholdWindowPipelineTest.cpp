@@ -28,6 +28,7 @@
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -49,7 +50,7 @@ class NonKeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public
 public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
-    ExecutablePipelineProvider* provider;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
@@ -65,11 +66,11 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup NonKeyedThresholdWindowPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
