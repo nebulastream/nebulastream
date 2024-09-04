@@ -29,6 +29,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -49,7 +50,7 @@ namespace NES::Runtime::Execution
 class NonKeyedTimeWindowPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    ExecutablePipelineProvider* provider{};
+    std::unique_ptr<ExecutablePipelineProvider> provider{};
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
@@ -64,7 +65,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 };
@@ -360,7 +361,6 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     NonKeyedTimeWindowPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
