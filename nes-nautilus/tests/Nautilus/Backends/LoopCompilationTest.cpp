@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -20,6 +21,7 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 
 using namespace NES::Nautilus;
@@ -259,8 +261,7 @@ TEST_P(LoopCompilationTest, nestedElseOnlySumLoop)
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     LoopCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<LoopCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

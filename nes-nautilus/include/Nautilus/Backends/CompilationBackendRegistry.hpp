@@ -13,27 +13,18 @@
 */
 
 #pragma once
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/DumpHelper.hpp>
 
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Util/PluginRegistry.hpp>
 namespace NES::Nautilus::Backends
 {
-class Executable;
 
-/**
- * @brief The compilation backend, compiles a ir graph to an executable.
- */
-class CompilationBackend
+class CompilationBackendRegistry : public BaseRegistry<CompilationBackendRegistry, std::string, CompilationBackend>
 {
-public:
-    /**
-     * @brief Compiles ir graph to executable.
-     * @return std::unique_ptr<Executable>
-     */
-    virtual std::unique_ptr<Executable>
-    compile(std::shared_ptr<IR::IRGraph>, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
-    virtual ~CompilationBackend() = default;
 };
 
-} /// namespace NES::Nautilus::Backends
+} /// namespace NES
+
+#define INCLUDED_FROM_COMPILATION_BACKEND_REGISTRY
+#include <Nautilus/Backends/GeneratedCompilationBackendRegistrar.hpp>
+#undef INCLUDED_FROM_COMPILATION_BACKEND_REGISTRY

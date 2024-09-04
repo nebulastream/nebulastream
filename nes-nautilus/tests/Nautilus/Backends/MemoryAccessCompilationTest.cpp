@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -21,6 +22,7 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus
@@ -146,8 +148,7 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest)
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     MemoryAccessCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<MemoryAccessCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus
