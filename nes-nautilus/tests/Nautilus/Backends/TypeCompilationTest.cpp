@@ -199,7 +199,10 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterCustomTypeInvocationPlugin()
+{
+    return std::make_unique<CustomTypeInvocationPlugin>();
+}
 
 Value<> customValueType()
 {
