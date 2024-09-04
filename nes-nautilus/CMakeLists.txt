@@ -63,7 +63,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     else ()
         message(FATAL_ERROR "Cannot find mlir")
     endif (MLIR_FOUND)
-    target_compile_definitions(nes-nautilus PRIVATE USE_MLIR)
+    target_compile_definitions(nes-nautilus PUBLIC USE_MLIR)
 
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04

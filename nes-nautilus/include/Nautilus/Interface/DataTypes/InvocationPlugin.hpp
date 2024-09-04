@@ -15,7 +15,6 @@
 #include <optional>
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Util/LegacyPluginRegistry.hpp>
 namespace NES::Nautilus
 {
 
@@ -45,7 +44,4 @@ public:
     virtual std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const;
     virtual bool IsCastable(const Value<>&, const TypeIdentifier*) const;
 };
-
-using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
-
 } /// namespace NES::Nautilus

@@ -87,5 +87,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<IdentifierInvocationPlugin> intPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterIdentifierInvocationPlugin()
+{
+    return std::make_unique<IdentifierInvocationPlugin>();
+}
 } /// namespace NES::Nautilus
