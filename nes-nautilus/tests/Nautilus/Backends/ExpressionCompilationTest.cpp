@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
@@ -365,8 +367,7 @@ TEST_P(ExpressionExecutionTest, castInt8ToInt64Test2)
 INSTANTIATE_TEST_CASE_P(
     testExpressions,
     ExpressionExecutionTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<ExpressionExecutionTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

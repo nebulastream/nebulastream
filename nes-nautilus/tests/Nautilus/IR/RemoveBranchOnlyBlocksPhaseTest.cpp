@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -23,6 +24,7 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus
@@ -326,8 +328,7 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp)
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     RemoveBranchOnlyBlocksPhaseTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

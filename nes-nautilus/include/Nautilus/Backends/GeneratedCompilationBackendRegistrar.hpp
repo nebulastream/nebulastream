@@ -13,27 +13,24 @@
 */
 
 #pragma once
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/DumpHelper.hpp>
 
+#include <string>
+#ifndef INCLUDED_FROM_COMPILATION_BACKEND_REGISTRY
+#    error "This file should not be included directly! " \
+"Include instead include <Natuilus/Backends/CompilationBackendRegistry.hpp>"
+#endif
 namespace NES::Nautilus::Backends
 {
-class Executable;
+std::unique_ptr<CompilationBackend> RegisterMlirBackend();
 
-/**
- * @brief The compilation backend, compiles a ir graph to an executable.
- */
-class CompilationBackend
+}
+namespace NES
 {
-public:
-    /**
-     * @brief Compiles ir graph to executable.
-     * @return std::unique_ptr<Executable>
-     */
-    virtual std::unique_ptr<Executable>
-    compile(std::shared_ptr<IR::IRGraph>, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
-    virtual ~CompilationBackend() = default;
-};
-
-} /// namespace NES::Nautilus::Backends
+template <>
+inline void Registrar<std::string, Nautilus::Backends::CompilationBackend>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+{
+#ifdef USE_MLIR
+    registry.registerPlugin("MLIR", Nautilus::Backends::RegisterMlirBackend);
+#endif
+}
+}
