@@ -36,6 +36,24 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
     message(STATUS "Tests are enabled for single-node-worker")
+
+    # TODO 294-P
+    # This test, in combination with tests/MoldStripBug.cpp,
+    # documents that the single-node worker (and the smaller MoldStripBug.cpp)
+    # break when linking with mold and then stripping with llvm-strip-18
+    if (MOLD_EXECUTABLE AND NES_USE_MOLD_IF_AVAILABLE)
+        add_custom_command(
+                OUTPUT mold-strip-bug
+                COMMAND llvm-strip-18 -o mold-strip-bug $<TARGET_FILE:single-node>
+                DEPENDS single-node
+                COMMENT "Breaking single-node by stripping with llvm-strip-18"
+        )
+
+        add_custom_target(mold-strip-bug-single-node_broken ALL DEPENDS mold-strip-bug)
+
+        # Expects the program to fail by failing if the program exits correctly
+        add_test(NAME mold-strip-bug-single-node_broken COMMAND sh -c "./mold-strip-bug && exit 1 || exit 0")
+    endif ()
 else ()
     message(STATUS "Tests are disabled for single-node-worker")
 endif ()
