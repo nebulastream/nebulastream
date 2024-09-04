@@ -382,13 +382,6 @@ public:
     Query& project(std::vector<ExpressionNodePtr> expressions);
 
     /**
-     * This looks ugly, but we can't reference to QueryPtr at this line.
-     * @param new source name
-     * @return the query
-     */
-    Query& as(std::string const& newSourceName);
-
-    /**
      * @brief: Filter records according to the predicate. An
      * examplary usage would be: filter(Attribute("f1" < 10))
      * @param predicate as expression node

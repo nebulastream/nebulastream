@@ -181,37 +181,6 @@ public:
     bool isValid();
 
     /**
-     * @brief Checks if the current node is of type NodeType
-     * @tparam NodeType
-     * @return bool true if node is of NodeType
-     */
-    template <class NodeType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<NodeType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the node to a NodeType
-    * @tparam NodeType
-    * @return returns a shared pointer of the NodeType
-    */
-    template <class NodeType>
-    std::shared_ptr<NodeType> as()
-    {
-        if (instanceOf<NodeType>())
-        {
-            return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
-        }
-        throw std::logic_error(
-            "Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
-    }
-
-    /**
      * @brief Dynamically casts the node to a NodeType or returns nullptr.
      * @tparam NodeType
      * @return returns a shared pointer of the NodeType or nullptr if the type can't be casted.
@@ -359,9 +328,10 @@ private:
     template <class NodeType>
     void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes)
     {
-        if (NES::Util::instanceOf<NodeType>(this))
+        auto sharedThis = this->shared_from_this();
+        if (NES::Util::instanceOf<NodeType>(sharedThis))
         {
-            foundNodes.push_back(NES::Util::as<NodeType>(this));
+            foundNodes.push_back(NES::Util::as<NodeType>(sharedThis));
         }
         for (auto& successor : this->children)
         {

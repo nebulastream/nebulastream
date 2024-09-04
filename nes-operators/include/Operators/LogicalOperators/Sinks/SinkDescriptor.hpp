@@ -41,21 +41,6 @@ public:
     virtual ~SinkDescriptor() = default;
 
     /**
-    * @brief Checks if the current node is of type SinkMedium
-    * @tparam SinkType
-    * @return bool true if node is of SinkMedium
-    */
-    template <class SinkType>
-    bool instanceOf() const
-    {
-        if (dynamic_cast<const SinkType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    /**
      * @brief getter for number of origins
      * @return number of origins
      */
@@ -66,26 +51,6 @@ public:
      * @return addTimestamp
      */
     bool getAddTimestamp() const;
-
-    /**
-    * @brief Dynamically casts the node to a NodeType
-    * @tparam NodeType
-    * @return returns a shared pointer of the NodeType
-    */
-    template <class SinkType>
-    std::shared_ptr<SinkType> as() const
-    {
-        if (instanceOf<SinkType>())
-        {
-            return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-        }
-        throw std::bad_cast();
-    }
-    template <class SinkType>
-    std::shared_ptr<SinkType> as()
-    {
-        return std::const_pointer_cast<SinkType>(const_cast<const SinkDescriptor*>(this)->as<const SinkType>());
-    }
 
     template <class SinkType>
     std::shared_ptr<SinkType> as_if()
