@@ -22,7 +22,7 @@
 namespace NES::Nautilus
 {
 
-/// TODO #310: Allow cmake to generate weak function calls, which may or may not be resolved during linking.
+/// TODO(#310): Allow cmake to generate weak function calls, which may or may not be resolved during linking.
 ///       If the function was not found during linking the function will be null, but no link error is raised.
 ///       During runtime we can check if the function symbol is not null before calling the function.
 ///       The Nautilus Test adds a CustomType and provides an InvocationPlugin, this type and plugin are only
