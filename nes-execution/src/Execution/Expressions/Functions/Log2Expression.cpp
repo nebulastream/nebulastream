@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log2Expression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -86,5 +87,9 @@ Value<> Log2Expression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>> log2Expression("log2");
+std::unique_ptr<Expression> RegisterLog2Expression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary log2 function should receive one argument");
+    return std::make_unique<Log2Expression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

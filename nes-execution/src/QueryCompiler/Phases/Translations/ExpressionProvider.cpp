@@ -34,6 +34,7 @@
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -215,7 +216,7 @@ std::shared_ptr<Expression> ExpressionProvider::lowerFunctionExpression(const st
     {
         arguments.emplace_back(lowerExpression(arg));
     }
-    auto functionProvider = ExecutableFunctionRegistry::createPlugin(expressionNode->getFunctionName());
-    return functionProvider->create(arguments);
+    auto functionProvider = ExecutableFunctionRegistry::instance().create(expressionNode->getFunctionName(), arguments);
+    return functionProvider;
 }
 } /// namespace NES::QueryCompilation

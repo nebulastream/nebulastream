@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {

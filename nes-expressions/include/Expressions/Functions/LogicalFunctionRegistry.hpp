@@ -14,18 +14,13 @@
 
 #pragma once
 
-#include <Util/LegacyPluginRegistry.hpp>
+#include <Util/PluginRegistry.hpp>
 namespace NES
 {
 
 class DataType;
 class LogicalFunction;
 using DataTypePtr = std::shared_ptr<DataType>;
-
-/**
- * @brief The LogicalFunctionRegistry manages all logical functions.
- */
-using LogicalFunctionRegistry = Util::PluginFactory<LogicalFunction>;
 
 /**
  * @brief Base class for all logical functions.
@@ -57,4 +52,12 @@ public:
     [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const = 0;
 };
 
+class LogicalFunctionRegistry : public BaseRegistry<LogicalFunctionRegistry, std::string, LogicalFunction>
+{
+};
+
 } /// namespace NES
+
+#define INCLUDED_FROM_LOGICAL_FUNCTION_REGISTRY
+#include <Expressions/Functions/GeneratedLogicalFunctionRegistrar.hpp>
+#undef INCLUDED_FROM_LOGICAL_FUNCTION_REGISTRY

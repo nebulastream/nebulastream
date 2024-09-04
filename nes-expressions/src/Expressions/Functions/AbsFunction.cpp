@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -34,6 +35,9 @@ public:
     }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<AbsFunction> absFunction("abs");
+std::unique_ptr<LogicalFunction> RegisterAbsFunction()
+{
+    return std::make_unique<AbsFunction>();
+}
 
 } /// namespace NES

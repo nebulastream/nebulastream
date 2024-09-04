@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/TanExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -80,5 +81,9 @@ Value<> TanExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<TanExpression>> tanFunction("tan");
+std::unique_ptr<Expression> RegisterTanExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary tan function should receive one argument");
+    return std::make_unique<TanExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

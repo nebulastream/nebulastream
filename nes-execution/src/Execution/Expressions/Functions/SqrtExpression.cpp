@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/SqrtExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -76,5 +77,9 @@ Value<> SqrtExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SqrtExpression>> sqrtFunction("sqrt");
+std::unique_ptr<Expression> RegisterSqrtExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary sqrt function should receive one argument");
+    return std::make_unique<SqrtExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions
