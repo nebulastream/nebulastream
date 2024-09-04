@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/CbrtExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -76,5 +77,9 @@ Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CbrtExpression>> cbrtFunction("cbtr");
+std::unique_ptr<Expression> RegisterCbrtExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary cbtr function should receive one argument");
+    return std::make_unique<CbrtExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

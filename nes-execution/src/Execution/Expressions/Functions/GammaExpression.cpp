@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/GammaExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -85,5 +86,9 @@ Value<> GammaExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<GammaExpression>> gammaFunction("gamma");
+std::unique_ptr<Expression> RegisterGammaExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary gamma function should receive one argument");
+    return std::make_unique<GammaExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

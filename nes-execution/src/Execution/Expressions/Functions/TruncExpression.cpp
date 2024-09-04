@@ -15,6 +15,7 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/TruncExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -83,5 +84,10 @@ Value<> TruncExpression::execute(NES::Nautilus::Record& record) const
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
+}
+std::unique_ptr<Expression> RegisterTruncExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary trunc function should receive one argument");
+    return std::make_unique<TruncExpression>(args[0]);
 }
 } /// namespace NES::Runtime::Execution::Expressions
