@@ -62,5 +62,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<MemRefInvocationPlugin> memRefInvocationPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterMemRefInvocationPlugin()
+{
+    return std::make_unique<MemRefInvocationPlugin>();
+}
 } /// namespace NES::Nautilus

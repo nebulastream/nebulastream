@@ -54,5 +54,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<BooleanInvocationPlugin> booleanInvocationPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterBooleanInvocationPlugin()
+{
+    return std::make_unique<BooleanInvocationPlugin>();
+}
 } /// namespace NES::Nautilus
