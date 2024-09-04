@@ -16,6 +16,7 @@
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -91,7 +92,7 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto dumpHelper = DumpHelper(options.identifier, options.dumpToConsole, options.dumpToFile, options.dumpOutputPath);
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.identifier);
     timer.start();
-    auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
+    auto compiler = Nautilus::Backends::CompilationBackendRegistry::instance().create(compilationBackend);
     auto ir = createIR(dumpHelper, timer);
     auto executable = compiler->compile(ir, options, dumpHelper);
     timer.snapshot("Compilation");

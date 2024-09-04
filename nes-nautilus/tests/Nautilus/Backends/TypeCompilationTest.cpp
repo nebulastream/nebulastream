@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -25,6 +26,7 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus
@@ -477,8 +479,7 @@ TEST_P(TypeCompilationTest, castFloat)
 INSTANTIATE_TEST_CASE_P(
     testTypeCompilation,
     TypeCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<TypeCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

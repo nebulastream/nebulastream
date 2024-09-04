@@ -16,6 +16,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
@@ -1475,8 +1476,7 @@ TEST_P(StructuredControlFlowPhaseTest, 23_DetectCountedLoopsWithEqualInCompariso
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     StructuredControlFlowPhaseTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<StructuredControlFlowPhaseTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus
