@@ -21,6 +21,7 @@
 
 namespace NES::Nautilus
 {
+std::unique_ptr<InvocationPlugin> RegisterIntInvocationPlugin();
 
 /// TODO(#310): Allow cmake to generate weak function calls, which may or may not be resolved during linking.
 ///       If the function was not found during linking the function will be null, but no link error is raised.
@@ -31,12 +32,19 @@ std::unique_ptr<InvocationPlugin> __attribute__((weak)) RegisterCustomTypeInvoca
 
 std::unique_ptr<InvocationPlugin> RegisterBooleanInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterFloatInvocationPlugin();
+
+std::unique_ptr<InvocationPlugin> RegisterTextInvocationPlugin();
+
+std::unique_ptr<InvocationPlugin> RegisterTimeStampInvocationPlugin();
+
 std::unique_ptr<InvocationPlugin> RegisterIdentifierInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterIntInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterListInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterMemRefInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterTextInvocationPlugin();
 std::unique_ptr<InvocationPlugin> RegisterTimeStampInvocationPlugin();
+
+std::unique_ptr<InvocationPlugin> RegisterBooleanInvocationPlugin();
 
 }
 namespace NES
@@ -51,6 +59,8 @@ inline void Registrar<std::string, Nautilus::InvocationPlugin>::registerAll([[ma
     }
     registry.registerPlugin("boolean", RegisterBooleanInvocationPlugin);
     registry.registerPlugin("float", RegisterFloatInvocationPlugin);
+    registry.registerPlugin("text", RegisterTextInvocationPlugin);
+    registry.registerPlugin("timeStamp", RegisterTimeStampInvocationPlugin);
     registry.registerPlugin("identifier", RegisterIdentifierInvocationPlugin);
     registry.registerPlugin("int", RegisterIntInvocationPlugin);
     registry.registerPlugin("list", RegisterListInvocationPlugin);
