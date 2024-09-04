@@ -12,21 +12,17 @@
     limitations under the License.
 */
 
-#include <Execution/Pipelines/InterpreterPipelineProvider.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#pragma once
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Runtime::Execution
 {
-
-std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider()
+class ExecutablePipelineProviderRegistry : public BaseRegistry<ExecutablePipelineProviderRegistry, std::string, ExecutablePipelineProvider>
 {
-    return std::make_unique<InterpreterPipelineProvider>();
+};
 }
 
-std::unique_ptr<ExecutablePipelineStage>
-InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&)
-{
-    return std::make_unique<NautilusExecutablePipelineStage>(physicalOperatorPipeline);
-}
-
-} /// namespace NES::Runtime::Execution
+#define INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
+#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.hpp>
+#undef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY

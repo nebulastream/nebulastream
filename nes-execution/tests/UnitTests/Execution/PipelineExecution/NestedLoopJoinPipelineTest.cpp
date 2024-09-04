@@ -28,7 +28,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -66,7 +66,7 @@ public:
 class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    ExecutablePipelineProvider* provider;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
@@ -85,11 +85,11 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup NestedLoopJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         bufferManager = Memory::BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }

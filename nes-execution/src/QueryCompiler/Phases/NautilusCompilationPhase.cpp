@@ -13,6 +13,7 @@
 */
 #include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -90,7 +91,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.proxyInlining = compilerOptions->compilationStrategy == CompilationStrategy::PROXY_INLINING;
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
-    auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);
+    auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName);
     auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);
     /// we replace the current pipeline operators with an executable operator.
     /// this allows us to keep the pipeline structure.

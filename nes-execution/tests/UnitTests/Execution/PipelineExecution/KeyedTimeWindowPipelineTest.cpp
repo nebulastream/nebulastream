@@ -26,6 +26,7 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -46,7 +47,7 @@ class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelin
 {
 public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    ExecutablePipelineProvider* provider{};
+    std::unique_ptr<ExecutablePipelineProvider> provider{};
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
@@ -61,7 +62,7 @@ public:
     void SetUp() override
     {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
-        provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -284,7 +285,6 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedTimeWindowPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
