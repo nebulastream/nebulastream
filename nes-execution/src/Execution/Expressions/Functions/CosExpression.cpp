@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/CosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -77,5 +78,9 @@ Value<> CosExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CosExpression>> cosFunction("cos");
+std::unique_ptr<Expression> RegisterCosExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary cos function should receive one argument");
+    return std::make_unique<CosExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

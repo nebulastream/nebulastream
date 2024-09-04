@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -78,5 +79,9 @@ Value<> AcosExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AcosExpression>> acosFunction("acos");
+std::unique_ptr<Expression> RegisterAcosExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary acos function should receive one argument");
+    return std::make_unique<AcosExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

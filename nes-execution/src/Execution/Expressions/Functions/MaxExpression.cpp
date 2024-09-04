@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/MaxExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -97,5 +98,9 @@ Value<> MaxExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<MaxExpression>> maxFunction("max");
+std::unique_ptr<Expression> RegisterMaxExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 2, "The binary max function should receive two arguments");
+    return std::make_unique<MaxExpression>(args[0], args[1]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

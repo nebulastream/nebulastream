@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/Atan2Expression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -60,5 +61,9 @@ Value<> Atan2Expression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<Atan2Expression>> atan2Function("atan");
+std::unique_ptr<Expression> RegisterAtan2Expression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 2, "The binary atan function should receive two arguments");
+    return std::make_unique<Atan2Expression>(args[0], args[1]);
+}
 } /// namespace NES::Runtime::Execution::Expressions
