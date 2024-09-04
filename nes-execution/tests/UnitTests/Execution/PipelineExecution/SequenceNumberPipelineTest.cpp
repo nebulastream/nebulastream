@@ -34,6 +34,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -55,7 +56,7 @@ namespace NES::Runtime::Execution
 class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    ExecutablePipelineProvider* provider;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
@@ -71,11 +72,11 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup SequenceNumberPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -446,8 +447,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     SequenceNumberPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

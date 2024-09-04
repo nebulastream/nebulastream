@@ -13,9 +13,9 @@
 */
 
 #pragma once
+#include <ranges>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/LegacyPluginRegistry.hpp>
 namespace NES::Runtime::Execution
 {
 class ExecutablePipelineStage;
@@ -36,7 +36,5 @@ public:
     create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&) = 0;
     virtual ~ExecutablePipelineProvider() = default;
 };
-
-using ExecutablePipelineProviderRegistry = NES::Util::NamedPluginRegistry<ExecutablePipelineProvider>;
 
 } /// namespace NES::Runtime::Execution

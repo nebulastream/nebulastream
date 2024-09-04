@@ -25,6 +25,7 @@
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -47,7 +48,7 @@ class KeyedThresholdWindowPipelineTest : public Testing::BaseUnitTest, public Ab
 public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
-    ExecutablePipelineProvider* provider;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
@@ -63,7 +64,7 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -283,7 +284,6 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedThresholdWindowPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<KeyedThresholdWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
