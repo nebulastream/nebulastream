@@ -47,12 +47,7 @@ jobs:
       - name: Calculate and lookup hash
         id: hash-and-lookup
         run: |
-          # Compute the hash from files in vcpkg/ and docker/dependency/ directories
-          echo "Calculating checksum for dependency files:"
-          find vcpkg/ docker/dependency/ -type f
-          
-          # we set LC_ALL to override the system-specific locale, to have consistent sort order
-          HASH=$(find vcpkg/ docker/dependency/ -type f -exec sha256sum {} \; | LC_ALL=C sort -k 2 | cut -d ' ' -f1 | sha256sum | cut -d ' ' -f1)
+          HASH=$(docker/dependency/hash_dependencies.sh)
           echo "Using Hash: $HASH"
           
           # Check if the Docker manifest exists for the computed hash
