@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/SinExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -86,5 +87,9 @@ Value<> SinExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<SinExpression>> sinFunction("sin");
+std::unique_ptr<Expression> RegisterSinExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary sin function should receive one argument");
+    return std::make_unique<SinExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

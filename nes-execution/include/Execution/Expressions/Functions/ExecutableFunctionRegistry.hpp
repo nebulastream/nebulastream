@@ -15,60 +15,19 @@
 #pragma once
 
 #include <Execution/Expressions/Expression.hpp>
-#include <Util/LegacyPluginRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
 
-/**
- * @brief The function provider, is the base class, which registers an expression in the engine.
- */
-class FunctionExpressionProvider
+class ExecutableFunctionRegistry
+    : public BaseRegistry<ExecutableFunctionRegistry, std::string, Expression, const std::vector<ExpressionPtr>&>
 {
-public:
-    /**
-     * @brief Creates a new function expression, which a set of arguments.
-     * @param args aruments for the function expression
-     * @return std::unique_ptr<Expression>
-     */
-    virtual std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) = 0;
-    virtual ~FunctionExpressionProvider() = default;
 };
-
-/**
- * @brief A function provider for unary function expressions.
- * @tparam T
- */
-template <typename T>
-class UnaryFunctionProvider : public FunctionExpressionProvider
-{
-public:
-    std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override
-    {
-        NES_ASSERT(args.size() == 1, "A unary function should receive one argument");
-        return std::make_unique<T>(args[0]);
-    };
-};
-
-/**
- * @brief A function provider for binary function expressions.
- * @tparam T
- */
-template <typename T>
-class BinaryFunctionProvider : public FunctionExpressionProvider
-{
-public:
-    std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override
-    {
-        NES_ASSERT(args.size() == 2, "A binary function should receive two arguments");
-        return std::make_unique<T>(args[0], args[1]);
-    };
-};
-
-/**
- * @brief The ExecutableFunctionRegistry manages all executable function expressions for the engine.
- */
-using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;
 
 } /// namespace NES::Runtime::Execution::Expressions
+
+#define INCLUDED_FROM_EXECUTABLE_FUNCTION_REGISTRY
+#include <Execution/Expressions/Functions/GeneratedExecutableFunctionRegistrar.hpp>
+#undef INCLUDED_FROM_EXECUTABLE_FUNCTION_REGISTRY

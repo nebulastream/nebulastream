@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/PowerExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -82,5 +83,9 @@ Value<> PowerExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<PowerExpression>> powerFunction("power");
+std::unique_ptr<Expression> RegisterPowerExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 2, "The binary power function should receive two arguments");
+    return std::make_unique<PowerExpression>(args[0], args[1]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

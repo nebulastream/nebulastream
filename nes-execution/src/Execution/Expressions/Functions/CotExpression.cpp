@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Functions/CotExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -85,5 +86,9 @@ Value<> CotExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CotExpression>> cotFunction("cot");
+std::unique_ptr<Expression> RegisterCotExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary cot function should receive one argument");
+    return std::make_unique<CotExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

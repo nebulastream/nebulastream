@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -35,6 +36,9 @@ public:
     }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<LnFunction> logFunction("ln");
+std::unique_ptr<LogicalFunction> RegisterLnFunction()
+{
+    return std::make_unique<LnFunction>();
+}
 
 } /// namespace NES

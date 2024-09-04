@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/MinExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -97,5 +98,9 @@ Value<> MinExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<MinExpression>> minFunction("min");
+std::unique_ptr<Expression> RegisterMinExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 2, "The binary min function should receive two arguments");
+    return std::make_unique<MinExpression>(args[0], args[1]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

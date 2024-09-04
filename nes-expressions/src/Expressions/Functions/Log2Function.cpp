@@ -13,6 +13,7 @@
 */
 
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -36,6 +37,9 @@ public:
     }
 };
 
-[[maybe_unused]] const static LogicalFunctionRegistry::Add<Log2Function> logFunction("log2");
+std::unique_ptr<LogicalFunction> RegisterLog2Function()
+{
+    return std::make_unique<Log2Function>();
+}
 
 } /// namespace NES

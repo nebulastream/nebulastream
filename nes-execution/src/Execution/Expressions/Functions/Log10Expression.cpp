@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log10Expression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -87,5 +88,9 @@ Value<> Log10Expression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log10Expression>> log10Expression("log10");
+std::unique_ptr<Expression> RegisterLog10Expression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary log10 function should receive one argument");
+    return std::make_unique<Log10Expression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions
