@@ -24,7 +24,7 @@ class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 }// namespace NES
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer {
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
@@ -63,5 +63,5 @@ class ChangeLogEntry {
      */
     std::set<OperatorId> computePoSet();
 };
-}// namespace NES::Optimizer::Experimental
+}// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_

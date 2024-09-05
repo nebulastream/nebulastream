@@ -39,6 +39,8 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     bool stop(Runtime::QueryTerminationType termination) override;
 
+    bool performSoftStop() override;
+
     Runtime::MemoryLayouts::TestTupleBuffer getBuffer();
 
     void emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData = true);

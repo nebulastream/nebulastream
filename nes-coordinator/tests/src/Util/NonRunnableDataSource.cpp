@@ -66,6 +66,12 @@ void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBuf
     DataSource::emitWork(buffer, addBufferMetaData);
 }
 
+bool NonRunnableDataSource::performSoftStop() {
+    DefaultSource::performSoftStop();
+    canTerminate.set_value(true);
+    return true;
+}
+
 DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager,
                                       const Runtime::QueryManagerPtr& queryManager,

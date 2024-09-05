@@ -211,6 +211,23 @@ class TCPSourceType : public PhysicalSourceType {
      */
     void setBytesUsedForSocketBufferSizeTransfer(uint32_t bytesUsedForSocketBufferSizeTransferValue);
 
+    const Configurations::BoolConfigOption& getPersistentTcpSource() const;
+
+    /**
+     * @brief set the flag to define the behavior of the TCP source to be a persistentTcpSource, i.e., the tcp source should always read from the same file descriptor
+     * @param persistentTcpSource: true or false
+     */
+    void setPersistentTcpSource(bool persistentTcpSource);
+
+    const Configurations::BoolConfigOption& addIngestionTimeEnabled() const;
+
+    /**
+     * @brief set flag to add ingestion timestamp to incoming tuple. TCP source will use the "ingestionTime" field defined in the schema.
+     * If field not defined then error will occur.
+     * @param addIngestionTime: true or false
+     */
+    void setAddIngestionTime(bool addIngestionTime);
+
   private:
     /**
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
@@ -241,6 +258,8 @@ class TCPSourceType : public PhysicalSourceType {
     Configurations::CharConfigOption tupleSeparator;
     Configurations::IntConfigOption socketBufferSize;
     Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
+    Configurations::BoolConfigOption persistentTCPSource;
+    Configurations::BoolConfigOption addIngestionTime;
 };
 }// namespace NES
 #endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_

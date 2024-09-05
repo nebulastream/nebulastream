@@ -69,6 +69,32 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
+class ChangeLogEntry;
+using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
+
+/**
+ * @brief This struct holds the placement removal and addition deployment contexts. This is necessary as after a placement
+ * amendment we might want to restart a running query by first removing the existing placements and then adding new one.
+ */
+struct DeploymentUnit {
+
+    std::set<DeploymentContextPtr> deploymentRemovalContexts;
+    std::set<DeploymentContextPtr> deploymentAdditionContexts;
+
+    DeploymentUnit(std::set<DeploymentContextPtr> deploymentRemovalContexts,
+                   std::set<DeploymentContextPtr> deploymentAdditionContexts)
+        : deploymentRemovalContexts(deploymentRemovalContexts), deploymentAdditionContexts(deploymentAdditionContexts){};
+
+    bool containsDeploymentContext() { return !deploymentAdditionContexts.empty() || !deploymentRemovalContexts.empty(); }
+
+    std::set<DeploymentContextPtr> getAllDeploymentContexts() {
+        std::set<DeploymentContextPtr> combinedDeploymentContexts;
+        combinedDeploymentContexts.insert(deploymentRemovalContexts.begin(), deploymentRemovalContexts.end());
+        combinedDeploymentContexts.insert(deploymentAdditionContexts.begin(), deploymentAdditionContexts.end());
+        return combinedDeploymentContexts;
+    }
+};
+
 static std::atomic_uint64_t counter{0};
 
 /**
@@ -97,7 +123,7 @@ class QueryPlacementAmendmentPhase {
      * @return true is placement amendment successful.
      * @throws QueryPlacementException
      */
-    std::set<DeploymentContextPtr> execute(const SharedQueryPlanPtr& sharedQueryPlan);
+    DeploymentUnit execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
   private:
     explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
@@ -140,12 +166,40 @@ class QueryPlacementAmendmentPhase {
      */
     BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy);
 
+    /**
+     * @brief perform placement removal for all operators marked for deletion
+     * @param sharedQueryId: id of the shared query plan
+     * @param upstreamOperators: the upstream operators
+     * @param downstreamOperators: the downstream operators
+     * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
+     * @param deploymentContexts: map containing un-deployment contexts for removed placements
+     */
+    void handlePlacementRemoval(SharedQueryId sharedQueryId,
+                                const std::set<LogicalOperatorPtr>& upstreamOperators,
+                                const std::set<LogicalOperatorPtr>& downstreamOperators,
+                                DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+                                std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts);
+
+    /**
+     * @brief perform placement addition for all operators with missing placements
+     * @param placementStrategy: the placement strategy
+     * @param upstreamOperators: upstream operators
+     * @param downstreamOperators: downstream operators
+     * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
+     * @param deploymentContexts: map containing deployment contexts for newly added placements
+     */
+    void handlePlacementAddition(PlacementStrategy placementStrategy,
+                                 SharedQueryId sharedQueryId,
+                                 const std::set<LogicalOperatorPtr>& upstreamOperators,
+                                 const std::set<LogicalOperatorPtr>& downstreamOperators,
+                                 DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+                                 std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts);
+
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     z3::ContextPtr z3Context;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
-    PlacementAmendmentMode placementAmendmentMode;
 };
 }// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTAMENDMENTPHASE_HPP_

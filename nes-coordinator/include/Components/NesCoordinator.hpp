@@ -134,10 +134,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     /**
     * @brief method to return the query statistics
-    * @param id of the query
+    * @param id of the shared query
     * @return vector of queryStatistics
     */
-    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(QueryId queryId);
+    std::vector<Runtime::QueryStatisticsPtr> getQueryStatistics(SharedQueryId sharedQueryId);
 
     /**
      * @brief catalog method for debug use only

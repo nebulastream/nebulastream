@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <algorithm>
@@ -126,6 +127,13 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() cons
 }
 
 QueryState DecomposedQueryPlan::getState() const { return currentState; }
+
+void DecomposedQueryPlan::refreshOperatorIds() {
+    for (const auto& logicalOperator : getAllOperators()) {
+        logicalOperator->addProperty(QueryCompilation::LOGICAL_OPERATOR_ID_KEY, logicalOperator->getId());
+        logicalOperator->setId(getNextOperatorId());
+    }
+}
 
 void DecomposedQueryPlan::setState(QueryState newState) { currentState = newState; }
 

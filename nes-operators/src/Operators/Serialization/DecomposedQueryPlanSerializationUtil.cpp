@@ -20,6 +20,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES {
@@ -67,8 +68,11 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     //Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
-        operatorIdToOperatorMap[serializedOperator.operatorid()] =
-            OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        const OperatorPtr& deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        //Set the operator id sent by coordinator to the logical operator property
+        const auto& operatorId = OperatorId(serializedOperator.operatorid());
+        deserializedOperator->setId(operatorId);
+        operatorIdToOperatorMap[serializedOperator.operatorid()] = deserializedOperator;
     }
 
     //Add deserialized children

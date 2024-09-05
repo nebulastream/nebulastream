@@ -30,7 +30,7 @@ namespace NES {
 
 class E2ECoordinatorMultiWorkerTest : public Testing::BaseIntegrationTest {
   public:
-    uint16_t timeoutMs = 5;
+    uint16_t timeoutMs = 100;
     static void SetUpTestCase() {
         NES::Logger::setupLogging("E2ECoordinatorWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");

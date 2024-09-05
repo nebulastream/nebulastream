@@ -121,9 +121,8 @@ std::vector<AbstractRequestPtr> StopQueryRequest::executeRequestLogic(const Stor
         // Actual Result:
         //  - All queries are set to stopped and the whole shared query plan is removed.
         bool success = amendmentInstance->getFuture().get();
-        // If successful then remove the queries marked for removal from the shared query plan
-        if (success) {
-            sharedQueryPlan->removeQueryMarkedForRemoval();
+        if (!success) {
+            NES_ERROR("Unable to stop query {}", queryId);
         }
 
         //5. Mark query as stopped

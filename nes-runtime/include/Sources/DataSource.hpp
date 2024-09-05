@@ -167,6 +167,13 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t getNumberOfGeneratedBuffers() const;
 
     /**
+     * @brief This method will mark the running as false this will result in 1. the interruption of data gathering loop
+     * and 2. initiation of soft stop routine.
+     * @return true if successfully interrupted else false
+     */
+    virtual bool performSoftStop();
+
+    /**
      * @brief method to set the sampling interval
      * @note the source will sleep for interval seconds and then produce the next buffer
      * @param interal to gather

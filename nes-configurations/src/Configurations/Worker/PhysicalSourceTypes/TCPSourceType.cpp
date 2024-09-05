@@ -81,7 +81,13 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
       bytesUsedForSocketBufferSizeTransfer(Configurations::ConfigurationOption<uint32_t>::create(
           Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG,
           0,
-          "Number of bytes used to identify the size of the next incoming message")) {
+          "Number of bytes used to identify the size of the next incoming message")),
+      persistentTCPSource(Configurations::ConfigurationOption<bool>::create(Configurations::PERSISTENT_TCP_SOURCE,
+                                                                            false,
+                                                                            "Is TCP source needs to use persistent connection")),
+      addIngestionTime(Configurations::ConfigurationOption<bool>::create(Configurations::ADD_INGESTION_TIME,
+                                                                         false,
+                                                                         "Add ingestion time to the tuple")) {
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
@@ -118,6 +124,12 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName,
     }
     if (sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG) != sourceConfigMap.end()) {
         inputFormat->setInputFormatEnum(sourceConfigMap.find(Configurations::INPUT_FORMAT_CONFIG)->second);
+    }
+    if (sourceConfigMap.find(Configurations::PERSISTENT_TCP_SOURCE) != sourceConfigMap.end()) {
+        persistentTCPSource->setValue((sourceConfigMap.find(Configurations::PERSISTENT_TCP_SOURCE)->second == "true"));
+    }
+    if (sourceConfigMap.find(Configurations::ADD_INGESTION_TIME) != sourceConfigMap.end()) {
+        addIngestionTime->setValue((sourceConfigMap.find(Configurations::ADD_INGESTION_TIME)->second == "true"));
     }
     switch (decideMessageSize->getValue()) {
         case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
@@ -189,6 +201,14 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
         NES_THROW_RUNTIME_ERROR(
             "TCPSourceType: you have not decided how to obtain the size of a message! Please define decideMessageSize.");
     }
+    if (!yamlConfig[Configurations::PERSISTENT_TCP_SOURCE].As<std::string>().empty()
+        && yamlConfig[Configurations::PERSISTENT_TCP_SOURCE].As<std::string>() != "\n") {
+        persistentTCPSource->setValue(yamlConfig[Configurations::PERSISTENT_TCP_SOURCE].As<bool>());
+    }
+    if (!yamlConfig[Configurations::ADD_INGESTION_TIME].As<std::string>().empty()
+        && yamlConfig[Configurations::ADD_INGESTION_TIME].As<std::string>() != "\n") {
+        addIngestionTime->setValue(yamlConfig[Configurations::ADD_INGESTION_TIME].As<bool>());
+    }
     switch (decideMessageSize->getValue()) {
         case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
             if (!yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>().empty()
@@ -235,6 +255,7 @@ std::string TCPSourceType::toString() {
     ss << tupleSeparator->toStringNameCurrentValue();
     ss << socketBufferSize->toStringNameCurrentValue();
     ss << bytesUsedForSocketBufferSizeTransfer->toStringNameCurrentValue();
+    ss << persistentTCPSource->toStringNameCurrentValue();
     ss << "}";
     return ss.str();
 }
@@ -253,6 +274,8 @@ bool TCPSourceType::equal(const PhysicalSourceTypePtr& other) {
         && decideMessageSize->getValue() == otherSourceConfig->decideMessageSize->getValue()
         && tupleSeparator->getValue() == otherSourceConfig->tupleSeparator->getValue()
         && socketBufferSize->getValue() == otherSourceConfig->socketBufferSize->getValue()
+        && persistentTCPSource->getValue() == otherSourceConfig->persistentTCPSource->getValue()
+        && addIngestionTime->getValue() == otherSourceConfig->addIngestionTime->getValue()
         && bytesUsedForSocketBufferSizeTransfer->getValue()
         == otherSourceConfig->bytesUsedForSocketBufferSizeTransfer->getValue();
 }
@@ -268,6 +291,8 @@ void TCPSourceType::reset() {
     setTupleSeparator(tupleSeparator->getDefaultValue());
     setSocketBufferSize(socketBufferSize->getDefaultValue());
     setBytesUsedForSocketBufferSizeTransfer(bytesUsedForSocketBufferSizeTransfer->getDefaultValue());
+    setPersistentTcpSource(persistentTCPSource->getDefaultValue());
+    setPersistentTcpSource(persistentTCPSource->getDefaultValue());
 }
 
 Configurations::StringConfigOption TCPSourceType::getSocketHost() const { return socketHost; }
@@ -281,6 +306,10 @@ void TCPSourceType::setSocketPort(uint32_t portValue) { socketPort->setValue(por
 Configurations::IntConfigOption TCPSourceType::getSocketDomain() const { return socketDomain; }
 
 void TCPSourceType::setSocketDomain(uint32_t domainValue) { socketDomain->setValue(domainValue); }
+
+const Configurations::BoolConfigOption& TCPSourceType::getPersistentTcpSource() const { return persistentTCPSource; }
+
+void TCPSourceType::setPersistentTcpSource(bool persistentTcpSource) { persistentTCPSource->setValue(persistentTcpSource); }
 
 void TCPSourceType::setSocketDomainViaString(const std::string& domainValue) {
     if (strcasecmp(domainValue.c_str(), "AF_INET") == 0) {
@@ -332,12 +361,18 @@ void TCPSourceType::setDecideMessageSize(Configurations::TCPDecideMessageSize de
 }
 
 Configurations::TCPDecideMessageSizeConfigOption TCPSourceType::getDecideMessageSize() const { return decideMessageSize; }
+
 void TCPSourceType::setSocketBufferSize(uint32_t socketBufferSizeValue) { socketBufferSize->setValue(socketBufferSizeValue); }
+
 Configurations::IntConfigOption TCPSourceType::getBytesUsedForSocketBufferSizeTransfer() const {
     return bytesUsedForSocketBufferSizeTransfer;
 }
 void TCPSourceType::setBytesUsedForSocketBufferSizeTransfer(uint32_t bytesUsedForSocketBufferSizeTransferValue) {
     bytesUsedForSocketBufferSizeTransfer->setValue(bytesUsedForSocketBufferSizeTransferValue);
 }
+
+const Configurations::BoolConfigOption& TCPSourceType::addIngestionTimeEnabled() const { return addIngestionTime; }
+
+void TCPSourceType::setAddIngestionTime(bool addIngestionTime) { this->addIngestionTime->setValue(addIngestionTime); }
 
 }// namespace NES

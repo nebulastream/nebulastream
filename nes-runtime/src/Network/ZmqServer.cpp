@@ -391,6 +391,8 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                         NES_ASSERT2_FMT(idx >= 0, "Invalid child index: " << idx);
                     }
 
+                    NES_TRACE("ZmqSink: Data received with sequence number {} successful",
+                              bufferHeader->sequenceData.sequenceNumber);
                     constexpr auto defaultChunkNumber = 1;
                     constexpr auto isLastChunk = true;
                     exchangeProtocol.onBuffer(*nesPartition,
@@ -441,10 +443,10 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
-                    NES_DEBUG("ZmqServer({}:{}): EndOfStream received for channel ",
-                              this->hostname,
-                              this->currentPort,
-                              eosMsg.getChannelId());
+                    NES_WARNING("ZmqServer({}:{}): EndOfStream received for channel ",
+                                this->hostname,
+                                this->currentPort,
+                                eosMsg.getChannelId());
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }

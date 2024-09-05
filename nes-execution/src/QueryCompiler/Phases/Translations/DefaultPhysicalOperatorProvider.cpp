@@ -75,6 +75,7 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
 #include <utility>
@@ -145,7 +146,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                               logicalSourceOperator->getInputSchema(),
                                                               logicalSourceOperator->getOutputSchema(),
                                                               logicalSourceOperator->getSourceDescriptor());
-        physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        physicalSourceOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
         operatorNode->replace(physicalSourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperator>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperator>();
@@ -154,7 +155,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                                                     logicalSinkOperator->getInputSchema(),
                                                                                     logicalSinkOperator->getOutputSchema(),
                                                                                     logicalSinkOperator->getSinkDescriptor());
-        physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        physicalSinkOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
         operatorNode->replace(physicalSinkOperator);
         decomposedQueryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
@@ -163,7 +164,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                                                         filterOperator->getInputSchema(),
                                                                                         filterOperator->getOutputSchema(),
                                                                                         filterOperator->getPredicate());
-        physicalFilterOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        physicalFilterOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperator>()) {
         lowerWindowOperator(operatorNode);
@@ -185,6 +186,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const DecomposedQueryPl
                                                                                       limitOperator->getInputSchema(),
                                                                                       limitOperator->getOutputSchema(),
                                                                                       limitOperator->getLimit());
+        physicalLimitOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
         operatorNode->replace(physicalLimitOperator);
     } else if (operatorNode->instanceOf<Statistic::LogicalStatisticWindowOperator>()) {
         lowerStatisticBuildOperator(*operatorNode->as<Statistic::LogicalStatisticWindowOperator>());
@@ -260,8 +262,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperator
                                                                                       projectOperator->getInputSchema(),
                                                                                       projectOperator->getOutputSchema(),
                                                                                       projectOperator->getExpressions());
-
-    physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
+    physicalProjectOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
     operatorNode->replace(physicalProjectOperator);
 }
 
@@ -283,7 +284,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
                                                                               mapOperator->getInputSchema(),
                                                                               mapOperator->getOutputSchema(),
                                                                               mapOperator->getMapExpression());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+    physicalMapOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -293,7 +294,7 @@ void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorP
                                                                                  mapUDFOperator->getInputSchema(),
                                                                                  mapUDFOperator->getOutputSchema(),
                                                                                  mapUDFOperator->getUDFDescriptor());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+    physicalMapOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -303,7 +304,7 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOpera
                                                                                      flatMapUDFOperator->getInputSchema(),
                                                                                      flatMapUDFOperator->getOutputSchema(),
                                                                                      flatMapUDFOperator->getUDFDescriptor());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+    physicalMapOperator->addProperty(LOGICAL_OPERATOR_ID_KEY, operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
     operatorNode->replace(physicalMapOperator);
 }
 
@@ -601,7 +602,8 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
                                                                                windowInputSchema,
                                                                                windowOutputSchema,
                                                                                windowDefinition);
-                thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+                thresholdWindowPhysicalOperator->addProperty(LOGICAL_OPERATOR_ID_KEY,
+                                                             operatorNode->getProperty(LOGICAL_OPERATOR_ID_KEY));
 
                 operatorNode->replace(thresholdWindowPhysicalOperator);
                 return;

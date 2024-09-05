@@ -52,6 +52,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <string>
 #include <utility>
@@ -87,6 +88,7 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
                                                                      nodeEngine->getQueryManager(),
                                                                      nodeEngine->getBufferManager());
 }
+
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     const OperatorPipelinePtr& pipeline,
     std::vector<DataSourcePtr>& sources,
@@ -172,7 +174,12 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(sourceOperator->getId(),
+    if (!sourceOperator->hasProperty(LOGICAL_OPERATOR_ID_KEY)) {
+        throw QueryCompilationException(
+            "Logical operator id not found for the source operator while creating executable query plan.");
+    }
+    auto logicalOperatorId = std::any_cast<OperatorId>(sourceOperator->getProperty(LOGICAL_OPERATOR_ID_KEY));
+    auto source = sourceProvider->lower(logicalOperatorId,
                                         sourceOperator->getOriginId(),
                                         sourceOperator->getStatisticId(),
                                         sourceDescriptor,

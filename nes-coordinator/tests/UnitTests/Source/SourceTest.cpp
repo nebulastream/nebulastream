@@ -861,7 +861,8 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
     ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(
+        this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),
               Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -910,7 +911,8 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                                                          this->nodeEngine->getQueryManager(),
                                                                          this->nodeEngine->getBufferManager());
     ASSERT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    ASSERT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(
+        this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     ASSERT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(this->queryId)),
               Runtime::Execution::ExecutableQueryPlanStatus::Running);
     EXPECT_CALL(*mDataSource, receiveData()).Times(Exactly(1));
@@ -1697,7 +1699,8 @@ TEST_F(SourceTest, TCPSourcePrint) {
         "5000\nsocketDomain: "
         "2\nsocketType: 1\nflushIntervalMS: -1\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
-        "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
+        "0\nbytesUsedForSocketBufferSizeTransfer: 0\n"
+        "persistentTcpSource: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
 }
@@ -1735,7 +1738,8 @@ TEST_F(SourceTest, TCPSourcePrintWithChangedValues) {
         "5000\nsocketDomain: "
         "10\nsocketType: 5\nflushIntervalMS: 100\ninputFormat: CSV\ndecideMessageSize: TUPLE_SEPARATOR\ntupleSeparator: "
         "\n\nsocketBufferSize: "
-        "0\nbytesUsedForSocketBufferSizeTransfer: 0\n}";
+        "0\nbytesUsedForSocketBufferSizeTransfer: 0\n"
+        "persistentTcpSource: 0\n}";
 
     EXPECT_EQ(tcpDataSource.toString(), expected);
 }

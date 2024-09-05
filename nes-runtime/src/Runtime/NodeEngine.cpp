@@ -75,7 +75,7 @@ NodeEngine::NodeEngine(std::vector<PhysicalSourceTypePtr> physicalSources,
         // nop
     }));
     if (!this->queryManager->startThreadPool(numberOfBuffersPerWorker)) {
-        NES_ERROR("Runtime: error while start thread pool");
+        NES_ERROR("error while start thread pool");
         throw Exceptions::RuntimeException("Error while starting thread pool");
     }
     NES_DEBUG("NodeEngine(): thread pool successfully started");
@@ -88,22 +88,23 @@ NodeEngine::~NodeEngine() {
     NES_ASSERT(stop(), "Cannot stop node engine");
 }
 
-bool NodeEngine::deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
+bool NodeEngine::deployExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: deployQueryInNodeEngine query using qep with sharedQueryId: {}", queryExecutionPlan->getSharedQueryId());
-    bool successRegister = registerExecutableQueryPlan(queryExecutionPlan);
+    NES_DEBUG("deployExecutableQueryPlan query using qep with sharedQueryId: {}", executableQueryPlan->getSharedQueryId());
+    bool successRegister = registerExecutableQueryPlan(executableQueryPlan);
     if (!successRegister) {
-        NES_ERROR("Runtime::deployQueryInNodeEngine: failed to register query");
+        NES_ERROR("Runtime::deployExecutableQueryPlan: failed to register query");
         return false;
     }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully register query");
+    NES_DEBUG("Runtime::deployExecutableQueryPlan: successfully register query");
 
-    bool successStart = startQuery(queryExecutionPlan->getSharedQueryId(), queryExecutionPlan->getDecomposedQueryPlanId());
+    bool successStart =
+        startDecomposedQueryPlan(executableQueryPlan->getSharedQueryId(), executableQueryPlan->getDecomposedQueryPlanId());
     if (!successStart) {
-        NES_ERROR("Runtime::deployQueryInNodeEngine: failed to start query");
+        NES_ERROR("Runtime::deployExecutableQueryPlan: failed to start query");
         return false;
     }
-    NES_DEBUG("Runtime::deployQueryInNodeEngine: successfully start query");
+    NES_DEBUG("Runtime::deployExecutableQueryPlan: successfully start query");
 
     return true;
 }
@@ -128,11 +129,11 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
     }
 }
 
-bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
+bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan) {
     std::unique_lock lock(engineMutex);
-    SharedQueryId sharedQueryId = queryExecutionPlan->getSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId = queryExecutionPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("Runtime: registerExecutableQueryPlan query with sharedQueryId= {} decomposedQueryPlanId = {}",
+    SharedQueryId sharedQueryId = executableQueryPlan->getSharedQueryId();
+    DecomposedQueryPlanId decomposedQueryPlanId = executableQueryPlan->getDecomposedQueryPlanId();
+    NES_DEBUG("registerExecutableQueryPlan query with sharedQueryId= {} decomposedQueryPlanId = {}",
               sharedQueryId,
               decomposedQueryPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
@@ -140,10 +141,10 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
         auto found = sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId);
         if (found == sharedQueryIdToDecomposedQueryPlanIds.end()) {
             sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId] = {decomposedQueryPlanId};
-            NES_DEBUG("Runtime: register of QEP  {}  as a singleton", decomposedQueryPlanId);
+            NES_DEBUG("register of QEP  {}  as a singleton", decomposedQueryPlanId);
         } else {
             (*found).second.push_back(decomposedQueryPlanId);
-            NES_DEBUG("Runtime: register of QEP  {}  added", decomposedQueryPlanId);
+            NES_DEBUG("register of QEP  {}  added", decomposedQueryPlanId);
         }
         /* We have to unlock here, as we do not want to hold the lock for the queryManager->registerQuery().
          * Otherwise, it can lead to the case, that we still hold the lock but another query wants to register itself on
@@ -152,45 +153,45 @@ bool NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPla
          */
         lock.unlock();
 
-        if (queryManager->registerQuery(queryExecutionPlan)) {
+        if (queryManager->registerExecutableQueryPlan(executableQueryPlan)) {
             // Here we have to lock again, as we are accessing deployedQEPs
             lock.lock();
-            deployedExecutableQueryPlans[decomposedQueryPlanId] = queryExecutionPlan;
-            NES_DEBUG("Runtime: register of subqep  {}  succeeded", decomposedQueryPlanId);
+            deployedExecutableQueryPlans[decomposedQueryPlanId] = executableQueryPlan;
+            NES_DEBUG("register of subqep  {}  succeeded", decomposedQueryPlanId);
             return true;
         }
-        NES_DEBUG("Runtime: register of subqep  {}  failed", decomposedQueryPlanId);
+        NES_DEBUG("register of subqep  {}  failed", decomposedQueryPlanId);
         return false;
 
     } else {
-        NES_DEBUG("Runtime: qep already exists. register failed {}", decomposedQueryPlanId);
+        NES_DEBUG("qep already exists. register failed {}", decomposedQueryPlanId);
         return false;
     }
 }
 
-bool NodeEngine::startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+bool NodeEngine::startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: startQuery= {}", sharedQueryId);
+    NES_DEBUG("startDecomposedQuery= {}", sharedQueryId);
     if (sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId) != sharedQueryIdToDecomposedQueryPlanIds.end()) {
         std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds = sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId];
         if (decomposedQueryPlanIds.empty()) {
-            NES_ERROR("Runtime: Unable to find qep ids for the query {}. Start failed.", sharedQueryId);
+            NES_ERROR("Unable to find qep ids for the query {}. Start failed.", sharedQueryId);
             return false;
         }
 
         if (std::find(decomposedQueryPlanIds.begin(), decomposedQueryPlanIds.end(), decomposedQueryPlanId)
             == decomposedQueryPlanIds.end()) {
-            NES_ERROR("Runtime: Unable to find qep with id {} for the shared query {}. Start failed.",
+            NES_ERROR("Unable to find qep with id {} for the shared query {}. Start failed.",
                       decomposedQueryPlanId,
                       sharedQueryId);
             return false;
         }
 
         try {
-            if (queryManager->startQuery(deployedExecutableQueryPlans[decomposedQueryPlanId])) {
-                NES_DEBUG("Runtime: start of QEP  {}  succeeded", decomposedQueryPlanId);
+            if (queryManager->startExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanId])) {
+                NES_DEBUG("start of QEP  {}  succeeded", decomposedQueryPlanId);
             } else {
-                NES_DEBUG("Runtime: start of QEP  {}  failed", decomposedQueryPlanId);
+                NES_DEBUG("start of QEP  {}  failed", decomposedQueryPlanId);
                 return false;
             }
         } catch (std::exception const& exception) {
@@ -199,89 +200,104 @@ bool NodeEngine::startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId d
 
         return true;
     }
-    NES_ERROR("Runtime: qep does not exists. start failed for query={}", sharedQueryId);
+    NES_ERROR("qep does not exists. start failed for query={}", sharedQueryId);
     return false;
 }
 
-bool NodeEngine::undeployQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+bool NodeEngine::undeployDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: undeployQuery query= {}", sharedQueryId);
-    bool successStop = stopQuery(sharedQueryId, decomposedQueryPlanId);
+    NES_DEBUG("UndeployQuery query= {}", sharedQueryId);
+    bool successStop = stopDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
     if (!successStop) {
-        NES_ERROR("Runtime::undeployQuery: failed to stop query");
+        NES_ERROR("Runtime::undeployDecomposedQueryPlan: failed to stop query");
         return false;
     }
-    NES_DEBUG("Runtime::undeployQuery: successfully stop query");
+    NES_DEBUG("Runtime::undeployDecomposedQueryPlan: successfully stop query");
 
-    bool successUnregister = unregisterQuery(sharedQueryId);
+    bool successUnregister = unregisterDecomposedQueryPlan(sharedQueryId, decomposedQueryPlanId);
     if (!successUnregister) {
-        NES_ERROR("Runtime::undeployQuery: failed to unregister query");
+        NES_ERROR("Runtime::undeployDecomposedQueryPlan: failed to unregister query");
         return false;
     }
-    NES_DEBUG("Runtime::undeployQuery: successfully unregister query");
+    NES_DEBUG("Runtime::undeployDecomposedQueryPlan: successfully unregister query");
     return true;
 }
 
-bool NodeEngine::unregisterQuery(SharedQueryId sharedQueryId) {
+bool NodeEngine::unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime: unregisterQuery query= {}", sharedQueryId);
+    NES_DEBUG("unregisterDecomposedQuery query= {}", sharedQueryId);
     bool ret = true;
-    if (auto it = sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId); it != sharedQueryIdToDecomposedQueryPlanIds.end()) {
-        auto& querySubPlanIds = it->second;
-        if (querySubPlanIds.empty()) {
-            NES_ERROR("Runtime: Unable to find qep ids for the query {}. Start failed.", sharedQueryId);
+    if (sharedQueryIdToDecomposedQueryPlanIds.contains(sharedQueryId)) {
+        auto& registeredDecomposedQueryPlanIds = sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId];
+        if (registeredDecomposedQueryPlanIds.empty()) {
+            NES_ERROR("Unable to find any registered decomposed query plans for the shared query {}. Unregister failed.",
+                      sharedQueryId);
             return false;
         }
 
-        for (const auto querySubPlanId : querySubPlanIds) {
-            auto qep = deployedExecutableQueryPlans[querySubPlanId];
-            bool isStopped = false;
-            switch (qep->getStatus()) {
-                case Execution::ExecutableQueryPlanStatus::Created:
-                case Execution::ExecutableQueryPlanStatus::Deployed:
-                case Execution::ExecutableQueryPlanStatus::Running: {
-                    NES_DEBUG("Runtime: unregister of query  {}  is not Stopped... stopping now", querySubPlanId);
-                    isStopped = queryManager->stopQuery(qep, Runtime::QueryTerminationType::HardStop);
-                    break;
-                }
-                default: {
-                    isStopped = true;
-                    break;
-                };
-            }
-            NES_DEBUG("Runtime: unregister of query  {} : current status is stopped= {}", querySubPlanId, isStopped);
-            if (isStopped && queryManager->deregisterQuery(qep)) {
-                deployedExecutableQueryPlans.erase(querySubPlanId);
-                NES_DEBUG("Runtime: unregister of query  {}  succeeded", querySubPlanId);
-            } else {
-                NES_ERROR("Runtime: unregister of QEP {} failed", querySubPlanId);
-                ret = false;
-            }
+        auto found =
+            std::find(registeredDecomposedQueryPlanIds.begin(), registeredDecomposedQueryPlanIds.end(), decomposedQueryPlanId);
+        if (found == registeredDecomposedQueryPlanIds.end()) {
+            NES_ERROR(
+                "Unable to locate any decomposed query plan with id {} registed for the shared query {}. Unregister failed.",
+                decomposedQueryPlanId,
+                sharedQueryId);
+            return false;
         }
-        sharedQueryIdToDecomposedQueryPlanIds.erase(sharedQueryId);
+
+        auto qep = deployedExecutableQueryPlans[decomposedQueryPlanId];
+        bool isStopped = false;
+        switch (qep->getStatus()) {
+            case Execution::ExecutableQueryPlanStatus::Created:
+            case Execution::ExecutableQueryPlanStatus::Deployed:
+            case Execution::ExecutableQueryPlanStatus::Running: {
+                NES_DEBUG("unregister of query  {}  is not Stopped... stopping now", decomposedQueryPlanId);
+                isStopped = queryManager->stopExecutableQueryPlan(qep, Runtime::QueryTerminationType::HardStop);
+                break;
+            }
+            default: {
+                isStopped = true;
+                break;
+            };
+        }
+        NES_DEBUG("unregister of query  {} : current status is stopped= {}", decomposedQueryPlanId, isStopped);
+        if (isStopped && queryManager->unregisterExecutableQueryPlan(qep)) {
+            deployedExecutableQueryPlans.erase(decomposedQueryPlanId);
+            NES_DEBUG("unregister of query  {}  succeeded", decomposedQueryPlanId);
+        } else {
+            NES_ERROR("unregister of QEP {} failed", decomposedQueryPlanId);
+            return false;
+        }
+
+        // Update the registered decomposed query plan
+        registeredDecomposedQueryPlanIds.erase(found);
+        sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId] = registeredDecomposedQueryPlanIds;
         return true;
     }
 
-    NES_ERROR("Runtime: qep does not exists. unregister failed{}", sharedQueryId);
+    NES_ERROR("qep does not exists. unregister failed for shared query id {}", sharedQueryId);
     return false;
 }
 
-bool NodeEngine::stopQuery(SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           Runtime::QueryTerminationType terminationType) {
+bool NodeEngine::stopDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                                         DecomposedQueryPlanId decomposedQueryPlanId,
+                                         Runtime::QueryTerminationType terminationType) {
     std::unique_lock lock(engineMutex);
-    NES_DEBUG("Runtime:stopQuery for qep= {}  termination= {}", sharedQueryId, terminationType);
+    NES_WARNING("Runtime:stopDecomposedQueryPlan for qep with shared query id = {} and decomposed query id = {}  termination= {}",
+                sharedQueryId,
+                decomposedQueryPlanId,
+                terminationType);
     auto it = sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId);
     if (it != sharedQueryIdToDecomposedQueryPlanIds.end()) {
         std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds = it->second;
         if (decomposedQueryPlanIds.empty()) {
-            NES_ERROR("Runtime: Unable to find qep ids for the query {}. Stop failed.", sharedQueryId);
+            NES_ERROR("Unable to find qep ids for the query {}. Stop failed.", sharedQueryId);
             return false;
         }
 
         if (std::find(decomposedQueryPlanIds.begin(), decomposedQueryPlanIds.end(), decomposedQueryPlanId)
             == decomposedQueryPlanIds.end()) {
-            NES_ERROR("Runtime: Unable to find qep with id {} for the shared query {}. Start failed.",
+            NES_ERROR("Unable to find qep with id {} for the shared query {}. Start failed.",
                       decomposedQueryPlanId,
                       sharedQueryId);
             return false;
@@ -291,11 +307,13 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId,
             case QueryTerminationType::Graceful:
             case QueryTerminationType::HardStop: {
                 try {
-                    if (queryManager->stopQuery(deployedExecutableQueryPlans[decomposedQueryPlanId], terminationType)) {
-                        NES_DEBUG("Runtime: stop of QEP  {}  succeeded", decomposedQueryPlanId);
+                    if (queryManager->stopExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanId],
+                                                              terminationType)) {
+                        queryManager->resetQueryStatistics(decomposedQueryPlanId);
+                        NES_DEBUG("stop of QEP  {}  succeeded", decomposedQueryPlanId);
                         return true;
                     } else {
-                        NES_ERROR("Runtime: stop of QEP {} failed", decomposedQueryPlanId);
+                        NES_ERROR("stop of QEP {} failed", decomposedQueryPlanId);
                         return false;
                     }
                 } catch (std::exception const& exception) {
@@ -305,11 +323,11 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId,
             }
             case QueryTerminationType::Failure: {
                 try {
-                    if (queryManager->failQuery(deployedExecutableQueryPlans[decomposedQueryPlanId])) {
-                        NES_DEBUG("Runtime: failure of QEP  {}  succeeded", decomposedQueryPlanId);
+                    if (queryManager->failExecutableQueryPlan(deployedExecutableQueryPlans[decomposedQueryPlanId])) {
+                        NES_DEBUG("failure of QEP  {}  succeeded", decomposedQueryPlanId);
                         return true;
                     } else {
-                        NES_ERROR("Runtime: failure of QEP {} failed", decomposedQueryPlanId);
+                        NES_ERROR("failure of QEP {} failed", decomposedQueryPlanId);
                         return false;
                     }
                 } catch (std::exception const& exception) {
@@ -321,7 +339,7 @@ bool NodeEngine::stopQuery(SharedQueryId sharedQueryId,
         }
         return true;
     }
-    NES_ERROR("Runtime: qep does not exists. stop failed {}", sharedQueryId);
+    NES_ERROR("qep does not exists. stop failed {}", sharedQueryId);
     return false;
 }
 
@@ -347,35 +365,35 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         auto& [querySubPlanId, queryExecutionPlan] = *it;
         try {
             if (markQueriesAsFailed) {
-                if (queryManager->failQuery(queryExecutionPlan)) {
-                    NES_DEBUG("Runtime: fail of QEP  {}  succeeded", querySubPlanId);
+                if (queryManager->failExecutableQueryPlan(queryExecutionPlan)) {
+                    NES_DEBUG("fail of QEP  {}  succeeded", querySubPlanId);
                 } else {
-                    NES_ERROR("Runtime: fail of QEP {} failed", querySubPlanId);
+                    NES_ERROR("fail of QEP {} failed", querySubPlanId);
                     withError = true;
                 }
             } else {
-                if (queryManager->stopQuery(queryExecutionPlan)) {
-                    NES_DEBUG("Runtime: stop of QEP  {}  succeeded", querySubPlanId);
+                if (queryManager->stopExecutableQueryPlan(queryExecutionPlan)) {
+                    NES_DEBUG("stop of QEP  {}  succeeded", querySubPlanId);
                 } else {
-                    NES_ERROR("Runtime: stop of QEP {} failed", querySubPlanId);
+                    NES_ERROR("stop of QEP {} failed", querySubPlanId);
                     withError = true;
                 }
             }
         } catch (std::exception const& err) {
-            NES_ERROR("Runtime: stop of QEP {} failed: {}", querySubPlanId, err.what());
+            NES_ERROR("stop of QEP {} failed: {}", querySubPlanId, err.what());
             withError = true;
         }
         try {
-            if (queryManager->deregisterQuery(queryExecutionPlan)) {
-                NES_DEBUG("Runtime: deregisterQuery of QEP  {}  succeeded", querySubPlanId);
+            if (queryManager->unregisterExecutableQueryPlan(queryExecutionPlan)) {
+                NES_DEBUG("unregisterExecutableQueryPlan of QEP  {}  succeeded", querySubPlanId);
                 it = deployedExecutableQueryPlans.erase(it);
             } else {
-                NES_ERROR("Runtime: deregisterQuery of QEP {} failed", querySubPlanId);
+                NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed", querySubPlanId);
                 withError = true;
                 ++it;
             }
         } catch (std::exception const& err) {
-            NES_ERROR("Runtime: deregisterQuery of QEP {} failed: {}", querySubPlanId, err.what());
+            NES_ERROR("unregisterExecutableQueryPlan of QEP {} failed: {}", querySubPlanId, err.what());
             withError = true;
             ++it;
         }
@@ -410,15 +428,15 @@ HardwareManagerPtr NodeEngine::getHardwareManager() const { return hardwareManag
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(SharedQueryId sharedQueryId) {
     std::unique_lock lock(engineMutex);
     if (sharedQueryIdToDecomposedQueryPlanIds.find(sharedQueryId) != sharedQueryIdToDecomposedQueryPlanIds.end()) {
-        std::vector<DecomposedQueryPlanId> querySubPlanIds = sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId];
-        if (querySubPlanIds.empty()) {
-            NES_ERROR("Runtime: Unable to find qep ids for the query {}. Start failed.", sharedQueryId);
+        std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds = sharedQueryIdToDecomposedQueryPlanIds[sharedQueryId];
+        if (decomposedQueryPlanIds.empty()) {
+            NES_ERROR("Unable to find qep ids for the query {}. Start failed.", sharedQueryId);
             return Execution::ExecutableQueryPlanStatus::Invalid;
         }
 
-        for (auto querySubPlanId : querySubPlanIds) {
+        for (auto decomposedQueryPlanId : decomposedQueryPlanIds) {
             //FIXME: handle vector of statistics properly in #977
-            return deployedExecutableQueryPlans[querySubPlanId]->getStatus();
+            return deployedExecutableQueryPlans[decomposedQueryPlanId]->getStatus();
         }
     }
     return Execution::ExecutableQueryPlanStatus::Invalid;
@@ -440,17 +458,15 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 
     switch (err.getErrorType()) {
         case Network::Messages::ErrorType::PartitionNotRegisteredError: {
-            NES_WARNING("Runtime: Unable to find the NES Partition {}", err.getChannelId());
+            NES_WARNING("Unable to find the NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::DeletedPartitionError: {
-            NES_WARNING("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
+            NES_WARNING("Requesting deleted NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::VersionMismatchError: {
-            NES_INFO("Runtime: Node {} encountered server error: Version mismatch for requested partition {}",
-                     nodeId,
-                     err.getChannelId());
+            NES_INFO("Node {} encountered server error: Version mismatch for requested partition {}", nodeId, err.getChannelId());
             break;
         }
         default: {
@@ -463,15 +479,15 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     switch (err.getErrorType()) {
         case Network::Messages::ErrorType::PartitionNotRegisteredError: {
-            NES_WARNING("Runtime: Unable to find the NES Partition {}", err.getChannelId());
+            NES_WARNING("Unable to find the NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::DeletedPartitionError: {
-            NES_WARNING("Runtime: Requesting deleted NES Partition {}", err.getChannelId());
+            NES_WARNING("Requesting deleted NES Partition {}", err.getChannelId());
             break;
         }
         case Network::Messages::ErrorType::VersionMismatchError: {
-            NES_INFO("Runtime: Expected version is not running yet for channel {}", err.getChannelId());
+            NES_INFO("Expected version is not running yet for channel {}", err.getChannelId());
             break;
         }
         default: {
@@ -495,9 +511,9 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(SharedQueryId sha
     }
 
     NES_TRACE("QueryManager: Extracting query execution ids for the input query {}", sharedQueryId);
-    std::vector<DecomposedQueryPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
-    for (auto querySubPlanId : querySubPlanIds) {
-        queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
+    std::vector<DecomposedQueryPlanId> decomposedQueryPlanIds = (*foundQuerySubPlanIds).second;
+    for (auto decomposedQueryPlanId : decomposedQueryPlanIds) {
+        queryStatistics.emplace_back(queryManager->getQueryStatistics(decomposedQueryPlanId));
     }
     return queryStatistics;
 }

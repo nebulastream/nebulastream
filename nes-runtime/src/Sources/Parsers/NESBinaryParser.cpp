@@ -16,16 +16,27 @@
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sources/Parsers/NESBinaryParser.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <absl/numeric/bits.h>
-#include <absl/types/span.h>
+#include <Util/TimeMeasurement.hpp>
+#include <chrono>
 #include <string>
 #include <utility>
 
 namespace NES {
 
-NESBinaryParser::NESBinaryParser() : Parser({}) {}
+NESBinaryParser::NESBinaryParser(const SchemaPtr& schema, bool addIngestionTime)
+    : Parser({}), addIngestionTime(addIngestionTime) {
+    tupleSize = schema->getSchemaSizeInBytes();
+    if (this->addIngestionTime) {
+        auto ingestionFieldName = "ingestionTime";
+        const auto& field = schema->getField(ingestionFieldName);
+        NES_ASSERT(!field, "'ingestionTime' field missing in the input schema");
+        if (!field) {
+            NES_ERROR("Unable to find the field");
+        }
+        ingestionTimeFiledName = field->getName();
+    }
+}
 
 #ifdef NES_DEBUG_MODE
 /**
@@ -41,15 +52,33 @@ static void assertValidMemoryLayout(const Runtime::MemoryLayouts::MemoryLayout& 
 bool NESBinaryParser::writeInputTupleToTupleBuffer(std::string_view binaryBuffer,
                                                    uint64_t,
                                                    Runtime::MemoryLayouts::TestTupleBuffer& dynamicBuffer,
-                                                   const SchemaPtr& schema,
+                                                   const SchemaPtr&,
                                                    const Runtime::BufferManagerPtr&) {
+
+    auto inputBufferSize = binaryBuffer.size();
 #ifdef NES_DEBUG_MODE
-    NES_ASSERT(binaryBuffer.size() % schema->getSchemaSizeInBytes() == 0, "Buffer size does not match expected buffer size");
-    NES_ASSERT(binaryBuffer.size() <= dynamicBuffer.getBuffer().getBufferSize(), "Buffer size missmatch");
+    NES_TRACE("Size of the read binary buffer {}, size of the schema {}, size of the tuple buffer {}",
+              inputBufferSize,
+              tupleSize,
+              dynamicBuffer.getBuffer().getBufferSize());
+    NES_ASSERT(inputBufferSize % tupleSize == 0,
+               "Received buffer contains partial record. Adjust the socketBufferSize such that complete tuples can be read.");
+    NES_ASSERT(inputBufferSize <= dynamicBuffer.getBuffer().getBufferSize(),
+               "Received buffer should be less or equal to tuple buffer size.");
     assertValidMemoryLayout(*dynamicBuffer.getMemoryLayout());
 #endif
-    std::memcpy(dynamicBuffer.getBuffer().getBuffer(), binaryBuffer.data(), binaryBuffer.size());
-    dynamicBuffer.getBuffer().setNumberOfTuples(binaryBuffer.size() / schema->getSchemaSizeInBytes());
+    auto numberOfTuples = inputBufferSize / tupleSize;
+    std::memcpy(dynamicBuffer.getBuffer().getBuffer(), binaryBuffer.data(), inputBufferSize);
+    if (addIngestionTime) {
+        //Iterate over all tuples and add ingestion time
+        for (uint64_t i = 0; i < numberOfTuples; i++) {
+            dynamicBuffer[i][ingestionTimeFiledName].write<uint64_t>(static_cast<uint64_t>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                    .count()));
+        }
+    }
+    dynamicBuffer.getBuffer().setNumberOfTuples(numberOfTuples);
     return true;
 }
+
 }// namespace NES

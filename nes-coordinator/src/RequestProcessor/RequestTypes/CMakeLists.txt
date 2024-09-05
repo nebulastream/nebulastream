@@ -18,7 +18,6 @@ add_source_files(nes-coordinator
         AbstractUniRequest.cpp
         ExplainRequest.cpp
         FailQueryRequest.cpp
-        TopologyNodeRelocationRequest.cpp
         StorageResourceLocker.cpp
         StopQueryRequest.cpp
         SubRequestFuture.cpp

@@ -79,7 +79,7 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntry) {
     NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log entry
-    auto changelogEntry = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
 
     EXPECT_EQ(changelogEntry->poSetOfSubQueryPlan.size(), 3);
     EXPECT_TRUE(changelogEntry->poSetOfSubQueryPlan.find(sourceOp1->getId()) != changelogEntry->poSetOfSubQueryPlan.end());
@@ -110,7 +110,7 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleDownStreamOptrs
     filterOp1->addParent(sinkOp2);
 
     // Initialize change log
-    auto changelogEntry = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1, sinkOp2});
+    auto changelogEntry = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1, sinkOp2});
 
     EXPECT_EQ(changelogEntry->poSetOfSubQueryPlan.size(), 5);
     EXPECT_TRUE(changelogEntry->poSetOfSubQueryPlan.find(sourceOp1->getId()) != changelogEntry->poSetOfSubQueryPlan.end());
@@ -142,7 +142,7 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleUpStreamOptrs) 
     filterOp2->addChild(sourceOp2);
 
     // Initialize change log
-    auto changelogEntry = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1, sourceOp2}, {sinkOp1});
+    auto changelogEntry = NES::Optimizer::ChangeLogEntry::create({sourceOp1, sourceOp2}, {sinkOp1});
 
     EXPECT_EQ(changelogEntry->poSetOfSubQueryPlan.size(), 5);
     EXPECT_TRUE(changelogEntry->poSetOfSubQueryPlan.find(sourceOp1->getId()) != changelogEntry->poSetOfSubQueryPlan.end());

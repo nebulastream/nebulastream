@@ -213,7 +213,7 @@ void AbstractQueryManager::destroy() {
         auto copyOfRunningQeps = runningQEPs;
         lock.unlock();
         for (auto& [_, qep] : copyOfRunningQeps) {
-            successful &= stopQuery(qep, Runtime::QueryTerminationType::HardStop);
+            successful &= stopExecutableQueryPlan(qep, Runtime::QueryTerminationType::HardStop);
         }
     }
     NES_ASSERT2_FMT(successful, "Cannot stop running queryIdAndCatalogEntryMapping upon query manager destruction");
@@ -261,11 +261,18 @@ Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(De
     return nullptr;
 }
 
-QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanId qepId) {
-    if (queryToStatisticsMap.contains(qepId)) {
-        return queryToStatisticsMap.find(qepId);
+QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId) {
+    QueryStatisticsPtr statistic = nullptr;
+    queryToStatisticsMap.find(decomposedQueryPlanId, statistic);
+    return statistic;//either value or null
+}
+
+void AbstractQueryManager::resetQueryStatistics(NES::DecomposedQueryPlanId decomposedQueryPlanId) {
+    QueryStatisticsPtr statistic = nullptr;
+    queryToStatisticsMap.find(decomposedQueryPlanId, statistic);
+    if (statistic) {
+        statistic->clear();
     }
-    return nullptr;
 }
 
 void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
@@ -295,8 +302,7 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
-            if (auto it = runningQEPs.find(qepId);
-                it != runningQEPs.end()) {// note that this will release all shared pointers stored in a QEP object
+            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end()) {
                 it->second->destroy();
                 runningQEPs.erase(it);
             }

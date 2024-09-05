@@ -31,7 +31,6 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <RequestProcessor/StorageHandles/SerialStorageHandler.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
@@ -39,6 +38,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 #include <atomic>
 #include <gtest/gtest.h>
 

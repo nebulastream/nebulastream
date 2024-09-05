@@ -283,6 +283,7 @@ bool QueryCatalog::updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
         case QueryState::FAILED:
         case QueryState::DEPLOYED:
         case QueryState::MIGRATING:
+        case QueryState::STOPPED:
         case QueryState::MARKED_FOR_HARD_STOP:
         case QueryState::MARKED_FOR_FAILURE:
         case QueryState::MARKED_FOR_REDEPLOYMENT:

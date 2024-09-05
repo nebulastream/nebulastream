@@ -492,7 +492,7 @@ template<typename Predicate = std::equal_to<uint64_t>>
         NES_TRACE("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
-        auto statistics = nesCoordinator->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
+        auto statistics = nesCoordinator->getQueryStatistics(sharedQueryId);
         if (statistics.empty()) {
             continue;
         }
@@ -529,9 +529,9 @@ template<typename Predicate = std::equal_to<uint64_t>>
     NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result={}"
               "processedBuffer={} processedTasks={} procWatermarks={}",
               expectedResult,
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(),
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(),
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+              nesCoordinator->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers(),
+              nesCoordinator->getQueryStatistics(sharedQueryId)[0]->getProcessedTasks(),
+              nesCoordinator->getQueryStatistics(sharedQueryId)[0]->getProcessedWatermarks());
     return false;
 }
 

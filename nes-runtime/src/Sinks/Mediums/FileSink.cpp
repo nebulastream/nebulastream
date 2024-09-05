@@ -63,6 +63,11 @@ void FileSink::setup() {
                 return;
             }
         }
+    } else {
+        if (std::filesystem::exists(filePath.c_str())) {
+            // Skip writing the schema to the file as we are appending to an existing file.
+            schemaWritten = true;
+        }
     }
 
     // Open the file stream
@@ -79,7 +84,7 @@ void FileSink::setup() {
 }
 
 void FileSink::shutdown() {
-    NES_DEBUG("Closing file sink, filePath={}", filePath);
+    NES_WARNING("Closing file sink, filePath={}", filePath);
     outputFile.close();
 }
 

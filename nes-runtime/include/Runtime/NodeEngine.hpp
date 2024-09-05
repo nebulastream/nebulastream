@@ -90,25 +90,25 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief deploy registers and starts a query
-     * @param new query plan
+     * @param executableQueryPlan the executable query plan to deploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool deployQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool deployExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
 
     /**
-     * @brief undeploy stops and undeploy a query
-     * @param sharedQueryId to undeploy
-     * @param decomposedQueryPlanId to undeploy
+     * @brief registers an executable query plan
+     * @param executableQueryPlan: executable query plan to register
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool undeployQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
 
     /**
-     * @brief registers a query
-     * @param query plan to register
+     * @brief Stops and undeploy a decomposed query plan
+     * @param sharedQueryId the shared query plan id that is served by the decomposed query plan
+     * @param decomposedQueryPlanId id of the decomposed query plan to undeploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] bool undeployDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief registers a decomposed query plan
@@ -118,31 +118,33 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     [[nodiscard]] bool registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
-     * @brief ungregisters a query
-     * @param sharedQueryId unregister query
+     * @brief unregisters a decomposed query
+     * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
+     * @param decomposedQueryPlanId: id of the decomposed query plan to be unregistered
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool unregisterQuery(SharedQueryId sharedQueryId);
+    [[nodiscard]] bool unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
-     * @param sharedQueryId to start
-     * @param decomposedQueryPlanId the decomposed query plan to start
+     * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
+     * @param decomposedQueryPlanId: id of the decomposed query plan to be started
      * @return bool indicating success
      */
-    [[nodiscard]] bool startQuery(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
-     * @brief method to stop a query
-     * @param sharedQueryId to stop
-     * @param decomposedQueryPlanId to stop
+     * @brief method to stop a decomposed query plan
+     * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
+     * @param decomposedQueryPlanId: id of the decomposed query plan to be stopped
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+    [[nodiscard]] bool
+    stopDecomposedQueryPlan(SharedQueryId sharedQueryId,
+                            DecomposedQueryPlanId decomposedQueryPlanId,
+                            Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id

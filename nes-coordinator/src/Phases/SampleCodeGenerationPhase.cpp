@@ -67,6 +67,9 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
             dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
             timer.snapshot("LogicalQueryPlan");
 
+            //Assign new operator ids and move the one sent by coordinator to the properties
+            logicalQueryPlan->refreshOperatorIds();
+
             auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
             dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
             timer.snapshot("PhysicalQueryPlan");

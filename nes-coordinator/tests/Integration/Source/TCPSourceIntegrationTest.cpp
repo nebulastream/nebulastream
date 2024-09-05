@@ -32,6 +32,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Util/TestUtils.hpp>
 #include <thread>
 
@@ -335,7 +337,7 @@ TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithSeparatorToken) {
 /**
  * @brief tests TCPSource read of JSON data that is seperated by a given token. Here \n is used
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToken) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithSeparatorToken) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -428,7 +430,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithSeparatorToke
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Constant length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataLengthFromSocket) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -521,7 +523,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataLengthFromSocket) 
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVWithVariableLength) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -614,7 +616,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVWithVariableLength) {
 /**
  * @brief tests TCPSource read of JSON data when obtaining the size of the data from the socket. Constant length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataLengthFromSocket) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -707,7 +709,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataLengthFromSocket)
 /**
  * @brief tests TCPSource read of CSV data when obtaining the size of the data from the socket. Variable length
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLength) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithVariableLength) {
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -800,7 +802,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithVariableLengt
 /**
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadCSVDataWithFixedSize) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -893,7 +895,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVDataWithFixedSize) {
 /**
  * @brief tests TCPSource read of CSV data with fixed length inputted at source creation time
  */
-TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
+TEST_F(TCPSourceIntegrationTest, TCPSourceReadJSONDataWithFixedSize) {
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -975,6 +977,144 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadJSONDataWithFixedSize) {
     NES_INFO("TCPSourceIntegrationTest: content={}", content);
     NES_INFO("TCPSourceIntegrationTest: expContent={}", expectedContent);
     EXPECT_EQ(content, expectedContent);
+
+    bool retStopWrk = wrk1->stop(false);
+    ASSERT_TRUE(retStopWrk);
+
+    bool retStopCord = crd->stopCoordinator(false);
+    ASSERT_TRUE(retStopCord);
+}
+
+/**
+ * @brief This test is written to check the proper functioning of our TCP data generator (more details on https://github.com/nebulastream/tcp-data-generator).
+ * The data generator is capable of producing data at a high even rate. Make sure that the data generator is running locally before starting this test.
+ * Last time tested by running: ./tcp-data-generator --host 127.0.0.1 -p 3000 -b 100 -t 1 -f 1000 -w 1000
+ * This test has two purpose:
+ * 1. It checks the feature to read data from a persistent TCP session. This feature allows us to consume data from an existing
+ * socket file descriptor. Allowing us to easily mimic a persistent queuing system like, Kafka, or MQTT.
+ * 2. It tests that when we are reconfiguring a running query, we are not losing data generated by the TCP data generator during
+ * the time query is down. Expected behaviour is that we continue reading the data from the location where we left it.
+ */
+TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVData) {
+    CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
+    coordinatorConfig->rpcPort = *rpcCoordinatorPort;
+    coordinatorConfig->restPort = *restPort;
+    coordinatorConfig->optimizer.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule;
+    NES_INFO("TCPSourceIntegrationTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("TCPSourceIntegrationTest: Coordinator started successfully");
+
+    auto tcpSchema = Schema::create()
+                         ->addField("id", BasicType::UINT64)
+                         ->addField("sequence", BasicType::UINT64)
+                         ->addField("eventTime", BasicType::UINT64)
+                         ->addField("ingestionTime", BasicType::UINT64);
+
+    crd->getSourceCatalog()->addLogicalSource("tcpStream", tcpSchema);
+    NES_DEBUG("TCPSourceIntegrationTest: Added tcpLogicalSource to coordinator.")
+
+    NES_DEBUG("TCPSourceIntegrationTest: Start worker 1");
+    WorkerConfigurationPtr workerConfig1 = WorkerConfiguration::create();
+    workerConfig1->coordinatorPort = *rpcCoordinatorPort;
+
+    TCPSourceTypePtr sourceConfig = TCPSourceType::create("tcpStream", "tcpStream");
+    sourceConfig->setSocketPort(3000);
+    sourceConfig->setSocketHost("127.0.0.1");
+    sourceConfig->setSocketDomainViaString("AF_INET");
+    sourceConfig->setSocketTypeViaString("SOCK_STREAM");
+    sourceConfig->setFlushIntervalMS(5000);
+    sourceConfig->setInputFormat(Configurations::InputFormat::NES_BINARY);
+    sourceConfig->setPersistentTcpSource(true);
+    sourceConfig->setDecideMessageSize(Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE);
+    sourceConfig->setSocketBufferSize(32);
+
+    workerConfig1->physicalSourceTypes.add(sourceConfig);
+    workerConfig1->bufferSizeInBytes = 50;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    ASSERT_TRUE(retStart1);
+    NES_INFO("TCPSourceIntegrationTest: Worker1 started successfully");
+
+    std::string filePath = getTestResourceFolder() / "tcpSourceTest.csv";
+    remove(filePath.c_str());
+
+    RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
+    auto queryCatalog = crd->getQueryCatalog();
+
+    //register query 1
+    auto query1 = Query::from("tcpStream").sink(FileSinkDescriptor::create(filePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(),
+                                                                              Optimizer::PlacementStrategy::BottomUp);// Deploy
+    EXPECT_NE(queryId1, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+
+    // Wait till 10 buffers are processed by the shared query plan
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 10));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 10));
+
+    //register query 2 which will be merged together with previous query
+    auto query2 = Query::from("tcpStream").sink(NullOutputSinkDescriptor::create());
+    QueryId queryId2 =
+        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(),
+                                                               Optimizer::PlacementStrategy::BottomUp);// SoftStop and Deploy
+    EXPECT_NE(queryId2, INVALID_QUERY_ID);
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 10));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 10));
+
+    //register query 3 which will be merged together with previous query
+    auto query3 = Query::from("tcpStream").sink(NullOutputSinkDescriptor::create());
+    QueryId queryId3 =
+        requestHandlerService->validateAndQueueAddQueryRequest(query3.getQueryPlan(),
+                                                               Optimizer::PlacementStrategy::BottomUp);// SoftStop and Deploy
+    EXPECT_NE(queryId3, INVALID_QUERY_ID);
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId3, queryCatalog));
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId3, globalQueryPlan, 10));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId3, globalQueryPlan, 10));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    requestHandlerService->validateAndQueueStopQueryRequest(queryId3);// soft stop
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId3, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    requestHandlerService->validateAndQueueStopQueryRequest(queryId2);// soft stop
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    requestHandlerService->validateAndQueueStopQueryRequest(queryId1);// hard stop
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
+
+    std::ifstream ifs(filePath.c_str());
+    ASSERT_TRUE(ifs.good());
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+    NES_ERROR("TCPSourceIntegrationTest: content={}", content);
+    // Assert that more than 20 tuples are present and without any missing sequence number
+    // Creating an input string stream from the input string
+    std::istringstream stream(content);
+    // Temporary string to store each token
+    string line;
+    // Read tokens from the string stream separated by the
+    char delimiter = '\n';
+    // counter for identifying missing sequence if any
+    uint16_t counter = 0;
+    //call to skip the header of the content
+    getline(stream, line, delimiter);
+    // Start iterating over the content
+    while (getline(stream, line, delimiter)) {
+        //Check if line contains text like "...,counter,...."
+        const std::string sequenceString = "," + std::to_string(counter) + ",";
+        NES_INFO("Check in the line {} sequence string {}", line, sequenceString);
+        //NOTE: This test require that TCP data generator is not generating the data at high rate as otherwise data may arrive
+        // out of order and the test will fail
+        // Test was passing with following config: ./tcp-data-generator --host 127.0.0.1 -p 3000 -b 100 -t 1 -f 1000 -w 1000
+        ASSERT_NE(line.find(sequenceString), string::npos);
+        counter++;
+    }
 
     bool retStopWrk = wrk1->stop(false);
     ASSERT_TRUE(retStopWrk);

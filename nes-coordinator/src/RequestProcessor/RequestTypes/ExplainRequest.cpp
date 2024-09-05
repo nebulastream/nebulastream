@@ -241,13 +241,13 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
         //26. Perform placement removal of updated shared query plan
         NES_DEBUG("Performing Operator placement for shared query plan");
-        auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+        auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
         //27. Set query status as Explained
         queryCatalog->updateQueryStatus(queryId, QueryState::EXPLAINED, "");
 
         //28. Iterate over deployment context and update execution plan
-        for (const auto& deploymentContext : deploymentContexts) {
+        for (const auto& deploymentContext : deploymentUnit.getAllDeploymentContexts()) {
             auto WorkerId = deploymentContext->getWorkerId();
             auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();

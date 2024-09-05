@@ -17,6 +17,7 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Util/CompilerConstants.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <algorithm>
 #include <atomic>
@@ -117,8 +118,8 @@ void OperatorPipeline::prependOperator(OperatorPtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
-    if (newRootOperator->hasProperty("LogicalOperatorId")) {
-        operatorIds.push_back(std::any_cast<OperatorId>(newRootOperator->getProperty("LogicalOperatorId")));
+    if (newRootOperator->hasProperty(LOGICAL_OPERATOR_ID_KEY)) {
+        operatorIds.push_back(std::any_cast<OperatorId>(newRootOperator->getProperty(LOGICAL_OPERATOR_ID_KEY)));
     }
     this->decomposedQueryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }

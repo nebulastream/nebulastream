@@ -154,6 +154,11 @@ class DecomposedQueryPlan {
     QueryState getState() const;
 
     /**
+     * @brief refresh the operator ids and put the original ids to the properties
+     */
+    void refreshOperatorIds();
+
+    /**
      * @brief Set state of the query plan
      * @param newState : new decomposed query plan state
      */

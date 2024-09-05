@@ -51,10 +51,6 @@ PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr shared
       deploymentPhase(deploymentPhase){};
 
 void PlacementAmendmentInstance::execute() {
-    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                        topology,
-                                                                                        typeInferencePhase,
-                                                                                        coordinatorConfiguration);
     // 1. Compute the request type
     RequestType requestType;
     SharedQueryPlanStatus sharedQueryPlanStatus = sharedQueryPlan->getStatus();
@@ -70,7 +66,13 @@ void PlacementAmendmentInstance::execute() {
         case SharedQueryPlanStatus::MIGRATING:
         case SharedQueryPlanStatus::CREATED:
         case SharedQueryPlanStatus::UPDATED: {
-            requestType = RequestType::AddQuery;
+            // If system is configured to perform incremental placement then mark the request for AddQuery
+            // else mark the request as restart to allow performing holistic deployment by first un-deployment and then re-deployment
+            if (coordinatorConfiguration->optimizer.enableIncrementalPlacement) {
+                requestType = RequestType::AddQuery;
+            } else {
+                requestType = RequestType::RestartQuery;
+            }
             break;
         }
         default: {
@@ -82,18 +84,30 @@ void PlacementAmendmentInstance::execute() {
     }
 
     NES_DEBUG("Processing placement amendment request with type {}", magic_enum::enum_name(requestType));
+
     // 2. Call the placement amendment phase to remove/add invalid placements
-    auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
+                                                                                        topology,
+                                                                                        typeInferencePhase,
+                                                                                        coordinatorConfiguration);
+    auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     // 3. Call the deployment phase to dispatch the updated decomposed query plans for deployment, un-deployment, or migration
-    if (!deploymentContexts.empty()) {
-        deploymentPhase->execute(deploymentContexts, requestType);
+    if (deploymentUnit.containsDeploymentContext()) {
+
+        //Undeploy all removed or migrating deployment contexts
+        deploymentPhase->execute(deploymentUnit.deploymentRemovalContexts, requestType);
+        //Remove all queries marked for removal from shared query plan
+        sharedQueryPlan->removeQueryMarkedForRemoval();
+
+        //Deploy all newly placed deployment contexts
+        deploymentPhase->execute(deploymentUnit.deploymentAdditionContexts, requestType);
 
         // 4. Update the global execution plan to reflect the updated state of the decomposed query plans
         NES_DEBUG("Update global execution plan to reflect state of decomposed query plans")
         auto sharedQueryId = sharedQueryPlan->getId();
         // Iterate over deployment context and update execution plan
-        for (const auto& deploymentContext : deploymentContexts) {
+        for (const auto& deploymentContext : deploymentUnit.getAllDeploymentContexts()) {
             auto workerId = deploymentContext->getWorkerId();
             auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();

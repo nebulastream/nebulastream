@@ -202,6 +202,8 @@ const std::string DECIDE_MESSAGE_SIZE_CONFIG = "decideMessageSize";
 const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
+const std::string PERSISTENT_TCP_SOURCE = "persistentTcpSource";
+const std::string ADD_INGESTION_TIME = "addIngestionTime";
 
 //Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";

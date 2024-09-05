@@ -91,7 +91,8 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     decomposedQueryPlan = originIdInferencePhase->execute(decomposedQueryPlan);
     decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
-    NES_ASSERT(nodeEngine->startQuery(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId()),
+    NES_ASSERT(nodeEngine->startDecomposedQueryPlan(decomposedQueryPlan->getSharedQueryId(),
+                                                    decomposedQueryPlan->getDecomposedQueryPlanId()),
                "query plan could not be started.");
     return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getDecomposedQueryPlanId());
 }
@@ -109,7 +110,7 @@ void TestExecutionEngine::emitBuffer(std::shared_ptr<Runtime::Execution::Executa
 
 bool TestExecutionEngine::stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
                                     Runtime::QueryTerminationType type) {
-    return nodeEngine->getQueryManager()->stopQuery(plan, type);
+    return nodeEngine->getQueryManager()->stopExecutableQueryPlan(plan, type);
 }
 
 Runtime::MemoryLayouts::TestTupleBuffer TestExecutionEngine::getBuffer(const SchemaPtr& schema) {

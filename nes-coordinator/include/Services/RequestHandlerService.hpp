@@ -182,16 +182,6 @@ class RequestHandlerService {
                                           const std::string& failureReason);
 
     /**
-     * @brief modify the topology by removing and adding links and then rerun an incremental placement for queries that were
-     * sending data over one of the removed links
-     * @param removedLinks a list of topology links to remove
-     * @param addedLinks a list or topology links to add
-     * @return true on success
-     */
-    bool queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                    const std::vector<TopologyLinkInformation>& addedLinks);
-
-    /**
      * @brief Process multiple query and topology change request represented by isqp events in a batch
      * @param isqpEvents a vector of ISQP requests to be handled
      * @return response to the execution of the request

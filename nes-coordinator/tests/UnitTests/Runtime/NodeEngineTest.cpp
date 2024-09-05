@@ -365,10 +365,10 @@ TEST_F(NodeEngineTest, teststartDeployStop) {
                       .build();
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    ASSERT_TRUE(engine->deployExecutableQueryPlan(qep));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->stopQuery(qep->getSharedQueryId(), qep->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->stopDecomposedQueryPlan(qep->getSharedQueryId(), qep->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "test.out");
@@ -384,13 +384,13 @@ TEST_F(NodeEngineTest, testStartDeployUndeployStop) {
                       .build();
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    ASSERT_TRUE(engine->deployExecutableQueryPlan(qep));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
     while (engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Finished) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-    ASSERT_TRUE(engine->undeployQuery(testQueryId, qep->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(testQueryId, qep->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "test.out");
@@ -407,14 +407,15 @@ TEST_F(NodeEngineTest, testStartRegisterStartStopDeregisterStop) {
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
     ASSERT_TRUE(engine->registerExecutableQueryPlan(qep));
-    ASSERT_TRUE(engine->startQuery(testQueryId, qep->getDecomposedQueryPlanId()));
+    const auto& decomposedQueryPlanId = qep->getDecomposedQueryPlanId();
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(testQueryId, decomposedQueryPlanId));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->stopQuery(testQueryId, qep->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->stopDecomposedQueryPlan(testQueryId, decomposedQueryPlanId));
 
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);
 
-    ASSERT_TRUE(engine->unregisterQuery(testQueryId));
+    ASSERT_TRUE(engine->unregisterDecomposedQueryPlan(testQueryId, decomposedQueryPlanId));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "test.out");
@@ -502,8 +503,8 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
@@ -511,10 +512,12 @@ TEST_F(NodeEngineTest, testParallelDifferentSource) {
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(
-        engine->stopQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
-    ASSERT_TRUE(
-        engine->stopQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId(), Runtime::QueryTerminationType::HardStop));
+    ASSERT_TRUE(engine->stopDecomposedQueryPlan(SharedQueryId(1),
+                                                executionPlan->getDecomposedQueryPlanId(),
+                                                Runtime::QueryTerminationType::HardStop));
+    ASSERT_TRUE(engine->stopDecomposedQueryPlan(SharedQueryId(2),
+                                                executionPlan2->getDecomposedQueryPlanId(),
+                                                Runtime::QueryTerminationType::HardStop));
 
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Stopped);
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Stopped);
@@ -610,8 +613,8 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
@@ -624,8 +627,8 @@ TEST_F(NodeEngineTest, testParallelSameSource) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "qep1.txt");
@@ -707,8 +710,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
@@ -716,8 +719,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSink) {// shared sinks are not s
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
     testOutput(getTestResourceFolder() / "qep12.txt", joinedExpectedOutput);
 }
@@ -823,8 +826,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan));
     ASSERT_TRUE(engine->registerExecutableQueryPlan(executionPlan2));
 
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->startQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->startDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
@@ -832,8 +835,8 @@ TEST_F(NodeEngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(1)) == ExecutableQueryPlanStatus::Running);
     ASSERT_TRUE(engine->getQueryStatus(SharedQueryId(2)) == ExecutableQueryPlanStatus::Running);
 
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
-    ASSERT_TRUE(engine->undeployQuery(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(1), executionPlan->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(SharedQueryId(2), executionPlan2->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->stop());
 
     testOutput(getTestResourceFolder() / "qep3.txt", joinedExpectedOutput);
@@ -849,12 +852,12 @@ TEST_F(NodeEngineTest, testStartStopStartStop) {
                       .build();
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId, getTestResourceFolder() / "test.out");
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    ASSERT_TRUE(engine->deployExecutableQueryPlan(qep));
     pipeline->completedPromise.get_future().get();
     while (engine->getQueryStatus(testQueryId) != ExecutableQueryPlanStatus::Finished) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-    ASSERT_TRUE(engine->undeployQuery(testQueryId, qep->getDecomposedQueryPlanId()));
+    ASSERT_TRUE(engine->undeployDecomposedQueryPlan(testQueryId, qep->getDecomposedQueryPlanId()));
     ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
 
     ASSERT_TRUE(engine->stop());

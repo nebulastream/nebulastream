@@ -42,13 +42,12 @@ namespace Optimizer {
 class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 
-namespace Experimental {
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
-}// namespace Experimental
+
 }// namespace Optimizer
 
 using Timestamp = uint64_t;
@@ -58,7 +57,7 @@ struct RemovedEdge {
     WorkerId upstreamWorkerId;
 };
 
-using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimental::ChangeLogEntryPtr>>;
+using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::ChangeLogEntryPtr>>;
 
 /**
  * @brief This class holds a query plan shared by multiple queryIdAndCatalogEntryMapping i.e. from its source nodes we can reach the sink nodes of all
@@ -208,7 +207,7 @@ class SharedQueryPlan {
      * connected upstream operators that are pinned during the previous process.
      * @param changeLogEntries : failed change log entries
      */
-    void recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> failedChangeLogEntries);
+    void recordFailedChangeLogEntries(std::vector<Optimizer::ChangeLogEntryPtr> failedChangeLogEntries);
 
     /**
      * @brief: update the timestamp till which the changes have been processed
@@ -281,7 +280,7 @@ class SharedQueryPlan {
     //FIXME: #2274 We have to figure out a way to change it once a query is removed
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
-    Optimizer::Experimental::ChangeLogPtr changeLog;
+    Optimizer::ChangeLogPtr changeLog;
 };
 }// namespace NES
 

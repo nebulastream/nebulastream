@@ -12,9 +12,7 @@
     limitations under the License.
 */
 
-#include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
-#include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
@@ -44,10 +42,8 @@
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/UpdateLogicalSourceEvent.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/UpdateSourceCatalogRequest.hpp>
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
-#include <RequestProcessor/RequestTypes/TopologyNodeRelocationRequest.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/QueryGeneration/AbstractStatisticQueryGenerator.hpp>
-#include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Core.hpp>
@@ -152,19 +148,6 @@ void RequestHandlerService::assignOperatorIds(QueryPlanPtr queryPlan) {
         auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(getNextOperatorId());
     }
-}
-
-bool RequestHandlerService::queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                                       const std::vector<TopologyLinkInformation>& addedLinks) {
-    auto nodeRelocationRequest =
-        RequestProcessor::Experimental::TopologyNodeRelocationRequest::create(removedLinks,
-                                                                              addedLinks,
-                                                                              RequestProcessor::DEFAULT_RETRIES);
-    asyncRequestExecutor->runAsync(nodeRelocationRequest);
-    auto future = nodeRelocationRequest->getFuture();
-    auto changeResponse =
-        std::static_pointer_cast<RequestProcessor::Experimental::TopologyNodeRelocationRequestResponse>(future.get());
-    return changeResponse->success;
 }
 
 RequestProcessor::ISQPRequestResponsePtr

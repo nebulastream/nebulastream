@@ -67,6 +67,7 @@ void AbstractQueryManager::notifyQueryStatusChange(const Execution::ExecutableQu
                                                      Execution::ExecutableQueryPlanStatus::ErrorState);
     }
 }
+
 void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason) {
     NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSource->getOperatorId(), reason);
     std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
@@ -83,7 +84,7 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
                 NES_DEBUG("Going to fail query id={} subplan={}",
                           qepToFail->getDecomposedQueryPlanId(),
                           qepToFail->getDecomposedQueryPlanId());
-                if (failQuery(qepToFail)) {
+                if (failExecutableQueryPlan(qepToFail)) {
                     NES_DEBUG("Failed query id= {} subplan={}",
                               qepToFail->getDecomposedQueryPlanId(),
                               qepToFail->getDecomposedQueryPlanId());
@@ -121,7 +122,7 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
             NES_DEBUG("Going to fail query id= {} subplan={}",
                       qepToFail->getDecomposedQueryPlanId(),
                       qepToFail->getDecomposedQueryPlanId());
-            if (failQuery(qepToFail)) {
+            if (failExecutableQueryPlan(qepToFail)) {
                 NES_DEBUG("Failed query id= {}  subplan= {}",
                           qepToFail->getDecomposedQueryPlanId(),
                           qepToFail->getDecomposedQueryPlanId());
@@ -137,17 +138,19 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
 
 void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType) {
     std::unique_lock lock(queryMutex);
-    //THIS is now shutting down all
-    for (auto& entry : sourceToQEPMapping[source->getOperatorId()]) {
+    //Check if a QEP exists for the datasource for which completion notification received.
+    const auto& operatorId = source->getOperatorId();
+    // Shutting down all sources by notifying source termination
+    for (auto& entry : sourceToQEPMapping[operatorId]) {
         NES_TRACE("notifySourceCompletion operator id={} plan id={} subplan={}",
-                  source->getOperatorId(),
+                  operatorId,
                   entry->getSharedQueryId(),
                   entry->getDecomposedQueryPlanId());
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful) {
             queryStatusListener->notifySourceTermination(entry->getSharedQueryId(),
                                                          entry->getDecomposedQueryPlanId(),
-                                                         source->getOperatorId(),
+                                                         operatorId,
                                                          QueryTerminationType::Graceful);
         }
     }

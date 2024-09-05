@@ -36,12 +36,9 @@ SinkMediumTypes PrintSink::getSinkMediumType() { return SinkMediumTypes::PRINT_S
 
 bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());
-
     if (!inputBuffer) {
         throw Exceptions::RuntimeException("PrintSink::writeData input buffer invalid");
     }
-
     NES_TRACE("PrintSink::getData: write data");
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());

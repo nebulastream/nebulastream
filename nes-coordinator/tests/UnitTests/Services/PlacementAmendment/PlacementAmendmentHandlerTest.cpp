@@ -92,70 +92,72 @@ class MockedDeploymentPhase : public DeploymentPhase {
         : DeploymentPhase(queryCatalog), queryCatalog(queryCatalog){};
 
     void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType) override {
-        QueryState sharedQueryState = QueryState::REGISTERED;
-        SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
-        for (const auto& deploymentContext : deploymentContexts) {
-            sharedQueryId = deploymentContext->getSharedQueryId();
-            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
-            auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
-            auto workerId = deploymentContext->getWorkerId();
-            auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-            switch (decomposedQueryPlanState) {
-                case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED) {
-                        sharedQueryState = QueryState::RUNNING;
+        if (!deploymentContexts.empty()) {
+            QueryState sharedQueryState = QueryState::REGISTERED;
+            SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
+            for (const auto& deploymentContext : deploymentContexts) {
+                sharedQueryId = deploymentContext->getSharedQueryId();
+                auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+                auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
+                auto workerId = deploymentContext->getWorkerId();
+                auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
+                switch (decomposedQueryPlanState) {
+                    case QueryState::MARKED_FOR_DEPLOYMENT: {
+                        if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED) {
+                            sharedQueryState = QueryState::RUNNING;
+                        }
                     }
-                }
-                case QueryState::MARKED_FOR_REDEPLOYMENT: {
-                    if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
-                        && decomposedQueryPlanState == QueryState::MARKED_FOR_REDEPLOYMENT) {
-                        sharedQueryState = QueryState::RUNNING;
-                    }
-                    // Update decomposed query plan status
-                    queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
-                                                                  decomposedQueryPlanVersion,
-                                                                  decomposedQueryPlanState,
-                                                                  workerId);
-                    break;
-                }
-                case QueryState::MARKED_FOR_MIGRATION: {
-                    if (requestType == RequestType::AddQuery) {
+                    case QueryState::MARKED_FOR_REDEPLOYMENT: {
+                        if (sharedQueryState != QueryState::FAILED && sharedQueryState != QueryState::STOPPED
+                            && decomposedQueryPlanState == QueryState::MARKED_FOR_REDEPLOYMENT) {
+                            sharedQueryState = QueryState::RUNNING;
+                        }
                         // Update decomposed query plan status
                         queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                       decomposedQueryPlanId,
                                                                       decomposedQueryPlanVersion,
                                                                       decomposedQueryPlanState,
                                                                       workerId);
-                    } else if (requestType == RequestType::StopQuery) {
-                        sharedQueryState = QueryState::STOPPED;
-                        // Update decomposed query plan status
-                        queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                      decomposedQueryPlanId,
-                                                                      decomposedQueryPlanVersion,
-                                                                      QueryState::MARKED_FOR_HARD_STOP,
-                                                                      workerId);
-                    } else if (requestType == RequestType::FailQuery) {
-                        sharedQueryState = QueryState::FAILED;
-                        // Update decomposed query plan status
-                        queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                      decomposedQueryPlanId,
-                                                                      decomposedQueryPlanVersion,
-                                                                      QueryState::MARKED_FOR_FAILURE,
-                                                                      workerId);
-                    } else {
-                        NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
-                                  magic_enum::enum_name(requestType));
+                        break;
                     }
-                    break;
-                }
-                default: {
-                    NES_WARNING("Can not handle decomposed query plan in the state {}",
-                                magic_enum::enum_name(decomposedQueryPlanState));
+                    case QueryState::MARKED_FOR_MIGRATION: {
+                        if (requestType == RequestType::AddQuery) {
+                            // Update decomposed query plan status
+                            queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryPlanVersion,
+                                                                          decomposedQueryPlanState,
+                                                                          workerId);
+                        } else if (requestType == RequestType::StopQuery || requestType == RequestType::RestartQuery) {
+                            sharedQueryState = QueryState::STOPPED;
+                            // Update decomposed query plan status
+                            queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryPlanVersion,
+                                                                          QueryState::MARKED_FOR_HARD_STOP,
+                                                                          workerId);
+                        } else if (requestType == RequestType::FailQuery) {
+                            sharedQueryState = QueryState::FAILED;
+                            // Update decomposed query plan status
+                            queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
+                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryPlanVersion,
+                                                                          QueryState::MARKED_FOR_FAILURE,
+                                                                          workerId);
+                        } else {
+                            NES_ERROR("Unhandled request type {} for decomposed query plan in status MARKED_FOR_MIGRATION",
+                                      magic_enum::enum_name(requestType));
+                        }
+                        break;
+                    }
+                    default: {
+                        NES_WARNING("Can not handle decomposed query plan in the state {}",
+                                    magic_enum::enum_name(decomposedQueryPlanState));
+                    }
                 }
             }
+            queryCatalog->updateSharedQueryStatus(sharedQueryId, sharedQueryState, "");
         }
-        queryCatalog->updateSharedQueryStatus(sharedQueryId, sharedQueryState, "");
     }
 
   private:

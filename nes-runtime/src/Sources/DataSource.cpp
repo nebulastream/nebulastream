@@ -96,7 +96,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
         buffer.setStatisticId(statisticId);
-        NES_DEBUG("Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
+        NES_TRACE("Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
                   "statisticId={}",
                   buffer.getOriginId(),
                   buffer.getOriginId(),
@@ -239,7 +239,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
             NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
             return true;// it's ok to return true because the source is stopped
         } else {
-            NES_DEBUG("DataSource {} was running, retrieving future now...", operatorId);
+            NES_DEBUG("DataSource {} is running, retrieving future now...", operatorId);
             auto expected = false;
             NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
                                 && detail::waitForFuture(completedPromise.get_future(), 10min),
@@ -273,6 +273,7 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this
 void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::close() {
+    NES_WARNING("Close Called")
     Runtime::QueryTerminationType queryTerminationType;
     {
         std::unique_lock lock(startStopMutex);
@@ -283,7 +284,9 @@ void DataSource::close() {
         // inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);
         NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
-        NES_DEBUG("DataSource {} : Data Source add end of stream. Gracefully={}", operatorId, queryTerminationType);
+        NES_WARNING("DataSource {} : Data Source add end of stream of type ={}",
+                    operatorId,
+                    magic_enum::enum_name(queryTerminationType));
         endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
         bufferManager->destroy();
@@ -358,9 +361,11 @@ void DataSource::runningRoutineWithIngestionRate() {
                 NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWork(buf);
-
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
+                if (!running) {// necessary if source stops while receiveData is called due to stricter shutdown logic
+                    break;
+                }
             } else {
                 NES_ERROR("DataSource: Buffer is invalid");
                 running = false;
@@ -430,9 +435,6 @@ void DataSource::runningRoutineWithGatheringInterval() {
         //check if already produced enough buffer
         if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce) {
             auto optBuf = receiveData();// note that receiveData might block
-            if (!running) {             // necessary if source stops while receiveData is called due to stricter shutdown logic
-                break;
-            }
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
@@ -450,9 +452,11 @@ void DataSource::runningRoutineWithGatheringInterval() {
                     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
                     NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
                 }
-
                 emitWork(buf);
                 ++numberOfBuffersProduced;
+                if (!running) {// necessary if source stops while receiveData is called due to stricter shutdown logic
+                    break;
+                }
             } else {
                 NES_DEBUG("DataSource {}: stopping cause of invalid buffer", operatorId);
                 running = false;
@@ -473,15 +477,24 @@ void DataSource::runningRoutineWithGatheringInterval() {
             std::this_thread::sleep_for(gatheringInterval);
         }
     }
-    NES_DEBUG("DataSource {} call close", operatorId);
+    NES_WARNING("DataSource {} call close", operatorId);
     close();
-
-    NES_DEBUG("DataSource {} end running", operatorId);
+    NES_WARNING("DataSource {} end running", operatorId);
 }
 
 // debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const { return generatedTuples; };
+
 uint64_t DataSource::getNumberOfGeneratedBuffers() const { return generatedBuffers; };
+
+bool DataSource::performSoftStop() {
+    bool expected = true;
+    if (!running.compare_exchange_strong(expected, false)) {
+        NES_WARNING("DataSource {}: was already not running", operatorId);
+        return false;
+    }
+    return true;
+}
 
 std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 

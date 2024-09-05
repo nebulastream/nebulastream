@@ -76,8 +76,8 @@ TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
     NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
-    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
-    auto changelogEntry = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changeLog = NES::Optimizer::ChangeLog::create();
+    auto changelogEntry = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
     changeLog->addChangeLogEntry(1, std::move(changelogEntry));
 
     // Fetch change log entries before timestamp 1
@@ -99,13 +99,13 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
     NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
-    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
-    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry3 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry4 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry5 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
-    auto changelogEntry6 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changeLog = NES::Optimizer::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry2 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry3 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry4 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry5 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry6 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
     changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
     changeLog->addChangeLogEntry(3, std::move(changelogEntry3));
     changeLog->addChangeLogEntry(6, std::move(changelogEntry6));
@@ -137,19 +137,19 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
     NES_DEBUG("{}", queryPlan->toString());
 
     // Initialize change log
-    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
+    auto changeLog = NES::Optimizer::ChangeLog::create();
 
     //three overlapping change log entries
-    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
-    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
-    auto changelogEntry3 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry1 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry2 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry3 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {filterOp1});
 
     //two more overlapping change log entries
-    auto changelogEntry4 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
-    auto changelogEntry5 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+    auto changelogEntry4 = NES::Optimizer::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+    auto changelogEntry5 = NES::Optimizer::ChangeLogEntry::create({filterOp2}, {sinkOp1});
 
     //one more overlapping change log entries
-    auto changelogEntry6 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
+    auto changelogEntry6 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {sinkOp1});
 
     changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
     changeLog->addChangeLogEntry(3, std::move(changelogEntry3));
@@ -215,9 +215,9 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs) {
     filterOp3->addParent(sinkOp2);
 
     // Initialize change log
-    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
-    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1}, {filterOp1});
-    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp2}, {sinkOp1});
+    auto changeLog = NES::Optimizer::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::ChangeLogEntry::create({sourceOp1}, {filterOp1});
+    auto changelogEntry2 = NES::Optimizer::ChangeLogEntry::create({filterOp2}, {sinkOp1});
     changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 
@@ -260,9 +260,9 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs) 
     filterOp3->addParent(sinkOp2);
 
     // Initialize change log
-    auto changeLog = NES::Optimizer::Experimental::ChangeLog::create();
-    auto changelogEntry1 = NES::Optimizer::Experimental::ChangeLogEntry::create({sourceOp1, sourceOp2}, {filterOp2});
-    auto changelogEntry2 = NES::Optimizer::Experimental::ChangeLogEntry::create({filterOp3}, {sinkOp1});
+    auto changeLog = NES::Optimizer::ChangeLog::create();
+    auto changelogEntry1 = NES::Optimizer::ChangeLogEntry::create({sourceOp1, sourceOp2}, {filterOp2});
+    auto changelogEntry2 = NES::Optimizer::ChangeLogEntry::create({filterOp3}, {sinkOp1});
     changeLog->addChangeLogEntry(1, std::move(changelogEntry1));
     changeLog->addChangeLogEntry(2, std::move(changelogEntry2));
 

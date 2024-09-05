@@ -22,6 +22,9 @@
 #include <Monitoring/Metrics/Gauge/RegistrationMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/MonitoringManager.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPRequest.hpp>
 #include <RequestProcessor/RequestTypes/SourceCatalog/SourceCatalogEvents/AddPhysicalSourcesEvent.hpp>
 #include <Runtime/OpenCLManager.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
@@ -30,7 +33,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/Mobility/SpatialTypeUtility.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <utility>
 
 using namespace NES;
@@ -488,21 +490,19 @@ Status CoordinatorRPCServer::GetParents(ServerContext*, const GetParentsRequest*
 
 Status
 CoordinatorRPCServer::RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) {
-    std::vector<TopologyLinkInformation> removedLinks;
-    removedLinks.reserve(request->removedlinks_size());
+    std::vector<RequestProcessor::ISQPEventPtr> isqpEvents;
     for (const auto& removedTopologyLink : request->removedlinks()) {
-        removedLinks.push_back(
-            TopologyLinkInformation(WorkerId(removedTopologyLink.upstream()), WorkerId(removedTopologyLink.downstream())));
+        isqpEvents.emplace_back(RequestProcessor::ISQPRemoveLinkEvent::create(WorkerId(removedTopologyLink.upstream()),
+                                                                              WorkerId(removedTopologyLink.downstream())));
     }
-    std::vector<TopologyLinkInformation> addedLinks;
-    addedLinks.reserve((request->addedlinks_size()));
     for (const auto& addedTopologyLink : request->addedlinks()) {
-        addedLinks.push_back(
-            TopologyLinkInformation(WorkerId(addedTopologyLink.upstream()), WorkerId(addedTopologyLink.downstream())));
+        isqpEvents.emplace_back(RequestProcessor::ISQPAddLinkEvent::create(WorkerId(addedTopologyLink.upstream()),
+                                                                           WorkerId(addedTopologyLink.downstream())));
     }
-    auto success = requestHandlerService->queueNodeRelocationRequest(removedLinks, addedLinks);
-    reply->set_success(success);
-    if (success) {
+
+    auto isqpRequestResponse = requestHandlerService->queueISQPRequest(isqpEvents);
+    reply->set_success(isqpRequestResponse->success);
+    if (isqpRequestResponse) {
         return Status::OK;
     }
     return Status::CANCELLED;

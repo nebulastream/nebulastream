@@ -89,6 +89,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         channel = workerContext.getNetworkChannel(getUniqueNetworkSinkDescriptorId());
     }
 
+    NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryPlanId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }

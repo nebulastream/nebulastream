@@ -158,6 +158,7 @@ ExecutionResult MultiQueueQueryManager::processNextTask(bool running, WorkerCont
         return terminateLoop(workerContext);
     }
 }
+
 ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext) {
     bool hitReconfiguration = false;
     Task task;

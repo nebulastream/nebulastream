@@ -1854,7 +1854,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
                                                                                                topology,
                                                                                                typeInferencePhase,
                                                                                                coordinatorConfiguration);
-            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]).getAllDeploymentContexts();
         });
         placementResults.emplace_back(std::move(placementResult));
     }
@@ -1959,7 +1959,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingPessimis
                                                                                                topology,
                                                                                                typeInferencePhase,
                                                                                                coordinatorConfiguration);
-            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]).getAllDeploymentContexts();
         });
         placementResults.emplace_back(std::move(placementResult));
     }
@@ -2066,7 +2066,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
                                                                                                topology,
                                                                                                typeInferencePhase,
                                                                                                coordinatorConfiguration);
-            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]).getAllDeploymentContexts();
         });
         placementResults.emplace_back(std::move(placementResult));
     }
@@ -2173,7 +2173,7 @@ TEST_F(QueryPlacementAmendmentTest, testConcurrentOperatorPlacementUsingOptimist
                                                                                                topology,
                                                                                                typeInferencePhase,
                                                                                                coordinatorConfiguration);
-            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]);
+            return queryPlacementPhaseInstance->execute(sharedQueryPlans[index]).getAllDeploymentContexts();
         });
         placementResults.emplace_back(std::move(placementResult));
     }

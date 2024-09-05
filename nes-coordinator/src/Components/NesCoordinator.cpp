@@ -340,9 +340,9 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");
 }
 
-std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(QueryId queryId) {
-    NES_INFO("NesCoordinator: Get query statistics for query Id {}", queryId);
-    return worker->getNodeEngine()->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId));
+std::vector<Runtime::QueryStatisticsPtr> NesCoordinator::getQueryStatistics(SharedQueryId sharedQueryId) {
+    NES_INFO("NesCoordinator: Get query statistics for shared query Id {}", sharedQueryId);
+    return worker->getNodeEngine()->getQueryStatistics(sharedQueryId);
 }
 
 RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return requestHandlerService; }

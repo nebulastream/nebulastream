@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer {
 
 ChangeLogEntryPtr ChangeLogEntry::create(std::set<LogicalOperatorPtr> upstreamOperators,
                                          std::set<LogicalOperatorPtr> downstreamOperators) {
@@ -96,4 +96,4 @@ std::set<OperatorId> ChangeLogEntry::computePoSet() {
     return poSet;
 }
 
-}// namespace NES::Optimizer::Experimental
+}// namespace NES::Optimizer

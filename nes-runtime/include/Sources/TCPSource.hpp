@@ -114,7 +114,7 @@ class TCPSource : public DataSource {
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
-    MMapCircularBuffer circularBuffer;
+    std::shared_ptr<MMapCircularBuffer> circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 }// namespace NES

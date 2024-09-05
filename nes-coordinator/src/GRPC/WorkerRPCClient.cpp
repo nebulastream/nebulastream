@@ -30,58 +30,58 @@ namespace NES {
 
 WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
 
-bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+    NES_DEBUG("WorkerRPCClient::registerDecomposedQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
               address,
               sharedQueryId,
               decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
-    RegisterQueryRequest request;
+    RegisterDecomposedQueryRequest request;
 
     // serialize query plan.
     auto serializedQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializedQueryPlan);
 
-    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
-    RegisterQueryReply reply;
+    NES_TRACE("WorkerRPCClient:registerDecomposedQuery -> {}", request.DebugString());
+    RegisterDecomposedQueryReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->RegisterQuery(&context, request, &reply);
+    Status status = workerStub->RegisterDecomposedQuery(&context, request, &reply);
 
     if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success={}", reply.success());
+        NES_DEBUG("WorkerRPCClient::registerDecomposedQuery: status ok return success={}", reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::registerQuery "
+    NES_DEBUG(" WorkerRPCClient::registerDecomposedQuery "
               "error={}: {}",
               status.error_code(),
               status.error_message());
-    throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerDecomposedQuery");
 }
 
-void WorkerRPCClient::registerQueryAsync(const std::string& address,
-                                         const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                         const CompletionQueuePtr& cq) {
+void WorkerRPCClient::registerDecomposedQueryAsync(const std::string& address,
+                                                   const DecomposedQueryPlanPtr& decomposedQueryPlan,
+                                                   const CompletionQueuePtr& cq) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
+    NES_DEBUG("WorkerRPCClient::registerDecomposedQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
               address,
               sharedQueryId,
               decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
-    RegisterQueryRequest request;
+    RegisterDecomposedQueryRequest request;
     // serialize query plan.
     auto serializableQueryPlan = request.mutable_decomposedqueryplan();
     DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, serializableQueryPlan);
 
-    NES_TRACE("WorkerRPCClient:registerQuery -> {}", request.DebugString());
-    RegisterQueryReply reply;
+    NES_TRACE("WorkerRPCClient:registerDecomposedQuery -> {}", request.DebugString());
+    RegisterDecomposedQueryReply reply;
     ClientContext context;
 
     grpc::ChannelArguments args;
@@ -90,13 +90,13 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
     // Call object to store rpc data
-    auto* call = new AsyncClientCall<RegisterQueryReply>;
+    auto* call = new AsyncClientCall<RegisterDecomposedQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncRegisterQuery(&call->context, request, cq.get());
+    call->responseReader = workerStub->PrepareAsyncRegisterDecomposedQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -120,19 +120,19 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
         bool status;
         auto requestClientMode = rpcAsyncRequest.rpcClientMode;
         if (requestClientMode == RpcClientMode::Register) {
-            auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
+            auto* call = static_cast<AsyncClientCall<RegisterDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
         } else if (requestClientMode == RpcClientMode::Unregister) {
-            auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
+            auto* call = static_cast<AsyncClientCall<UnregisterDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
         } else if (requestClientMode == RpcClientMode::Start) {
-            auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
+            auto* call = static_cast<AsyncClientCall<StartDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
         } else if (requestClientMode == RpcClientMode::Stop) {
-            auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
+            auto* call = static_cast<AsyncClientCall<StopDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
         } else {
@@ -149,28 +149,119 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
     NES_DEBUG("All rpc async requests succeeded");
 }
 
-void WorkerRPCClient::unregisterQueryAsync(const std::string& address,
+void WorkerRPCClient::unregisterDecomposedQueryAsync(const std::string& address,
+                                                     SharedQueryId sharedQueryId,
+                                                     DecomposedQueryPlanId decomposedQueryPlanId,
+                                                     const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::unregisterDecomposedQueryAsync address={} queryId={}", address, sharedQueryId);
+
+    UnregisterDecomposedQueryRequest request;
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+
+    UnregisterDecomposedQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<UnregisterDecomposedQueryReply>;
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncUnregisterDecomposedQuery(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+}
+
+bool WorkerRPCClient::unregisterDecomposedQuery(const std::string& address,
+                                                SharedQueryId sharedQueryId,
+                                                DecomposedQueryPlanId decomposedQueryPlanId) {
+    NES_DEBUG("WorkerRPCClient::unregisterDecomposedQuery address={} queryId={}", address, sharedQueryId);
+
+    UnregisterDecomposedQueryRequest request;
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+
+    UnregisterDecomposedQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->UnregisterDecomposedQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::unregisterDecomposedQuery: status ok return success={}", reply.success());
+        return reply.success();
+    }
+    NES_DEBUG(" WorkerRPCClient::unregisterDecomposedQuery error={}: {}", status.error_code(), status.error_message());
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterDecomposedQuery");
+}
+
+bool WorkerRPCClient::startDecomposedQuery(const std::string& address,
                                            SharedQueryId sharedQueryId,
-                                           const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, sharedQueryId);
+                                           DecomposedQueryPlanId decomposedQueryPlanId) {
+    NES_DEBUG("WorkerRPCClient::startDecomposedQuery address={} shared queryId={} decomposed query plan {}",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
 
-    UnregisterQueryRequest request;
-    request.set_queryid(sharedQueryId.getRawValue());
+    StartDecomposedQueryRequest request;
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
 
-    UnregisterQueryReply reply;
+    StartDecomposedQueryReply reply;
+    ClientContext context;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    Status status = workerStub->StartDecomposedQuery(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::startDecomposedQuery: status ok return success={}", reply.success());
+        return reply.success();
+    }
+    NES_DEBUG(" WorkerRPCClient::startDecomposedQuery error={}: {}", status.error_code(), status.error_message());
+    throw Exceptions::RuntimeException("Error while WorkerRPCClient::startDecomposedQuery");
+}
+
+void WorkerRPCClient::startDecomposedQueryAsync(const std::string& address,
+                                                SharedQueryId sharedQueryId,
+                                                DecomposedQueryPlanId decomposedQueryPlanId,
+                                                const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::startDecomposedQueryAsync address={} shared queryId={} decomposed queryId={}",
+              address,
+              sharedQueryId,
+              decomposedQueryPlanId);
+
+    StartDecomposedQueryRequest request;
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+
+    StartDecomposedQueryReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
 
     // Call object to store rpc data
-    auto* call = new AsyncClientCall<UnregisterQueryReply>;
+    auto* call = new AsyncClientCall<StartDecomposedQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncUnregisterQuery(&call->context, request, cq.get());
+    call->responseReader = workerStub->PrepareAsyncStartDecomposedQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -181,109 +272,23 @@ void WorkerRPCClient::unregisterQueryAsync(const std::string& address,
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
 }
 
-bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId sharedQueryId) {
-    NES_DEBUG("WorkerRPCClient::unregisterQuery address={} queryId={}", address, sharedQueryId);
-
-    UnregisterQueryRequest request;
-    request.set_queryid(sharedQueryId.getRawValue());
-
-    UnregisterQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->UnregisterQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success={}", reply.success());
-        return reply.success();
-    }
-    NES_DEBUG(" WorkerRPCClient::unregisterQuery error={}: {}", status.error_code(), status.error_message());
-    throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
-}
-
-bool WorkerRPCClient::startQuery(const std::string& address,
-                                 SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId) {
-    NES_DEBUG("WorkerRPCClient::startQuery address={} shared queryId={} decomposed query plan {}",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
-
-    StartQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
-
-    StartQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    Status status = workerStub->StartQuery(&context, request, &reply);
-
-    if (status.ok()) {
-        NES_DEBUG("WorkerRPCClient::startQuery: status ok return success={}", reply.success());
-        return reply.success();
-    }
-    NES_DEBUG(" WorkerRPCClient::startQuery error={}: {}", status.error_code(), status.error_message());
-    throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
-}
-
-void WorkerRPCClient::startQueryAsync(const std::string& address,
-                                      SharedQueryId sharedQueryId,
-                                      DecomposedQueryPlanId decomposedQueryPlanId,
-                                      const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::startQueryAsync address={} shared queryId={} decomposed queryId={}",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
-
-    StartQueryRequest request;
-    request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
-
-    StartQueryReply reply;
-    ClientContext context;
-
-    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
-    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-
-    // Call object to store rpc data
-    auto* call = new AsyncClientCall<StartQueryReply>;
-
-    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
-    // an instance to store in "call" but does not actually start the RPC
-    // Because we are using the asynchronous API, we need to hold on to
-    // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStartQuery(&call->context, request, cq.get());
-
-    // StartCall initiates the RPC call
-    call->responseReader->StartCall();
-
-    // Request that, upon completion of the RPC, "reply" be updated with the
-    // server's response; "status" with the indication of whether the operation
-    // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-}
-
-bool WorkerRPCClient::stopQuery(const std::string& address,
-                                SharedQueryId sharedQueryId,
-                                DecomposedQueryPlanId decomposedQueryPlanId,
-                                Runtime::QueryTerminationType terminationType) {
+bool WorkerRPCClient::stopDecomposedQuery(const std::string& address,
+                                          SharedQueryId sharedQueryId,
+                                          DecomposedQueryPlanId decomposedQueryPlanId,
+                                          Runtime::QueryTerminationType terminationType) {
     NES_DEBUG("WorkerRPCClient::markQueryForStop address={} shared queryId={}", address, sharedQueryId);
 
-    StopQueryRequest request;
+    StopDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
     request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
-    StopQueryReply reply;
+    StopDecomposedQueryReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
-    Status status = workerStub->StopQuery(&context, request, &reply);
+    Status status = workerStub->StopDecomposedQuery(&context, request, &reply);
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::markQueryForStop: status ok return success={}", reply.success());
@@ -293,32 +298,32 @@ bool WorkerRPCClient::stopQuery(const std::string& address,
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
-void WorkerRPCClient::stopQueryAsync(const std::string& address,
-                                     SharedQueryId sharedQueryId,
-                                     DecomposedQueryPlanId decomposedQueryPlanId,
-                                     Runtime::QueryTerminationType terminationType,
-                                     const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::stopQueryAsync address={} shared queryId={}", address, sharedQueryId);
+void WorkerRPCClient::stopDecomposedQueryAsync(const std::string& address,
+                                               SharedQueryId sharedQueryId,
+                                               DecomposedQueryPlanId decomposedQueryPlanId,
+                                               Runtime::QueryTerminationType terminationType,
+                                               const CompletionQueuePtr& cq) {
+    NES_DEBUG("WorkerRPCClient::stopDecomposedQueryAsync address={} shared queryId={}", address, sharedQueryId);
 
-    StopQueryRequest request;
+    StopDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
     request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
-    StopQueryReply reply;
+    StopDecomposedQueryReply reply;
     ClientContext context;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
 
     // Call object to store rpc data
-    auto* call = new AsyncClientCall<StopQueryReply>;
+    auto* call = new AsyncClientCall<StopDecomposedQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
     // Because we are using the asynchronous API, we need to hold on to
     // the "call" instance in order to get updates on the ongoing RPC.
-    call->responseReader = workerStub->PrepareAsyncStopQuery(&call->context, request, cq.get());
+    call->responseReader = workerStub->PrepareAsyncStopDecomposedQuery(&call->context, request, cq.get());
 
     // StartCall initiates the RPC call
     call->responseReader->StartCall();
@@ -373,7 +378,7 @@ std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
 bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
     EpochBarrierNotification request;
     request.set_timestamp(timestamp);
-    request.set_queryid(queryId);
+    request.set_sharedqueryid(queryId);
     EpochBarrierReply reply;
     ClientContext context;
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -387,10 +392,12 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
     return false;
 }
 
-bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
+bool WorkerRPCClient::bufferData(const std::string& address,
+                                 DecomposedQueryPlanId decomposedQueryPlanId,
+                                 uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address={}", address);
     BufferRequest request;
-    request.set_querysubplanid(querySubPlanId);
+    request.set_decomposedqueryplanid(decomposedQueryPlanId.getRawValue());
     request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
     BufferReply reply;
     ClientContext context;
@@ -414,13 +421,13 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
                                         uint64_t newNodeId,
                                         const std::string& newHostname,
                                         uint32_t newPort,
-                                        uint64_t querySubPlanId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
                                         uint64_t uniqueNetworkSinDescriptorId) {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
     request.set_newport(newPort);
-    request.set_querysubplanid(querySubPlanId);
+    request.set_decomposedqueryplanid(decomposedQueryPlanId.getRawValue());
     request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
 
     UpdateNetworkSinkReply reply;

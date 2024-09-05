@@ -137,7 +137,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
                         "Received EOS for data channel on event channel for consumer " << eosChannelId.toString());
 
         const auto lastEOS = partitionManager->unregisterSubpartitionConsumer(eosNesPartition);
-        NES_TRACE("lastEOS {}", lastEOS);
+        NES_DEBUG("Received lastEOS {}", lastEOS);
         if (lastEOS) {
             const auto& eosMessageMaxSeqNumber = endOfStreamMessage.getMaxMessageSequenceNumber();
             while ((*maxSeqNumberPerNesPartition.rlock()).at(eosNesPartition).getCurrentValue() < eosMessageMaxSeqNumber) {
@@ -156,10 +156,10 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
         if (!lastEOS) {
-            NES_DEBUG("ExchangeProtocol: EndOfStream message received on data channel from {} but there is still some active "
-                      "subpartition: {}",
-                      endOfStreamMessage.getChannelId().toString(),
-                      *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+            NES_WARNING("ExchangeProtocol: EndOfStream message received on data channel from {} but there is still some active "
+                        "subpartition: {}",
+                        endOfStreamMessage.getChannelId().toString(),
+                        *partitionManager->getSubpartitionConsumerCounter(endOfStreamMessage.getChannelId().getNesPartition()));
         } else {
             auto dataEmitter = partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition());
             auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);

@@ -53,13 +53,21 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
                     NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
                     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
 
-    Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
+    Status RegisterDecomposedQuery(ServerContext* context,
+                                   const RegisterDecomposedQueryRequest* request,
+                                   RegisterDecomposedQueryReply* reply) override;
 
-    Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) override;
+    Status UnregisterDecomposedQuery(ServerContext* context,
+                                     const UnregisterDecomposedQueryRequest* request,
+                                     UnregisterDecomposedQueryReply* reply) override;
 
-    Status StartQuery(ServerContext* context, const StartQueryRequest* request, StartQueryReply* reply) override;
+    Status StartDecomposedQuery(ServerContext* context,
+                                const StartDecomposedQueryRequest* request,
+                                StartDecomposedQueryReply* reply) override;
 
-    Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
+    Status StopDecomposedQuery(ServerContext* context,
+                               const StopDecomposedQueryRequest* request,
+                               StopDecomposedQueryReply* reply) override;
 
     Status
     RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;

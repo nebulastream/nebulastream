@@ -23,13 +23,13 @@ CallData::CallData(WorkerRPCServer& service) : service(service) {
 
 void CallData::proceed() {
     // What we get from the client.
-    RegisterQueryRequest request;
+    RegisterDecomposedQueryRequest request;
     //
     //    // What we send back to the client.
-    RegisterQueryReply reply;
+    RegisterDecomposedQueryReply reply;
 
     ServerContext ctx;
-    grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
+    grpc::ServerAsyncResponseWriter<RegisterDecomposedQueryReply> responder(&ctx);
 
     if (status == CallStatus::CREATE) {
         NES_DEBUG("RequestInSyncInCreate={}", request.DebugString());
@@ -46,7 +46,7 @@ void CallData::proceed() {
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
-        service.RegisterQuery(&ctx, &request, &reply);
+        service.RegisterDecomposedQuery(&ctx, &request, &reply);
 
         // And we are done! Let the gRPC Runtime know we've finished, using the
         // memory address of this instance as the uniquely identifying tag for

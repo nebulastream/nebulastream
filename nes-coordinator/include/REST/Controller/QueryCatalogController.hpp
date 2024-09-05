@@ -130,15 +130,12 @@ class QueryCatalogController : public oatpp::web::server::api::ApiController {
             }
             uint64_t processedBuffers = 0;
             if (auto shared_back_reference = coordinator.lock()) {
-                std::vector<Runtime::QueryStatisticsPtr> statistics =
-                    shared_back_reference->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
+                std::vector<Runtime::QueryStatisticsPtr> statistics = shared_back_reference->getQueryStatistics(sharedQueryId);
                 if (statistics.empty()) {
                     return errorHandler->handleError(Status::CODE_404,
                                                      "no statistics available for query with ID: " + std::to_string(queryId));
                 }
-                processedBuffers =
-                    shared_back_reference->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId))[0]
-                        ->getProcessedBuffers();
+                processedBuffers = shared_back_reference->getQueryStatistics(sharedQueryId)[0]->getProcessedBuffers();
             }
             nlohmann::json response;
             response["producedBuffers"] = processedBuffers;

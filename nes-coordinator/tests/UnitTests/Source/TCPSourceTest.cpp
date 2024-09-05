@@ -78,6 +78,7 @@ static thread_local struct {
     std::vector<size_t> read_sizes;
     std::vector<const void*> read_ptr;
 } record_socket_parameters;
+
 static thread_local struct {
     int fd = 0;
     int connection_fd = 0;
@@ -89,9 +90,9 @@ void setup_read_from_buffer(std::vector<char> data) {
     socket_mock_data.fd = 9234;
     socket_mock_data.data = std::move(data);
     socket_mock_data.index = 0;
-
     record_socket_parameters = {};
 }
+
 std::string get_ip_address() {
     char ip_string[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(record_socket_parameters.addr_in.sin_addr), ip_string, INET_ADDRSTRLEN);
@@ -113,6 +114,7 @@ extern "C" int socket(int domain, int type, int protocol) {
 
     return socket_mock_data.fd;
 }
+
 extern "C" int connect(int fd, const sockaddr* addr, [[maybe_unused]] socklen_t addrlen) {
     assert(!record_socket_parameters.called_connect && "Unexpected multiple connect calls");
     record_socket_parameters.connect_fd = fd;
@@ -201,6 +203,7 @@ configuration:
     socketBufferSize: 20
     decideMessageSize: USER_SPECIFIED_BUFFER_SIZE
     flushIntervalMS: 10
+    persistentTcpSource: false
     )";
     Yaml::Parse(sourceConfiguration, yaml);
 
@@ -216,6 +219,7 @@ configuration:
     ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE);
     ASSERT_EQ(tcpSourceType->getSocketBufferSize()->getValue(), 20);
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 10);
+    ASSERT_FALSE(tcpSourceType->getPersistentTcpSource()->getValue());
 
     auto tcpSource = createTCPSource(test_schema,
                                      bufferManager,
@@ -242,6 +246,7 @@ tupleSeparator:)";
     std::string expected_part_3 = R"(
 socketBufferSize: 20
 bytesUsedForSocketBufferSizeTransfer: 0
+persistentTcpSource: 0
 })";
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
@@ -261,12 +266,16 @@ bytesUsedForSocketBufferSizeTransfer: 0
     ASSERT_EQ(get_port(), 9080);
 
     uint32_t i = 0;
-    while (socket_mock_data.index < total_number_of_bytes) {
+    while (socket_mock_data.index <= total_number_of_bytes) {
         auto buffer = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
             Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
             buffer);
         std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
+
+        if (testBuffer.getNumberOfTuples() == 0) {
+            break;
+        }
 
         for (const auto& tuple : testBuffer) {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
@@ -336,6 +345,7 @@ tupleSeparator:)";
     std::string expected_part_3 = R"(
 socketBufferSize: 0
 bytesUsedForSocketBufferSizeTransfer: 0
+persistentTcpSource: 0
 })";
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
@@ -425,6 +435,7 @@ tupleSeparator:)";
     std::string expected_part_3 = R"(
 socketBufferSize: 0
 bytesUsedForSocketBufferSizeTransfer: 8
+persistentTcpSource: 0
 })";
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
@@ -522,6 +533,7 @@ tupleSeparator:)";
     std::string expected_part_3 = R"(
 socketBufferSize: 0
 bytesUsedForSocketBufferSizeTransfer: 8
+persistentTcpSource: 0
 })";
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
@@ -580,5 +592,4 @@ bytesUsedForSocketBufferSizeTransfer: 8
     ASSERT_EQ(socket_mock_data.index, (actualBufferSize + 8) * total_number_of_buffers);
     ASSERT_EQ(i, total_number_of_buffers * tupleInBuffer);
 }
-
 }// namespace NES

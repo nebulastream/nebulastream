@@ -29,9 +29,11 @@ class NESBinaryParser : public Parser {
 
   public:
     /**
-   * @brief public constructor for NES input data parser
-   */
-    NESBinaryParser();
+     * @brief public constructor for NES input data parser
+     * @param schema: schema of the tuple
+     * @param addIngestionTime: add ingestion time to the incoming record
+     */
+    NESBinaryParser(const SchemaPtr& schema, bool addIngestionTime = false);
 
     /**
    * @brief takes a binary nes tuple buffer as string_view and copies it into a TupleBuffer
@@ -46,6 +48,11 @@ class NESBinaryParser : public Parser {
                                       Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
                                       const SchemaPtr& schema,
                                       const Runtime::BufferManagerPtr& bufferManager) override;
+
+  private:
+    uint64_t tupleSize;
+    std::string ingestionTimeFiledName;
+    bool addIngestionTime;
 };
 
 }// namespace NES

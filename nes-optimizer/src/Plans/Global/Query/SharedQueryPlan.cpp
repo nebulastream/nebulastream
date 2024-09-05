@@ -47,7 +47,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     //Set the placement strategy used
     placementStrategy = queryPlan->getPlacementStrategy();
     //Initialize change log
-    changeLog = Optimizer::Experimental::ChangeLog::create();
+    changeLog = Optimizer::ChangeLog::create();
 
     //Compute first change log entry
     std::set<LogicalOperatorPtr> downstreamOperators;
@@ -59,7 +59,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
         upstreamOperators.insert(sourceOperator->as<LogicalOperator>());
     }
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
+    changeLog->addChangeLogEntry(now, Optimizer::ChangeLogEntry::create(upstreamOperators, downstreamOperators));
 }
 
 SharedQueryPlanPtr SharedQueryPlan::create(const QueryPlanPtr& queryPlan) {
@@ -210,9 +210,8 @@ void SharedQueryPlan::addQuery(QueryId queryId, const std::vector<Optimizer::Mat
         //add change log entry indicating the addition
         auto now =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        changeLog->addChangeLogEntry(
-            now,
-            Optimizer::Experimental::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
+        changeLog->addChangeLogEntry(now,
+                                     Optimizer::ChangeLogEntry::create(clEntryUpstreamOperators, clEntryDownstreamOperators));
     }
 
     //add the new sink operators as root to the query plan
@@ -252,7 +251,7 @@ bool SharedQueryPlan::markQueryForRemoval(QueryId queryId) {
         //add change log entry indicating the addition
         auto now =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        changeLog->addChangeLogEntry(now, Optimizer::Experimental::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
+        changeLog->addChangeLogEntry(now, Optimizer::ChangeLogEntry::create(upstreamOperators, {sinkOperator}));
     }
     queriesMarkedForRemoval.emplace_back(queryId);
     if (containsAllQueryIds(runningQueryIds, queriesMarkedForRemoval)) {
@@ -274,7 +273,7 @@ bool SharedQueryPlan::removeQueryMarkedForRemoval() {
             removeOperator(sinkOperator);
             queryPlan->removeAsRootOperator(sinkOperator);
         }
-        static_cast<void>(std::remove(runningQueryIds.begin(), runningQueryIds.end(), queryId));
+        runningQueryIds.erase(std::remove(runningQueryIds.begin(), runningQueryIds.end(), queryId));
         queryIdToSinkOperatorMap.erase(queryId);
     }
     queriesMarkedForRemoval.clear();
@@ -382,7 +381,7 @@ ChangeLogEntries SharedQueryPlan::getChangeLogEntries(Timestamp timestamp) {
     return changeLog->getCompactChangeLogEntriesBeforeTimestamp(timestamp);
 }
 
-void SharedQueryPlan::recordFailedChangeLogEntries(std::vector<Optimizer::Experimental::ChangeLogEntryPtr> changeLogEntries) {
+void SharedQueryPlan::recordFailedChangeLogEntries(std::vector<Optimizer::ChangeLogEntryPtr> changeLogEntries) {
     for (const auto& changeLogEntry : changeLogEntries) {
 
         // Find the most downstream pinned operator
@@ -458,9 +457,7 @@ void SharedQueryPlan::recordFailedChangeLogEntries(std::vector<Optimizer::Experi
         // Compute a new change log entry
         auto now =
             std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        changeLog->addChangeLogEntry(
-            now,
-            Optimizer::Experimental::ChangeLogEntry::create(newUpstreamOperators, newDownStreamOperators));
+        changeLog->addChangeLogEntry(now, Optimizer::ChangeLogEntry::create(newUpstreamOperators, newDownStreamOperators));
     }
 }
 
@@ -510,9 +507,7 @@ void SharedQueryPlan::performReOperatorPlacement(const std::set<OperatorId>& ups
 
     //add change log entry indicating the addition
     auto now = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    changeLog->addChangeLogEntry(
-        now,
-        Optimizer::Experimental::ChangeLogEntry::create(upstreamLogicalOperators, downstreamLogicalOperators));
+    changeLog->addChangeLogEntry(now, Optimizer::ChangeLogEntry::create(upstreamLogicalOperators, downstreamLogicalOperators));
 }
 
 void SharedQueryPlan::updateOperators(const std::set<LogicalOperatorPtr>& updatedOperators) {

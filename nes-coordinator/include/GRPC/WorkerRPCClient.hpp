@@ -101,7 +101,7 @@ class WorkerRPCClient {
      * @param decomposedQueryPlan plan to register
      * @return true if succeeded, else false
      */
-    bool registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    bool registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
      * @brief register a query asynchronously
@@ -109,71 +109,79 @@ class WorkerRPCClient {
      * @param query plan to register
      * @param cq the completion queue
      */
-    void registerQueryAsync(const std::string& address,
-                            const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                            const CompletionQueuePtr& cq);
+    void registerDecomposedQueryAsync(const std::string& address,
+                                      const DecomposedQueryPlanPtr& decomposedQueryPlan,
+                                      const CompletionQueuePtr& cq);
 
     /**
-     * @brief ungregisters a query
-     * @param sharedQueryId to unregister query
+     * @brief unregisters a decomposed query
+     * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+     * @param decomposedQueryPlanId: id of the decomposed query to unregister
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(const std::string& address, SharedQueryId sharedQueryId);
+    bool unregisterDecomposedQuery(const std::string& address,
+                                   SharedQueryId sharedQueryId,
+                                   DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
-     * @brief ungregisters a query asynchronously
-     * @param sharedQueryId to unregister query
+     * @brief un-registers a decomposed query asynchronously
+     * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+     * @param decomposedQueryPlanId: id of the decomposed query to unregister
      */
-    void unregisterQueryAsync(const std::string& address, SharedQueryId sharedQueryId, const CompletionQueuePtr& cq);
+    void unregisterDecomposedQueryAsync(const std::string& address,
+                                        SharedQueryId sharedQueryId,
+                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        const CompletionQueuePtr& cq);
 
     /**
-     * @brief method to start a already deployed query
+     * @brief method to start a already deployed decomposed query
      * @note if query is not deploy, false is returned
-     * @param sharedQueryId to start
-     * @param decomposedQueryPlanId to start
+     * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+     * @param decomposedQueryPlanId: id of the decomposed query to start
      * @return bool indicating success
      */
-    bool startQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool
+    startDecomposedQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
       * @brief method to start a already deployed query asynchronously
       * @note if query is not deploy, false is returned
       * @param address the address of the worker
-      * @param sharedQueryId to start
-      * @param decomposedQueryPlanId to start
+      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+      * @param decomposedQueryPlanId: id of the decomposed query to start
       * @param cq the completion queue
       */
-    void startQueryAsync(const std::string& address,
-                         SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanId decomposedQueryPlanId,
-                         const CompletionQueuePtr& cq);
+    void startDecomposedQueryAsync(const std::string& address,
+                                   SharedQueryId sharedQueryId,
+                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   const CompletionQueuePtr& cq);
 
     /**
      * @brief method to stop a query
      * @param address address of the new worker
      * @param sharedQueryId to stop
-     * @param decomposedQueryPlanId to stop
-     * @param terminationType termination type of the query
+     * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+     * @param decomposedQueryPlanId: id of the decomposed query to stop
      * @return bool indicating success
      */
-    bool stopQuery(const std::string& address,
-                   SharedQueryId sharedQueryId,
-                   DecomposedQueryPlanId decomposedQueryPlanId,
-                   Runtime::QueryTerminationType terminationType);
+    bool stopDecomposedQuery(const std::string& address,
+                             SharedQueryId sharedQueryId,
+                             DecomposedQueryPlanId decomposedQueryPlanId,
+                             Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
      * @param address : address of the worker
-     * @param sharedQueryId to stop
-     * @param decomposedQueryPlanId to stop
+     * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
+     * @param decomposedQueryPlanId: id of the decomposed query to stop
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
      */
-    void stopQueryAsync(const std::string& address,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId,
-                        Runtime::QueryTerminationType terminationType,
-                        const CompletionQueuePtr& cq);
+    void stopDecomposedQueryAsync(const std::string& address,
+                                  SharedQueryId sharedQueryId,
+                                  DecomposedQueryPlanId decomposedQueryPlanId,
+                                  Runtime::QueryTerminationType terminationType,
+                                  const CompletionQueuePtr& cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
@@ -195,11 +203,12 @@ class WorkerRPCClient {
      * a query sub plan Id and a global sinkId.
      * Once buffering starts, the Network Sink no longer sends data downstream
      * @param ipAddress
-     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param decomposedQueryPlanId : the id of the query sub plan to which the Network Sink belongs
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    bool bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    bool
+    bufferData(const std::string& address, DecomposedQueryPlanId decomposedQueryPlanId, uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
@@ -207,7 +216,7 @@ class WorkerRPCClient {
      * @param newNodeId : the id of the node that the Network Sink will send data to after reconfiguration
      * @param newHostname : the hostname of the node that the NetworkSink should send data to
      * @param newPort : the port of the node that the NetworkSink should send data to
-     * @param querySubPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param decomposedQueryPlanId : the id of the query sub plan to which the Network Sink belongs
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
@@ -215,7 +224,7 @@ class WorkerRPCClient {
                            uint64_t newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           uint64_t querySubPlanId,
+                           DecomposedQueryPlanId decomposedQueryPlanId,
                            uint64_t uniqueNetworkSinDescriptorId);
 
     /**

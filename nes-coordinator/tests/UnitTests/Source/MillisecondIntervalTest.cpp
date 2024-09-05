@@ -173,7 +173,8 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      this->nodeEngine->getQueryManager(),
                                                      this->nodeEngine->getBufferManager());
     EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
-    EXPECT_TRUE(this->nodeEngine->startQuery(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
+    EXPECT_TRUE(
+        this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(queryId)), ExecutableQueryPlanStatus::Running);
     sink->waitTillCompleted(numberOfBuffers * numberOfTuplesToProcess);
     auto theThing = sink->getResult();

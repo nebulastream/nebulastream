@@ -18,14 +18,14 @@ import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
 
 service WorkerRPCService {
-  rpc DeployQuery (DeployQueryRequest) returns (DeployQueryReply) {}
-  rpc UndeployQuery (UndeployQueryRequest) returns (UndeployQueryReply) {}
+  rpc DeployDecomposedQuery (DeployDecomposedQueryRequest) returns (DeployDecomposedQueryReply) {}
+  rpc UndeployDecomposedQuery (UndeployDecomposedQueryRequest) returns (UndeployDecomposedQueryReply) {}
 
-  rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
-  rpc UnregisterQuery (UnregisterQueryRequest) returns (UnregisterQueryReply) {}
+  rpc RegisterDecomposedQuery (RegisterDecomposedQueryRequest) returns (RegisterDecomposedQueryReply) {}
+  rpc UnregisterDecomposedQuery (UnregisterDecomposedQueryRequest) returns (UnregisterDecomposedQueryReply) {}
 
-  rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
-  rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
+  rpc StartDecomposedQuery (StartDecomposedQueryRequest) returns (StartDecomposedQueryReply) {}
+  rpc StopDecomposedQuery (StopDecomposedQueryRequest) returns (StopDecomposedQueryReply) {}
 
   rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
@@ -45,54 +45,56 @@ service WorkerRPCService {
   rpc ProbeStatistics (ProbeStatisticsRequest) returns(ProbeStatisticsReply) {}
 }
 
-message DeployQueryRequest {
+message DeployDecomposedQueryRequest {
   NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 }
 
-message DeployQueryReply {
+message DeployDecomposedQueryReply {
   bool success = 1;
 }
 
-message UndeployQueryRequest {
-  uint64 queryId = 1;
-}
-
-message UndeployQueryReply {
-  bool success = 1;
-}
-
-message RegisterQueryRequest {
-  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
-}
-
-message RegisterQueryReply {
-  bool success = 1;
-}
-
-message UnregisterQueryRequest {
-  uint64 queryId = 1;
-}
-
-message UnregisterQueryReply {
-  bool success = 1;
-}
-
-message StartQueryRequest {
+message UndeployDecomposedQueryRequest {
   uint64 sharedQueryId = 1;
   uint64 decomposedQueryId = 2;
 }
 
-message StartQueryReply {
+message UndeployDecomposedQueryReply {
   bool success = 1;
 }
 
-message StopQueryRequest {
+message RegisterDecomposedQueryRequest {
+  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+}
+
+message RegisterDecomposedQueryReply {
+  bool success = 1;
+}
+
+message UnregisterDecomposedQueryRequest {
+  uint64 sharedQueryId = 1;
+  uint64 decomposedQueryId = 2;
+}
+
+message UnregisterDecomposedQueryReply {
+  bool success = 1;
+}
+
+message StartDecomposedQueryRequest {
+  uint64 sharedQueryId = 1;
+  uint64 decomposedQueryId = 2;
+}
+
+message StartDecomposedQueryReply {
+  bool success = 1;
+}
+
+message StopDecomposedQueryRequest {
   uint64 sharedQueryId = 1;
   uint64 decomposedQueryId = 2;
   uint64 queryTerminationType = 3;
 }
 
-message StopQueryReply {
+message StopDecomposedQueryReply {
   bool success = 1;
 }
 
@@ -113,7 +115,7 @@ message MonitoringDataReply {
 
 message EpochBarrierNotification{
   uint64 timestamp = 1;
-  uint64 queryId = 2;
+  uint64 sharedQueryId = 2;
 }
 
 message EpochBarrierReply{
@@ -124,7 +126,7 @@ message UpdateNetworkSinkRequest{
   uint64 newNodeId = 1;
   string newHostname = 2;
   uint32 newPort = 3;
-  uint64 querySubPlanId = 4;
+  uint64 decomposedQueryPlanId = 4;
   uint64 uniqueNetworkSinkDescriptorId = 5;
 }
 
@@ -133,7 +135,7 @@ message UpdateNetworkSinkReply {
 }
 
 message BufferRequest {
-  uint64 querySubPlanId = 1;
+  uint64 decomposedQueryPlanId = 1;
   uint64 uniqueNetworkSinkDescriptorId = 2;
 }
 

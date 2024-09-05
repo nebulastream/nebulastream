@@ -93,7 +93,6 @@ TEST_F(FilterPushDownTest, testCorrectResultsForFilterPushDownBelowTwoMaps) {
                      .project(Attribute("timestamp"), Attribute("velocity"), Attribute("quantity"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-
                                   .addLogicalSource("QnV1", schema)
                                   .attachWorkerWithCSVSourceToCoordinator(srcConf1);
 

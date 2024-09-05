@@ -27,6 +27,7 @@
 #include <Runtime/Task.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/AtomicCounter.hpp>
+#include <Util/MMapCircularBuffer.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
@@ -87,17 +88,40 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /**
     * @brief register a query by extracting sources, windows and sink and add them to
     * respective map
-    * @param QueryExecutionPlan to be deployed
+    * @param executableQueryPlan to be deployed
     */
-    virtual bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
+    virtual bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
      * from respective map
-     * @param QueryExecutionPlan to be deployed
+     * @param executableQueryPlan to be unregistered
      * @return bool indicating if register was successful
     */
-    bool deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
+    bool unregisterExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& executableQueryPlan);
+
+    /**
+     * @brief method to start a query
+     * @param qep of the query to start
+     * @return bool indicating success
+     */
+    [[nodiscard]] bool startExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep);
+
+    /**
+     * @brief method to start a query
+     * @param qep of the query to start
+     * @param graceful stop the query gracefully or not
+     * @return bool indicating success
+     */
+    [[nodiscard]] bool stopExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep,
+                                               Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
+
+    /**
+    * @brief method to fail a query
+    * @param qep of the query to fail
+    * @return bool indicating success
+    */
+    bool failExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep);
 
     /**
      * @brief process task from task queue
@@ -146,29 +170,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
 
     /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @return bool indicating success
-     */
-    [[nodiscard]] bool startQuery(const Execution::ExecutableQueryPlanPtr& qep);
-
-    /**
-     * @brief method to start a query
-     * @param qep of the query to start
-     * @param graceful stop the query gracefully or not
-     * @return bool indicating success
-     */
-    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep,
-                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
-
-    /**
-    * @brief method to fail a query
-    * @param qep of the query to fail
-    * @return bool indicating success
-    */
-    bool failQuery(const Execution::ExecutableQueryPlanPtr& qep);
-
-    /**
      * @brief notify all waiting threads in getWork() to wake up and finish up
      */
     virtual void poisonWorkers() = 0;
@@ -180,10 +181,16 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief method to return the query statistics
-     * @param qep of the particular query
+     * @param decomposedQueryPlanId id of the particular decomposed query
      * @return
      */
-    QueryStatisticsPtr getQueryStatistics(DecomposedQueryPlanId qepId);
+    QueryStatisticsPtr getQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId);
+
+    /**
+     * @brief Reset statistics for the decomposed query plan
+     * @param decomposedQueryPlanId : the decomposed query plan id
+     */
+    void resetQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * Get the id of the current node
@@ -320,6 +327,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void
     notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
+    folly::Synchronized<std::unordered_map<std::string, uint64_t>> persistentTCPFileDescriptors;
+    folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<MMapCircularBuffer>>> persistentTCPSourceCircularBuffer;
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -341,7 +351,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-  protected:
     /**
      * @brief Method to update the statistics
      * @param task
@@ -389,7 +398,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNextTaskId();
 
-  protected:
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
@@ -420,6 +428,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     std::vector<AtomicCounter<uint64_t>> tempCounterTasksCompleted;
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
+
+    std::unordered_map<DecomposedQueryPlanId, std::vector<OperatorId>> decomposeQueryToSourceIdMapping;
 
     std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
@@ -550,7 +560,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
 
     void destroy() override;
 
-    bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep) override;
+    bool registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep) override;
 
     /**
      * @brief process task from task queue

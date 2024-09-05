@@ -20,7 +20,7 @@
 #include <memory>
 #include <vector>
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer {
 
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
@@ -92,5 +92,5 @@ class ChangeLog {
     Timestamp lastProcessedChangeLogTimestamp;
     absl::btree_map<Timestamp, ChangeLogEntryPtr> changeLogEntries;
 };
-}// namespace NES::Optimizer::Experimental
+}// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_

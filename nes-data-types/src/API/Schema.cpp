@@ -223,7 +223,7 @@ AttributeFieldPtr Schema::getField(const std::string& fieldName) const {
     if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
         //Add only attribute name separator
         //caution: adding the fully qualified name may result in undesired behavior
-        //E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
+        //e.g.: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
         //system should throw invalid field exception
         stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
     }

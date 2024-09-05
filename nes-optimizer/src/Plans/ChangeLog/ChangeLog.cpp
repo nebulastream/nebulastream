@@ -16,7 +16,7 @@
 #include <Plans/ChangeLog/ChangeLog.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer {
 
 ChangeLogPtr ChangeLog::create() { return std::make_unique<ChangeLog>(ChangeLog()); }
 
@@ -255,4 +255,4 @@ ChangeLog::compactChangeLogEntries(std::vector<std::pair<Timestamp, ChangeLogEnt
     return ChangeLogEntry::create(firstUpstreamOperators, firstDownstreamOperators);
 }
 
-}// namespace NES::Optimizer::Experimental
+}// namespace NES::Optimizer
