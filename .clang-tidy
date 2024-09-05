@@ -24,6 +24,7 @@ Checks: [
 
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-modernize-use-trailing-return-type", # purely cosmetic
+  "-fuchsia-default-arguments-calls", # we do not forbid default args
 ]
 
 # We try to be as strict as possible.
