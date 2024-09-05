@@ -1,9 +1,15 @@
-# Which checks are disabled and why?
-# - Disable project-specific checks (abseil, fuchsia, google, zircon, llvm)
-# - Also disable modernization to trailing return types because this would cause a lot of unnecessary
-#   refactoring
-# - Implicit conversions sometimes make the code more readable
-# - readability-named-parameter does not improve readability
+# run clang-tidy e.g. like:
+#
+#     cmake -B build
+#     ln -s build/compile_commands.json .
+#     # this will take a while
+#     run-clang-tidy-18 > ct.log 2> /dev/null
+#
+#     # list the violations
+#     cat ct.log | grep "^\/.*\[[^ ]*\]$" | sed "s|\([^ ]*\):.*\[\([^ ]*\)\]$|\1 \2|" | awk '{ split($2, arr, ","); for (a in arr) { print $1, arr[a] } }' > location_violation.txt
+#
+#     # show a summary of violations
+#     cat location_violation.txt | cut -d " " -f 2 | sort | uniq -c | sort -n
 
 
 Checks: [
