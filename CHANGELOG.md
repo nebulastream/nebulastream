@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.177](https://github.com/nebulastream/nebulastream/tree/v0.6.177) (2024-09-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.176...v0.6.177)
+
+**Implemented enhancements:**
+
+- \[TASK\] Allow tcp data generator to continuously ingest data throughout source redeployment [\#5070](https://github.com/nebulastream/nebulastream/issues/5070)
+
 ## [v0.6.176](https://github.com/nebulastream/nebulastream/tree/v0.6.176) (2024-09-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.175...v0.6.176)
