@@ -37,41 +37,18 @@ namespace NES::QueryCompilation
 {
 class ExpressionProvider;
 
-/**
- * @brief This phase lowers a pipeline plan of physical operators into a pipeline plan of nautilus operators.
- * The lowering of individual operators is defined by the nautilus operator provider to improve extendability.
- */
-class LowerPhysicalToNautilusOperators
+/// This phase lowers a pipeline plan of physical operators into a pipeline plan of nautilus operators.
+/// The lowering of individual operators is defined by the nautilus operator provider to improve extendability.
+class LowerPhysicalToNautilusOperators : std::enable_shared_from_this<LowerPhysicalToNautilusOperators>
 {
 public:
-    /**
-     * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
-     */
-    explicit LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options);
-
-    /**
-     * @brief Create a LowerPhysicalToGeneratableOperatorPhase
-     */
-    static std::shared_ptr<LowerPhysicalToNautilusOperators> create(const QueryCompilation::QueryCompilerOptionsPtr& options);
-
-    /**
-     * @brief Applies the phase on a pipelined query plan.
-     * @param pipelined query plan
-     * @return PipelineQueryPlanPtr
-     */
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
-
-    /**
-     * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
-     * @param pipeline
-     * @return OperatorPipelinePtr
-     */
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
-
-    /**
-     * @brief Deconstructor for this class
-     */
+    explicit LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options);
     ~LowerPhysicalToNautilusOperators();
+
+    /// Applies the phase on a pipelined query plan.
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan, size_t bufferSize);
+    /// Applies the phase on a pipelined and lower physical operator to generatable once.
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline, size_t bufferSize);
 
 private:
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
@@ -161,48 +138,19 @@ private:
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& functions);
 
-    /**
-     * Create a unique pointer of an aggregation value of the given aggregation function then return it
-     * @param aggregationType the type of this aggregation
-     * @param inputType the data type of the input tuples for this aggregation
-     * @return unique pointer of an aggregation value
-     */
     std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
     getAggregationValueForThresholdWindow(Windowing::WindowAggregationDescriptor::Type aggregationType, DataTypePtr inputType);
 
-    /**
-     * @brief Lowers a hash join slicing build operator
-     * @param hashJoinBuildOperator
-     * @param operatorHandlerIndex
-     * @param timeFunction
-     * @return ExecutableOperatorPtr
-     */
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJSlicing(
         const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
         uint64_t operatorHandlerIndex,
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
-    /**
-     * @brief Lowers a hash join slicing build operator for variable sized data
-     * @param hashJoinBuildOperator
-     * @param operatorHandlerIndex
-     * @param timeFunction
-     * @return ExecutableOperatorPtr
-     */
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJSlicingVarSized(
         const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
         uint64_t operatorHandlerIndex,
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
-    /**
-     * @brief Lowers a hash join bucketing build operator
-     * @param hashJoinBuildOperator
-     * @param operatorHandlerIndex
-     * @param timeFunction
-     * @param windowSize
-     * @param windowSlide
-     * @return ExecutableOperatorPtr
-     */
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJBucketing(
         const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
         uint64_t operatorHandlerIndex,
@@ -210,27 +158,11 @@ private:
         uint64_t windowSize,
         uint64_t windowSlide);
 
-    /**
-     * @brief Lowers a hash join slicing build operator
-     * @param nestedLoopJoinBuildOperator
-     * @param operatorHandlerIndex
-     * @param timeFunction
-     * @return ExecutableOperatorPtr
-     */
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJSlicing(
         std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
         uint64_t operatorHandlerIndex,
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
-    /**
-     * @brief Lowers a hash join slicing build operator
-     * @param nestedLoopJoinBuildOperator
-     * @param operatorHandlerIndex
-     * @param timeFunction
-     * @param windowSize
-     * @param windowSlide
-     * @return ExecutableOperatorPtr
-     */
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJBucketing(
         std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
         uint64_t operatorHandlerIndex,
@@ -238,7 +170,7 @@ private:
         uint64_t windowSize,
         uint64_t windowSlide);
 
-    const QueryCompilation::QueryCompilerOptionsPtr options;
+    std::shared_ptr<QueryCompilerOptions> options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
 } /// namespace NES::QueryCompilation

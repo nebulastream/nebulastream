@@ -50,7 +50,7 @@ MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilati
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
 
     /// 2.a dump MLIR to console or a file
-    if (options.isDumpToConsole() || options.isDumpToFile())
+    if (options.dumpToConsole || options.dumpToFile)
     {
         mlir::OpPrintingFlags flags;
         std::string result;

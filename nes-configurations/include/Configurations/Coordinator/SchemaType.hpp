@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace NES::Configurations
@@ -32,20 +31,15 @@ public:
     std::string variableLengthInBytes;
 };
 
-class SchemaType;
-using SchemaTypePtr = std::shared_ptr<SchemaType>;
-
-/**
- * @brief This class is a wrapper for storing the schema related configurations supplied by user and then later using it to create the actual schema
- */
+/// This class is a wrapper for storing the schema related configurations supplied by user and then later using it to create the actual schema
 class SchemaType
 {
 public:
-    static SchemaTypePtr create(const std::vector<SchemaFieldDetail>& schemaFieldDetails);
+    static std::shared_ptr<SchemaType> create(const std::vector<SchemaFieldDetail>& schemaFieldDetails);
 
     [[nodiscard]] const std::vector<SchemaFieldDetail>& getSchemaFieldDetails() const;
 
-    bool contains(const std::string& fieldName);
+    [[nodiscard]] bool contains(const std::string& fieldName) const;
 
 private:
     explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);

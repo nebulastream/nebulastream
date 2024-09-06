@@ -23,7 +23,7 @@ SchemaType::SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails) : sche
 {
 }
 
-SchemaTypePtr SchemaType::create(const std::vector<SchemaFieldDetail>& schemaFieldDetails)
+std::shared_ptr<SchemaType> SchemaType::create(const std::vector<SchemaFieldDetail>& schemaFieldDetails)
 {
     return std::make_shared<SchemaType>(SchemaType(schemaFieldDetails));
 }
@@ -33,7 +33,7 @@ const std::vector<SchemaFieldDetail>& SchemaType::getSchemaFieldDetails() const
     return schemaFieldDetails;
 }
 
-bool SchemaType::contains(const std::string& fieldName)
+bool SchemaType::contains(const std::string& fieldName) const
 {
     for (const auto& schemaFieldDetail : this->schemaFieldDetails)
     {

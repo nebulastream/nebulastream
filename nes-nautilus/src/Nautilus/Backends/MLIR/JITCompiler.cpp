@@ -39,7 +39,7 @@ void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOpt
 
     /// Optionally run an optimization pipeline over the llvm module.
     auto optPipeline = mlir::makeOptimizingTransformer(
-        /*optLevel=*/compilerOptions.isOptimize() ? 3 : 0,
+        /*optLevel=*/compilerOptions.optimize ? 3 : 0,
         /*sizeLevel=*/0,
         /*targetMachine=*/nullptr);
     if (auto err = optPipeline(llvmModule.get()))
@@ -67,7 +67,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     /// Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
 
-    if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile())
+    if (compilerOptions.dumpToConsole || compilerOptions.dumpToFile)
     {
         dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
     }

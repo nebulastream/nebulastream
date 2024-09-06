@@ -14,11 +14,4 @@
 add_source_files(nes-nautilus
         CastUtils.cpp
         IRDumpHandler.cpp
-        CompilationOptions.cpp
         )
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
-    add_source_files(nes-nautilus
-            Dyncall.cpp
-            )
-endif ()

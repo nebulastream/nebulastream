@@ -15,21 +15,20 @@
 #pragma once
 
 #include <string>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Configurations/Enums/DistributedJoinOptimizationMode.hpp"
-#include "Configurations/Enums/MemoryLayoutPolicy.hpp"
-#include "Configurations/Enums/PlacementAmendmentMode.hpp"
-#include "Configurations/Enums/QueryMergerRule.hpp"
-#include "Configurations/Validation/BooleanValidation.hpp"
-#include "Configurations/Validation/NumberValidation.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 
 namespace NES::Configurations
 {
 
-/**
- * @brief ConfigOptions for Coordinator
- */
 class OptimizerConfiguration : public BaseConfiguration
 {
 public:
@@ -125,9 +124,6 @@ public:
     UIntOption placementAmendmentThreadCount
         = {PLACEMENT_AMENDMENT_THREAD_COUNT, "1", "set the placement amender thread count", {std::make_shared<NumberValidation>()}};
 
-    /**
-     * @brief Enable incremental placement of running query plans.
-     */
     BoolOption enableIncrementalPlacement
         = {ENABLE_INCREMENTAL_PLACEMENT,
            "false",
@@ -146,7 +142,7 @@ public:
            "selects the distributed join optimization mode [NONE|MATRIX|NEMO]"};
 
 private:
-    std::vector<Configurations::BaseOption*> getOptions() override
+    std::vector<BaseOption*> getOptions() override
     {
         return {
             &queryMergerRule,

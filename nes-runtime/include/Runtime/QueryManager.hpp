@@ -83,10 +83,9 @@ public:
     /// Register a query by extracting sources, windows and sink and add them to respective map
     bool registerQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /// Unregister a query by extracting sources, windows and sink and remove them from respective map
+    /// extracts sources, windows and sinks and removes them from their respective maps
     bool unregisterQuery(const Execution::ExecutableQueryPlanPtr& qep);
 
-    /// Process task from task queue
     ExecutionResult processNextTask(bool ThreadPoolRunning, WorkerContext& workerContext);
 
     /**
@@ -164,13 +163,8 @@ private:
     bool addReconfigurationMessage(QueryId queryId, Memory::TupleBuffer&& buffer, bool blocking = false);
 
 public:
-    /// Informs the query manager that a task has failed
     void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& faultReason);
-
-    /// This method informs the QueryManager that a source has failed
     void notifySourceFailure(const OriginId failedSourceOriginId, const Exception& exception);
-
-    /// Informs the query manager about a status change in a query plan
     void notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::QueryStatus newStatus);
 
     /**
@@ -187,9 +181,6 @@ public:
         const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors,
         Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
-    /**
-     * @return true if thread pool is running
-     */
     bool isThreadPoolRunning() const;
 
     [[nodiscard]] uint64_t getNumberOfTasksInWorkerQueues() const;

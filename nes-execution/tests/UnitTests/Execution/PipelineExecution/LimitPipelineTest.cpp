@@ -59,8 +59,8 @@ public:
         {
             GTEST_SKIP();
         }
-        options.setDumpToConsole(true);
-        options.setDumpToFile(true);
+        options.dumpToConsole = true;
+        options.dumpToFile = true;
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }

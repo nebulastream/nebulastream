@@ -32,7 +32,7 @@ Runtime::Execution::ExecutableQueryPlanPtr QueryCompilationResult::getExecutable
     return executableQueryPlan;
 }
 
-uint64_t QueryCompilationResult::getCompilationTime() const
+uint64_t QueryCompilationResult::getCompilationTimeMilli() const
 {
     return timer.getRuntime();
 }

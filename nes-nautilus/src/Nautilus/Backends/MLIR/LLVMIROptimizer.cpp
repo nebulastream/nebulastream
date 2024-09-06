@@ -52,26 +52,25 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(const CompilationOptions& options, con
         llvm::SMDiagnostic Err;
 
         /// Load LLVM IR module from proxy inlining input path (We assert that it exists in CompilationOptions).
-        if (options.isProxyInlining())
+        if (options.proxyInlining)
         {
-            auto proxyFunctionsIR = llvm::parseIRFile(options.getProxyInliningInputPath(), Err, llvmIRModule->getContext());
+            auto proxyFunctionsIR = llvm::parseIRFile(options.proxyInliningInputPath, Err, llvmIRModule->getContext());
             /// Link the module with our generated LLVM IR module and optimize the linked LLVM IR module (inlining happens during optimization).
             llvm::Linker::linkModules(*llvmIRModule, std::move(proxyFunctionsIR), llvm::Linker::Flags::OverrideFromSrc);
         }
-        auto optPipeline = mlir::makeOptimizingTransformer(options.getOptimizationLevel(), SIZE_LEVEL, targetMachinePtr);
+        auto optPipeline = mlir::makeOptimizingTransformer(options.optimizationLevel, SIZE_LEVEL, targetMachinePtr);
         auto optimizedModule = optPipeline(llvmIRModule);
 
         /// Print debug information to file/console if set in options.
-        if (options.isDumpToConsole() || options.isDumpToFile())
+        if (options.dumpToConsole || options.dumpToFile)
         {
             /// Write the llvmIRModule to a string.
             std::string llvmIRString;
             llvm::raw_string_ostream llvmStringStream(llvmIRString);
             llvmIRModule->print(llvmStringStream, nullptr);
-            auto* basicError = new std::error_code();
 
             /// Dump the generated llvmIRModule.
-            dumpHelper.dump(options.getIdentifier(), llvmIRString);
+            dumpHelper.dump(options.identifier, llvmIRString);
         }
         return optimizedModule;
     };

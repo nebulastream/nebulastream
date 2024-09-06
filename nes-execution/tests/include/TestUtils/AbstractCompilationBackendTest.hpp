@@ -40,6 +40,6 @@ public:
     std::unique_ptr<Nautilus::Backends::Executable> prepare(
         std::shared_ptr<Nautilus::Tracing::ExecutionTrace> executionTrace,
         const CompilationOptions& options = CompilationOptions(),
-        const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
+        const DumpHelper& dumpHelper = DumpHelper("", true, false, ""));
 };
 } /// namespace NES::Nautilus

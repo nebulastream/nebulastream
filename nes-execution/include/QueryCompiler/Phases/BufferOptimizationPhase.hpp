@@ -13,48 +13,24 @@
 */
 #pragma once
 
-#include <vector>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
 
-/**
- * @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
- * It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
- */
+/// @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
+/// It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
 class BufferOptimizationPhase
 {
 public:
-    /**
-     * @brief Constructor to create a BufferOptimizationPhase
-     */
     explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
-
-    /**
-     * @brief Create a BufferOptimizationPhase
-     */
     static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
 
-    /**
-     * @brief Applies the phase on a pipelined query plan. Analyzes every pipeline to see if buffer optimization can be applied.
-     * @param pipelined query plan
-     * @return PipelineQueryPlanPtr
-     */
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
-
-    /**
-     * @brief Analyzes pipeline to see if buffer optimization can be applied.
-     * @param pipeline
-     * @return OperatorPipelinePtr
-     */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
 private:
     [[maybe_unused]] OutputBufferOptimizationLevel level;
 };
-} /// namespace NES::QueryCompilation
+}
