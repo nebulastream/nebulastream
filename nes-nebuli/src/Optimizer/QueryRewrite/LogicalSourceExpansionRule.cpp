@@ -81,7 +81,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
     for (const auto& sourceOperator : sourceOperators)
     {
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().getLogicalSourceName();
+        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().logicalSourceName;
 
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());

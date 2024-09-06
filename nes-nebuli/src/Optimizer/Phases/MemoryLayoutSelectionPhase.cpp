@@ -46,7 +46,7 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan)
     {
         if (auto op = node->as_if<SourceLogicalOperator>())
         {
-            op->getSourceDescriptorRef().getSchema()->setLayoutType(layoutType);
+            op->getSourceDescriptorRef().schema->setLayoutType(layoutType);
         }
         if (auto op = node->as_if<LogicalUnaryOperator>())
         {

@@ -112,9 +112,9 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
 
         /// Filtering for logical sources
         ///-Todo: improve
-        if (sourceDescriptor.getSourceType() == "Logical")
+        if (sourceDescriptor.sourceType == "Logical")
         {
-            auto sourceName = sourceDescriptor.getLogicalSourceName();
+            auto sourceName = sourceDescriptor.logicalSourceName;
 
             /// Making sure that all logical sources are present in the source catalog
             if (!sourceCatalog->containsLogicalSource(sourceName))
@@ -134,7 +134,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     for (auto sourceOperator : sourceOperators)
     {
         ;
-        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().getLogicalSourceName();
+        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().logicalSourceName;
         if (sourceCatalog->getPhysicalSources(logicalSourceName).empty())
         {
             invalidLogicalSourceNames.emplace_back(logicalSourceName);

@@ -873,7 +873,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
 {
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor);
 
-    if (sourceDescriptor.getSourceType() == Sources::TCPSource::NAME)
+    if (sourceDescriptor.sourceType == Sources::TCPSource::NAME)
     {
         /// serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -930,10 +930,10 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         tcpSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedPhysicalSourceType);
 
         /// serialize source schema
-        SchemaSerializationUtil::serializeSchema(sourceDescriptor.getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.getSourceType() == Sources::CSVSource::NAME)
+    else if (sourceDescriptor.sourceType == Sources::CSVSource::NAME)
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -953,14 +953,14 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedSourceConfig);
         /// serialize source schema
-        SchemaSerializationUtil::serializeSchema(sourceDescriptor.getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
     }
     else
     {
         auto exception = UnknownOperator();
         exception.what += "Not supporting operator in serializeSourceDescriptor: ";
-        exception.what += sourceDescriptor.getSourceType().c_str();
+        exception.what += sourceDescriptor.sourceType.c_str();
         throw exception;
     }
     else

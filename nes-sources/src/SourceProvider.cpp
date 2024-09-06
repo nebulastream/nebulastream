@@ -38,9 +38,9 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor.getSchema();
+    auto schema = sourceDescriptor.schema;
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    const auto sourceName = sourceDescriptor.getSourceType();
+    const auto& sourceName = sourceDescriptor.sourceType;
     if (auto source = SourceRegistry::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
     {
         return std::make_unique<SourceHandle>(

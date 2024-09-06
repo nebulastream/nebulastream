@@ -72,8 +72,8 @@ Sources::SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
 
 bool SourceLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->getSchema();
-    outputSchema = sourceDescriptor->getSchema();
+    inputSchema = sourceDescriptor->schema;
+    outputSchema = sourceDescriptor->schema;
     return true;
 }
 

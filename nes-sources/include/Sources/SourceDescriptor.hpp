@@ -32,9 +32,8 @@
 namespace NES::Sources
 {
 
-class SourceDescriptor
+struct SourceDescriptor
 {
-public:
     /// Tag struct that tags a config key with a type.
     /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
     /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
@@ -82,15 +81,6 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
-    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
-    std::string getLogicalSourceName() const;
-
-    std::string getLogicalSourceName() const;
-    void setSchema(const std::shared_ptr<Schema>& schema);
-    [[nodiscard]] std::string getSourceType() const;
-
-    void setSourceType(std::string sourceType);
-    [[nodiscard]] const Configurations::InputFormat& getInputFormat() const;
 
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
     void setConfigType(const std::string& key, ConfigType value);
@@ -194,15 +184,14 @@ public:
         throw CannotFormatSourceData(configKey.key + " was not configured and no default value was available.");
     };
 
-private:
     /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
-    ///-Todo: make struct? (schema: getter/setter, logicalSourceName: getter, sourceName: getter/setter, inputFormat: getter, config: getter/setter)
     std::shared_ptr<Schema> schema;
     std::string logicalSourceName;
     std::string sourceType;
     Configurations::InputFormat inputFormat{};
-    Config config;
 
+private:
+    Config config;
     friend std::ostream& operator<<(std::ostream& out, const Config& config);
 };
 

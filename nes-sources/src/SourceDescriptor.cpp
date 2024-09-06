@@ -48,37 +48,6 @@ SourceDescriptor::SourceDescriptor(
 {
 }
 
-std::string SourceDescriptor::getLogicalSourceName() const
-{
-    return logicalSourceName;
-}
-
-
-std::shared_ptr<Schema> SourceDescriptor::getSchema() const
-{
-    return schema;
-}
-
-void SourceDescriptor::setSchema(const std::shared_ptr<Schema>& schema)
-{
-    this->schema = schema;
-}
-
-const std::string& SourceDescriptor::getSourceType() const
-{
-    return sourceType;
-}
-
-void SourceDescriptor::setSourceType(std::string sourceType)
-{
-    this->sourceType = std::move(sourceType);
-}
-
-const Configurations::InputFormat& SourceDescriptor::getInputFormat() const
-{
-    return this->inputFormat;
-}
-
 void SourceDescriptor::setConfigType(const std::string& key, ConfigType value)
 {
     if (!this->config.contains(key))
@@ -172,7 +141,7 @@ bool operator==(const SourceDescriptor::Config& lhs, const SourceDescriptor::Con
 }
 bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
-    return lhs.schema == rhs.getSchema() && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
+    return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
 }
 
 } /// namespace NES

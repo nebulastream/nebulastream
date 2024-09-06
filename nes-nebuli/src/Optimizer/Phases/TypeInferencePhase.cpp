@@ -14,7 +14,6 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -86,9 +85,9 @@ void TypeInferencePhase::performTypeInference(
         /// source descriptor form the catalog.
         auto& sourceDescriptor = source->getSourceDescriptorRef();
         ///-Todo: improve
-        if (sourceDescriptor.getSourceType() == "Logical" && !sourceDescriptor.getSchema())
+        if (sourceDescriptor.sourceType == "Logical" && !sourceDescriptor.schema)
         {
-            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
+            auto logicalSourceName = sourceDescriptor.logicalSourceName;
             SchemaPtr schema = Schema::create();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName))
             {
@@ -109,7 +108,7 @@ void TypeInferencePhase::performTypeInference(
                 }
             }
             /// Todo: is not persisted (get returns copy)
-            sourceDescriptor.setSchema(schema);
+            sourceDescriptor.schema = schema;
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
         }
     }

@@ -197,10 +197,10 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     for (auto& sourceOperator : query->getSourceOperators())
     {
         auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-        if (sourceDescriptor.getSourceType() == "Logical") ///-Todo: improve
+        if (sourceDescriptor.sourceType == "Logical") ///-Todo: improve
         {
             /// Fetch logical and physical source name in the descriptor
-            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
+            auto logicalSourceName = sourceDescriptor.logicalSourceName;
             /// Iterate over all available physical sources
             bool foundPhysicalSource = false;
             for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
@@ -210,9 +210,8 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
                 {
                     /// Get 'physical' descriptor from catalog. Todo: OperatorLogicalSource(SourceLogicalOperator) should not have a descriptor.
                     auto physicalDescriptor = physicalSource->getSourceDescriptor();
-                    physicalDescriptor->setSchema(
-                        sourceDescriptor
-                            .getSchema()); ///-Todo: remove when OperatorLogicalSource has no descriptor anymore, and schema attached directly.
+                    ///-Todo: remove when OperatorLogicalSource has no descriptor anymore, and schema attached directly.
+                    physicalDescriptor->schema = sourceDescriptor.schema;
                     std::stringstream ss;
                     ss << *physicalDescriptor;
                     std::string ssString = ss.str();
