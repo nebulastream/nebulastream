@@ -47,7 +47,7 @@ RUN wget https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-
 RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
     && tar -xf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
-    && ./configure --parallel=$(nproc) \
+    && ./configure --parallel=$(nproc) --prefix=/usr \
     && make install -j \
     && cd .. \
     && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
