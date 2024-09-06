@@ -112,7 +112,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
 
         /// Filtering for logical sources
         ///-Todo: improve
-        if (sourceDescriptor.getSourceName() == "Logical")
+        if (sourceDescriptor.getSourceType() == "Logical")
         {
             auto sourceName = sourceDescriptor.getLogicalSourceName();
 

@@ -19,6 +19,7 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -62,18 +63,18 @@ public:
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
-    explicit SourceDescriptor(std::string logicalSourceName, std::string sourceName);
+    explicit SourceDescriptor(std::string logicalSourceName, std::string sourceType);
     /// Constructor used before applying schema inference.
-    explicit SourceDescriptor(std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
     explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+        std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
 
     ///-Todo: clean up constructors
     explicit SourceDescriptor(
         std::string logicalSourceName,
         std::shared_ptr<Schema> schema,
-        std::string sourceName,
+        std::string sourceType,
         Configurations::InputFormat inputFormat,
         Config&& config);
     ~SourceDescriptor() = default;
@@ -86,15 +87,9 @@ public:
 
     std::string getLogicalSourceName() const;
     void setSchema(const std::shared_ptr<Schema>& schema);
-    virtual std::string toString() const = 0;
+    [[nodiscard]] std::string getSourceType() const;
 
-    [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0;
-
-    virtual ~SourceDescriptor() = default;
-
-    [[nodiscard]] const std::string& getSourceName() const;
-
-    void setSourceName(std::string sourceName);
+    void setSourceType(std::string sourceType);
     [[nodiscard]] const Configurations::InputFormat& getInputFormat() const;
 
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
@@ -204,7 +199,7 @@ private:
     ///-Todo: make struct? (schema: getter/setter, logicalSourceName: getter, sourceName: getter/setter, inputFormat: getter, config: getter/setter)
     std::shared_ptr<Schema> schema;
     std::string logicalSourceName;
-    std::string sourceType; ///-Todo: remove to SourceType
+    std::string sourceType;
     Configurations::InputFormat inputFormat{};
     Config config;
 

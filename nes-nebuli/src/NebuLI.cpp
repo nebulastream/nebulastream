@@ -197,7 +197,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     for (auto& sourceOperator : query->getSourceOperators())
     {
         auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-        if (sourceDescriptor.getSourceName() == "Logical") ///-Todo: improve
+        if (sourceDescriptor.getSourceType() == "Logical") ///-Todo: improve
         {
             /// Fetch logical and physical source name in the descriptor
             auto logicalSourceName = sourceDescriptor.getLogicalSourceName();

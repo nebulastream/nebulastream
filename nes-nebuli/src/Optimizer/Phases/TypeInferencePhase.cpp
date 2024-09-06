@@ -86,7 +86,7 @@ void TypeInferencePhase::performTypeInference(
         /// source descriptor form the catalog.
         auto& sourceDescriptor = source->getSourceDescriptorRef();
         ///-Todo: improve
-        if (sourceDescriptor.getSourceName() == "Logical" && !sourceDescriptor.getSchema())
+        if (sourceDescriptor.getSourceType() == "Logical" && !sourceDescriptor.getSchema())
         {
             auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
             SchemaPtr schema = Schema::create();

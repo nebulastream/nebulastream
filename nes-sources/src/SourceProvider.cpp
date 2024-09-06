@@ -40,7 +40,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
 {
     auto schema = sourceDescriptor.getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor.getSourceName(), schema, sourceDescriptor); source.has_value())
+    const auto sourceName = sourceDescriptor.getSourceType();
+    if (auto source = SourceRegistry::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
     {
         return std::make_unique<SourceHandle>(
             std::move(originId),

@@ -873,7 +873,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
 {
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor);
 
-    if (sourceDescriptor.getSourceName() == Sources::TCPSource::NAME)
+    if (sourceDescriptor.getSourceType() == Sources::TCPSource::NAME)
     {
         /// serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -933,7 +933,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(sourceDescriptor.getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.getSourceName() == Sources::CSVSource::NAME)
+    else if (sourceDescriptor.getSourceType() == Sources::CSVSource::NAME)
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -960,7 +960,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     {
         auto exception = UnknownOperator();
         exception.what += "Not supporting operator in serializeSourceDescriptor: ";
-        exception.what += sourceDescriptor.getSourceName().c_str();
+        exception.what += sourceDescriptor.getSourceType().c_str();
         throw exception;
     }
     else
