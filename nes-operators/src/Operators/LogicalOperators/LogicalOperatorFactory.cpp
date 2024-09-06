@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -35,7 +35,7 @@ namespace NES
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(std::string logicalSourceName, OperatorId id, OriginId originId)
 {
-    return std::make_shared<SourceLogicalOperator>(std::move(logicalSourceName), id, originId);
+    return std::make_shared<OperatorLogicalSourceName>(std::move(logicalSourceName), id, originId);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(

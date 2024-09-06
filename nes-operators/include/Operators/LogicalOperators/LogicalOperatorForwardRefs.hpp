@@ -59,8 +59,8 @@ using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 class LogicalBinaryOperator;
 using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
+class OperatorLogicalSourceName;
+using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;

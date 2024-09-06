@@ -16,7 +16,7 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -46,7 +46,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
-    std::vector<std::shared_ptr<SourceLogicalOperator>> sourceOperators = queryPlan->getSourceOperators<SourceLogicalOperator>();
+    std::vector<std::shared_ptr<OperatorLogicalSourceName>> sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
 
     /// Compute a map of all blocking operators in the query plan
     std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
@@ -120,7 +120,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperator>();
+            auto duplicateSourceOperator = sourceOperator->duplicate()->as<OperatorLogicalSourceName>();
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());

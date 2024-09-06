@@ -81,7 +81,7 @@ private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
 
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceLogicalOperator>>& sourceOperators);
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<OperatorLogicalSourceName>>& sourceOperators);
 
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
     void performTypeInferenceSinks(QueryId planId, const std::vector<SinkLogicalOperatorPtr>& sinkOperators);

@@ -60,8 +60,8 @@ using LogicalLimitOperatorPtr = std::shared_ptr<LogicalLimitOperator>;
 class WatermarkAssignerLogicalOperator;
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
+class OperatorLogicalSourceName;
+using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
 
 namespace InferModel
 {

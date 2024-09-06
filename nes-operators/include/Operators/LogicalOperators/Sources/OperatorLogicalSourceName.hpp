@@ -21,12 +21,12 @@ namespace NES
 {
 
 /// Is constructed during parsing and represents a logical source as an operator node in the query plan.
-class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+class OperatorLogicalSourceName : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId);
+    explicit OperatorLogicalSourceName(std::string logicalSourceName, OperatorId id, OriginId originId);
 
-    explicit SourceLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
+    explicit OperatorLogicalSourceName(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -49,5 +49,5 @@ private:
 };
 
 ///-Todo: remove
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
+using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
 } /// namespace NES

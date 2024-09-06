@@ -32,7 +32,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -191,7 +191,7 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
     if (details.Is<SerializableOperator_SourceDetails>())
     {
         /// de-serialize source operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to SourceLogicalOperator");
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to OperatorLogicalSourceName");
         auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
         details.UnpackTo(&serializedSourceDescriptor);
         operatorNode = deserializeSourceOperator(serializedSourceDescriptor);
@@ -351,7 +351,7 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
 void OperatorSerializationUtil::serializeSourceOperator(
     OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperator");
+    NES_TRACE("OperatorSerializationUtil:: serialize to OperatorLogicalSourceName");
 
     auto sourceDetails = SerializableOperator_SourceDetails();
     auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();

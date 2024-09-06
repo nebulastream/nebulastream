@@ -15,19 +15,19 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-SourceLogicalOperator::SourceLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId)
+OperatorLogicalSourceName::OperatorLogicalSourceName(std::string logicalSourceName, OperatorId id, OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceLogicalOperator::SourceLogicalOperator(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
+OperatorLogicalSourceName::OperatorLogicalSourceName(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
     : Operator(id)
     , LogicalUnaryOperator(id)
     , OriginIdAssignmentOperator(id, originId)
@@ -36,23 +36,23 @@ SourceLogicalOperator::SourceLogicalOperator(std::string logicalSourceName, Sche
 {
 }
 
-bool SourceLogicalOperator::isIdentical(NodePtr const& rhs) const
+bool OperatorLogicalSourceName::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<SourceLogicalOperator>()->getId() == id;
+    return equal(rhs) && rhs->as<OperatorLogicalSourceName>()->getId() == id;
 }
 
-bool SourceLogicalOperator::equal(NodePtr const& rhs) const
+bool OperatorLogicalSourceName::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<SourceLogicalOperator>())
+    if (rhs->instanceOf<OperatorLogicalSourceName>())
     {
-        auto rhsAsSourceLogicalOperator = rhs->as<SourceLogicalOperator>();
-        return this->getSchema() == rhsAsSourceLogicalOperator->getSchema()
-            && this->getLogicalSourceName() == rhsAsSourceLogicalOperator->getLogicalSourceName();
+        auto rhsAsOperatorLogicalSourceName = rhs->as<OperatorLogicalSourceName>();
+        return this->getSchema() == rhsAsOperatorLogicalSourceName->getSchema()
+            && this->getLogicalSourceName() == rhsAsOperatorLogicalSourceName->getLogicalSourceName();
     }
     return false;
 }
 
-std::string SourceLogicalOperator::toString() const
+std::string OperatorLogicalSourceName::toString() const
 {
     std::stringstream ss;
     ss << "LogicalSource(opId: " << id << ": originid: " << originId << ")";
@@ -60,14 +60,14 @@ std::string SourceLogicalOperator::toString() const
     return ss.str();
 }
 
-bool SourceLogicalOperator::inferSchema()
+bool OperatorLogicalSourceName::inferSchema()
 {
     inputSchema = schema;
     outputSchema = schema;
     return true;
 }
 
-OperatorPtr SourceLogicalOperator::copy()
+OperatorPtr OperatorLogicalSourceName::copy()
 {
     auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id, originId);
     copy->setInputSchema(inputSchema);
@@ -82,30 +82,30 @@ OperatorPtr SourceLogicalOperator::copy()
     return copy;
 }
 
-void SourceLogicalOperator::inferStringSignature()
+void OperatorLogicalSourceName::inferStringSignature()
 {
     ///Update the signature
-    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceLogicalOperator.");
+    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for OperatorLogicalSourceName.");
 }
 
-void SourceLogicalOperator::inferInputOrigins()
+void OperatorLogicalSourceName::inferInputOrigins()
 {
     /// Data sources have no input origins.
 }
 
-std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const
+std::vector<OriginId> OperatorLogicalSourceName::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
-std::string SourceLogicalOperator::getLogicalSourceName() const
+std::string OperatorLogicalSourceName::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> SourceLogicalOperator::getSchema() const
+std::shared_ptr<Schema> OperatorLogicalSourceName::getSchema() const
 {
     return schema;
 }
-void SourceLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+void OperatorLogicalSourceName::setSchema(std::shared_ptr<Schema> schema)
 {
     this->schema = std::move(schema);
 }

@@ -46,7 +46,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan)
     /// We only need to infere the schema for sources once, before specifying the source.
     if (isFirstExecuteCall)
     {
-        auto sourceOperators = queryPlan->getSourceOperators<SourceLogicalOperator>();
+        auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
         if (sourceOperators.empty())
         {
             throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
@@ -82,7 +82,7 @@ void TypeInferencePhase::performTypeInferenceSinks(QueryId queryId, const std::v
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceLogicalOperator>>& sourceOperators)
+void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<OperatorLogicalSourceName>>& sourceOperators)
 {
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)
