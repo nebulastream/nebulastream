@@ -63,7 +63,7 @@ jobs:
           echo "hash=$HASH" >> "$GITHUB_OUTPUT"
 
 
-  docker-development-images-pre:
+  build-dev-images:
     # We run the docker image build on separate machines and combine them into a single
     # multi-arch docker image in the docker-development-images job.
     # The Docker build uses a cache based on previous branch-specific images or the
@@ -72,7 +72,7 @@ jobs:
     # CMake version
     # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
     # The Development Image contains the dependencies and additional tooling like clang-format.
-    name: "Build Development Images"
+    name: "Build Dev Images"
     needs: [ detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
@@ -128,10 +128,10 @@ jobs:
           context: .
           file: docker/dependency/Development.dockerfile
 
-  docker-development-images:
-    # This job merges arch specific images into a single multi-arch image
-    name: "Merge images for different archs into a single Multi-arch image"
-    needs: [ docker-development-images-pre, detect-dependency-changes ]
+  merge-dev-images:
+    # This Job merges platform specific images into a single multi-platform image
+    name: "Merge Dev Images"
+    needs: [ build-dev-images, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build ]
     steps:
@@ -169,7 +169,7 @@ jobs:
   
 
   check-format:
-    needs: [ docker-development-images, detect-dependency-changes ]
+    needs: [ merge-dev-images, detect-dependency-changes ]
     if: ${{ ! failure() && ! cancelled() }}
     runs-on: [ self-hosted, linux, Build ]
     container:
@@ -183,7 +183,7 @@ jobs:
   build-linux:
     name: "Build ${{matrix.arch}}"
     if: ${{ ! failure() && ! cancelled() }}
-    needs: [ docker-development-images , detect-dependency-changes ]
+    needs: [ merge-dev-images, detect-dependency-changes ]
     container:
       image: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
       volumes:
