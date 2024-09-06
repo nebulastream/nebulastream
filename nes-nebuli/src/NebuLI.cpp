@@ -40,6 +40,7 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
+#include <parser.hpp>
 
 namespace NES::CLI
 {
@@ -186,17 +187,14 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto parsingService = QueryParsingService::create(jitCompiler);
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(parsingService);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(coordinatorConfig->optimizer.memoryLayoutPolicy);
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
+    auto query = query_plan_or_fail(parse(config.query));
 
-    auto query = syntacticQueryValidation->validate(config.query);
     semanticQueryValidation->validate(query);
 
     logicalSourceExpansionRule->apply(query);

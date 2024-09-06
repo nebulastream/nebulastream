@@ -1,0 +1,16 @@
+query: |
+  SELECT * FROM csv_source WHERE id < 16
+logical:
+  - name: csv_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: id2
+        type: UINT64
+physical:
+  - logical: csv_source
+    config:
+      type: CSV_SOURCE
+      filePath: oneToThirtyOneDoubleColumn.csv
+      delimiter: ","
+      numberOfBuffersToProduce: 32
