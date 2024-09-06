@@ -100,14 +100,12 @@ const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be sa
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_DUMP_MODE = "queryCompilerDumpMode";
+const std::string QUERY_COMPILER_DUMP_PATH = "queryCompilerDumpPath";
 const std::string QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG = "queryCompilerNautilusBackendConfig";
 const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrategy";
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";
 const std::string QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG = "windowingStrategy";
-
-/// CUDA config names
-const std::string CUDA_SDK_PATH = "cudaSdkPath";
 
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";

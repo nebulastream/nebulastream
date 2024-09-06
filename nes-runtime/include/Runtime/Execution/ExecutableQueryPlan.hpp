@@ -32,24 +32,10 @@ class ReconfigurationMessage;
 namespace NES::Runtime::Execution
 {
 
-/**
- * @brief Represents an executable plan of an particular query.
- * Each executable query plan contains a set of sources, pipelines, and sinks.
- * A valid query plan should contain at least one source and sink.
- * This class is thread-safe.
- */
+/// Each executable query plan contains a set of sources, pipelines, and sinks (but at least one source and sink). This class is thread-safe.
 class ExecutableQueryPlan : public Reconfigurable
 {
 public:
-    /**
-     * @brief Constructor for an executable query plan.
-     * @param queryId id of query
-     * @param sources vector of data sources
-     * @param sinks vector of data sinks
-     * @param pipelines vector of pipelines
-     * @param queryManager shared pointer to the query manager
-     * @param bufferManager shared pointer to the buffer manager
-     */
     explicit ExecutableQueryPlan(
         QueryId queryId,
         std::vector<Sources::SourceHandlePtr>&& sources,
@@ -58,15 +44,6 @@ public:
         QueryManagerPtr&& queryManager,
         Memory::BufferManagerPtr&& bufferManager);
 
-    /**
-     * @brief Factory to create an new executable query plan.
-     * @param queryId id of query
-     * @param sources vector of data sources
-     * @param sinks vector of data sinks
-     * @param pipelines vector of pipelines
-     * @param queryManager shared pointer to the query manager
-     * @param bufferManager shared pointer to the buffer manager
-     */
     static ExecutableQueryPlanPtr create(
         QueryId queryId,
         std::vector<Sources::SourceHandlePtr> sources,
@@ -80,20 +57,13 @@ public:
     void notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
     void notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType);
 
-    /**
-     * @brief Setup the query plan, e.g., instantiate state variables.
-     */
+    /// Setup the query plan, e.g., instantiate state variables.
     bool setup();
 
-    /**
-     * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
-     * @return Success if the query plan started
-     */
+    /// Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
     bool start();
 
-    /**
-     * @brief Stop the query plan and free all associated resources.
-     */
+    /// Stop the query plan and free all associated resources.
     bool stop();
 
     enum class Result : uint8_t
@@ -102,16 +72,10 @@ public:
         FAILED
     };
 
-    /**
-     * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
-     * @return a shared future that eventually indicates how the qep terminated
-     */
+    /// returns a future that will tell us if the plan was terminated with errors.
     std::shared_future<Result> getTerminationFuture();
 
-    /**
-     * @brief Fail the query plan and free all associated resources.
-     * @return not defined yet
-     */
+    /// Fail the query plan and free all associated resources.
     bool fail();
 
     [[nodiscard]] QueryStatus getStatus() const;
@@ -122,17 +86,10 @@ public:
     [[nodiscard]] Memory::BufferManagerPtr getBufferManager() const;
     [[nodiscard]] QueryId getQueryId() const;
 
-    /**
-     * @brief final reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     */
+    /// final reconfigure callback called upon a reconfiguration
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    /**
-     * @brief destroy resources allocated to the EQP. Used
-     * to explicitly destroy them outside the allocated
-     * destructor.
-     */
+    /// destroy resources allocated to the EQP. Used to explicitly destroy them outside the allocated destructor.
     void destroy();
 
 private:

@@ -38,7 +38,7 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(NES::DecomposedQueryPlanPtr plan)
+    size_t registerQuery(const std::shared_ptr<NES::DecomposedQueryPlan> plan) const
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;
@@ -60,7 +60,7 @@ public:
         return reply.queryid();
     }
 
-    void stop(size_t queryId)
+    void stop(size_t queryId) const
     {
         grpc::ClientContext context;
         StopQueryRequest request;
@@ -82,7 +82,7 @@ public:
         }
     }
 
-    void status(size_t queryId)
+    void status(size_t queryId) const
     {
         grpc::ClientContext context;
         QuerySummaryRequest request;
@@ -103,7 +103,7 @@ public:
         }
     }
 
-    void start(size_t queryId)
+    void start(size_t queryId) const
     {
         grpc::ClientContext context;
         StartQueryRequest request;
@@ -124,7 +124,7 @@ public:
         }
     }
 
-    void unregister(size_t queryId)
+    void unregister(size_t queryId) const
     {
         grpc::ClientContext context;
         UnregisterQueryRequest request;
@@ -206,7 +206,7 @@ int main(int argc, char** argv)
     }
 
     bool handled = false;
-    for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t)>>{
+    for (const auto& [name, fn] : std::initializer_list<std::pair<std::string_view, void (GRPCClient::*)(size_t) const>>{
              {"start", &GRPCClient::start}, {"unregister", &GRPCClient::unregister}, {"stop", &GRPCClient::stop}})
     {
         if (program.is_subcommand_used(name))

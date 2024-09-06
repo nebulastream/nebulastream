@@ -26,14 +26,9 @@
 namespace NES::QueryCompilation
 {
 
-NautilusCompilationPhase::NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+NautilusCompilationPhase::NautilusCompilationPhase(const std::shared_ptr<QueryCompilerOptions>& compilerOptions)
     : compilerOptions(compilerOptions)
 {
-}
-
-std::shared_ptr<NautilusCompilationPhase> NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
-{
-    return std::make_shared<NautilusCompilationPhase>(compilerOptions);
 }
 
 PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan)
@@ -49,9 +44,9 @@ PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryP
     return queryPlan;
 }
 
-std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOptions>& compilerOptions)
 {
-    switch (compilerOptions->getNautilusBackend())
+    switch (compilerOptions->nautilusBackend)
     {
         case NautilusBackend::INTERPRETER: {
             return "PipelineInterpreter";
@@ -84,18 +79,15 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getPipelineId());
-    options.setIdentifier(identifier);
+    options.identifier = identifier;
 
     /// enable dump to console if the compiler options are set
-    options.setDumpToConsole(
-        compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+    options.dumpToConsole = compilerOptions->dumpMode == DumpMode::CONSOLE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE;
 
     /// enable dump to file if the compiler options are set
-    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+    options.dumpToFile = compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE;
 
-    options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
-
-    options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
+    options.proxyInlining = compilerOptions->compilationStrategy == CompilationStrategy::PROXY_INLINING;
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);

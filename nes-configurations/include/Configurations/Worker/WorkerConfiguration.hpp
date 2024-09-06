@@ -18,12 +18,10 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Enums/EnumOptionDetails.hpp>
-#include <Configurations/Enums/QueryExecutionMode.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeYaml.hpp>
+#include <Configurations/WrapOption.hpp>
 
 namespace NES
 {
@@ -37,23 +35,15 @@ namespace Configurations
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
-/**
- * @brief object for storing worker configuration
- */
 class WorkerConfiguration : public BaseConfiguration
 {
 public:
     WorkerConfiguration() : BaseConfiguration() {};
     WorkerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
 
-    /**
-     * @brief Factory function for a worker config
-     */
+
     static WorkerConfigurationPtr create() { return std::make_shared<WorkerConfiguration>(); }
 
-    /**
-     * @brief IP of the Worker.
-     */
     StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
 
     /**
@@ -62,15 +52,9 @@ public:
      */
     UIntOption rpcPort = {RPC_PORT_CONFIG, "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
 
-    /**
-     * @brief The current log level. Controls the detail of log messages.
-     */
     EnumOption<LogLevel> logLevel
         = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
-    /**
-     * @brief Configures the number of worker threads.
-     */
     UIntOption numberOfWorkerThreads
         = {"numberOfWorkerThreads",
            "1",
@@ -86,9 +70,7 @@ public:
            "1024",
            "Number buffers in global buffer pool.",
            {std::make_shared<NumberValidation>()}};
-    /**
-     * @brief Indicates how many buffers a single worker thread can allocate.
-     */
+
     UIntOption numberOfBuffersPerWorker
         = {NUMBER_OF_BUFFERS_PER_WORKER_CONFIG, "128", "Number buffers in task local buffer pool.", {std::make_shared<NumberValidation>()}};
 
@@ -108,15 +90,10 @@ public:
      */
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
-    /**
-     * @brief Enables the statistic output
-     */
     BoolOption enableStatisticOuput
         = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output", {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Sets configuration properties for the query compiler.
-     */
+
     QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
 
     /**
@@ -130,8 +107,6 @@ public:
      * @warning this is just a placeholder configuration
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
-
-    /* Network specific settings */
 
     UIntOption senderHighwatermark
         = {SENDER_HIGH_WATERMARK,
@@ -158,5 +133,5 @@ private:
         };
     }
 };
-} /// namespace Configurations
-} /// namespace NES
+}
+}

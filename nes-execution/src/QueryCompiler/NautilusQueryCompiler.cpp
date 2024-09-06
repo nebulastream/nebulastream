@@ -26,15 +26,14 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/DumpHandler/DumpContext.hpp>
+#include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {
 
 NautilusQueryCompiler::NautilusQueryCompiler(
-    const QueryCompilation::QueryCompilerOptionsPtr& options, const Phases::PhaseFactoryPtr& phaseFactory)
+    std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory)
     : QueryCompiler(options)
     , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
@@ -45,13 +44,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(
 {
 }
 
-QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory)
-{
-    return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory));
-}
-
-QueryCompilation::QueryCompilationResultPtr
-NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request, QueryId queryId)
+std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(QueryCompilationRequestPtr request, QueryId queryId)
 {
     NES_INFO("Compile Query with Nautilus");
     /// For now we have to override the id here as it should not be set by the client
@@ -59,28 +52,28 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
 
     Timer timer("NautilusQueryCompiler");
     /// Uncomment these dumb informations for debugging purposes. They are be quite intrusive.
-    /// auto queryId = request->getDecomposedQueryPlan()->getQueryId();
-    /// auto query = fmt::format("{}", queryId);
+    auto query = fmt::format("{}", queryId);
     /// create new context for handling debug output
-    /// auto dumpContext = DumpContext::create("QueryCompilation-" + query);
-    /// dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
+    bool dumpToFile = options->dumpMode != DumpMode::CONSOLE;
+    bool dumpToConsole = options->dumpMode != DumpMode::FILE;
+    auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, options->dumpPath);
 
     timer.start();
     NES_DEBUG("compile query with id: {}", queryId);
     auto logicalQueryPlan = request->getDecomposedQueryPlan();
-    /// dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+    dumpHelper.dump("1. LogicalQueryPlan", logicalQueryPlan->toString());
     timer.snapshot("LogicalQueryPlan");
 
     auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-    /// dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+    dumpHelper.dump("2. PhysicalQueryPlan", physicalQueryPlan->toString());
     timer.snapshot("PhysicalQueryPlan");
 
     auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-    /// dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+    dumpHelper.dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan->toString());
     timer.snapshot("AfterPipelinedQueryPlan");
 
     addScanAndEmitPhase->apply(pipelinedQueryPlan);
-    /// dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+    dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
     timer.snapshot("AfterAddScanAndEmitPhase");
     auto nodeEngine = request->getNodeEngine();
     auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
@@ -93,4 +86,4 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
     auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
     return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
 }
-} /// namespace NES::QueryCompilation
+}
