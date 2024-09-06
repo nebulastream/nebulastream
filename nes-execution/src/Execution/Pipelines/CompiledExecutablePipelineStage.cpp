@@ -30,7 +30,7 @@ namespace NES::Runtime::Execution
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
     const std::string& compilationBackend,
-    const Nautilus::CompilationOptions& options)
+    const CompilationOptions& options)
     : NautilusExecutablePipelineStage(physicalOperatorPipeline)
     , compilationBackend(compilationBackend)
     , options(options)
@@ -48,15 +48,14 @@ ExecutionResult CompiledExecutablePipelineStage::execute(
     return ExecutionResult::Ok;
 }
 
-std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::createIR(DumpHelper& dumpHelper, Timer<>& timer)
+std::shared_ptr<IR::IRGraph> CompiledExecutablePipelineStage::createIR(DumpHelper& dumpHelper, Timer<>& timer)
 {
     auto pipelineExecutionContextRef = Value<MemRef>((int8_t*)nullptr);
-    pipelineExecutionContextRef.ref
-        = Nautilus::Tracing::ValueRef(INT32_MAX, 0, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+    pipelineExecutionContextRef.ref = Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto workerContextRef = Value<MemRef>((int8_t*)nullptr);
-    workerContextRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 1, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
-    auto memRef = Nautilus::Value<Nautilus::MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
-    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, NES::Nautilus::IR::Types::StampFactory::createAddressStamp());
+    workerContextRef.ref = Tracing::ValueRef(INT32_MAX, 1, IR::Types::StampFactory::createAddressStamp());
+    auto memRef = Nautilus::Value<MemRef>(std::make_unique<Nautilus::MemRef>(Nautilus::MemRef(0)));
+    memRef.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 2, IR::Types::StampFactory::createAddressStamp());
     auto recordBuffer = RecordBuffer(memRef);
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
@@ -74,12 +73,12 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
         });
     dumpHelper.dump("O. AfterTracing.trace", executionTrace->toString());
 
-    Nautilus::Tracing::SSACreationPhase ssaCreationPhase;
+    Tracing::SSACreationPhase ssaCreationPhase;
     executionTrace = ssaCreationPhase.apply(std::move(executionTrace));
     dumpHelper.dump("1. AfterTracing.trace", executionTrace->toString());
     timer.snapshot("Trace Generation");
 
-    Nautilus::Tracing::TraceToIRConversionPhase irCreationPhase;
+    Tracing::TraceToIRConversionPhase irCreationPhase;
     auto ir = irCreationPhase.apply(executionTrace);
     timer.snapshot("IR Generation");
     dumpHelper.dump("2. IR AfterGeneration.ir", ir->toString());
@@ -89,9 +88,8 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
 std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline()
 {
     /// compile after setup
-    auto dumpHelper
-        = DumpHelper::create(options.getIdentifier(), options.isDumpToConsole(), options.isDumpToFile(), options.getDumpOutputPath());
-    Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
+    auto dumpHelper = DumpHelper(options.identifier, options.dumpToConsole, options.dumpToFile, options.dumpOutputPath);
+    Timer timer("CompilationBasedPipelineExecutionEngine " + options.identifier);
     timer.start();
     auto& compiler = Nautilus::Backends::CompilationBackendRegistry::getPlugin(compilationBackend);
     auto ir = createIR(dumpHelper, timer);

@@ -47,7 +47,7 @@ EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
-/// NebuLI
+/// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "Could not read query description")
 EXCEPTION(QueryDescriptionNotParsable, 2201, "Could not parse query description")
 EXCEPTION(QueryInvalid, 2202, "Query is invalid")
@@ -60,6 +60,8 @@ EXCEPTION(OperatorNotFound, 2205, "Operator not found")
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
 EXCEPTION(CannotStartNodeEngine, 3003, "cannot start node engine")
 EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")
+EXCEPTION(CannotStartQueryManager, 3005, "cannot start query manager")
+EXCEPTION(CannotStopQueryManager, 3006, "cannot stop query manager")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")

@@ -132,8 +132,7 @@ namespace QueryCompilation
 {
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
-class QueryCompilerOptions;
-using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
+struct QueryCompilerOptions;
 } /// namespace QueryCompilation
 
 } /// namespace NES

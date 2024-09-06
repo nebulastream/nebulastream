@@ -40,9 +40,6 @@ option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
 
-#toggle GPU runtime and test
-option(NES_USE_GPU "Build with GPU acceleration" OFF)
-
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
@@ -254,18 +251,6 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
-
-if (NES_USE_GPU)
-    find_package(CUDAToolkit REQUIRED)
-    enable_language(CUDA)
-    if (NOT ${CUDAToolkit_FOUND})
-        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
-    endif ()
-    set(CMAKE_CUDA_STANDARD 17)
-    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
-    set(LIBRARIES ${LIBRARIES} ${LIBRARIES_CUDA})
-    message("CUDA dependencies OK")
-endif (NES_USE_GPU)
 
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)

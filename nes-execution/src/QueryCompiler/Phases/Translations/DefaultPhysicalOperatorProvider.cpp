@@ -20,8 +20,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -58,7 +56,6 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -68,12 +65,9 @@
 namespace NES::QueryCompilation
 {
 
-DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options)
-    : PhysicalOperatorProvider(std::move(options)) {};
-
-PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create(const QueryCompilerOptionsPtr& options)
+DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options)
+    : PhysicalOperatorProvider(std::move(options))
 {
-    return std::make_shared<DefaultPhysicalOperatorProvider>(options);
 }
 
 bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& operatorNode)
@@ -300,7 +294,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
         = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = options->getStreamJoinStrategy();
+    const auto joinStrategy = options->joinStrategy;
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
@@ -332,8 +326,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             buildSideType,
             timeStampField,
             joinFieldName,
-            options->getStreamJoinStrategy(),
-            options->getWindowingStrategy());
+            options->joinStrategy,
+            options->windowingStrategy);
     };
 
     const auto leftJoinBuildOperator = createBuildOperator(
@@ -354,8 +348,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
         joinOperator->getWindowStartFieldName(),
         joinOperator->getWindowEndFieldName(),
         joinOperatorHandler,
-        options->getStreamJoinStrategy(),
-        options->getWindowingStrategy());
+        options->joinStrategy,
+        options->windowingStrategy);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -369,7 +363,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
     const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
 
     Operators::NLJOperatorHandlerPtr joinOperatorHandler;
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         return Operators::NLJOperatorHandlerSlicing::create(
             joinOperator->getAllInputOriginIds(),
@@ -381,7 +375,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         return Operators::NLJOperatorHandlerBucketing::create(
             joinOperator->getAllInputOriginIds(),
@@ -405,7 +399,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
     Operators::HJOperatorHandlerPtr joinOperatorHandler;
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         return Operators::HJOperatorHandlerSlicing::create(
             joinOperator->getAllInputOriginIds(),
@@ -415,12 +409,12 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             joinOperator->getLeftInputSchema(),
             joinOperator->getRightInputSchema(),
             streamJoinConfig.joinStrategy,
-            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-            options->getHashJoinOptions()->getPreAllocPageCnt(),
-            options->getHashJoinOptions()->getPageSize(),
-            options->getHashJoinOptions()->getNumberOfPartitions());
+            options->hashJoinOptions.totalSizeForDataStructures,
+            options->hashJoinOptions.preAllocPageCnt,
+            options->hashJoinOptions.pageSize,
+            options->hashJoinOptions.numberOfPartitions);
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         return Operators::HJOperatorHandlerBucketing::create(
             joinOperator->getAllInputOriginIds(),
@@ -430,10 +424,10 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             joinOperator->getLeftInputSchema(),
             joinOperator->getRightInputSchema(),
             streamJoinConfig.joinStrategy,
-            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-            options->getHashJoinOptions()->getPreAllocPageCnt(),
-            options->getHashJoinOptions()->getPageSize(),
-            options->getHashJoinOptions()->getNumberOfPartitions());
+            options->hashJoinOptions.totalSizeForDataStructures,
+            options->hashJoinOptions.preAllocPageCnt,
+            options->hashJoinOptions.pageSize,
+            options->hashJoinOptions.numberOfPartitions);
     }
     else
     {
@@ -516,7 +510,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
     /// if we have a sliding window and use slicing we have to create another slice merge operator
-    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>() && options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>() && options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
             getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);

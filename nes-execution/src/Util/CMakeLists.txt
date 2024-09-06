@@ -11,7 +11,6 @@
 # limitations under the License.
 
 
-add_subdirectory(DumpHandler)
 add_source_files(nes-execution
         Execution.cpp
 )

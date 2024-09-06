@@ -106,14 +106,8 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<LowerPhysicalToNautilusOperators>
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators::create(const QueryCompilation::QueryCompilerOptionsPtr& options)
-{
-    return std::make_shared<LowerPhysicalToNautilusOperators>(options);
-}
-
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options)
-    : options(options), expressionProvider(std::make_unique<ExpressionProvider>())
+LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options)
+    : options(std::move(options)), expressionProvider(std::make_unique<ExpressionProvider>())
 {
 }
 
@@ -585,7 +579,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions, startTs, endTs, physicalGSMO->getWindowDefinition()->getOriginId());
@@ -645,7 +639,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
             aggregationFunctions,
@@ -722,7 +716,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
 
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
@@ -732,7 +726,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
         return slicePreAggregation;
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
 
@@ -769,7 +763,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
@@ -784,7 +778,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         return sliceMergingOperator;
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());

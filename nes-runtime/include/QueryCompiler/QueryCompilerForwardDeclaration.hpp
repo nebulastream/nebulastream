@@ -111,8 +111,7 @@ using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 
-class QueryCompilerOptions;
-using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
+struct QueryCompilerOptions;
 
 class OperatorPipeline;
 using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;

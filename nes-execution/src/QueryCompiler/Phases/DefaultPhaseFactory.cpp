@@ -33,9 +33,9 @@ PhaseFactoryPtr DefaultPhaseFactory::create()
     return std::make_shared<DefaultPhaseFactory>();
 }
 
-PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options)
+PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
-    switch (options->getPipeliningStrategy())
+    switch (options->pipeliningStrategy)
     {
         case PipeliningStrategy::OPERATOR_FUSION: {
             NES_DEBUG("Create pipelining phase with fuse policy");
@@ -50,14 +50,14 @@ PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptio
     };
 }
 
-LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options)
+LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
     NES_DEBUG("Create default lower logical plan phase");
-    auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create(options);
+    auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(options);
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
-AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr)
+AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions>)
 {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
@@ -72,10 +72,10 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
-BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options)
+BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
     NES_DEBUG("Create buffer optimization phase");
-    return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
+    return BufferOptimizationPhase::create(options->outputBufferOptimizationLevel);
 }
 
 } /// namespace NES::QueryCompilation::Phases
