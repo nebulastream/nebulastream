@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 
 namespace NES
 {
@@ -24,9 +25,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
-
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -70,42 +68,25 @@ public:
      */
     static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
-    /**
-     * @brief Performs type inference on the given query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param queryPlan the query plan
-     */
+
+    /// Performs type inference on the given query plan.
+    /// This involves the following steps.
+    /// 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
+    /// 2. Propagate the input and output schemas from source operators to the sink operators.
+    /// 3. If a operator contains expression, we infer the result stamp of this operators.
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    /**
-     * @brief Performs type inference on the given decomposed query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param decomposedQueryPlan the decomposed query plan
-     */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
-
 private:
-    /**
-     * @brief Infer schema for all operators between given source and sink operators.
-     * @param planId: the id of the plan
-     * @param sourceOperators : the source operators
-     * @param sinkOperators : the sink operators
-     * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
-     * @return QueryPlanPtr
-     * @throws TypeInferenceException if inferring the data types into the query failed
-     * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
-     */
-    void performTypeInference(
-        QueryId planId, std::vector<SourceLogicalOperatorPtr> sourceOperators, std::vector<SinkLogicalOperatorPtr> sinkOperators);
+    bool isFirstExecuteCall;
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
+
+    /// @throws TypeInferenceException if inferring the data types into the query failed
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceLogicalOperator>>& sourceOperators);
+
+    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
+    void performTypeInferenceSinks(QueryId planId, const std::vector<SinkLogicalOperatorPtr>& sinkOperators);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
 } /// namespace Optimizer
 } /// namespace NES

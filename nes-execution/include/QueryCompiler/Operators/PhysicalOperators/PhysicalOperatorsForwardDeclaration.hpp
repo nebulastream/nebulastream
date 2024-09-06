@@ -69,9 +69,6 @@ using PhysicalProjectOperatorPtr = std::shared_ptr<PhysicalProjectOperator>;
 class PhysicalSinkOperator;
 using PhysicalSinkOperatorPtr = std::shared_ptr<PhysicalSinkOperator>;
 
-class PhysicalSourceOperator;
-using PhysicalSourceOperatorPtr = std::shared_ptr<PhysicalSourceOperator>;
-
 class PhysicalUnaryOperator;
 using PhysicalUnaryOperatorPtr = std::shared_ptr<PhysicalUnaryOperator>;
 

@@ -22,14 +22,17 @@
 namespace NES
 {
 
-SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
+SourceLogicalOperator::SourceLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceLogicalOperator::SourceLogicalOperator(
-    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
+SourceLogicalOperator::SourceLogicalOperator(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
+    : Operator(id)
+    , LogicalUnaryOperator(id)
+    , OriginIdAssignmentOperator(id, originId)
+    , logicalSourceName(std::move(logicalSourceName))
+    , schema(std::move(schema))
 {
 }
 
@@ -42,8 +45,9 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 {
     if (rhs->instanceOf<SourceLogicalOperator>())
     {
-        auto sourceOperator = rhs->as<SourceLogicalOperator>();
-        return sourceOperator->getSourceDescriptor()->equal(*sourceDescriptor);
+        auto rhsAsSourceLogicalOperator = rhs->as<SourceLogicalOperator>();
+        return this->getSchema() == rhsAsSourceLogicalOperator->getSchema()
+            && this->getLogicalSourceName() == rhsAsSourceLogicalOperator->getLogicalSourceName();
     }
     return false;
 }
@@ -51,46 +55,31 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 std::string SourceLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId;
-    if (sourceDescriptor)
-    {
-        ss << ", " << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString();
-    }
-    ss << ")";
+    ss << "LogicalSource(opId: " << id << ": originid: " << originId << ")";
 
     return ss.str();
 }
 
-std::unique_ptr<Sources::SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
-{
-    return std::move(this->sourceDescriptor);
-}
-Sources::SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
-{
-    return *sourceDescriptor;
-}
-
 bool SourceLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    inputSchema = schema;
+    outputSchema = schema;
     return true;
-}
-
-void SourceLogicalOperator::setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
-{
-    this->sourceDescriptor = std::move(sourceDescriptor);
-}
-
-void SourceLogicalOperator::setProjectSchema(SchemaPtr schema)
-{
-    projectSchema = std::move(schema);
 }
 
 OperatorPtr SourceLogicalOperator::copy()
 {
-    throw InvalidUseOfOperatorFunction(
-        "SourceLogicalOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
+    auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id, originId);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    copy->setHashBasedSignature(hashBasedSignature);
+    copy->setZ3Signature(z3Signature);
+    copy->setOperatorState(operatorState);
+    for (const auto& pair : properties)
+    {
+        copy->addProperty(pair.first, pair.second);
+    }
+    return copy;
 }
 
 void SourceLogicalOperator::inferStringSignature()
@@ -107,6 +96,18 @@ void SourceLogicalOperator::inferInputOrigins()
 std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
+}
+std::string SourceLogicalOperator::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
+std::shared_ptr<Schema> SourceLogicalOperator::getSchema() const
+{
+    return schema;
+}
+void SourceLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
+{
+    this->schema = std::move(schema);
 }
 
 } /// namespace NES

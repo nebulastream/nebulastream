@@ -10,7 +10,7 @@ logical:
 physical:
   - logical: tcp_source
     config:
-      type: TCP_SOURCE
+      type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: -1 # Generated in test to avoid port conflicts.
@@ -21,7 +21,7 @@ physical:
       flushIntervalMS: 100
   - logical: tcp_source
     config:
-      type: TCP_SOURCE
+      type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: -1 # Generated in test to avoid port conflicts.

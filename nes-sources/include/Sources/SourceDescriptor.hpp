@@ -16,10 +16,10 @@
 
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
-#include <memory>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -64,12 +64,14 @@ struct SourceDescriptor
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
     explicit SourceDescriptor(std::string logicalSourceName, std::string sourceType);
     /// Constructor used before applying schema inference.
+    ///-Todo: used only in serialization -> can potentially remove, after refactoring serialization
     explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
+    ///-Todo: used only in serialization -> can potentially remove, after refactoring serialization
     explicit SourceDescriptor(
         std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
 
-    ///-Todo: clean up constructors
+    /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
         std::string logicalSourceName,
         std::shared_ptr<Schema> schema,

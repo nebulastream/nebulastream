@@ -129,7 +129,7 @@ bool Operator::addChild(NodePtr newNode)
         return false;
     }
 
-    if (newNode->as<Operator>()->getId() == id)
+    if (isIdentical(newNode))
     {
         NES_ERROR("Operator: can not add self as child to itself");
         return false;
@@ -160,7 +160,7 @@ bool Operator::addParent(NodePtr newNode)
         return false;
     }
 
-    if (newNode->as<Operator>()->getId() == id)
+    if (isIdentical(newNode))
     {
         NES_ERROR("Operator: can not add self as parent to itself");
         return false;

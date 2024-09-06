@@ -17,7 +17,8 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp> ///-Todo: remove
 #include <SerializableOperator.pb.h>
 
 namespace NES
@@ -54,7 +55,7 @@ public:
     /// Note: This method will not deserialize its children
     static OperatorPtr deserializeOperator(SerializableOperator serializedOperator);
 
-    static void serializeSourceOperator(SourceLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
+    static void serializeSourceOperator(OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator);
 
     static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
 

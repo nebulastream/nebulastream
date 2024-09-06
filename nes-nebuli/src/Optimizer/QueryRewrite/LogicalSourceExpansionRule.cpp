@@ -26,6 +26,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp"
 
 namespace NES::Optimizer
 {
@@ -45,7 +46,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
-    std::vector<SourceLogicalOperatorPtr> sourceOperators = queryPlan->getSourceOperators();
+    std::vector<std::shared_ptr<SourceLogicalOperator>> sourceOperators = queryPlan->getSourceOperators<SourceLogicalOperator>();
 
     /// Compute a map of all blocking operators in the query plan
     std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
@@ -81,7 +82,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
     for (const auto& sourceOperator : sourceOperators)
     {
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().logicalSourceName;
+        auto logicalSourceName = sourceOperator->getLogicalSourceName();
 
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
@@ -118,8 +119,15 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         /// Create one duplicate operator for each physical source
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
+            NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
+            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperator>();
+            /// Add to the source operator the id of the physical node where we have to pin the operator
+            /// NOTE: This is required at the time of placement to know where the source operator is pinned
+            duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
+            duplicateSourceOperator->setSchema(sourceOperator->getSchema());
+
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
-            const std::vector<NodePtr>& allOperators = sourceOperator->getAndFlattenAllAncestors();
+            const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
 
             std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators)
@@ -171,6 +179,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
                     visitedOperators.insert(operatorNode->getId());
                 }
             }
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->getSourceDescriptor();
+            sourceDescriptor->schema = duplicateSourceOperator->getSchema();
+            auto operatorSourceLogicalDescriptor
+                = std::make_shared<OperatorLogicalSourceDescriptor>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
+            duplicateSourceOperator->replace(operatorSourceLogicalDescriptor, duplicateSourceOperator);
         }
     }
 

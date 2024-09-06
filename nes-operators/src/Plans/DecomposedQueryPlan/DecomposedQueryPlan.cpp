@@ -111,21 +111,6 @@ void DecomposedQueryPlan::setQueryId(QueryId queryId)
     this->queryId = queryId;
 }
 
-std::vector<SourceLogicalOperatorPtr> DecomposedQueryPlan::getSourceOperators() const
-{
-    NES_DEBUG("Get all source operators by traversing all the root nodes.");
-    std::set<SourceLogicalOperatorPtr> sourceOperatorsSet;
-    for (const auto& rootOperator : rootOperators)
-    {
-        auto sourceOperators = rootOperator->getNodesByType<SourceLogicalOperator>();
-        NES_DEBUG("Insert all source operators to the collection");
-        sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
-    }
-    NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
-    std::vector<SourceLogicalOperatorPtr> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
-    return sourceOperators;
-}
-
 std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() const
 {
     NES_DEBUG("Get all sink operators by traversing all the root nodes.");

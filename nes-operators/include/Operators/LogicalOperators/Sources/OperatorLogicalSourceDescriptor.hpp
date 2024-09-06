@@ -21,12 +21,16 @@ namespace NES
 {
 
 /// Is constructed during parsing and represents a logical source as an operator node in the query plan.
-class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+class OperatorLogicalSourceDescriptor : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId);
+    explicit OperatorLogicalSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit OperatorLogicalSourceDescriptor(
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
-    explicit SourceLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
+    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
+
+    void setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -39,15 +43,10 @@ public:
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
-    void setSchema(std::shared_ptr<Schema> schema);
-
 private:
-    std::string logicalSourceName;
-    std::shared_ptr<Schema> schema;
+    const std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
-///-Todo: remove
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
+///-Todo: rem
+using OperatorLogicalSourceDescriptorPtr = std::shared_ptr<OperatorLogicalSourceDescriptor>;
 } /// namespace NES

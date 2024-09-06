@@ -12,4 +12,5 @@
 
 add_source_files(nes-operators
         SourceLogicalOperator.cpp
+        OperatorLogicalSourceDescriptor.cpp
 )

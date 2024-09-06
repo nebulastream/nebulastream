@@ -28,6 +28,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
@@ -45,7 +46,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -125,19 +125,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (operatorNode->instanceOf<SourceLogicalOperator>())
-    {
-        auto logicalSourceOperator = operatorNode->as<SourceLogicalOperator>();
-        auto physicalSourceOperator = PhysicalOperators::PhysicalSourceOperator::create(
-            getNextOperatorId(),
-            logicalSourceOperator->getOriginId(),
-            logicalSourceOperator->getInputSchema(),
-            logicalSourceOperator->getOutputSchema(),
-            logicalSourceOperator->getSourceDescriptor());
-        physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-        operatorNode->replace(physicalSourceOperator);
-    }
-    else if (operatorNode->instanceOf<SinkLogicalOperator>())
+    if (operatorNode->instanceOf<SinkLogicalOperator>())
     {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperator>();
 

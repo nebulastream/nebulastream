@@ -23,7 +23,6 @@ namespace NES::Sources
 SourceDescriptor::SourceDescriptor(std::string logicalSourceName, std::string sourceType)
     : logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceType))
 {
-    this->schema = schema;
 }
 SourceDescriptor::SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config)
     : sourceType(std::move(sourceType)), inputFormat(inputFormat), config(std::move(config))
@@ -46,15 +45,6 @@ SourceDescriptor::SourceDescriptor(
     , inputFormat(std::move(inputFormat))
     , config(std::move(config))
 {
-}
-
-void SourceDescriptor::setConfigType(const std::string& key, ConfigType value)
-{
-    if (!this->config.contains(key))
-    {
-        return;
-    }
-    this->config.at(key) = std::move(value);
 }
 
 

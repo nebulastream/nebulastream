@@ -14,14 +14,11 @@
 
 #include <variant>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -115,10 +112,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
-    PRECONDITION(
-        !dynamic_cast<const LogicalSourceDescriptor*>(&sourceOperator->getSourceDescriptorRef()),
-        "Logical source name lookup is not supported");
+    auto sourceOperator = rootOperator->as<OperatorLogicalSourceDescriptor>();
+    auto sourceDescriptor = sourceOperator->getSourceDescriptorRef();
+    INVARIANT(&sourceDescriptor, "Logical source name lookup is not supported");
 
     /// ReSharper disable once CppDFAUnreachableCode
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;

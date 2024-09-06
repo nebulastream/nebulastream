@@ -67,10 +67,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
 {
     NES_TRACE("OperatorSerializationUtil:: serialize operator {}", operatorNode->toString());
     auto serializedOperator = SerializableOperator();
-    if (operatorNode->instanceOf<SourceLogicalOperator>())
+    if (operatorNode->instanceOf<OperatorLogicalSourceDescriptor>())
     {
         /// serialize source operator
-        serializeSourceOperator(*operatorNode->as<SourceLogicalOperator>(), serializedOperator);
+        serializeSourceOperator(*operatorNode->as<OperatorLogicalSourceDescriptor>(), serializedOperator);
     }
     else if (operatorNode->instanceOf<SinkLogicalOperator>())
     {
@@ -348,7 +348,8 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
     return operatorNode;
 }
 
-void OperatorSerializationUtil::serializeSourceOperator(SourceLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
+void OperatorSerializationUtil::serializeSourceOperator(
+    OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperator");
 

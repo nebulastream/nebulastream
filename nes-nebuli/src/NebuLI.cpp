@@ -152,6 +152,8 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
     auto schema = Schema::create();
+
+    /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalName, schemaFields] : config.logical)
     {
         NES_INFO("Adding logical source: {}", logicalName);
@@ -162,7 +164,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
         sourceCatalog->addLogicalSource(logicalName, std::move(schema));
     }
 
-    ///-Todo: What to do with physical source?
+    /// Add physical sources to corresponding logical sources.
     for (auto [logicalName, config] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(schema, logicalName, std::move(config));
@@ -185,46 +187,16 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     auto query = syntacticQueryValidation->validate(config.query);
     semanticQueryValidation->validate(query);
+    typeInference->execute(query);
 
     logicalSourceExpansionRule->apply(query);
+    NES_ERROR("{}", query->toString());
     typeInference->execute(query);
+
     originIdInferencePhase->execute(query);
     memoryLayoutSelectionPhase->execute(query);
     queryRewritePhase->execute(query);
     typeInference->execute(query);
-
-    /// Attaches all source descriptors belonging to a specific logical source.
-    for (auto& sourceOperator : query->getSourceOperators())
-    {
-        auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-        if (sourceDescriptor.sourceType == "Logical") ///-Todo: improve
-        {
-            /// Fetch logical and physical source name in the descriptor
-            auto logicalSourceName = sourceDescriptor.logicalSourceName;
-            /// Iterate over all available physical sources
-            bool foundPhysicalSource = false;
-            for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
-            {
-                NES_DEBUG("Replacing LogicalSourceDescriptor {}", logicalSourceName);
-                if (auto physicalSource = entry->getPhysicalSource())
-                {
-                    /// Get 'physical' descriptor from catalog. Todo: OperatorLogicalSource(SourceLogicalOperator) should not have a descriptor.
-                    auto physicalDescriptor = physicalSource->getSourceDescriptor();
-                    ///-Todo: remove when OperatorLogicalSource has no descriptor anymore, and schema attached directly.
-                    physicalDescriptor->schema = sourceDescriptor.schema;
-                    std::stringstream ss;
-                    ss << *physicalDescriptor;
-                    std::string ssString = ss.str();
-                    NES_DEBUG("Replacement with: {}", ssString);
-                    ///-Todo: we probably need to attach multiple source descriptors to a logical source here.
-                    sourceOperator->setSourceDescriptor(std::move(physicalDescriptor));
-                    foundPhysicalSource = true;
-                    break;
-                }
-            }
-            NES_ASSERT(foundPhysicalSource, "Logical source descriptor could not be replaced with the physical source descriptor.");
-        }
-    }
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());

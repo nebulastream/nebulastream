@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -44,7 +45,7 @@ QueryPlanPtr MemoryLayoutSelectionPhase::execute(const QueryPlanPtr& queryPlan)
     auto iterator = PlanIterator(queryPlan);
     for (auto node : iterator)
     {
-        if (auto op = node->as_if<SourceLogicalOperator>())
+        if (auto op = node->as_if<OperatorLogicalSourceDescriptor>())
         {
             op->getSourceDescriptorRef().schema->setLayoutType(layoutType);
         }
