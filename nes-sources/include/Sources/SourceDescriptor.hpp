@@ -47,6 +47,8 @@ struct SourceDescriptor
 
         ConfigKey(std::string key) : key(std::move(key)), defaultValue(std::nullopt) { }
         ConfigKey(std::string key, T defaultValue) : key(std::move(key)), defaultValue(std::move(defaultValue)) { }
+
+        operator const std::string&() const { return key; }
     };
 
     using ConfigType = std::variant<
@@ -165,13 +167,13 @@ struct SourceDescriptor
     static void
     validateAndFormatParameter(const ConfigKey& configKey, const std::map<std::string, std::string>& config, Config& validatedConfig)
     {
-        if (config.contains(configKey.key))
+        if (config.contains(configKey))
         {
             std::optional<typename ConfigKey::Type> formattedParameter
-                = SourceDescriptor::stringParameterAs<typename ConfigKey::Type>(config.at(configKey.key));
+                = SourceDescriptor::stringParameterAs<typename ConfigKey::Type>(config.at(configKey));
             if (formattedParameter.has_value())
             {
-                validatedConfig.emplace(std::make_pair(configKey.key, formattedParameter.value()));
+                validatedConfig.emplace(std::make_pair(configKey, formattedParameter.value()));
                 return; /// success
             }
             throw CannotFormatSourceData(configKey.key + " Parameter formatting unsuccessful.");
@@ -179,7 +181,7 @@ struct SourceDescriptor
 
         if (configKey.defaultValue.has_value())
         {
-            validatedConfig.emplace(std::make_pair(configKey.key, configKey.defaultValue.value()));
+            validatedConfig.emplace(std::make_pair(configKey, configKey.defaultValue.value()));
             return; /// success
         }
 

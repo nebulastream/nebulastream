@@ -357,44 +357,44 @@ SourceDescriptor::Config TCPSource::validateAndFormat(std::map<std::string, std:
     SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::HOST, config, validatedConfig);
     SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::PORT, config, validatedConfig);
     ///-Todo: could move into lambda function in ConfigKey, to keep everything in one place.
-    if (config.contains(ConfigParametersTCP::DOMAIN.key))
+    if (config.contains(ConfigParametersTCP::DOMAIN))
     {
-        const auto socketDomainString = config.at(ConfigParametersTCP::DOMAIN.key);
+        const auto socketDomainString = config.at(ConfigParametersTCP::DOMAIN);
         if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN.key, AF_INET));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN, AF_INET));
         }
         else if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN.key, AF_INET6));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN, AF_INET6));
         }
         else
         {
             throw UnknownSourceFormat("Domain provided for TCP source was : " + socketDomainString + ", allowed is AF_INET or AF_INET6");
         }
     }
-    if (config.contains(ConfigParametersTCP::TYPE.key))
+    if (config.contains(ConfigParametersTCP::TYPE))
     {
-        const auto socketTypeString = config.at(ConfigParametersTCP::TYPE.key);
+        const auto socketTypeString = config.at(ConfigParametersTCP::TYPE);
         if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_STREAM));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_STREAM));
         }
         else if (strcasecmp(socketTypeString.c_str(), "SOCK_DGRAM") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_DGRAM));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_DGRAM));
         }
         else if (strcasecmp(socketTypeString.c_str(), "SOCK_SEQPACKET") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_SEQPACKET));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_SEQPACKET));
         }
         else if (strcasecmp(socketTypeString.c_str(), "SOCK_RAW") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_RAW));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_RAW));
         }
         else if (strcasecmp(socketTypeString.c_str(), "SOCK_RDM") == 0)
         {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_RDM));
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_RDM));
         }
         else
         {

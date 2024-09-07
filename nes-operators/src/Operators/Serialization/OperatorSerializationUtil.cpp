@@ -990,19 +990,19 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
         Sources::SourceDescriptor::Config sourceDescriptorConfig{};
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::HOST.key, tcpSourceConfig->sockethost()));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::PORT.key, tcpSourceConfig->socketport()));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::DOMAIN.key, tcpSourceConfig->socketdomain()));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::TYPE.key, tcpSourceConfig->sockettype()));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::FLUSH_INTERVAL_MS.key, tcpSourceConfig->flushintervalms()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::HOST, tcpSourceConfig->sockethost()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::PORT, tcpSourceConfig->socketport()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::DOMAIN, tcpSourceConfig->socketdomain()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::TYPE, tcpSourceConfig->sockettype()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::FLUSH_INTERVAL_MS, tcpSourceConfig->flushintervalms()));
         sourceDescriptorConfig.emplace(std::make_pair(
-            TCPConf::DECIDED_MESSAGE_SIZE.key, static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SEPARATOR.key, tcpSourceConfig->tupleseparator().at(0)));
-        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SOCKET_BUFFER_SIZE.key, tcpSourceConfig->socketbuffersize()));
+            TCPConf::DECIDED_MESSAGE_SIZE, static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SEPARATOR, tcpSourceConfig->tupleseparator().at(0)));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SOCKET_BUFFER_SIZE, tcpSourceConfig->socketbuffersize()));
         sourceDescriptorConfig.emplace(
-            std::make_pair(TCPConf::SOCKET_BUFFER_TRANSFER_SIZE.key, tcpSourceConfig->bytesusedforsocketbuffersizetransfer()));
+            std::make_pair(TCPConf::SOCKET_BUFFER_TRANSFER_SIZE, tcpSourceConfig->bytesusedforsocketbuffersizetransfer()));
         sourceDescriptorConfig.emplace(
-            std::make_pair(TCPConf::INPUT_FORMAT.key, static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat())));
+            std::make_pair(TCPConf::INPUT_FORMAT, static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat())));
         return std::make_unique<Sources::SourceDescriptor>(
             schema,
             Sources::TCPSource::NAME,
@@ -1024,9 +1024,9 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         physicalSourceType.specificphysicalsourcetype().UnpackTo(csvSourceConfig);
 
         Sources::SourceDescriptor::Config sourceDescriptorConfig{};
-        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::FILEPATH.key, csvSourceConfig->filepath()));
-        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::SKIP_HEADER.key, csvSourceConfig->skipheader()));
-        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::DELIMITER.key, csvSourceConfig->delimiter()));
+        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::FILEPATH, csvSourceConfig->filepath()));
+        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::SKIP_HEADER, csvSourceConfig->skipheader()));
+        sourceDescriptorConfig.emplace(std::make_pair(CSVConf::DELIMITER, csvSourceConfig->delimiter()));
         return std::make_unique<Sources::SourceDescriptor>(
             schema, Sources::CSVSource::NAME, Configurations::InputFormat::CSV, std::move(sourceDescriptorConfig));
     }

@@ -1,13 +1,13 @@
 
-¦¡
-ø
-:type.googleapis.com/NES.SerializableOperator.SourceDetails¹
-´
-Ztype.googleapis.com/NES.SerializableOperator.SourceDetails.SerializableCsvSourceDescriptorÕ
-€
-CSV"y
-Ptype.googleapis.com/NES.SerializablePhysicalSourceType.SerializableCSVSourceType%
-oneToThirtyOneDoubleColumn.csv,Ï
+£ž
+õ
+:type.googleapis.com/NES.SerializableOperator.SourceDetails¶
+±
+Ztype.googleapis.com/NES.SerializableOperator.SourceDetails.SerializableCsvSourceDescriptorÒ
+~
+CSV"w
+Ptype.googleapis.com/NES.SerializablePhysicalSourceType.SerializableCSVSourceType#
+oneToThirtyOneDoubleColumn.csv,Ï
 e
 default_source$idPL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
