@@ -389,6 +389,5 @@ if (NES_USE_GPU)
 endif ()
 
 #Other configurations
-project_enable_clang_format()
-project_enable_check_preamble()
+project_enable_format()
 instrument_codebase()

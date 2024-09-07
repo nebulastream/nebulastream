@@ -72,3 +72,5 @@ then
     echo Found forbidden comments. Please use /// for doc comments, remove all else.
     exit 1
 fi
+
+python3 scripts/check_preamble.py

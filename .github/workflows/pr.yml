@@ -181,12 +181,8 @@ jobs:
       options: --user root
     steps:
       - uses: actions/checkout@v4
-      - name: Configure CMake
-        run: cmake -B build
-      - name: Check Preamble
-        run: cmake --build build --target check-format-preamble
       - name: Check Format
-        run: cmake --build build --target check-format
+        run: ./scripts/format.sh
 
   build-linux:
     name: "Build ${{matrix.arch}}"
