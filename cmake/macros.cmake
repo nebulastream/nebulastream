@@ -35,7 +35,7 @@ macro(add_source_files)
 endmacro()
 
 # Looks for the configured clang format version and enabled the format target if available.
-function(project_enable_clang_format)
+function(project_enable_format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
     if (NOT CLANG_FORMAT_EXECUTABLE)
         message(WARNING "Clang-Format not found, but can be installed with 'sudo apt install clang-format'. Disabling format target.")
@@ -57,12 +57,7 @@ function(project_enable_clang_format)
     message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
     add_custom_target(format       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
     add_custom_target(check-format COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
-endfunction(project_enable_clang_format)
-
-macro(project_enable_check_preamble)
-    message(STATUS "Check Preamble (License and pragma once check) is available via the 'check-format-preamble' target")
-    add_custom_target(check-format-preamble COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/check_preamble.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.no-license-check)
-endmacro(project_enable_check_preamble)
+endfunction(project_enable_format)
 
 macro(get_nes_log_level_value NES_LOGGING_VALUE)
     message(STATUS "Provided log level is: ${NES_LOG_LEVEL}")
