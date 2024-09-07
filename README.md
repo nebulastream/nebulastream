@@ -79,4 +79,3 @@ Afterward, there exist multiple new targets:
 - `check-format-clang` runs clang-format and checks if the code is formatted correctly but does not fix it
 - `tidy`  runs clang-tidy 
 - `check-license-and-pragma-once` runs a script that checks that all of our header files start with our license preamble followed by `#pragma once` 
-- `check-format-comment` runs a script that checks if the comments are correct.

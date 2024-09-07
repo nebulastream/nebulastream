@@ -34,22 +34,6 @@ macro(add_source_files)
     add_source(${TARGET_NAME} "${SOURCE_FILES}")
 endmacro()
 
-macro(get_nes_folders output_var)
-    file(GLOB NES_FOLDERS
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-*")
-    # Create a semicolon-separated list of folder names
-    set(NES_FOLDER_NAMES "")
-    foreach(FOLDER ${NES_FOLDERS})
-        get_filename_component(FOLDER_NAME ${FOLDER} NAME)
-        list(APPEND NES_FOLDER_NAMES ${CMAKE_CURRENT_SOURCE_DIR}/${FOLDER_NAME})
-    endforeach()
-    # Join the folder names with a comma
-    string(REPLACE ";" "," NES_FOLDER_NAMES_COMMA_SEPARATED "${NES_FOLDER_NAMES}")
-
-    # Set the output variable
-    set(${output_var} "${NES_FOLDER_NAMES_COMMA_SEPARATED}")
-endmacro(get_nes_folders)
-
 # Looks for the configured clang format version and enabled the format target if available.
 function(project_enable_clang_format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
@@ -71,28 +55,13 @@ function(project_enable_clang_format)
     endif ()
 
     message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
-    add_custom_target(format-clang       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
-    add_custom_target(check-format-clang COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(format       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(check-format COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
 endfunction(project_enable_clang_format)
 
-macro(project_enable_check_comment_format)
-    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
-    if (NOT_ALLOWED_COMMENT_STYLE_REGEX)
-        message(STATUS "comment formatting check enabled through 'check-format-comment' target.")
-        add_custom_target(check-format-comment COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/run_check_correct_comment_style.py --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --not_allowed_comment_style \"${NOT_ALLOWED_COMMENT_STYLE_REGEX}\" USES_TERMINAL)
-    else ()
-        message(FATAL_ERROR "check-format-comment is not enabled as ${NOT_ALLOWED_COMMENT_STYLE_REGEX} is not set.")
-    endif ()
-endmacro(project_enable_check_comment_format)
-
 macro(project_enable_check_preamble)
-    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
-    if (NOT_ALLOWED_COMMENT_STYLE_REGEX)
-        message(STATUS "Check Preamble (License and pragma once check) is available via the 'check-format-preamble' target")
-        add_custom_target(check-format-preamble COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/check_preamble.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.no-license-check)
-    else ()
-        message(FATAL_ERROR "check-format-preamble is not enabled as ${NOT_ALLOWED_COMMENT_STYLE_REGEX} is not set.")
-    endif ()
+    message(STATUS "Check Preamble (License and pragma once check) is available via the 'check-format-preamble' target")
+    add_custom_target(check-format-preamble COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/check_preamble.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.no-license-check)
 endmacro(project_enable_check_preamble)
 
 macro(get_nes_log_level_value NES_LOGGING_VALUE)

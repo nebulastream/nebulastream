@@ -17,9 +17,6 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
 SET(LLVM_MAJOR_VERSION 18)
 set(CLANG_FORMAT_MAJOR_VERSION ${LLVM_MAJOR_VERSION})
-# Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
-# The regex must match all comments that are not allowed in the codebase per line.
-set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
 
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
@@ -393,6 +390,5 @@ endif ()
 
 #Other configurations
 project_enable_clang_format()
-project_enable_check_comment_format()
 project_enable_check_preamble()
 instrument_codebase()
