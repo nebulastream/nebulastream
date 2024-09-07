@@ -31,6 +31,23 @@ done
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
 
+# If Docker is running in rootless mode, the root user inside the container
+# maps to the user running the rootless Docker daemon (likely the current user).
+# Therefore, we can safely use the root user within the container.
+# If rootless mode is not detected, we install the current user into the container.
+# This assumes there is no custom user mapping between the host and container, which is reasonable.
+USE_ROOTLESS=false
+USE_UID=$(id -u)
+USE_GID=$(id -g)
+USE_USERNAME=$(whoami)
+if docker info -f "{{println .SecurityOptions}}" | grep rootless; then
+  echo "Detected docker rootless mode. Container internal user will be root"
+  USE_ROOTLESS=true
+  USE_UID=0
+  USE_GID=0
+  USE_USERNAME=root
+fi
+
 ARCH=$(uname -m)
 if [ "$ARCH" == "x86_64" ]; then
    ARCH="x64"
@@ -58,9 +75,10 @@ if [ $BUILD_LOCAL -eq 1 ]; then
 
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t nebulastream/nes-development:local \
-               --build-arg UID=$(id -u) \
-               --build-arg GID=$(id -g) \
-               --build-arg USERNAME=$(whoami) \
+               --build-arg UID=${USE_UID} \
+               --build-arg GID=${USE_GID} \
+               --build-arg USERNAME=${USE_USERNAME} \
+               --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=default .
 else
   if ! docker manifest inspect nebulastream/nes-development:${HASH} > /dev/null 2>&1 ; then
@@ -72,8 +90,9 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
   echo "Basing local development image on remote on nebulastream/nes-development:${HASH}"
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t nebulastream/nes-development:local \
-               --build-arg UID=$(id -u) \
-               --build-arg GID=$(id -g) \
-               --build-arg USERNAME=$(whoami) \
+               --build-arg UID=${USE_UID} \
+               --build-arg GID=${USE_GID} \
+               --build-arg USERNAME=${USE_USERNAME} \
+               --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=${HASH} .
 fi
