@@ -13,7 +13,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: -1 # Generated in test to avoid port conflicts.
+      socketPort: 0 # Generated in test to avoid port conflicts.
       socketHost: localhost
       inputFormat: CSV
       socketBufferSize: 2
@@ -24,7 +24,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: -1 # Generated in test to avoid port conflicts.
+      socketPort: 0 # Generated in test to avoid port conflicts.
       socketHost: localhost
       inputFormat: CSV
       socketBufferSize: 2

@@ -884,30 +884,23 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         serializedPhysicalSourceType->set_sourcetype(Sources::TCPSource::NAME);
         /// init serializable tcp source config
         auto tcpSerializedSourceConfig = SerializablePhysicalSourceType_SerializableTCPSourceType();
-        tcpSerializedSourceConfig.set_sockethost(sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::HOST));
-        tcpSerializedSourceConfig.set_socketport(sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::PORT));
-        tcpSerializedSourceConfig.set_socketdomain(sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::DOMAIN));
-        tcpSerializedSourceConfig.set_sockettype(sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::TYPE));
+        tcpSerializedSourceConfig.set_sockethost(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::HOST));
+        tcpSerializedSourceConfig.set_socketport(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::PORT));
+        tcpSerializedSourceConfig.set_socketdomain(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::DOMAIN));
+        tcpSerializedSourceConfig.set_sockettype(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::TYPE));
         std::string tupleSeparator;
-        tupleSeparator = sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::SEPARATOR);
+        tupleSeparator = sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::SEPARATOR);
         tcpSerializedSourceConfig.set_tupleseparator(tupleSeparator);
-        tcpSerializedSourceConfig.set_flushintervalms(
-            sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::FLUSH_INTERVAL_MS));
-        switch (sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::INPUT_FORMAT))
+        tcpSerializedSourceConfig.set_flushintervalms(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::FLUSH_INTERVAL_MS));
+        switch (sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::INPUT_FORMAT))
         {
-            case Configurations::InputFormat::JSON:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
-                break;
             case Configurations::InputFormat::CSV:
                 tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
-                break;
-            case Configurations::InputFormat::NES_BINARY:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_NES_BINARY);
                 break;
         }
 
         using enum Configurations::TCPDecideMessageSize;
-        switch (sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
+        switch (sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
         {
             case TUPLE_SEPARATOR:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
@@ -921,10 +914,9 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
                 break;
         }
-        tcpSerializedSourceConfig.set_socketbuffersize(
-            sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::SOCKET_BUFFER_SIZE));
+        tcpSerializedSourceConfig.set_socketbuffersize(sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::SOCKET_BUFFER_SIZE));
         tcpSerializedSourceConfig.set_bytesusedforsocketbuffersizetransfer(
-            sourceDescriptor.getFromConfig(Sources::TCPSource::ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE));
+            sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE));
         serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(tcpSerializedSourceConfig);
         ///init serializable tcp source descriptor
         auto tcpSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
@@ -946,9 +938,9 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
         csvSerializedSourceConfig.set_numberofbufferstoproduce(
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
-        csvSerializedSourceConfig.set_filepath(sourceDescriptor.getFromConfig(Sources::CSVSource::ConfigParametersCSV::FILEPATH));
-        csvSerializedSourceConfig.set_skipheader(sourceDescriptor.getFromConfig(Sources::CSVSource::ConfigParametersCSV::SKIP_HEADER));
-        csvSerializedSourceConfig.set_delimiter(sourceDescriptor.getFromConfig(Sources::CSVSource::ConfigParametersCSV::DELIMITER));
+        csvSerializedSourceConfig.set_filepath(sourceDescriptor.getFromConfig(Sources::ConfigParametersCSV::FILEPATH));
+        csvSerializedSourceConfig.set_skipheader(sourceDescriptor.getFromConfig(Sources::ConfigParametersCSV::SKIP_HEADER));
+        csvSerializedSourceConfig.set_delimiter(sourceDescriptor.getFromConfig(Sources::ConfigParametersCSV::DELIMITER));
         serializedSourceConfig->mutable_specificphysicalsourcetype()->PackFrom(csvSerializedSourceConfig);
         /// init serializable csv source descriptor
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
@@ -980,7 +972,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor>())
     {
         /// de-serialize tcp source descriptor
-        using TCPConf = Sources::TCPSource::ConfigParametersTCP;
+        using TCPConf = Sources::ConfigParametersTCP;
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as TCPSourceDescriptor");
         auto* tcpSerializedSourceDescriptor = new SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(tcpSerializedSourceDescriptor);
@@ -1012,7 +1004,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>())
     {
         /// de-serialize csv source descriptor
-        using CSVConf = Sources::CSVSource::ConfigParametersCSV;
+        using CSVConf = Sources::ConfigParametersCSV;
         NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as CsvSourceDescriptor");
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         serializedSourceDescriptor.UnpackTo(&csvSerializedSourceDescriptor);

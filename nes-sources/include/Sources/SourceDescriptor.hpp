@@ -26,31 +26,26 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources
 {
 
+/// The SourceDescriptor:
+/// 1. Is a generic descriptor that can fully describe any kind of Source.
+/// 2. Is (de-)serializable, making it possible to send to other nodes.
+/// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a SourceDescriptor and returns a fully configured Source.
+/// 4. Is used by the frontend to validate and format string configs.
+/// Config: The design principle of the SourceDescriptor config is that the entire definition of the configuration happens in one place.
+/// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
+/// - the type
+/// - the name
+/// - the validation function
+/// All functions that operate on the config, operate on ConfigParameters and can therefore access all relevant information.
+/// This design makes it difficult to use the wrong (string) name to access a parameter, the wrong type, e.g., in a templated function, or
+/// to forget to define a validation function. Also, changing the type/name/validation function of a config parameter can be done in a single place.
 struct SourceDescriptor
 {
-    /// Tag struct that tags a config key with a type.
-    /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
-    /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
-    ///-Todo: could store validate function in ConfigKey that performs parameter specific validation.
-    template <typename T>
-    struct ConfigKey
-    {
-        std::string key;
-        std::optional<T> defaultValue;
-        using Type = T;
-
-        ConfigKey(std::string key) : key(std::move(key)), defaultValue(std::nullopt) { }
-        ConfigKey(std::string key, T defaultValue) : key(std::move(key)), defaultValue(std::move(defaultValue)) { }
-
-        operator const std::string&() const { return key; }
-    };
-
     using ConfigType = std::variant<
         int32_t,
         uint32_t,
@@ -62,6 +57,75 @@ struct SourceDescriptor
         Configurations::TCPDecideMessageSize,
         Configurations::InputFormat>;
     using Config = std::unordered_map<std::string, ConfigType>;
+
+    /// Tag struct that tags a config key with a type.
+    /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
+    /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
+    template <typename T>
+    struct ConfigParameter
+    {
+        using Type = T;
+        using ValidateFunc = std::function<bool(const std::map<std::string, std::string>& config, Config& validatedConfig)>;
+
+        ConfigParameter(std::string name, ValidateFunc&& validateFunc) : name(std::move(name)), validateFunc(std::move(validateFunc)) { }
+
+        std::string name;
+        ValidateFunc validateFunc;
+
+        operator const std::string&() const { return name; }
+        bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const
+        {
+            return validateFunc(config, validatedConfig);
+        }
+    };
+
+    /// Uses type erasure to create a container for ConfigParameters, which are templated.
+    /// @note Expects ConfigParameter to have a 'validate' function.
+    class ConfigParameterContainer
+    {
+    public:
+        template <typename T>
+        ConfigParameterContainer(T&& configParameter) : configParameter(std::make_shared<Model<T>>(std::forward<T>(configParameter)))
+        {
+        }
+
+        bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const
+        {
+            return configParameter->validate(config, validatedConfig);
+        }
+
+        struct Concept
+        {
+            virtual ~Concept() = default;
+            virtual bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const = 0;
+        };
+
+        template <typename T>
+        struct Model : Concept
+        {
+            Model(const T& configParameter) : configParameter(configParameter) { }
+            bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const override
+            {
+                return configParameter.validate(config, validatedConfig);
+            }
+
+        private:
+            T configParameter;
+        };
+
+        std::shared_ptr<const Concept> configParameter;
+    };
+
+    /// Takes ConfigParameters as inputs and creates an unordered map using the 'key' form the ConfigParameter as key and the ConfigParameter as value.
+    /// This function should be used at the end of the Config definition of a source, e.g., the ConfigParametersTCP definition.
+    /// The map makes it possible that we can simply iterate over all config parameters to check if the user provided all mandatory
+    /// parameters and whether the configuration is valid. Additionally, we can quickly check if there are unsupported parameters.
+    template <typename... Args>
+    static std::unordered_map<std::string, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
+    {
+        return std::unordered_map<std::string, ConfigParameterContainer>(
+            {std::make_pair(parameters.name, std::forward<Args>(parameters))...});
+    }
 
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
     explicit SourceDescriptor(std::string logicalSourceName, std::string sourceType);
@@ -89,29 +153,99 @@ struct SourceDescriptor
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
     void setConfigType(const std::string& key, ConfigType value);
 
-    /// Takes a key that is a tagged ConfigKey, with a string key and a tagged type.
+    /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
     /// Uses the taggeg type to retrieve the correct type from the variant value in the configuration.
-    template <typename ConfigKey>
-    typename ConfigKey::Type getFromConfig(const ConfigKey& key) const
+    template <typename ConfigParameter>
+    typename ConfigParameter::Type getFromConfig(const ConfigParameter& key) const
     {
-        const auto& value = config.at(key.key);
-        return std::get<typename ConfigKey::Type>(value);
+        const auto& value = config.at(key);
+        return std::get<typename ConfigParameter::Type>(value);
     }
 
     /// In contrast to getFromConfig(), tryGetFromConfig checks if the key exists and if the tagged type is correct.
     /// If not, tryGetFromConfig returns a nullopt, otherwise it returns an optional containing a value of the tagged type.
-    template <typename ConfigKey>
-    std::optional<typename ConfigKey::Type> tryGetFromConfig(const ConfigKey& configKey) const
+    template <typename ConfigParameter>
+    std::optional<typename ConfigParameter::Type> tryGetFromConfig(const ConfigParameter& configParameter) const
     {
-        if (config.contains(configKey.key) && std::holds_alternative<typename ConfigKey::Type>(config.at(configKey.key)))
+        if (config.contains(configParameter) && std::holds_alternative<typename ConfigParameter::Type>(config.at(configParameter)))
         {
-            const auto& value = config.at(configKey.key);
-            return std::get<typename ConfigKey::Type>(value);
+            const auto& value = config.at(configParameter);
+            return std::get<typename ConfigParameter::Type>(value);
         }
-        NES_DEBUG("SourceDescriptor did not contain key: {}, with type: {}", configKey.key, typeid(ConfigKey).name());
+        NES_DEBUG("SourceDescriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
         return std::nullopt;
     }
+
+    template <typename ConfigParameter>
+    static std::optional<typename ConfigParameter::Type>
+    tryGet(const ConfigParameter& configParameter, const std::map<std::string, std::string>& config)
+    {
+        /// No specific validation and formatting function defined, using default formatter.
+        if (config.contains(configParameter))
+        {
+            return SourceDescriptor::stringParameterAs<typename ConfigParameter::Type>(config.at(configParameter));
+        }
+        NES_ERROR("ConfigParameter: {}, is not available in config.", configParameter.name);
+        return std::nullopt;
+    };
+
+    template <typename ConfigParameter>
+    static bool tryMandatoryConfigure(
+        const ConfigParameter& configParameter,
+        const std::map<std::string, std::string>& config,
+        Config& validatedConfig,
+        const std::optional<std::function<bool(const std::map<std::string, std::string>& lambdaConfig)>> customValidateFunc = std::nullopt)
+    {
+        if (const auto userSpecifiedConfigParamater = SourceDescriptor::tryGet(configParameter, config);
+            userSpecifiedConfigParamater.has_value())
+        {
+            if (customValidateFunc.has_value() and not customValidateFunc.value()(config))
+            {
+                NES_ERROR("Mandatory parameter: {} was set, but invalid.", configParameter.name);
+                return false;
+            }
+            validatedConfig.emplace(std::make_pair(configParameter, userSpecifiedConfigParamater.value()));
+            return true;
+        }
+        NES_ERROR("Mandatory parameter: {} was not set.", configParameter.name);
+        return false;
+    }
+
+    template <typename ConfigParameter>
+    static bool tryOptionalConfigure(
+        typename ConfigParameter::Type defaultValue,
+        const ConfigParameter& configParameter,
+        const std::map<std::string, std::string>& config,
+        Config& validatedConfig)
+    {
+        /// If user did not specify a specific value and a default value is available, set it.
+        if (not config.contains(configParameter))
+        {
+            validatedConfig.emplace(configParameter, defaultValue);
+            return true;
+        }
+        /// Try set user configured config parameter.
+        auto userSpecifiedConfigParameter = SourceDescriptor::tryGet(configParameter, config);
+        if (userSpecifiedConfigParameter.has_value())
+        {
+            validatedConfig.emplace(std::make_pair(configParameter, userSpecifiedConfigParameter.value()));
+            return true;
+        }
+        return false;
+    };
+
+
+    /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
+    std::shared_ptr<Schema> schema;
+    std::string logicalSourceName;
+    std::string sourceType;
+    Configurations::InputFormat inputFormat{};
+
+private:
+    Config config;
+    friend std::ostream& operator<<(std::ostream& out, const Config& config);
+
 
     template <typename T>
     static std::optional<T> stringParameterAs(std::string stringParameter)
@@ -162,41 +296,6 @@ struct SourceDescriptor
             return std::nullopt;
         }
     }
-
-    template <typename ConfigKey>
-    static void
-    validateAndFormatParameter(const ConfigKey& configKey, const std::map<std::string, std::string>& config, Config& validatedConfig)
-    {
-        if (config.contains(configKey))
-        {
-            std::optional<typename ConfigKey::Type> formattedParameter
-                = SourceDescriptor::stringParameterAs<typename ConfigKey::Type>(config.at(configKey));
-            if (formattedParameter.has_value())
-            {
-                validatedConfig.emplace(std::make_pair(configKey, formattedParameter.value()));
-                return; /// success
-            }
-            throw CannotFormatSourceData(configKey.key + " Parameter formatting unsuccessful.");
-        }
-
-        if (configKey.defaultValue.has_value())
-        {
-            validatedConfig.emplace(std::make_pair(configKey, configKey.defaultValue.value()));
-            return; /// success
-        }
-
-        throw CannotFormatSourceData(configKey.key + " was not configured and no default value was available.");
-    };
-
-    /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
-    std::shared_ptr<Schema> schema;
-    std::string logicalSourceName;
-    std::string sourceType;
-    Configurations::InputFormat inputFormat{};
-
-private:
-    Config config;
-    friend std::ostream& operator<<(std::ostream& out, const Config& config);
 };
 
 }

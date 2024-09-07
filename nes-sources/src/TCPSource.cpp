@@ -352,66 +352,7 @@ bool TCPSource::fillBuffer(
 
 SourceDescriptor::Config TCPSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    SourceDescriptor::Config validatedConfig;
-
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::HOST, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::PORT, config, validatedConfig);
-    ///-Todo: could move into lambda function in ConfigKey, to keep everything in one place.
-    if (config.contains(ConfigParametersTCP::DOMAIN))
-    {
-        const auto socketDomainString = config.at(ConfigParametersTCP::DOMAIN);
-        if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN, AF_INET));
-        }
-        else if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN, AF_INET6));
-        }
-        else
-        {
-            throw UnknownSourceFormat("Domain provided for TCP source was : " + socketDomainString + ", allowed is AF_INET or AF_INET6");
-        }
-    }
-    if (config.contains(ConfigParametersTCP::TYPE))
-    {
-        const auto socketTypeString = config.at(ConfigParametersTCP::TYPE);
-        if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_STREAM));
-        }
-        else if (strcasecmp(socketTypeString.c_str(), "SOCK_DGRAM") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_DGRAM));
-        }
-        else if (strcasecmp(socketTypeString.c_str(), "SOCK_SEQPACKET") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_SEQPACKET));
-        }
-        else if (strcasecmp(socketTypeString.c_str(), "SOCK_RAW") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_RAW));
-        }
-        else if (strcasecmp(socketTypeString.c_str(), "SOCK_RDM") == 0)
-        {
-            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE, SOCK_RDM));
-        }
-        else
-        {
-            throw UnknownSourceFormat(
-                "Domain provided for TCP source was : " + socketTypeString
-                + ", allowed is SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, and SOCK_RDM");
-        }
-    }
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SEPARATOR, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::FLUSH_INTERVAL_MS, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::DECIDED_MESSAGE_SIZE, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SOCKET_BUFFER_SIZE, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::INPUT_FORMAT, config, validatedConfig);
-
-    /// Optional config paramaters
-    return validatedConfig;
+    return Source::validateAndFormat<ConfigParametersTCP>(std::move(config));
 }
 
 void TCPSource::close()

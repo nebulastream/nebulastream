@@ -19,6 +19,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
@@ -46,6 +47,10 @@ public:
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
+    /// Todo: add format:
+    /// namespace fmt {
+    /// template <>
+    /// struct format<NES::Source> : public ostream_formatter {}
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
 protected:

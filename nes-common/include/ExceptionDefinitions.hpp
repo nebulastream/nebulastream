@@ -49,6 +49,7 @@ EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
+
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "Could not read query description")
 EXCEPTION(QueryDescriptionNotParsable, 2201, "Could not parse query description")
@@ -56,7 +57,6 @@ EXCEPTION(QueryInvalid, 2202, "Query is invalid")
 EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "Logical source was not found in the query description")
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "Physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "Operator not found")
-
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

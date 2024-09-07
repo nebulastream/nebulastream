@@ -149,13 +149,7 @@ bool CSVSource::fillTupleBuffer(
 
 SourceDescriptor::Config CSVSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    SourceDescriptor::Config validatedConfig;
-
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::FILEPATH, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::DELIMITER, config, validatedConfig);
-    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::SKIP_HEADER, config, validatedConfig);
-
-    return validatedConfig;
+    return Source::validateAndFormat<ConfigParametersCSV>(std::move(config));
 }
 
 std::ostream& CSVSource::toString(std::ostream& str) const

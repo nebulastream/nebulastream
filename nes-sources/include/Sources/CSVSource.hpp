@@ -17,6 +17,7 @@
 #include <fstream>
 #include <string>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -25,20 +26,28 @@
 namespace NES::Sources
 {
 
-class CSVParser;
-using CSVParserPtr = std::shared_ptr<CSVParser>;
+struct ConfigParametersCSV
+{
+    static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
+        "filePath", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
+            return SourceDescriptor::tryMandatoryConfigure(FILEPATH, config, validatedConfig);
+        }};
+    static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
+        "skipHeader", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
+            return SourceDescriptor::tryOptionalConfigure(false, SKIP_HEADER, config, validatedConfig);
+        }};
+    static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
+        "delimiter", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
+            return SourceDescriptor::tryOptionalConfigure(",", DELIMITER, config, validatedConfig);
+        }};
+
+    static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
+        = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
+};
 
 class CSVSource : public Source
 {
 public:
-    struct ConfigParametersCSV
-    {
-        static inline const SourceDescriptor::ConfigKey<std::string> FILEPATH{"filePath"};
-        static inline const SourceDescriptor::ConfigKey<bool> SKIP_HEADER{"skipHeader", false};
-        static inline const SourceDescriptor::ConfigKey<std::string> DELIMITER{"delimiter"};
-        static inline const SourceDescriptor::ConfigKey<uint32_t> NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE{"numberOfTuplesToProducePerBuffer"};
-    };
-
     static inline const std::string NAME = "CSV";
 
     explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
@@ -67,7 +76,7 @@ private:
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
-    CSVParserPtr inputParser;
+    std::shared_ptr<Parser> inputParser;
 
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t generatedTuples{0};

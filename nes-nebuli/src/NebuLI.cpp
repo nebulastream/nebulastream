@@ -130,12 +130,8 @@ createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
+    /// We currently only support CSV
     auto inputFormat = Configurations::InputFormat::CSV;
-    if (sourceConfiguration.contains(Configurations::INPUT_FORMAT_CONFIG)
-        && sourceConfiguration.at(Configurations::INPUT_FORMAT_CONFIG) != "CSV")
-    {
-        inputFormat = Configurations::InputFormat::JSON;
-    }
 
     auto sourceValidationRegistry = Sources::RegistrySourceValidation::instance();
     if (auto validConfig = sourceValidationRegistry.tryCreate(sourceType, std::move(sourceConfiguration)); validConfig.has_value())

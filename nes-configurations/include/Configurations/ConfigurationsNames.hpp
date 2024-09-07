@@ -24,10 +24,19 @@ namespace NES::Configurations
  */
 enum class InputFormat : uint8_t
 {
-    JSON,
-    CSV,
-    NES_BINARY
+    CSV
 };
+
+inline bool validateInputFormat(const InputFormat inputFormat)
+{
+    switch (inputFormat)
+    {
+        case InputFormat::CSV:
+            return true;
+        default:
+            return false;
+    }
+}
 
 /**
  * NOTE: this is not related to the network stack at all. Do not mix it up.
