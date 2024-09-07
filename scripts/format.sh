@@ -60,3 +60,15 @@ else
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
       | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }'
 fi
+
+# comment style
+#
+# Only /// allowed, as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
+# The regex matches an even number of slashes (i.e. //, ////, ...)
+# The regex does not match "://" (for e.g. https://foo)
+if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "nes-*"
+then
+    echo
+    echo Found forbidden comments. Please use /// for doc comments, remove all else.
+    exit 1
+fi
