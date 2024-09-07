@@ -7,10 +7,10 @@ USER root
 ARG UID=1000
 ARG GID=1000
 ARG USERNAME=ubuntu
-RUN echo "uid: ${UID} gid ${GID} username ${USERNAME}" && deluser --remove-home ubuntu && \
+ARG ROOTLESS=false
+RUN (${ROOTLESS} || (echo "uid: ${UID} gid ${GID} username ${USERNAME}" && deluser --remove-home ubuntu && \
     addgroup --gid ${GID} ${USERNAME} && \
-    adduser --uid ${UID} --gid ${GID} ${USERNAME} && \
+    adduser --uid ${UID} --gid ${GID} ${USERNAME})) && \
     chown -R ${UID}:${GID} ${NES_PREBUILT_VCPKG_ROOT}
 
 USER ${USERNAME}
-WORKDIR /home/${USERNAME}
