@@ -17,7 +17,6 @@
 CMakeUserPresets.json
 debug*
 vcpkg-repository
-build-docker
 
 # Deb file
 docker/executableImage/resources/NebulaStream*.deb
@@ -39,12 +38,3 @@ nes-asp/data/*.csv
 
 # Ignore log files
 *.log
-
-# Ignore cached cables
-tpch_cached_tables
-
-# System test files
-.lit_test_times.txt
-*.test.script
-*.test.tmp
-*.test.tmpsink
