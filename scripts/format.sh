@@ -29,6 +29,8 @@ EOF
 fi
 
 
+FAIL=0
+
 if [ "${1-}" = "-i" ]
 then
     # clang-format
@@ -47,7 +49,8 @@ then
 else
     # clang-format
     git ls-files -- '*.cpp' '*.hpp' \
-      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror
+      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror \
+      || FAIL=1
 
     # newline at eof
     #
@@ -58,7 +61,8 @@ else
     git ls-files \
       | grep --invert-match -e "\.bin$" -e "\.png$" \
       | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
-      | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }'
+      | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"scripts/format.sh -i\" to fix."; exit 1 }' \
+      || FAIL=1
 fi
 
 # comment style
@@ -70,7 +74,9 @@ if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "nes-*"
 then
     echo
     echo Found forbidden comments. Please use /// for doc comments, remove all else.
-    exit 1
+    FAIL=1
 fi
 
 python3 scripts/check_preamble.py
+
+exit "$FAIL"
