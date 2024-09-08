@@ -93,7 +93,7 @@ endif ()
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 #endif
 
-# enables tracing of stack traces if operator / expression nodes are created
+# enables tracing of stack traces if operator / function nodes are created
 if (NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
@@ -335,7 +335,7 @@ add_subdirectory(nes-operators)
 add_subdirectory(nes-client)
 add_subdirectory(nes-execution)
 add_subdirectory(nes-nautilus)
-add_subdirectory(nes-expressions)
+add_subdirectory(nes-functions)
 add_subdirectory(nes-window-types)
 
 add_subdirectory(nes-memory)

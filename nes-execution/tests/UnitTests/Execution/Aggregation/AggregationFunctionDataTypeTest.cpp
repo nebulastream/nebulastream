@@ -18,7 +18,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -26,7 +26,7 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Expressions
+namespace NES::Runtime::Execution::Functions
 {
 class AggregationFunctionDataTypeTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<std::string>
 {
@@ -34,8 +34,8 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddExpressionTest test class.");
+        NES::Logger::setupLogging("AddFunctionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup AddFunctionTest test class.");
     }
 
     static PhysicalTypePtr getDataType(std::string dataTypeString, DefaultPhysicalTypeFactory factory)
@@ -398,12 +398,12 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto testParam = NES::Runtime::Execution::Functions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "sum";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
-    auto sumAgg = Aggregation::SumAggregationFunction(dataType, dataType, readFieldExpression, "result");
+    auto sumAgg = Aggregation::SumAggregationFunction(dataType, dataType, readFieldFunction, "result");
 
     /// create an aggregation value based on the aggregation function type and data type
     auto sumValue = getAggregationValue(aggFunctionType, testParam);
@@ -429,12 +429,12 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto testParam = NES::Runtime::Execution::Functions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "avg";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
-    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType, readFieldExpression, "result");
+    auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType, readFieldFunction, "result");
 
     /// create an aggregation value based on the aggregation function type and data type
     auto avgValue = getAggregationValue(aggFunctionType, testParam);
@@ -458,12 +458,12 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto testParam = NES::Runtime::Execution::Functions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "min";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
-    auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType, readFieldExpression, "result");
+    auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType, readFieldFunction, "result");
 
     /// create an aggregation value based on the aggregation function type and data type
     auto minValue = getAggregationValue(aggFunctionType, testParam);
@@ -488,12 +488,12 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto testParam = NES::Runtime::Execution::Functions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     std::string aggFunctionType = "max";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
-    auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType, readFieldExpression, "result");
+    auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType, readFieldFunction, "result");
 
     /// create an aggregation value based on the aggregation function type and data type
     auto maxValue = getAggregationValue(aggFunctionType, testParam);
@@ -517,14 +517,14 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-    auto testParam = NES::Runtime::Execution::Expressions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
+    auto testParam = NES::Runtime::Execution::Functions::AggregationFunctionDataTypeTest_scanEmitPipelineSum_Test::GetParam();
     auto ui64 = "ui64";
     std::string aggFunctionType = "count";
     PhysicalTypePtr dataType = this->getDataType(testParam, physicalDataTypeFactory);
     PhysicalTypePtr unsignedIntegerType = this->getDataType(ui64, physicalDataTypeFactory);
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
-    auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType, readFieldExpression, "result");
+    auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType, readFieldFunction, "result");
 
     /// create an aggregation value based on the aggregation function type and data type
     auto countValue = getAggregationValue(aggFunctionType, ui64);
@@ -549,4 +549,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("i8", "i16", "i32", "i64", "ui8", "ui16", "ui32", "ui64", "f32", "f64"),
     [](const testing::TestParamInfo<AggregationFunctionDataTypeTest::ParamType>& info) { return info.param; });
 
-} /// namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Functions

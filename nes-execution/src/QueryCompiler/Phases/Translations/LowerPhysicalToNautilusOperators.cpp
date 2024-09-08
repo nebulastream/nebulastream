@@ -17,8 +17,8 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Map.hpp>
@@ -29,8 +29,8 @@
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -54,7 +54,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
-#include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
+#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -75,7 +75,7 @@ namespace NES::QueryCompilation
 {
 
 LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options)
-    : options(std::move(options)), expressionProvider(std::make_unique<ExpressionProvider>())
+    : options(std::move(options)), functionProvider(std::make_unique<FunctionProvider>())
 {
 }
 
@@ -187,19 +187,19 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
     auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalFilterOperator>(operatorPtr);
-    auto expression = expressionProvider->lowerExpression(filterOperator->getPredicate());
-    return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
+    auto function = functionProvider->lowerFunction(filterOperator->getPredicate());
+    return std::make_shared<Runtime::Execution::Operators::Selection>(function);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerMap(
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
     auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
-    auto assignmentField = mapOperator->getMapExpression()->getField();
-    auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
-    auto expression = expressionProvider->lowerExpression(assignmentExpression);
-    auto writeField = std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(
-        assignmentField->getFieldName(), expression);
+    auto assignmentField = mapOperator->getMapFunction()->getField();
+    auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
+    auto function = functionProvider->lowerFunction(assignmentFunction);
+    auto writeField = std::make_shared<Runtime::Execution::Functions::WriteFieldFunction>(
+        assignmentField->getFieldName(), function);
     return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
 

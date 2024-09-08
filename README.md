@@ -37,7 +37,7 @@ The codebase is structured in the following components:
 | [nes-coordinator](nes-coordinator)       | This component contains the coordinator and the executable.                                                                                               |
 | [nes-worker](nes-worker)                 | This component contains the worker and the executable.                                                                                                    |
 | [nes-window-types](nes-window-types)     | This component contains functionalities to define windows.                                                                                                |
-| [nes-expressions](nes-expressions)       | This component contains functionalities for our expressions.                                                                                              |
+| [nes-functions](nes-functions)       | This component contains functionalities for our functions.                                                                                              |
 
 ### Dependencies:
 
@@ -46,8 +46,8 @@ graph TD;
 nes-common-->nes-grpc
 nes-configurations-->nes-common
 nes-data-types-->nes-configurations
-nes-expressions-->nes-data-types
-nes-window-types-->nes-expressions
+nes-functions-->nes-data-types
+nes-window-types-->nes-functions
 nes-operators-->nes-window-types
 nes-client-->nes-operators
 nes-catalogs-->nes-operators

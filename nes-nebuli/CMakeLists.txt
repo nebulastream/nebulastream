@@ -77,7 +77,7 @@ add_nebuli_header(nes-data-types Common/DataTypes Common/DataTypes)
 add_nebuli_header(nes-data-types Common/ExecutableType Common/ExecutableType)
 add_nebuli_header(nes-data-types Common/PhysicalTypes Common/PhysicalTypes)
 add_nebuli_header(nes-data-types API/ API)
-add_nebuli_header(nes-expressions Expressions/ Expressions)
+add_nebuli_header(nes-functions Functions/ Functions)
 add_nebuli_header(nes-operators Operators/LogicalOperators Operators/LogicalOperators)
 add_nebuli_header(nes-operators Plans/Query/ Plans/Query)
 add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
@@ -95,7 +95,7 @@ endfunction()
 add_tests_if_enabled(tests)
 
 # install Nebuli and all its dependencies + the file_set with the headers
-install(TARGETS nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
+install(TARGETS nebuli nes-operators nes-functions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
         FILE_SET nebuliPublicHeaders DESTINATION "${CMAKE_INSTALL_PREFIX}/include/nebulastream"
         COMPONENT nebuli
 )

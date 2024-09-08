@@ -18,16 +18,16 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/Expression.hpp>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/Function.hpp>
+#include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -52,7 +52,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 namespace NES::Runtime::Execution
 {
-using namespace Expressions;
+using namespace Functions;
 using namespace Operators;
 class TPCH_Query1
 {
@@ -77,10 +77,10 @@ public:
      *
      *  1998-09-02
      */
-        auto const_1998_09_02 = std::make_shared<ConstantInt32ValueExpression>(19980831);
-        auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-        auto lessThanExpression1 = std::make_shared<LessThanExpression>(readShipdate, const_1998_09_02);
-        auto selection = std::make_shared<Selection>(lessThanExpression1);
+        auto const_1998_09_02 = std::make_shared<ConstantInt32ValueFunction>(19980831);
+        auto readShipdate = std::make_shared<ReadFieldFunction>("l_shipdate");
+        auto lessThanFunction1 = std::make_shared<LessThanFunction>(readShipdate, const_1998_09_02);
+        auto selection = std::make_shared<Selection>(lessThanFunction1);
         scan->setChild(selection);
 
         /*
@@ -105,42 +105,42 @@ public:
         sum(disc_price * (one + l_tax[i]))
         count(*)
      */
-        auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
-        auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
+        auto l_returnflagField = std::make_shared<ReadFieldFunction>("l_returnflag");
+        auto l_linestatusFiled = std::make_shared<ReadFieldFunction>("l_linestatus");
 
         ///  sum(l_quantity) as sum_qty,
-        auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
+        auto l_quantityField = std::make_shared<ReadFieldFunction>("l_quantity");
         auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
 
         /// sum(l_extendedprice) as sum_base_price,
-        auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
+        auto l_extendedpriceField = std::make_shared<ReadFieldFunction>("l_extendedprice");
         auto sumAggFunction2
             = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
 
         /// disc_price = l_extendedprice * (1 - l_discount)
-        auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
-        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
-        auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
-        auto mulExpression = std::make_shared<MulExpression>(l_extendedpriceField, subExpression);
-        auto disc_priceExpression = std::make_shared<WriteFieldExpression>("disc_price", mulExpression);
-        auto map = std::make_shared<Map>(disc_priceExpression);
+        auto l_discountField = std::make_shared<ReadFieldFunction>("l_discount");
+        auto oneConst = std::make_shared<ConstantFloatValueFunction>(1.0f);
+        auto subFunction = std::make_shared<SubFunction>(oneConst, l_discountField);
+        auto mulFunction = std::make_shared<MulFunction>(l_extendedpriceField, subFunction);
+        auto disc_priceFunction = std::make_shared<WriteFieldFunction>("disc_price", mulFunction);
+        auto map = std::make_shared<Map>(disc_priceFunction);
         selection->setChild(map);
 
         ///  sum(disc_price)
-        auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
+        auto disc_price = std::make_shared<ReadFieldFunction>("disc_price");
         auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
 
         ///  sum(disc_price * (one + l_tax[i]))
-        auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
-        auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
-        auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
-        auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
+        auto l_taxField = std::make_shared<ReadFieldFunction>("l_tax");
+        auto addFunction = std::make_shared<AddFunction>(oneConst, l_taxField);
+        auto mulFunction2 = std::make_shared<AddFunction>(disc_price, addFunction);
+        auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulFunction2, "sum_charge");
 
         ///   count(*)
         auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(
-            uintegerType, uintegerType, Expressions::ExpressionPtr(), "count_order");
+            uintegerType, uintegerType, Functions::FunctionPtr(), "count_order");
 
-        std::vector<Expressions::ExpressionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
+        std::vector<Functions::FunctionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
             = {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, countAggFunction5};
 

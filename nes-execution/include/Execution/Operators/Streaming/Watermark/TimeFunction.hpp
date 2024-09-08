@@ -28,11 +28,11 @@ class ExecutionContext;
 
 } /// namespace NES::Runtime::Execution
 
-namespace NES::Runtime::Execution::Expressions
+namespace NES::Runtime::Execution::Functions
 {
-class Expression;
-using ExpressionPtr = std::shared_ptr<Expression>;
-} /// namespace NES::Runtime::Execution::Expressions
+class Function;
+using FunctionPtr = std::shared_ptr<Function>;
+} /// namespace NES::Runtime::Execution::Functions
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -59,13 +59,13 @@ public:
 class EventTimeFunction final : public TimeFunction
 {
 public:
-    explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
+    explicit EventTimeFunction(Functions::FunctionPtr timestampFunction, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
     nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
 private:
     Windowing::TimeUnit unit;
-    Expressions::ExpressionPtr timestampExpression;
+    Functions::FunctionPtr timestampFunction;
 };
 
 /**

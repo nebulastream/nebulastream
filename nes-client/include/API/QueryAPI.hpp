@@ -13,9 +13,9 @@
 */
 
 #pragma once
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Functions/ArithmeticalFunctions.hpp>
+#include <API/Functions/Functions.hpp>
+#include <API/Functions/LogicalFunctions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
