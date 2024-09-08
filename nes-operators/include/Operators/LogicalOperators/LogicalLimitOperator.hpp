@@ -45,7 +45,7 @@ public:
 
     /**
     * @brief Infers the input and output schema of this operator depending on its child.
-    * @throws Exception the predicate expression has to return a boolean.
+    * @throws Exception the predicate function has to return a boolean.
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */

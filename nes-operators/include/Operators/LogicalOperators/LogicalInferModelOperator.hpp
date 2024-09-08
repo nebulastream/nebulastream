@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES::InferModel
@@ -27,7 +27,7 @@ class LogicalInferModelOperator : public LogicalUnaryOperator
 {
 public:
     LogicalInferModelOperator(
-        std::string model, std::vector<ExpressionNodePtr> inputFields, std::vector<ExpressionNodePtr> outputFields, OperatorId id);
+        std::string model, std::vector<FunctionNodePtr> inputFields, std::vector<FunctionNodePtr> outputFields, OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -83,24 +83,24 @@ public:
      * @brief getter for inputFieldsPtr
      * @return inputFieldsPtr
      */
-    const std::vector<ExpressionNodePtr>& getInputFields() const;
+    const std::vector<FunctionNodePtr>& getInputFields() const;
 
     /**
      * @brief getter for outputFieldsPtr
      * @return outputFieldsPtr
      */
-    const std::vector<ExpressionNodePtr>& getOutputFields() const;
+    const std::vector<FunctionNodePtr>& getOutputFields() const;
 
 private:
     /**
      * @brief updates the field to a fully qualified one.
      * @param field
      */
-    void updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const;
+    void updateToFullyQualifiedFieldName(FieldAccessFunctionNodePtr field) const;
 
     std::string model;
-    std::vector<ExpressionNodePtr> inputFields;
-    std::vector<ExpressionNodePtr> outputFields;
+    std::vector<FunctionNodePtr> inputFields;
+    std::vector<FunctionNodePtr> outputFields;
 };
 
 } /// namespace NES::InferModel

@@ -4,15 +4,15 @@
 :type.googleapis.com/NES.SerializableOperator.FilterDetailsÁ
 ¾
 ·
-=type.googleapis.com/NES.SerializableExpression.LessExpressionõ
+=type.googleapis.com/NES.SerializableFunction.LessFunctionõ
 «
 PL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿW
-Dtype.googleapis.com/NES.SerializableExpression.FieldAccessExpression
+Dtype.googleapis.com/NES.SerializableFunction.FieldAccessFunction
 csv_source$idÄ
 VR
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails ÿÿÿÿ€€€€øÿÿÿÿé
-Ftype.googleapis.com/NES.SerializableExpression.ConstantValueExpressionž
+Ftype.googleapis.com/NES.SerializableFunction.ConstantValueFunctionž
 ›
 ˜
 8type.googleapis.com/NES.SerializableDataValue.BasicValue\

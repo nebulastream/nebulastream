@@ -12,28 +12,28 @@
     limitations under the License.
 */
 #pragma once
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 /**
- * @brief Map operator that evaluates a map expression on a input records.
- * Map expressions read record fields, apply transformations, and can set/update fields.
+ * @brief Map operator that evaluates a map function on a input records.
+ * Map functions read record fields, apply transformations, and can set/update fields.
  */
 class Map : public ExecutableOperator
 {
 public:
     /**
-     * @brief Creates a map operator with a map expression.
-     * @param mapExpression map expression.
+     * @brief Creates a map operator with a map function.
+     * @param mapFunction map function.
      */
-    Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression) : mapExpression(mapExpression) {};
+    Map(Runtime::Execution::Functions::FunctionPtr mapFunction) : mapFunction(mapFunction) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const Runtime::Execution::Expressions::ExpressionPtr mapExpression;
+    const Runtime::Execution::Functions::FunctionPtr mapFunction;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

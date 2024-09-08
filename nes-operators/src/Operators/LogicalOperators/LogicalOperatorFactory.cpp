@@ -49,7 +49,7 @@ LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr& sinkDescript
     return sinkOperator;
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createFilterOperator(const FunctionNodePtr& predicate, OperatorId id)
 {
     return std::make_shared<LogicalFilterOperator>(predicate, id);
 }
@@ -64,18 +64,18 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createLimitOperator(const uint64
     return std::make_shared<LogicalLimitOperator>(limit, id);
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createProjectionOperator(const std::vector<FunctionNodePtr>& functions, OperatorId id)
 {
-    return std::make_shared<LogicalProjectionOperator>(expressions, id);
+    return std::make_shared<LogicalProjectionOperator>(functions, id);
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentFunctionNodePtr& mapFunction, OperatorId id)
 {
-    return std::make_shared<LogicalMapOperator>(mapExpression, id);
+    return std::make_shared<LogicalMapOperator>(mapFunction, id);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createInferModelOperator(
-    std::string model, std::vector<ExpressionNodePtr> inputFieldsPtr, std::vector<ExpressionNodePtr> outputFieldsPtr, OperatorId id)
+    std::string model, std::vector<FunctionNodePtr> inputFieldsPtr, std::vector<FunctionNodePtr> outputFieldsPtr, OperatorId id)
 {
     return std::make_shared<NES::InferModel::LogicalInferModelOperator>(model, inputFieldsPtr, outputFieldsPtr, id);
 }
