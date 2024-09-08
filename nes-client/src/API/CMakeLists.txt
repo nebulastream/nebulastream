@@ -15,4 +15,4 @@ add_source_files(nes-client
         Windowing.cpp
         WindowedQuery.cpp
         )
-add_subdirectory(Expressions)
+add_subdirectory(Functions)

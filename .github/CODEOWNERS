@@ -16,7 +16,7 @@
 /nes-configurations/ @alepping @adrianmichalke
 /nes-data-types/ @alepping @adrianmichalke @ls-1801
 /nes-execution/ @keyseven123 @adrianmichalke
-/nes-expressions/ @alepping @adrianmichalke
+/nes-functions/ @alepping @adrianmichalke
 /nes-memory/ @ls-1801 @alepping @keyseven123
 /nes-nautilus/ @alepping @keyseven123 @ls-1801
 /nes-nebuli/ @ls-1801 @adrianmichalke @alepping

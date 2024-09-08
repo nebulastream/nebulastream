@@ -15,9 +15,9 @@
 #include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Functions/BinaryFunctionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -27,13 +27,13 @@ namespace NES::Join
 {
 
 LogicalJoinDescriptor::LogicalJoinDescriptor(
-    ExpressionNodePtr joinExpression,
+    FunctionNodePtr joinFunction,
     Windowing::WindowTypePtr windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
     JoinType joinType,
     OriginId originId)
-    : joinExpression(joinExpression)
+    : joinFunction(joinFunction)
     , leftSourceType(Schema::create())
     , rightSourceType(Schema::create())
     , outputSchema(Schema::create())
@@ -50,14 +50,14 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
 }
 
 LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(
-    ExpressionNodePtr joinExpressions,
+    FunctionNodePtr joinFunctions,
     const Windowing::WindowTypePtr& windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
     JoinType joinType)
 {
     return std::make_shared<Join::LogicalJoinDescriptor>(
-        joinExpressions, windowType, numberOfInputEdgesLeft, numberOfInputEdgesRight, joinType);
+        joinFunctions, windowType, numberOfInputEdgesLeft, numberOfInputEdgesRight, joinType);
 }
 
 SchemaPtr LogicalJoinDescriptor::getLeftSourceType() const
@@ -134,15 +134,15 @@ void LogicalJoinDescriptor::setOriginId(OriginId originId)
     this->originId = originId;
 }
 
-ExpressionNodePtr LogicalJoinDescriptor::getJoinExpression()
+FunctionNodePtr LogicalJoinDescriptor::getJoinFunction()
 {
-    return this->joinExpression;
+    return this->joinFunction;
 }
 
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const
 {
     return leftSourceType->equals(other.leftSourceType) && rightSourceType->equals(other.rightSourceType)
-        && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType) && joinExpression->equal(other.joinExpression)
+        && outputSchema->equals(other.outputSchema) && windowType->equal(other.windowType) && joinFunction->equal(other.joinFunction)
         && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
         && joinType == other.joinType && originId == other.originId;
 }

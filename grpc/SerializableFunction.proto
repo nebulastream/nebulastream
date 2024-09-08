@@ -1,0 +1,145 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+syntax = "proto3";
+import "google/protobuf/any.proto";
+import "SerializableDataType.proto";
+package NES;
+
+option java_package = "stream.nebula.protobuf";
+option java_multiple_files = true;
+
+/*
+The serializable wrapper definition for fields
+ */
+message SerializableField{
+  string name = 1;
+  SerializableDataType type = 2;
+}
+
+/**
+The serializable wrapper definition for function nodes
+ */
+message SerializableFunction {
+  message ConstantValueFunction{
+    SerializableDataValue value = 1;
+  }
+  message FieldAccessFunction{
+    string fieldName = 1;
+    SerializableDataType type = 2;
+  }
+  message FunctionFunction{
+    string functionName = 1;
+    repeated SerializableFunction arguments = 2;
+  }
+  message FieldRenameFunction{
+    string newFieldName = 1;
+    SerializableFunction originalFieldAccessFunction = 2;
+  }
+  message FieldAssignmentFunction{
+    FieldAccessFunction field = 1;
+    SerializableFunction assignment = 2;
+  }
+  message WhenFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message CaseFunction{
+    repeated SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message AndFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message EqualsFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message GreaterEqualsFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message GreaterFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message LessEqualsFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message LessFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message NegateFunction{
+    SerializableFunction child = 1;
+  }
+  message OrFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message AbsFunction{
+    SerializableFunction child = 1;
+  }
+  message AddFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message CeilFunction{
+    SerializableFunction child = 1;
+  }
+  message DivFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message ExpFunction{
+    SerializableFunction child = 1;
+  }
+  message FloorFunction{
+    SerializableFunction child = 1;
+  }
+  message ModFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message MulFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message PowFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message RoundFunction{
+    SerializableFunction child = 1;
+  }
+  message SqrtFunction{
+    SerializableFunction child = 1;
+  }
+  message SubFunction{
+    SerializableFunction left = 1;
+    SerializableFunction right = 2;
+  }
+  message UdfCallFunction{
+    ConstantValueFunction udfName = 1;
+    repeated SerializableFunction functionArguments = 2;
+  }
+
+  SerializableDataType stamp = 1;
+  google.protobuf.Any details = 2;
+  repeated SerializableFunction children = 3;
+
+}
+

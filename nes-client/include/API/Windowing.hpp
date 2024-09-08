@@ -20,10 +20,10 @@
 namespace NES
 {
 
-class ExpressionNode;
-using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+class FunctionNode;
+using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-class ExpressionItem;
+class FunctionItem;
 
 namespace Windowing
 {
@@ -54,30 +54,30 @@ class WindowAggregation
 {
 public:
     WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
-    API::WindowAggregationPtr as(const ExpressionItem& asField);
+    API::WindowAggregationPtr as(const FunctionItem& asField);
     const Windowing::WindowAggregationDescriptorPtr aggregation;
 };
 
 /**
  * @brief Defines a Sum Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param FunctionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Sum(const ExpressionItem& onField);
+API::WindowAggregationPtr Sum(const FunctionItem& onField);
 
 /**
  * @brief Defines a Min Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param FunctionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Min(const ExpressionItem& onField);
+API::WindowAggregationPtr Min(const FunctionItem& onField);
 
 /**
  * @brief Defines a Max Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param FunctionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Max(const ExpressionItem& onField);
+API::WindowAggregationPtr Max(const FunctionItem& onField);
 
 /**
  * @brief Defines a Count Aggregation function on a particular field.
@@ -89,29 +89,29 @@ API::WindowAggregationPtr Count();
  * @brief Defines a Median Aggregation function on a particular field.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Median(const ExpressionItem& onField);
+API::WindowAggregationPtr Median(const FunctionItem& onField);
 
 /**
  * @brief Defines a Agg Aggregation function on a particular field.
- * @param ExpressionItem Attribute("field-name") the field which should be aggregated.
+ * @param FunctionItem Attribute("field-name") the field which should be aggregated.
  * @return A descriptor of the aggregation function.
  */
-API::WindowAggregationPtr Avg(const ExpressionItem& onField);
+API::WindowAggregationPtr Avg(const FunctionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.
- * @param ExpressionItem which defines the field name.
+ * @param FunctionItem which defines the field name.
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField);
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField);
 
 /**
  * @brief Defines event time as a time characteristic for a window.
- * @param ExpressionItem which defines the field name.
+ * @param FunctionItem which defines the field name.
  * @param Timeunit
  * @return A descriptor of the time characteristic.
  */
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const Windowing::TimeUnit& unit);
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit);
 
 /**
  * @brief Defines a ingestion time as a time characteristic for a window.
@@ -182,8 +182,8 @@ Windowing::TimeUnit Days();
 /**
  * @brief This function provides access to the creation ts (ingestion ts) of an individual record.
  * This is assigned by the data source.
- * @return ExpressionNodePtr
+ * @return FunctionNodePtr
  */
-[[maybe_unused]] ExpressionNodePtr RecordCreationTs();
+[[maybe_unused]] FunctionNodePtr RecordCreationTs();
 
 } /// namespace NES::API

@@ -18,25 +18,25 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate)
+PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr predicate)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate))
 {
 }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression)
+PhysicalOperatorPtr
+PhysicalFilterOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FunctionNodePtr& function)
 {
-    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
+    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, function);
 }
 
-ExpressionNodePtr PhysicalFilterOperator::getPredicate()
+FunctionNodePtr PhysicalFilterOperator::getPredicate()
 {
     return predicate;
 }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression)
+PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr function)
 {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expression));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }
 
 std::string PhysicalFilterOperator::toString() const

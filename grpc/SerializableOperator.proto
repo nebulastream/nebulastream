@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 import "google/protobuf/any.proto";
-import "SerializableExpression.proto";
+import "SerializableFunction.proto";
 import "SerializableSchema.proto";
 package NES;
 
@@ -101,7 +101,7 @@ message SerializableOperator{
    */
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
-      SerializableExpression onField = 1;
+      SerializableFunction onField = 1;
       uint64 allowedLateness = 2;
       uint64 multiplier = 3;
     }
@@ -119,10 +119,10 @@ message SerializableOperator{
     }
 
   /**
-   Map Details contains properties for the map operator, such as the field assignment expression
+   Map Details contains properties for the map operator, such as the field assignment function
    */
   message MapDetails {
-    SerializableExpression expression = 1;
+    SerializableFunction function = 1;
   }
 
   /**
@@ -137,7 +137,7 @@ message SerializableOperator{
   Projection Details contains properties for the projection operator, i.e., the output schema
   */
   message ProjectionDetails {
-    repeated SerializableExpression expression = 1;
+    repeated SerializableFunction function = 1;
 
   }
   /**
@@ -151,10 +151,10 @@ message SerializableOperator{
   message BroadcastDetails{}
 
   /**
-   Filter Details contains properties for the filter operator, such as the filter predicate expression
+   Filter Details contains properties for the filter operator, such as the filter predicate function
    */
   message FilterDetails {
-    SerializableExpression predicate = 1;
+    SerializableFunction predicate = 1;
     float selectivity = 2;
   }
 
@@ -169,8 +169,8 @@ message SerializableOperator{
  InferModelDetails contains the model file for the inference
  */
   message InferModelDetails {
-    repeated SerializableExpression inputFields = 1;
-    repeated SerializableExpression outputFields = 2;
+    repeated SerializableFunction inputFields = 1;
+    repeated SerializableFunction outputFields = 2;
     string mlFileName = 3;
     bytes mlFileContent = 4;
   }
@@ -227,7 +227,7 @@ message SerializableOperator{
     Properties of a threshold window
   */
   message ThresholdWindow {
-    SerializableExpression predicate = 1;
+    SerializableFunction predicate = 1;
     uint32 minimumCount = 2;
   }
 
@@ -246,14 +246,14 @@ message SerializableOperator{
         MEDIAN = 5;
       }
       Type type = 1;
-      SerializableExpression onField = 2;
-      SerializableExpression asField = 3;
+      SerializableFunction onField = 2;
+      SerializableFunction asField = 3;
     }
 
     google.protobuf.Any windowType = 1;
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
-    repeated SerializableExpression keys = 4;
+    repeated SerializableFunction keys = 4;
     uint64 allowedLateness = 5;
     uint64 origin = 6;
   }
@@ -273,7 +273,7 @@ message SerializableOperator{
 
     google.protobuf.Any windowType = 1;
     DistributionCharacteristic distrChar = 2;
-    SerializableExpression joinExpression = 3;
+    SerializableFunction joinFunction = 3;
     uint64 numberOfInputEdgesLeft = 4;
     uint64 numberOfInputEdgesRight = 5;
     JoinTypeCharacteristic jointype = 6;
@@ -286,10 +286,10 @@ message SerializableOperator{
     Batch Join Details contains properties for the batch join operator
   */
   message BatchJoinDetails {
-    SerializableExpression onBuildKey = 1;
-    SerializableExpression onProbeKey = 2;
-    SerializableExpression buildSchema = 3;
-    SerializableExpression probeSchema = 4;
+    SerializableFunction onBuildKey = 1;
+    SerializableFunction onProbeKey = 2;
+    SerializableFunction buildSchema = 3;
+    SerializableFunction probeSchema = 4;
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
   }

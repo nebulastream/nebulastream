@@ -40,7 +40,7 @@ public:
      * @param allowedLateness
      */
     explicit LogicalWindowDescriptor(
-        const std::vector<FieldAccessExpressionNodePtr>& keys,
+        const std::vector<FieldAccessFunctionNodePtr>& keys,
         std::vector<WindowAggregationDescriptorPtr> windowAggregation,
         WindowTypePtr windowType,
         uint64_t allowedLateness);
@@ -69,7 +69,7 @@ public:
      * @return Window Definition
      */
     static std::shared_ptr<LogicalWindowDescriptor> create(
-        std::vector<FieldAccessExpressionNodePtr> keys,
+        std::vector<FieldAccessFunctionNodePtr> keys,
         std::vector<WindowAggregationDescriptorPtr> windowAggregation,
         const WindowTypePtr& windowType,
         uint64_t allowedLateness);
@@ -118,13 +118,13 @@ public:
      * @brief Getter for the key attributes.
      * @return Vector of key attributes.
      */
-    std::vector<FieldAccessExpressionNodePtr> getKeys() const;
+    std::vector<FieldAccessFunctionNodePtr> getKeys() const;
 
     /**
      * @brief Setter for the keys.
      * @param keys
      */
-    void setOnKey(const std::vector<FieldAccessExpressionNodePtr>& keys);
+    void setOnKey(const std::vector<FieldAccessFunctionNodePtr>& keys);
 
     /**
      * @brief Getter for the allowed lateness. The allowed lateness defines,
@@ -170,11 +170,11 @@ public:
 private:
     std::vector<WindowAggregationDescriptorPtr> windowAggregation;
     WindowTypePtr windowType;
-    std::vector<FieldAccessExpressionNodePtr> onKey;
+    std::vector<FieldAccessFunctionNodePtr> onKey;
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
     uint64_t allowedLateness;
 };
 using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
-} /// namespace NES::Windowing
+}
