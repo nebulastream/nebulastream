@@ -30,33 +30,33 @@ public:
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<FunctionNodePtr> inputFields,
+        std::vector<FunctionNodePtr> outputFields);
 
     static PhysicalOperatorPtr create(
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<FunctionNodePtr> inputFields,
+        std::vector<FunctionNodePtr> outputFields);
 
     static PhysicalOperatorPtr create(
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<FunctionNodePtr> inputFields,
+        std::vector<FunctionNodePtr> outputFields);
 
     std::string toString() const override;
     OperatorPtr copy() override;
     const std::string& getModel() const;
-    const std::vector<ExpressionNodePtr>& getInputFields() const;
-    const std::vector<ExpressionNodePtr>& getOutputFields() const;
+    const std::vector<FunctionNodePtr>& getInputFields() const;
+    const std::vector<FunctionNodePtr>& getOutputFields() const;
 
 protected:
     const std::string model;
-    const std::vector<ExpressionNodePtr> inputFields;
-    const std::vector<ExpressionNodePtr> outputFields;
+    const std::vector<FunctionNodePtr> inputFields;
+    const std::vector<FunctionNodePtr> outputFields;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

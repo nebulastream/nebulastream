@@ -13,7 +13,7 @@
 */
 
 #include <utility>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -24,17 +24,17 @@
 namespace NES
 {
 
-LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, OperatorId id)
+LogicalFilterOperator::LogicalFilterOperator(FunctionNodePtr const& predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(predicate)
 {
 }
 
-ExpressionNodePtr LogicalFilterOperator::getPredicate() const
+FunctionNodePtr LogicalFilterOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalFilterOperator::setPredicate(ExpressionNodePtr newPredicate)
+void LogicalFilterOperator::setPredicate(FunctionNodePtr newPredicate)
 {
     predicate = std::move(newPredicate);
 }
@@ -70,7 +70,7 @@ bool LogicalFilterOperator::inferSchema()
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
+        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter function is not a valid predicate");
     }
     return true;
 }
@@ -132,11 +132,11 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
     DepthFirstNodeIterator depthFirstNodeIterator(predicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        ///if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
-        if (NES::Util::instanceOf<FieldAccessExpressionNode>(*itr))
+        ///if it finds a fieldAccessFunctionNode this means that the predicate uses this specific field that comes from any source
+        if (NES::Util::instanceOf<FieldAccessFunctionNode>(*itr))
         {
-            const FieldAccessExpressionNodePtr accessExpressionNode = NES::Util::as<FieldAccessExpressionNode>(*itr);
-            fieldsInPredicate.push_back(accessExpressionNode->getFieldName());
+            const FieldAccessFunctionNodePtr accessFunctionNode = NES::Util::as<FieldAccessFunctionNode>(*itr);
+            fieldsInPredicate.push_back(accessFunctionNode->getFieldName());
         }
     }
 

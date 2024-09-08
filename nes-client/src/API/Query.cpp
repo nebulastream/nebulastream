@@ -13,13 +13,14 @@
 */
 
 #include <utility>
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Functions/Functions.hpp>
+#include <API/Functions/LogicalFunctions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/FieldRenameFunctionNode.hpp>
+#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -35,9 +36,9 @@
 namespace NES
 {
 
-ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem)
+FunctionNodePtr getFunctionNodePtr(FunctionItem& functionItem)
 {
-    return expressionItem.getExpressionNode();
+    return functionItem.getFunctionNode();
 }
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs)
@@ -78,23 +79,23 @@ CEPOperatorBuilder::Times Query::times()
 namespace JoinOperatorBuilder
 {
 
-JoinWhere Join::where(ExpressionNodePtr joinExpression) const
+JoinWhere Join::where(FunctionNodePtr joinFunction) const
 {
-    return JoinWhere(subQueryRhs, originalQuery, joinExpression);
+    return JoinWhere(subQueryRhs, originalQuery, joinFunction);
 }
 
 Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery)
 {
 }
 
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpression)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinExpressions(joinExpression)
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, FunctionNodePtr joinFunction)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(joinFunction)
 {
 }
 
 Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
 {
-    return originalQuery.joinWith(subQueryRhs, joinExpressions, windowType); ///call original joinWith() function
+    return originalQuery.joinWith(subQueryRhs, joinFunctions, windowType); ///call original joinWith() function
 }
 
 } /// namespace JoinOperatorBuilder
@@ -106,9 +107,9 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-Query& Join::where(const ExpressionNodePtr joinExpression) const
+Query& Join::where(const FunctionNodePtr joinFunction) const
 {
-    return originalQuery.batchJoinWith(subQueryRhs, joinExpression);
+    return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
 
 } /// namespace Experimental::BatchJoinOperatorBuilder
@@ -128,13 +129,13 @@ And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     ///last, define the artificial attributes as key attributes
     NES_DEBUG("Query: add name cepLeftKey {}", cepLeftKey);
     NES_DEBUG("Query: add name cepRightKey {}", cepRightKey);
-    joinExpression
-        = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+    joinFunction
+        = FunctionItem(Attribute(cepLeftKey)).getFunctionNode() == FunctionItem(Attribute(cepRightKey)).getFunctionNode();
 }
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const
 {
-    return originalQuery.andWith(subQueryRhs, joinExpression, windowType); ///call original andWith() function
+    return originalQuery.andWith(subQueryRhs, joinFunction, windowType); ///call original andWith() function
 }
 
 Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery)
@@ -147,8 +148,8 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     ///last, define the artificial attributes as key attributes
-    joinExpression
-        = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+    joinFunction
+        = FunctionItem(Attribute(cepLeftKey)).getFunctionNode() == FunctionItem(Attribute(cepRightKey)).getFunctionNode();
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
@@ -184,9 +185,9 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
     {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
-    NES_DEBUG("ExpressionItem for Left Source {}", sourceNameLeft);
-    NES_DEBUG("ExpressionItem for Right Source {}", sourceNameRight);
-    return originalQuery.seqWith(subQueryRhs, joinExpression, windowType)
+    NES_DEBUG("FunctionItem for Left Source {}", sourceNameLeft);
+    NES_DEBUG("FunctionItem for Right Source {}", sourceNameRight);
+    return originalQuery.seqWith(subQueryRhs, joinFunction, windowType)
         .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
 }
 
@@ -263,10 +264,10 @@ Query Query::from(const std::string& logicalSourceName)
     return Query(queryPlan);
 }
 
-Query& Query::project(std::vector<ExpressionNodePtr> expressions)
+Query& Query::project(std::vector<FunctionNodePtr> functions)
 {
     NES_DEBUG("Query: add projection to query");
-    this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addProjection(functions, this->queryPlan);
     return *this;
 }
 
@@ -277,41 +278,41 @@ Query& Query::unionWith(const Query& subQuery)
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+Query& Query::joinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
-    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression)
+Query& Query::batchJoinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction)
 {
     NES_DEBUG("Query: add Batch Join Operator to Query");
-    if (NES::Util::as<EqualsExpressionNode>(joinExpression))
+    if (NES::Util::as<EqualsFunctionNode>(joinFunction))
     {
-        auto onProbeKey = NES::Util::as<BinaryExpressionNode>(joinExpression)->getLeft();
-        auto onBuildKey = NES::Util::as<BinaryExpressionNode>(joinExpression)->getRight();
+        auto onProbeKey = NES::Util::as<BinaryFunctionNode>(joinFunction)->getLeft();
+        auto onBuildKey = NES::Util::as<BinaryFunctionNode>(joinFunction)->getRight();
 
         this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("Query:joinExpression has to be a EqualsExpressionNode");
+        NES_THROW_RUNTIME_ERROR("Query:joinFunction has to be a EqualsFunctionNode");
     }
     return *this;
 }
 
-Query& Query::andWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+Query& Query::andWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
-    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+Query& Query::seqWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
-    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
@@ -322,10 +323,10 @@ Query& Query::orWith(const Query& subQueryRhs)
     return *this;
 }
 
-Query& Query::filter(const ExpressionNodePtr& filterExpression)
+Query& Query::filter(const FunctionNodePtr& filterFunction)
 {
     NES_DEBUG("Query: add filter operator to query");
-    this->queryPlan = QueryPlanBuilder::addFilter(filterExpression, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addFilter(filterFunction, this->queryPlan);
     return *this;
 }
 
@@ -335,30 +336,30 @@ Query& Query::limit(const uint64_t limit)
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
-Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression)
+Query& Query::map(const FieldAssignmentFunctionNodePtr& mapFunction)
 {
     NES_DEBUG("Query: add map operator to query");
-    this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);
+    this->queryPlan = QueryPlanBuilder::addMap(mapFunction, this->queryPlan);
     return *this;
 }
 
 Query& Query::inferModel(
     const std::string model,
-    const std::initializer_list<ExpressionItem> inputFields,
-    const std::initializer_list<ExpressionItem> outputFields)
+    const std::initializer_list<FunctionItem> inputFields,
+    const std::initializer_list<FunctionItem> outputFields)
 {
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
-    std::vector<ExpressionNodePtr> inputFieldsPtr;
-    std::vector<ExpressionNodePtr> outputFieldsPtr;
+    std::vector<FunctionNodePtr> inputFieldsPtr;
+    std::vector<FunctionNodePtr> outputFieldsPtr;
     for (const auto& inputField : inputFieldVector)
     {
-        inputFieldsPtr.push_back(inputField.getExpressionNode());
+        inputFieldsPtr.push_back(inputField.getFunctionNode());
     }
     for (const auto& outputField : outputFieldVector)
     {
-        outputFieldsPtr.push_back(outputField.getExpressionNode());
+        outputFieldsPtr.push_back(outputField.getFunctionNode());
     }
 
     OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
@@ -387,27 +388,27 @@ QueryPlanPtr Query::getQueryPlan() const
 }
 
 ///
-Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr joinExpression)
+Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(FunctionNodePtr joinFunction)
 {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
-    NES_DEBUG("Query: Iterate over all ExpressionNode to check join field.");
-    std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
-    auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
+    NES_DEBUG("Query: Iterate over all FunctionNode to check join field.");
+    std::unordered_set<std::shared_ptr<BinaryFunctionNode>> visitedFunctions;
+    auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (NES::Util::instanceOf<BinaryExpressionNode>(*itr))
+        if (NES::Util::instanceOf<BinaryFunctionNode>(*itr))
         {
-            auto visitingOp = NES::Util::as<BinaryExpressionNode>(*itr);
-            if (visitedExpressions.contains(visitingOp))
+            auto visitingOp = NES::Util::as<BinaryFunctionNode>(*itr);
+            if (visitedFunctions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             else
             {
-                visitedExpressions.insert(visitingOp);
-                if (NES::Util::instanceOf<EqualsExpressionNode>(*itr))
+                visitedFunctions.insert(visitingOp);
+                if (NES::Util::instanceOf<EqualsFunctionNode>(*itr))
                 {
                     NES_DEBUG("Query: identify Join Type: INNER JOIN");
                     joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;

@@ -12,27 +12,27 @@
     limitations under the License.
 */
 #pragma once
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 /**
- * @brief Selection operator that evaluates an boolean expression on each record.
+ * @brief Selection operator that evaluates an boolean function on each record.
  */
 class Selection : public ExecutableOperator
 {
 public:
     /**
-     * @brief Creates a selection operator with a expression.
-     * @param expression boolean predicate expression
+     * @brief Creates a selection operator with a function.
+     * @param function boolean predicate function
      */
-    Selection(Runtime::Execution::Expressions::ExpressionPtr expression) : expression(expression) {};
+    Selection(Runtime::Execution::Functions::FunctionPtr function) : function(function) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const Runtime::Execution::Expressions::ExpressionPtr expression;
+    const Runtime::Execution::Functions::FunctionPtr function;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

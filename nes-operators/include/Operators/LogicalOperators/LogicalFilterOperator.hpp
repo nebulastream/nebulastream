@@ -21,24 +21,24 @@ namespace NES
 {
 
 /**
- * @brief Filter operator, which contains an expression as a predicate.
+ * @brief Filter operator, which contains an function as a predicate.
  */
 class LogicalFilterOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalFilterOperator(ExpressionNodePtr const&, OperatorId id);
+    explicit LogicalFilterOperator(FunctionNodePtr const&, OperatorId id);
     ~LogicalFilterOperator() override = default;
 
     /**
    * @brief get the filter predicate.
    * @return PredicatePtr
    */
-    ExpressionNodePtr getPredicate() const;
+    FunctionNodePtr getPredicate() const;
     /**
      * @brief exchanges the predicate of a filter with a new predicate
      * @param newPredicate the predicate which will be the new predicate of the filter
      */
-    void setPredicate(ExpressionNodePtr newPredicate);
+    void setPredicate(FunctionNodePtr newPredicate);
     float getSelectivity() const;
     void setSelectivity(float newSelectivity);
 
@@ -53,7 +53,7 @@ public:
 
     /**
     * @brief infers the input and output schema of this operator depending on its child.
-    * @throws Exception the predicate expression has to return a boolean.
+    * @throws Exception the predicate function has to return a boolean.
     * @param typeInferencePhaseContext needed for stamp inferring
     * @return true if schema was correctly inferred
     */
@@ -68,7 +68,7 @@ public:
     std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
 
 private:
-    ExpressionNodePtr predicate;
+    FunctionNodePtr predicate;
     float selectivity = 1.0f;
 };
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;

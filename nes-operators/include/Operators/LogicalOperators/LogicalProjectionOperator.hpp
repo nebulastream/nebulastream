@@ -25,14 +25,14 @@ namespace NES
 class LogicalProjectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id);
+    explicit LogicalProjectionOperator(std::vector<FunctionNodePtr> functions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
     /**
      * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<ExpressionNodePtr>
+     * @return  std::vector<FunctionNodePtr>
      */
-    std::vector<ExpressionNodePtr> getExpressions() const;
+    std::vector<FunctionNodePtr> getFunctions() const;
 
     /**
      * @brief check if two operators have the same output schema
@@ -53,7 +53,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    std::vector<ExpressionNodePtr> expressions;
+    std::vector<FunctionNodePtr> functions;
 };
 
 } /// namespace NES

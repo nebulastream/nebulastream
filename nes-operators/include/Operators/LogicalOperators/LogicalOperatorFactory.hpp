@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Expressions/ConstantValueExpressionNode.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/ConstantValueFunctionNode.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
@@ -40,11 +40,11 @@ public:
 
     /**
      * @brief Create a new logical filter operator.
-     * @param predicate: the filter predicate is represented as an expression node, which has to return true.
+     * @param predicate: the filter predicate is represented as an function node, which has to return true.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createFilterOperator(ExpressionNodePtr const& predicate, OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createFilterOperator(FunctionNodePtr const& predicate, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source rename operator.
@@ -63,12 +63,12 @@ public:
 
     /**
     * @brief Create a new logical projection operator.
-    * @param expression list
+    * @param function list
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorPtr
     */
     static LogicalUnaryOperatorPtr
-    createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id = getNextOperatorId());
+    createProjectionOperator(const std::vector<FunctionNodePtr>& functions, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -81,13 +81,13 @@ public:
         SinkDescriptorPtr const& sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
 
     /**
-     * @brief Create a new map operator with a field assignment expression as a map expression.
-     * @param mapExpression the FieldAssignmentExpressionNode.
+     * @brief Create a new map operator with a field assignment function as a map function.
+     * @param mapFunction the FieldAssignmentFunctionNode.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr
-    createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id = getNextOperatorId());
+    createMapOperator(FieldAssignmentFunctionNodePtr const& mapFunction, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -99,8 +99,8 @@ public:
      */
     static LogicalUnaryOperatorPtr createInferModelOperator(
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields,
+        std::vector<FunctionNodePtr> inputFields,
+        std::vector<FunctionNodePtr> outputFields,
         OperatorId id = getNextOperatorId());
 
     static LogicalUnaryOperatorPtr createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId());

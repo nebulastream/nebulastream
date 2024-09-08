@@ -33,11 +33,11 @@ public:
 
     /**
       * @brief this call projects out the attributes in the parameter list
-      * @param expressions list of attributes
+      * @param functions list of attributes
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static QueryPlanPtr addProjection(const std::vector<ExpressionNodePtr>& expressions, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(const std::vector<FunctionNodePtr>& functions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -50,28 +50,28 @@ public:
     /**
      * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
      * exemplary usage would be: filter(Attribute("f1" < 10))
-     * @param filterExpression as expression node containing the predicate
+     * @param filterFunction as function node containing the predicate
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFilter(FunctionNodePtr const& filterFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
-     * @param filterExpression as expression node containing the predicate
+     * @param filterFunction as function node containing the predicate
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
     static QueryPlanPtr addLimit(const uint64_t limit, QueryPlanPtr queryPlan);
 
     /**
-     * @brief: Map records according to a map expression. An
+     * @brief: Map records according to a map function. An
      * exemplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
-     * @param mapExpression as expression node
+     * @param mapFunction as function node
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMap(FieldAssignmentFunctionNodePtr const& mapFunction, QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -85,14 +85,14 @@ public:
      * @brief This methods add the join operator to a query
      * @param leftQueryPlan the left query plan to combine by the join
      * @param rightQueryPlan the right query plan to combine by the join
-     * @param joinExpression set of join Expressions
+     * @param joinFunction set of join Functions
      * @param windowType Window definition.
      * @return the updated queryPlan
      */
     static QueryPlanPtr addJoin(
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
-        ExpressionNodePtr joinExpression,
+        FunctionNodePtr joinFunction,
         const Windowing::WindowTypePtr& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
@@ -106,7 +106,7 @@ public:
      * @return the updated queryPlan
      */
     static QueryPlanPtr
-    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, ExpressionNodePtr onProbeKey, ExpressionNodePtr onBuildKey);
+    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, FunctionNodePtr onProbeKey, FunctionNodePtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
@@ -135,12 +135,12 @@ public:
 
 private:
     /**
-     * @brief This method checks if an ExpressionNode is instance Of FieldAccessExpressionNode for Join and BatchJoin
-     * @param expression the expression node to test
-     * @param side points out from which side, i.e., left or right query plan, the ExpressionNode is
-     * @return expressionNode as FieldAccessExpressionNode
+     * @brief This method checks if an FunctionNode is instance Of FieldAccessFunctionNode for Join and BatchJoin
+     * @param function the function node to test
+     * @param side points out from which side, i.e., left or right query plan, the FunctionNode is
+     * @return functionNode as FieldAccessFunctionNode
      */
-    static std::shared_ptr<FieldAccessExpressionNode> checkExpression(ExpressionNodePtr expression, std::string side);
+    static std::shared_ptr<FieldAccessFunctionNode> checkFunction(FunctionNodePtr function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources
