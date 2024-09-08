@@ -5,11 +5,16 @@ set -eo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 
-if ! [ -x "$(command -v clang-format-18)" ]
+if [ -x "$(command -v clang-format-18)" ]
 then
-	echo could not find clang-format-18 in PATH.
-	echo please install.
-	exit 1
+    CLANG_FORMAT="clang-format-18"
+elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 18" > /dev/null
+then
+    CLANG_FORMAT="clang-format"
+else
+    echo could not find clang-format 18 in PATH.
+    echo please install.
+    exit 1
 fi
 
 if [ "$#" -gt 0 ] && [ "$1" != "-i" ]
@@ -23,7 +28,7 @@ if [ "${1-}" = "-i" ]
 then
     # clang-format
     git ls-files -- '*.cpp' '*.hpp' \
-      | xargs --max-args=10 --max-procs="$(nproc)" clang-format-18 -i
+      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" -i
 
     # newline at eof
     #
@@ -37,7 +42,7 @@ then
 else
     # clang-format
     git ls-files -- '*.cpp' '*.hpp' \
-      | xargs --max-args=10 --max-procs="$(nproc)" clang-format-18 --dry-run -Werror
+      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror
 
     # newline at eof
     #
