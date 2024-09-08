@@ -38,7 +38,7 @@ void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& c
         return;
     }
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
-    NES_TRACE("Inferring Z3 expressions for {}", operatorNode->toString());
+    NES_TRACE("Inferring Z3 functions for {}", operatorNode->toString());
 
     ///Infer query signatures for child operators
     for (const auto& child : children)

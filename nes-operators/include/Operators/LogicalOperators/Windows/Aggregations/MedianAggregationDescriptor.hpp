@@ -29,17 +29,17 @@ public:
     * @brief Factory method to creates a median aggregation on a particular field.
     * @param onField field on which the aggregation should be performed
     */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const FunctionNodePtr& onField);
 
     /**
      * @brief Factory method to creates a median aggregation on a particular field.
      * @param onField field on which the aggregation should be performed
-     * @param asField expression describing how the aggregated field should be called
+     * @param asField function describing how the aggregated field should be called
      */
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
 
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
@@ -58,13 +58,13 @@ private:
      * @brief Creates a new MedianAggregationDescriptor
      * @param onField field on which the aggregation should be performed
      */
-    explicit MedianAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit MedianAggregationDescriptor(FieldAccessFunctionNodePtr onField);
 
     /**
      * @brief Creates a new MedianAggregationDescriptor
      * @param onField field on which the aggregation should be performed
-     * @param asField expression describing how the aggregated field should be called
+     * @param asField function describing how the aggregated field should be called
      */
-    MedianAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    MedianAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
 };
 } /// namespace NES::Windowing

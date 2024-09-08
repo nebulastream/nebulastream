@@ -25,11 +25,11 @@ namespace NES
 class AttributeField;
 using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
-class ExpressionNode;
-using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+class FunctionNode;
+using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-class FieldAccessExpressionNode;
-using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
+class FieldAccessFunctionNode;
+using FieldAccessFunctionNodePtr = std::shared_ptr<FieldAccessFunctionNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;

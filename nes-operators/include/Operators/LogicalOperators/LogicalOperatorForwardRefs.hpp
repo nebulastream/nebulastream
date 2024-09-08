@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/FunctionNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
@@ -83,11 +83,11 @@ class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
 } /// namespace Experimental
 
-class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+class FieldAssignmentFunctionNode;
+using FieldAssignmentFunctionNodePtr = std::shared_ptr<FieldAssignmentFunctionNode>;
 
-class ConstantValueExpressionNode;
-using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
+class ConstantValueFunctionNode;
+using ConstantValueFunctionNodePtr = std::shared_ptr<ConstantValueFunctionNode>;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;

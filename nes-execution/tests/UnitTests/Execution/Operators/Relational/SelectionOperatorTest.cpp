@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Selection.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -44,10 +44,10 @@ public:
  */
 TEST_F(SelectionOperatorTest, qualifingRecordTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = Selection(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = Selection(equalsFunction);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
@@ -65,10 +65,10 @@ TEST_F(SelectionOperatorTest, qualifingRecordTest)
  */
 TEST_F(SelectionOperatorTest, nonqualifingRecordTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = Selection(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = Selection(equalsFunction);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
@@ -82,7 +82,7 @@ TEST_F(SelectionOperatorTest, nonqualifingRecordTest)
  */
 TEST_F(SelectionOperatorTest, wrongSelectionTypeTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
     auto selectionOperator = Selection(readF1);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);

@@ -13,9 +13,9 @@
 */
 
 #include <memory>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -45,10 +45,10 @@ public:
  */
 TEST_F(MapOperatorTest, createNewFieldTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
-    auto writeF3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto addFunction = std::make_shared<Functions::AddFunction>(readF1, readF2);
+    auto writeF3 = std::make_shared<Functions::WriteFieldFunction>("f3", addFunction);
     auto mapOperator = Map(writeF3);
     auto collector = std::make_shared<CollectOperator>();
     mapOperator.setChild(collector);
@@ -67,10 +67,10 @@ TEST_F(MapOperatorTest, createNewFieldTest)
  */
 TEST_F(MapOperatorTest, overrideFieldTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
-    auto writeF3 = std::make_shared<Expressions::WriteFieldExpression>("f1", addExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto addFunction = std::make_shared<Functions::AddFunction>(readF1, readF2);
+    auto writeF3 = std::make_shared<Functions::WriteFieldFunction>("f1", addFunction);
     auto mapOperator = Map(writeF3);
     auto collector = std::make_shared<CollectOperator>();
     mapOperator.setChild(collector);

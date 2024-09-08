@@ -17,11 +17,11 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
@@ -132,10 +132,10 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = std::make_shared<Operators::Selection>(equalsFunction);
     scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
@@ -218,10 +218,10 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
-    auto writeF3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto addFunction = std::make_shared<Functions::AddFunction>(readF1, readF2);
+    auto writeF3 = std::make_shared<Functions::WriteFieldFunction>("f3", addFunction);
     auto mapOperator = std::make_shared<Operators::Map>(writeF3);
     scanOperator->setChild(mapOperator);
 
@@ -279,10 +279,10 @@ std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
-    auto writeF3 = std::make_shared<Expressions::WriteFieldExpression>("f3", addExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto addFunction = std::make_shared<Functions::AddFunction>(readF1, readF2);
+    auto writeF3 = std::make_shared<Functions::WriteFieldFunction>("f3", addFunction);
     auto mapOperator = std::make_shared<Operators::Map>(writeF3);
     scanOperator->setChild(mapOperator);
 
@@ -301,7 +301,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
+    const auto readTsField = std::make_shared<Functions::ReadFieldFunction>("ts");
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
     auto slicePreAggregation = std::make_shared<Operators::NonKeyedSlicePreAggregation>(
         0 /*handler index*/,
@@ -358,7 +358,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto memoryLayoutOutputWindow = Memory::MemoryLayouts::RowLayout::create(outputSchemaWindow, bufferManager->getBufferSize());
 
     /// Creating aggregation function
-    const auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
+    const auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
     const auto aggregationResultFieldName1 = "test$count";
     PhysicalTypePtr integerType = DefaultPhysicalTypeFactory().getPhysicalType(DataTypeFactory::createInt64());
     Aggregation::AggregationFunctionPtr aggregationFunction

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
@@ -283,8 +283,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
     hashJoinOpHandler->start(std::make_shared<PipelineExecutionContext>(pipelineContext), 0);
 
     auto handlerIndex = 0_u64;
-    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldLeft);
-    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldRight);
+    auto readTsFieldLeft = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.timeStampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.timeStampFieldRight);
 
     auto hashJoinBuildLeft = std::make_shared<Operators::HJBuildSlicingVarSized>(
         handlerIndex,
@@ -308,14 +308,14 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         hashJoinProbeHelper.rightSchema,
         Util::createJoinSchema(hashJoinProbeHelper.leftSchema, hashJoinProbeHelper.rightSchema));
     Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(), joinSchema.joinSchema->get(1)->getName());
-    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameLeft);
-    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameRight);
-    auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+    auto onLeftKey = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.joinFieldNameRight);
+    auto keyFunctions = std::make_shared<Functions::EqualsFunction>(onLeftKey, onRightKey);
 
     auto hashJoinProbe = std::make_shared<Operators::HJProbeVarSized>(
         handlerIndex,
         joinSchema,
-        keyExpressions,
+        keyFunctions,
         windowMetaData,
         hashJoinProbeHelper.leftSchema,
         hashJoinProbeHelper.rightSchema,
@@ -572,7 +572,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicingVarSized>(
         handlerIndex,
         leftSchema,
@@ -600,7 +600,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestRight)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Right;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicingVarSized>(
         handlerIndex,
         rightSchema,
@@ -628,7 +628,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultiplePagesPerBucket)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicingVarSized>(
         handlerIndex,
         leftSchema,
@@ -659,7 +659,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultipleWindows)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     const auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicingVarSized>(
         handlerIndex,
         leftSchema,

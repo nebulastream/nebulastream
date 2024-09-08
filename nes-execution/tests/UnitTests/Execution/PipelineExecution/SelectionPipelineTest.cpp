@@ -14,9 +14,9 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Streaming/Selection.hpp>
@@ -82,10 +82,10 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = std::make_shared<Operators::Selection>(equalsFunction);
     scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
@@ -171,10 +171,10 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = std::make_shared<Operators::Selection>(equalsFunction);
     scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);

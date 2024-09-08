@@ -18,7 +18,7 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -27,24 +27,24 @@ namespace NES::Windowing
 {
 
 EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(
-    const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
+    const FunctionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
     : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness))
 {
 }
 
 WatermarkStrategyDescriptorPtr
-EventTimeWatermarkStrategyDescriptor::create(const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::create(const FunctionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));
 }
 
-ExpressionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() const
+FunctionNodePtr EventTimeWatermarkStrategyDescriptor::getOnField() const
 {
     return onField;
 }
 
-void EventTimeWatermarkStrategyDescriptor::setOnField(const ExpressionNodePtr& newField)
+void EventTimeWatermarkStrategyDescriptor::setOnField(const FunctionNodePtr& newField)
 {
     this->onField = newField;
 }
@@ -82,13 +82,13 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
 {
-    auto fieldAccessExpression = onField->as<FieldAccessExpressionNode>();
-    auto fieldName = fieldAccessExpression->getFieldName();
+    auto fieldAccessFunction = onField->as<FieldAccessFunctionNode>();
+    auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
     auto existingField = schema->getField(fieldName);
     if (existingField)
     {
-        fieldAccessExpression->updateFieldName(existingField->getName());
+        fieldAccessFunction->updateFieldName(existingField->getName());
         return true;
     }
     else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)

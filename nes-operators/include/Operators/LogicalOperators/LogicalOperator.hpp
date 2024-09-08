@@ -48,7 +48,7 @@ public:
     explicit LogicalOperator(OperatorId id);
 
     /**
-     * @brief Get the First Order Logic formula representation by the Z3 expression
+     * @brief Get the First Order Logic formula representation by the Z3 function
      * @param context: the shared pointer to the z3::context
      */
     void inferZ3Signature(const Optimizer::QuerySignatureContext& context);
@@ -84,8 +84,8 @@ public:
     void updateHashBasedSignature(size_t hashCode, const std::string& stringSignature);
 
     /**
-     * @brief Get the Z3 expression for the logical operator
-     * @return reference to the Z3 expression
+     * @brief Get the Z3 function for the logical operator
+     * @return reference to the Z3 function
      */
     Optimizer::QuerySignaturePtr getZ3Signature() const;
 

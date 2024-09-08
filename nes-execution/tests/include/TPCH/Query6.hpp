@@ -18,14 +18,14 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/LessEqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -48,7 +48,7 @@
 
 namespace NES::Runtime::Execution
 {
-using namespace Expressions;
+using namespace Functions;
 using namespace Operators;
 class TPCH_Query6
 {
@@ -68,39 +68,39 @@ public:
         *   l_shipdate >= date '1994-01-01'
         *   and l_shipdate < date '1995-01-01'
         */
-        auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
-        auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
-        auto readShipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
-        auto lessThanExpression1 = std::make_shared<LessEqualsExpression>(const_1994_01_01, readShipdate);
-        auto lessThanExpression2 = std::make_shared<LessThanExpression>(readShipdate, const_1995_01_01);
-        auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+        auto const_1994_01_01 = std::make_shared<ConstantInt32ValueFunction>(19940101);
+        auto const_1995_01_01 = std::make_shared<ConstantInt32ValueFunction>(19950101);
+        auto readShipdate = std::make_shared<ReadFieldFunction>("l_shipdate");
+        auto lessThanFunction1 = std::make_shared<LessEqualsFunction>(const_1994_01_01, readShipdate);
+        auto lessThanFunction2 = std::make_shared<LessThanFunction>(readShipdate, const_1995_01_01);
+        auto andFunction = std::make_shared<AndFunction>(lessThanFunction1, lessThanFunction2);
 
-        auto selection1 = std::make_shared<Selection>(andExpression);
+        auto selection1 = std::make_shared<Selection>(andFunction);
         scan->setChild(selection1);
 
         /// l_discount between 0.06 - 0.01 and 0.06 + 0.01
-        auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
-        auto const_0_05 = std::make_shared<ConstantFloatValueExpression>(0.04);
-        auto const_0_07 = std::make_shared<ConstantFloatValueExpression>(0.08);
-        auto lessThanExpression3 = std::make_shared<LessThanExpression>(const_0_05, readDiscount);
-        auto lessThanExpression4 = std::make_shared<LessThanExpression>(readDiscount, const_0_07);
-        auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
-        auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
+        auto readDiscount = std::make_shared<ReadFieldFunction>("l_discount");
+        auto const_0_05 = std::make_shared<ConstantFloatValueFunction>(0.04);
+        auto const_0_07 = std::make_shared<ConstantFloatValueFunction>(0.08);
+        auto lessThanFunction3 = std::make_shared<LessThanFunction>(const_0_05, readDiscount);
+        auto lessThanFunction4 = std::make_shared<LessThanFunction>(readDiscount, const_0_07);
+        auto andFunction2 = std::make_shared<AndFunction>(lessThanFunction3, lessThanFunction4);
+        auto andFunction3 = std::make_shared<AndFunction>(andFunction, andFunction2);
 
         /// l_quantity < 24
-        auto const_24 = std::make_shared<ConstantInt32ValueExpression>(24);
-        auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
-        auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
+        auto const_24 = std::make_shared<ConstantInt32ValueFunction>(24);
+        auto readQuantity = std::make_shared<ReadFieldFunction>("l_quantity");
+        auto lessThanFunction5 = std::make_shared<LessThanFunction>(readQuantity, const_24);
 
-        auto andExpression4 = std::make_shared<AndExpression>(andExpression3, lessThanExpression5);
+        auto andFunction4 = std::make_shared<AndFunction>(andFunction3, lessThanFunction5);
 
-        auto selection2 = std::make_shared<Selection>(andExpression4);
+        auto selection2 = std::make_shared<Selection>(andFunction4);
         selection1->setChild(selection2);
 
         /// sum(l_extendedprice * l_discount)
-        auto l_extendedprice = std::make_shared<Expressions::ReadFieldExpression>("l_extendedprice");
-        auto l_discount = std::make_shared<Expressions::ReadFieldExpression>("l_discount");
-        auto revenue = std::make_shared<Expressions::MulExpression>(l_extendedprice, l_discount);
+        auto l_extendedprice = std::make_shared<Functions::ReadFieldFunction>("l_extendedprice");
+        auto l_discount = std::make_shared<Functions::ReadFieldFunction>("l_discount");
+        auto revenue = std::make_shared<Functions::MulFunction>(l_extendedprice, l_discount);
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions

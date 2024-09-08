@@ -13,8 +13,8 @@
 */
 
 #include <memory>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>

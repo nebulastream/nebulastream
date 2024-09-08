@@ -22,7 +22,7 @@ namespace NES
 {
 
 /**
- * @brief Join operator, which contains an expression as a predicate.
+ * @brief Join operator, which contains an function as a predicate.
  */
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
 {
@@ -59,10 +59,10 @@ public:
     const std::string& getWindowEndFieldName() const;
 
     /**
-     * @brief Getter for join expression, i.e. a set of binary expressions
-     * @return joinExpressions
+     * @brief Getter for join function, i.e. a set of binary functions
+     * @return joinFunctions
      */
-    const ExpressionNodePtr getJoinExpression() const;
+    const FunctionNodePtr getJoinFunction() const;
 
     /**
      * @brief Sets the window start, end, and key field name during the serialization of the operator

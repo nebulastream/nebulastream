@@ -15,8 +15,8 @@
 #include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
 #include <Exceptions/ErrorListener.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
@@ -296,8 +296,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()), Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
 
     auto handlerIndex = 0_u64;
-    auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldLeft);
-    auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldRight);
+    auto readTsFieldLeft = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.timeStampFieldLeft);
+    auto readTsFieldRight = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.timeStampFieldRight);
 
     auto hashJoinBuildLeft = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,
@@ -322,14 +322,14 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         Util::createJoinSchema(hashJoinProbeHelper.leftSchema, hashJoinProbeHelper.rightSchema));
     Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(), joinSchema.joinSchema->get(1)->getName());
 
-    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameLeft);
-    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameRight);
-    auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+    auto onLeftKey = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.joinFieldNameLeft);
+    auto onRightKey = std::make_shared<Functions::ReadFieldFunction>(hashJoinProbeHelper.joinFieldNameRight);
+    auto keyFunctions = std::make_shared<Functions::EqualsFunction>(onLeftKey, onRightKey);
 
     auto hashJoinProbe = std::make_shared<Operators::HJProbe>(
         handlerIndex,
         joinSchema,
-        keyExpressions,
+        keyFunctions,
         windowMetaData,
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
         QueryCompilation::WindowingStrategy::SLICING,
@@ -594,7 +594,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTest)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
 
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,
@@ -622,7 +622,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestRight)
     const auto timeStampField = "left$timestamp";
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Right;
 
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
     auto handlerIndex = 0;
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,
@@ -651,7 +651,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultiplePagesPerBucket)
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
     auto handlerIndex = 0;
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
 
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,
@@ -683,7 +683,7 @@ TEST_F(HashJoinOperatorTest, joinBuildTestMultipleWindows)
     const auto handlerIndex = 0;
     const auto isLeftSide = QueryCompilation::JoinBuildSideType::Left;
 
-    auto readTsField = std::make_shared<Expressions::ReadFieldExpression>(timeStampField);
+    auto readTsField = std::make_shared<Functions::ReadFieldFunction>(timeStampField);
 
     auto hashJoinBuild = std::make_shared<Operators::HJBuildSlicing>(
         handlerIndex,

@@ -50,14 +50,14 @@ public:
     };
 
     static LogicalJoinDescriptorPtr create(
-        ExpressionNodePtr joinExpression,
+        FunctionNodePtr joinFunction,
         const Windowing::WindowTypePtr& windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType);
 
     explicit LogicalJoinDescriptor(
-        ExpressionNodePtr joinExpression,
+        FunctionNodePtr joinFunction,
         Windowing::WindowTypePtr windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
@@ -136,7 +136,7 @@ public:
      * @brief Getter keys
      * @return keys
      */
-    [[nodiscard]] ExpressionNodePtr getJoinExpression();
+    [[nodiscard]] FunctionNodePtr getJoinFunction();
 
     /**
      * @brief Checks if these two are equal
@@ -146,7 +146,7 @@ public:
     bool equals(const LogicalJoinDescriptor& other) const;
 
 private:
-    ExpressionNodePtr joinExpression;
+    FunctionNodePtr joinFunction;
     SchemaPtr leftSourceType = Schema::create();
     SchemaPtr rightSourceType = Schema::create();
     SchemaPtr outputSchema = Schema::create();

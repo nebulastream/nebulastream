@@ -17,7 +17,7 @@
 #include <filesystem>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -25,7 +25,7 @@ namespace NES::InferModel
 {
 
 LogicalInferModelOperator::LogicalInferModelOperator(
-    std::string model, std::vector<ExpressionNodePtr> inputFields, std::vector<ExpressionNodePtr> outputFields, OperatorId id)
+    std::string model, std::vector<FunctionNodePtr> inputFields, std::vector<FunctionNodePtr> outputFields, OperatorId id)
     : Operator(id)
     , LogicalUnaryOperator(id)
     , model(std::move(model))
@@ -71,7 +71,7 @@ bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const
     return equal(rhs) && rhs->as<LogicalInferModelOperator>()->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const
+void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessFunctionNodePtr field) const
 {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
@@ -106,31 +106,31 @@ bool LogicalInferModelOperator::inferSchema()
 
     for (auto inputField : inputFields)
     {
-        auto inputExpression = inputField->as<FieldAccessExpressionNode>();
-        updateToFullyQualifiedFieldName(inputExpression);
-        inputExpression->inferStamp(inputSchema);
-        auto fieldName = inputExpression->getFieldName();
-        inputSchema->replaceField(fieldName, inputExpression->getStamp());
+        auto inputFunction = inputField->as<FieldAccessFunctionNode>();
+        updateToFullyQualifiedFieldName(inputFunction);
+        inputFunction->inferStamp(inputSchema);
+        auto fieldName = inputFunction->getFieldName();
+        inputSchema->replaceField(fieldName, inputFunction->getStamp());
     }
 
     for (auto outputField : outputFields)
     {
-        auto outputExpression = outputField->as<FieldAccessExpressionNode>();
-        updateToFullyQualifiedFieldName(outputExpression);
-        auto fieldName = outputExpression->getFieldName();
+        auto outputFunction = outputField->as<FieldAccessFunctionNode>();
+        updateToFullyQualifiedFieldName(outputFunction);
+        auto fieldName = outputFunction->getFieldName();
         if (outputSchema->getField(fieldName))
         {
             /// The assigned field is part of the current schema.
             /// Thus we check if it has the correct type.
             NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
-            outputSchema->replaceField(fieldName, outputExpression->getStamp());
+            outputSchema->replaceField(fieldName, outputFunction->getStamp());
         }
         else
         {
             /// The assigned field is not part of the current schema.
             /// Thus we extend the schema by the new attribute.
             NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
-            outputSchema->addField(fieldName, outputExpression->getStamp());
+            outputSchema->addField(fieldName, outputFunction->getStamp());
         }
     }
 
@@ -177,12 +177,12 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const
     return path;
 }
 
-const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getInputFields() const
+const std::vector<FunctionNodePtr>& LogicalInferModelOperator::getInputFields() const
 {
     return inputFields;
 }
 
-const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getOutputFields() const
+const std::vector<FunctionNodePtr>& LogicalInferModelOperator::getOutputFields() const
 {
     return outputFields;
 }

@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -28,7 +28,7 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Expressions
+namespace NES::Runtime::Execution::Functions
 {
 class AggregationFunctionTest : public Testing::BaseUnitTest
 {
@@ -36,8 +36,8 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("AddExpressionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddExpressionTest test class.");
+        NES::Logger::setupLogging("AddFunctionTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup AddFunctionTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -51,8 +51,8 @@ TEST_F(AggregationFunctionTest, sumAggregation)
 {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
-    auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType, readFieldExpression, "result");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType, readFieldFunction, "result");
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&sumValue);
 
@@ -81,13 +81,13 @@ TEST_F(AggregationFunctionTest, sumAggregation)
  */
 TEST_F(AggregationFunctionTest, countAggregation)
 {
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto unsignedIntegerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType, readFieldExpression, "result");
+    auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType, readFieldFunction, "result");
 
     auto countValue = Aggregation::CountAggregationValue<uint64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&countValue);
@@ -116,11 +116,11 @@ TEST_F(AggregationFunctionTest, countAggregation)
  */
 TEST_F(AggregationFunctionTest, AvgAggregation)
 {
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
-    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType, readFieldExpression, "result");
+    auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType, readFieldFunction, "result");
     auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&avgValue);
 
@@ -153,12 +153,12 @@ TEST_F(AggregationFunctionTest, AvgAggregation)
  */
 TEST_F(AggregationFunctionTest, MinAggregation)
 {
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType, readFieldExpression, "result");
+    auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType, readFieldFunction, "result");
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&minValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
@@ -220,12 +220,12 @@ TEST_F(AggregationFunctionTest, MinAggregation)
  */
 TEST_F(AggregationFunctionTest, MaxAggregation)
 {
-    auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
+    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-    auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType, readFieldExpression, "result");
+    auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType, readFieldFunction, "result");
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&maxValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
@@ -287,4 +287,4 @@ TEST_F(AggregationFunctionTest, MaxAggregation)
     maxAgg.reset(memref);
     EXPECT_EQ(maxValue.max, std::numeric_limits<int64_t>::min());
 }
-} /// namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Functions

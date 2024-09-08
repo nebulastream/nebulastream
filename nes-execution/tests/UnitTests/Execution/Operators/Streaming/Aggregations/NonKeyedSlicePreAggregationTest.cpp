@@ -17,7 +17,7 @@
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
@@ -87,8 +87,8 @@ public:
 
 TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
 {
-    auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto readTs = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
@@ -138,8 +138,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
 
 TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
 {
-    auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
+    auto readTs = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
 
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr i64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());

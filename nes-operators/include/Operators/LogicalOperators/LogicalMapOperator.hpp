@@ -21,18 +21,18 @@ namespace NES
 {
 
 /**
- * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
+ * @brief Map operator, which contains an field assignment function that manipulates a field of the record.
  */
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id);
+    LogicalMapOperator(FieldAssignmentFunctionNodePtr const& mapFunction, OperatorId id);
 
     /**
-    * @brief Returns the expression of this map operator
-    * @return FieldAssignmentExpressionNodePtr
+    * @brief Returns the function of this map operator
+    * @return FieldAssignmentFunctionNodePtr
     */
-    FieldAssignmentExpressionNodePtr getMapExpression() const;
+    FieldAssignmentFunctionNodePtr getMapFunction() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -50,7 +50,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    const FieldAssignmentExpressionNodePtr mapExpression;
+    const FieldAssignmentFunctionNodePtr mapFunction;
 };
 
 } /// namespace NES

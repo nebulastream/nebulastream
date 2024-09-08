@@ -18,10 +18,10 @@
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
 #include <API/TimeUnit.hpp>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
@@ -93,7 +93,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest
 public:
     Operators::NLJOperatorHandlerPtr nljOperatorHandler;
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    Expressions::ExpressionPtr joinExpression;
+    Functions::FunctionPtr joinFunction;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
     std::string joinFieldNameLeft;
@@ -124,9 +124,9 @@ public:
         joinFieldNameLeft = leftSchema->get(1)->getName();
         joinFieldNameRight = rightSchema->get(1)->getName();
 
-        auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameLeft);
-        auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
-        joinExpression = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
+        auto onLeftKey = std::make_shared<Functions::ReadFieldFunction>(joinFieldNameLeft);
+        auto onRightKey = std::make_shared<Functions::ReadFieldFunction>(joinFieldNameRight);
+        joinFunction = std::make_shared<Functions::EqualsFunction>(onLeftKey, onRightKey);
 
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
@@ -292,8 +292,8 @@ public:
     std::tuple<std::vector<Record>, std::vector<Record>, uint64_t>
     insertRecordsIntoBuild(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight)
     {
-        auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
-        auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
+        auto readTsFieldLeft = std::make_shared<Functions::ReadFieldFunction>(timestampFieldNameLeft);
+        auto readTsFieldRight = std::make_shared<Functions::ReadFieldFunction>(timestampFieldNameRight);
 
         auto nljBuildLeft = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
@@ -393,7 +393,7 @@ public:
                         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
                     }
 
-                    if (joinExpression->execute(joinedRecord).as<Boolean>())
+                    if (joinFunction->execute(joinedRecord).as<Boolean>())
                     {
                         auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
                         if (it == collector->records.end())
@@ -426,7 +426,7 @@ public:
         auto nljProbe = std::make_shared<Operators::NLJProbe>(
             handlerIndex,
             joinSchema,
-            joinExpression,
+            joinFunction,
             windowMetaData,
             leftSchema,
             rightSchema,
@@ -674,15 +674,15 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows)
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
 
-TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpressions)
+TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleFunctions)
 {
     const auto numberOfRecordsLeft = 250;
     const auto numberOfRecordsRight = 250;
 
-    auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>("test1$value");
-    auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>("test2$value");
-    auto expression = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey, onRightKey);
-    joinExpression = std::make_shared<Expressions::AndExpression>(joinExpression, expression);
+    auto onLeftKey = std::make_shared<Functions::ReadFieldFunction>("test1$value");
+    auto onRightKey = std::make_shared<Functions::ReadFieldFunction>("test2$value");
+    auto function = std::make_shared<Functions::GreaterThanFunction>(onLeftKey, onRightKey);
+    joinFunction = std::make_shared<Functions::AndFunction>(joinFunction, function);
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }

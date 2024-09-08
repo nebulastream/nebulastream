@@ -13,7 +13,7 @@
 */
 
 #include <utility>
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -27,14 +27,14 @@ void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuff
     /// nop
 }
 
-EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
-    : unit(unit), timestampExpression(std::move(timestampExpression))
+EventTimeFunction::EventTimeFunction(Functions::FunctionPtr timestampFunction, Windowing::TimeUnit unit)
+    : unit(unit), timestampFunction(std::move(timestampFunction))
 {
 }
 
 nautilus::val<uint64_t> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
 {
-    const auto ts = this->timestampExpression->execute(record);
+    const auto ts = this->timestampFunction->execute(record);
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = (ts * timeMultiplier).cast<nautilus::val<uint64_t>>();
     ctx.setCurrentTs(tsInMs);

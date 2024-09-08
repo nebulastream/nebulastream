@@ -13,30 +13,30 @@
 */
 
 #include <sstream>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Windowing
 {
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField) : onField(onField), asField(onField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(const FieldAccessFunctionNodePtr& onField) : onField(onField), asField(onField)
 {
 }
 
-WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField)
+WindowAggregationDescriptor::WindowAggregationDescriptor(const FunctionNodePtr& onField, const FunctionNodePtr& asField)
     : onField(onField), asField(asField)
 {
 }
 
-WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const ExpressionNodePtr& asField)
+WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const FunctionNodePtr& asField)
 {
-    const auto& field = asField->as<FieldAccessExpressionNode>();
+    const auto& field = asField->as<FieldAccessFunctionNode>();
     this->asField = field;
     return this->copy();
 }
 
-ExpressionNodePtr WindowAggregationDescriptor::as() const
+FunctionNodePtr WindowAggregationDescriptor::as() const
 {
     if (asField == nullptr)
     {
@@ -66,7 +66,7 @@ std::string WindowAggregationDescriptor::getTypeAsString() const
     return std::string(magic_enum::enum_name(aggregationType));
 }
 
-ExpressionNodePtr WindowAggregationDescriptor::on() const
+FunctionNodePtr WindowAggregationDescriptor::on() const
 {
     return onField;
 }

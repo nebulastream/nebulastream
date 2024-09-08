@@ -14,11 +14,11 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
@@ -44,7 +44,7 @@ public:
     std::unique_ptr<ExecutablePipelineProvider> provider;
     Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
@@ -70,7 +70,7 @@ public:
 };
 
 /**
- * @brief Pipeline that execute a text processing expression.
+ * @brief Pipeline that execute a text processing function.
  */
 TEST_P(TextPipelineTest, textEqualsPipeline)
 {
@@ -81,10 +81,10 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
-    auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto equalsFunction = std::make_shared<Functions::EqualsFunction>(readF1, readF2);
+    auto selectionOperator = std::make_shared<Operators::Selection>(equalsFunction);
     scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);

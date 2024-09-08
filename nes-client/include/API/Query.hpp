@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <API/Expressions/Expressions.hpp>
+#include <API/Functions/Functions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 
@@ -28,11 +28,11 @@ class Query;
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
-class ExpressionNode;
-using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+class FunctionNode;
+using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-class FieldAssignmentExpressionNode;
-using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
+class FieldAssignmentFunctionNode;
+using FieldAssignmentFunctionNodePtr = std::shared_ptr<FieldAssignmentFunctionNode>;
 
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
@@ -89,12 +89,12 @@ public:
     Join(const Query& subQueryRhs, Query& originalQuery);
 
     /**
-     * @brief is called to append all joinExpressions (key predicates) to the previous defined join, i.e.,
+     * @brief is called to append all joinFunctions (key predicates) to the previous defined join, i.e.,
      * it sets all condition for the join matches
-     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which window function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(ExpressionNodePtr joinExpression) const;
+    [[nodiscard]] JoinWhere where(FunctionNodePtr joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -105,12 +105,12 @@ class JoinWhere
 {
 public:
     /**
-     * @brief Constructor. Initialises always subQueryRhs, original Query and the joinExpression
+     * @brief Constructor. Initialises always subQueryRhs, original Query and the joinFunction
      * @param subQueryRhs
      * @param originalQuery
-     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @param joinFunction : a set of binary functions to compare left and right tuples
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpressions);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, FunctionNodePtr joinFunctions);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
@@ -122,7 +122,7 @@ public:
 private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr joinExpressions;
+    FunctionNodePtr joinFunctions;
 };
 
 } ///namespace JoinOperatorBuilder
@@ -148,12 +148,12 @@ public:
      */
     Join(const Query& subQueryRhs, Query& originalQuery);
 
-    /** @brief is called to append all joinExpressions (key predicates) to the previous defined join, i.e.,
+    /** @brief is called to append all joinFunctions (key predicates) to the previous defined join, i.e.,
      * it sets all condition for the join matches
-     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] Query& where(const ExpressionNodePtr joinExpression) const;
+    [[nodiscard]] Query& where(const FunctionNodePtr joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -185,7 +185,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr joinExpression;
+    FunctionNodePtr joinFunction;
 };
 
 class Seq
@@ -208,7 +208,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    ExpressionNodePtr joinExpression;
+    FunctionNodePtr joinFunction;
 };
 
 /**
@@ -369,9 +369,9 @@ public:
      * @return the query
      */
     template <typename... Args>
-    auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&>
+    auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<FunctionItem, Args>...>, Query&>
     {
-        return project({std::forward<Args>(args).getExpressionNode()...});
+        return project({std::forward<Args>(args).getFunctionNode()...});
     }
 
     /**
@@ -379,7 +379,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(std::vector<ExpressionNodePtr> expressions);
+    Query& project(std::vector<FunctionNodePtr> functions);
 
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -391,10 +391,10 @@ public:
     /**
      * @brief: Filter records according to the predicate. An
      * examplary usage would be: filter(Attribute("f1" < 10))
-     * @param predicate as expression node
+     * @param predicate as function node
      * @return the query
      */
-    Query& filter(ExpressionNodePtr const& filterExpression);
+    Query& filter(FunctionNodePtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -411,12 +411,12 @@ public:
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
     /**
-     * @brief: Map records according to a map expression. An
+     * @brief: Map records according to a map function. An
      * examplary usage would be: map(Attribute("f2") = Attribute("f1") * 42 )
-     * @param map expression
+     * @param map function
      * @return query
      */
-    Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
+    Query& map(FieldAssignmentFunctionNodePtr const& mapFunction);
 
     /**
      * @brief: inferModel
@@ -425,7 +425,7 @@ public:
      * @return query
      */
     Query&
-    inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
+    inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
 
     /**
      * @brief Add sink operator for the query.
@@ -459,7 +459,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -470,7 +470,7 @@ private:
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression);
+    Query& batchJoinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -482,7 +482,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs, ExpressionNodePtr joinExpressions, Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, FunctionNodePtr joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -494,7 +494,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs, ExpressionNodePtr joinExpressions, Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, FunctionNodePtr joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -507,23 +507,23 @@ private:
 
     /**
       * @brief: Creates a keyed window aggregation.
-      * @param joinExpressions keys.
+      * @param joinFunctions keys.
       * @param windowType Window definition.
       * @param aggregations Window aggregation functions.
       * @return query.
       */
     Query& windowByKey(
-        std::vector<ExpressionNodePtr> joinExpressions,
+        std::vector<FunctionNodePtr> joinFunctions,
         Windowing::WindowTypePtr const& windowType,
         std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
-      * @brief: Given a Expression is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
+      * @brief: Given a Function is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
       * different Join algorithms, while all other join types right lead to the NestedLoopJoin
-      * @param joinExpressions key expressions
+      * @param joinFunctions key functions
       * @return joinType
       */
-    Join::LogicalJoinDescriptor::JoinType identifyJoinType(ExpressionNodePtr joinExpressions);
+    Join::LogicalJoinDescriptor::JoinType identifyJoinType(FunctionNodePtr joinFunctions);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

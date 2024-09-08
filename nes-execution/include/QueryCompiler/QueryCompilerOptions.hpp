@@ -31,8 +31,8 @@ struct QueryCompilerOptions
 {
     enum class FilterProcessingStrategy : uint8_t
     {
-        BRANCHED, /// Uses a branches to process filter expressions
-        PREDICATION /// Uses predication for filter expressions if possible
+        BRANCHED, /// Uses a branches to process filter functions
+        PREDICATION /// Uses predication for filter functions if possible
     };
 
     struct StreamHashJoinOptions

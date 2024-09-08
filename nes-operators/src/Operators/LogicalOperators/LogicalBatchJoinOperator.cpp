@@ -15,7 +15,7 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -65,7 +65,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     rightInputSchema->clear();
 
     ///Find the schema for left join key
-    FieldAccessExpressionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
+    FieldAccessFunctionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
     {
@@ -81,7 +81,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     ///Find the schema for right join key
-    FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
+    FieldAccessFunctionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
     {

@@ -19,8 +19,8 @@ namespace NES::Runtime::Execution::Operators
 
 void Map::execute(ExecutionContext& ctx, Record& record) const
 {
-    /// assume that map expression performs a field write
-    mapExpression->execute(record);
+    /// assume that map function performs a field write
+    mapFunction->execute(record);
     /// call next operator
     child->execute(ctx, record);
 }

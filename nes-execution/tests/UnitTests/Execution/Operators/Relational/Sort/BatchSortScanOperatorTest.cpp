@@ -15,7 +15,7 @@
 #include <memory>
 #include <random>
 #include <tuple>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>

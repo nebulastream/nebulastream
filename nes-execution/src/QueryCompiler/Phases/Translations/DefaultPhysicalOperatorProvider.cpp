@@ -14,8 +14,8 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Functions/BinaryFunctionNode.hpp>
+#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -209,7 +209,7 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperator
 {
     auto projectOperator = operatorNode->as<LogicalProjectionOperator>();
     auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
-        projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getExpressions());
+        projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getFunctions());
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
@@ -231,7 +231,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
 {
     auto mapOperator = operatorNode->as<LogicalMapOperator>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
-        mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapExpression());
+        mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapFunction());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }

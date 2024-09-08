@@ -13,33 +13,33 @@
 */
 #include <sstream>
 #include <utility>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalMapOperator::PhysicalMapOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
-    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapExpression(std::move(mapExpression))
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction)
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapFunction(std::move(mapFunction))
 {
 }
 
-FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression()
+FieldAssignmentFunctionNodePtr PhysicalMapOperator::getMapFunction()
 {
-    return mapExpression;
+    return mapFunction;
 }
 
 PhysicalOperatorPtr PhysicalMapOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentExpressionNodePtr& mapExpression)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentFunctionNodePtr& mapFunction)
 {
-    return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapExpression);
+    return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapFunction);
 }
 
 PhysicalOperatorPtr
-PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
+PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction)
 {
-    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapFunction));
 }
 
 std::string PhysicalMapOperator::toString() const
@@ -48,9 +48,9 @@ std::string PhysicalMapOperator::toString() const
     out << std::endl;
     out << "PhysicalMapOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    if (mapExpression != nullptr)
+    if (mapFunction != nullptr)
     {
-        out << "mapExpression: " << mapExpression->toString();
+        out << "mapFunction: " << mapFunction->toString();
     }
     out << std::endl;
     return out.str();
@@ -58,7 +58,7 @@ std::string PhysicalMapOperator::toString() const
 
 OperatorPtr PhysicalMapOperator::copy()
 {
-    auto result = create(id, inputSchema, outputSchema, getMapExpression());
+    auto result = create(id, inputSchema, outputSchema, getMapFunction());
     result->addAllProperties(properties);
     return result;
 }

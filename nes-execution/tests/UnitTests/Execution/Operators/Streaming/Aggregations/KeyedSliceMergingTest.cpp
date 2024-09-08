@@ -16,7 +16,7 @@
 #include <vector>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
@@ -132,7 +132,7 @@ public:
 
 TEST_F(KeyedSliceMergingTest, aggregate)
 {
-    auto readV1 = std::make_shared<Expressions::ReadFieldExpression>("v1");
+    auto readV1 = std::make_shared<Functions::ReadFieldFunction>("v1");
     auto integer = DataTypeFactory::createInt64();
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 

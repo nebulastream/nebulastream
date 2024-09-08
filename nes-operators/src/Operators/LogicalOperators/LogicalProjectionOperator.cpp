@@ -16,8 +16,8 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/FieldRenameFunctionNode.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,14 +25,14 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), expressions(std::move(expressions))
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<FunctionNodePtr> functions, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
 }
 
-std::vector<ExpressionNodePtr> LogicalProjectionOperator::getExpressions() const
+std::vector<FunctionNodePtr> LogicalProjectionOperator::getFunctions() const
 {
-    return expressions;
+    return functions;
 }
 
 bool LogicalProjectionOperator::isIdentical(NodePtr const& rhs) const
@@ -65,32 +65,32 @@ bool LogicalProjectionOperator::inferSchema()
     }
     NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
     outputSchema->clear();
-    for (const auto& expression : expressions)
+    for (const auto& function : functions)
     {
-        ///Infer schema of the field expression
-        expression->inferStamp(inputSchema);
+        ///Infer schema of the field function
+        function->inferStamp(inputSchema);
 
         /// Build the output schema
-        if (expression->instanceOf<FieldRenameExpressionNode>())
+        if (function->instanceOf<FieldRenameFunctionNode>())
         {
-            auto fieldRename = expression->as<FieldRenameExpressionNode>();
+            auto fieldRename = function->as<FieldRenameFunctionNode>();
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
         }
-        else if (expression->instanceOf<FieldAccessExpressionNode>())
+        else if (function->instanceOf<FieldAccessFunctionNode>())
         {
-            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+            auto fieldAccess = function->as<FieldAccessFunctionNode>();
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else
         {
             NES_ERROR(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
+                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a FieldRenameFunction "
                 "but it was a {}",
-                expression->toString());
+                function->toString());
             throw TypeInferenceException(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a "
-                "FieldRenameExpression but it was a "
-                + expression->toString());
+                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a "
+                "FieldRenameFunction but it was a "
+                + function->toString());
         }
     }
     return true;
@@ -98,12 +98,12 @@ bool LogicalProjectionOperator::inferSchema()
 
 OperatorPtr LogicalProjectionOperator::copy()
 {
-    std::vector<ExpressionNodePtr> copyOfProjectionExpressions;
-    for (const auto& originalExpression : expressions)
+    std::vector<FunctionNodePtr> copyOfProjectionFunctions;
+    for (const auto& originalFunction : functions)
     {
-        copyOfProjectionExpressions.emplace_back(originalExpression->copy());
+        copyOfProjectionFunctions.emplace_back(originalFunction->copy());
     }
-    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionExpressions, id);
+    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

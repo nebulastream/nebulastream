@@ -51,15 +51,15 @@ f
 :type.googleapis.com/NES.SerializableOperator.FilterDetailsÅ
 Â
 »
-=type.googleapis.com/NES.SerializableExpression.LessExpressionù
+=type.googleapis.com/NES.SerializableFunction.LessFunctionù
 ¯
 PL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ[
-Dtype.googleapis.com/NES.SerializableExpression.FieldAccessExpression
+Dtype.googleapis.com/NES.SerializableFunction.FieldAccessFunction
 default_source$idÄ
 VR
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails ÿÿÿÿ€€€€øÿÿÿÿé
-Ftype.googleapis.com/NES.SerializableExpression.ConstantValueExpressionž
+Ftype.googleapis.com/NES.SerializableFunction.ConstantValueFunctionž
 ›
 ˜
 8type.googleapis.com/NES.SerializableDataValue.BasicValue\
@@ -110,15 +110,15 @@ f
 :type.googleapis.com/NES.SerializableOperator.FilterDetailsÅ
 Â
 »
-=type.googleapis.com/NES.SerializableExpression.LessExpressionù
+=type.googleapis.com/NES.SerializableFunction.LessFunctionù
 ¯
 PL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ[
-Dtype.googleapis.com/NES.SerializableExpression.FieldAccessExpression
+Dtype.googleapis.com/NES.SerializableFunction.FieldAccessFunction
 default_source$idÄ
 VR
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails ÿÿÿÿ€€€€øÿÿÿÿé
-Ftype.googleapis.com/NES.SerializableExpression.ConstantValueExpressionž
+Ftype.googleapis.com/NES.SerializableFunction.ConstantValueFunctionž
 ›
 ˜
 8type.googleapis.com/NES.SerializableDataValue.BasicValue\

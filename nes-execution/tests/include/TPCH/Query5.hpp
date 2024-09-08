@@ -18,15 +18,15 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterEqualsExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterEqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -51,7 +51,7 @@
 #include <TPCH/TPCHTableGenerator.hpp>
 namespace NES::Runtime::Execution
 {
-using namespace Expressions;
+using namespace Functions;
 using namespace Operators;
 class TPCH_Query5
 {
@@ -83,11 +83,11 @@ public:
         auto customersScanOperator = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
 
         /// build ht for first join
-        auto readCCustKey = std::make_shared<ReadFieldExpression>("c_custkey");
-        std::vector<ExpressionPtr> customerJoinBuildValues = {std::make_shared<ReadFieldExpression>("c_nationkey")};
+        auto readCCustKey = std::make_shared<ReadFieldFunction>("c_custkey");
+        std::vector<FunctionPtr> customerJoinBuildValues = {std::make_shared<ReadFieldFunction>("c_nationkey")};
         auto customerJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             0 /*handler index*/,
-            std::vector<Expressions::ExpressionPtr>{readCCustKey},
+            std::vector<Functions::FunctionPtr>{readCCustKey},
             std::vector<PhysicalTypePtr>{integerType},
             customerJoinBuildValues,
             std::vector<PhysicalTypePtr>{integerType},
@@ -123,7 +123,7 @@ public:
         auto orderScanOperator = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
         /// Probe with Customer
-        std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
+        std::vector<FunctionPtr> ordersProbeKeys = {std::make_shared<ReadFieldFunction>("o_custkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> orderProbeFieldIdentifier = {"c_nationkey"};
 
         auto orderJoinProbeOperator = std::make_shared<BatchJoinProbe>(
@@ -135,20 +135,20 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         orderScanOperator->setChild(orderJoinProbeOperator);
 
-        auto const_1994_01_01 = std::make_shared<ConstantInt32ValueExpression>(19940101);
-        auto const_1995_01_01 = std::make_shared<ConstantInt32ValueExpression>(19950101);
-        auto readOrderDate = std::make_shared<ReadFieldExpression>("o_orderdate");
+        auto const_1994_01_01 = std::make_shared<ConstantInt32ValueFunction>(19940101);
+        auto const_1995_01_01 = std::make_shared<ConstantInt32ValueFunction>(19950101);
+        auto readOrderDate = std::make_shared<ReadFieldFunction>("o_orderdate");
 
-        auto lessThanExpression1 = std::make_shared<GreaterEqualsExpression>(const_1994_01_01, readOrderDate);
-        auto lessThanExpression2 = std::make_shared<LessThanExpression>(readOrderDate, const_1995_01_01);
-        auto andExpression = std::make_shared<AndExpression>(lessThanExpression1, lessThanExpression2);
+        auto lessThanFunction1 = std::make_shared<GreaterEqualsFunction>(const_1994_01_01, readOrderDate);
+        auto lessThanFunction2 = std::make_shared<LessThanFunction>(readOrderDate, const_1995_01_01);
+        auto andFunction = std::make_shared<AndFunction>(lessThanFunction1, lessThanFunction2);
 
-        auto orderDateSelectionOperator = std::make_shared<Selection>(andExpression);
+        auto orderDateSelectionOperator = std::make_shared<Selection>(andFunction);
         orderJoinProbeOperator->setChild(orderDateSelectionOperator);
 
         /// Build on Order
-        std::vector<ExpressionPtr> orderJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_orderkey")};
-        std::vector<ExpressionPtr> orderJoinBuildValues = {std::make_shared<ReadFieldExpression>("c_nationkey")};
+        std::vector<FunctionPtr> orderJoinBuildKeys = {std::make_shared<ReadFieldFunction>("o_orderkey")};
+        std::vector<FunctionPtr> orderJoinBuildValues = {std::make_shared<ReadFieldFunction>("c_nationkey")};
         auto order_customersJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
             orderJoinBuildKeys,
@@ -191,7 +191,7 @@ public:
         auto lineItemScanOperator = std::make_shared<Operators::Scan>(std::move(lineItemMemoryProviderPtr), lineItemProjection);
 
         /// Probe with Order
-        std::vector<ExpressionPtr> lineItemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
+        std::vector<FunctionPtr> lineItemProbeKeys = {std::make_shared<ReadFieldFunction>("l_orderkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProbeFieldIdentifier
             = {"l_extendedprice", "l_discount", "c_nationkey"};
         auto lineItemJoinProbeOperator = std::make_shared<BatchJoinProbe>(
@@ -204,11 +204,11 @@ public:
         lineItemScanOperator->setChild(lineItemJoinProbeOperator);
 
         /// Build on LineItem
-        std::vector<ExpressionPtr> lineItemJoinBuildKeys = {std::make_shared<ReadFieldExpression>("l_suppkey")};
-        std::vector<ExpressionPtr> lineItemJoinBuildValues
-            = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
-               std::make_shared<ReadFieldExpression>("l_discount"),
-               std::make_shared<ReadFieldExpression>("c_nationkey")};
+        std::vector<FunctionPtr> lineItemJoinBuildKeys = {std::make_shared<ReadFieldFunction>("l_suppkey")};
+        std::vector<FunctionPtr> lineItemJoinBuildValues
+            = {std::make_shared<ReadFieldFunction>("l_extendedprice"),
+               std::make_shared<ReadFieldFunction>("l_discount"),
+               std::make_shared<ReadFieldFunction>("c_nationkey")};
         auto lineItemJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
             lineItemJoinBuildKeys,
@@ -251,7 +251,7 @@ public:
         auto supplierScanOperator = std::make_shared<Operators::Scan>(std::move(supplierMemoryProviderPtr), supplierProjection);
 
         /// Probe with LineItem
-        std::vector<ExpressionPtr> supplierProbeKeys = {std::make_shared<ReadFieldExpression>("s_suppkey")};
+        std::vector<FunctionPtr> supplierProbeKeys = {std::make_shared<ReadFieldFunction>("s_suppkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProbeFieldIdentifier
             = {"l_extendedprice", "l_discount", "c_nationkey"};
 
@@ -265,16 +265,16 @@ public:
         supplierScanOperator->setChild(supplierJoinProbeOperator);
 
         /// Selection c_nationkey == s_nationkey
-        auto readsNationKey = std::make_shared<ReadFieldExpression>("s_nationkey");
-        auto readCNationKey = std::make_shared<ReadFieldExpression>("c_nationkey");
-        auto equalsExpression = std::make_shared<EqualsExpression>(readsNationKey, readCNationKey);
-        auto suppliySelectionOperator = std::make_shared<Selection>(equalsExpression);
+        auto readsNationKey = std::make_shared<ReadFieldFunction>("s_nationkey");
+        auto readCNationKey = std::make_shared<ReadFieldFunction>("c_nationkey");
+        auto equalsFunction = std::make_shared<EqualsFunction>(readsNationKey, readCNationKey);
+        auto suppliySelectionOperator = std::make_shared<Selection>(equalsFunction);
         supplierJoinProbeOperator->setChild(suppliySelectionOperator);
 
         /// Build on Supplier
-        std::vector<ExpressionPtr> supplierJoinBuildKeys = {std::make_shared<ReadFieldExpression>("s_nationkey")};
-        std::vector<ExpressionPtr> supplierJoinBuildValues
-            = {std::make_shared<ReadFieldExpression>("l_extendedprice"), std::make_shared<ReadFieldExpression>("l_discount")};
+        std::vector<FunctionPtr> supplierJoinBuildKeys = {std::make_shared<ReadFieldFunction>("s_nationkey")};
+        std::vector<FunctionPtr> supplierJoinBuildValues
+            = {std::make_shared<ReadFieldFunction>("l_extendedprice"), std::make_shared<ReadFieldFunction>("l_discount")};
         auto supplierJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
             supplierJoinBuildKeys,
@@ -317,7 +317,7 @@ public:
         auto nationScanOperator = std::make_shared<Operators::Scan>(std::move(nationMemoryProviderPtr), nationProjection);
 
         /// Probe with Supplier
-        std::vector<ExpressionPtr> nationProbeKeys = {std::make_shared<ReadFieldExpression>("n_nationkey")};
+        std::vector<FunctionPtr> nationProbeKeys = {std::make_shared<ReadFieldFunction>("n_nationkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> nationProbeFieldIdentifier = {"l_extendedprice", "l_discount"};
         auto nationJoinProbeOperator = std::make_shared<BatchJoinProbe>(
             0 /*handler index*/,
@@ -329,11 +329,11 @@ public:
         nationScanOperator->setChild(nationJoinProbeOperator);
 
         /// Build on Nation
-        std::vector<ExpressionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldExpression>("n_regionkey")};
-        std::vector<ExpressionPtr> nationJoinBuildValues
-            = {std::make_shared<ReadFieldExpression>("n_name"),
-               std::make_shared<ReadFieldExpression>("l_extendedprice"),
-               std::make_shared<ReadFieldExpression>("l_discount")};
+        std::vector<FunctionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldFunction>("n_regionkey")};
+        std::vector<FunctionPtr> nationJoinBuildValues
+            = {std::make_shared<ReadFieldFunction>("n_name"),
+               std::make_shared<ReadFieldFunction>("l_extendedprice"),
+               std::make_shared<ReadFieldFunction>("l_discount")};
         auto nationJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
             nationJoinBuildKeys,
@@ -376,14 +376,14 @@ public:
         auto regionScanOperator = std::make_shared<Operators::Scan>(std::move(regionMemoryProviderPtr), regionProjection);
 
         /// Selection r_name = 'ASIA' -> currently modeled as 1 (as in Query 3)
-        auto asia = std::make_shared<ConstantInt32ValueExpression>(1);
-        auto readRName = std::make_shared<ReadFieldExpression>("r_name");
-        auto equalsExpression = std::make_shared<EqualsExpression>(readRName, asia);
-        auto regionSelectionOperator = std::make_shared<Selection>(equalsExpression);
+        auto asia = std::make_shared<ConstantInt32ValueFunction>(1);
+        auto readRName = std::make_shared<ReadFieldFunction>("r_name");
+        auto equalsFunction = std::make_shared<EqualsFunction>(readRName, asia);
+        auto regionSelectionOperator = std::make_shared<Selection>(equalsFunction);
         regionScanOperator->setChild(regionSelectionOperator);
 
         /// Probe with Nation
-        std::vector<ExpressionPtr> regionProbeKeys = {std::make_shared<ReadFieldExpression>("r_regionkey")};
+        std::vector<FunctionPtr> regionProbeKeys = {std::make_shared<ReadFieldFunction>("r_regionkey")};
         std::vector<Record::RecordFieldIdentifier> regionProbeFieldNames = {"n_name", "l_extendedprice", "l_discount"};
 
         auto regionJoinProbeOperator = std::make_shared<BatchJoinProbe>(
@@ -396,15 +396,15 @@ public:
         regionSelectionOperator->setChild(regionJoinProbeOperator);
 
         /// Aggregation: sum(l_extendedprice * (1 - l_discount)) as revenue
-        auto lineItemExtendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
-        auto lineItemdiscountField = std::make_shared<ReadFieldExpression>("l_discount");
-        auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
-        auto subExpression = std::make_shared<SubExpression>(oneConst, lineItemdiscountField);
-        auto revenueExpression = std::make_shared<MulExpression>(lineItemExtendedpriceField, subExpression);
-        auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueExpression, "sum_revenue");
-        auto readNationName = std::make_shared<ReadFieldExpression>("n_name");
-        std::vector<Expressions::ExpressionPtr> keyFields = {readNationName};
-        std::vector<Expressions::ExpressionPtr> aggregationExpressions = {revenueExpression};
+        auto lineItemExtendedpriceField = std::make_shared<ReadFieldFunction>("l_extendedprice");
+        auto lineItemdiscountField = std::make_shared<ReadFieldFunction>("l_discount");
+        auto oneConst = std::make_shared<ConstantFloatValueFunction>(1.0f);
+        auto subFunction = std::make_shared<SubFunction>(oneConst, lineItemdiscountField);
+        auto revenueFunction = std::make_shared<MulFunction>(lineItemExtendedpriceField, subFunction);
+        auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueFunction, "sum_revenue");
+        auto readNationName = std::make_shared<ReadFieldFunction>("n_name");
+        std::vector<Functions::FunctionPtr> keyFields = {readNationName};
+        std::vector<Functions::FunctionPtr> aggregationFunctions = {revenueFunction};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
 
         PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());

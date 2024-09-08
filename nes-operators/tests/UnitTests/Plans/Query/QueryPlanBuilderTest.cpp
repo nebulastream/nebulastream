@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <API/Query.hpp>
-#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -56,17 +56,17 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
     ///test addFilter
-    auto filterExpression
-        = ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("a").getExpressionNode(), NES::Attribute("b").getExpressionNode()));
-    queryPlan = QueryPlanBuilder::addFilter(filterExpression, queryPlan);
+    auto filterFunction
+        = FunctionNodePtr(LessFunctionNode::create(NES::Attribute("a").getFunctionNode(), NES::Attribute("b").getFunctionNode()));
+    queryPlan = QueryPlanBuilder::addFilter(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterExpression);
+    EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
-    std::vector<ExpressionNodePtr> expressions;
-    expressions.push_back(Attribute("id").getExpressionNode());
-    queryPlan = QueryPlanBuilder::addProjection(expressions, queryPlan);
+    std::vector<FunctionNodePtr> functions;
+    functions.push_back(Attribute("id").getFunctionNode());
+    queryPlan = QueryPlanBuilder::addProjection(functions, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalProjectionOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getExpressions(), expressions);
+    EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getFunctions(), functions);
     ///test addMap
     queryPlan = QueryPlanBuilder::addMap(Attribute("b") = 1, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalMapOperator>().size() == 1);

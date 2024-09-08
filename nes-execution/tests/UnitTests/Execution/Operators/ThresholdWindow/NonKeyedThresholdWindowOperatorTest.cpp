@@ -19,9 +19,9 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -62,10 +62,10 @@ public:
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
@@ -76,7 +76,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -112,10 +112,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountTrue)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
@@ -124,7 +124,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -160,10 +160,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCountFalse)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
@@ -174,7 +174,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 3, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 3, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -204,10 +204,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Min";
 
@@ -217,7 +217,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest)
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(minAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -253,10 +253,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest)
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Max";
 
@@ -266,7 +266,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
     auto maxAgg = std::make_shared<Aggregation::MaxAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(maxAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -302,10 +302,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Avg";
 
@@ -315,7 +315,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest)
     auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(avgAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -351,10 +351,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest)
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
 
     auto aggregationResultFieldName = "Count";
 
@@ -363,11 +363,11 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest)
     auto unsignedIntegerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(
-        integerType, unsignedIntegerType, Expressions::ExpressionPtr(), aggregationResultFieldName);
+        integerType, unsignedIntegerType, Functions::FunctionPtr(), aggregationResultFieldName);
 
     aggVector.push_back(countAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -404,12 +404,12 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest)
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations)
 {
     ///set up
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto readF3 = std::make_shared<Expressions::ReadFieldExpression>("f3");
-    auto readF4 = std::make_shared<Expressions::ReadFieldExpression>("f4");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto readF3 = std::make_shared<Functions::ReadFieldFunction>("f3");
+    auto readF4 = std::make_shared<Functions::ReadFieldFunction>("f4");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldNameSum = "Sum";
@@ -426,7 +426,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregati
     auto minAgg = std::make_shared<Aggregation::MinAggregationFunction>(integerType, integerType, readF3, aggregationResultFieldNameMin);
     auto avgAgg = std::make_shared<Aggregation::AvgAggregationFunction>(integerType, doubleType, readF4, aggregationResultFieldNameMean);
     auto countAgg = std::make_shared<Aggregation::CountAggregationFunction>(
-        integerType, unsignedIntegerType, Expressions::ExpressionPtr(), aggregationResultFieldNameCount);
+        integerType, unsignedIntegerType, Functions::FunctionPtr(), aggregationResultFieldNameCount);
 
     aggVector.push_back(sumAgg);
     aggVector.push_back(maxAgg);
@@ -434,7 +434,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregati
     aggVector.push_back(avgAgg);
     aggVector.push_back(countAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression,
+        greaterThanFunction,
         std::vector<Record::RecordFieldIdentifier>{
             aggregationResultFieldNameSum,
             aggregationResultFieldNameMax,
@@ -487,10 +487,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregati
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42.5);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42.5);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
@@ -501,7 +501,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTes
     auto sumAgg = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, readF2, aggregationResultFieldName);
     aggVector.push_back(sumAgg);
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
+        greaterThanFunction, std::vector<Record::RecordFieldIdentifier>{aggregationResultFieldName}, 0, aggVector, 0);
 
     auto collector = std::make_shared<CollectOperator>();
     thresholdWindowOperator->setChild(collector);
@@ -537,10 +537,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTes
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratingMultipleWindowsTest)
 {
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
-    auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ReadFieldFunction>("f2");
+    auto fortyTwo = std::make_shared<Functions::ConstantInt32ValueFunction>(42);
+    auto greaterThanFunction = std::make_shared<Functions::GreaterThanFunction>(readF1, fortyTwo);
     /// Attribute(f1) > 42, sum(f2)
 
     auto sumAggregationResultFieldName = "sum";
@@ -557,7 +557,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratin
     aggVector.push_back(avgAgg);
 
     auto thresholdWindowOperator = std::make_shared<NonKeyedThresholdWindow>(
-        greaterThanExpression,
+        greaterThanFunction,
         std::vector<Record::RecordFieldIdentifier>{sumAggregationResultFieldName, avgAggregationResultFieldName},
         0,
         aggVector,
