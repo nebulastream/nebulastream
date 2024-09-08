@@ -28,12 +28,12 @@ public:
     /**
    * Factory method to creates a MinAggregationDescriptor aggregation on a particular field.
    */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const FunctionNodePtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
 
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
@@ -46,7 +46,7 @@ public:
     virtual ~MinAggregationDescriptor() = default;
 
 private:
-    explicit MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    explicit MinAggregationDescriptor(FieldAccessFunctionNodePtr onField);
+    MinAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
 };
 } /// namespace NES::Windowing

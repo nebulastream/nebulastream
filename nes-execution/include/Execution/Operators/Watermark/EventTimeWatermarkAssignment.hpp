@@ -26,7 +26,7 @@ class EventTimeWatermarkAssignment : public ExecutableOperator
 {
 public:
     /**
-     * @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionExpression expression.
+     * @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionFunction function.
      * @param TimeFunctionPtr the time function
      */
     EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction);

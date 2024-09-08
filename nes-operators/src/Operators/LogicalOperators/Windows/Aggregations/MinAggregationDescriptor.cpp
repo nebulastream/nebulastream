@@ -14,8 +14,8 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/ExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FunctionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -24,28 +24,28 @@
 namespace NES::Windowing
 {
 
-MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessExpressionNodePtr field) : WindowAggregationDescriptor(field)
+MinAggregationDescriptor::MinAggregationDescriptor(FieldAccessFunctionNodePtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Min;
 }
-MinAggregationDescriptor::MinAggregationDescriptor(ExpressionNodePtr field, ExpressionNodePtr asField)
+MinAggregationDescriptor::MinAggregationDescriptor(FunctionNodePtr field, FunctionNodePtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Min;
 }
 
-WindowAggregationDescriptorPtr MinAggregationDescriptor::create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField)
+WindowAggregationDescriptorPtr MinAggregationDescriptor::create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField)
 {
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr MinAggregationDescriptor::on(const ExpressionNodePtr& keyExpression)
+WindowAggregationDescriptorPtr MinAggregationDescriptor::on(const FunctionNodePtr& keyFunction)
 {
-    if (!NES::Util::instanceOf<FieldAccessExpressionNode>(keyExpression))
+    if (!NES::Util::instanceOf<FieldAccessFunctionNode>(keyFunction))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
+        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
     }
-    auto fieldAccess = NES::Util::as<FieldAccessExpressionNode>(keyExpression);
+    auto fieldAccess = NES::Util::as<FieldAccessFunctionNode>(keyFunction);
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
@@ -72,19 +72,19 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = NES::Util::as<FieldAccessExpressionNode>(onField)->getFieldName();
-    auto asFieldName = NES::Util::as<FieldAccessExpressionNode>(asField)->getFieldName();
+    auto onFieldName = NES::Util::as<FieldAccessFunctionNode>(onField)->getFieldName();
+    auto asFieldName = NES::Util::as<FieldAccessFunctionNode>(asField)->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<FieldAccessFunctionNode>(asField)->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<FieldAccessFunctionNode>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

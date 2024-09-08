@@ -139,6 +139,5 @@ private:
      */
     [[nodiscard]] std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
         const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType) const;
-
 };
 }

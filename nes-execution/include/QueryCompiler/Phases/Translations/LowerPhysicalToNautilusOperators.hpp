@@ -16,12 +16,12 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/FunctionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
@@ -31,7 +31,7 @@
 
 namespace NES::QueryCompilation
 {
-class ExpressionProvider;
+class FunctionProvider;
 
 /// This phase lowers a pipeline plan of physical operators into a pipeline plan of nautilus operators.
 /// The lowering of individual operators is defined by the nautilus operator provider to improve extendability.
@@ -71,6 +71,6 @@ private:
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::shared_ptr<QueryCompilerOptions> options;
-    std::unique_ptr<ExpressionProvider> expressionProvider;
+    std::unique_ptr<FunctionProvider> functionProvider;
 };
 }

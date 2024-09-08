@@ -28,27 +28,27 @@ public:
     /**
      * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
      */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const FunctionNodePtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
 
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
     void inferStamp(SchemaPtr schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
-    MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    MaxAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
 
     virtual ~MaxAggregationDescriptor() = default;
 
 private:
-    explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit MaxAggregationDescriptor(FieldAccessFunctionNodePtr onField);
 };
 } /// namespace NES::Windowing

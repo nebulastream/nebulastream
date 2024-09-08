@@ -13,7 +13,7 @@
 */
 
 syntax = "proto3";
-import "SerializableExpression.proto";
+import "SerializableFunction.proto";
 package NES;
 
 /**

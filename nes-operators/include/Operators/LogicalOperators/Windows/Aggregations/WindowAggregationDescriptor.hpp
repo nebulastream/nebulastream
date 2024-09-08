@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Expressions/ExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/FunctionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
@@ -41,19 +41,19 @@ public:
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    std::shared_ptr<WindowAggregationDescriptor> as(const ExpressionNodePtr& asField);
+    std::shared_ptr<WindowAggregationDescriptor> as(const FunctionNodePtr& asField);
 
     /**
     * Returns the result field of the aggregation
-    * @return ExpressionNodePtr
+    * @return FunctionNodePtr
     */
-    ExpressionNodePtr as() const;
+    FunctionNodePtr as() const;
 
     /**
     * Returns the result field of the aggregation
-    * @return ExpressionNodePtr
+    * @return FunctionNodePtr
     */
-    ExpressionNodePtr on() const;
+    FunctionNodePtr on() const;
 
     /**
      * @brief Returns the type of this aggregation.
@@ -62,7 +62,7 @@ public:
     Type getType() const;
 
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
@@ -101,11 +101,11 @@ public:
     bool equal(std::shared_ptr<WindowAggregationDescriptor> otherWindowAggregationDescriptor) const;
 
 protected:
-    explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);
-    WindowAggregationDescriptor(const ExpressionNodePtr& onField, const ExpressionNodePtr& asField);
+    explicit WindowAggregationDescriptor(const FieldAccessFunctionNodePtr& onField);
+    WindowAggregationDescriptor(const FunctionNodePtr& onField, const FunctionNodePtr& asField);
     WindowAggregationDescriptor() = default;
-    ExpressionNodePtr onField;
-    ExpressionNodePtr asField;
+    FunctionNodePtr onField;
+    FunctionNodePtr asField;
     Type aggregationType;
 };
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
