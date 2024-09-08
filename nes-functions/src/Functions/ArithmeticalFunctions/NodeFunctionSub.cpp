@@ -14,14 +14,19 @@
 
 #include <sstream>
 #include <utility>
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionSub.cpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+========
+#include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/SubFunctionNode.cpp
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionSub.cpp
 NodeFunctionSub::NodeFunctionSub(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Sub") {};
 
 NodeFunctionSub::NodeFunctionSub(NodeFunctionSub* other) : NodeFunctionArithmeticalBinary(other)
@@ -31,30 +36,59 @@ NodeFunctionSub::NodeFunctionSub(NodeFunctionSub* other) : NodeFunctionArithmeti
 NodeFunctionPtr NodeFunctionSub::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto subNode = std::make_shared<NodeFunctionSub>(left->getStamp());
+========
+SubFunctionNode::SubFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+
+SubFunctionNode::SubFunctionNode(SubFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
+{
+}
+
+FunctionNodePtr SubFunctionNode::create(const FunctionNodePtr& left, const FunctionNodePtr& right)
+{
+    auto subNode = std::make_shared<SubFunctionNode>(left->getStamp());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/SubFunctionNode.cpp
     subNode->setChildren(left, right);
     return subNode;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionSub.cpp
 bool NodeFunctionSub::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSub>(rhs))
     {
         auto otherSubNode = NES::Util::as<NodeFunctionSub>(rhs);
+========
+bool SubFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<SubFunctionNode>())
+    {
+        auto otherSubNode = rhs->as<SubFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/SubFunctionNode.cpp
         return getLeft()->equal(otherSubNode->getLeft()) && getRight()->equal(otherSubNode->getRight());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionSub.cpp
 std::string NodeFunctionSub::toString() const
+========
+std::string SubFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/SubFunctionNode.cpp
 {
     std::stringstream ss;
     ss << children[0]->toString() << "-" << children[1]->toString();
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionSub.cpp
 NodeFunctionPtr NodeFunctionSub::deepCopy()
 {
     return NodeFunctionSub::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
+========
+FunctionNodePtr SubFunctionNode::copy()
+{
+    return SubFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/SubFunctionNode.cpp
 }
 
 }

@@ -11,24 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <utility>
 
-#pragma once
+namespace NES::Runtime::Execution::Functions {
 
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/Source.hpp>
-#include <Util/PluginRegistry.hpp>
-
-
-namespace NES::Sources
-{
-
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, const Schema&, const SourceDescriptor&>
-{
-};
-
+VarVal MulFunction::execute(Record& record) const {
+    const auto leftValue = leftSubFunction->execute(record);
+    const auto rightValue = rightSubFunction->execute(record);
+    return leftValue * rightValue;
 }
+MulFunction::MulFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
+    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(rightSubFunction) {}
 
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
-#undef INCLUDED_FROM_SOURCE_REGISTRY
+}// namespace NES::Runtime::Execution::Functions

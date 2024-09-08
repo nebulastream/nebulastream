@@ -16,13 +16,19 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+========
+#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/FieldRenameFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataTypePtr stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
 
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
@@ -40,30 +46,66 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(rhs))
     {
         auto otherFieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(rhs);
+========
+FieldAssignmentFunctionNode::FieldAssignmentFunctionNode(DataTypePtr stamp) : BinaryFunctionNode(std::move(stamp)) {};
+
+FieldAssignmentFunctionNode::FieldAssignmentFunctionNode(FieldAssignmentFunctionNode* other) : BinaryFunctionNode(other) {};
+
+FieldAssignmentFunctionNodePtr
+FieldAssignmentFunctionNode::create(const FieldAccessFunctionNodePtr& fieldAccess, const FunctionNodePtr& functionNodePtr)
+{
+    auto fieldAssignment = std::make_shared<FieldAssignmentFunctionNode>(functionNodePtr->getStamp());
+    fieldAssignment->setChildren(fieldAccess, functionNodePtr);
+    return fieldAssignment;
+}
+
+bool FieldAssignmentFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<FieldAssignmentFunctionNode>())
+    {
+        auto otherFieldAssignment = rhs->as<FieldAssignmentFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
         /// a field assignment function has always two children.
         return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 std::string NodeFunctionFieldAssignment::toString() const
+========
+std::string FieldAssignmentFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
 {
     std::stringstream ss;
     ss << children[0]->toString() << "=" << children[1]->toString();
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 NodeFunctionFieldAccessPtr NodeFunctionFieldAssignment::getField() const
 {
     return Util::as<NodeFunctionFieldAccess>(getLeft());
 }
 
 NodeFunctionPtr NodeFunctionFieldAssignment::getAssignment() const
+========
+FieldAccessFunctionNodePtr FieldAssignmentFunctionNode::getField() const
+{
+    return getLeft()->as<FieldAccessFunctionNode>();
+}
+
+FunctionNodePtr FieldAssignmentFunctionNode::getAssignment() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
 {
     return getRight();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
+========
+void FieldAssignmentFunctionNode::inferStamp(SchemaPtr schema)
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
 {
     /// infer stamp of assignment function
     getAssignment()->inferStamp(schema);
@@ -105,9 +147,15 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
         field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionFieldAssignment.cpp
 NodeFunctionPtr NodeFunctionFieldAssignment::deepCopy()
 {
     return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(getField()->deepCopy()), getAssignment()->deepCopy());
+========
+FunctionNodePtr FieldAssignmentFunctionNode::copy()
+{
+    return FieldAssignmentFunctionNode::create(getField()->copy()->as<FieldAccessFunctionNode>(), getAssignment()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/FieldAssignmentFunctionNode.cpp
 }
 
 bool NodeFunctionFieldAssignment::validateBeforeLowering() const

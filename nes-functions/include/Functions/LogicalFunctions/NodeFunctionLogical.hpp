@@ -16,9 +16,19 @@
 
 namespace NES
 {
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogical.hpp
 class LogicalNodeFunction
 {
 protected:
     LogicalNodeFunction() = default;
+========
+/**
+ * @brief This class just indicates that a node is a logical function.
+ */
+class LogicalFunctionNode
+{
+protected:
+    LogicalFunctionNode() = default;
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LogicalFunctionNode.hpp
 };
 }

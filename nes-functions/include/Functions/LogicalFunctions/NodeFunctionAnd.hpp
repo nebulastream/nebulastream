@@ -13,13 +13,18 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionAnd.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/AndFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents an AND combination between the two children.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionAnd.hpp
 class NodeFunctionAnd : public NodeFunctionLogicalBinary
 {
 public:
@@ -29,6 +34,17 @@ public:
     * @brief Create a new AND function
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+========
+class AndFunctionNode : public LogicalBinaryFunctionNode
+{
+public:
+    AndFunctionNode();
+    ~AndFunctionNode() override = default;
+    /**
+    * @brief Create a new AND function
+    */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/AndFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     /**
@@ -38,10 +54,22 @@ public:
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionAnd.hpp
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 private:
     explicit NodeFunctionAnd(NodeFunctionAnd* other);
+========
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+private:
+    explicit AndFunctionNode(AndFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/AndFunctionNode.hpp
 };
 } /// namespace NES

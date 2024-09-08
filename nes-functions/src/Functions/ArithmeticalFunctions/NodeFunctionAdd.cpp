@@ -14,15 +14,20 @@
 
 #include <sstream>
 #include <utility>
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionAdd.cpp
 
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+========
+#include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/AddFunctionNode.cpp
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionAdd.cpp
 NodeFunctionAdd::NodeFunctionAdd(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Add") {};
 
 NodeFunctionAdd::NodeFunctionAdd(NodeFunctionAdd* other) : NodeFunctionArithmeticalBinary(other)
@@ -32,30 +37,59 @@ NodeFunctionAdd::NodeFunctionAdd(NodeFunctionAdd* other) : NodeFunctionArithmeti
 NodeFunctionPtr NodeFunctionAdd::create(NodeFunctionPtr const& left, NodeFunctionPtr const& right)
 {
     auto addNode = std::make_shared<NodeFunctionAdd>(left->getStamp());
+========
+AddFunctionNode::AddFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+
+AddFunctionNode::AddFunctionNode(AddFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
+{
+}
+
+FunctionNodePtr AddFunctionNode::create(FunctionNodePtr const& left, FunctionNodePtr const& right)
+{
+    auto addNode = std::make_shared<AddFunctionNode>(left->getStamp());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/AddFunctionNode.cpp
     addNode->setChildren(left, right);
     return addNode;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionAdd.cpp
 bool NodeFunctionAdd::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAdd>(rhs))
     {
         auto otherAddNode = NES::Util::as<NodeFunctionAdd>(rhs);
+========
+bool AddFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<AddFunctionNode>())
+    {
+        auto otherAddNode = rhs->as<AddFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/AddFunctionNode.cpp
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionAdd.cpp
 std::string NodeFunctionAdd::toString() const
+========
+std::string AddFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/AddFunctionNode.cpp
 {
     std::stringstream ss;
     ss << children[0]->toString() << "+" << children[1]->toString();
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionAdd.cpp
 NodeFunctionPtr NodeFunctionAdd::deepCopy()
 {
     return NodeFunctionAdd::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
+========
+FunctionNodePtr AddFunctionNode::copy()
+{
+    return AddFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/AddFunctionNode.cpp
 }
 
 }

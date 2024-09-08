@@ -11,8 +11,18 @@
 # limitations under the License.
 
 add_source_files(nes-execution
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ArithmeticalFunctions/CMakeLists.txt
         ExecutableFunctionAdd.cpp
         ExecutableFunctionMul.cpp
         ExecutableFunctionDiv.cpp
         ExecutableFunctionSub.cpp
         )
+========
+        ReadFieldFunction.cpp
+        WriteFieldFunction.cpp
+        ConstantValueFunction.cpp
+        )
+
+add_subdirectory(ArithmeticalFunctions)
+add_subdirectory(LogicalFunctions)
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/CMakeLists.txt

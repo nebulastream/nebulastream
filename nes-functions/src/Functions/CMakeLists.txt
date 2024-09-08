@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-functions
+<<<<<<<< HEAD:nes-functions/src/Functions/CMakeLists.txt
         FunctionSerializationUtil.cpp
         NodeFunction.cpp
         NodeFunctionBinary.cpp
@@ -21,6 +22,22 @@ add_source_files(nes-functions
         NodeFunctionFieldRename.cpp
         NodeFunctionUnary.cpp
         NodeFunctionWhen.cpp
+========
+        ArithmeticalUnaryFunctionNode.cpp
+        ArithmeticalBinaryFunctionNode.cpp
+        AbsFunctionNode.cpp
+        AddFunctionNode.cpp
+        CeilFunctionNode.cpp
+        DivFunctionNode.cpp
+        ExpFunctionNode.cpp
+        FloorFunctionNode.cpp
+        ModFunctionNode.cpp
+        MulFunctionNode.cpp
+        PowFunctionNode.cpp
+        RoundFunctionNode.cpp
+        SqrtFunctionNode.cpp
+        SubFunctionNode.cpp
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/CMakeLists.txt
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)

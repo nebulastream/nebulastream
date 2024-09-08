@@ -13,12 +13,17 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionUnary.hpp
 #include <Functions/NodeFunction.hpp>
+========
+#include <Functions/FunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/UnaryFunctionNode.hpp
 namespace NES
 {
 /**
  * @brief A unary function is used to represent functions with one child.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionUnary.hpp
 class NodeFunctionUnary : public NodeFunction
 {
 public:
@@ -29,11 +34,24 @@ public:
      * @param child NodeFunctionPtr
      */
     void setChild(const NodeFunctionPtr& child);
+========
+class UnaryFunctionNode : public FunctionNode
+{
+public:
+    explicit UnaryFunctionNode(DataTypePtr stamp);
+
+    /**
+     * @brief set the child node of this function.
+     * @param child FunctionNodePtr
+     */
+    void setChild(const FunctionNodePtr& child);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/UnaryFunctionNode.hpp
 
     /**
      * @brief returns the child of this function
      * @return
      */
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionUnary.hpp
     NodeFunctionPtr child() const;
 
     /**
@@ -44,5 +62,17 @@ public:
 
 protected:
     explicit NodeFunctionUnary(NodeFunctionUnary* other);
+========
+    FunctionNodePtr child() const;
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override = 0;
+
+protected:
+    explicit UnaryFunctionNode(UnaryFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/UnaryFunctionNode.hpp
 };
 } /// namespace NES

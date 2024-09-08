@@ -12,13 +12,18 @@
     limitations under the License.
 */
 
+<<<<<<<< HEAD:nes-functions/src/Functions/LogicalFunctions/NodeFunctionLess.cpp
 #include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
 #include <Util/Common.hpp>
+========
+#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/LogicalFunctions/LessFunctionNode.cpp
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
+<<<<<<<< HEAD:nes-functions/src/Functions/LogicalFunctions/NodeFunctionLess.cpp
 
 NodeFunctionLess::NodeFunctionLess() : NodeFunctionLogicalBinary("Less")
 {
@@ -31,30 +36,57 @@ NodeFunctionLess::NodeFunctionLess(NodeFunctionLess* other) : NodeFunctionLogica
 NodeFunctionPtr NodeFunctionLess::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto lessThen = std::make_shared<NodeFunctionLess>();
+========
+LessFunctionNode::LessFunctionNode(LessFunctionNode* other) : LogicalBinaryFunctionNode(other)
+{
+}
+
+FunctionNodePtr LessFunctionNode::create(const FunctionNodePtr& left, const FunctionNodePtr& right)
+{
+    auto lessThen = std::make_shared<LessFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/LogicalFunctions/LessFunctionNode.cpp
     lessThen->setChildren(left, right);
     return lessThen;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/LogicalFunctions/NodeFunctionLess.cpp
 bool NodeFunctionLess::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionLess>(rhs))
     {
         auto other = NES::Util::as<NodeFunctionLess>(rhs);
+========
+bool LessFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<LessFunctionNode>())
+    {
+        auto other = rhs->as<LessFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/LogicalFunctions/LessFunctionNode.cpp
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/LogicalFunctions/NodeFunctionLess.cpp
 std::string NodeFunctionLess::toString() const
+========
+std::string LessFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/LogicalFunctions/LessFunctionNode.cpp
 {
     std::stringstream ss;
     ss << children[0]->toString() << "<" << children[1]->toString();
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/LogicalFunctions/NodeFunctionLess.cpp
 NodeFunctionPtr NodeFunctionLess::deepCopy()
 {
     return NodeFunctionLess::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
+========
+FunctionNodePtr LessFunctionNode::copy()
+{
+    return LessFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/LogicalFunctions/LessFunctionNode.cpp
 }
 
 }

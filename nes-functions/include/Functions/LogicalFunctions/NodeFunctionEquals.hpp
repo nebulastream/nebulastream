@@ -13,13 +13,18 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionEquals.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/EqualsFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents an equals comparision between the two children.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionEquals.hpp
 class NodeFunctionEquals : public NodeFunctionLogicalBinary
 {
 public:
@@ -29,17 +34,37 @@ public:
     * @brief Create a new equals function
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+========
+class EqualsFunctionNode : public LogicalBinaryFunctionNode
+{
+public:
+    EqualsFunctionNode() noexcept = default;
+    ~EqualsFunctionNode() override = default;
+    /**
+    * @brief Create a new equals function
+    */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/EqualsFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     bool validateBeforeLowering() const override;
 
     /**
     * @brief Create a deep copy of this function node.
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionEquals.hpp
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionEquals(NodeFunctionEquals* other);
+========
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit EqualsFunctionNode(EqualsFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/EqualsFunctionNode.hpp
 };
 } /// namespace NES

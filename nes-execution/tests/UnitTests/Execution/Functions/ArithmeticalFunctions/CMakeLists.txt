@@ -10,7 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        EqualsExpression.cpp
-        NotEqualsExpression.cpp
-        )
+add_nes_execution_test(arithmetical-function-tests "AddFunctionTest.cpp" "SubFunctionTest.cpp" "MulFunctionTest.cpp" "DivFunctionTest.cpp")

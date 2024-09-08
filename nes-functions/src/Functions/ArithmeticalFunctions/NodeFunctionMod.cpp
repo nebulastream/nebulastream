@@ -13,9 +13,13 @@
 */
 
 #include <sstream>
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+========
+#include <Functions/ArithmeticalFunctions/ModFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -23,6 +27,7 @@
 namespace NES
 {
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
 NodeFunctionMod::NodeFunctionMod(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
 
 NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeticalBinary(other)
@@ -32,14 +37,31 @@ NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeti
 NodeFunctionPtr NodeFunctionMod::create(const NodeFunctionPtr& left, const NodeFunctionPtr& right)
 {
     auto addNode = std::make_shared<NodeFunctionMod>(
+========
+ModFunctionNode::ModFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+
+ModFunctionNode::ModFunctionNode(ModFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
+{
+}
+
+FunctionNodePtr ModFunctionNode::create(const FunctionNodePtr& left, const FunctionNodePtr& right)
+{
+    auto addNode = std::make_shared<ModFunctionNode>(
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
         DataTypeFactory::createFloat()); /// TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);
     return addNode;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
 void NodeFunctionMod::inferStamp(SchemaPtr schema)
 {
     NodeFunctionArithmeticalBinary::inferStamp(schema);
+========
+void ModFunctionNode::inferStamp(SchemaPtr schema)
+{
+    ArithmeticalBinaryFunctionNode::inferStamp(schema);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
 
     if (stamp->isInteger())
     {
@@ -106,6 +128,7 @@ void NodeFunctionMod::inferStamp(SchemaPtr schema)
 
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, newLowerBound, newUpperBound);
     }
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
     ///NodeFunction do nothing if the stamp is of type undefined (from ArithmeticalBinary::inferSchema(typeInferencePhaseContext, schema);)
 }
 
@@ -114,21 +137,41 @@ bool NodeFunctionMod::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionMod>(rhs))
     {
         auto otherAddNode = NES::Util::as<NodeFunctionMod>(rhs);
+========
+    /// do nothing if the stamp is of type undefined (from ArithmeticalBinaryFunctionNode::inferSchema(typeInferencePhaseContext, schema);)
+}
+
+bool ModFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<ModFunctionNode>())
+    {
+        auto otherAddNode = rhs->as<ModFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
 std::string NodeFunctionMod::toString() const
+========
+std::string ModFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
 {
     std::stringstream ss;
     ss << children[0]->toString() << "%" << children[1]->toString();
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionMod.cpp
 NodeFunctionPtr NodeFunctionMod::deepCopy()
 {
     return NodeFunctionMod::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
+========
+FunctionNodePtr ModFunctionNode::copy()
+{
+    return ModFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ModFunctionNode.cpp
 }
 
 }

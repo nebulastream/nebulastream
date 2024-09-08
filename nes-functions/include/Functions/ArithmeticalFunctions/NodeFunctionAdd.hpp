@@ -13,12 +13,17 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
+========
+#include <Functions/ArithmeticalFunctions/ArithmeticalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/AddFunctionNode.hpp
 namespace NES
 {
 /**
  * @brief This node represents an ADD function.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp
 class NodeFunctionAdd final : public NodeFunctionArithmeticalBinary
 {
 public:
@@ -34,6 +39,28 @@ public:
 
 private:
     explicit NodeFunctionAdd(NodeFunctionAdd* other);
+========
+class AddFunctionNode final : public ArithmeticalBinaryFunctionNode
+{
+public:
+    explicit AddFunctionNode(DataTypePtr stamp);
+    ~AddFunctionNode() noexcept override = default;
+    /**
+     * @brief Create a new ADD function
+     */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+private:
+    explicit AddFunctionNode(AddFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/AddFunctionNode.hpp
 };
 
 }

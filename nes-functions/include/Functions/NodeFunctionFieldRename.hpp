@@ -13,6 +13,7 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldRename.hpp
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 namespace NES
@@ -25,6 +26,20 @@ using NodeFunctionFieldRenamePtr = std::shared_ptr<NodeFunctionFieldRename>;
  * @brief A NodeFunctionFieldRename allows us to rename an attribute value via .as in the query
  */
 class NodeFunctionFieldRename : public NodeFunction
+========
+#include <Functions/FunctionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
+namespace NES
+{
+
+class FieldRenameFunctionNode;
+using FieldRenameFunctionNodePtr = std::shared_ptr<FieldRenameFunctionNode>;
+
+/**
+ * @brief A FieldRenameFunctionNode allows us to rename an attribute value via .as in the query
+ */
+class FieldRenameFunctionNode : public FunctionNode
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldRenameFunctionNode.hpp
 {
 public:
     /**
@@ -32,9 +47,15 @@ public:
      * @param fieldName : name of the field
      * @param newFieldName : new name of the field
      * @param datatype : the data type
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldRename.hpp
      * @return pointer to the NodeFunctionFieldRename
      */
     static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
+========
+     * @return pointer to the FieldRenameFunctionNode
+     */
+    static FunctionNodePtr create(FieldAccessFunctionNodePtr originalField, std::string newFieldName);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldRenameFunctionNode.hpp
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -52,6 +73,7 @@ public:
 
     /**
     * @brief Create a deep copy of this function node.
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldRename.hpp
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override;
@@ -65,6 +87,21 @@ private:
     NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName);
 
     NodeFunctionFieldAccessPtr originalField;
+========
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+    FieldAccessFunctionNodePtr getOriginalField() const;
+
+protected:
+    explicit FieldRenameFunctionNode(const FieldRenameFunctionNodePtr other);
+
+private:
+    FieldRenameFunctionNode(const FieldAccessFunctionNodePtr& originalField, std::string newFieldName);
+
+    FieldAccessFunctionNodePtr originalField;
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldRenameFunctionNode.hpp
     std::string newFieldName;
 };
 

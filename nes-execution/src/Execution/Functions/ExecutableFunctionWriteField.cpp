@@ -11,12 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionWriteField.cpp
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
+========
+#include <Execution/Functions/WriteFieldFunction.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/WriteFieldFunction.cpp
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionWriteField.cpp
 ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, std::unique_ptr<Function> childFunction)
     : field(std::move(field)), childFunction(std::move(childFunction))
 {
@@ -25,8 +30,22 @@ ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldId
 VarVal ExecutableFunctionWriteField::execute(Record& record) const
 {
     VarVal newValue = childFunction->execute(record);
+========
+WriteFieldFunction::WriteFieldFunction(Record::RecordFieldIdentifier field, const FunctionPtr& subFunction)
+    : field(std::move(field)), subFunction(subFunction)
+{
+}
+
+VarVal WriteFieldFunction::execute(Record& record) const
+{
+    VarVal newValue = subFunction->execute(record);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/WriteFieldFunction.cpp
     record.write(field, newValue);
     return newValue;
 }
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionWriteField.cpp
 }
+========
+} /// namespace NES::Runtime::Execution::Functions
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/WriteFieldFunction.cpp

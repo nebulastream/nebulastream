@@ -13,28 +13,49 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalFunctionNode.hpp>
+#include <Functions/UnaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LogicalUnaryFunctionNode.hpp
 namespace NES
 {
 /**
  * @brief This node represents a logical unary function.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp
 class NodeFunctionLogicalUnary : public NodeFunctionUnary, public LogicalNodeFunction
 {
 protected:
     NodeFunctionLogicalUnary(std::string name);
+========
+class LogicalUnaryFunctionNode : public UnaryFunctionNode, public LogicalFunctionNode
+{
+protected:
+    LogicalUnaryFunctionNode();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LogicalUnaryFunctionNode.hpp
 
 public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
     /**
     * @brief Create a deep copy of this function node.
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override = 0;
 
 protected:
     explicit NodeFunctionLogicalUnary(NodeFunctionLogicalUnary* other);
+========
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override = 0;
+
+protected:
+    explicit LogicalUnaryFunctionNode(LogicalUnaryFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LogicalUnaryFunctionNode.hpp
 };
 } /// namespace NES

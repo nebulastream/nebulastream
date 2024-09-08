@@ -14,6 +14,7 @@
 
 #pragma once
 
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp
 namespace NES
 {
 /**
@@ -27,3 +28,21 @@ protected:
 };
 
 }
+========
+#include <Execution/Functions/Function.hpp>
+
+namespace NES::Runtime::Execution::Functions {
+
+/// Performs leftSubFunction + rightSubFunction
+class AddFunction : public Function {
+  public:
+    AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+    VarVal execute(Record& record) const override;
+
+  private:
+    const FunctionPtr leftSubFunction;
+    const FunctionPtr rightSubFunction;
+};
+
+}
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/include/Execution/Functions/ArithmeticalFunctions/AddFunction.hpp

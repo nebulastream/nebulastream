@@ -13,8 +13,12 @@
 */
 
 #include <cmath>
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionRound.cpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Util/Common.hpp>
+========
+#include <Functions/ArithmeticalFunctions/RoundFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/RoundFunctionNode.cpp
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -25,6 +29,7 @@
 namespace NES
 {
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionRound.cpp
 NodeFunctionRound::NodeFunctionRound(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
 
 NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionArithmeticalUnary(other)
@@ -34,10 +39,22 @@ NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionAri
 NodeFunctionPtr NodeFunctionRound::create(NodeFunctionPtr const& child)
 {
     auto roundNode = std::make_shared<NodeFunctionRound>(child->getStamp());
+========
+RoundFunctionNode::RoundFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+
+RoundFunctionNode::RoundFunctionNode(RoundFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
+{
+}
+
+FunctionNodePtr RoundFunctionNode::create(FunctionNodePtr const& child)
+{
+    auto roundNode = std::make_shared<RoundFunctionNode>(child->getStamp());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/RoundFunctionNode.cpp
     roundNode->setChild(child);
     return roundNode;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionRound.cpp
 void NodeFunctionRound::inferStamp(SchemaPtr schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
@@ -53,20 +70,47 @@ bool NodeFunctionRound::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionRound>(rhs))
     {
         auto otherRoundNode = NES::Util::as<NodeFunctionRound>(rhs);
+========
+void RoundFunctionNode::inferStamp(SchemaPtr schema)
+{
+    /// infer stamp of child, check if its numerical, assume same stamp
+    ArithmeticalUnaryFunctionNode::inferStamp(schema);
+
+    /// if stamp is integer, convert stamp to float
+    stamp = DataTypeFactory::createFloatFromInteger(stamp);
+    NES_TRACE("RoundFunctionNode: converted stamp to float: {}", toString());
+}
+
+bool RoundFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<RoundFunctionNode>())
+    {
+        auto otherRoundNode = rhs->as<RoundFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/RoundFunctionNode.cpp
         return child()->equal(otherRoundNode->child());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionRound.cpp
 std::string NodeFunctionRound::toString() const
+========
+std::string RoundFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/RoundFunctionNode.cpp
 {
     std::stringstream ss;
     ss << "ROUND(" << children[0]->toString() << ")";
     return ss.str();
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionRound.cpp
 NodeFunctionPtr NodeFunctionRound::deepCopy()
 {
     return NodeFunctionRound::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }
+========
+FunctionNodePtr RoundFunctionNode::copy()
+{
+    return RoundFunctionNode::create(children[0]->as<FunctionNode>()->copy());
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/RoundFunctionNode.cpp
 }

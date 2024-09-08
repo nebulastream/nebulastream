@@ -13,23 +13,39 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionNegate.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalUnaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/NegateFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node negates its child function.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionNegate.hpp
 class NodeFunctionNegate : public NodeFunctionLogicalUnary
 {
 public:
     NodeFunctionNegate();
     ~NodeFunctionNegate() override = default;
+========
+class NegateFunctionNode : public LogicalUnaryFunctionNode
+{
+public:
+    NegateFunctionNode();
+    ~NegateFunctionNode() override = default;
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/NegateFunctionNode.hpp
 
     /**
      * @brief Create a new negate function
      */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionNegate.hpp
     static NodeFunctionPtr create(NodeFunctionPtr const& child);
+========
+    static FunctionNodePtr create(FunctionNodePtr const& child);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/NegateFunctionNode.hpp
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
@@ -45,11 +61,20 @@ public:
 
     /**
     * @brief Create a deep copy of this function node.
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionNegate.hpp
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionNegate(NodeFunctionNegate* other);
+========
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit NegateFunctionNode(NegateFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/NegateFunctionNode.hpp
 };
 } /// namespace NES

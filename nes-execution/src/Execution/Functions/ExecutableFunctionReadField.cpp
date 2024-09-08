@@ -11,18 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
+========
+#include <Execution/Functions/ReadFieldFunction.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/ReadFieldFunction.cpp
 
 namespace NES::Runtime::Execution::Functions
 {
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIdentifier field) : field(field)
 {
 }
 
 VarVal ExecutableFunctionReadField::execute(Record& record) const
+========
+ReadFieldFunction::ReadFieldFunction(Record::RecordFieldIdentifier field) : field(field)
+{
+}
+
+VarVal ReadFieldFunction::execute(Record& record) const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/ReadFieldFunction.cpp
 {
     return record.read(field);
 }
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 }
+========
+} /// namespace NES::Runtime::Execution::Functions
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/src/Execution/Functions/ReadFieldFunction.cpp

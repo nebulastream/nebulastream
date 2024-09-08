@@ -14,19 +14,19 @@
 
 #pragma once
 
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Functions {
 
-/// Performs leftSubExpression + rightSubExpression
-class AddExpression : public Expression {
+/// Performs leftSubFunction - rightSubFunction
+class SubFunction : public Function {
   public:
-    AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+    SubFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
     VarVal execute(Record& record) const override;
 
   private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+    const FunctionPtr leftSubFunction;
+    const FunctionPtr rightSubFunction;
 };
 
 }

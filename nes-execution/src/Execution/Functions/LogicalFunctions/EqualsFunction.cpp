@@ -12,22 +12,19 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <Execution/Expressions/Expression.hpp>
-
-namespace NES::Runtime::Execution::Expressions
+#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+namespace NES::Runtime::Execution::Functions
 {
 
-/// Returns true if the left and right subexpressions are equal, otherwise false.
-class EqualsExpression final : public Expression
-{
-public:
-    EqualsExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    VarVal execute(Record& record) const override;
+EqualsFunction::EqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction)
+: leftSubFunction(leftSubFunction), rightSubFunction(rightSubFunction) {}
 
-private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
-};
+VarVal EqualsFunction::execute(Record& record) const
+{
+    const auto leftValue = leftSubFunction->execute(record);
+    const auto rightValue = rightSubFunction->execute(record);
+    return leftValue == rightValue;
+}
+
+
 }

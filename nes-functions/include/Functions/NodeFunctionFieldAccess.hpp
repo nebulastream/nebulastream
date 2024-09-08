@@ -13,29 +13,50 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldAccess.hpp
 #include <Functions/NodeFunction.hpp>
 namespace NES
 {
 
 class NodeFunctionFieldAccess;
 using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
+========
+#include <Functions/FunctionNode.hpp>
+namespace NES
+{
+
+class FieldAccessFunctionNode;
+using FieldAccessFunctionNodePtr = std::shared_ptr<FieldAccessFunctionNode>;
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldAccessFunctionNode.hpp
 
 /**
  * @brief A FieldAccessFunction reads a specific field of the current record.
  * It can be created typed or untyped.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldAccess.hpp
 class NodeFunctionFieldAccess : public NodeFunction
+========
+class FieldAccessFunctionNode : public FunctionNode
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldAccessFunctionNode.hpp
 {
 public:
     /**
     * @brief Create typed field read.
     */
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldAccess.hpp
     static NodeFunctionPtr create(DataTypePtr stamp, std::string fieldName);
+========
+    static FunctionNodePtr create(DataTypePtr stamp, std::string fieldName);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldAccessFunctionNode.hpp
 
     /**
      * @brief Create untyped field read.
      */
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldAccess.hpp
     static NodeFunctionPtr create(std::string fieldName);
+========
+    static FunctionNodePtr create(std::string fieldName);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldAccessFunctionNode.hpp
 
     std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
@@ -61,6 +82,7 @@ public:
 
     /**
     * @brief Create a deep copy of this function node.
+<<<<<<<< HEAD:nes-functions/include/Functions/NodeFunctionFieldAccess.hpp
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override;
@@ -71,6 +93,16 @@ protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
     NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName);
+========
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit FieldAccessFunctionNode(FieldAccessFunctionNode* other);
+
+    FieldAccessFunctionNode(DataTypePtr stamp, std::string fieldName);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/FieldAccessFunctionNode.hpp
     /**
      * @brief Name of the field want to access.
      */

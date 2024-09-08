@@ -14,13 +14,13 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/Expressions/ConstantValueExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Expressions/WriteFieldExpression.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/DivFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Streaming/Map.hpp>
@@ -75,13 +75,13 @@ public:
 };
 
 
-auto createPipelineForMapWithExpression(Expressions::ExpressionPtr expression, MemoryLayouts::RowLayoutPtr memoryLayout)
+auto createPipelineForMapWithFunction(Functions::FunctionPtr function, MemoryLayouts::RowLayoutPtr memoryLayout)
 {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
-    auto writeExpression = std::make_shared<Expressions::WriteFieldExpression>("f1", expression);
-    auto mapOperator = std::make_shared<Operators::Map>(writeExpression);
+    auto writeFunction = std::make_shared<Functions::WriteFieldFunction>("f1", function);
+    auto mapOperator = std::make_shared<Operators::Map>(writeFunction);
     scanOperator->setChild(mapOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
@@ -93,17 +93,17 @@ auto createPipelineForMapWithExpression(Expressions::ExpressionPtr expression, M
     return pipeline;
 }
 
-TEST_P(MapPipelineTest, AddExpression)
+TEST_P(MapPipelineTest, AddFunction)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
-    auto pipeline = createPipelineForMapWithExpression(addExpression, memoryLayout);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto addFunction = std::make_shared<Functions::AddFunction>(readF1, readF2);
+    auto pipeline = createPipelineForMapWithFunction(addFunction, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
@@ -132,17 +132,17 @@ TEST_P(MapPipelineTest, AddExpression)
         ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
     }
 }
-TEST_P(MapPipelineTest, DivExpression)
+TEST_P(MapPipelineTest, DivFunction)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto addExpression = std::make_shared<Expressions::DivExpression>(readF1, readF2);
-    auto pipeline = createPipelineForMapWithExpression(addExpression, memoryLayout);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto addFunction = std::make_shared<Functions::DivFunction>(readF1, readF2);
+    auto pipeline = createPipelineForMapWithFunction(addFunction, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
@@ -172,17 +172,17 @@ TEST_P(MapPipelineTest, DivExpression)
     }
 }
 
-TEST_P(MapPipelineTest, MulExpression)
+TEST_P(MapPipelineTest, MulFunction)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto addExpression = std::make_shared<Expressions::MulExpression>(readF1, readF2);
-    auto pipeline = createPipelineForMapWithExpression(addExpression, memoryLayout);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto addFunction = std::make_shared<Functions::MulFunction>(readF1, readF2);
+    auto pipeline = createPipelineForMapWithFunction(addFunction, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
@@ -212,17 +212,17 @@ TEST_P(MapPipelineTest, MulExpression)
     }
 }
 
-TEST_P(MapPipelineTest, SubExpression)
+TEST_P(MapPipelineTest, SubFunction)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
-    auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
-    auto readF2 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
-    auto addExpression = std::make_shared<Expressions::SubExpression>(readF1, readF2);
-    auto pipeline = createPipelineForMapWithExpression(addExpression, memoryLayout);
+    auto readF1 = std::make_shared<Functions::ReadFieldFunction>("f1");
+    auto readF2 = std::make_shared<Functions::ConstantInt64ValueFunction>(5);
+    auto addFunction = std::make_shared<Functions::SubFunction>(readF1, readF2);
+    auto pipeline = createPipelineForMapWithFunction(addFunction, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);

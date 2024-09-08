@@ -13,13 +13,18 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionOr.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/OrFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents an OR combination between the two children.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionOr.hpp
 class NodeFunctionOr : public NodeFunctionLogicalBinary
 {
 public:
@@ -29,6 +34,17 @@ public:
     * @brief Create a new OR function
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+========
+class OrFunctionNode : public LogicalBinaryFunctionNode
+{
+public:
+    OrFunctionNode();
+    ~OrFunctionNode() override = default;
+    /**
+    * @brief Create a new OR function
+    */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/OrFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     /**
@@ -38,10 +54,21 @@ public:
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionOr.hpp
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);
+========
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit OrFunctionNode(OrFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/OrFunctionNode.hpp
 };
 } /// namespace NES

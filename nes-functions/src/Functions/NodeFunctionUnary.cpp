@@ -13,6 +13,7 @@
 */
 
 #include <utility>
+<<<<<<<< HEAD:nes-functions/src/Functions/NodeFunctionUnary.cpp
 #include <Functions/NodeFunctionUnary.hpp>
 #include <Util/Common.hpp>
 
@@ -34,4 +35,25 @@ NodeFunctionPtr NodeFunctionUnary::child() const
 {
     return Util::as<NodeFunction>(children[0]);
 }
+========
+#include <Functions/UnaryFunctionNode.hpp>
+
+namespace NES
+{
+UnaryFunctionNode::UnaryFunctionNode(DataTypePtr stamp) : FunctionNode(std::move(stamp))
+{
+}
+
+UnaryFunctionNode::UnaryFunctionNode(UnaryFunctionNode* other) : FunctionNode(other)
+{
+}
+
+void UnaryFunctionNode::setChild(const FunctionNodePtr& child)
+{
+    addChildWithEqual(child);
+}
+FunctionNodePtr UnaryFunctionNode::child() const
+{
+    return children[0]->as<FunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/UnaryFunctionNode.cpp
 }

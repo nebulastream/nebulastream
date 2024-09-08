@@ -11,17 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
 #include <utility>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Functions {
 
-VarVal AddExpression::execute(Record& record) const {
-    const auto leftValue = leftSubExpression->execute(record);
-    const auto rightValue = rightSubExpression->execute(record);
+VarVal AddFunction::execute(Record& record) const {
+    const auto leftValue = leftSubFunction->execute(record);
+    const auto rightValue = rightSubFunction->execute(record);
     return leftValue + rightValue;
 }
-AddExpression::AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
+AddFunction::AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
+    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
 
-}// namespace NES::Runtime::Execution::Expressions
+}// namespace NES::Runtime::Execution::Functions

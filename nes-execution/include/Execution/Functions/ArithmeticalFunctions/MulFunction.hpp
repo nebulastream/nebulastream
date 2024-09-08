@@ -12,19 +12,21 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
-namespace NES::Runtime::Execution::Expressions
-{
+#pragma once
 
-EqualsExpression::EqualsExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-: leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+#include <Execution/Functions/Function.hpp>
 
-VarVal EqualsExpression::execute(Record& record) const
-{
-    const auto leftValue = leftSubExpression->execute(record);
-    const auto rightValue = rightSubExpression->execute(record);
-    return leftValue == rightValue;
-}
+namespace NES::Runtime::Execution::Functions {
 
+/// Performs leftSubFunction * rightSubFunction
+class MulFunction : public Function {
+  public:
+    MulFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+    VarVal execute(Record& record) const override;
+
+  private:
+    const FunctionPtr leftSubFunction;
+    const FunctionPtr rightSubFunction;
+};
 
 }

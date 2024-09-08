@@ -10,9 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        AddExpression.cpp
-        MulExpression.cpp
-        DivExpression.cpp
-        SubExpression.cpp
-        )
+add_nes_execution_test(logical-function-tests "EqualsFunctionTest.cpp" "NotEqualsFunctionTest.cpp")

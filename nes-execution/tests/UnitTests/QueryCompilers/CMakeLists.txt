@@ -10,5 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<<< HEAD:nes-execution/tests/UnitTests/QueryCompilers/CMakeLists.txt
 
 add_nes_execution_test(function-provider-test "FunctionProviderTest.cpp")
+========
+add_subdirectory(ArithmeticalFunctions)
+add_subdirectory(LogicalFunctions)
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-execution/tests/UnitTests/Execution/Functions/CMakeLists.txt

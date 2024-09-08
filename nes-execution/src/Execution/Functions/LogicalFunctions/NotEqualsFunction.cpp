@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Execution/Expressions/LogicalExpressions/NotEqualsExpression.hpp>
+#include <Execution/Functions/LogicalFunctions/NotEqualsFunction.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Functions {
 
-NotEqualsExpression::NotEqualsExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+NotEqualsFunction::NotEqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction)
+    : leftSubFunction(leftSubFunction), rightSubFunction(rightSubFunction) {}
 
-VarVal NotEqualsExpression::execute(Record& record) const
+VarVal NotEqualsFunction::execute(Record& record) const
 {
-    const auto leftValue = leftSubExpression->execute(record);
-    const auto rightValue = rightSubExpression->execute(record);
+    const auto leftValue = leftSubFunction->execute(record);
+    const auto rightValue = rightSubFunction->execute(record);
     const auto result = leftValue != rightValue;
     return result;
 }

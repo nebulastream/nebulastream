@@ -13,13 +13,18 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents a greater comparison between the two children.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp
 class NodeFunctionGreaterEquals : public NodeFunctionLogicalBinary
 {
 public:
@@ -35,5 +40,27 @@ public:
 
 protected:
     explicit NodeFunctionGreaterEquals(NodeFunctionGreaterEquals* other);
+========
+class GreaterEqualsFunctionNode : public LogicalBinaryFunctionNode
+{
+public:
+    GreaterEqualsFunctionNode() noexcept = default;
+    ~GreaterEqualsFunctionNode() override = default;
+    /**
+    * @brief Create a new greater then function
+    */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit GreaterEqualsFunctionNode(GreaterEqualsFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp
 };
 } /// namespace NES

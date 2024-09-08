@@ -13,6 +13,7 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 namespace NES
 {
@@ -25,6 +26,23 @@ public:
     explicit NodeFunctionAbs(DataTypePtr stamp);
     ~NodeFunctionAbs() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
+========
+#include <Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.hpp>
+namespace NES
+{
+/**
+ * @brief This node represents an ROUND (absolut value) function.
+ */
+class RoundFunctionNode final : public ArithmeticalUnaryFunctionNode
+{
+public:
+    explicit RoundFunctionNode(DataTypePtr stamp);
+    ~RoundFunctionNode() noexcept override = default;
+    /**
+     * @brief Create a new ROUND function
+     */
+    [[nodiscard]] static FunctionNodePtr create(FunctionNodePtr const& child);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/RoundFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
@@ -34,10 +52,22 @@ public:
      * @param schema
      */
     void inferStamp(SchemaPtr schema) override;
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
     NodeFunctionPtr deepCopy() override;
 
 private:
     explicit NodeFunctionAbs(NodeFunctionAbs* other);
+========
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+private:
+    explicit RoundFunctionNode(RoundFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/RoundFunctionNode.hpp
 };
 
 }

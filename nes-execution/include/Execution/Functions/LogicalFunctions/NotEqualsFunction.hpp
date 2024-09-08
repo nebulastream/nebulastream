@@ -14,19 +14,18 @@
 
 #pragma once
 
-#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Functions {
 
-/// Performs leftSubExpression * rightSubExpression
-class MulExpression : public Expression {
-  public:
-    MulExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+/// Returns true if the left and right subfunctions are NOT equal, otherwise false.
+class NotEqualsFunction final : public Function {
+public:
+    NotEqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction);
     VarVal execute(Record& record) const override;
 
-  private:
-    const ExpressionPtr leftSubExpression;
-    const ExpressionPtr rightSubExpression;
+private:
+    const FunctionPtr leftSubFunction;
+    const FunctionPtr rightSubFunction;
 };
-
 }

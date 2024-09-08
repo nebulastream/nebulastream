@@ -13,13 +13,18 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLess.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+========
+#include <Functions/LogicalFunctions/LogicalBinaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LessFunctionNode.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents a less comparision between the two children.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLess.hpp
 class NodeFunctionLess : public NodeFunctionLogicalBinary
 {
 public:
@@ -29,12 +34,35 @@ public:
     * @brief Create a new less function
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+========
+class LessFunctionNode : public LogicalBinaryFunctionNode
+{
+public:
+    LessFunctionNode() = default;
+    ~LessFunctionNode() override = default;
+    /**
+    * @brief Create a new less function
+    */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LessFunctionNode.hpp
 
     bool equal(NodePtr const& rhs) const override;
     std::string toString() const override;
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLess.hpp
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionLess(NodeFunctionLess* other);
+========
+
+    /**
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+protected:
+    explicit LessFunctionNode(LessFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/LogicalFunctions/LessFunctionNode.hpp
 };
 } /// namespace NES

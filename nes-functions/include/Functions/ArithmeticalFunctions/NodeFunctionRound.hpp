@@ -13,6 +13,7 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 namespace NES
 {
@@ -22,10 +23,29 @@ public:
     explicit NodeFunctionRound(DataTypePtr stamp);
     ~NodeFunctionRound() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
+========
+#include <Functions/ArithmeticalFunctions/ArithmeticalBinaryFunctionNode.hpp>
+namespace NES
+{
+
+/**
+ * @brief This node represents a division function.
+ */
+class DivFunctionNode final : public ArithmeticalBinaryFunctionNode
+{
+public:
+    explicit DivFunctionNode(DataTypePtr stamp);
+    ~DivFunctionNode() noexcept override = default;
+    /**
+     * @brief Create a new DIV function
+     */
+    static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/DivFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
     /**
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
@@ -35,6 +55,15 @@ public:
 
 private:
     explicit NodeFunctionRound(NodeFunctionRound* other);
+========
+    * @brief Create a deep copy of this function node.
+    * @return FunctionNodePtr
+    */
+    FunctionNodePtr copy() override;
+
+private:
+    explicit DivFunctionNode(DivFunctionNode* other);
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/DivFunctionNode.hpp
 };
 
 }

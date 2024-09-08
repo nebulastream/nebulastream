@@ -13,20 +13,31 @@
 */
 
 #include <utility>
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.cpp
 
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Util/Common.hpp>
+========
+#include <Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.hpp>
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.cpp
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.cpp
 NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name)
     : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
 NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other) : NodeFunctionUnary(other)
+========
+ArithmeticalUnaryFunctionNode::ArithmeticalUnaryFunctionNode(DataTypePtr stamp) : UnaryFunctionNode(std::move(stamp))
+{
+}
+ArithmeticalUnaryFunctionNode::ArithmeticalUnaryFunctionNode(ArithmeticalUnaryFunctionNode* other) : UnaryFunctionNode(other)
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.cpp
 {
 }
 
@@ -37,7 +48,11 @@ NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithme
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.cpp
 void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
+========
+void ArithmeticalUnaryFunctionNode::inferStamp(SchemaPtr schema)
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.cpp
 {
     /// infer stamp of child
     auto child = this->child();
@@ -55,17 +70,29 @@ void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
     NES_TRACE("We assigned the following stamp: {}", toString());
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.cpp
 bool NodeFunctionArithmeticalUnary::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionArithmeticalUnary>(rhs))
     {
         auto otherAddNode = NES::Util::as<NodeFunctionArithmeticalUnary>(rhs);
+========
+bool ArithmeticalUnaryFunctionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<ArithmeticalUnaryFunctionNode>())
+    {
+        auto otherAddNode = rhs->as<ArithmeticalUnaryFunctionNode>();
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.cpp
         return child()->equal(otherAddNode->child());
     }
     return false;
 }
 
+<<<<<<<< HEAD:nes-functions/src/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.cpp
 std::string NodeFunctionArithmeticalUnary::toString() const
+========
+std::string ArithmeticalUnaryFunctionNode::toString() const
+>>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/src/Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.cpp
 {
     return "ArithmeticalFunction()";
 }
