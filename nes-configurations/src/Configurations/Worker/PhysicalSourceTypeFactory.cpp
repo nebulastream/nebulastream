@@ -18,8 +18,8 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PluginRegistry.hpp>
 
 namespace NES::Configurations
 {

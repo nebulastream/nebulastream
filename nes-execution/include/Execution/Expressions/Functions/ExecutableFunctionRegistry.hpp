@@ -15,8 +15,8 @@
 #pragma once
 
 #include <Execution/Expressions/Expression.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PluginRegistry.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
