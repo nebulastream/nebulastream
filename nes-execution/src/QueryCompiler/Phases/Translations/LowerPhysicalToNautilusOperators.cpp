@@ -22,11 +22,11 @@
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/Map.hpp>
 #include <Execution/Operators/Streaming/Selection.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
 #include <Functions/FieldAccessFunctionNode.hpp>
 #include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>

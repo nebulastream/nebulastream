@@ -15,7 +15,7 @@
 #include <atomic>
 #include <iostream>
 #include <thread>
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Streaming/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
