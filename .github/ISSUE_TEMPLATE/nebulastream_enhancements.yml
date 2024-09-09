@@ -1,6 +1,6 @@
 ---
-name: 🌀 NebulaStream Enhancement
-description: Perfrom enhancement to existing feature in NebulaStream
+name: 🌀 Enhancement
+description: Suggest an enhancement
 labels: ["enhancement"]
 title: '[TASK]'
 body:
@@ -16,12 +16,12 @@ body:
   - type: textarea
     attributes:
       label: Description
-      description: Describe the task
+      description: Description of the enhancement
     validations:
       required: true
   - type: textarea
     attributes:
       label: Acceptance Criteria
-      description: List the criteria to be checked when accepting the PR
+      description: List of criteria to be meet
     validations:
       required: true
