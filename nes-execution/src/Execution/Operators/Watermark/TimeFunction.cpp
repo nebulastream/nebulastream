@@ -15,7 +15,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <utility>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/TimeFunction.cpp
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+========
+#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
+>>>>>>>> 68726787a8 (chore(Execution) Moved Watermark operators to own folder):nes-execution/src/Execution/Operators/Streaming/Watermark/TimeFunction.cpp
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>

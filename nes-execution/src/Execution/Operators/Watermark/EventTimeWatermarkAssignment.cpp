@@ -14,8 +14,13 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/EventTimeWatermarkAssignment.cpp
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+========
+#include <Execution/Operators/Streaming/Watermark/EventTimeWatermarkAssignment.hpp>
+#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
+>>>>>>>> 68726787a8 (chore(Execution) Moved Watermark operators to own folder):nes-execution/src/Execution/Operators/Streaming/Watermark/EventTimeWatermarkAssignment.cpp
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>

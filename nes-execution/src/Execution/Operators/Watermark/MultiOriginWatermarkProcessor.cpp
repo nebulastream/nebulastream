@@ -12,7 +12,11 @@
     limitations under the License.
 */
 #include <sstream>
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/MultiOriginWatermarkProcessor.cpp
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
+========
+#include <Execution/Operators/Streaming/Watermark/MultiOriginWatermarkProcessor.hpp>
+>>>>>>>> 68726787a8 (chore(Execution) Moved Watermark operators to own folder):nes-execution/src/Execution/Operators/Streaming/Watermark/MultiOriginWatermarkProcessor.cpp
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
