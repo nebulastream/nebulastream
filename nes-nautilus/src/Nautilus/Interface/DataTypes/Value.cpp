@@ -17,7 +17,7 @@
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 
 namespace NES::Nautilus
 {

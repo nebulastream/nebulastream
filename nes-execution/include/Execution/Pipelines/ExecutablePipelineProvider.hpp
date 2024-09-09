@@ -15,7 +15,7 @@
 #pragma once
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 namespace NES::Runtime::Execution
 {
 class ExecutablePipelineStage;
