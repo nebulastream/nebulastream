@@ -1,6 +1,6 @@
 ---
-name: 🔧 NebulaStream Bug report
-description: Problems and issues with code in NebulaStream core
+name: 🔧 NebulaStream bug report
+description: Create a report to help us improve
 labels: ["Bug"]
 title: '[BUG]'
 body:
@@ -13,24 +13,26 @@ body:
         We really appreciate the community's efforts to improve NebulaStream.
         <br clear='left'/>"
       # yamllint enable rule:line-length
+
   - type: textarea
     attributes:
-      label: NebulaStream version
+      label: Version / Commit
       description: >
-        What NebulaStream version are you using? If you wish to
-        discuss NebulaStream, open a [discussion](https://github.com/nebulastream/nebulastream/discussions) instead!
+        Which version of NebulaStream are you using?
       placeholder: >
-        vx.x.x
+        vx.x.x / commit hash
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: What happened?
-      description: Describe what happened.
+      description: A short, clear and concise description of what the bug is.
       placeholder: >
         Please provide the context in which the problem occurred and explain what happened
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: What is the expected behavior?
@@ -40,6 +42,7 @@ body:
         You can include files by dragging and dropping them here.
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: How to reproduce
@@ -51,6 +54,7 @@ body:
         as minimally and precisely as possible. Keep in mind we do not have access to your cluster or DAGs.
         Remember that non-reproducible issues will be closed! Opening a discussion is recommended as a
         first step.
+
   - type: input
     attributes:
       label: Operating System
@@ -58,12 +62,14 @@ body:
       placeholder: "In linux systems you can get it via `cat /etc/os-release`"
     validations:
       required: true
+
   - type: textarea
     attributes:
       label: Deployment details
       description: Additional description of your deployment.
       placeholder: >
         Enter any relevant details of your deployment.
+
   - type: textarea
     attributes:
       label: Anything else
@@ -73,6 +79,7 @@ body:
         Any relevant logs to include? Put them here inside fenced
         ``` ``` blocks or inside a foldable details tag if it's long:
         <details><summary>x.log</summary> lots of stuff </details>
+
   - type: checkboxes
     attributes:
       label: Are you willing to submit a PR?
@@ -81,6 +88,7 @@ body:
         especially if you already have a good understanding of how to fix the bug.
       options:
         - label: Yes I am willing to submit a PR!
+
   - type: checkboxes
     attributes:
       label: Code of Conduct
@@ -92,6 +100,7 @@ body:
             I agree to follow this project's
             [Code of Conduct](https://github.com/nebulastream/nebulastream/blob/main/CODE_OF_CONDUCT.md)
           required: true
+
   - type: markdown
     attributes:
       value: "Thanks for completing our form!"
