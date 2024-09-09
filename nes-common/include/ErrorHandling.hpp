@@ -83,9 +83,13 @@ private:
  * @param message The message that should be printed if the condition is false
  */
 #define PRECONDITION(condition, message) \
-    if (!(condition)) \
     { \
-        throw PreconditionViolated(message); \
+        std::stringstream messageStream; \
+        messageStream << message; \
+        if (!(condition)) \
+        { \
+            throw PreconditionViolated(messageStream.str()); \
+        } \
     }
 
 /**
@@ -95,9 +99,13 @@ private:
  * @param message The message that should be printed if the condition is false
  */
 #define INVARIANT(condition, message) \
-    if (!(condition)) \
     { \
-        throw InvariantViolated(message); \
+        std::stringstream messageStream; \
+        messageStream << message; \
+        if (!(condition)) \
+        { \
+            throw InvariantViolated(messageStream.str()); \
+        } \
     }
 
 /**
