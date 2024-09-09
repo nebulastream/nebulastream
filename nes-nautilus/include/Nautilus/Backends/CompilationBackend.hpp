@@ -16,7 +16,7 @@
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/DumpHelper.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 
 namespace NES::Nautilus::Backends
 {

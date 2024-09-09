@@ -14,7 +14,7 @@
 #pragma once
 #include <optional>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Util/LegacyPluginRegistry.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

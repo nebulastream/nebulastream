@@ -13,187 +13,82 @@
 */
 
 #pragma once
-#include <list>
-#include <map>
-#include <memory>
-#include <Util/Logger/Logger.hpp>
-
-namespace NES::Util
+#include <functional>
+#include <unordered_map>
+#include <utility>
+namespace NES
 {
 
-/**
- * @brief The plugin registry allows the dynamic registration of plugins at runtime.
- * A plugin is a provider of a specific type T, which defines the plugin interface.
- * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the plugin.
- * @tparam T plugin interface type
- */
-template <typename T>
-class PluginRegistry
+/// The registry singleton allows registration of factory methods to produce a certain type.
+/// There exists multiple distinct registries for different types.
+template <typename Registrar>
+class Registry
 {
-private:
-    static inline std::list<std::unique_ptr<T>> items = std::list<std::unique_ptr<T>>();
-
 public:
-    static std::list<std::unique_ptr<T>>& getPlugins() { return items; }
-    /** A static registration template. Use like such:
-    *
-    * Registry<PluginInterfaceType>::Add<PluginType> X;
-    *
-    * Use of this template requires that:
-    *
-    * 1. The registered subclass has a default constructor.
-    */
-    template <typename V>
-    class Add
+    /// Cannot copy and move
+    Registry(const Registry& other) = delete;
+    Registry(Registry&& other) noexcept = delete;
+    Registry& operator=(const Registry& other) = delete;
+    Registry& operator=(Registry&& other) noexcept = delete;
+    ~Registry() = default;
+
+    [[nodiscard]] bool contains(const typename Registrar::Key& key) const { return registryImpl.contains(key); }
+
+    template <typename... Args>
+    [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args... args) const
     {
-        static std::unique_ptr<T> CtorFn() { return std::make_unique<V>(); }
-
-    public:
-        Add() { PluginRegistry<T>::items.emplace_back(CtorFn()); }
-    };
-};
-
-/**
- * @brief The plugin registry allows the dynamic registration of plugins at runtime.
- * A plugin is a provider of a specific type T, which defines the plugin interface.
- * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the registry.
- * @tparam T plugin interface type
- */
-template <typename T>
-class NamedPluginRegistry
-{
-private:
-    static inline std::list<std::string> names = std::list<std::string>();
-    static inline std::map<std::string, std::unique_ptr<T>> items = std::map<std::string, std::unique_ptr<T>>();
-
-public:
-    /**
-     * @brief Returns an existing instance of this plugin.
-     * @param name
-     * @return std::unique_ptr<T>
-     */
-    static std::unique_ptr<T>& getPlugin(std::string name)
-    {
-        auto found = items.find(name);
-        if (found == items.end())
-        {
-            NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
-        }
-        return found->second;
+        return registryImpl.at(key)(args...);
     }
 
-    /**
-     * @brief Returns the list of all plugins.
-     * @return std::list<std::string>
-     */
-    static std::list<std::string>& getPluginNames() { return names; }
-
-    /**
-     * @brief Checks if a specific plugin was registered.
-     * @param name plugin name
-     * @return bool
-     */
-    static bool hasPlugin(std::string name) { return items.contains(name); }
-
-    /** A static registration template. Use like such:
-    *
-    * Registry<PluginInterfaceType>::Add<PluginType> X;
-    *
-    * Use of this template requires that:
-    *
-    * 1. The registered subclass has a default constructor.
-    */
-    template <typename V>
-    class Add
+    [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const
     {
-        static std::unique_ptr<T> CtorFn() { return std::make_unique<V>(); }
+        std::vector<typename Registrar::Key> names;
+        names.reserve(registryImpl.size());
+        std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first; });
+        return names;
+    }
 
-    public:
-        Add(std::string name)
-        {
-            NamedPluginRegistry<T>::names.emplace_back(name);
-            NamedPluginRegistry<T>::items.emplace(name, CtorFn());
-        }
-    };
-};
-
-/**
- * @brief The plugin factory allows the dynamic registration of plugins at that dynamically create instances of the plugin at runtime.
- * A plugin is a provider of a specific type T, which defines the plugin interface.
- * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the registry.
- * @tparam T plugin interface type
- */
-template <typename T>
-class PluginFactory
-{
-    template <typename X>
-    class Provider
-    {
-    public:
-        Provider() = default;
-        [[nodiscard]] virtual std::unique_ptr<X> create() const = 0;
-        virtual ~Provider() = default;
-    };
-
-    template <class Base, class Sub>
-    class TypedProvider : public Provider<Base>
-    {
-    public:
-        [[nodiscard]] std::unique_ptr<Base> create() const override { return std::make_unique<Sub>(); }
-    };
+protected:
+    /// A single registry will be constructed in the static instance() method. It is impossible to create a registry otherwise.
+    Registry() { Registrar::registerAll(*this); }
 
 private:
-    static inline std::list<std::string> names = std::list<std::string>();
-    static inline std::map<std::string, std::unique_ptr<Provider<T>>> items = std::map<std::string, std::unique_ptr<Provider<T>>>();
-
-public:
-    /**
-     * @brief Returns a new instance of this plugin.
-     * @param name
-     * @return std::unique_ptr<T>
-     */
-    static std::unique_ptr<T> createPlugin(std::string name)
+    /// Only the Registrar can register new plugins.
+    void registerPlugin(typename Registrar::Key key, typename Registrar::CreatorFn fn)
     {
-        auto found = items.find(name);
-        if (found == items.end())
-        {
-            NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
-        }
-        return found->second->create();
+        registryImpl.emplace(std::move(key), std::move(fn));
     }
-    /**
-     * @brief Returns the list of all plugins.
-     * @return std::list<std::string>
-     */
-    static std::list<std::string>& getPluginNames() { return names; }
+    friend Registrar;
 
-    /**
-     * @brief Checks if a specific plugin was registered.
-     * @param name plugin name
-     * @return bool
-     */
-    static bool hasPlugin(std::string name) { return items.contains(name); }
-
-    /** A static registration template. Use like such:
-    *
-    * Registry<PluginInterfaceType>::Add<PluginType> X;
-    *
-    * Use of this template requires that:
-    *
-    * 1. The registered subclass has a default constructor.
-    */
-    template <typename V>
-    class Add
-    {
-        static std::unique_ptr<Provider<T>> CtorFn() { return std::make_unique<TypedProvider<T, V>>(); }
-
-    public:
-        explicit Add(std::string name)
-        {
-            PluginFactory<T>::names.emplace_back(name);
-            PluginFactory<T>::items.emplace(name, CtorFn());
-        }
-    };
+    std::unordered_map<typename Registrar::Key, typename Registrar::CreatorFn> registryImpl;
 };
 
-} /// namespace NES::Util
+template <typename K, typename BaseType, typename... Args>
+class Registrar
+{
+    using Key = K;
+    using Type = std::unique_ptr<BaseType>;
+    using CreatorFn = std::function<Type(Args...)>;
+    static void registerAll(Registry<Registrar>& registry);
+    friend class Registry<Registrar>;
+};
+
+static_assert(!std::copy_constructible<Registry<Registrar<std::string, std::string>>>);
+static_assert(!std::move_constructible<Registry<Registrar<std::string, std::string>>>);
+static_assert(!std::is_copy_assignable_v<Registry<Registrar<std::string, std::string>>>);
+static_assert(!std::is_move_assignable_v<Registry<Registrar<std::string, std::string>>>);
+static_assert(!std::is_default_constructible_v<Registry<Registrar<std::string, std::string>>>);
+
+/// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful
+/// if custom member functions are added to the concrete registry class.
+template <typename ConcreteRegistry, typename KeyType, typename Type, typename... Args>
+class BaseRegistry : public Registry<Registrar<KeyType, Type, Args...>>
+{
+public:
+    static ConcreteRegistry& instance()
+    {
+        static ConcreteRegistry instance;
+        return instance;
+    }
+};
+}
