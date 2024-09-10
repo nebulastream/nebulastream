@@ -326,7 +326,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             buildSideType,
             timeStampField,
             joinFieldName,
-            options->joinStrategy,
+            options->joinStrategy);
     };
 
     const auto leftJoinBuildOperator = createBuildOperator(
@@ -347,7 +347,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
         joinOperator->getWindowStartFieldName(),
         joinOperator->getWindowEndFieldName(),
         joinOperatorHandler,
-        options->joinStrategy,
+        options->joinStrategy);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -386,10 +386,10 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
         joinOperator->getLeftInputSchema(),
         joinOperator->getRightInputSchema(),
         streamJoinConfig.joinStrategy,
-        options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-        options->getHashJoinOptions()->getPreAllocPageCnt(),
-        options->getHashJoinOptions()->getPageSize(),
-        options->getHashJoinOptions()->getNumberOfPartitions());
+        options->hashJoinOptions.totalSizeForDataStructures,
+        options->hashJoinOptions.preAllocPageCnt,
+        options->hashJoinOptions.pageSize,
+        options->hashJoinOptions.numberOfPartitions);
 }
 
 std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(

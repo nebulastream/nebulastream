@@ -15,13 +15,13 @@
 #pragma once
 
 #include <string>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
 #include "Configurations/BaseConfiguration.hpp"
 #include "Configurations/ConfigurationOption.hpp"
 #include "Configurations/Enums/CompilationStrategy.hpp"
 #include "Configurations/Enums/DumpMode.hpp"
-#include <Configurations/Enums/EnumOption.hpp>
 #include "Configurations/Enums/NautilusBackend.hpp"
-#include <Configurations/ScalarOption.hpp>
 #include "Configurations/Validation/BooleanValidation.hpp"
 #include "Configurations/Validation/NumberValidation.hpp"
 #include "Util/Common.hpp"
