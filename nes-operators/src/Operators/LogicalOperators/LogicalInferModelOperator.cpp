@@ -19,6 +19,7 @@
 #include <API/Schema.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::InferModel

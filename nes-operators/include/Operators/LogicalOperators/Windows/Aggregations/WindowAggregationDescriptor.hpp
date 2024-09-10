@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
@@ -40,7 +41,7 @@ public:
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    WindowAggregationDescriptorPtr as(const ExpressionNodePtr& asField);
+    std::shared_ptr<WindowAggregationDescriptor> as(const ExpressionNodePtr& asField);
 
     /**
     * Returns the result field of the aggregation
@@ -70,7 +71,7 @@ public:
     /**
     * @brief Creates a deep copy of the window aggregation
     */
-    virtual WindowAggregationDescriptorPtr copy() = 0;
+    virtual std::shared_ptr<WindowAggregationDescriptor> copy() = 0;
 
     /**
      * @return the input type
@@ -97,7 +98,7 @@ public:
      * @param otherWindowAggregationDescriptor : other window aggregation definition
      * @return true if equal else false
      */
-    bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const;
+    bool equal(std::shared_ptr<WindowAggregationDescriptor> otherWindowAggregationDescriptor) const;
 
 protected:
     explicit WindowAggregationDescriptor(const FieldAccessExpressionNodePtr& onField);
@@ -107,4 +108,5 @@ protected:
     ExpressionNodePtr asField;
     Type aggregationType;
 };
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 } /// namespace NES::Windowing

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 

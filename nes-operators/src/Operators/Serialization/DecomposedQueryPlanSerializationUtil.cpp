@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>

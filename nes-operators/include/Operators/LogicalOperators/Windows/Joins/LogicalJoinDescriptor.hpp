@@ -17,12 +17,12 @@
 #include <cstdint>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Join
 {
-
+class LogicalJoinDescriptor;
+using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental

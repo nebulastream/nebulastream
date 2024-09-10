@@ -16,6 +16,7 @@
 
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 
 namespace NES
 {

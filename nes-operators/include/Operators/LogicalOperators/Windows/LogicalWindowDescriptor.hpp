@@ -16,11 +16,11 @@
 
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Windowing
 {
-
 /**
  * @brief The logical window definition encapsulates all information, which are required for windowed aggregations on data streams.
  * It contains the key attributes, the aggregation functions, and the window type.
@@ -55,7 +55,7 @@ public:
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDescriptorPtr create(
+    static std::shared_ptr<LogicalWindowDescriptor> create(
         const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType, uint64_t allowedLateness);
 
     /**
@@ -68,7 +68,7 @@ public:
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDescriptorPtr create(
+    static std::shared_ptr<LogicalWindowDescriptor> create(
         std::vector<FieldAccessExpressionNodePtr> keys,
         std::vector<WindowAggregationDescriptorPtr> windowAggregation,
         const WindowTypePtr& windowType,
@@ -147,9 +147,9 @@ public:
 
     /**
      * @brief Creates a copy of the logical window definition
-     * @return LogicalWindowDescriptorPtr
+     * @return std::shared_ptr<LogicalWindowDescriptor>
      */
-    LogicalWindowDescriptorPtr copy() const;
+    std::shared_ptr<LogicalWindowDescriptor> copy() const;
 
     /**
     * @brief Getter for on trigger action
@@ -169,7 +169,7 @@ public:
      * @param otherWindowDefinition: The other window definition
      * @return true if they are equal else false
      */
-    bool equal(LogicalWindowDescriptorPtr otherWindowDefinition) const;
+    bool equal(std::shared_ptr<LogicalWindowDescriptor> otherWindowDefinition) const;
     const std::vector<OriginId>& getInputOriginIds() const;
     void setInputOriginIds(const std::vector<OriginId>& inputOriginIds);
 
@@ -182,5 +182,5 @@ private:
     OriginId originId = INVALID_ORIGIN_ID;
     uint64_t allowedLateness;
 };
-
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 } /// namespace NES::Windowing

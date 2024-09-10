@@ -14,11 +14,11 @@
 #pragma once
 #include <vector>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 namespace NES::QueryCompilation
 {
 
