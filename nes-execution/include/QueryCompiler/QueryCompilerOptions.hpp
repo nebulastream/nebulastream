@@ -17,9 +17,9 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::QueryCompilation

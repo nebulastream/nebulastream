@@ -61,7 +61,6 @@ const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "number
 const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
 const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "numOfRequestExecutorThread";
-const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
@@ -83,14 +82,10 @@ const std::string STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSiz
 const std::string JOIN_STRATEGY = "joinStrategy";
 
 ///Optimizer Configurations
-const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
 const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCount";
-const std::string DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG = "distributedJoinOptimizationMode";
-const std::string MEMORY_LAYOUT_POLICY_CONFIG = "memoryLayoutPolicy";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
 const std::string ENABLE_INCREMENTAL_PLACEMENT = "enableIncrementalPlacement";
 const std::string QUERY_BATCH_SIZE_CONFIG = "queryBatchSize";
-const std::string QUERY_MERGER_RULE_CONFIG = "queryMergerRule";
 const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainmentCheck";
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
@@ -98,7 +93,6 @@ const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 ///Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
-const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_DUMP_MODE = "queryCompilerDumpMode";
 const std::string QUERY_COMPILER_DUMP_PATH = "queryCompilerDumpPath";
 const std::string QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG = "queryCompilerNautilusBackendConfig";

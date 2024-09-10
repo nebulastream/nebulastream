@@ -23,7 +23,7 @@ class PhaseFactory
 {
 public:
     virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
-    virtual PipeliningPhasePtr createPipeliningPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
+    virtual PipeliningPhasePtr createPipeliningPhase() = 0;
     virtual AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
     virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() = 0;
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;

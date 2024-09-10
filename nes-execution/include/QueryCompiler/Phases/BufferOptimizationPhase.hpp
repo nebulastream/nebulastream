@@ -24,7 +24,6 @@ namespace NES::QueryCompilation
 class BufferOptimizationPhase
 {
 public:
-
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 };
