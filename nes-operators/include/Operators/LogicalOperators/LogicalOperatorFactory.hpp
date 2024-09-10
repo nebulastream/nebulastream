@@ -15,10 +15,18 @@
 #pragma once
 
 #include <Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+
+
 
 namespace NES
 {
