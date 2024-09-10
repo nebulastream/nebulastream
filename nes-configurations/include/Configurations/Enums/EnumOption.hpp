@@ -14,9 +14,9 @@
 #pragma once
 #include <string>
 #include <type_traits>
+#include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
-#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations
 {
@@ -38,7 +38,7 @@ public:
      * @param description of the EnumOption.
      */
     EnumOption(const std::string& name, T defaultValue, const std::string& description)
-        : TypedBaseOption<T>(name, defaultValue, description){};
+        : TypedBaseOption<T>(name, defaultValue, description) {};
 
     /**
      * @brief Operator to assign a new value as a value of this option.
