@@ -19,7 +19,12 @@ fi
 
 if [ "$#" -gt 0 ] && [ "$1" != "-i" ]
 then
-    echo "Wrong args. use with no args or a single '-i'."
+    cat << EOF
+Usage:
+
+  $0     to check formatting
+  $0 -i  to fix formatting (if possible)
+EOF
     exit 1
 fi
 
