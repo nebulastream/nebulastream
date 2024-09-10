@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join

@@ -15,11 +15,14 @@
 #pragma once
 
 #include <cstdint>
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <memory>
+#include <API/Schema.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Join::Experimental
 {
-
+class LogicalBatchJoinDescriptor;
+using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental
@@ -105,5 +108,5 @@ private:
     uint64_t numberOfInputEdgesProbe;
 };
 
-using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
+using LogicalBatchJoinDescriptorPtr = LogicalBatchJoinDescriptorPtr;
 } /// namespace NES::Join::Experimental
