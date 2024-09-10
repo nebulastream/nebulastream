@@ -113,7 +113,7 @@ class VarVal {
     VarVal(const VarVal& other);
     VarVal(VarVal&& other) noexcept;
     VarVal& operator=(const VarVal& other);
-    VarVal& operator=(VarVal&& other);
+    VarVal& operator=(VarVal&& other) noexcept;
 
     /// This is only for the PoC. We should think when do we need this and if we can get rid of the usages.
     template<typename T>

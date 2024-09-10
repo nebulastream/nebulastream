@@ -32,7 +32,7 @@ VarVal& VarVal::operator=(const VarVal& other) {
     return *this;
 }
 
-VarVal& VarVal::operator=(VarVal&& other) {
+VarVal& VarVal::operator=(VarVal&& other) noexcept {
     if (value.index() != other.value.index()) {
         throw std::runtime_error("VarVal move assignment with mismatching types.");
     }
