@@ -15,6 +15,7 @@ add_source_files(nes-execution
         ExecutableOperator.cpp
         Emit.cpp
         Scan.cpp
+        Scan2.cpp
         ExecutionContext.cpp)
 
 add_subdirectory(Relational)
