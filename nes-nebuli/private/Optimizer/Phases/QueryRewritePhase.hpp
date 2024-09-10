@@ -81,9 +81,8 @@ public:
     QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
 
 private:
-    explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
+    explicit QueryRewritePhase();
 
-    bool applyRulesImprovingSharingIdentification;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
     FilterMergeRulePtr filterMergeRule;
