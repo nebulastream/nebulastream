@@ -33,7 +33,7 @@ PhaseFactoryPtr DefaultPhaseFactory::create()
     return std::make_shared<DefaultPhaseFactory>();
 }
 
-PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(std::shared_ptr<QueryCompilerOptions> options)
+PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase()
 {
     NES_DEBUG("Create pipelining phase with fuse policy");
     auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
