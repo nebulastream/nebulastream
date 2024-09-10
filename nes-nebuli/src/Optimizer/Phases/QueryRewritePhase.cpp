@@ -34,16 +34,10 @@ QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::Coordinator
 {
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
 
-    /// If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
-    /// then apply special rewrite rules for improving the match identification
-    bool applyRulesImprovingSharingIdentification
-        = optimizerConfigurations.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
-
-    return std::make_shared<QueryRewritePhase>(QueryRewritePhase(applyRulesImprovingSharingIdentification));
+    return std::make_shared<QueryRewritePhase>(QueryRewritePhase());
 }
 
-QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentification)
-    : applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification)
+QueryRewritePhase::QueryRewritePhase()
 {
     attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
@@ -60,13 +54,6 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan)
 {
     /// Duplicate query plan
     auto duplicateQueryPlan = queryPlan->copy();
-
-    /// Apply rules necessary for improving sharing identification
-    if (applyRulesImprovingSharingIdentification)
-    {
-        duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
-        duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
-    }
 
     /// Apply rules necessary for enabling query execution when stream alias or union operators are involved
     duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
