@@ -16,8 +16,6 @@
 
 #include <map>
 #include <set>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/OperatorState.hpp>
 
@@ -121,5 +119,5 @@ protected:
     [[no_unique_address]] std::hash<std::string> hashGenerator;
     OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
-
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 } /// namespace NES

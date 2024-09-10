@@ -51,4 +51,5 @@ public:
 private:
     std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema) const;
 };
+using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 } /// namespace NES

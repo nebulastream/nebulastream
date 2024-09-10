@@ -32,6 +32,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation
 {

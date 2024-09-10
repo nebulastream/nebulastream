@@ -73,5 +73,5 @@ private:
     /// Value of this expression
     ValueTypePtr constantValue;
 };
-
+using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 } /// namespace NES

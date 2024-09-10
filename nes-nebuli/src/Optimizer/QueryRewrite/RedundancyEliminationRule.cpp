@@ -18,6 +18,7 @@
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
@@ -32,6 +33,7 @@
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>

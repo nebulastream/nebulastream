@@ -13,7 +13,7 @@
 */
 #pragma once
 
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators

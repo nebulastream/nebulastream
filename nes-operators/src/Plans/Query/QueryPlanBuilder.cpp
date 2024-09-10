@@ -21,6 +21,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>

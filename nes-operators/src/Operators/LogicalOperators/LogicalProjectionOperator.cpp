@@ -19,6 +19,7 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 

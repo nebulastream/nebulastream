@@ -52,5 +52,5 @@ public:
 private:
     const FieldAssignmentExpressionNodePtr mapExpression;
 };
-
+using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
 } /// namespace NES
