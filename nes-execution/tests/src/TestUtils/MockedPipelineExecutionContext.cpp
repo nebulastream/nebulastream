@@ -12,10 +12,35 @@
     limitations under the License.
 */
 
-#include <utility>
+#include <span>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 namespace NES::Runtime::Execution
 {
+
+Memory::TupleBuffer copyBuffer(Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
+{
+    auto copiedBuffer = provider.getBufferBlocking();
+    NES_ASSERT(copiedBuffer.getBufferSize() >= buffer.getBufferSize(), "Attempt to copy buffer into smaller buffer");
+    auto bufferData = std::span(buffer.getBuffer(), buffer.getBufferSize());
+    std::ranges::copy(bufferData, copiedBuffer.getBuffer());
+    copiedBuffer.setWatermark(buffer.getWatermark());
+    copiedBuffer.setChunkNumber(buffer.getChunkNumber());
+    copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
+    copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    copiedBuffer.setLastChunk(buffer.isLastChunk());
+    copiedBuffer.setOriginId(buffer.getOriginId());
+    copiedBuffer.setSequenceData(buffer.getSequenceData());
+    copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
+
+    for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildrenBuffer(); ++childIdx)
+    {
+        auto childBuffer = buffer.loadChildBuffer(childIdx);
+        auto copiedChildBuffer = copyBuffer(childBuffer, provider);
+        NES_ASSERT(copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx, "Child buffer index does not match");
+    }
+
+    return copiedBuffer;
+}
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
@@ -38,7 +63,8 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
                   }
                   seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              buffers.emplace_back(std::move(buffer));
+
+              buffers.emplace_back(copyBuffer(buffer, *this->getBufferManager()));
           },
           [this, logSeenSeqChunk](Memory::TupleBuffer& buffer)
           {
@@ -52,7 +78,8 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
                   }
                   seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              buffers.emplace_back(std::move(buffer));
+
+              buffers.emplace_back(copyBuffer(buffer, *this->getBufferManager()));
           },
           std::move(handler)) {
         /// nop
