@@ -164,9 +164,5 @@ void LogicalWindowDescriptor::setInputOriginIds(const std::vector<OriginId>& inp
 {
     LogicalWindowDescriptor::inputOriginIds = inputOriginIds;
 }
-WindowActionDescriptorPtr LogicalWindowDescriptor::getTriggerAction() const
-{
-    return NES::Windowing::WindowActionDescriptorPtr();
-}
 
 } /// namespace NES::Windowing
