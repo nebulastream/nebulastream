@@ -20,6 +20,8 @@
 
 namespace NES::QueryCompilation
 {
+class DataSinkProvider;
+using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
 /**
  * @brief Provider to transform a sink descriptor to executable DataSink
  */

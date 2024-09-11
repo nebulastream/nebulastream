@@ -33,5 +33,5 @@ public:
     virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() = 0;
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
 };
-
+using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 } /// namespace NES::QueryCompilation::Phases

@@ -28,6 +28,9 @@
 
 namespace NES::QueryCompilation
 {
+/**
+ * @brief Set of common options for the query compiler
+ */
 
 struct QueryCompilerOptions
 {
@@ -58,6 +61,9 @@ struct QueryCompilerOptions
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     StreamHashJoinOptions hashJoinOptions;
 } __attribute__((aligned(64)));
+
+using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
+
 
 
 /// TODO(#122): Refactor QueryCompilerConfiguration

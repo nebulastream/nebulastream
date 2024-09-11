@@ -22,7 +22,8 @@
 
 namespace NES::QueryCompilation
 {
-
+class PipelineQueryPlan;
+using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 /**
  * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
  */

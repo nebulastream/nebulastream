@@ -21,6 +21,8 @@
 
 namespace NES::QueryCompilation
 {
+class BufferOptimizationPhase;
+using BufferOptimizationPhasePtr = std::shared_ptr<BufferOptimizationPhase>;
 
 /// @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
 /// It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.

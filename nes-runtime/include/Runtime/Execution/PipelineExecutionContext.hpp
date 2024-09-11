@@ -28,7 +28,7 @@
 
 namespace NES::Runtime::Execution
 {
-
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */

@@ -21,7 +21,8 @@
 
 namespace NES::QueryCompilation
 {
-
+class OperatorPipeline;
+using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
 /**
 * @brief Returns the next free pipeline id
 * @return node id

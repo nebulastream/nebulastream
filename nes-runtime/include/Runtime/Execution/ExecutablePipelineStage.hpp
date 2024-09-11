@@ -107,7 +107,7 @@ public:
 private:
     PipelineStageArity arity;
 };
-
+using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 } /// namespace NES::Runtime::Execution
 
 namespace fmt

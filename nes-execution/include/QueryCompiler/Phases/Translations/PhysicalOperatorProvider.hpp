@@ -32,4 +32,5 @@ public:
 protected:
     std::shared_ptr<QueryCompilerOptions> options;
 };
+using PhysicalOperatorProviderPtr = std::shared_ptr<PhysicalOperatorProvider>;
 } /// namespace NES::QueryCompilation

@@ -18,7 +18,8 @@
 #include <Runtime/NodeEngine.hpp>
 namespace NES::QueryCompilation
 {
-
+class QueryCompilationRequest;
+using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 /**
  * @brief Represents a query compilation request.
  * The request encapsulates the decomposed query plan and addition properties.

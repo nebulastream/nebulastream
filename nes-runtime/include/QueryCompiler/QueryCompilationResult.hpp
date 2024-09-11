@@ -18,6 +18,8 @@
 
 namespace NES::QueryCompilation
 {
+class QueryCompilationResult;
+using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 
 /// Provides the query compilation results.
 /// Query compilation can succeed, in this case the result contains a ExecutableQueryPlan pointer.

@@ -28,6 +28,8 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace QueryCompilation
 {
+class LowerToExecutableQueryPlanPhase;
+using LowerToExecutableQueryPlanPhasePtr = std::shared_ptr<LowerToExecutableQueryPlanPhase>;
 
 class LowerToExecutableQueryPlanPhase
 {

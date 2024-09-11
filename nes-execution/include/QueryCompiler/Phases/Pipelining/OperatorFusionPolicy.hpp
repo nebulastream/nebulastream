@@ -32,4 +32,5 @@ public:
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
+using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 } /// namespace NES::QueryCompilation
