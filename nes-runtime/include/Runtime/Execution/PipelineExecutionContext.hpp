@@ -24,11 +24,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <folly/Synchronized.h>
-#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution
 {
-using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
+
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */

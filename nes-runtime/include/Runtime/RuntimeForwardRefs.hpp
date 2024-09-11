@@ -23,6 +23,12 @@ using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 namespace Execution
 {
+class OperatorHandler;
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
+
+class PipelineExecutionContext;
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
+
 class ExecutablePipeline;
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 

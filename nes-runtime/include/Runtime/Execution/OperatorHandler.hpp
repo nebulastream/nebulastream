@@ -13,12 +13,11 @@
 */
 
 #pragma once
-#include <list>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -98,5 +97,5 @@ public:
             "OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
     }
 };
-
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 } /// namespace NES::Runtime::Execution
