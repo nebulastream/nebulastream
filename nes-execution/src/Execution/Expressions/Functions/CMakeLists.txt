@@ -12,7 +12,6 @@
 
 add_source_files(nes-execution
         ModExpression.cpp
-        PiExpression.cpp
         RadiansExpression.cpp
         DegreesExpression.cpp
         CosExpression.cpp
