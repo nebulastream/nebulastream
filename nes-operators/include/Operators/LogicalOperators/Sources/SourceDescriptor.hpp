@@ -46,14 +46,14 @@ public:
 
     virtual ~SourceDescriptor() = default;
 
-    [[nodiscard]] std::string getSourceName() const;
+    [[nodiscard]] const std::string& getSourceName() const;
 
     void setSourceName(std::string sourceName);
 
 private:
     SchemaPtr schema;
     std::string logicalSourceName;
-    std::string sourceName;
+    std::string sourceType;
 };
 
 } /// namespace NES

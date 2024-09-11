@@ -76,9 +76,8 @@ std::string PhysicalSourceOperator::toString() const
 }
 OperatorPtr PhysicalSourceOperator::copy()
 {
-    auto exception = InvalidUseOfOperatorFunction(
+    throw InvalidUseOfOperatorFunction(
         "PhysicalSourceOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
-    throw exception;
 }
 
 } /// namespace NES::QueryCompilation::PhysicalOperators

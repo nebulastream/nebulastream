@@ -45,9 +45,7 @@ public:
     TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-        std::shared_ptr<Schema> schema) override;
+        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
     std::string toString() const override;
 
@@ -59,10 +57,8 @@ public:
     void close() override;
 
 private:
-    bool fillBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-        std::shared_ptr<Schema> schema);
+    bool
+    fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema);
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
