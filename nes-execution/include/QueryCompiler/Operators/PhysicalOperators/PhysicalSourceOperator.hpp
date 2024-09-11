@@ -39,7 +39,7 @@ public:
     static std::shared_ptr<PhysicalSourceOperator>
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
-    std::unique_ptr<SourceDescriptor> getSourceDescriptor();
+    const SourceDescriptor& getSourceDescriptorRef() const;
 
     void setOriginId(OriginId originId);
 
@@ -48,7 +48,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    std::unique_ptr<SourceDescriptor> sourceDescriptor;
+    const std::unique_ptr<SourceDescriptor> sourceDescriptor;
     OriginId originId;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

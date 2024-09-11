@@ -103,7 +103,7 @@ message SerializableOperator{
 
     message SerializableLogicalSourceDescriptor {
       string logicalSourceName = 1;
-      string sourceName = 2;
+      string sourceType = 2;
       optional SerializableSchema sourceSchema = 3;
     }
 

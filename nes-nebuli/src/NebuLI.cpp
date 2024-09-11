@@ -147,16 +147,15 @@ std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, Physi
     }
 }
 
-PhysicalSourceTypePtr
-createPhysicalSourceType(const std::string& logicalName, const std::map<std::string, std::string>& sourceConfiguration)
+PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalName, std::map<std::string, std::string> sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
     }
 
-    auto modifiedSourceConfiguration = sourceConfiguration;
-    modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = logicalName;
+    auto modifiedSourceConfiguration = std::move(sourceConfiguration);
+    modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = std::move(logicalName);
 
     return Configurations::PhysicalSourceTypeFactory::createFromString("", modifiedSourceConfiguration);
 }

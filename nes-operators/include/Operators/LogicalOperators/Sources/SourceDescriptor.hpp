@@ -32,7 +32,7 @@ public:
 
     explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
 
-    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName);
+    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceType);
 
     SchemaPtr getSchema() const;
 
@@ -46,9 +46,9 @@ public:
 
     virtual ~SourceDescriptor() = default;
 
-    [[nodiscard]] const std::string& getSourceName() const;
+    [[nodiscard]] const std::string& getSourceType() const;
 
-    void setSourceName(std::string sourceName);
+    void setSourceType(std::string sourceName);
 
 private:
     SchemaPtr schema;

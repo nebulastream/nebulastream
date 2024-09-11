@@ -964,7 +964,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto logicalSourceDescriptor = dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor);
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
-        logicalSourceSerializedSourceDescriptor.set_sourcename(logicalSourceDescriptor->getSourceName());
+        logicalSourceSerializedSourceDescriptor.set_sourcetype(logicalSourceDescriptor->getSourceType());
 
         if (!isClientOriginated)
         {
