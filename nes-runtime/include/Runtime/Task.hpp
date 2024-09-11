@@ -16,12 +16,12 @@
 
 #include <limits>
 #include <memory>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 namespace NES::Runtime
 {
-
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers)
  */

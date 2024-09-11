@@ -18,10 +18,11 @@
 #include <future>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourceHandle.hpp>
 
@@ -31,6 +32,9 @@ class ReconfigurationMessage;
 }
 namespace NES::Runtime::Execution
 {
+
+using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
+using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 /// Each executable query plan contains a set of sources, pipelines, and sinks (but at least one source and sink). This class is thread-safe.
 class ExecutableQueryPlan : public Reconfigurable

@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 
 namespace NES::Runtime
 {

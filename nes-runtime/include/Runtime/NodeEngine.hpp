@@ -21,8 +21,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/QueryManager.hpp>
-
+#include <Runtime/RuntimeForwardRefs.hpp>
 namespace NES::Runtime
 {
 /**

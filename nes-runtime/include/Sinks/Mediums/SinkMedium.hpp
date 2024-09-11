@@ -17,6 +17,7 @@
 #include <mutex>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 namespace NES
 {

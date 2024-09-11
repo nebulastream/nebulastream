@@ -23,12 +23,12 @@
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <libcuckoo/cuckoohash_map.hh>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
@@ -50,7 +50,8 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>; /// TODO consider moving this
 
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
-
+class QueryManager;
+using QueryManagerPtr = std::shared_ptr<QueryManager>;
 class QueryManager : public detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable
 {
 public:
@@ -263,7 +264,6 @@ protected:
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
 };
-using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 } /// namespace Runtime
 } /// namespace NES

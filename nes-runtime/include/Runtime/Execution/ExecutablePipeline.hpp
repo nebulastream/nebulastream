@@ -18,17 +18,19 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
 
 namespace NES::Runtime::Execution
 {
+class ExecutablePipeline;
+using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
 /// An ExecutablePipeline represents a fragment of an overall query.
 /// It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
