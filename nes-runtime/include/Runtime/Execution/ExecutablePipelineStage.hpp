@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
@@ -23,6 +22,12 @@
 
 namespace NES::Runtime::Execution
 {
+enum class PipelineStageArity : uint8_t
+{
+    Unary,
+    BinaryLeft,
+    BinaryRight
+};
 
 /**
  * @brief The executable pipeline stage represents the executable part of a an specific pipeline.

@@ -29,7 +29,7 @@
 
 namespace NES::Runtime::Execution
 {
-
+using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
 /// An ExecutablePipeline represents a fragment of an overall query.
 /// It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
 /// Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.

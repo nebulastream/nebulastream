@@ -105,4 +105,5 @@ public:
     uint32_t getQueueId() const;
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
+using WorkerContextRef = WorkerContext&;
 } /// namespace NES::Runtime
