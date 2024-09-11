@@ -15,6 +15,7 @@
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <magic_enum.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -22,7 +23,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
-    const Join::JoinOperatorHandlerPtr& operatorHandler,
+    const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
     JoinBuildSideType buildSide)
 {
     return create(getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
@@ -32,14 +33,14 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(
     OperatorId id,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
-    const Join::JoinOperatorHandlerPtr& operatorHandler,
+    const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
     JoinBuildSideType buildSide)
 {
     return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSideType buildSide)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler, JoinBuildSideType buildSide)
     : Operator(id)
     , PhysicalJoinOperator(std::move(operatorHandler))
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))

@@ -14,6 +14,7 @@
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -22,7 +23,7 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(
     const SchemaPtr& leftInputSchema,
     const SchemaPtr& rightInputSchema,
     const SchemaPtr& outputSchema,
-    const Join::JoinOperatorHandlerPtr& joinOperatorHandler)
+    const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler)
 {
     return create(getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
@@ -32,7 +33,7 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(
     const SchemaPtr& leftInputSchema,
     const SchemaPtr& rightInputSchema,
     const SchemaPtr& outputSchema,
-    const Join::JoinOperatorHandlerPtr& joinOperatorHandler)
+    const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler)
 {
     return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
@@ -42,7 +43,7 @@ PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(
     SchemaPtr leftInputSchema,
     SchemaPtr rightInputSchema,
     SchemaPtr outputSchema,
-    Join::JoinOperatorHandlerPtr joinOperatorHandler)
+    NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler)
     : Operator(id)
     , PhysicalJoinOperator(std::move(joinOperatorHandler))
     , PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)) {};

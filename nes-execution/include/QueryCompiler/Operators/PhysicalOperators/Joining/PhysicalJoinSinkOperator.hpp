@@ -14,7 +14,8 @@
 #pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -30,18 +31,18 @@ public:
         const SchemaPtr& leftInputSchema,
         const SchemaPtr& rightInputSchema,
         const SchemaPtr& outputSchema,
-        const Join::JoinOperatorHandlerPtr& operatorHandler);
+        const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
     static PhysicalOperatorPtr create(
         const SchemaPtr& leftInputSchema,
         const SchemaPtr& rightInputSchema,
         const SchemaPtr& outputSchema,
-        const Join::JoinOperatorHandlerPtr& operatorHandler);
+        const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler);
     PhysicalJoinSinkOperator(
         OperatorId id,
         SchemaPtr leftInputSchema,
         SchemaPtr rightInputSchema,
         SchemaPtr outputSchema,
-        Join::JoinOperatorHandlerPtr operatorHandler);
+        NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler);
     [[nodiscard]] std::string toString() const override;
     OperatorPtr copy() override;
 };
