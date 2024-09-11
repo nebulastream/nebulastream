@@ -88,9 +88,8 @@ void SourceLogicalOperator::setProjectSchema(SchemaPtr schema)
 
 OperatorPtr SourceLogicalOperator::copy()
 {
-    auto exception = InvalidUseOfOperatorFunction(
+    throw InvalidUseOfOperatorFunction(
         "SourceLogicalOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
-    throw exception;
 }
 
 void SourceLogicalOperator::inferStringSignature()

@@ -34,9 +34,7 @@ public:
     CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-        std::shared_ptr<Schema> schema) override;
+        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
     void open() override;
     void close() override;
