@@ -16,7 +16,8 @@
 
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Windowing
 {

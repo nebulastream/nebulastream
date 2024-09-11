@@ -14,11 +14,14 @@
 
 #pragma once
 
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES::Windowing
 {
+class WindowAggregationDescriptor;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 /**
  * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
  */

@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Join
 {
