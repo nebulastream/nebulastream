@@ -16,6 +16,7 @@
 
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES
 {

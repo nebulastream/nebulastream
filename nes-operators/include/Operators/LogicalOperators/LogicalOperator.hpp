@@ -16,8 +16,6 @@
 
 #include <map>
 #include <set>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/OperatorState.hpp>
 
