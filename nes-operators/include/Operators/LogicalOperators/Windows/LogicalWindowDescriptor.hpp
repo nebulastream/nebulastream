@@ -152,12 +152,6 @@ public:
     std::shared_ptr<LogicalWindowDescriptor> copy() const;
 
     /**
-    * @brief Getter for on trigger action
-     * @return trigger action
-    */
-    [[nodiscard]] WindowActionDescriptorPtr getTriggerAction() const;
-
-    /**
      * @brief To string function for the window definition.
      * @return string
      */
