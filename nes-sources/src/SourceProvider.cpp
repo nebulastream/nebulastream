@@ -27,23 +27,22 @@
 namespace NES::Sources
 {
 
-DataSourceProviderPtr SourceProvider::create()
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
-    return std::make_shared<SourceProvider>();
+    return std::make_unique<SourceProvider>();
 }
 
-SourceHandlePtr SourceProvider::lower(
+std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
-    std::unique_ptr<SourceDescriptor>&& sourceDescriptor,
+    const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor->getSchema();
+    auto schema = sourceDescriptor.getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor->getSourceName(), schema, std::move(sourceDescriptor));
-        source.has_value())
+    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor.getSourceName(), schema, sourceDescriptor); source.has_value())
     {
-        return std::make_shared<SourceHandle>(
+        return std::make_unique<SourceHandle>(
             std::move(originId),
             std::move(schema),
             std::move(bufferPool),

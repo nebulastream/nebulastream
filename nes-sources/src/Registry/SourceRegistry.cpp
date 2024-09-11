@@ -24,11 +24,11 @@ SourceRegistry::SourceRegistry()
 }
 
 std::optional<std::unique_ptr<Source>>
-SourceRegistry::tryCreate(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) const
+SourceRegistry::tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const
 {
     if (registry.contains(name))
     {
-        return {registry.at(name)(schema, std::move(sourceDescriptor))};
+        return {registry.at(name)(schema, sourceDescriptor)};
     }
     std::cerr << "Data source " << name << " not found.\n";
     return std::nullopt;

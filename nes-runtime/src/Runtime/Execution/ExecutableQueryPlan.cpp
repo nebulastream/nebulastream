@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution
 
 ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId,
-    std::vector<Sources::SourceHandlePtr>&& sources,
+    std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
     std::vector<DataSinkPtr>&& sinks,
     std::vector<ExecutablePipelinePtr>&& pipelines,
     QueryManagerPtr&& queryManager,
@@ -48,7 +48,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(
     QueryId queryId,
-    std::vector<Sources::SourceHandlePtr> sources,
+    std::vector<std::unique_ptr<Sources::SourceHandle>> sources,
     std::vector<DataSinkPtr> sinks,
     std::vector<ExecutablePipelinePtr> pipelines,
     QueryManagerPtr queryManager,
@@ -171,7 +171,7 @@ Memory::BufferManagerPtr ExecutableQueryPlan::getBufferManager() const
     return bufferManager;
 }
 
-const std::vector<Sources::SourceHandlePtr>& ExecutableQueryPlan::getSources() const
+const std::vector<std::unique_ptr<Sources::SourceHandle>>& ExecutableQueryPlan::getSources() const
 {
     return sources;
 }
@@ -303,7 +303,7 @@ void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTermina
     auto it = std::find_if(
         sources.begin(),
         sources.end(),
-        [sourceId](const Sources::SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
+        [sourceId](const std::unique_ptr<Sources::SourceHandle>& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
     /// TODO(#306): assert is commented out. We need to fix the source termination logic
     /// NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << sourceId << " in query plan " << queryId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);

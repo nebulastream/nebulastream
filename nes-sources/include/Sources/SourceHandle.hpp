@@ -54,8 +54,6 @@ private:
     std::unique_ptr<DataSource> dataSource;
 };
 
-using SourceHandlePtr = std::shared_ptr<SourceHandle>;
-
 }
 
 /// Specializing the fmt ostream_formatter to accept SourceHandle objects.

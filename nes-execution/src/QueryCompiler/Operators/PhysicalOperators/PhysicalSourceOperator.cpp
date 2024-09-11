@@ -55,9 +55,9 @@ void PhysicalSourceOperator::setOriginId(OriginId originId)
     this->originId = originId;
 }
 
-std::unique_ptr<SourceDescriptor> PhysicalSourceOperator::getSourceDescriptor()
+const SourceDescriptor& PhysicalSourceOperator::getSourceDescriptorRef() const
 {
-    return std::move(sourceDescriptor);
+    return *sourceDescriptor;
 }
 
 std::string PhysicalSourceOperator::toString() const

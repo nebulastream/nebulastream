@@ -16,7 +16,6 @@
 #include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 
@@ -32,19 +31,19 @@ namespace QueryCompilation
 class LowerToExecutableQueryPlanPhase
 {
 public:
-    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider);
+    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider);
     static LowerToExecutableQueryPlanPhasePtr
-    create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider);
+    create(const DataSinkProviderPtr& sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider);
 
     Runtime::Execution::ExecutableQueryPlanPtr
     apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
 
 private:
     DataSinkProviderPtr sinkProvider;
-    Sources::DataSourceProviderPtr sourceProvider;
+    std::unique_ptr<Sources::SourceProvider> sourceProvider;
     void processSource(
         const OperatorPipelinePtr& pipeline,
-        std::vector<Sources::SourceHandlePtr>& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const Runtime::NodeEnginePtr& nodeEngine,
@@ -53,7 +52,7 @@ private:
 
     Runtime::Execution::SuccessorExecutablePipeline processSuccessor(
         const OperatorPipelinePtr& pipeline,
-        std::vector<Sources::SourceHandlePtr>& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const Runtime::NodeEnginePtr& nodeEngine,
@@ -62,7 +61,7 @@ private:
 
     Runtime::Execution::SuccessorExecutablePipeline processSink(
         const OperatorPipelinePtr& pipeline,
-        std::vector<Sources::SourceHandlePtr>& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         Runtime::NodeEnginePtr nodeEngine,
@@ -70,7 +69,7 @@ private:
 
     Runtime::Execution::SuccessorExecutablePipeline processOperatorPipeline(
         const OperatorPipelinePtr& pipeline,
-        std::vector<Sources::SourceHandlePtr>& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const Runtime::NodeEnginePtr& nodeEngine,

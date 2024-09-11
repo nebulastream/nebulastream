@@ -35,7 +35,7 @@ public:
     template <bool update = false>
     void registerPlugin(
         const std::string& name,
-        const std::function<std::unique_ptr<Source>(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)>& creator)
+        const std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -45,39 +45,15 @@ public:
         registry[name] = creator;
     }
 
-    template <typename Derived>
-    std::optional<std::unique_ptr<Derived>>
-    tryCreateAs(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
-    {
-        if (registry.contains(name))
-        {
-            auto basePointer = registry[name](schema, std::move(sourceDescriptor));
-            auto* tmp = dynamic_cast<Derived*>(basePointer.get());
-            /// ReSharper disable once CppDFAConstantConditions, incorrect assumption: tmp can never be a nullptr
-            if (tmp != nullptr && basePointer.release())
-            {
-                std::unique_ptr<Derived> derivedPointer;
-                derivedPointer.reset(tmp);
-                return std::optional(std::move(derivedPointer));
-            }
-            std::cerr << "Failed to cast from " << typeid(basePointer.get()).name() << " to " << typeid(Derived).name() << ".\n";
-            return std::nullopt;
-        }
-        std::cerr << "Data source " << name << " not found.\n";
-        return std::nullopt;
-    }
-
     std::optional<std::unique_ptr<Source>>
-    tryCreate(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) const;
+    tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
     static SourceRegistry& instance();
 
 private:
-    std::unordered_map<
-        std::string,
-        std::function<std::unique_ptr<Source>(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)>>
+    std::unordered_map<std::string, std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>>
         registry;
 };
 
