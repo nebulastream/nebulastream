@@ -88,7 +88,7 @@ RuntimePathConfig loadRuntimePathConfig()
         NES_DEBUG("Detected a local install dir as a execution location");
         auto executablePath = getExecutablePath().parent_path();
         runtimePathConfig.clangBinaryPath = executablePath.append("bin/nes-clang");
-        runtimePathConfig.includePaths.push_back(executablePath.append("include/nebulatstream"));
+        runtimePathConfig.includePaths.push_back(executablePath.append("include/nebulastream"));
         runtimePathConfig.libPaths.push_back(executablePath.append("lib"));
     }
     else if (isInBuildDir() || isInBuildDirIsAvailable())
