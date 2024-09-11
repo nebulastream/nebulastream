@@ -16,6 +16,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

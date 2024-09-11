@@ -15,6 +15,7 @@
 
 #include <map>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
 {

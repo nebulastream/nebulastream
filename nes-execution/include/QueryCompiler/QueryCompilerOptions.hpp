@@ -21,6 +21,8 @@
 #include <Configurations/Enums/PipeliningStrategy.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Enums/WindowingStrategy.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Util/Common.hpp>
 

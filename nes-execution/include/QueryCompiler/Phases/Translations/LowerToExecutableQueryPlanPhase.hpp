@@ -14,11 +14,11 @@
 #pragma once
 
 #include <vector>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 
 namespace NES
 {

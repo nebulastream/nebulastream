@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation
 {
 

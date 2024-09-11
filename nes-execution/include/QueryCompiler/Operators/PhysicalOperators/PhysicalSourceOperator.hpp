@@ -14,6 +14,7 @@
 #pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

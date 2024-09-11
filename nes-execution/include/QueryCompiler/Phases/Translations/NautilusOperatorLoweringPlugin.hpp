@@ -13,8 +13,9 @@
 */
 #pragma once
 #include <optional>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/PluginRegistry.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

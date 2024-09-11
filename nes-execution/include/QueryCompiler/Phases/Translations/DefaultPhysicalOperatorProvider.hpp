@@ -19,6 +19,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 namespace NES::QueryCompilation
 {
 

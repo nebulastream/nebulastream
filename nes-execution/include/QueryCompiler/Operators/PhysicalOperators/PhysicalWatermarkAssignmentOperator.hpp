@@ -14,7 +14,7 @@
 #pragma once
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

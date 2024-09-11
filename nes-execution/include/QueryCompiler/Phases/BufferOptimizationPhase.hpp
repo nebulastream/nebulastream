@@ -13,7 +13,10 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <vector>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation

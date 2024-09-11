@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <utility>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 namespace NES::QueryCompilation
 {
 

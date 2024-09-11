@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler/Phases/PhaseFactory.hpp>
 
 namespace NES::QueryCompilation
 {

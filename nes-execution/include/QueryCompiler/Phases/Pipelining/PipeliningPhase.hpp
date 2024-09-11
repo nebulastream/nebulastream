@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 namespace NES::QueryCompilation
 {
 

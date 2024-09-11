@@ -12,8 +12,7 @@
     limitations under the License.
 */
 #pragma once
-
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <functional>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation

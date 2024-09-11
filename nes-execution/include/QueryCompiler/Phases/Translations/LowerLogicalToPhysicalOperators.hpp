@@ -14,8 +14,7 @@
 #pragma once
 
 #include <vector>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 namespace NES::QueryCompilation
 {
 

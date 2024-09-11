@@ -15,8 +15,8 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES::QueryCompilation
 {

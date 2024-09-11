@@ -13,8 +13,8 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Timer.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {

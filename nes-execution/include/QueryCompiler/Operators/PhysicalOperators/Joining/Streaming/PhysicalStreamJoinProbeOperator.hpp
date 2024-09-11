@@ -18,7 +18,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Expressions/ExpressionNode.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

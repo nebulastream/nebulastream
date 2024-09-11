@@ -13,8 +13,9 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <memory>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 namespace NES::QueryCompilation
 {
 

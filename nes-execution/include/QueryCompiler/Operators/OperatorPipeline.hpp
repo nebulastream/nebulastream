@@ -17,7 +17,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {

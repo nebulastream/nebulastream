@@ -18,7 +18,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 
 namespace NES::QueryCompilation
 {

@@ -24,6 +24,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 
