@@ -19,7 +19,7 @@
 #include <Configurations/Enums/NautilusBackend.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::QueryCompilation
@@ -50,7 +50,7 @@ struct QueryCompilerOptions
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     StreamHashJoinOptions hashJoinOptions;
 } __attribute__((aligned(64)));
-
+using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
 /// TODO(#122): Refactor QueryCompilerConfiguration
 [[maybe_unused]]

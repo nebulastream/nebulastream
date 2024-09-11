@@ -18,19 +18,17 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Common.hpp>
 #include <folly/Synchronized.h>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution
 {
-
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */

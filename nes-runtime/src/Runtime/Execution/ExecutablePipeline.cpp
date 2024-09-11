@@ -25,7 +25,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES::QueryCompilation
 {
 
@@ -32,4 +32,5 @@ public:
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
+using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 } /// namespace NES::QueryCompilation

@@ -13,11 +13,11 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <memory>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Runtime/NodeEngine.hpp>
 namespace NES::QueryCompilation
 {
-
 /**
  * @brief Represents a query compilation request.
  * The request encapsulates the decomposed query plan and addition properties.
@@ -25,7 +25,7 @@ namespace NES::QueryCompilation
 class QueryCompilationRequest
 {
 public:
-    static QueryCompilationRequestPtr create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
+    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
 
     /**
      * @brief Enable debugging for this query.
@@ -80,4 +80,5 @@ private:
     bool optimize;
     bool dumpQueryPlans;
 };
+using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 } /// namespace NES::QueryCompilation

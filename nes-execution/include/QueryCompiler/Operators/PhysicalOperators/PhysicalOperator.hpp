@@ -14,7 +14,6 @@
 #pragma once
 
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -41,5 +40,5 @@ public:
      */
     std::string toString() const;
 };
-
+using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 } /// namespace NES::QueryCompilation::PhysicalOperators
