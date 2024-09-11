@@ -351,17 +351,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         return joinBuildNautilus;
     }
 
-    /// Check if a plugin is registered that handles this physical operator
-    for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins())
-    {
-        auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
-        if (resultOperator.has_value())
-        {
-            parentOperator->setChild(*resultOperator);
-            return *resultOperator;
-        }
-    }
-
     throw UnknownPhysicalOperator();
 }
 
