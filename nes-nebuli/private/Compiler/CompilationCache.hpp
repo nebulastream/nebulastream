@@ -16,7 +16,6 @@
 #include <mutex>
 #include <unordered_map>
 #include <Compiler/CompilationResult.hpp>
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/SourceCode.hpp>
 
 namespace NES::Compiler
