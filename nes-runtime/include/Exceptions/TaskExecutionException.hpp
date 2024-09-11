@@ -16,11 +16,10 @@
 
 #include <string>
 #include <Exceptions/RuntimeException.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 
 namespace NES
 {
-
 /**
  * @brief This exception is thrown when an error occurs during window processing.
  */
