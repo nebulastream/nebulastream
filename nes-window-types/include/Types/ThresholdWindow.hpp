@@ -14,11 +14,15 @@
 
 #pragma once
 
-#include <Expressions/ExpressionNode.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 
-namespace NES::Windowing
+namespace NES
+{
+
+using ExpressionNodePtr = std::shared_ptr<class ExpressionNode>;
+
+namespace Windowing
 {
 /*
  * Threshold window creates a window whenever an event attribute exceeds a threshold (predicate), and close the window if it is below the threshold (or the other way around)
@@ -68,4 +72,5 @@ private:
     uint64_t minimumCount = 0;
 };
 
-} /// namespace NES::Windowing
+}
+}
