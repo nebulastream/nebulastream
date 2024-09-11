@@ -20,7 +20,8 @@
 
 namespace NES::Windowing
 {
-
+class LogicalWindowDescriptor;
+using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 /**
  * @brief The logical window definition encapsulates all information, which are required for windowed aggregations on data streams.
  * It contains the key attributes, the aggregation functions, and the window type.

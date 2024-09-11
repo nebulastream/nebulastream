@@ -119,5 +119,5 @@ protected:
     [[no_unique_address]] std::hash<std::string> hashGenerator;
     OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
-
+using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 } /// namespace NES

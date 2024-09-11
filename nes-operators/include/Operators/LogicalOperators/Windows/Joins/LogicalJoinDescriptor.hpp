@@ -21,7 +21,8 @@
 
 namespace NES::Join
 {
-
+class LogicalJoinDescriptor;
+using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental
