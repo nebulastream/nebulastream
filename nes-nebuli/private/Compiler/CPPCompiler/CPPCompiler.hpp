@@ -14,7 +14,6 @@
 #pragma once
 #include <filesystem>
 #include <vector>
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/Util/ExecutablePath.hpp>
 

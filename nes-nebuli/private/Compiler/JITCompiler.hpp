@@ -15,7 +15,7 @@
 #include <future>
 #include <map>
 #include <vector>
-#include <Compiler/CompilerForwardDeclarations.hpp>
+#include <Compiler/LanguageCompiler.hpp>
 
 namespace NES::Compiler
 {
