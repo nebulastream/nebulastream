@@ -354,7 +354,9 @@ add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
-add_subdirectory(test)
+if (NES_ENABLES_TESTS)
+  add_subdirectory(test)
+endif ()
 
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
