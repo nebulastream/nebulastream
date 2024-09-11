@@ -41,11 +41,11 @@ target_link_libraries(nebuli-lib
         PRIVATE yaml-cpp::yaml-cpp nes-client
 )
 
-add_executable(nebuli src/NebuLIStarter.cpp)
+add_executable(nes-nebuli src/NebuLIStarter.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
-set_property(TARGET nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nebuli PUBLIC nebuli-lib argparse::argparse)
-target_include_directories(nebuli
+set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
+target_link_libraries(nes-nebuli PUBLIC nebuli-lib argparse::argparse)
+target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
 
@@ -67,7 +67,7 @@ macro(add_nebuli_header TARGET PATH_OR_FILES)
         file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
     endif ()
 
-    target_sources(nebuli PUBLIC
+    target_sources(nes-nebuli PUBLIC
             FILE_SET nebuliPublicHeaders
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include
             FILES ${HEADER}
@@ -105,9 +105,9 @@ endfunction()
 add_tests_if_enabled(tests)
 
 # install Nebuli and all its dependencies + the file_set with the headers
-install(TARGETS nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
+install(TARGETS nes-nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
         FILE_SET nebuliPublicHeaders DESTINATION "${CMAKE_INSTALL_PREFIX}/include/nebulastream"
-        COMPONENT nebuli
+        COMPONENT nes-nebuli
 )
 
 # Configure CPackage
