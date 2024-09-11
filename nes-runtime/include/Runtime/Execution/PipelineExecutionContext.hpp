@@ -24,10 +24,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <folly/Synchronized.h>
-#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::Runtime::Execution
 {
+/// Forward declaration of OperatorHandler, which directly includes PipelineExecutionContext
+class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 /**
  * @brief Stores a sequenceNumber and an OriginId

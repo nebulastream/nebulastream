@@ -17,11 +17,17 @@
 #include <limits>
 #include <memory>
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
+
 namespace NES::Runtime
 {
-
+namespace Execution
+{
+/// Forward declaration of ExecutablePipeline, which includes QueryManager, which includes Task
+class ExecutablePipeline;
+using SuccessorExecutablePipeline = std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>;
+}
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers)
  */

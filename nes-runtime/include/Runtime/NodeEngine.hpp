@@ -13,7 +13,6 @@
 */
 
 #pragma once
-
 #include <unordered_map>
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
@@ -21,10 +20,18 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/QueryManager.hpp>
 
 namespace NES::Runtime
 {
+/// Forward declaration of QueryManager, which includes Task, which includes SinkMedium, which includes NodeEngine
+class QueryManager;
+
+namespace Execution
+{
+/// Forward declaration of ExecutableQueryPlan, which includes SinkMedium, which includes NodeEngine
+class ExecutableQueryPlan;
+using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
+}
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality

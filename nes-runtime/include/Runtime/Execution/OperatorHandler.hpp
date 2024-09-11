@@ -13,16 +13,16 @@
 */
 
 #pragma once
-#include <list>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
 {
-
+/// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
+class PipelineExecutionContext;
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 /**
  * @brief Interface to handle specific operator state.
  */
@@ -98,5 +98,5 @@ public:
             "OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
     }
 };
-
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 } /// namespace NES::Runtime::Execution
