@@ -25,7 +25,8 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution
 {

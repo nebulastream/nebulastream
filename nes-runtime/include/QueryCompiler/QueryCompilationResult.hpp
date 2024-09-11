@@ -13,19 +13,18 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::QueryCompilation
 {
-
 /// Provides the query compilation results.
 /// Query compilation can succeed, in this case the result contains a ExecutableQueryPlan pointer.
 /// If query compilation fails, the result contains the error and hasError() return true.
 class QueryCompilationResult
 {
 public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
+    static std::shared_ptr<QueryCompilationResult> create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
 
     Runtime::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
     [[nodiscard]] uint64_t getCompilationTimeMilli() const;
@@ -35,4 +34,5 @@ private:
     Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan;
     Timer<> timer;
 };
+using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 } /// namespace NES::QueryCompilation

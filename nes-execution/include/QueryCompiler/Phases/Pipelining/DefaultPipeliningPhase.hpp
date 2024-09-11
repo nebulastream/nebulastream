@@ -14,6 +14,7 @@
 #pragma once
 
 #include <map>
+#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 
 namespace NES::QueryCompilation

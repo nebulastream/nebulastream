@@ -13,7 +13,7 @@
 */
 #pragma once
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 
 namespace NES::QueryCompilation
 {
