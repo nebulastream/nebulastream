@@ -16,7 +16,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::QueryCompilation
 {

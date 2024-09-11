@@ -23,7 +23,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Common.hpp>
@@ -136,5 +135,5 @@ private:
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;
 };
-
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 } /// namespace NES::Runtime::Execution

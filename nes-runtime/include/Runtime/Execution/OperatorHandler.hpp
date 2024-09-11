@@ -18,7 +18,7 @@
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
 {
