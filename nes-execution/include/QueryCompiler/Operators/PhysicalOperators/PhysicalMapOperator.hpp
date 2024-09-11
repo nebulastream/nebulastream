@@ -14,6 +14,7 @@
 #pragma once
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

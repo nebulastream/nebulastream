@@ -18,6 +18,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Types/WindowType.hpp>
+#include <Expressions/ExpressionNode.hpp>
 
 namespace NES::Join
 {

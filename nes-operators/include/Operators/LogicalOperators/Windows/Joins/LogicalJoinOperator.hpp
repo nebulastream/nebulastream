@@ -77,4 +77,5 @@ private:
     std::string windowStartFieldName;
     std::string windowEndFieldName;
 };
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 } /// namespace NES

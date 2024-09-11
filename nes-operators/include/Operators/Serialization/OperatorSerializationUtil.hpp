@@ -16,12 +16,18 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <SerializableOperator.pb.h>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
+#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 
 namespace NES
 {
