@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
