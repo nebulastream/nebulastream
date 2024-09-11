@@ -47,17 +47,60 @@ public:
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
-    /// Todo: add format:
-    /// namespace fmt {
-    /// template <>
-    /// struct format<NES::Source> : public ostream_formatter {}
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
-    [[nodiscard]] virtual SourceType getType() const = 0;
-
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
+
+    /// Make sure that SourceSpecificConfiguration::parameterMap exists.
+    template <typename T, typename = void>
+    struct has_parameter_map : std::false_type
+    {
+    };
+    template <typename T>
+    struct has_parameter_map<T, std::void_t<decltype(std::declval<T>().parameterMap)>> : std::true_type
+    {
+    };
+    /// Iterates over all parameters in a user provided config and checks if they are supported by a source-specific config.
+    /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
+    /// Uses default parameters if the user did not specify a parameter.
+    /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
+    template <typename SourceSpecificConfiguration>
+    static SourceDescriptor::Config validateAndFormatImpl(std::map<std::string, std::string>&& config, const std::string_view sourceName)
+    {
+        SourceDescriptor::Config validatedConfig;
+
+        /// First check if all user-specified keys are valid.
+        for (const auto& [key, _] : config)
+        {
+            static_assert(
+                has_parameter_map<SourceSpecificConfiguration>::value,
+                "A source configuration must have a parameterMap containing all configuration parameters.");
+            if (key != "type" && not SourceSpecificConfiguration::parameterMap.contains(key))
+            {
+                throw(InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key)));
+            }
+        }
+        /// Next, try to validate all config parameters.
+        for (const auto& [key, configParameter] : SourceSpecificConfiguration::parameterMap)
+        {
+            const auto validatedParameter = configParameter.validate(config);
+            if (validatedParameter.has_value())
+            {
+                validatedConfig.emplace(key, validatedParameter.value());
+                continue;
+            }
+            /// If the user did not specify a parameter that is optional, use the default value.
+            if (not config.contains(key) && configParameter.getDefaultValue().has_value())
+            {
+                validatedConfig.emplace(key, configParameter.getDefaultValue().value());
+                continue;
+            }
+            throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in Source: {}", key, sourceName));
+        }
+        return validatedConfig;
+    }
 };
 
 }

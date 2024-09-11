@@ -352,7 +352,7 @@ bool TCPSource::fillBuffer(
 
 SourceDescriptor::Config TCPSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    return Source::validateAndFormat<ConfigParametersTCP>(std::move(config));
+    return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
 
 void TCPSource::close()

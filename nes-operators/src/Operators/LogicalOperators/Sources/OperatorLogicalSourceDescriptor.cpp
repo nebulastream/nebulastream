@@ -99,4 +99,4 @@ std::vector<OriginId> OperatorLogicalSourceDescriptor::getOutputOriginIds() cons
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-} /// namespace NES
+}

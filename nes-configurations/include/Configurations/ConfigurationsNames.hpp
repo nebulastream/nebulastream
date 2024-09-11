@@ -14,6 +14,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <Util/Logger/Logger.hpp>
 
 using namespace std::string_literals;
 
@@ -26,17 +27,6 @@ enum class InputFormat : uint8_t
 {
     CSV
 };
-
-inline bool validateInputFormat(const InputFormat inputFormat)
-{
-    switch (inputFormat)
-    {
-        case InputFormat::CSV:
-            return true;
-        default:
-            return false;
-    }
-}
 
 /**
  * NOTE: this is not related to the network stack at all. Do not mix it up.

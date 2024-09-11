@@ -47,6 +47,4 @@ private:
     const std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
-///-Todo: rem
-using OperatorLogicalSourceDescriptorPtr = std::shared_ptr<OperatorLogicalSourceDescriptor>;
-} /// namespace NES
+}

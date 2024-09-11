@@ -29,17 +29,15 @@ namespace NES::Sources
 struct ConfigParametersCSV
 {
     static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
-        "filePath", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryMandatoryConfigure(FILEPATH, config, validatedConfig);
+        "filePath", std::nullopt, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(FILEPATH, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
-        "skipHeader", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryOptionalConfigure(false, SKIP_HEADER, config, validatedConfig);
+        "skipHeader", false, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(SKIP_HEADER, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
-        "delimiter", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryOptionalConfigure(",", DELIMITER, config, validatedConfig);
-        }};
+        "delimiter", ",", [](const std::map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DELIMITER, config); }};
 
     static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
         = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);

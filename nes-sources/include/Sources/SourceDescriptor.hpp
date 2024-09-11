@@ -25,7 +25,9 @@
 #include <variant>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
+#include <Sources/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources
@@ -41,42 +43,41 @@ namespace NES::Sources
 /// - the type
 /// - the name
 /// - the validation function
-/// All functions that operate on the config, operate on ConfigParameters and can therefore access all relevant information.
+/// All functions that operate on the config operate on ConfigParameters and can therefore access all relevant information.
 /// This design makes it difficult to use the wrong (string) name to access a parameter, the wrong type, e.g., in a templated function, or
 /// to forget to define a validation function. Also, changing the type/name/validation function of a config parameter can be done in a single place.
 struct SourceDescriptor
 {
-    using ConfigType = std::variant<
-        int32_t,
-        uint32_t,
-        bool,
-        char,
-        float,
-        double,
-        std::string,
-        Configurations::TCPDecideMessageSize,
-        Configurations::InputFormat>;
+    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
     /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
     /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
-    template <typename T>
+    template <typename T, typename U = void>
     struct ConfigParameter
     {
         using Type = T;
-        using ValidateFunc = std::function<bool(const std::map<std::string, std::string>& config, Config& validatedConfig)>;
+        using EnumType = U;
+        using ValidateFunc = std::function<std::optional<T>(const std::map<std::string, std::string>& config)>;
 
-        ConfigParameter(std::string name, ValidateFunc&& validateFunc) : name(std::move(name)), validateFunc(std::move(validateFunc)) { }
+        ConfigParameter(std::string name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
+            : name(std::move(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
+        {
+            static_assert(
+                not(std::is_same_v<EnumWrapper, T> && std::is_same_v<void, U>),
+                "An EnumWrapper config parameter must define the enum type as a template parameter.");
+        }
 
-        std::string name;
-        ValidateFunc validateFunc;
+        const std::string name;
+        const ValidateFunc validateFunc;
+        const std::optional<T> defaultValue;
 
         operator const std::string&() const { return name; }
-        bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const
-        {
-            return validateFunc(config, validatedConfig);
-        }
+
+        std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const { return this->validateFunc(config); }
+
+        static constexpr bool isEnumWrapper() { return not(std::is_same_v<U, void>); }
     };
 
     /// Uses type erasure to create a container for ConfigParameters, which are templated.
@@ -89,25 +90,29 @@ struct SourceDescriptor
         {
         }
 
-        bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const
+        std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const
         {
-            return configParameter->validate(config, validatedConfig);
+            return configParameter->validate(config);
         }
+
+        std::optional<ConfigType> getDefaultValue() const { return configParameter->getDefaultValue(); }
 
         struct Concept
         {
             virtual ~Concept() = default;
-            virtual bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const = 0;
+            virtual std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const = 0;
+            virtual std::optional<ConfigType> getDefaultValue() const = 0;
         };
 
         template <typename T>
         struct Model : Concept
         {
             Model(const T& configParameter) : configParameter(configParameter) { }
-            bool validate(const std::map<std::string, std::string>& config, Config& validatedConfig) const override
+            std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const override
             {
-                return configParameter.validate(config, validatedConfig);
+                return configParameter.validate(config);
             }
+            std::optional<ConfigType> getDefaultValue() const override { return configParameter.defaultValue; }
 
         private:
             T configParameter;
@@ -130,10 +135,10 @@ struct SourceDescriptor
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
     explicit SourceDescriptor(std::string logicalSourceName, std::string sourceType);
     /// Constructor used before applying schema inference.
-    ///-Todo: used only in serialization -> can potentially remove, after refactoring serialization
+    /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
     explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
-    ///-Todo: used only in serialization -> can potentially remove, after refactoring serialization
+    /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
     explicit SourceDescriptor(
         std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
 
@@ -149,7 +154,6 @@ struct SourceDescriptor
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
-
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
     void setConfigType(const std::string& key, ConfigType value);
 
@@ -157,10 +161,18 @@ struct SourceDescriptor
     /// Uses the key to retrieve to lookup the config paramater.
     /// Uses the taggeg type to retrieve the correct type from the variant value in the configuration.
     template <typename ConfigParameter>
-    typename ConfigParameter::Type getFromConfig(const ConfigParameter& key) const
+    auto getFromConfig(const ConfigParameter& key) const
     {
         const auto& value = config.at(key);
-        return std::get<typename ConfigParameter::Type>(value);
+        if constexpr (ConfigParameter::isEnumWrapper())
+        {
+            const EnumWrapper enumWrapper = std::get<EnumWrapper>(value);
+            return enumWrapper.toEnum<typename ConfigParameter::EnumType>().value();
+        }
+        else
+        {
+            return std::get<typename ConfigParameter::Type>(value);
+        }
     }
 
     /// In contrast to getFromConfig(), tryGetFromConfig checks if the key exists and if the tagged type is correct.
@@ -184,57 +196,17 @@ struct SourceDescriptor
         /// No specific validation and formatting function defined, using default formatter.
         if (config.contains(configParameter))
         {
-            return SourceDescriptor::stringParameterAs<typename ConfigParameter::Type>(config.at(configParameter));
+            return SourceDescriptor::stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
+                config.at(configParameter));
         }
-        NES_ERROR("ConfigParameter: {}, is not available in config.", configParameter.name);
+        /// The user did not specify the parameter, if a default value is available, return the default value.
+        if (configParameter.defaultValue.has_value())
+        {
+            return configParameter.defaultValue;
+        }
+        NES_ERROR("ConfigParameter: {}, is not available in config and there is no default value.", configParameter.name);
         return std::nullopt;
     };
-
-    template <typename ConfigParameter>
-    static bool tryMandatoryConfigure(
-        const ConfigParameter& configParameter,
-        const std::map<std::string, std::string>& config,
-        Config& validatedConfig,
-        const std::optional<std::function<bool(const std::map<std::string, std::string>& lambdaConfig)>> customValidateFunc = std::nullopt)
-    {
-        if (const auto userSpecifiedConfigParamater = SourceDescriptor::tryGet(configParameter, config);
-            userSpecifiedConfigParamater.has_value())
-        {
-            if (customValidateFunc.has_value() and not customValidateFunc.value()(config))
-            {
-                NES_ERROR("Mandatory parameter: {} was set, but invalid.", configParameter.name);
-                return false;
-            }
-            validatedConfig.emplace(std::make_pair(configParameter, userSpecifiedConfigParamater.value()));
-            return true;
-        }
-        NES_ERROR("Mandatory parameter: {} was not set.", configParameter.name);
-        return false;
-    }
-
-    template <typename ConfigParameter>
-    static bool tryOptionalConfigure(
-        typename ConfigParameter::Type defaultValue,
-        const ConfigParameter& configParameter,
-        const std::map<std::string, std::string>& config,
-        Config& validatedConfig)
-    {
-        /// If user did not specify a specific value and a default value is available, set it.
-        if (not config.contains(configParameter))
-        {
-            validatedConfig.emplace(configParameter, defaultValue);
-            return true;
-        }
-        /// Try set user configured config parameter.
-        auto userSpecifiedConfigParameter = SourceDescriptor::tryGet(configParameter, config);
-        if (userSpecifiedConfigParameter.has_value())
-        {
-            validatedConfig.emplace(std::make_pair(configParameter, userSpecifiedConfigParameter.value()));
-            return true;
-        }
-        return false;
-    };
-
 
     /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
     std::shared_ptr<Schema> schema;
@@ -247,7 +219,7 @@ private:
     friend std::ostream& operator<<(std::ostream& out, const Config& config);
 
 
-    template <typename T>
+    template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
         if constexpr (std::is_same_v<T, int32_t>)
@@ -283,13 +255,16 @@ private:
         {
             return stringParameter;
         }
-        else if constexpr (std::is_same_v<T, Configurations::TCPDecideMessageSize>)
+        else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
-            return magic_enum::enum_cast<Configurations::TCPDecideMessageSize>(stringParameter).value();
-        }
-        else if constexpr (std::is_same_v<T, Configurations::InputFormat>)
-        {
-            return magic_enum::enum_cast<Configurations::InputFormat>(stringParameter).value();
+            const auto enumWrapperValue = EnumWrapper::create(stringParameter);
+            if (enumWrapperValue.toEnum<EnumType>().has_value()
+                && magic_enum::enum_contains<EnumType>(enumWrapperValue.toEnum<EnumType>().value()))
+            {
+                return enumWrapperValue;
+            }
+            NES_ERROR("Failed to convert EnumWrapper with value: {}, to InputFormat enum.", enumWrapperValue);
+            return std::nullopt;
         }
         else
         {

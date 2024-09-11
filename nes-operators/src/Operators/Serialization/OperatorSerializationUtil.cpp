@@ -30,10 +30,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -53,6 +50,7 @@
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/EnumWrapper.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
@@ -895,7 +893,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         switch (sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::INPUT_FORMAT))
         {
             case Configurations::InputFormat::CSV:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
+                tcpSerializedSourceConfig.set_inputformat(InputFormat::CSV);
                 break;
         }
 
@@ -987,14 +985,17 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         sourceDescriptorConfig.emplace(std::make_pair(TCPConf::DOMAIN, tcpSourceConfig->socketdomain()));
         sourceDescriptorConfig.emplace(std::make_pair(TCPConf::TYPE, tcpSourceConfig->sockettype()));
         sourceDescriptorConfig.emplace(std::make_pair(TCPConf::FLUSH_INTERVAL_MS, tcpSourceConfig->flushintervalms()));
-        sourceDescriptorConfig.emplace(std::make_pair(
-            TCPConf::DECIDED_MESSAGE_SIZE, static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
+        Sources::EnumWrapper enumWrapperDecidedMessageSize = Sources::EnumWrapper::create<Configurations::TCPDecideMessageSize>(
+            static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize()));
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::DECIDED_MESSAGE_SIZE, std::move(enumWrapperDecidedMessageSize)));
         sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SEPARATOR, tcpSourceConfig->tupleseparator().at(0)));
         sourceDescriptorConfig.emplace(std::make_pair(TCPConf::SOCKET_BUFFER_SIZE, tcpSourceConfig->socketbuffersize()));
         sourceDescriptorConfig.emplace(
             std::make_pair(TCPConf::SOCKET_BUFFER_TRANSFER_SIZE, tcpSourceConfig->bytesusedforsocketbuffersizetransfer()));
-        sourceDescriptorConfig.emplace(
-            std::make_pair(TCPConf::INPUT_FORMAT, static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat())));
+        /// Deserialize Enum: InputFormat
+        const auto inputFormat = static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat());
+        Sources::EnumWrapper enumWrapperInputFormat = Sources::EnumWrapper::create<Configurations::InputFormat>(inputFormat);
+        sourceDescriptorConfig.emplace(std::make_pair(TCPConf::INPUT_FORMAT, std::move(enumWrapperInputFormat)));
         return std::make_unique<Sources::SourceDescriptor>(
             schema,
             Sources::TCPSource::NAME,

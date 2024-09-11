@@ -122,7 +122,6 @@ namespace NES::CLI
 Sources::SourceDescriptor
 createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map<std::string, std::string>&& sourceConfiguration)
 {
-    ///-Todo: this function must be called for every physical source
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");

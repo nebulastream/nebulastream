@@ -90,7 +90,6 @@ void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shar
         INVARIANT(!source->getSchema(), "A ")
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
-        ///-Todo: improve
         auto logicalSourceName = source->getLogicalSourceName();
         SchemaPtr schema = Schema::create();
         if (!sourceCatalog->containsLogicalSource(logicalSourceName))

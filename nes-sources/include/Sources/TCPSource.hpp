@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/EnumWrapper.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -30,105 +31,75 @@ namespace NES::Sources
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
-    static inline const SourceDescriptor::ConfigParameter<Configurations::InputFormat> INPUT_FORMAT{
-        "inputFormat",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
-        {
-            return SourceDescriptor::tryMandatoryConfigure(
-                INPUT_FORMAT,
-                config,
-                validatedConfig,
-                [](const std::map<std::string, std::string>& lambdaConfig)
-                {
-                    ///-Todo: could pass userSpecifiedInputFormat as argument to function, but needs templating.
-                    const auto userSpecifiedInputFormat = SourceDescriptor::tryGet(INPUT_FORMAT, lambdaConfig);
-                    if (not NES::Configurations::validateInputFormat(userSpecifiedInputFormat.value()))
-                    {
-                        NES_ERROR(
-                            "TCPSource: mandatory input format was: {}, which is not supported.",
-                            magic_enum::enum_name(userSpecifiedInputFormat.value()));
-                        return false;
-                    }
-                    return true;
-                });
+    static inline const SourceDescriptor::ConfigParameter<EnumWrapper, Configurations::InputFormat> INPUT_FORMAT{
+        "inputFormat", std::nullopt, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(INPUT_FORMAT, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<std::string> HOST{
-        "socketHost", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryMandatoryConfigure(HOST, config, validatedConfig);
+        "socketHost", std::nullopt, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(HOST, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> PORT{
         "socketPort",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
+        std::nullopt,
+        [](const std::map<std::string, std::string>& config)
         {
             /// Mandatory (no default value)
-            if (const auto portNumber = SourceDescriptor::tryGet(PORT, config); portNumber.has_value())
+            const auto portNumber = SourceDescriptor::tryGet(PORT, config);
+            if (portNumber.has_value())
             {
                 constexpr uint32_t PORT_NUMBER_MAX = 65535;
                 if (portNumber.value() <= PORT_NUMBER_MAX)
                 {
-                    validatedConfig.emplace(std::make_pair(PORT, portNumber.value()));
-                    return true;
+                    return portNumber;
                 }
                 NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
-            return false;
+            return portNumber;
         }};
     static inline const SourceDescriptor::ConfigParameter<int32_t> DOMAIN{
         "socketDomain",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
+        AF_INET,
+        [](const std::map<std::string, std::string>& config) -> std::optional<int>
         {
-            /// Set DEFAULT if not specified by user.
-            if (not config.contains(DOMAIN))
-            {
-                validatedConfig.emplace(std::make_pair(DOMAIN, AF_INET));
-            }
-
             /// User specified value, set if input is valid, throw if not.
             const auto socketDomainString = config.at(DOMAIN);
             if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
             {
-                validatedConfig.emplace(std::make_pair(DOMAIN, AF_INET));
+                return (AF_INET);
             }
-            else if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
+            if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
             {
-                validatedConfig.emplace(std::make_pair(DOMAIN, AF_INET6));
+                return AF_INET6;
             }
-            else
-            {
-                NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
-                return false;
-            }
-            return true;
+            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
+            return std::nullopt;
         }};
     static inline const SourceDescriptor::ConfigParameter<int32_t> TYPE{
         "socketType",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
+        SOCK_STREAM,
+        [](const std::map<std::string, std::string>& config) -> std::optional<int>
         {
-            if (not config.contains(TYPE))
-            {
-                validatedConfig.emplace(std::make_pair(DOMAIN, SOCK_STREAM));
-            }
-
             const auto socketTypeString = config.at(TYPE);
             if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
             {
-                validatedConfig.emplace(std::make_pair(TYPE, SOCK_STREAM));
+                return SOCK_STREAM;
             }
             else if (strcasecmp(socketTypeString.c_str(), "SOCK_DGRAM") == 0)
             {
-                validatedConfig.emplace(std::make_pair(TYPE, SOCK_DGRAM));
+                return SOCK_DGRAM;
             }
             else if (strcasecmp(socketTypeString.c_str(), "SOCK_SEQPACKET") == 0)
             {
-                validatedConfig.emplace(std::make_pair(TYPE, SOCK_SEQPACKET));
+                return SOCK_SEQPACKET;
             }
             else if (strcasecmp(socketTypeString.c_str(), "SOCK_RAW") == 0)
             {
-                validatedConfig.emplace(std::make_pair(TYPE, SOCK_RAW));
+                return SOCK_RAW;
             }
             else if (strcasecmp(socketTypeString.c_str(), "SOCK_RDM") == 0)
             {
-                validatedConfig.emplace(std::make_pair(TYPE, SOCK_RDM));
+                return SOCK_RDM;
             }
             else
             {
@@ -136,33 +107,29 @@ struct ConfigParametersTCP
                     "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
                     "SOCK_RDM",
                     socketTypeString)
-                return false;
+                return std::nullopt;
             }
-            return true;
         }};
     static inline const SourceDescriptor::ConfigParameter<char> SEPARATOR{
-        "tupleSeparator", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryOptionalConfigure('\n', SEPARATOR, config, validatedConfig);
+        "tupleSeparator", '\n', [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(SEPARATOR, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flushIntervalMS", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryOptionalConfigure(0, FLUSH_INTERVAL_MS, config, validatedConfig);
+        "flushIntervalMS", 0, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(FLUSH_INTERVAL_MS, config);
         }};
-    static inline const SourceDescriptor::ConfigParameter<Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{
+    static inline const SourceDescriptor::ConfigParameter<EnumWrapper, Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{
         "decideMessageSize",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
-        {
-            return SourceDescriptor::tryOptionalConfigure(
-                Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR, DECIDED_MESSAGE_SIZE, config, validatedConfig);
-        }};
+        EnumWrapper::create<Configurations::TCPDecideMessageSize>(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR),
+        [](const std::map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DECIDED_MESSAGE_SIZE, config); }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socketBufferSize", [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig) {
-            return SourceDescriptor::tryOptionalConfigure(1024, SOCKET_BUFFER_SIZE, config, validatedConfig);
+        "socketBufferSize", 1024, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(SOCKET_BUFFER_SIZE, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytesUsedForSocketBufferSizeTransfer",
-        [](const std::map<std::string, std::string>& config, SourceDescriptor::Config& validatedConfig)
-        { return SourceDescriptor::tryOptionalConfigure(0, SOCKET_BUFFER_TRANSFER_SIZE, config, validatedConfig); }};
+        "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
+        }};
 
     static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
         = SourceDescriptor::createConfigParameterContainerMap(

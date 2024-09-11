@@ -25,7 +25,7 @@ PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDes
 {
 }
 
-PhysicalSourcePtr PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
+std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
 {
     const auto logicalSourceName = sourceDescriptor.logicalSourceName;
     return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));

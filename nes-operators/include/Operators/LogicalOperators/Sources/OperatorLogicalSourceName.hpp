@@ -48,6 +48,4 @@ private:
     std::shared_ptr<Schema> schema;
 };
 
-///-Todo: remove
-using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
-} /// namespace NES
+}
