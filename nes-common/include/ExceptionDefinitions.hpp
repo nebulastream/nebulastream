@@ -14,10 +14,9 @@
 
 #pragma once
 
-/***
- * WARNING: Do not include this header directly but use:
- * #include <ErrorHandling.hpp>
- */
+#ifndef EXCEPTION
+    #error "This file should not be included directly! Include instead include <ErrorHandling.hpp>"
+#endif
 
 /// 1XXX Configuration Errors
 EXCEPTION(InvalidConfigParameter, 1000, "invalid config parameter")
@@ -48,12 +47,12 @@ EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
 /// 22XX NebuLI
-EXCEPTION(QueryDescriptionNotReadable, 2200, "Could not read query description")
-EXCEPTION(QueryDescriptionNotParsable, 2201, "Could not parse query description")
-EXCEPTION(QueryInvalid, 2202, "Query is invalid")
-EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "Logical source was not found in the query description")
-EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "Physical source was not found in the query description")
-EXCEPTION(OperatorNotFound, 2205, "Operator not found")
+EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
+EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")
+EXCEPTION(QueryInvalid, 2202, "query is invalid")
+EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not found in the query description")
+EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
+EXCEPTION(OperatorNotFound, 2205, "operator not found")
 
 
 /// 3XXX Errors during query runtime
