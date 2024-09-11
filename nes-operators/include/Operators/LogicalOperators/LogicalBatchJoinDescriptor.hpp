@@ -21,8 +21,6 @@
 
 namespace NES::Join::Experimental
 {
-class LogicalBatchJoinDescriptor;
-using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental
@@ -31,7 +29,7 @@ class LogicalBatchJoinDescriptor
 { /// todo jm its dumb that this is in the windowing dir
 
 public:
-    static LogicalBatchJoinDescriptorPtr create(
+    static std::shared_ptr<LogicalBatchJoinDescriptor> create(
         const FieldAccessExpressionNodePtr& keyTypeBuild,
         const FieldAccessExpressionNodePtr& keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
@@ -108,5 +106,5 @@ private:
     uint64_t numberOfInputEdgesProbe;
 };
 
-using LogicalBatchJoinDescriptorPtr = LogicalBatchJoinDescriptorPtr;
+using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 } /// namespace NES::Join::Experimental

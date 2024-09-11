@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
