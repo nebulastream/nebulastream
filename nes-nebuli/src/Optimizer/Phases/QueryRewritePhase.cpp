@@ -50,11 +50,8 @@ QueryRewritePhase::QueryRewritePhase()
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
-QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
+void QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
 {
-    /// Duplicate query plan
-    auto duplicateQueryPlan = queryPlan->copy();
-
     /// Apply rules necessary for enabling query execution when stream alias or union operators are involved
     queryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
     queryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
@@ -66,7 +63,7 @@ QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
     /// Apply rule for filter merge
     queryPlan = filterMergeRule->apply(queryPlan);
     /// Apply rule for filter reordering optimization
-    return predicateReorderingRule->apply(queryPlan);
+    queryPlan = predicateReorderingRule->apply(queryPlan);
 }
 
 }

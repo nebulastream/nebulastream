@@ -55,9 +55,9 @@ void PhysicalSourceOperator::setOriginId(OriginId originId)
     this->originId = originId;
 }
 
-std::unique_ptr<SourceDescriptor> PhysicalSourceOperator::getSourceDescriptor()
+const SourceDescriptor& PhysicalSourceOperator::getSourceDescriptorRef() const
 {
-    return std::move(sourceDescriptor);
+    return *sourceDescriptor;
 }
 
 std::string PhysicalSourceOperator::toString() const
@@ -76,8 +76,7 @@ std::string PhysicalSourceOperator::toString() const
 }
 OperatorPtr PhysicalSourceOperator::copy()
 {
-    throw InvalidUseOfOperatorFunction(
-        "PhysicalSourceOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
+    PRECONDITION(false, "PhysicalSourceOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
 }
 
 } /// namespace NES::QueryCompilation::PhysicalOperators

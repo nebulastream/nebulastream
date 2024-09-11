@@ -29,7 +29,6 @@ EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
 EXCEPTION(CannotSerialize, 2001, "cannot serialize")
 EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
 EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
-EXCEPTION(InvalidUseOfOperatorFunction, 2004, "invalid use of an operator function")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
