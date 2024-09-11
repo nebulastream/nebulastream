@@ -22,10 +22,10 @@
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr)
+RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(Memory::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr)
     : rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
 
-MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr()
+Memory::MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr()
 {
     return rowMemoryLayoutPtr;
 }

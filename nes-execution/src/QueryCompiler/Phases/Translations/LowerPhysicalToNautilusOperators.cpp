@@ -20,6 +20,7 @@
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Map.hpp>
@@ -117,7 +118,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+    std::vector<Runtime::Execution::OperatorHandlerPtr>&)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalScanOperator>())

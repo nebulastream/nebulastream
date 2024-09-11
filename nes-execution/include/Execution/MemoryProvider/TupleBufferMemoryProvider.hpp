@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
@@ -31,7 +32,7 @@ public:
 
     static MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
 
-    virtual MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() = 0;
+    virtual Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() = 0;
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available

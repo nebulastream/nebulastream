@@ -21,11 +21,6 @@ target_include_directories(nes-functions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-register_public_header_file(nes-functions ${CMAKE_CURRENT_SOURCE_DIR}/include/Functions/FunctionNode.hpp Functions/FunctionNode.hpp)
-register_public_header_file(nes-functions ${CMAKE_CURRENT_SOURCE_DIR}/include/Functions/FieldAccessFunctionNode.hpp Functions/FieldAccessFunctionNode.hpp)
-
-
-
 #Add the nes functions and headers to cpack
 install(TARGETS nes-functions
         EXPORT NebulaStreamTargets

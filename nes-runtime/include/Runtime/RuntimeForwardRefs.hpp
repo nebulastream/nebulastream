@@ -111,8 +111,9 @@ class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 
 } /// namespace Execution
+} /// namespace Runtime
 
-namespace MemoryLayouts
+namespace Memory::MemoryLayouts
 {
 
 class MemoryLayout;
@@ -124,9 +125,8 @@ using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 class RowLayout;
 using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
-} /// namespace MemoryLayouts
+} /// namespace Memory::MemoryLayouts
 
-} /// namespace Runtime
 
 namespace QueryCompilation
 {

@@ -56,10 +56,10 @@ public:
         char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
         std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&now_time_t));
         /// Ordering: time -> system test name -> test id
-        std::string logFileName = std::string("SystemTest_") + timestamp + "_" + systemTestName + "_" + std::to_string(testId) + ".log";
+        const auto logFileName = std::filesystem::path("test") / fmt::format("SystemTest_{}_{}_{}.log", timestamp, systemTestName, testId);
 
         Logger::setupLogging(logFileName, LogLevel::LOG_DEBUG, LOG_TO_STDOUT);
-        std::filesystem::path logPath = std::filesystem::current_path() / "test" / logFileName;
+        std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
         /// file:// to make the link clickable in the console
         std::cout << "Find the test log at: file://" << logPath.string() << std::endl;
 

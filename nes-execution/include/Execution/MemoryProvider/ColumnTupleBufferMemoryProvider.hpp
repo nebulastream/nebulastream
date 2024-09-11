@@ -28,10 +28,10 @@ public:
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
      * @param Column memory layout pointer used to create the ColumnMemoryProvider.
      */
-    ColumnTupleBufferMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr);
+    ColumnTupleBufferMemoryProvider(Memory::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr);
     ~ColumnTupleBufferMemoryProvider() = default;
 
-    MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record readRecord(
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
@@ -44,7 +44,7 @@ public:
 private:
     nautilus::val<int8_t*>
     calculateFieldAddress(nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
-    Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
+    Memory::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
 }

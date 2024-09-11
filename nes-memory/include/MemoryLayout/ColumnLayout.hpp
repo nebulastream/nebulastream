@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Memory::MemoryLayouts

@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -30,10 +32,10 @@ public:
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
      * @param Row memory layout pointer used to create the RowTupleBufferMemoryProvider.
      */
-    RowTupleBufferMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
+    RowTupleBufferMemoryProvider(Memory::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
     ~RowTupleBufferMemoryProvider() override = default;
 
-    MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record readRecord(
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
@@ -46,7 +48,7 @@ public:
 private:
     [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 
-    const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
+    Memory::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };
 
 }

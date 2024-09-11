@@ -83,8 +83,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
 
     /// enable dump to console or file if the compiler options are set
     options.setOption(
-        "toConsole", compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
-    options.setOption("toFile", compilerOptions->getDumpMode() == DumpMode::FILE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+        "toConsole", compilerOptions->dumpMode == DumpMode::CONSOLE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
+    options.setOption("toFile", compilerOptions->dumpMode == DumpMode::FILE || compilerOptions->dumpMode == DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName);
