@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

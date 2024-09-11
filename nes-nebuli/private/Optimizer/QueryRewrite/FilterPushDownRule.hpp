@@ -14,9 +14,10 @@
 
 #pragma once
 
-#include <Operators/OperatorForwardDeclaration.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
 {
