@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Runtime/QueryManager.hpp>
 
 namespace NES::Runtime
 {

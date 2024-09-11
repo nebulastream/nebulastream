@@ -13,8 +13,8 @@
 */
 
 #pragma once
-
 #include <mutex>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 
