@@ -13,8 +13,8 @@
 */
 #pragma once
 
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Util/Timer.hpp>
+#include <Compiler/DynamicObject.hpp>
 
 namespace NES::Compiler
 {

@@ -13,10 +13,10 @@
 */
 #pragma once
 
-#include <Compiler/CompilerForwardDeclarations.hpp>
-
 #include <memory>
 #include <vector>
+#include <Compiler/ExternalAPI.hpp>
+#include <Compiler/SourceCode.hpp>
 
 namespace NES::Compiler
 {
