@@ -16,15 +16,11 @@
 
 #include <memory>
 #include <Nodes/Node.hpp>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-
-class DataType;
-using DataTypePtr = std::shared_ptr<DataType>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
