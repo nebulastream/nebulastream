@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Expressions/ExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES
@@ -70,5 +71,5 @@ private:
     ExpressionNodePtr predicate;
     float selectivity = 1.0f;
 };
-
+using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 } /// namespace NES

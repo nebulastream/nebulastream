@@ -14,9 +14,8 @@
 
 #pragma once
 
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
-
 namespace NES
 {
 

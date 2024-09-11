@@ -16,13 +16,12 @@
 
 #include <cstdint>
 #include <API/Schema.hpp>
+#include <Expressions/ExpressionNode.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Types/WindowType.hpp>
 
 namespace NES::Join
 {
-class LogicalJoinDescriptor;
-using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 /**
  * @brief Runtime definition of a join operator
  * @experimental
@@ -49,7 +48,7 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    static LogicalJoinDescriptorPtr create(
+    static std::shared_ptr<LogicalJoinDescriptor> create(
         ExpressionNodePtr joinExpression,
         const Windowing::WindowTypePtr& windowType,
         uint64_t numberOfInputEdgesLeft,
