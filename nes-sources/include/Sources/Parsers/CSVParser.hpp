@@ -29,8 +29,8 @@ public:
         std::string_view inputString,
         uint64_t tupleCount,
         NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-        std::shared_ptr<Schema> schema,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        const Schema& schema,
+        NES::Memory::AbstractBufferProvider& bufferManager) override;
 
 private:
     uint64_t numberOfSchemaFields;
