@@ -73,12 +73,7 @@ class QueryRewritePhase
 public:
     static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
-    /**
-     * @brief Perform query plan re-write for the input query plan
-     * @param queryPlan : the input query plan
-     * @return updated query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr& queryPlan) const;
+    void execute(QueryPlanPtr& queryPlan) const;
 
 private:
     explicit QueryRewritePhase();

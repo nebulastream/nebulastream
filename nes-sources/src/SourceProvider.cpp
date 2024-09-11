@@ -34,11 +34,11 @@ DataSourceProviderPtr SourceProvider::create()
 
 SourceHandlePtr SourceProvider::lower(
     OriginId originId,
-    std::unique_ptr<SourceDescriptor>&& sourceDescriptor,
+    const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor->getSchema();
+    auto schema = sourceDescriptor.getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), schema, sourceDescriptor))
     {
@@ -50,8 +50,7 @@ SourceHandlePtr SourceProvider::lower(
             NUM_SOURCE_LOCAL_BUFFERS,
             std::move(source));
     }
-    NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
-    throw std::invalid_argument("Unknown Source Descriptor Type");
+    throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.getSourceType()));
 }
 
 }

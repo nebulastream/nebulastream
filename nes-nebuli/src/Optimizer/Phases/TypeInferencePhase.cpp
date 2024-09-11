@@ -109,7 +109,6 @@ void TypeInferencePhase::performTypeInference(
                     field->setName(qualifierName + field->getName());
                 }
             }
-            /// Todo: is not persisted (get returns copy)
             sourceDescriptor.setSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
         }

@@ -30,8 +30,8 @@ SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceNa
 {
 }
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceName))
+SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceType)
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceType))
 {
 }
 
@@ -50,12 +50,12 @@ void SourceDescriptor::setSchema(const SchemaPtr& schema)
     this->schema = schema;
 }
 
-const std::string& SourceDescriptor::getSourceName() const
+const std::string& SourceDescriptor::getSourceType() const
 {
     return sourceType;
 }
 
-void SourceDescriptor::setSourceName(std::string sourceName)
+void SourceDescriptor::setSourceType(std::string sourceName)
 {
     this->sourceType = std::move(sourceName);
 }

@@ -33,18 +33,11 @@
 namespace NES::Sources
 {
 
-void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
-{
-    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
-    registry.registerPlugin((CSVSource::PLUGIN_NAME), constructorFunc);
-}
-
 /// Todo #72: remove schema from CSVSource (only required by parser).
-CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
     : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
 {
-    auto csvSourceType = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get())->getSourceConfig();
+    auto csvSourceType = dynamic_cast<const CSVSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
     this->filePath = csvSourceType->getFilePath()->getValue();
     this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
     this->delimiter = csvSourceType->getDelimiter()->getValue();
@@ -151,7 +144,7 @@ bool CSVSource::fillTupleBuffer(
 
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
-        /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
+        /// #72: there will be a problem with non-printable characters (at least with null terminators). Check sources
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, *schema, bufferManager);
         tupleCount++;
     } ///end of while
