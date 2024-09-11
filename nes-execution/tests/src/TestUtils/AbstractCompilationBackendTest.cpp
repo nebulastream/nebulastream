@@ -14,6 +14,7 @@
 
 #include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {
