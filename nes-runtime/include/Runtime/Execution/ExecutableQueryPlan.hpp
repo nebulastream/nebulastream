@@ -13,16 +13,16 @@
 */
 
 #pragma once
-
 #include <atomic>
 #include <future>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Sinks/SinksForwaredRefs.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Sources/SourceHandle.hpp>
 
 namespace NES::Runtime
