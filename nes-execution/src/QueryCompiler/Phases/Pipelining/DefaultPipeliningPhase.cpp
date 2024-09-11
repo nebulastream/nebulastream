@@ -170,7 +170,6 @@ void DefaultPipeliningPhase::processSource(
         currentPipeline = newPipeline;
     }
     currentPipeline->setType(OperatorPipeline::Type::SourcePipelineType);
-    /// Not copying here, because the source operator has a unique_ptr to the source descriptor that cannot be copied.
     currentPipeline->prependOperator(sourceOperator);
 }
 

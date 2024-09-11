@@ -26,12 +26,12 @@ SourceDescriptor::SourceDescriptor(SchemaPtr schema)
 }
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceName("INVALID")
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceType("INVALID")
 {
 }
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceName(std::move(sourceName))
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceName))
 {
 }
 
@@ -50,14 +50,14 @@ void SourceDescriptor::setSchema(const SchemaPtr& schema)
     this->schema = schema;
 }
 
-std::string SourceDescriptor::getSourceName() const
+const std::string& SourceDescriptor::getSourceName() const
 {
-    return sourceName;
+    return sourceType;
 }
 
 void SourceDescriptor::setSourceName(std::string sourceName)
 {
-    this->sourceName = std::move(sourceName);
+    this->sourceType = std::move(sourceName);
 }
 
 } /// namespace NES

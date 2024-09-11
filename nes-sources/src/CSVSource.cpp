@@ -100,9 +100,7 @@ void CSVSource::close()
 }
 
 bool CSVSource::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
-    std::shared_ptr<Schema> schema)
+    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
@@ -154,7 +152,7 @@ bool CSVSource::fillTupleBuffer(
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, *schema, bufferManager);
         tupleCount++;
     } ///end of while
 
