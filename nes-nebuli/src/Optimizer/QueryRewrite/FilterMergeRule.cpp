@@ -18,6 +18,7 @@
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 
 namespace NES::Optimizer
 {

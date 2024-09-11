@@ -14,6 +14,7 @@
 
 #include <utility>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES

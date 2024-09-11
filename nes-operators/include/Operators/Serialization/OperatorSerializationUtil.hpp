@@ -17,6 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <SerializableOperator.pb.h>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>

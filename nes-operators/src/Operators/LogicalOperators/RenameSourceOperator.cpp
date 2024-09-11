@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 
 namespace NES
 {
