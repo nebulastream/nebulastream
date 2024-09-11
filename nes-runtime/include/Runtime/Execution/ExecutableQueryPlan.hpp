@@ -23,7 +23,6 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourceHandle.hpp>
 
 namespace NES::Runtime
