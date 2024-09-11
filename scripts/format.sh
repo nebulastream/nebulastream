@@ -41,10 +41,10 @@ then
     #
     # list files in repo
     #   remove filenames ending with .bin or .png
-    #   if len(last char) > 0 (i.e.: not '\n'): append newline
+    #   last char as decimal ascii is 10 (i.e. is newline) OR append newline
     git ls-files \
       | grep --invert-match -e "\.bin$" -e "\.png$" -e "\.zip$" \
-      | xargs --max-procs="$(nproc)" -I {} sh -c '[ -n "$(tail -c 1 {})" ] && echo "" >> {}'
+      | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
 
 else
     # clang-format
