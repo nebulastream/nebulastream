@@ -53,7 +53,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     using base = Execution::ExecutablePipelineStage;
 
 public:
-    explicit ReconfigurationEntryPointPipelineStage() : base(PipelineStageArity::Unary)
+    explicit ReconfigurationEntryPointPipelineStage() : base(Execution::PipelineStageArity::Unary)
     {
         /// nop
     }
@@ -329,7 +329,7 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
     using base = Execution::ExecutablePipelineStage;
 
 public:
-    explicit PoisonPillEntryPointPipelineStage() : base(PipelineStageArity::Unary)
+    explicit PoisonPillEntryPointPipelineStage() : base(Execution::PipelineStageArity::Unary)
     {
         /// nop
     }
