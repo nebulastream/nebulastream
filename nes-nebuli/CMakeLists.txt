@@ -53,6 +53,11 @@ target_include_directories(nebuli
 # Collect all headers required for our "query-parsing" and store them in a file_set
 macro(add_nebuli_header TARGET PATH)
     file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH}/*.hpp)
+    foreach (ABSOLUTE_PATH_TO_HEADER IN LISTS HEADER)
+        file(RELATIVE_PATH RELATIVE_PATH_TO_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/" "${ABSOLUTE_PATH_TO_HEADER}")
+        configure_file(${ABSOLUTE_PATH_TO_HEADER} "${CMAKE_BINARY_DIR}/include/nebulastream/${RELATIVE_PATH_TO_HEADER}" COPYONLY)
+    endforeach ()
+
     if (NOT HEADER)
         file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH})
     endif ()
