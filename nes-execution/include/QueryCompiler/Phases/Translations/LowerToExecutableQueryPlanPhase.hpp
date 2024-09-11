@@ -14,7 +14,7 @@
 #pragma once
 
 #include <vector>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -33,7 +33,7 @@ class LowerToExecutableQueryPlanPhase
 {
 public:
     LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider);
-    static LowerToExecutableQueryPlanPhasePtr
+    static std::shared_ptr<LowerToExecutableQueryPlanPhase>
     create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider);
 
     Runtime::Execution::ExecutableQueryPlanPtr
@@ -79,5 +79,6 @@ private:
 
     static std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
 };
+using LowerToExecutableQueryPlanPhasePtr = std::shared_ptr<LowerToExecutableQueryPlanPhase>;
 } /// namespace QueryCompilation
 } /// namespace NES

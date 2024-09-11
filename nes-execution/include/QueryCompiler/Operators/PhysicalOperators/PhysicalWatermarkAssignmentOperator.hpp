@@ -13,8 +13,8 @@
 */
 #pragma once
 
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

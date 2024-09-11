@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::QueryCompilation
@@ -30,7 +30,7 @@ public:
      * @brief Factory method for creating a DataSinkProvider
      * @return DataSinkProvider
      */
-    static DataSinkProviderPtr create();
+    static std::shared_ptr<DataSinkProvider> create();
 
     /**
      * @brief Lowers a sink descriptor to a executable data sink.
@@ -51,4 +51,5 @@ public:
 
     virtual ~DataSinkProvider() = default;
 };
+using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
 } /// namespace NES::QueryCompilation

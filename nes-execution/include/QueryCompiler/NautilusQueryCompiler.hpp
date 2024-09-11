@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 
 namespace NES::QueryCompilation
