@@ -25,7 +25,6 @@ namespace NES
 {
 
 class SerializableOperator;
-class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
@@ -57,7 +56,7 @@ public:
 
     static void serializeSourceOperator(OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
+    static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
 
     static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
 
@@ -91,9 +90,10 @@ public:
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
 
     static void serializeSourceDescriptor(
-        Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDetails& sourceDetails, bool isClientOriginated = false);
+        Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
 
-    static std::unique_ptr<Sources::SourceDescriptor> deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails);
+    static std::unique_ptr<Sources::SourceDescriptor>
+    deserializeSourceDescriptor(const SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor& sourceDescriptor);
 
     static void
     serializeSinkDescriptor(const SinkDescriptor& sinkDescriptor, SerializableOperator_SinkDetails& sinkDetails, uint64_t numberOfOrigins);

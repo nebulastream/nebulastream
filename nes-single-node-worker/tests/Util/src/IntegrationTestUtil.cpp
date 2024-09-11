@@ -17,9 +17,7 @@
 #include <fstream>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/CSVSource.hpp>
@@ -231,7 +229,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
     {
         google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDetails>())
+        if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptor();
@@ -257,7 +255,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
     {
         google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDetails>())
+        if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptor();
@@ -266,7 +264,9 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
-                    sourceDescriptor->setConfigType(Sources::ConfigParametersTCP::PORT, mockTcpServerPort);
+                    sourceDescriptor->setConfigType(Sources::ConfigParametersTCP::PORT, static_cast<uint32_t>(mockTcpServerPort));
+                    auto socketPortInt = sourceDescriptor->getFromConfig(Sources::ConfigParametersTCP::PORT);
+                    NES_DEBUG("socket port: {}", socketPortInt);
                     deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->setSourceDescriptor(std::move(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 

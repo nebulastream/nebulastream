@@ -34,8 +34,8 @@ SourceDescriptor::SourceDescriptor(std::shared_ptr<Schema> schema, std::string s
 {
 }
 SourceDescriptor::SourceDescriptor(
-    std::string logicalSourceName,
     std::shared_ptr<Schema> schema,
+    std::string logicalSourceName,
     std::string sourceType,
     Configurations::InputFormat inputFormat,
     Config&& config)
