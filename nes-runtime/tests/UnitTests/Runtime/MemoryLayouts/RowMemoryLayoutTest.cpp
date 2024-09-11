@@ -19,7 +19,6 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>

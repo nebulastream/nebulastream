@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #pragma once
-
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -20,10 +19,10 @@
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
@@ -36,15 +35,19 @@
 
 #include <folly/MPMCQueue.h>
 
-namespace NES
-{
-class DataSource;
-using DataSourcePtr = std::shared_ptr<DataSource>;
-
-class NesWorker;
-namespace Runtime
+namespace NES::Runtime
 {
 
+namespace Execution
+{
+/// Forward declaration of ExecutableQueryPlan, which directly includes QueryManager
+class ExecutableQueryPlan;
+using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
+
+/// Forward declaration of ExecutablePipeline, which directly includes QueryManager
+class ExecutablePipeline;
+using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
+}
 class ThreadPool;
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>; /// TODO consider moving this atomic in c++20
 
@@ -264,6 +267,4 @@ protected:
 #endif
 };
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
-
-} /// namespace Runtime
-} /// namespace NES
+} /// namespace NES::Runtime
