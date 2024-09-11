@@ -5,7 +5,7 @@ FROM nebulastream/nes-development:${TAG} AS build
 USER root
 ADD . /home/ubuntu/src
 RUN cd /home/ubuntu/src \
-    && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+    && cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 \
     && cmake --build build --target single-node -j \
     && mkdir /tmp/lib /tmp/bin \
     && find build -name '*.so' -exec mv -t /tmp/lib {} + \
