@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -23,13 +23,13 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalJoinOperator
 {
 public:
-    Join::JoinOperatorHandlerPtr getJoinHandler();
+    NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr getJoinHandler();
 
     virtual ~PhysicalJoinOperator() noexcept = default;
 
 protected:
-    explicit PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
+    explicit PhysicalJoinOperator(NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler);
 
-    Join::JoinOperatorHandlerPtr operatorHandler;
+    NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

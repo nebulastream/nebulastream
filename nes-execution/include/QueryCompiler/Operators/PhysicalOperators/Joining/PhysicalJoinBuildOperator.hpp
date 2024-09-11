@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
@@ -31,18 +32,18 @@ public:
         OperatorId id,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        const Join::JoinOperatorHandlerPtr& operatorHandler,
+        const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
         JoinBuildSideType buildSide);
     static PhysicalOperatorPtr create(
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        const Join::JoinOperatorHandlerPtr& operatorHandler,
+        const NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
         JoinBuildSideType buildSide);
     PhysicalJoinBuildOperator(
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        Join::JoinOperatorHandlerPtr operatorHandler,
+        NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler,
         JoinBuildSideType buildSide);
 
     ~PhysicalJoinBuildOperator() noexcept override = default;
