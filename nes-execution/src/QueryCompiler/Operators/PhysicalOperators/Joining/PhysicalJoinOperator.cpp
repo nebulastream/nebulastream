@@ -17,9 +17,10 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(std::move(operatorHandler)) {};
+PhysicalJoinOperator::PhysicalJoinOperator(NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr operatorHandler)
+    : operatorHandler(std::move(operatorHandler)) {};
 
-Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler()
+NES::Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler()
 {
     return operatorHandler;
 }
