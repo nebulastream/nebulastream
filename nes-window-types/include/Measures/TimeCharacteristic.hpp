@@ -16,9 +16,13 @@
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
-#include <Expressions/ExpressionNode.hpp>
 
-namespace NES::Windowing
+namespace NES
+{
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
+namespace Windowing
 {
 
 class TimeCharacteristic;
@@ -93,4 +97,5 @@ private:
     AttributeFieldPtr field;
     TimeUnit unit;
 };
-} /// namespace NES::Windowing
+}
+}
