@@ -15,7 +15,7 @@
 #pragma once
 
 #ifndef EXCEPTION
-    #error "This file should not be included directly! Include instead include <ErrorHandling.hpp>"
+#    error "This file should not be included directly! Include it via <ErrorHandling.hpp>"
 #endif
 
 /// 1XXX Configuration Errors
