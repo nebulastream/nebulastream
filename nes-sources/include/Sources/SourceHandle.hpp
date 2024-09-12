@@ -18,6 +18,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 namespace NES::Sources
 {

@@ -15,8 +15,9 @@
 #pragma once
 
 #include <source_location>
+#include <sstream>
 #include <string>
-#include <Util/Logger/Logger.hpp>
+#include <Util/StacktraceLoader.hpp>
 
 namespace NES
 {
@@ -29,16 +30,13 @@ namespace NES
 class Exception final : public std::exception
 {
 public:
-    Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace)
-        : message(std::move(message)), errorCode(code), location(loc), stacktrace(std::move(trace))
-    {
-    }
+    Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace);
 
-    std::string& what() noexcept { return message; }
-    [[nodiscard]] const char* what() const noexcept override { return message.c_str(); }
-    [[nodiscard]] uint64_t code() const noexcept { return errorCode; }
-    [[nodiscard]] const std::source_location& where() const noexcept { return location; }
-    [[nodiscard]] const std::string& stack() const noexcept { return stacktrace; }
+    std::string& what() noexcept;
+    [[nodiscard]] const char* what() const noexcept override;
+    [[nodiscard]] uint64_t code() const noexcept;
+    [[nodiscard]] const std::source_location& where() const noexcept;
+    [[nodiscard]] const std::string& stack() const noexcept;
 
 private:
     std::string message;
@@ -63,7 +61,7 @@ private:
     inline Exception name( \
         std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
     { \
-        return Exception(std::string(message) + "\n" + msg, code, loc, trace); \
+        return Exception(std::string(message) + "; " + msg, code, loc, trace); \
     } \
     namespace ErrorCode \
     { \
@@ -112,51 +110,12 @@ private:
  * @brief This function is used to log the current exception.
  * @warning This function should be used only in a catch block.
  */
-inline void tryLogCurrentException()
-{
-    try
-    {
-        throw;
-    }
-    catch (const Exception& e)
-    {
-        NES_ERROR(
-            "failed to process with error code ({}) : {}\n {}({}:{}), function `{}`\n",
-            e.code(),
-            e.what(),
-            e.where().file_name(),
-            e.where().line(),
-            e.where().column(),
-            e.where().function_name())
-    }
-    catch (const std::exception& e)
-    {
-        NES_ERROR("failed to process with error : {}\n", e.what())
-    }
-    catch (...)
-    {
-        NES_ERROR("failed to process with unknown error\n")
-    }
-}
+void tryLogCurrentException();
 
 /**
  * @brief This function is used to get the current exception code.
  * @warning This function should be used only in a catch block.
  */
-inline uint64_t getCurrentExceptionCode()
-{
-    try
-    {
-        throw;
-    }
-    catch (const Exception& e)
-    {
-        return e.code();
-    }
-    catch (...)
-    {
-        return ErrorCode::UnknownException;
-    }
-}
+[[nodiscard]] uint64_t getCurrentExceptionCode();
 
-} /// Namespace NES
+}
