@@ -24,6 +24,8 @@ class ExecutablePipelineStage;
  * @brief The executable pipeline provider creates an executable pipeline stage out of a pipeline of physical operators.
  * We differentiate between different implementations that can use different execution strategies, e.g. compilation or interpretation.
  */
+
+/// !!!IMPORTANT!!! This is not how we should use registries. We have an open issue to address this problem #323
 class ExecutablePipelineProvider
 {
 public:
