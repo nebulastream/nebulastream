@@ -26,7 +26,6 @@ public:
     PipeliningPhasePtr createPipeliningPhase() override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() override;
-    BufferOptimizationPhasePtr createBufferOptimizationPhase(std::shared_ptr<QueryCompilerOptions> options) override;
 };
 
 } /// namespace NES::QueryCompilation::Phases
