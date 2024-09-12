@@ -39,12 +39,15 @@ option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
+option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
-
+if (NES_LOG_WITH_STACKTRACE)
+    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+endif()
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
 endif ()
