@@ -77,7 +77,9 @@ then
     FAIL=1
 fi
 
-python3 scripts/check_preamble.py
+python3 scripts/check_preamble.py || FAIL=1
+
+python3 scripts/check_todos.py || FAIL=1
 
 [ "$FAIL" = "0" ] && echo "format.sh: no problems found"
 

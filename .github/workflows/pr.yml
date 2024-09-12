@@ -43,8 +43,19 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
       options: --user root
+      env:
+        GH_TOKEN: ${{ github.token }}
+        # has to be sha since github.base_ref would have to be checked out
+        BASE_REF: ${{ github.event.pull_request.base.sha }}
+    permissions:
+      issues: read
+      contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          # check-todos.py needs to reach the merge-base,
+          # so it fails if the PR is longer than 100 commits
+          fetch-depth: 100
       - name: Check Format
         run: ./scripts/format.sh
 
