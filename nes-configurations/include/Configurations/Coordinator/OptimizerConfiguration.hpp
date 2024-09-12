@@ -15,11 +15,11 @@
 #pragma once
 
 #include <string>
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Configurations/Validation/BooleanValidation.hpp"
-#include "Configurations/Validation/NumberValidation.hpp"
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 
 namespace NES::Configurations
 {
