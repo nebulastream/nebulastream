@@ -23,7 +23,7 @@ namespace NES
 class LogicalUnaryFunctionNode : public UnaryFunctionNode, public LogicalFunctionNode
 {
 protected:
-    LogicalUnaryFunctionNode();
+    LogicalUnaryFunctionNode(std::string name);
 
 public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -32,7 +32,7 @@ public:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override = 0;
+    FunctionNodePtr deepCopy() override = 0;
 
 protected:
     explicit LogicalUnaryFunctionNode(LogicalUnaryFunctionNode* other);

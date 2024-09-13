@@ -21,7 +21,7 @@
 
 namespace NES
 {
-WhenFunctionNode::WhenFunctionNode(DataTypePtr stamp) : BinaryFunctionNode(std::move(stamp)) {};
+WhenFunctionNode::WhenFunctionNode(DataTypePtr stamp) : BinaryFunctionNode(std::move(stamp), "When") {};
 
 WhenFunctionNode::WhenFunctionNode(WhenFunctionNode* other) : BinaryFunctionNode(other)
 {
@@ -72,9 +72,14 @@ std::string WhenFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr WhenFunctionNode::copy()
+FunctionNodePtr WhenFunctionNode::deepCopy()
 {
-    return WhenFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return WhenFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool WhenFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

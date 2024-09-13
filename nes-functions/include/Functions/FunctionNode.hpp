@@ -33,7 +33,7 @@ using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 class FunctionNode : public Node
 {
 public:
-    explicit FunctionNode(DataTypePtr stamp);
+    explicit FunctionNode(DataTypePtr stamp, std::string type);
 
     ~FunctionNode() override = default;
 
@@ -43,30 +43,19 @@ public:
      */
     bool isPredicate() const;
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
+    ///Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
     virtual void inferStamp(SchemaPtr schema);
 
-    /**
-     * @brief returns the stamp as the data type which is produced by this function.
-     * @return Stamp
-     */
     DataTypePtr getStamp() const;
-
-    /**
-     * @brief sets the stamp of this function.
-     * @param stamp
-     */
     void setStamp(DataTypePtr stamp);
+    [[nodiscard]] const std::string& getType() const;
 
-    /**
-     * @brief Create a deep copy of this function node.
-     * @return FunctionNodePtr
-     */
-    virtual FunctionNodePtr copy() = 0;
+    /// Checks if the function is valid. This means that the function can be lowered to an executable function.
+    /// This entails checking for configuration mismatches and other issues.
+    virtual bool validate() const = 0;
+
+    /// Create a deep copy of this function node.
+    virtual FunctionNodePtr deepCopy() = 0;
 
 protected:
     explicit FunctionNode(const FunctionNode* other);
@@ -76,5 +65,6 @@ protected:
      * todo replace the direct usage of data types with a stamp abstraction.
      */
     DataTypePtr stamp;
+    const std::string type;
 };
 } /// namespace NES

@@ -19,6 +19,11 @@
 
 namespace NES
 {
+
+LessEqualsFunctionNode::LessEqualsFunctionNode() : LogicalBinaryFunctionNode("LessEquals")
+{
+}
+
 LessEqualsFunctionNode::LessEqualsFunctionNode(LessEqualsFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -47,9 +52,14 @@ std::string LessEqualsFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr LessEqualsFunctionNode::copy()
+FunctionNodePtr LessEqualsFunctionNode::deepCopy()
 {
-    return LessEqualsFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return LessEqualsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool LessEqualsFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

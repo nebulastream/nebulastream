@@ -33,6 +33,8 @@ public:
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
+    bool validate() const override;
+
     /**
      * @brief Infers the stamp of this logical negate function node.
      * We assume that the children of this function is a predicate.
@@ -45,7 +47,7 @@ public:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit NegateFunctionNode(NegateFunctionNode* other);

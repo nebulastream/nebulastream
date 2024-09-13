@@ -90,7 +90,7 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
 }
 WindowAggregationDescriptorPtr MinAggregationDescriptor::copy()
 {
-    return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 
 } /// namespace NES::Windowing

@@ -37,12 +37,8 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
-    */
-    FunctionNodePtr copy() override;
+    void inferStamp(SchemaPtr schema) override;bool validate() const override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit OrFunctionNode(OrFunctionNode* other);

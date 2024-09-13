@@ -29,7 +29,7 @@ public:
      * @brief Creates a map operator with a map function.
      * @param mapFunction map function.
      */
-    Map(Runtime::Execution::Functions::FunctionPtr mapFunction) : mapFunction(mapFunction) {};
+    Map(Functions::FunctionPtr mapFunction) : mapFunction(std::move(mapFunction)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

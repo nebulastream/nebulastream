@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Functions/ArithmeticalFunctions/DivFunction.hpp>
+#include <memory>
+#include <ErrorHandling.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Functions {
@@ -21,7 +23,15 @@ VarVal DivFunction::execute(Record& record) const {
     const auto rightValue = rightSubFunction->execute(record);
     return leftValue / rightValue;
 }
+
 DivFunction::DivFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
     : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
 
-}// namespace NES::Runtime::Execution::Functions
+
+FunctionPtr RegisterDivFunction(std::vector<FunctionPtr> subFunctions)
+{
+    PRECONDITION(subFunctions.size() == 2, "Div function must have exactly two sub-functions");
+    return std::make_unique<DivFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+}
+
+}

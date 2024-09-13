@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <utility>
+
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAccessFunctionNode.hpp>
@@ -22,7 +23,7 @@
 namespace NES
 {
 FieldAccessFunctionNode::FieldAccessFunctionNode(DataTypePtr stamp, std::string fieldName)
-    : FunctionNode(std::move(stamp)), fieldName(std::move(fieldName)) {};
+    : FunctionNode(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
 FieldAccessFunctionNode::FieldAccessFunctionNode(FieldAccessFunctionNode* other)
     : FunctionNode(other), fieldName(other->getFieldName()) {};
@@ -75,8 +76,14 @@ void FieldAccessFunctionNode::inferStamp(SchemaPtr schema)
     throw std::logic_error("FieldAccessFunction: the field " + fieldName + " is not defined in the schema " + schema->toString());
 }
 
-FunctionNodePtr FieldAccessFunctionNode::copy()
+FunctionNodePtr FieldAccessFunctionNode::deepCopy()
 {
     return std::make_shared<FieldAccessFunctionNode>(*this);
 }
-} /// namespace NES
+
+bool FieldAccessFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+
+}
+}

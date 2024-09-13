@@ -14,12 +14,11 @@
 #include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <utility>
 
 namespace NES::Runtime::Execution::Functions
 {
-WriteFieldFunction::WriteFieldFunction(Record::RecordFieldIdentifier field, const FunctionPtr& subFunction)
-    : field(std::move(field)), subFunction(subFunction)
+WriteFieldFunction::WriteFieldFunction(Record::RecordFieldIdentifier field, FunctionPtr subFunction)
+    : field(std::move(field)), subFunction(std::move(subFunction))
 {
 }
 
@@ -30,4 +29,4 @@ VarVal WriteFieldFunction::execute(Record& record) const
     return newValue;
 }
 
-} /// namespace NES::Runtime::Execution::Functions
+}
