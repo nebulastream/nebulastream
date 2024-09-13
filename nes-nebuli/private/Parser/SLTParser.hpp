@@ -91,7 +91,7 @@ private:
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst = false);
     [[nodiscard]] std::string expectQuery();
 
-    [[nodiscard]] static bool emptyOrComment(const std::string& line) { return line.empty() || line.find("#") == 0; }
+    [[nodiscard]] static bool emptyOrComment(const std::string& line);
 
     QueryCallback onQueryCallback;
     QueryResultTuplesCallback onQueryResultTuplesCallback;
