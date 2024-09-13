@@ -67,7 +67,8 @@ protected:
     /// Uses default parameters if the user did not specify a parameter.
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SourceSpecificConfiguration>
-    static SourceDescriptor::Config validateAndFormatImpl(std::map<std::string, std::string>&& config, const std::string_view sourceName)
+    static SourceDescriptor::Config
+    validateAndFormatImpl(std::unordered_map<std::string, std::string>&& config, const std::string_view sourceName)
     {
         SourceDescriptor::Config validatedConfig;
 

@@ -350,7 +350,7 @@ bool TCPSource::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
-SourceDescriptor::Config TCPSource::validateAndFormat(std::map<std::string, std::string>&& config)
+SourceDescriptor::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
@@ -368,7 +368,7 @@ void TCPSource::close()
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationTCP(RegistrySourceValidation& registry)
 {
-    const auto validateFunc = [](std::map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
     { return TCPSource::validateAndFormat(std::move(sourceConfig)); };
     registry.registerPlugin((TCPSource::NAME), validateFunc);
 }

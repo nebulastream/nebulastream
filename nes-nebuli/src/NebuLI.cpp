@@ -59,7 +59,7 @@ struct LogicalSource
 struct PhysicalSource
 {
     std::string logical;
-    std::map<std::string, std::string> config;
+    std::unordered_map<std::string, std::string> config;
 };
 
 struct QueryConfig
@@ -99,7 +99,7 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::map<std::string, std::string>>();
+        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -120,7 +120,7 @@ namespace NES::CLI
 {
 
 Sources::SourceDescriptor
-createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map<std::string, std::string>&& sourceConfiguration)
+createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::unordered_map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {

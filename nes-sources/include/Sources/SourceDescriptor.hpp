@@ -59,7 +59,7 @@ struct SourceDescriptor
     {
         using Type = T;
         using EnumType = U;
-        using ValidateFunc = std::function<std::optional<T>(const std::map<std::string, std::string>& config)>;
+        using ValidateFunc = std::function<std::optional<T>(const std::unordered_map<std::string, std::string>& config)>;
 
         ConfigParameter(std::string name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
             : name(std::move(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
@@ -75,7 +75,10 @@ struct SourceDescriptor
 
         operator const std::string&() const { return name; }
 
-        std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const { return this->validateFunc(config); }
+        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
+        {
+            return this->validateFunc(config);
+        }
 
         static constexpr bool isEnumWrapper() { return not(std::is_same_v<U, void>); }
     };
@@ -90,7 +93,7 @@ struct SourceDescriptor
         {
         }
 
-        std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const
+        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
         {
             return configParameter->validate(config);
         }
@@ -100,7 +103,7 @@ struct SourceDescriptor
         struct Concept
         {
             virtual ~Concept() = default;
-            virtual std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const = 0;
+            virtual std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const = 0;
             virtual std::optional<ConfigType> getDefaultValue() const = 0;
         };
 
@@ -108,7 +111,7 @@ struct SourceDescriptor
         struct Model : Concept
         {
             Model(const T& configParameter) : configParameter(configParameter) { }
-            std::optional<ConfigType> validate(const std::map<std::string, std::string>& config) const override
+            std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
             {
                 return configParameter.validate(config);
             }
@@ -139,8 +142,8 @@ struct SourceDescriptor
     explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
     /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
-    explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
+    explicit
+    SourceDescriptor(std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -204,7 +207,7 @@ struct SourceDescriptor
 
     template <typename ConfigParameter>
     static std::optional<typename ConfigParameter::Type>
-    tryGet(const ConfigParameter& configParameter, const std::map<std::string, std::string>& config)
+    tryGet(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
     {
         /// No specific validation and formatting function defined, using default formatter.
         if (config.contains(configParameter))

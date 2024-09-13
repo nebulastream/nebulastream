@@ -26,7 +26,7 @@ RegistrySourceValidation::RegistrySourceValidation()
 }
 
 std::optional<SourceDescriptor::Config>
-RegistrySourceValidation::tryCreate(const std::string& name, std::map<std::string, std::string>&& sourceConfig) const
+RegistrySourceValidation::tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sourceConfig) const
 {
     if (registry.contains(name))
     {

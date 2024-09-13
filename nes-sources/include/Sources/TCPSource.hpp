@@ -32,17 +32,17 @@ namespace NES::Sources
 struct ConfigParametersTCP
 {
     static inline const SourceDescriptor::ConfigParameter<EnumWrapper, Configurations::InputFormat> INPUT_FORMAT{
-        "inputFormat", std::nullopt, [](const std::map<std::string, std::string>& config) {
+        "inputFormat", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(INPUT_FORMAT, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<std::string> HOST{
-        "socketHost", std::nullopt, [](const std::map<std::string, std::string>& config) {
+        "socketHost", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(HOST, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> PORT{
         "socketPort",
         std::nullopt,
-        [](const std::map<std::string, std::string>& config)
+        [](const std::unordered_map<std::string, std::string>& config)
         {
             /// Mandatory (no default value)
             const auto portNumber = SourceDescriptor::tryGet(PORT, config);
@@ -60,7 +60,7 @@ struct ConfigParametersTCP
     static inline const SourceDescriptor::ConfigParameter<int32_t> DOMAIN{
         "socketDomain",
         AF_INET,
-        [](const std::map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
             /// User specified value, set if input is valid, throw if not.
             const auto socketDomainString = config.at(DOMAIN);
@@ -78,7 +78,7 @@ struct ConfigParametersTCP
     static inline const SourceDescriptor::ConfigParameter<int32_t> TYPE{
         "socketType",
         SOCK_STREAM,
-        [](const std::map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
             const auto socketTypeString = config.at(TYPE);
             if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
@@ -111,23 +111,23 @@ struct ConfigParametersTCP
             }
         }};
     static inline const SourceDescriptor::ConfigParameter<char> SEPARATOR{
-        "tupleSeparator", '\n', [](const std::map<std::string, std::string>& config) {
+        "tupleSeparator", '\n', [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(SEPARATOR, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<float> FLUSH_INTERVAL_MS{
-        "flushIntervalMS", 0, [](const std::map<std::string, std::string>& config) {
+        "flushIntervalMS", 0, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(FLUSH_INTERVAL_MS, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<EnumWrapper, Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{
         "decideMessageSize",
         EnumWrapper::create<Configurations::TCPDecideMessageSize>(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR),
-        [](const std::map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DECIDED_MESSAGE_SIZE, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DECIDED_MESSAGE_SIZE, config); }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socketBufferSize", 1024, [](const std::map<std::string, std::string>& config) {
+        "socketBufferSize", 1024, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(SOCKET_BUFFER_SIZE, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::map<std::string, std::string>& config) {
+        "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
 
@@ -164,7 +164,7 @@ public:
     /// Close TCP connection.
     void close() override;
 
-    static SourceDescriptor::Config validateAndFormat(std::map<std::string, std::string>&& config);
+    static SourceDescriptor::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

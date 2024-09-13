@@ -15,12 +15,14 @@
 #pragma once
 
 #include <fstream>
+#include <optional>
 #include <string>
+#include <unordered_map>
+#include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
@@ -29,21 +31,23 @@ namespace NES::Sources
 struct ConfigParametersCSV
 {
     static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
-        "filePath", std::nullopt, [](const std::map<std::string, std::string>& config) {
+        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(FILEPATH, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
-        "skipHeader", false, [](const std::map<std::string, std::string>& config) {
+        "skipHeader", false, [](const std::unordered_map<std::string, std::string>& config) {
             return SourceDescriptor::tryGet(SKIP_HEADER, config);
         }};
     static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
-        "delimiter", ",", [](const std::map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DELIMITER, config); }};
+        "delimiter", ",", [](const std::unordered_map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(DELIMITER, config);
+        }};
 
     static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
         = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
 };
 
-class CSVSource : public Source
+class CSVSource final : public Source
 {
 public:
     static inline const std::string NAME = "CSV";
@@ -60,7 +64,7 @@ public:
     void close() override;
 
     /// validates and formats a string to string configuration
-    static SourceDescriptor::Config validateAndFormat(std::map<std::string, std::string>&& config);
+    static SourceDescriptor::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

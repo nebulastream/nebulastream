@@ -33,7 +33,7 @@ public:
 
     template <bool update = false>
     void registerPlugin(
-        const std::string& name, const std::function<SourceDescriptor::Config(std::map<std::string, std::string>&& sourceConfig)>& creator)
+        const std::string& name, const std::function<SourceDescriptor::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -43,14 +43,14 @@ public:
         registry[name] = creator;
     }
 
-    std::optional<SourceDescriptor::Config> tryCreate(const std::string& name, std::map<std::string, std::string>&& sourceConfig) const;
+    std::optional<SourceDescriptor::Config> tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sourceConfig) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
     static RegistrySourceValidation& instance();
 
 private:
-    std::unordered_map<std::string, std::function<SourceDescriptor::Config(std::map<std::string, std::string>&& sourceConfig)>> registry;
+    std::unordered_map<std::string, std::function<SourceDescriptor::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>> registry;
 };
 
 }
