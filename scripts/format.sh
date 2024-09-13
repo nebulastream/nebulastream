@@ -79,4 +79,6 @@ fi
 
 python3 scripts/check_preamble.py
 
+[ "$FAIL" = "0" ] && echo "format.sh: no problems found"
+
 exit "$FAIL"
