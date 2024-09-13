@@ -12,35 +12,26 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
 {
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
-} /// namespace NES::Nautilus
+}
 
 namespace NES::Runtime::Execution::Functions
 {
 using namespace Nautilus;
-class Any;
 class Function;
-using FunctionPtr = std::shared_ptr<Function>;
+using FunctionPtr = std::unique_ptr<Function>;
 
-/**
- * @brief Base class for all functions.
- */
 class Function
 {
 public:
-    /**
-     * @brief Evaluates the functions on a record.
-     * @param record
-     * @return VarVal
-     */
+    Function() = default;
     virtual VarVal execute(Record& record) const = 0;
     virtual ~Function() = default;
 };
 
-} /// namespace NES::Runtime::Execution::Functions
+}

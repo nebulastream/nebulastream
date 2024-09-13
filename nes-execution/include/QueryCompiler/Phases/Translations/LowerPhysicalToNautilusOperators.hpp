@@ -64,7 +64,7 @@ private:
         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
         size_t bufferSize);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

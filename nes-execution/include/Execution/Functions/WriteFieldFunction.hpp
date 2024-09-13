@@ -26,12 +26,7 @@ namespace NES::Runtime::Execution::Functions
 class WriteFieldFunction : public Function
 {
 public:
-    /**
-     * @brief Creates a new WriteFieldFunction.
-     * @param field identifier of a record field.
-     * @param subFunction the input function that generates a value that is written to the field.
-     */
-    WriteFieldFunction(Nautilus::Record::RecordFieldIdentifier field, const FunctionPtr& subFunction);
+    WriteFieldFunction(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
     VarVal execute(Record& record) const override;
 
 private:

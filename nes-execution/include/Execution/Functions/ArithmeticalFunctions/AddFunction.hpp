@@ -26,12 +26,13 @@
 namespace NES::Runtime::Execution::Functions {
 
 /// Performs leftSubFunction + rightSubFunction
-class AddFunction : public Function {
-  public:
+class AddFunction : public Function
+{
+public:
     AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
     VarVal execute(Record& record) const override;
 
-  private:
+private:
     const FunctionPtr leftSubFunction;
     const FunctionPtr rightSubFunction;
 };

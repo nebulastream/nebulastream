@@ -35,7 +35,7 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 protected:
-    explicit ArithmeticalUnaryFunctionNode(DataTypePtr stamp);
+    explicit ArithmeticalUnaryFunctionNode(DataTypePtr stamp, std::string name);
     explicit ArithmeticalUnaryFunctionNode(ArithmeticalUnaryFunctionNode* other);
     ~ArithmeticalUnaryFunctionNode() noexcept override = default;
 };

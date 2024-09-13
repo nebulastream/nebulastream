@@ -12,52 +12,54 @@
     limitations under the License.
 */
 
-#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <vector>
 #include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Functions/WriteFieldFunction.hpp>
-#include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/DivFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/MulFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/Functions/FunctionFunctionNode.hpp>
-#include <Functions/LogicalFunctions/AndFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/NegateFunctionNode.hpp>
-#include <Functions/LogicalFunctions/OrFunctionNode.hpp>
+#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
+#include <Functions/FunctionNode.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
-#include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <ErrorHandling.hpp>
+#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/ConstantValueFunctionNode.hpp>
 
 namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-std::shared_ptr<Function> FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
+FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
 {
     NES_INFO("Lower Function {}", functionNode->toString())
     if (auto constantValue = functionNode->as_if<ConstantValueFunctionNode>())
     {
-        return lowerConstantFunction(constantValue);
+        subFunctions.emplace_back(lowerFunction(child->as<FunctionNode>()));
     }
-    if (auto fieldAccess = functionNode->as_if<FieldAccessFunctionNode>())
+
+    /// The field assignment, field access and constant value nodes are special as they require a different treatment, due to them not simply getting a subFunction as a parameter.
+    if (functionNode->instanceOf<FieldAssignmentFunctionNode>())
     {
-        return std::make_shared<ReadFieldFunction>(fieldAccess->getFieldName());
+        const auto fieldAssignmentNode = functionNode->as<FieldAssignmentFunctionNode>();
+        const auto field = fieldAssignmentNode->getField()->getFieldName();
+        return std::make_unique<WriteFieldFunction>(field, std::move(subFunctions[0]));
     }
     if (auto fieldWrite = functionNode->as_if<FieldAssignmentFunctionNode>())
     {
         return std::make_shared<WriteFieldFunction>(fieldWrite->getField()->getFieldName(), lowerFunction(fieldWrite->getAssignment()));
     }
 
-    throw UnknownFunctionType();
+    /// Calling the registry to create an executable function.
+    auto function = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(functionNode->getType(), std::move(subFunctions));
+    if (not function.has_value())
+    {
+        throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));
+    }
+
+    return std::move(function.value());
 }
 
 FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantValueFunctionNode>& constantFunction)
@@ -71,50 +73,50 @@ FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<Consta
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::UINT_8: {
-                auto intValue = (uint8_t)std::stoul(stringValue);
-                return std::make_shared<ConstantUInt8ValueFunction>(intValue);
+                auto intValue = static_cast<uint8_t>(std::stoul(stringValue));
+                return std::make_unique<ConstantUInt8ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_16: {
-                auto intValue = (uint16_t)std::stoul(stringValue);
-                return std::make_shared<ConstantUInt16ValueFunction>(intValue);
+                auto intValue = static_cast<uint16_t>(std::stoul(stringValue));
+                return std::make_unique<ConstantUInt16ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_32: {
-                auto intValue = (uint32_t)std::stoul(stringValue);
-                return std::make_shared<ConstantUInt32ValueFunction>(intValue);
+                auto intValue = static_cast<uint32_t>(std::stoul(stringValue));
+                return std::make_unique<ConstantUInt32ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::UINT_64: {
-                auto intValue = (uint64_t)std::stoull(stringValue);
-                return std::make_shared<ConstantUInt64ValueFunction>(intValue);
+                auto intValue = static_cast<uint64_t>(std::stoull(stringValue));
+                return std::make_unique<ConstantUInt64ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::INT_8: {
-                auto intValue = (int8_t)std::stoi(stringValue);
-                return std::make_shared<ConstantInt8ValueFunction>(intValue);
+                auto intValue = static_cast<int8_t>(std::stoi(stringValue));
+                return std::make_unique<ConstantInt8ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::INT_16: {
-                auto intValue = (int16_t)std::stoi(stringValue);
-                return std::make_shared<ConstantInt16ValueFunction>(intValue);
+                auto intValue = static_cast<int16_t>(std::stoi(stringValue));
+                return std::make_unique<ConstantInt16ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::INT_32: {
-                auto intValue = (int32_t)std::stoi(stringValue);
-                return std::make_shared<ConstantInt32ValueFunction>(intValue);
+                auto intValue = static_cast<int32_t>(std::stoi(stringValue));
+                return std::make_unique<ConstantInt32ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                auto intValue = (int64_t)std::stol(stringValue);
-                return std::make_shared<ConstantInt64ValueFunction>(intValue);
+                auto intValue = static_cast<int64_t>(std::stol(stringValue));
+                return std::make_unique<ConstantInt64ValueFunction>(intValue);
             };
             case BasicPhysicalType::NativeType::FLOAT: {
                 auto floatValue = std::stof(stringValue);
-                return std::make_shared<ConstantFloatValueFunction>(floatValue);
+                return std::make_unique<ConstantFloatValueFunction>(floatValue);
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
                 auto doubleValue = std::stod(stringValue);
-                return std::make_shared<ConstantDoubleValueFunction>(doubleValue);
+                return std::make_unique<ConstantDoubleValueFunction>(doubleValue);
             };
             case BasicPhysicalType::NativeType::CHAR:
                 break;
             case BasicPhysicalType::NativeType::BOOLEAN: {
-                auto boolValue = (bool)std::stoi(stringValue) == 1;
-                return std::make_shared<ConstantBooleanValueFunction>(boolValue);
+                auto boolValue = static_cast<bool>(std::stoi(stringValue)) == 1;
+                return std::make_unique<ConstantBooleanValueFunction>(boolValue);
             };
             default: {
                 throw UnknownPhysicalType("the basic type is not supported");
@@ -123,4 +125,4 @@ FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<Consta
     }
     throw UnknownPhysicalType("type must be a basic types");
 }
-} /// namespace NES::QueryCompilation
+}

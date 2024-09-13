@@ -13,11 +13,14 @@
 */
 
 #include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Functions
 {
 
-EqualsFunction::EqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction)
-: leftSubFunction(leftSubFunction), rightSubFunction(rightSubFunction) {}
+EqualsFunction::EqualsFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
+    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction))
+{
+}
 
 VarVal EqualsFunction::execute(Record& record) const
 {
@@ -26,5 +29,10 @@ VarVal EqualsFunction::execute(Record& record) const
     return leftValue == rightValue;
 }
 
+FunctionPtr RegisterEqualsFunction(std::vector<FunctionPtr> subFunctions)
+{
+    PRECONDITION(subFunctions.size() == 2, "Equals function must have exactly two sub-functions");
+    return std::make_unique<EqualsFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+}
 
 }

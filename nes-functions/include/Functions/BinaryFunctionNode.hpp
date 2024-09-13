@@ -39,14 +39,8 @@ public:
      */
     FunctionNodePtr getRight() const;
 
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
-    */
-    FunctionNodePtr copy() override = 0;
-
 protected:
-    explicit BinaryFunctionNode(DataTypePtr stamp);
+    explicit BinaryFunctionNode(DataTypePtr stamp, std::string name);
     explicit BinaryFunctionNode(BinaryFunctionNode* other);
 };
 

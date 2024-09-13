@@ -11,26 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
-#include <Execution/Functions/Function.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
 
-namespace NES::Runtime::Execution::Functions
-{
-
-/**
- * @brief This function reads a specific field from the input record and returns its value.
- */
-class ReadFieldFunction : public Function
-{
-public:
-    ReadFieldFunction(Record::RecordFieldIdentifier field);
-    VarVal execute(Record& record) const override;
-
-private:
-    const Record::RecordFieldIdentifier field;
-};
-
+namespace NES::Execution::Functions {
 }

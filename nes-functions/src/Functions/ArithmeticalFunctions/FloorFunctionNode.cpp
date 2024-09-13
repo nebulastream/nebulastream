@@ -22,7 +22,7 @@
 namespace NES
 {
 
-FloorFunctionNode::FloorFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+FloorFunctionNode::FloorFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp), "Floor") {};
 
 FloorFunctionNode::FloorFunctionNode(FloorFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
 {
@@ -62,9 +62,14 @@ std::string FloorFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr FloorFunctionNode::copy()
+FunctionNodePtr FloorFunctionNode::deepCopy()
 {
-    return FloorFunctionNode::create(Util::as<FunctionNode>(children[0])->copy());
+    return FloorFunctionNode::create(Util::as<FunctionNode>(children[0])->deepCopy());
 }
 
-} /// namespace NES
+bool FloorFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

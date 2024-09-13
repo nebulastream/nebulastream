@@ -97,6 +97,11 @@ nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) 
     return !(*this == rhs);
 }
 
+nautilus::val<bool> VariableSizedData::operator!() const
+{
+    return !isValid();
+}
+
 [[nodiscard]] nautilus::val<uint32_t> VariableSizedData::getSize() const
 {
     return size;

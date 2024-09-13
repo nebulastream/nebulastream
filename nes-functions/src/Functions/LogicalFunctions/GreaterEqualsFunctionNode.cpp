@@ -19,6 +19,11 @@
 
 namespace NES
 {
+
+GreaterEqualsFunctionNode::GreaterEqualsFunctionNode() noexcept : LogicalBinaryFunctionNode("GreaterEquals")
+{
+}
+
 GreaterEqualsFunctionNode::GreaterEqualsFunctionNode(GreaterEqualsFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -47,10 +52,14 @@ std::string GreaterEqualsFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr GreaterEqualsFunctionNode::copy()
+FunctionNodePtr GreaterEqualsFunctionNode::deepCopy()
 {
-    return GreaterEqualsFunctionNode::create(
-        Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return GreaterEqualsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool GreaterEqualsFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

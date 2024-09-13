@@ -23,7 +23,7 @@ namespace NES
 class LessFunctionNode : public LogicalBinaryFunctionNode
 {
 public:
-    LessFunctionNode() = default;
+    LessFunctionNode();
     ~LessFunctionNode() override = default;
     /**
     * @brief Create a new less function
@@ -33,12 +33,8 @@ public:
     bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
-
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
-    */
-    FunctionNodePtr copy() override;
+bool validate() const override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit LessFunctionNode(LessFunctionNode* other);
