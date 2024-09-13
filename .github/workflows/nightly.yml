@@ -25,6 +25,7 @@ jobs:
         run: echo "Long running tests will be added in the future."
 
   create-nightly-image:
+    if: ${{ !github.event.act }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
