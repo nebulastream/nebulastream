@@ -1,4 +1,21 @@
-# run clang-tidy e.g. like:
+# This configuration aims to keep up quality over time and foster improvements
+# i.e. clang-tidy should generally only become stricter (at least with errors)
+#
+# The mantra is: All checks should be errors, except those that fail on main.
+#
+# Put differently: If a check is fixed on main so that no violation is found
+# anymore, it shall be removed from the exceptions to WarningsArErrors, so that
+# check may never be violated again, i.e. 'WarningsAsErrors' is an
+# ever-increasing list of guarantees of the codebase.
+# This follows the ratchet approach, described in https://qntm.org/ratchet
+#
+# Non-Error checks give hints to the programmer. Some hints might be
+# "situational", e.g. sometimes or even often useless, as long as they can be
+# valuable from time to time. If Checks are generally annoying and useless 
+# (or aliases), we disable them.
+#
+#
+# to see how often a check is violated run clang-tidy e.g. like:
 #
 #     cmake -B build
 #     ln -s build/compile_commands.json .
@@ -12,16 +29,21 @@
 #     cat location_violation.txt | cut -d " " -f 2 | sort | uniq -c | sort -n
 
 
+# Disabled checks are one of
+# - generally irrelevant (e.g. llvmlibc, altera)
+# - very annoying and providing very little or no value
+# - aliases of other checks
 Checks: [
   "*",
-  # we disable project-specific checks:
-  "-llvmlibc-*",
-  "-android-*",
-  "-zircon-*",
+  # irrelevant
+  "-llvmlibc-*", # project-specific
+  "-android-*", # project-specific
+  "-zircon-*", # project-specific
 
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
+  # annyoing and useless
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
