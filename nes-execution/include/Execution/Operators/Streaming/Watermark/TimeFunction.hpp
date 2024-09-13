@@ -14,6 +14,7 @@
 #pragma once
 
 #include <API/TimeUnit.hpp>
+#include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
@@ -26,13 +27,7 @@ namespace NES::Runtime::Execution
 class RecordBuffer;
 class ExecutionContext;
 
-} /// namespace NES::Runtime::Execution
-
-namespace NES::Runtime::Execution::Functions
-{
-class Function;
-using FunctionPtr = std::shared_ptr<Function>;
-} /// namespace NES::Runtime::Execution::Functions
+}
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -74,8 +69,8 @@ private:
 class IngestionTimeFunction final : public TimeFunction
 {
 public:
-    void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) override;
+    nautilus::val<uint64_t> getTs(ExecutionContext& ctx, Record& record) override;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

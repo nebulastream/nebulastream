@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Functions
 class EqualsFunction final : public Function
 {
 public:
-    EqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction);
+    EqualsFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
     VarVal execute(Record& record) const override;
 
 private:

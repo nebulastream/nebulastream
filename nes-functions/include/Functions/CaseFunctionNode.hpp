@@ -59,11 +59,8 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;
 
-    /**
-     * @brief Create a deep copy of this function node.
-     * @return FunctionNodePtr
-     */
-    FunctionNodePtr copy() final;
+    bool validate() const override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit CaseFunctionNode(CaseFunctionNode* other);

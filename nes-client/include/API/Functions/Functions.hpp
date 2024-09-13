@@ -61,8 +61,8 @@ public:
     FunctionItem(FunctionItem const&) = default;
     FunctionItem(FunctionItem&&) = default;
 
-    FieldAssignmentFunctionNodePtr operator=(FunctionItem);
-    FieldAssignmentFunctionNodePtr operator=(FunctionNodePtr);
+    NodeFunctionFieldAssignmentPtr operator=(FunctionItem assignItem);
+    NodeFunctionFieldAssignmentPtr operator=(NodeFunctionPtr assignFunction);
 
     /**
      * @brief Gets the function node of this function item.

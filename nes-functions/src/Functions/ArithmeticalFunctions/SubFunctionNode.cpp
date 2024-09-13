@@ -17,11 +17,11 @@
 #include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-SubFunctionNode::SubFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+SubFunctionNode::SubFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Sub") {};
 
 SubFunctionNode::SubFunctionNode(SubFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -51,9 +51,14 @@ std::string SubFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr SubFunctionNode::copy()
+FunctionNodePtr SubFunctionNode::deepCopy()
 {
-    return SubFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return SubFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool SubFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

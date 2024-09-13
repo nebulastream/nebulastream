@@ -26,8 +26,8 @@ class UnaryFunctionWrapper
 public:
     UnaryFunctionWrapper()
     {
-        auto input = std::make_shared<ReadFieldFunction>("value");
-        function = std::make_shared<FunctionType>(input);
+        auto input = std::make_unique<ReadFieldFunction>("value");
+        function = std::make_unique<FunctionType>(std::move(input));
     }
     VarVal eval(VarVal value) const
     {
@@ -35,7 +35,7 @@ public:
         return function->execute(record);
     }
 
-    std::shared_ptr<FunctionType> function;
+    std::unique_ptr<FunctionType> function;
 };
 
 template <typename FunctionType>
@@ -44,9 +44,9 @@ class BinaryFunctionWrapper
 public:
     BinaryFunctionWrapper()
     {
-        auto leftFunction = std::make_shared<ReadFieldFunction>("left");
-        auto rightFunction = std::make_shared<ReadFieldFunction>("right");
-        function = std::make_shared<FunctionType>(leftFunction, rightFunction);
+        auto leftFunction = std::make_unique<ReadFieldFunction>("left");
+        auto rightFunction = std::make_unique<ReadFieldFunction>("right");
+        function = std::make_unique<FunctionType>(std::move(leftFunction), std::move(rightFunction));
     }
     [[nodiscard]] VarVal eval(VarVal left, VarVal right) const
     {
@@ -54,6 +54,6 @@ public:
         return function->execute(record);
     }
 
-    std::shared_ptr<FunctionType> function;
+    std::unique_ptr<FunctionType> function;
 };
 } /// namespace NES::Runtime::Execution::Functions

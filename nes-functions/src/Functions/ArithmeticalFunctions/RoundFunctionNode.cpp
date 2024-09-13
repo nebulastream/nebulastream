@@ -25,7 +25,7 @@
 namespace NES
 {
 
-RoundFunctionNode::RoundFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+RoundFunctionNode::RoundFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp), "Round") {};
 
 RoundFunctionNode::RoundFunctionNode(RoundFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
 {
@@ -65,9 +65,14 @@ std::string RoundFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr RoundFunctionNode::copy()
+FunctionNodePtr RoundFunctionNode::deepCopy()
 {
-    return RoundFunctionNode::create(Util::as<FunctionNode>(children[0])->copy());
+    return RoundFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool RoundFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

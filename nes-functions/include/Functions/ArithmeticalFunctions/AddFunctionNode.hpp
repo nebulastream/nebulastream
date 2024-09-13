@@ -30,12 +30,8 @@ public:
     static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
-    */
-    FunctionNodePtr copy() override;
+    bool validate() const override;
+    FunctionNodePtr deepCopy() override;
 
 private:
     explicit AddFunctionNode(AddFunctionNode* other);

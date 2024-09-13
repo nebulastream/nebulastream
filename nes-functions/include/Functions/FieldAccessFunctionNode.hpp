@@ -63,7 +63,9 @@ public:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override;
+    FunctionNodePtr deepCopy() override;
+
+    bool validate() const override;
 
 protected:
     explicit FieldAccessFunctionNode(FieldAccessFunctionNode* other);

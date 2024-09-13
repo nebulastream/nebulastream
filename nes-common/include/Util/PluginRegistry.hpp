@@ -42,6 +42,16 @@ public:
         return registryImpl.at(key)(std::forward<Args>(args)...);
     }
 
+    template <typename... Args>
+    [[nodiscard]] std::optional<typename Registrar::Type> tryCreate(const typename Registrar::Key& key, Args&&... args) const
+    {
+        if (const auto it = registryImpl.find(key); it != registryImpl.end())
+        {
+            return it->second(std::forward<Args>(args)...);
+        }
+        return std::nullopt;
+    }
+
     [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const
     {
         std::vector<typename Registrar::Key> names;

@@ -13,8 +13,10 @@
 */
 
 #include <utility>
+
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
 #include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/CeilFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/DivFunctionNode.hpp>
@@ -22,11 +24,11 @@
 #include <Functions/ArithmeticalFunctions/FloorFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/ModFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/MulFunctionNode.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
 #include <Functions/ArithmeticalFunctions/RoundFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/SqrtFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
 #include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/Functions/FunctionFunctionNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
@@ -63,18 +65,17 @@ FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
     return std::move(leftExp) % std::move(rightExp);
 }
 
-FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr POWER(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "power", {leftExp, rightExp});
+    return NodeFunctionPow::create(leftExp, rightExp);
 }
 
-/// calls of unary operators with FunctionNode
-FunctionNodePtr ABS(const FunctionNodePtr& exp)
+NodeFunctionPtr ABS(const NodeFunctionPtr& exp)
 {
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "abs", {exp});
+    return NodeFunctionAbs::create(exp);
 }
 
-FunctionNodePtr SQRT(const FunctionNodePtr& exp)
+NodeFunctionPtr SQRT(const NodeFunctionPtr& exp)
 {
     return SqrtFunctionNode::create(exp);
 }
@@ -82,36 +83,6 @@ FunctionNodePtr SQRT(const FunctionNodePtr& exp)
 FunctionNodePtr EXP(const FunctionNodePtr& exp)
 {
     return ExpFunctionNode::create(exp);
-}
-
-FunctionNodePtr LN(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "ln", {exp});
-}
-
-FunctionNodePtr LOG2(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "log2", {exp});
-}
-
-FunctionNodePtr LOG10(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "log10", {exp});
-}
-
-FunctionNodePtr SIN(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "sin", {exp});
-}
-
-FunctionNodePtr COS(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "cos", {exp});
-}
-
-FunctionNodePtr RADIANS(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "radians", {exp});
 }
 
 FunctionNodePtr ROUND(const FunctionNodePtr& exp)
@@ -278,37 +249,7 @@ FunctionNodePtr EXP(FunctionItem exp)
     return EXP(exp.getFunctionNode());
 }
 
-FunctionNodePtr LN(FunctionItem exp)
-{
-    return LN(exp.getFunctionNode());
-}
-
-FunctionNodePtr LOG2(FunctionItem exp)
-{
-    return LOG2(exp.getFunctionNode());
-}
-
-FunctionNodePtr LOG10(FunctionItem exp)
-{
-    return LOG10(exp.getFunctionNode());
-}
-
-FunctionNodePtr SIN(FunctionItem exp)
-{
-    return SIN(exp.getFunctionNode());
-}
-
-FunctionNodePtr COS(FunctionItem exp)
-{
-    return COS(exp.getFunctionNode());
-}
-
-FunctionNodePtr RADIANS(FunctionItem exp)
-{
-    return RADIANS(exp.getFunctionNode());
-}
-
-FunctionNodePtr ROUND(FunctionItem exp)
+NodeFunctionPtr ROUND(FunctionItem exp)
 {
     return ROUND(exp.getFunctionNode());
 }
@@ -343,4 +284,4 @@ FunctionNodePtr operator--(FunctionItem exp, int)
     return exp.getFunctionNode()--;
 }
 
-} /// namespace NES
+}
