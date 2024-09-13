@@ -418,7 +418,7 @@ private:
 
     /**
      * @brief Stores the stacktrace while node creation.
-     * It is empty if CMAKE_NES_TRACE_NODE_CREATION == false.
+     * It is empty if NES_TRACE_NODE_CREATION == false.
      */
     std::string stackTrace;
 };
