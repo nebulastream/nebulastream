@@ -28,10 +28,10 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
-#include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/Parsers/Parser.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/RegistrySource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>

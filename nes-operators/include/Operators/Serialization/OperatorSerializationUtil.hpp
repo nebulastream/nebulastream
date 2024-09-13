@@ -90,7 +90,7 @@ public:
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
 
     static void serializeSourceDescriptor(
-        Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
+        const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
 
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor& sourceDescriptor);

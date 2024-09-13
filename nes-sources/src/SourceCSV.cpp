@@ -21,12 +21,12 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Sources/SourceCSV.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
 #include <Sources/Parsers/ParserCSV.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Sources/RegistrySource.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/SourceCSV.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -66,7 +66,7 @@ void SourceCSV::open()
     const auto path = std::unique_ptr<const char, Deleter>(realCSVPath);
     if (realCSVPath == nullptr)
     {
-        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str() << " - " << std::strerror(errno));
+        throw InvalidConfigParameter(fmt::format("Could not determine absolute pathname: {} - {}", filePath.c_str(), std::strerror(errno)));
     }
 
     input.open(path.get());

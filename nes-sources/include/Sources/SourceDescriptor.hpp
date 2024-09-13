@@ -33,7 +33,7 @@
 namespace NES::Sources
 {
 
-/// The SourceDescriptor:
+/// The SourceDescriptor is an IMMUTABLE struct (all members and functions must be const) that:
 /// 1. Is a generic descriptor that can fully describe any kind of Source.
 /// 2. Is (de-)serializable, making it possible to send to other nodes.
 /// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a SourceDescriptor and returns a fully configured Source.
@@ -142,8 +142,8 @@ struct SourceDescriptor
     explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
     /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
-    explicit
-    SourceDescriptor(std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(
+        std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config config);
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -156,22 +156,6 @@ struct SourceDescriptor
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
-
-    /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
-    template <typename ConfigParameter>
-    void setConfigType(const ConfigParameter& configParameter, ConfigType value)
-    {
-        if (not std::holds_alternative<typename ConfigParameter::Type>(value))
-        {
-            throw InvalidConfigParameter(fmt::format(
-                "Tried to set: {}, but type was wrong. Expected: {}", configParameter.name, typeid(typename ConfigParameter::Type).name()));
-        }
-        if (!this->config.contains(configParameter))
-        {
-            return;
-        }
-        this->config.at(configParameter) = std::move(value);
-    }
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
@@ -225,12 +209,12 @@ struct SourceDescriptor
     };
 
     /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
-    std::shared_ptr<Schema> schema;
-    std::string logicalSourceName;
-    std::string sourceType;
-    Configurations::InputFormat inputFormat{};
+    const std::shared_ptr<Schema> schema;
+    const std::string logicalSourceName;
+    const std::string sourceType;
+    const Configurations::InputFormat inputFormat{};
 
-    Config config;
+    const Config config;
 
 private:
     friend std::ostream& operator<<(std::ostream& out, const Config& config);

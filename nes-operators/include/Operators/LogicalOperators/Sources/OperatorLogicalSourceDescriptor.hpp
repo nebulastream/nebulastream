@@ -30,8 +30,6 @@ public:
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
-    void setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
-
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 

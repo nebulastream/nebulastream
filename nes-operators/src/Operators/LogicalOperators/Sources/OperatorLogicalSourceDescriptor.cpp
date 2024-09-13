@@ -69,11 +69,6 @@ bool OperatorLogicalSourceDescriptor::inferSchema()
     return true;
 }
 
-void OperatorLogicalSourceDescriptor::setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
-{
-    this->sourceDescriptor = std::move(sourceDescriptor);
-}
-
 OperatorPtr OperatorLogicalSourceDescriptor::copy()
 {
     auto exception = InvalidUseOfOperatorFunction(

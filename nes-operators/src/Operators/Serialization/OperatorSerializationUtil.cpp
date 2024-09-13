@@ -49,8 +49,8 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Sources/SourceCSV.hpp>
 #include <Sources/EnumWrapper.hpp>
+#include <Sources/SourceCSV.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
@@ -352,7 +352,7 @@ void OperatorSerializationUtil::serializeSourceOperator(
     NES_TRACE("OperatorSerializationUtil:: serialize to OperatorLogicalSourceName");
 
     auto sourceDetails = SerializableOperator_OperatorLogicalSourceDescriptor();
-    auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
+    const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
     serializeSourceDescriptor(sourceDescriptor, sourceDetails);
     sourceDetails.set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
 
@@ -894,7 +894,7 @@ sourceDescriptorConfigTypeToProto(const Sources::SourceDescriptor::ConfigType& v
     return proto_var;
 }
 void OperatorSerializationUtil::serializeSourceDescriptor(
-    Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails)
+    const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails)
 {
     auto serializedSourceDescriptor
         = SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor().New(); /// cleaned up by protobuf

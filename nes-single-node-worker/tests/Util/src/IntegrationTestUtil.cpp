@@ -232,13 +232,24 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
         if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptor();
-            if (sourceDescriptor->sourceType == Sources::SourceCSV::NAME)
+            const auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptorRef();
+            if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
             {
-                /// Set socket port and serialize again.
-                sourceDescriptor->setConfigType(Sources::ConfigParametersCSV::FILEPATH, newInputFileName);
-                deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->setSourceDescriptor(std::move(sourceDescriptor));
-                auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
+                /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
+                Sources::SourceDescriptor::Config configUpdated = sourceDescriptor.config;
+                configUpdated.at(Sources::ConfigParametersCSV::FILEPATH) = newInputFileName;
+                auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
+                    sourceDescriptor.schema,
+                    sourceDescriptor.logicalSourceName,
+                    sourceDescriptor.sourceType,
+                    sourceDescriptor.inputFormat,
+                    std::move(configUpdated));
+
+                const auto operatorLogicalSourceDescriptorUpdated = std::make_shared<OperatorLogicalSourceDescriptor>(
+                    std::move(sourceDescriptorUpdated),
+                    deserializedSourceOperator->getId(),
+                    deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getOriginId());
+                auto serializedOperator = OperatorSerializationUtil::serializeOperator(operatorLogicalSourceDescriptorUpdated);
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
                 serializedOperator.set_operatorid(value.operatorid());
@@ -258,17 +269,26 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
         if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptor();
-            if (sourceDescriptor->sourceType == Sources::SourceTCP::NAME)
+            const auto sourceDescriptor = deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getSourceDescriptorRef();
+            if (sourceDescriptor.sourceType == Sources::SourceTCP::NAME)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
-                    /// Set socket port and serialize again.
-                    sourceDescriptor->setConfigType(Sources::ConfigParametersTCP::PORT, static_cast<uint32_t>(mockTcpServerPort));
-                    auto socketPortInt = sourceDescriptor->getFromConfig(Sources::ConfigParametersTCP::PORT);
-                    NES_DEBUG("socket port: {}", socketPortInt);
-                    deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->setSourceDescriptor(std::move(sourceDescriptor));
-                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
+                    /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
+                    Sources::SourceDescriptor::Config configUpdated = sourceDescriptor.config;
+                    configUpdated.at(Sources::ConfigParametersTCP::PORT) = static_cast<uint32_t>(mockTcpServerPort);
+                    auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
+                        sourceDescriptor.schema,
+                        sourceDescriptor.logicalSourceName,
+                        sourceDescriptor.sourceType,
+                        sourceDescriptor.inputFormat,
+                        std::move(configUpdated));
+
+                    const auto operatorLogicalSourceDescriptorUpdated = std::make_shared<OperatorLogicalSourceDescriptor>(
+                        std::move(sourceDescriptorUpdated),
+                        deserializedSourceOperator->getId(),
+                        deserializedSourceOperator->as<OperatorLogicalSourceDescriptor>()->getOriginId());
+                    auto serializedOperator = OperatorSerializationUtil::serializeOperator(operatorLogicalSourceDescriptorUpdated);
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.
                     serializedOperator.set_operatorid(value.operatorid());
