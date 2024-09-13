@@ -21,7 +21,7 @@
 namespace NES
 {
 
-ExpFunctionNode::ExpFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+ExpFunctionNode::ExpFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp), "Exp") {};
 
 ExpFunctionNode::ExpFunctionNode(ExpFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
 {
@@ -61,9 +61,14 @@ std::string ExpFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr ExpFunctionNode::copy()
+FunctionNodePtr ExpFunctionNode::deepCopy()
 {
-    return ExpFunctionNode::create(children[0]->as<FunctionNode>()->copy());
+    return ExpFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool ExpFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

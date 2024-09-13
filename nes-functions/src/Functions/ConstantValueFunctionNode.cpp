@@ -14,14 +14,15 @@
 
 #include <Functions/ConstantValueFunctionNode.hpp>
 #include <Common/ValueTypes/ValueType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
 ConstantValueFunctionNode::ConstantValueFunctionNode(ValueTypePtr const& constantValue)
-    : FunctionNode(constantValue->dataType), constantValue(constantValue) {};
+    : FunctionNode(constantValue->dataType, "ConstantValue"), constantValue(constantValue) {};
 
 ConstantValueFunctionNode::ConstantValueFunctionNode(const ConstantValueFunctionNode* other)
-    : FunctionNode(other->constantValue->dataType), constantValue(other->constantValue)
+    : FunctionNode(other->constantValue->dataType, "ConstantValue"), constantValue(other->constantValue)
 {
 }
 
@@ -56,9 +57,14 @@ void ConstantValueFunctionNode::inferStamp(SchemaPtr)
     /// thus ut is already assigned correctly when the function node is created.
 }
 
-FunctionNodePtr ConstantValueFunctionNode::copy()
+FunctionNodePtr ConstantValueFunctionNode::deepCopy()
 {
     return std::make_shared<ConstantValueFunctionNode>(*this);
 }
 
-} /// namespace NES
+bool ConstantValueFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

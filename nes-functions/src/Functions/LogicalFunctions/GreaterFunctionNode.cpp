@@ -17,6 +17,11 @@
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
+
+GreaterFunctionNode::GreaterFunctionNode() noexcept : LogicalBinaryFunctionNode("Greater")
+{
+}
+
 GreaterFunctionNode::GreaterFunctionNode(GreaterFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -45,9 +50,14 @@ std::string GreaterFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr GreaterFunctionNode::copy()
+FunctionNodePtr GreaterFunctionNode::deepCopy()
 {
-    return GreaterFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return GreaterFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool GreaterFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

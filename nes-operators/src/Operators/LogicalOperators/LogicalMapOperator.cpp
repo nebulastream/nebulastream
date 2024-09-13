@@ -85,7 +85,7 @@ std::string LogicalMapOperator::toString() const
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(mapFunction->copy()->as<FieldAssignmentFunctionNode>(), id);
+    auto copy = LogicalOperatorFactory::createMapOperator(mapFunction->deepCopy()->as<FieldAssignmentFunctionNode>(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

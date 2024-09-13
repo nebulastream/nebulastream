@@ -19,7 +19,7 @@
 namespace NES
 {
 
-CeilFunctionNode::CeilFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+CeilFunctionNode::CeilFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp), "Ceil") {};
 
 CeilFunctionNode::CeilFunctionNode(CeilFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
 {
@@ -59,9 +59,14 @@ std::string CeilFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr CeilFunctionNode::copy()
+FunctionNodePtr CeilFunctionNode::deepCopy()
 {
-    return CeilFunctionNode::create(children[0]->as<FunctionNode>()->copy());
+    return CeilFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool CeilFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

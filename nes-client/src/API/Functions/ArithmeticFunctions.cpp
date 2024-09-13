@@ -26,7 +26,6 @@
 #include <Functions/ArithmeticalFunctions/SqrtFunctionNode.hpp>
 #include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
 #include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/Functions/FunctionFunctionNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
@@ -63,17 +62,6 @@ FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
     return std::move(leftExp) % std::move(rightExp);
 }
 
-FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "power", {leftExp, rightExp});
-}
-
-/// calls of unary operators with FunctionNode
-FunctionNodePtr ABS(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "abs", {exp});
-}
-
 FunctionNodePtr SQRT(const FunctionNodePtr& exp)
 {
     return SqrtFunctionNode::create(exp);
@@ -82,36 +70,6 @@ FunctionNodePtr SQRT(const FunctionNodePtr& exp)
 FunctionNodePtr EXP(const FunctionNodePtr& exp)
 {
     return ExpFunctionNode::create(exp);
-}
-
-FunctionNodePtr LN(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "ln", {exp});
-}
-
-FunctionNodePtr LOG2(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "log2", {exp});
-}
-
-FunctionNodePtr LOG10(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "log10", {exp});
-}
-
-FunctionNodePtr SIN(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "sin", {exp});
-}
-
-FunctionNodePtr COS(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "cos", {exp});
-}
-
-FunctionNodePtr RADIANS(const FunctionNodePtr& exp)
-{
-    return FunctionFunction::create(DataTypeFactory::createUndefined(), "radians", {exp});
 }
 
 FunctionNodePtr ROUND(const FunctionNodePtr& exp)
@@ -343,4 +301,4 @@ FunctionNodePtr operator--(FunctionItem exp, int)
     return exp.getFunctionNode()--;
 }
 
-} /// namespace NES
+}

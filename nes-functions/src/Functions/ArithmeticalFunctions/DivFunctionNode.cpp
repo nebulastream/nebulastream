@@ -16,10 +16,11 @@
 #include <utility>
 #include <Functions/ArithmeticalFunctions/DivFunctionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-DivFunctionNode::DivFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+DivFunctionNode::DivFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Div") {};
 
 DivFunctionNode::DivFunctionNode(DivFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -49,9 +50,14 @@ std::string DivFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr DivFunctionNode::copy()
+FunctionNodePtr DivFunctionNode::deepCopy()
 {
-    return DivFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return DivFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
+}
+
+bool DivFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

@@ -66,7 +66,7 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
 
 WindowAggregationDescriptorPtr CountAggregationDescriptor::copy()
 {
-    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 DataTypePtr CountAggregationDescriptor::getInputStamp()
 {

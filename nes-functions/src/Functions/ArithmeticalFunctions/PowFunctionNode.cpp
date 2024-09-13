@@ -20,7 +20,7 @@
 namespace NES
 {
 
-PowFunctionNode::PowFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+PowFunctionNode::PowFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Pow") {};
 
 PowFunctionNode::PowFunctionNode(PowFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -68,9 +68,14 @@ std::string PowFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr PowFunctionNode::copy()
+FunctionNodePtr PowFunctionNode::deepCopy()
 {
-    return PowFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return PowFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool PowFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

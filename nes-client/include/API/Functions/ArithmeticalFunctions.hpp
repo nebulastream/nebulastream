@@ -24,9 +24,7 @@ class FunctionNode;
 class FunctionItem;
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-/**
- * @brief Defines common arithmetical operations between function nodes.
- */
+/// Defines common arithmetical operations between function nodes.
 FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
@@ -51,9 +49,7 @@ FunctionNodePtr operator--(FunctionNodePtr exp);
 FunctionNodePtr operator++(FunctionNodePtr exp, int value);
 FunctionNodePtr operator--(FunctionNodePtr exp, int value);
 
-/**
- * @brief Defines common binary arithmetical operations between a constant and an function node.
- */
+/// Defines common binary arithmetical operations between a constant and an function node.
 FunctionNodePtr operator+(FunctionItem leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator-(FunctionItem leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator*(FunctionItem leftExp, FunctionNodePtr rightExp);
@@ -62,9 +58,7 @@ FunctionNodePtr operator%(FunctionItem leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr MOD(FunctionItem leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr POWER(FunctionItem leftExp, FunctionNodePtr rightExp);
 
-/**
- * @brief Defines common binary arithmetical operations between an function node and a constant.
- */
+/// Defines common binary arithmetical operations between an function node and a constant.
 FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionItem rightExp);
 FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionItem rightExp);
 FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionItem rightExp);
@@ -73,9 +67,7 @@ FunctionNodePtr operator%(FunctionNodePtr leftExp, FunctionItem rightExp);
 FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionItem rightExp);
 FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionItem rightExp);
 
-/**
- * @brief Defines common binary arithmetical operations between two function items.
- */
+/// Defines common binary arithmetical operations between two function items
 FunctionNodePtr operator+(FunctionItem leftExp, FunctionItem rightExp);
 FunctionNodePtr operator-(FunctionItem leftExp, FunctionItem rightExp);
 FunctionNodePtr operator*(FunctionItem leftExp, FunctionItem rightExp);
@@ -84,10 +76,9 @@ FunctionNodePtr operator%(FunctionItem leftExp, FunctionItem rightExp);
 FunctionNodePtr MOD(FunctionItem leftExp, FunctionItem rightExp);
 FunctionNodePtr POWER(FunctionItem leftExp, FunctionItem rightExp);
 
-/**
- * @brief Defines common unary arithmetical operations on an function items.
- */
-FunctionNodePtr ABS(FunctionItem exp);
+
+/// Defines common unary arithmetical operations on an function items.
+/// FunctionNodePtr ABS(FunctionItem exp);
 FunctionNodePtr SQRT(FunctionItem exp);
 FunctionNodePtr EXP(FunctionItem exp);
 FunctionNodePtr LN(FunctionItem exp);
@@ -104,4 +95,4 @@ FunctionNodePtr operator--(FunctionItem exp);
 FunctionNodePtr operator++(FunctionItem exp, int);
 FunctionNodePtr operator--(FunctionItem exp, int);
 
-} /// namespace NES
+}

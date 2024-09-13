@@ -74,7 +74,7 @@ bool LogicalFilterOperator::inferSchema()
 
 OperatorPtr LogicalFilterOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->copy(), id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->deepCopy(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

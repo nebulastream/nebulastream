@@ -176,8 +176,8 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
     auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
-    auto function = functionProvider->lowerFunction(filterOperator->getPredicate());
-    return std::make_shared<Runtime::Execution::Operators::Selection>(function);
+    auto function = FunctionProvider::lowerFunction(filterOperator->getPredicate());
+    return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerMap(
@@ -186,11 +186,11 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
     auto assignmentField = mapOperator->getMapFunction()->getField();
     auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
-    auto function = functionProvider->lowerFunction(assignmentFunction);
-    auto writeField = std::make_shared<Runtime::Execution::Functions::WriteFieldFunction>(assignmentField->getFieldName(), function);
-    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
+    auto function = FunctionProvider::lowerFunction(assignmentFunction);
+    auto writeField = std::make_unique<Runtime::Execution::Functions::WriteFieldFunction>(assignmentField->getFieldName(), std::move(function));
+    return std::make_shared<Runtime::Execution::Operators::Map>(std::move(writeField));
 }
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
-} /// namespace NES::QueryCompilation
+}

@@ -34,9 +34,6 @@ public:
     static FunctionNodePtr create(ValueTypePtr const& constantValue);
     ~ConstantValueFunctionNode() noexcept override = default;
 
-    /**
-     * @brief Returns the constant value.
-     */
     ValueTypePtr getConstantValue() const;
 
     /**
@@ -46,24 +43,15 @@ public:
      */
     void inferStamp(SchemaPtr schema) override;
 
-    /**
-     * @brief Creates a string of the value and the type.
-     * @return
-     */
     std::string toString() const override;
-
-    /**
-     * @brief Compares if another node is equal to this constant value function.
-     * @param otherNode
-     * @return true if they are equal
-     */
     bool equal(NodePtr const& rhs) const override;
+    bool validate() const override;
 
     /**
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit ConstantValueFunctionNode(const ConstantValueFunctionNode* other);

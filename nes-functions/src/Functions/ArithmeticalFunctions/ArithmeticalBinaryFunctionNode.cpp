@@ -19,8 +19,8 @@
 namespace NES
 {
 
-ArithmeticalBinaryFunctionNode::ArithmeticalBinaryFunctionNode(DataTypePtr stamp)
-    : BinaryFunctionNode(std::move(stamp)), ArithmeticalFunctionNode()
+ArithmeticalBinaryFunctionNode::ArithmeticalBinaryFunctionNode(DataTypePtr stamp, std::string name)
+    : BinaryFunctionNode(std::move(stamp), std::move(name)), ArithmeticalFunctionNode()
 {
 }
 ArithmeticalBinaryFunctionNode::ArithmeticalBinaryFunctionNode(ArithmeticalBinaryFunctionNode* other) : BinaryFunctionNode(other)

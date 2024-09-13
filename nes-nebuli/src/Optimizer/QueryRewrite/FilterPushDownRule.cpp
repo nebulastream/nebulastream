@@ -189,7 +189,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
-        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
+        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->deepCopy();
 
         renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.first, equiJoinKeyNames.second);
 
@@ -209,7 +209,7 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
-        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
+        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->deepCopy();
         renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.second, equiJoinKeyNames.first);
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
@@ -236,7 +236,7 @@ void FilterPushDownRule::pushFilterBelowUnion(LogicalFilterOperatorPtr filterOpe
 
     auto copyOfFilterOperator = filterOperator->copy()->as<LogicalFilterOperator>();
     copyOfFilterOperator->setId(getNextOperatorId());
-    copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
+    copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->deepCopy());
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
 
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...");
@@ -369,7 +369,7 @@ void FilterPushDownRule::renameFieldAccessExpressionNodes(
 void FilterPushDownRule::renameFilterAttributesByExpressionNodes(
     const LogicalFilterOperatorPtr& filterOperator, const std::vector<ExpressionNodePtr>& expressionNodes)
 {
-    ExpressionNodePtr predicateCopy = filterOperator->getPredicate()->copy();
+    ExpressionNodePtr predicateCopy = filterOperator->getPredicate()->deepCopy();
     NES_TRACE("FilterPushDownRule: Iterate over all expressions in the projection operator");
 
     for (auto& expressionNode : expressionNodes)
@@ -411,7 +411,7 @@ void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
     {
         if (filterAccessExpression->getFieldName() == fieldName)
         {
-            filterAccessExpression->replace(mapTransformation->copy());
+            filterAccessExpression->replace(mapTransformation->deepCopy());
         }
     }
     NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());

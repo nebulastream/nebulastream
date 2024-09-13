@@ -17,6 +17,11 @@
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
+
+LessFunctionNode::LessFunctionNode() : LogicalBinaryFunctionNode("Less")
+{
+}
+
 LessFunctionNode::LessFunctionNode(LessFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -45,9 +50,14 @@ std::string LessFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr LessFunctionNode::copy()
+FunctionNodePtr LessFunctionNode::deepCopy()
 {
-    return LessFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return LessFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool LessFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

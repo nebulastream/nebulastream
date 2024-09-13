@@ -18,7 +18,9 @@
 namespace NES
 {
 
-AndFunctionNode::AndFunctionNode() = default;
+AndFunctionNode::AndFunctionNode() : LogicalBinaryFunctionNode("And")
+{
+}
 
 AndFunctionNode::AndFunctionNode(AndFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
@@ -65,9 +67,14 @@ void AndFunctionNode::inferStamp(SchemaPtr schema)
             "AND Function Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }
-FunctionNodePtr AndFunctionNode::copy()
+FunctionNodePtr AndFunctionNode::deepCopy()
 {
-    return AndFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return AndFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool AndFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

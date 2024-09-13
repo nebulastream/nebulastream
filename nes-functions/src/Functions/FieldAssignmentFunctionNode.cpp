@@ -17,12 +17,12 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
-FieldAssignmentFunctionNode::FieldAssignmentFunctionNode(DataTypePtr stamp) : BinaryFunctionNode(std::move(stamp)) {};
+FieldAssignmentFunctionNode::FieldAssignmentFunctionNode(DataTypePtr stamp) : BinaryFunctionNode(std::move(stamp), "FieldAssignment") {};
 
 FieldAssignmentFunctionNode::FieldAssignmentFunctionNode(FieldAssignmentFunctionNode* other) : BinaryFunctionNode(other) {};
 
@@ -103,9 +103,14 @@ void FieldAssignmentFunctionNode::inferStamp(SchemaPtr schema)
         field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
-FunctionNodePtr FieldAssignmentFunctionNode::copy()
+FunctionNodePtr FieldAssignmentFunctionNode::deepCopy()
 {
-    return FieldAssignmentFunctionNode::create(getField()->copy()->as<FieldAccessFunctionNode>(), getAssignment()->copy());
+    return FieldAssignmentFunctionNode::create(getField()->deepCopy()->as<FieldAccessFunctionNode>(), getAssignment()->deepCopy());
+}
+
+bool FieldAssignmentFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

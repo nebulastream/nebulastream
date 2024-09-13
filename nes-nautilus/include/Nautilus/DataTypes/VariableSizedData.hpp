@@ -47,6 +47,7 @@ public:
 
     nautilus::val<bool> operator==(const VariableSizedData&) const;
     nautilus::val<bool> operator!=(const VariableSizedData&) const;
+    nautilus::val<bool> operator!() const;
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
 private:

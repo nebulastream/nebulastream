@@ -35,7 +35,7 @@ public:
     [[nodiscard]] std::string toString() const override;
 
 protected:
-    explicit ArithmeticalBinaryFunctionNode(DataTypePtr stamp);
+    explicit ArithmeticalBinaryFunctionNode(DataTypePtr stamp, std::string name);
     explicit ArithmeticalBinaryFunctionNode(ArithmeticalBinaryFunctionNode* other);
     ~ArithmeticalBinaryFunctionNode() noexcept override = default;
 };

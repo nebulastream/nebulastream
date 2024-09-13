@@ -23,7 +23,7 @@
 namespace NES
 {
 
-SqrtFunctionNode::SqrtFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp)) {};
+SqrtFunctionNode::SqrtFunctionNode(DataTypePtr stamp) : ArithmeticalUnaryFunctionNode(std::move(stamp), "Sqrt") {};
 
 SqrtFunctionNode::SqrtFunctionNode(SqrtFunctionNode* other) : ArithmeticalUnaryFunctionNode(other)
 {
@@ -73,9 +73,14 @@ std::string SqrtFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr SqrtFunctionNode::copy()
+FunctionNodePtr SqrtFunctionNode::deepCopy()
 {
-    return SqrtFunctionNode::create(children[0]->as<FunctionNode>()->copy());
+    return SqrtFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool SqrtFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

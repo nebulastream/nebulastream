@@ -18,10 +18,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-ModFunctionNode::ModFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+ModFunctionNode::ModFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Mod") {};
 
 ModFunctionNode::ModFunctionNode(ModFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -124,9 +125,14 @@ std::string ModFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr ModFunctionNode::copy()
+FunctionNodePtr ModFunctionNode::deepCopy()
 {
-    return ModFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return ModFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool ModFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

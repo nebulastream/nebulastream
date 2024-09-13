@@ -18,14 +18,13 @@
 
 namespace NES::Runtime::Execution::Functions {
 
-/// Returns true if the left and right subfunctions are NOT equal, otherwise false.
-class NotEqualsFunction final : public Function {
+/// Negates the result of the subFunction
+class NegateFunction final : public Function {
 public:
-    NotEqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction);
+    explicit NegateFunction(FunctionPtr subFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
+    const FunctionPtr subFunction;
 };
 }

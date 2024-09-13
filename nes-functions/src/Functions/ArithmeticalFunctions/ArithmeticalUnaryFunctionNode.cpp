@@ -19,7 +19,7 @@
 namespace NES
 {
 
-ArithmeticalUnaryFunctionNode::ArithmeticalUnaryFunctionNode(DataTypePtr stamp) : UnaryFunctionNode(std::move(stamp))
+ArithmeticalUnaryFunctionNode::ArithmeticalUnaryFunctionNode(DataTypePtr stamp, std::string name) : UnaryFunctionNode(std::move(stamp), std::move(name))
 {
 }
 ArithmeticalUnaryFunctionNode::ArithmeticalUnaryFunctionNode(ArithmeticalUnaryFunctionNode* other) : UnaryFunctionNode(other)

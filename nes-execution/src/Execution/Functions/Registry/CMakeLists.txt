@@ -10,15 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-functions
-        FunctionFunction.cpp
-        FunctionRegistry.cpp
-        LnFunction.cpp
-        Log2Function.cpp
-        Log10Function.cpp
-        AbsFunction.cpp
-        PowerFunction.cpp
-        SinFunction.cpp
-        CosFunction.cpp
-        RadiansFunction.cpp
-        )
+add_source_files(nes-execution
+        RegistryFunctionExecutable.cpp
+)

@@ -15,8 +15,13 @@
 #include <sstream>
 #include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
+
+EqualsFunctionNode::EqualsFunctionNode() noexcept : LogicalBinaryFunctionNode("Equals")
+{
+}
 
 EqualsFunctionNode::EqualsFunctionNode(EqualsFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
@@ -46,9 +51,14 @@ std::string EqualsFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr EqualsFunctionNode::copy()
+FunctionNodePtr EqualsFunctionNode::deepCopy()
 {
-    return EqualsFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return EqualsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
+}
+
+bool EqualsFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

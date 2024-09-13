@@ -18,7 +18,7 @@
 
 namespace NES
 {
-LogicalBinaryFunctionNode::LogicalBinaryFunctionNode() : BinaryFunctionNode(DataTypeFactory::createBoolean()), LogicalFunctionNode()
+LogicalBinaryFunctionNode::LogicalBinaryFunctionNode(std::string name) : BinaryFunctionNode(DataTypeFactory::createBoolean(), std::move(name)), LogicalFunctionNode()
 {
 }
 
@@ -37,4 +37,4 @@ bool LogicalBinaryFunctionNode::equal(NodePtr const& rhs) const
     return false;
 }
 
-} /// namespace NES
+}

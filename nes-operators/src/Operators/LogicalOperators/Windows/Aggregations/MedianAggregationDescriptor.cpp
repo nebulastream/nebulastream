@@ -74,7 +74,7 @@ void MedianAggregationDescriptor::inferStamp(SchemaPtr schema)
 }
 WindowAggregationDescriptorPtr MedianAggregationDescriptor::copy()
 {
-    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 
 DataTypePtr MedianAggregationDescriptor::getInputStamp()
@@ -90,4 +90,4 @@ DataTypePtr MedianAggregationDescriptor::getFinalAggregateStamp()
     return DataTypeFactory::createDouble();
 }
 
-} /// namespace NES::Windowing
+}

@@ -77,7 +77,7 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema)
 
 WindowAggregationDescriptorPtr MaxAggregationDescriptor::copy()
 {
-    return std::make_shared<MaxAggregationDescriptor>(this->onField->copy(), this->asField->copy());
+    return std::make_shared<MaxAggregationDescriptor>(this->onField->deepCopy(), this->asField->deepCopy());
 }
 
 DataTypePtr MaxAggregationDescriptor::getInputStamp()

@@ -17,7 +17,9 @@
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-OrFunctionNode::OrFunctionNode() = default;
+OrFunctionNode::OrFunctionNode() : LogicalBinaryFunctionNode("Or")
+{
+}
 
 OrFunctionNode::OrFunctionNode(OrFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
@@ -63,9 +65,14 @@ void OrFunctionNode::inferStamp(SchemaPtr schema)
             "OR Function Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }
-FunctionNodePtr OrFunctionNode::copy()
+FunctionNodePtr OrFunctionNode::deepCopy()
 {
-    return OrFunctionNode::create(children[0]->as<FunctionNode>()->copy(), children[1]->as<FunctionNode>()->copy());
+    return OrFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool OrFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

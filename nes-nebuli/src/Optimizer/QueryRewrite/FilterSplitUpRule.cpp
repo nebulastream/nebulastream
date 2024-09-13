@@ -122,7 +122,7 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
         {
             /// getPredicate() is the first NegateExpression; first getChildren()[0] is the second NegateExpression;
             /// second getChildren()[0] is the expressionNode that was negated twice. copy() only copies children of this expressionNode. (probably not mandatory but no reference to the negations needs to be kept)
-            filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->copy());
+            filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<ExpressionNode>()->deepCopy());
             splitUpFilters(filterOperator);
         }
     }
