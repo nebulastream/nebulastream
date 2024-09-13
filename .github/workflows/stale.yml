@@ -6,7 +6,7 @@ on:
 
 jobs:
   stale:
-
+    if: ${{ !github.event.act }}
     runs-on: [ self-hosted, linux, X64, Build ]
     permissions:
       issues: write
