@@ -22,7 +22,7 @@ namespace NES
 
 Node::Node()
 {
-/// The CMAKE_NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
+/// The NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
 /// This can be useful for the debugging of optimizations, but could lead to a substantial performance impact.
 #ifdef NES_TRACE_NODE_CREATION
     stackTrace = collectAndPrintStacktrace();
