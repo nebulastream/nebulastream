@@ -13,7 +13,7 @@ classDiagram
     Source --> PullingSource : implemented by
     Source --> PushingSource : implemented by
     PullingSource --> FileSource : calls 'pull()' in start()
-    PushingSource --> TCPSource : start() -> subscribe, close() -> unsubscribe
+    PushingSource --> SourceTCP : start() -> subscribe, close() -> unsubscribe
 
     namespace OutsideFacing {
         class SourceHandle {
@@ -48,14 +48,14 @@ classDiagram
             - std::string filePath
         }
         
-        class TCPSource {
+        class SourceTCP {
             + void push()
             - std::string host
             - std::string port
         }
     }
 ```
-(G3): FileSource/TCPSource should implement a common 'SourceInterface' to reside in the same registry
+(G3): FileSource/SourceTCP should implement a common 'SourceInterface' to reside in the same registry
 ---
 # Version 2
 ```mermaid
@@ -64,11 +64,11 @@ title: Sources Implementation Overview
 ---
 classDiagram
     SourceHandle --> Source : takes implementation from
-    Source --> DataSource : query start&stop logic implemented by
+    Source --> SourceData : query start&stop logic implemented by
     Source ..> FileSource : data ingestion implemented by 
-    Source ..> TCPSource : data ingestion implemented by
-    DataSource --> FileSource : start() -> connect & pull, stop() -> close
-    DataSource --> TCPSource : start() -> connect & pull, stop() -> close
+    Source ..> SourceTCP : data ingestion implemented by
+    SourceData --> FileSource : start() -> connect & pull, stop() -> close
+    SourceData --> SourceTCP : start() -> connect & pull, stop() -> close
     
     note for Source "- Interface for PluginRegistry\n - defers start/stop to\nPulling/PushingSource"
     
@@ -87,7 +87,7 @@ namespace Internal {
         + void virtual stop()
     }
     
-    class DataSource {
+    class SourceData {
         + void start()
         + void stop()
         + Source(File/TCP/..) sourceImpl
@@ -99,7 +99,7 @@ namespace Internal {
         - std::string filePath
     }
     
-    class TCPSource {
+    class SourceTCP {
         + void start()
         + void stop()
         - std::string host
@@ -114,22 +114,22 @@ namespace Internal {
 title: Sources Implementation Overview
 ---
 classDiagram
-    SourceHandle --> DataSource : uses
+    SourceHandle --> SourceData : uses
     FileSource --> Source : implements
-    TCPSource --> Source  : implements
-    DataSource --> FileSource : uses
-    DataSource --> TCPSource : uses
+    SourceTCP --> Source  : implements
+    SourceData --> FileSource : uses
+    SourceData --> SourceTCP : uses
 
     namespace OutsideFacing {
         class SourceHandle {
-            + DataSource dataSource
+            + SourceData sourceData
             + void start()
             + void stop()
             + OriginId getSourceId()
             + std::string toString()
         }
     }
-    namespace SourceRegistry {
+    namespace RegistrySource {
     %% Source is the interface for the PluginRegistry for sources
         class Source {
             + virtual void open()
@@ -142,7 +142,7 @@ classDiagram
 
     namespace Internal {
 
-        class DataSource {
+        class SourceData {
             + void start()
             + void stop()
             + OriginId getSourceId()
@@ -159,7 +159,7 @@ classDiagram
             - std::string filePath
         }
 
-        class TCPSource {
+        class SourceTCP {
             + void open()
             + void close()
             + void fillTupleBuffer()
@@ -182,9 +182,9 @@ classDiagram
     Source --> PullingSource : query start&stop logic implemented by
     Source --> PushingSource : query start&stop logic implemented by
     PullingSource --> FileSource : start() -> connect & pull, stop() -> close
-    PushingSource --> TCPSource : start() -> subscribe, close() -> unsubscribe
+    PushingSource --> SourceTCP : start() -> subscribe, close() -> unsubscribe
     Source ..> FileSource : data ingestion implemented by 
-    Source ..> TCPSource : data ingestion implemented by
+    Source ..> SourceTCP : data ingestion implemented by
     
     note for Source "- Interface for PluginRegistry\n - defers start/stop to\nPulling/PushingSource"
     
@@ -222,7 +222,7 @@ namespace Internal {
         - std::string filePath
     }
     
-    class TCPSource {
+    class SourceTCP {
         + void start()
         + void stop()
         - std::string host

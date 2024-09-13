@@ -33,7 +33,7 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
-#include <Sources/CSVSource.hpp>
+#include <Sources/SourceCSV.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>

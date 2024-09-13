@@ -24,8 +24,8 @@ namespace NES::Sources
 {
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
-/// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
-/// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
+/// The SourceData spawns an independent thread for data ingestion and it manages the pipeline and task logic.
+/// The Source is owned by the SourceData. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
     /// Todo #237: reevaluate whether we still need num source local buffers, and potentially use new configuration approach.

@@ -12,21 +12,21 @@
     limitations under the License.
 */
 
-#include <Sources/GeneratedSourceRegistrar.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceRegistry.hpp>
+#include <../include/Sources/Source.hpp>
+#include <../include/Sources/SourceDescriptor.hpp>
+#include <Sources/GeneratedRegistrarSource.hpp>
+#include <Sources/RegistrySource.hpp>
 
 namespace NES::Sources
 {
 
-SourceRegistry::SourceRegistry()
+RegistrySource::RegistrySource()
 {
-    GeneratedSourceRegistrar::registerAllPlugins(*this);
+    GeneratedRegistrarSource::registerAllPlugins(*this);
 }
 
 std::optional<std::unique_ptr<Source>>
-SourceRegistry::tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const
+RegistrySource::tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const
 {
     if (registry.contains(name))
     {
@@ -36,14 +36,14 @@ SourceRegistry::tryCreate(const std::string& name, const Schema& schema, const S
     return std::nullopt;
 }
 
-bool SourceRegistry::contains(const std::string& name) const
+bool RegistrySource::contains(const std::string& name) const
 {
     return registry.contains(name);
 }
 
-SourceRegistry& SourceRegistry::instance()
+RegistrySource& RegistrySource::instance()
 {
-    static SourceRegistry instance;
+    static RegistrySource instance;
     return instance;
 }
 

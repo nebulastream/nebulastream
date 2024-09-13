@@ -19,8 +19,8 @@
 namespace NES
 {
 
-class DataSource;
-using DataSourcePtr = std::shared_ptr<DataSource>;
+class SourceData;
+using SourceDataPtr = std::shared_ptr<SourceData>;
 
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;

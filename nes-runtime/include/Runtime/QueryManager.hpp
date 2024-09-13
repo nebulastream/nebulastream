@@ -38,8 +38,8 @@
 
 namespace NES
 {
-class DataSource;
-using DataSourcePtr = std::shared_ptr<DataSource>;
+class SourceData;
+using SourceDataPtr = std::shared_ptr<SourceData>;
 
 class NesWorker;
 namespace Runtime

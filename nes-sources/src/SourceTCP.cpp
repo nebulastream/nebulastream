@@ -27,12 +27,12 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/GeneratedSourceRegistrar.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/GeneratedRegistrarSource.hpp>
+#include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceRegistry.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/RegistrySource.hpp>
+#include <Sources/SourceTCP.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <sys/socket.h> /// For socket functions
@@ -44,7 +44,7 @@
 namespace NES::Sources
 {
 
-TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
     : tupleSize(schema.getSchemaSizeInBytes())
     , circularBuffer(getpagesize() * 2)
     , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
@@ -69,26 +69,26 @@ TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescrip
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         auto fieldName = field->getName();
-        NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
+        NES_TRACE("SOURCETCP:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
     switch (inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<CSVParser>(schema.getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<ParserCSV>(schema.getSize(), physicalTypes, ",");
             break;
         default:
             NES_ERROR("InputFormat not supported.")
             NES_NOT_IMPLEMENTED();
     }
 
-    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
+    NES_TRACE("SourceTCP::SourceTCP: Init SourceTCP.");
 }
 
-std::ostream& TCPSource::toString(std::ostream& str) const
+std::ostream& SourceTCP::toString(std::ostream& str) const
 {
-    str << "TCPSOURCE(";
+    str << "SOURCETCP(";
     str << "Tuplesize:" << this->tupleSize;
     str << "Generated tuples: " << this->generatedTuples;
     str << "Generated buffers: " << this->generatedBuffers;
@@ -108,9 +108,9 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-void TCPSource::open()
+void SourceTCP::open()
 {
-    NES_TRACE("TCPSource::open: Trying to create socket and connect.");
+    NES_TRACE("SourceTCP::open: Trying to create socket and connect.");
 
     addrinfo hints;
     addrinfo* result;
@@ -125,7 +125,7 @@ void TCPSource::open()
     if (errorCode != 0)
     {
         /// #72: use correct error type
-        NES_THROW_RUNTIME_ERROR("TCPSource::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
+        NES_THROW_RUNTIME_ERROR("SourceTCP::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
     }
 
     /// Try each address until we successfully connect
@@ -155,19 +155,19 @@ void TCPSource::open()
     if (result == nullptr)
     {
         /// #72: use correct error type
-        NES_THROW_RUNTIME_ERROR("TCPSource::open: Could not connect to " << socketHost << ":" << socketPort);
+        NES_THROW_RUNTIME_ERROR("SourceTCP::open: Could not connect to " << socketHost << ":" << socketPort);
     }
 
-    NES_TRACE("TCPSource::open: Connected to server.");
+    NES_TRACE("SourceTCP::open: Connected to server.");
 }
 
-bool TCPSource::fillTupleBuffer(
+bool SourceTCP::fillTupleBuffer(
     NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
 {
     std::stringstream ss;
     ss << this;
-    NES_DEBUG("TCPSource  {}: receiveData ", ss.str());
-    NES_DEBUG("TCPSource buffer allocated ");
+    NES_DEBUG("SourceTCP  {}: receiveData ", ss.str());
+    NES_DEBUG("SourceTCP buffer allocated ");
     try
     {
         while (fillBuffer(tupleBuffer, bufferManager, schema))
@@ -178,7 +178,7 @@ bool TCPSource::fillTupleBuffer(
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
+        NES_ERROR("SourceTCP::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
 }
@@ -205,17 +205,17 @@ size_t binaryBufferSize(std::span<const char> data)
     return result;
 }
 
-size_t TCPSource::parseBufferSize(const std::span<const char> data) const
+size_t SourceTCP::parseBufferSize(const std::span<const char> data) const
 {
     return asciiBufferSize(data);
 }
 
-bool TCPSource::fillBuffer(
+bool SourceTCP::fillBuffer(
     NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
 {
     /// determine how many tuples fit into the buffer
     const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
-    NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
+    NES_DEBUG("SourceTCP::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     /// init tuple count for buffer
     uint64_t tupleCount = 0;
     /// init timer for flush interval
@@ -240,13 +240,13 @@ bool TCPSource::fillBuffer(
             if (bufferSizeReceived == -1)
             {
                 /// if read method returned -1 an error occurred during read.
-                NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
+                NES_ERROR("SourceTCP::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
                 isEoS = true;
                 break;
             }
             if (bufferSizeReceived == 0)
             {
-                NES_TRACE("TCPSource::fillBuffer: No data received from {}:{}.", socketHost, socketPort);
+                NES_TRACE("SourceTCP::fillBuffer: No data received from {}:{}.", socketHost, socketPort);
             }
 
             writer.consume(bufferSizeReceived);
@@ -327,7 +327,7 @@ bool TCPSource::fillBuffer(
             if (!tupleData.empty())
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
+                NES_TRACE("SOURCETCP::fillBuffer: Client consume message: '{}'.", buf);
                 inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, testTupleBuffer, schema, bufferManager);
                 tupleCount++;
             }
@@ -339,7 +339,7 @@ bool TCPSource::fillBuffer(
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
                  >= flushIntervalInMs))
         {
-            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("SourceTCP::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -350,34 +350,34 @@ bool TCPSource::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
-SourceDescriptor::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+SourceDescriptor::Config SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
 
-void TCPSource::close()
+void SourceTCP::close()
 {
-    NES_TRACE("TCPSource::close: trying to close connection.");
+    NES_TRACE("SourceTCP::close: trying to close connection.");
     if (connection >= 0)
     {
         ::close(connection);
         ::close(sockfd);
-        NES_TRACE("TCPSource::close: connection closed.");
+        NES_TRACE("SourceTCP::close: connection closed.");
     }
 }
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationTCP(RegistrySourceValidation& registry)
 {
     const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
-    { return TCPSource::validateAndFormat(std::move(sourceConfig)); };
-    registry.registerPlugin((TCPSource::NAME), validateFunc);
+    { return SourceTCP::validateAndFormat(std::move(sourceConfig)); };
+    registry.registerPlugin((SourceTCP::NAME), validateFunc);
 }
 
-void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
+void GeneratedRegistrarSource::RegisterSourceTCP(RegistrySource& registry)
 {
     const auto constructorFunc = [](const Schema& schema, const SourceDescriptor& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<TCPSource>(schema, sourceDescriptor); };
-    registry.registerPlugin((TCPSource::NAME), constructorFunc);
+    { return std::make_unique<SourceTCP>(schema, sourceDescriptor); };
+    registry.registerPlugin((SourceTCP::NAME), constructorFunc);
 }
 
 }

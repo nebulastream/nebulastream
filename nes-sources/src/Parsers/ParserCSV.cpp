@@ -16,7 +16,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -28,19 +28,19 @@ namespace NES::Sources
 {
 using namespace std::string_literals;
 
-CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
+ParserCSV::ParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
     : numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)), delimiter(std::move(delimiter))
 {
 }
 
-bool CSVParser::writeInputTupleToTupleBuffer(
+bool ParserCSV::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
     NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
     const Schema& schema,
     NES::Memory::AbstractBufferProvider& bufferManager)
 {
-    NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);
+    NES_TRACE("ParserCSV::parseCSVLine: Current TupleCount:  {}", tupleCount);
 
     std::vector<std::string> values;
     try
@@ -50,13 +50,13 @@ bool CSVParser::writeInputTupleToTupleBuffer(
     catch (std::exception e)
     {
         NES_THROW_RUNTIME_ERROR(
-            "CSVParser::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
+            "ParserCSV::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
     }
 
     if (values.size() != schema.getSize())
     {
         NES_THROW_RUNTIME_ERROR(fmt::format(
-            "CSVParser: The input line does not contain the right number of delimited fields. Fields in schema: {}"
+            "ParserCSV: The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
             std::to_string(schema.getSize()),

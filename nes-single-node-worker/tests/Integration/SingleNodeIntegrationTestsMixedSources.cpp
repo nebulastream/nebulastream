@@ -116,7 +116,7 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -125,10 +125,10 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
 
     /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto sourceTCPNumber = 0; sourceTCPNumber < numSources; ++sourceTCPNumber)
     {
         auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTcpServerPort, sourceTCPNumber);
         mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
     }
 

@@ -73,7 +73,7 @@ private:
     };
 
     inline bool isSource(TokenType type) const noexcept { return type == TokenType::SOURCE; }
-    inline bool isCSVSource(TokenType type) const noexcept { return type == TokenType::SOURCE_CSV; }
+    inline bool isSourceCSV(TokenType type) const noexcept { return type == TokenType::SOURCE_CSV; }
     inline bool isQuery(TokenType type) const noexcept { return type == TokenType::QUERY; }
     inline bool isInvalid(TokenType type) const noexcept { return type == TokenType::INVALID; }
     inline bool isEnd(TokenType type) const noexcept { return type == TokenType::END; }

@@ -26,11 +26,11 @@
 namespace NES::Sources
 {
 
-class SourceRegistry final
+class RegistrySource final
 {
 public:
-    SourceRegistry();
-    ~SourceRegistry() = default;
+    RegistrySource();
+    ~RegistrySource() = default;
 
     template <bool update = false>
     void registerPlugin(
@@ -50,7 +50,7 @@ public:
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
-    static SourceRegistry& instance();
+    static RegistrySource& instance();
 
 private:
     std::unordered_map<std::string, std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>>

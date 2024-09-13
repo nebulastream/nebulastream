@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <Sources/DataSource.hpp>
+#include <Sources/SourceData.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <fmt/format.h>
 
@@ -50,8 +50,8 @@ public:
 
 private:
     /// Used to print the data source via the overloaded '<<' operator.
-    [[nodiscard]] const DataSource* getDataSource() const;
-    std::unique_ptr<DataSource> dataSource;
+    [[nodiscard]] const SourceData* getSourceData() const;
+    std::unique_ptr<SourceData> sourceData;
 };
 
 }

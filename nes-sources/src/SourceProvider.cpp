@@ -21,8 +21,8 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/SourceRegistry.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/RegistrySource.hpp>
+#include <Sources/SourceTCP.hpp>
 
 namespace NES::Sources
 {
@@ -41,7 +41,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     auto schema = sourceDescriptor.schema;
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     const auto& sourceName = sourceDescriptor.sourceType;
-    if (auto source = SourceRegistry::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
+    if (auto source = RegistrySource::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
     {
         return std::make_unique<SourceHandle>(
             std::move(originId),

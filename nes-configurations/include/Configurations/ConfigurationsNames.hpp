@@ -130,13 +130,13 @@ const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimula
 
 ///Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
-const std::string CSV_SOURCE_CONFIG = "CSVSource";
+const std::string CSV_SOURCE_CONFIG = "SourceCSV";
 const std::string BINARY_SOURCE_CONFIG = "BinarySource";
 const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
-const std::string TCP_SOURCE_CONFIG = "TCPSource";
+const std::string TCP_SOURCE_CONFIG = "SourceTCP";
 const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
@@ -175,7 +175,7 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string TENSORFLOW_SUPPORTED_CONFIG = "tensorflowSupported";
 
-///TCPSourceType configs
+///SourceTCPType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";

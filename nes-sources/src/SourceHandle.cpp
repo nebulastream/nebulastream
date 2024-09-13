@@ -15,7 +15,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/DataSource.hpp>
+#include <Sources/SourceData.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -29,7 +29,7 @@ SourceHandle::SourceHandle(
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
 {
-    this->dataSource = std::make_unique<DataSource>(
+    this->sourceData = std::make_unique<SourceData>(
         std::move(originId),
         std::move(schema),
         std::move(bufferPool),
@@ -40,26 +40,26 @@ SourceHandle::SourceHandle(
 
 bool SourceHandle::start() const
 {
-    return this->dataSource->start();
+    return this->sourceData->start();
 }
 bool SourceHandle::stop() const
 {
-    return this->dataSource->stop();
+    return this->sourceData->stop();
 }
 
-const DataSource* SourceHandle::getDataSource() const
+const SourceData* SourceHandle::getSourceData() const
 {
-    return this->dataSource.get();
+    return this->sourceData.get();
 }
 
 OriginId SourceHandle::getSourceId() const
 {
-    return this->dataSource->getOriginId();
+    return this->sourceData->getOriginId();
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
 {
-    return out << sourceHandle.getDataSource();
+    return out << sourceHandle.getSourceData();
 }
 
 }

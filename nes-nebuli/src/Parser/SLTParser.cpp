@@ -94,7 +94,7 @@ void SLTParser::registerOnSourceCallback(SourceCallback callback)
     auto token = nextToken();
     while (token != TokenType::END)
     {
-        if (isCSVSource(token))
+        if (isSourceCSV(token))
         {
             auto source = expectSource();
             if (onSourceCallback)

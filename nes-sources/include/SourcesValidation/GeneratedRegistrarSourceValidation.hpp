@@ -20,7 +20,7 @@
 namespace NES::Sources
 {
 
-/// Auto generated, injects all plugins into the SourceRegistry
+/// Auto generated, injects all plugins into the RegistrySource
 class GeneratedRegistrarSourceValidation
 {
 public:

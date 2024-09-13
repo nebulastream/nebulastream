@@ -11,6 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        SourceRegistry.cpp
-        RegistrySourceValidation.cpp
+        MMapCircularBuffer.cpp
 )

@@ -123,10 +123,10 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto sourceTCPNumber = 0; sourceTCPNumber < numSources; ++sourceTCPNumber)
     {
         auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTcpServerPort, sourceTCPNumber);
         mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
     }
 
@@ -168,7 +168,7 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
-        QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
+        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
+        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
+        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
 }

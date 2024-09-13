@@ -49,9 +49,9 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Sources/CSVSource.hpp>
+#include <Sources/SourceCSV.hpp>
 #include <Sources/EnumWrapper.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/SourceTCP.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>

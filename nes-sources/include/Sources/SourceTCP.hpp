@@ -53,7 +53,7 @@ struct ConfigParametersTCP
                 {
                     return portNumber;
                 }
-                NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+                NES_ERROR("SourceTCP specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
             return portNumber;
         }};
@@ -72,7 +72,7 @@ struct ConfigParametersTCP
             {
                 return AF_INET6;
             }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
+            NES_ERROR("SourceTCP: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
             return std::nullopt;
         }};
     static inline const SourceDescriptor::ConfigParameter<int32_t> TYPE{
@@ -104,7 +104,7 @@ struct ConfigParametersTCP
             else
             {
                 NES_ERROR(
-                    "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
+                    "SourceTCP: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
                     "SOCK_RDM",
                     socketTypeString)
                 return std::nullopt;
@@ -145,7 +145,7 @@ struct ConfigParametersTCP
             SOCKET_BUFFER_TRANSFER_SIZE);
 };
 
-class TCPSource : public Source
+class SourceTCP : public Source
 {
     /// TODO #74: make timeout configurable via descriptor
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
@@ -153,8 +153,8 @@ class TCPSource : public Source
 public:
     static inline const std::string NAME = "TCP";
 
-    explicit TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
-    ~TCPSource() override = default;
+    explicit SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    ~SourceTCP() override = default;
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
@@ -198,5 +198,5 @@ private:
     uint64_t generatedBuffers{0};
 };
 
-using TCPSourcePtr = std::shared_ptr<TCPSource>;
+using SourceTCPPtr = std::shared_ptr<SourceTCP>;
 }

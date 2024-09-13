@@ -46,7 +46,7 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
-class DataSource;
+class SourceData;
 
 namespace Runtime
 {
@@ -102,7 +102,7 @@ class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
-using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
+using PredecessorExecutablePipeline = std::variant<std::weak_ptr<SourceData>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;

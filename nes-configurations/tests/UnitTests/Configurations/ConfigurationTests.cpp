@@ -183,7 +183,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
 }
 
-TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
+TEST_F(ConfigTest, testWorkerSourceCSVConsoleInput)
 {
     /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();

@@ -11,15 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        SourceCSV.cpp
-        SourceData.cpp
-        SourceDescriptor.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
-        Source.cpp
-        SourceTCP.cpp
-        RegistrySource.cpp
+        RegistrySourceValidation.cpp
 )
-add_subdirectory(Parsers)
-add_subdirectory(SourcesValidation)
-add_subdirectory(SourcesUtils)
