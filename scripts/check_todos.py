@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
   Checks that all TODOs that were introduced since forking off $BASE_REF or main
   - have a corresponding issue nr
