@@ -204,13 +204,20 @@ void SLTParser::applySubstitutionRules(std::string& line)
         }
     }
 
-    auto it = std::find_if(
-        stringToToken.begin(), stringToToken.end(), [&argumentList](const auto& pair) { return pair.first == argumentList[0]; });
-    if (it != stringToToken.end())
+    if (!argumentList.empty())
     {
-        return it->second;
+        auto it = std::find_if(
+            stringToToken.begin(), stringToToken.end(), [&argumentList](const auto& pair) { return pair.first == argumentList[0]; });
+
+        if (it != stringToToken.end())
+        {
+            return it->second;
+        }
+        NES_ERROR("Unrecognized parameter {}", argumentList[0]);
+        return TokenType::INVALID;
     }
-    NES_ERROR("Unrecognized parameter {}", argumentList[0]);
+
+    NES_ERROR("No tokens found in line {}", currentLine);
     return TokenType::INVALID;
 }
 
@@ -226,6 +233,14 @@ void SLTParser::applySubstitutionRules(std::string& line)
     }
     return argumentList;
 }
+
+bool SLTParser::emptyOrComment(const std::string& line)
+{
+    return line.empty() /// completely empty
+        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
+        || line.find('#') == 0; /// slt comment
+}
+
 
 [[nodiscard]] std::vector<std::string> SLTParser::expectTuples(bool ignoreFirst)
 {

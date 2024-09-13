@@ -313,7 +313,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
             /// Read schema fields till reached last parameter
             for (size_t i = 2; i < SourceParameters.size() - 1; i += 2)
             {
-                NES::CLI::SchemaField schemaField;
+                SchemaField schemaField;
                 schemaField.type = *magic_enum::enum_cast<BasicType>(SourceParameters[i]);
                 schemaField.name = SourceParameters[i + 1];
                 logicalSource.schema.push_back(schemaField);
@@ -331,6 +331,8 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                 NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
                 return;
             }
+
+            /// Write tuples to csv file
             for (const auto& tuple : tuples)
             {
                 sourceFile << tuple << std::endl;
