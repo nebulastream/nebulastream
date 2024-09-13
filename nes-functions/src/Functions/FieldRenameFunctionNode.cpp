@@ -25,7 +25,7 @@
 namespace NES
 {
 FieldRenameFunctionNode::FieldRenameFunctionNode(const FieldAccessFunctionNodePtr& originalField, std::string newFieldName)
-    : FunctionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)) {};
+    : FunctionNode(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
 FieldRenameFunctionNode::FieldRenameFunctionNode(const FieldRenameFunctionNodePtr other)
     : FieldRenameFunctionNode(other->getOriginalField(), other->getNewFieldName()) {};
@@ -101,9 +101,14 @@ void FieldRenameFunctionNode::inferStamp(SchemaPtr schema)
     stamp = fieldAttribute->getDataType();
 }
 
-FunctionNodePtr FieldRenameFunctionNode::copy()
+FunctionNodePtr FieldRenameFunctionNode::deepCopy()
 {
-    return FieldRenameFunctionNode::create(Util::as<FieldAccessFunctionNode>(originalField->copy()), newFieldName);
+    return FieldRenameFunctionNode::create(originalField->deepCopy()->as<FieldAccessFunctionNode>(), newFieldName);
+}
+
+bool FieldRenameFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

@@ -19,6 +19,11 @@
 
 namespace NES
 {
+
+LessFunctionNode::LessFunctionNode() : LogicalBinaryFunctionNode("Less")
+{
+}
+
 LessFunctionNode::LessFunctionNode(LessFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -47,9 +52,14 @@ std::string LessFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr LessFunctionNode::copy()
+FunctionNodePtr LessFunctionNode::deepCopy()
 {
-    return LessFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return LessFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool LessFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

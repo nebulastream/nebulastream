@@ -41,9 +41,9 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
-            auto timeStampFieldRecord = std::make_shared<Runtime::Execution::Functions::ReadFieldFunction>(timeStampFieldName);
+            auto timeStampFieldRecord = std::make_unique<Runtime::Execution::Functions::ReadFieldFunction>(timeStampFieldName);
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-                timeStampFieldRecord, windowType.getTimeCharacteristic()->getTimeUnit());
+                std::move(timeStampFieldRecord), windowType.getTimeCharacteristic()->getTimeUnit());
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
     }
@@ -78,4 +78,4 @@ void logProxy(const char* message, const LogLevel logLevel)
 
 }
 
-} /// namespace NES::QueryCompilation::Util
+}

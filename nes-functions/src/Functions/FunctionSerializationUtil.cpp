@@ -31,7 +31,6 @@
 #include <Functions/FieldAccessFunctionNode.hpp>
 #include <Functions/FieldAssignmentFunctionNode.hpp>
 #include <Functions/FieldRenameFunctionNode.hpp>
-#include <Functions/Functions/FunctionFunctionNode.hpp>
 #include <Functions/LogicalFunctions/AndFunctionNode.hpp>
 #include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp>
@@ -131,20 +130,6 @@ FunctionSerializationUtil::serializeFunction(const FunctionNodePtr& function, Se
         serializeFunction(caseFunctionNode->getDefaultExp(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<FunctionFunction>())
-    {
-        /// serialize negate function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize function logical function to SerializableFunction_FunctionFunction");
-        auto functionFunctionNode = function->as<FunctionFunction>();
-        auto serializedFunctionNode = SerializableFunction_FunctionFunction();
-        serializedFunctionNode.set_functionname(functionFunctionNode->getFunctionName());
-        for (const auto& child : functionFunctionNode->getChildren())
-        {
-            auto argument = serializedFunctionNode.add_arguments();
-            serializeFunction(child->as<FunctionNode>(), argument);
-        }
-        serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
-    }
     else
     {
         NES_FATAL_ERROR("FunctionSerializationUtil: could not serialize this function: {}", function->toString());
@@ -217,22 +202,6 @@ FunctionNodePtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
             functionNodePtr
                 = FieldAssignmentFunctionNode::create(fieldAccessNode->as<FieldAccessFunctionNode>(), fieldAssignmentFunction);
-        }
-        else if (serializedFunction.details().Is<SerializableFunction_FunctionFunction>())
-        {
-            /// de-serialize field read function node.
-            NES_TRACE("FunctionSerializationUtil:: de-serialize function as function function node.");
-            SerializableFunction_FunctionFunction functionFunction;
-            serializedFunction.details().UnpackTo(&functionFunction);
-            const auto& functionName = functionFunction.functionname();
-            std::vector<FunctionNodePtr> arguments;
-            for (const auto& arg : functionFunction.arguments())
-            {
-                arguments.emplace_back(deserializeFunction(arg));
-            }
-            auto resultStamp = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
-            auto functionFunctionNode = FunctionFunction::create(resultStamp, functionName, arguments);
-            functionNodePtr = functionFunctionNode;
         }
         else if (serializedFunction.details().Is<SerializableFunction_WhenFunction>())
         {

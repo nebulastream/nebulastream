@@ -24,9 +24,7 @@ class FunctionNode;
 class FunctionItem;
 using FunctionNodePtr = std::shared_ptr<FunctionNode>;
 
-/**
- * @brief Defines common logical operations between function nodes.
- */
+/// Defines common logical operations between function nodes.
 FunctionNodePtr operator&&(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator||(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
 FunctionNodePtr operator==(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
@@ -147,4 +145,4 @@ inline auto operator>(LHS&& lhs, RHS&& rhs) -> FunctionNodePtr
     return toFunctionNodePtr(std::forward<LHS>(lhs)) > toFunctionNodePtr(std::forward<RHS>(rhs));
 }
 
-} /// namespace NES
+}

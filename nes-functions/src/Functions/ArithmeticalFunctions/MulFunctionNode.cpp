@@ -17,11 +17,10 @@
 #include <Functions/ArithmeticalFunctions/MulFunctionNode.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
 namespace NES
 {
 
-MulFunctionNode::MulFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+MulFunctionNode::MulFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Mul") {};
 
 MulFunctionNode::MulFunctionNode(MulFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -51,9 +50,14 @@ std::string MulFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr MulFunctionNode::copy()
+FunctionNodePtr MulFunctionNode::deepCopy()
 {
-    return MulFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return MulFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
+}
+
+bool MulFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

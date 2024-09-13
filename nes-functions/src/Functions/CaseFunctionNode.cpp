@@ -20,7 +20,7 @@
 
 namespace NES
 {
-CaseFunctionNode::CaseFunctionNode(DataTypePtr stamp) : FunctionNode(std::move(stamp))
+CaseFunctionNode::CaseFunctionNode(DataTypePtr stamp) : FunctionNode(std::move(stamp), "Case")
 {
 }
 
@@ -29,9 +29,9 @@ CaseFunctionNode::CaseFunctionNode(CaseFunctionNode* other) : FunctionNode(other
     auto otherWhenChildren = getWhenChildren();
     for (auto& whenItr : otherWhenChildren)
     {
-        addChildWithEqual(whenItr->copy());
+        addChildWithEqual(whenItr->deepCopy());
     }
-    addChildWithEqual(getDefaultExp()->copy());
+    addChildWithEqual(getDefaultExp()->deepCopy());
 }
 
 FunctionNodePtr CaseFunctionNode::create(std::vector<FunctionNodePtr> const& whenExps, const FunctionNodePtr& defaultExp)
@@ -142,14 +142,19 @@ std::string CaseFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr CaseFunctionNode::copy()
+FunctionNodePtr CaseFunctionNode::deepCopy()
 {
     std::vector<FunctionNodePtr> copyOfWhenFunctions;
     for (auto whenFunction : getWhenChildren())
     {
-        copyOfWhenExpressions.push_back(NES::Util::as<FunctionNode>(whenFunction)->copy());
+        copyOfWhenExpressions.push_back(NES::Util::as<FunctionNode>(whenFunction)->deepCopy());
     }
-    return CaseFunctionNode::create(copyOfWhenFunctions, getDefaultExp()->copy());
+    return CaseFunctionNode::create(copyOfWhenFunctions, getDefaultExp()->deepCopy());
 }
 
-} /// namespace NES
+bool CaseFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

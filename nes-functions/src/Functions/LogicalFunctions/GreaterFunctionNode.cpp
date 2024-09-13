@@ -19,6 +19,11 @@
 
 namespace NES
 {
+
+GreaterFunctionNode::GreaterFunctionNode() noexcept : LogicalBinaryFunctionNode("Greater")
+{
+}
+
 GreaterFunctionNode::GreaterFunctionNode(GreaterFunctionNode* other) : LogicalBinaryFunctionNode(other)
 {
 }
@@ -47,9 +52,14 @@ std::string GreaterFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr GreaterFunctionNode::copy()
+FunctionNodePtr GreaterFunctionNode::deepCopy()
 {
-    return GreaterFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return GreaterFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-} /// namespace NES
+bool GreaterFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
+}
+
+}

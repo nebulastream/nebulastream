@@ -12,5 +12,5 @@
 
 add_source_files(nes-execution
         EqualsFunction.cpp
-        NotEqualsFunction.cpp
+        NegateFunction.cpp
         )

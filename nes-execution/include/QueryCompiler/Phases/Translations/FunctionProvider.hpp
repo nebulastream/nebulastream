@@ -25,20 +25,22 @@ class FunctionFunction;
 namespace Runtime::Execution::Functions
 {
 class Function;
-using FunctionPtr = std::shared_ptr<Function>;
-} /// namespace Runtime::Execution::Functions
+using FunctionPtr = std::unique_ptr<Function>;
+}
 
 namespace QueryCompilation
 {
 class FunctionProvider
 {
 public:
-    Runtime::Execution::Functions::FunctionPtr lowerFunction(const FunctionNodePtr& functionNode);
+    /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
+    /// a ConstantValueFunctionNode, FieldAccessFunctionNode or FieldAssignmentFunctionNode
+    static Runtime::Execution::Functions::FunctionPtr lowerFunction(const FunctionNodePtr& functionNode);
+
 
 private:
-    Runtime::Execution::Functions::FunctionPtr
-    lowerConstantFunction(const std::shared_ptr<ConstantValueFunctionNode>& functionNode);
+    static Runtime::Execution::Functions::FunctionPtr lowerConstantFunction(const std::shared_ptr<ConstantValueFunctionNode>& functionNode);
 };
 
-} /// namespace QueryCompilation
-} /// namespace NES
+}
+}

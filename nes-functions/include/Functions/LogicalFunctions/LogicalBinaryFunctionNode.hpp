@@ -23,16 +23,10 @@ namespace NES
 class LogicalBinaryFunctionNode : public BinaryFunctionNode, public LogicalFunctionNode
 {
 public:
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
-    */
-    FunctionNodePtr copy() override = 0;
-
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
 protected:
-    LogicalBinaryFunctionNode();
+    LogicalBinaryFunctionNode(std::string name);
     ~LogicalBinaryFunctionNode() override = default;
     explicit LogicalBinaryFunctionNode(LogicalBinaryFunctionNode* other);
 };

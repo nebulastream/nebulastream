@@ -18,3 +18,4 @@ add_source_files(nes-execution
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(LogicalFunctions)
+add_subdirectory(Registry)

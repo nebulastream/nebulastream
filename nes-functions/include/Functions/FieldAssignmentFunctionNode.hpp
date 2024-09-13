@@ -36,6 +36,7 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    bool validate() const override;
 
     /**
      * @brief return the field to which a new value is assigned.
@@ -60,7 +61,7 @@ public:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override;
+    FunctionNodePtr deepCopy() override;
 
 protected:
     explicit FieldAssignmentFunctionNode(FieldAssignmentFunctionNode* other);
