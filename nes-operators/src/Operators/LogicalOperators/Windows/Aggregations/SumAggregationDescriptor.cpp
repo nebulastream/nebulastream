@@ -76,7 +76,7 @@ void SumAggregationDescriptor::inferStamp(SchemaPtr schema)
 }
 WindowAggregationDescriptorPtr SumAggregationDescriptor::copy()
 {
-    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 
 DataTypePtr SumAggregationDescriptor::getInputStamp()

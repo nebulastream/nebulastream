@@ -14,6 +14,7 @@
 
 #include <sstream>
 #include <utility>
+
 #include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -21,7 +22,7 @@
 namespace NES
 {
 
-AddFunctionNode::AddFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+AddFunctionNode::AddFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Add") {};
 
 AddFunctionNode::AddFunctionNode(AddFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -51,9 +52,14 @@ std::string AddFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr AddFunctionNode::copy()
+FunctionNodePtr AddFunctionNode::deepCopy()
 {
     return AddFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
+}
+
+bool AddFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 }

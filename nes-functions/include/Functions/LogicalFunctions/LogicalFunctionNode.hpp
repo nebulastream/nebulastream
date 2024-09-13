@@ -16,12 +16,9 @@
 
 namespace NES
 {
-/**
- * @brief This class just indicates that a node is a logical function.
- */
 class LogicalFunctionNode
 {
 protected:
     LogicalFunctionNode() = default;
 };
-} /// namespace NES
+}

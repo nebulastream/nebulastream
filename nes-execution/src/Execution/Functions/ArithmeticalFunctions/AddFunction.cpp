@@ -12,7 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
-#include <utility>
+#include <ErrorHandling.hpp>
+#include <memory>
 
 namespace NES::Runtime::Execution::Functions {
 
@@ -21,7 +22,14 @@ VarVal AddFunction::execute(Record& record) const {
     const auto rightValue = rightSubFunction->execute(record);
     return leftValue + rightValue;
 }
+
 AddFunction::AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
     : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
 
-}// namespace NES::Runtime::Execution::Functions
+FunctionPtr RegisterAddFunction(std::vector<FunctionPtr> subFunctions)
+{
+    PRECONDITION(subFunctions.size() == 2, "Add function must have exactly two sub-functions");
+    return std::make_unique<AddFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+}
+
+}

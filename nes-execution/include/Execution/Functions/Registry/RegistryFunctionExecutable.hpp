@@ -11,26 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-
+#include <Util/PluginRegistry.hpp>
 #include <Execution/Functions/Function.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+namespace NES::Execution::Functions {
 
-namespace NES::Runtime::Execution::Functions
-{
+class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutable, std::string, Runtime::Execution::Functions::Function, std::vector<Runtime::Execution::Functions::FunctionPtr>> {
 
-/**
- * @brief This function reads a specific field from the input record and returns its value.
- */
-class ReadFieldFunction : public Function
-{
-public:
-    ReadFieldFunction(Record::RecordFieldIdentifier field);
-    VarVal execute(Record& record) const override;
-
-private:
-    const Record::RecordFieldIdentifier field;
 };
-
 }
+
+
+#define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
+#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.hpp>
+#undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE

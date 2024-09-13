@@ -104,7 +104,7 @@ OperatorPtr LogicalProjectionOperator::copy()
     std::vector<FunctionNodePtr> copyOfProjectionFunctions;
     for (const auto& originalFunction : functions)
     {
-        copyOfProjectionFunctions.emplace_back(originalFunction->copy());
+        copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
     }
     auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);

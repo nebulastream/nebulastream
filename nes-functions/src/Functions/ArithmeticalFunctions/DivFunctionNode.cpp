@@ -21,7 +21,7 @@
 namespace NES
 {
 
-DivFunctionNode::DivFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp)) {};
+DivFunctionNode::DivFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Div") {};
 
 DivFunctionNode::DivFunctionNode(DivFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -51,9 +51,14 @@ std::string DivFunctionNode::toString() const
     return ss.str();
 }
 
-FunctionNodePtr DivFunctionNode::copy()
+FunctionNodePtr DivFunctionNode::deepCopy()
 {
-    return DivFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
+    return DivFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
+}
+
+bool DivFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 }

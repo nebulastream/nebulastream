@@ -78,7 +78,7 @@ void AvgAggregationDescriptor::inferStamp(SchemaPtr schema)
 
 WindowAggregationDescriptorPtr AvgAggregationDescriptor::copy()
 {
-    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(this->onField->copy(), this->asField->copy()));
+    return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(this->onField->deepCopy(), this->asField->deepCopy()));
 }
 
 DataTypePtr AvgAggregationDescriptor::getInputStamp()
@@ -94,4 +94,4 @@ DataTypePtr AvgAggregationDescriptor::getFinalAggregateStamp()
     return DataTypeFactory::createDouble();
 }
 
-} /// namespace NES::Windowing
+}

@@ -16,11 +16,13 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-NegateFunctionNode::NegateFunctionNode() = default;
+NegateFunctionNode::NegateFunctionNode() : LogicalUnaryFunctionNode("Negate")
+{
+};
 
 NegateFunctionNode::NegateFunctionNode(NegateFunctionNode* other) : LogicalUnaryFunctionNode(other)
 {
@@ -60,9 +62,14 @@ void NegateFunctionNode::inferStamp(SchemaPtr schema)
         NES_THROW_RUNTIME_ERROR("Negate Function Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
     }
 }
-FunctionNodePtr NegateFunctionNode::copy()
+FunctionNodePtr NegateFunctionNode::deepCopy()
 {
-    return NegateFunctionNode::create(Util::as<FunctionNode>(children[0])->copy());
+    return NegateFunctionNode::create(Util::as<FunctionNode>(children[0])->deepCopy());
+}
+
+bool NegateFunctionNode::validate() const
+{
+    NES_NOT_IMPLEMENTED();
 }
 
 } /// namespace NES

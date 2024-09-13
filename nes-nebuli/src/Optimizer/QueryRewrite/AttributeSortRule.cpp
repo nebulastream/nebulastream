@@ -125,7 +125,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
@@ -236,7 +236,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
@@ -353,7 +353,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
@@ -453,7 +453,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(

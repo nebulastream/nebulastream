@@ -18,14 +18,14 @@
 
 namespace NES
 {
-BinaryFunctionNode::BinaryFunctionNode(DataTypePtr stamp) : FunctionNode(std::move(stamp))
+BinaryFunctionNode::BinaryFunctionNode(DataTypePtr stamp, std::string name) : FunctionNode(std::move(stamp), std::move(name))
 {
 }
 
 BinaryFunctionNode::BinaryFunctionNode(BinaryFunctionNode* other) : FunctionNode(other)
 {
-    addChildWithEqual(getLeft()->copy());
-    addChildWithEqual(getRight()->copy());
+    addChildWithEqual(getLeft()->deepCopy());
+    addChildWithEqual(getRight()->deepCopy());
 }
 
 void BinaryFunctionNode::setChildren(FunctionNodePtr const& left, FunctionNodePtr const& right)

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
+#include <string_view>
 #include <utility>
 #include <Functions/FunctionNode.hpp>
 #include <Util/Common.hpp>
@@ -19,7 +21,7 @@
 
 namespace NES
 {
-FunctionNode::FunctionNode(DataTypePtr stamp) : stamp(std::move(stamp))
+FunctionNode::FunctionNode(DataTypePtr stamp, std::string name) : stamp(std::move(stamp)), name(std::move(name))
 {
 }
 
@@ -36,6 +38,11 @@ DataTypePtr FunctionNode::getStamp() const
 void FunctionNode::setStamp(DataTypePtr stamp)
 {
     this->stamp = std::move(stamp);
+}
+
+const std::string& FunctionNode::getName() const
+{
+    return name;
 }
 
 void FunctionNode::inferStamp(SchemaPtr schema)

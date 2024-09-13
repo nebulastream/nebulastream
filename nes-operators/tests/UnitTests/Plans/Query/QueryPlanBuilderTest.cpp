@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
+#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -57,7 +57,7 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
     ///test addFilter
     auto filterFunction
-        = FunctionNodePtr(LessFunctionNode::create(NES::Attribute("a").getFunctionNode(), NES::Attribute("b").getFunctionNode()));
+        = FunctionNodePtr(EqualsFunctionNode::create(NES::Attribute("a").getFunctionNode(), NES::Attribute("b").getFunctionNode()));
     queryPlan = QueryPlanBuilder::addFilter(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterFunction);

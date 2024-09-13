@@ -21,7 +21,7 @@
 namespace NES
 {
 
-LogicalUnaryFunctionNode::LogicalUnaryFunctionNode() : UnaryFunctionNode(DataTypeFactory::createBoolean()), LogicalFunctionNode()
+LogicalUnaryFunctionNode::LogicalUnaryFunctionNode(std::string name) : UnaryFunctionNode(DataTypeFactory::createBoolean(), std::move(name)), LogicalFunctionNode()
 {
 }
 
