@@ -14,12 +14,11 @@
 
 #pragma once
 
+#include <map>
 #include <string>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::Sources
 {
@@ -41,8 +40,6 @@ public:
         NES::Memory::AbstractBufferProvider& bufferManager,
         std::shared_ptr<Schema> schema)
         = 0;
-
-    [[nodiscard]] virtual bool validateConfig(const SourceDescriptor& config) const = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open() = 0;

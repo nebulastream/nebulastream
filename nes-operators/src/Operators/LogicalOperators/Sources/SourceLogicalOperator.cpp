@@ -65,7 +65,7 @@ std::unique_ptr<Sources::SourceDescriptor> SourceLogicalOperator::getSourceDescr
 {
     return std::move(this->sourceDescriptor);
 }
-SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
+Sources::SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
 {
     return *sourceDescriptor;
 }

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -24,12 +25,11 @@
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
 
 class SourceDescriptor
 {
@@ -37,18 +37,16 @@ public:
     /// Tag struct that tags a config key with a type.
     /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
     /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
-    /// For example, the TCPSource defines:
-    ///   static inline const SourceDescriptor::ConfigKey<std::string> HOST{"socket_host"};
-    /// HOST can then be used to set configurations to a descriptor and to retrieve configurations:
-    ///   Set: sourceDescriptorConfig.emplace(std::make_pair(ConfigParametersTCP::HOST.key, tcpSourceConfig->sockethost())); <-- from serialization.
-    ///   Get: descriptor->getFromConfig(ConfigParametersTCP::HOST); <-- The ConfigKey is enough to retrieve the parameter with the correct type.
+    ///-Todo: could store validate function in ConfigKey that performs parameter specific validation.
     template <typename T>
     struct ConfigKey
     {
         std::string key;
+        std::optional<T> defaultValue;
         using Type = T;
 
-        ConfigKey(std::string key) : key(std::move(key)) { }
+        ConfigKey(std::string key) : key(std::move(key)), defaultValue(std::nullopt) { }
+        ConfigKey(std::string key, T defaultValue) : key(std::move(key)), defaultValue(std::move(defaultValue)) { }
     };
 
     using ConfigType = std::variant<
@@ -64,21 +62,31 @@ public:
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
-    explicit SourceDescriptor(std::string sourceName);
+    explicit SourceDescriptor(std::string logicalSourceName, std::string sourceName);
     /// Constructor used before applying schema inference.
     explicit SourceDescriptor(std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
-    explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(
+        std::shared_ptr<Schema> schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+
+    ///-Todo: clean up constructors
+    explicit SourceDescriptor(
+        std::string logicalSourceName,
+        std::shared_ptr<Schema> schema,
+        std::string sourceName,
+        Configurations::InputFormat inputFormat,
+        Config&& config);
     ~SourceDescriptor() = default;
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceHandle);
+    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
-    [[nodiscard]] SchemaPtr getSchema() const;
+    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
+    std::string getLogicalSourceName() const;
 
     std::string getLogicalSourceName() const;
-    void setSchema(const SchemaPtr& schema);
-virtual std::string toString() const = 0;
+    void setSchema(const std::shared_ptr<Schema>& schema);
+    virtual std::string toString() const = 0;
 
     [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0;
 
@@ -116,11 +124,101 @@ virtual std::string toString() const = 0;
         return std::nullopt;
     }
 
+    template <typename T>
+    static std::optional<T> stringParameterAs(std::string stringParameter)
+    {
+        if constexpr (std::is_same_v<T, int32_t>)
+        {
+            return std::stoi(stringParameter);
+        }
+        else if constexpr (std::is_same_v<T, uint32_t>)
+        {
+            return std::stoul(stringParameter);
+        }
+        else if constexpr (std::is_same_v<T, bool>)
+        {
+            return stringParameter == "true"; ///-Todo: improve
+        }
+        else if constexpr (std::is_same_v<T, char>)
+        {
+            if (stringParameter.length() != 0)
+            {
+                NES_ERROR("Char SourceDescriptor config paramater must not be empty.")
+                return std::nullopt;
+            }
+            return stringParameter[0];
+        }
+        else if constexpr (std::is_same_v<T, float>)
+        {
+            return std::stof(stringParameter);
+        }
+        else if constexpr (std::is_same_v<T, double>)
+        {
+            return std::stod(stringParameter);
+        }
+        else if constexpr (std::is_same_v<T, std::string>)
+        {
+            return stringParameter;
+        }
+        else if constexpr (std::is_same_v<T, Configurations::TCPDecideMessageSize>)
+        {
+            return magic_enum::enum_cast<Configurations::TCPDecideMessageSize>(stringParameter).value();
+        }
+        else if constexpr (std::is_same_v<T, Configurations::InputFormat>)
+        {
+            return magic_enum::enum_cast<Configurations::InputFormat>(stringParameter).value();
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    template <typename ConfigKey>
+    static void
+    validateAndFormatParameter(const ConfigKey& configKey, const std::map<std::string, std::string>& config, Config& validatedConfig)
+    {
+        if (config.contains(configKey.key))
+        {
+            std::optional<typename ConfigKey::Type> formattedParameter
+                = SourceDescriptor::stringParameterAs<typename ConfigKey::Type>(config.at(configKey.key));
+            if (formattedParameter.has_value())
+            {
+                validatedConfig.emplace(std::make_pair(configKey.key, formattedParameter.value()));
+                return; /// success
+            }
+            throw CannotFormatSourceData(configKey.key + " Parameter formatting unsuccessful.");
+        }
+
+        if (configKey.defaultValue.has_value())
+        {
+            validatedConfig.emplace(std::make_pair(configKey.key, configKey.defaultValue.value()));
+            return; /// success
+        }
+
+        throw CannotFormatSourceData(configKey.key + " was not configured and no default value was available.");
+    };
+
 private:
     /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
-    SchemaPtr schema;
+    ///-Todo: make struct? (schema: getter/setter, logicalSourceName: getter, sourceName: getter/setter, inputFormat: getter, config: getter/setter)
+    std::shared_ptr<Schema> schema;
     std::string logicalSourceName;
-    std::string sourceType;
+    std::string sourceType; ///-Todo: remove to SourceType
+    Configurations::InputFormat inputFormat{};
+    Config config;
+
+    friend std::ostream& operator<<(std::ostream& out, const Config& config);
 };
 
+}
+
+/// Specializing the fmt ostream_formatter to accept SourceDescriptor objects.
+/// Allows to call fmt::format("SourceDescriptor: {}", sourceDescriptorObject); and therefore also works with our logging.
+namespace fmt
+{
+template <>
+struct formatter<NES::Sources::SourceDescriptor> : ostream_formatter
+{
+};
 }

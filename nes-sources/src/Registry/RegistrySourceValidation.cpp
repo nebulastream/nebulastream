@@ -12,38 +12,38 @@
     limitations under the License.
 */
 
-#include <Sources/GeneratedSourceRegistrar.hpp>
-#include <Sources/Source.hpp>
+#include <string>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceRegistry.hpp>
+#include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
+#include <SourcesValidation/RegistrySourceValidation.hpp>
 
 namespace NES::Sources
 {
 
-SourceRegistry::SourceRegistry()
+RegistrySourceValidation::RegistrySourceValidation()
 {
-    GeneratedSourceRegistrar::registerAllPlugins(*this);
+    GeneratedRegistrarSourceValidation::registerAllPlugins(*this);
 }
 
-std::optional<std::unique_ptr<Source>>
-SourceRegistry::tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const
+std::optional<SourceDescriptor::Config>
+RegistrySourceValidation::tryCreate(const std::string& name, std::map<std::string, std::string>&& sourceConfig) const
 {
     if (registry.contains(name))
     {
-        return {registry.at(name)(schema, sourceDescriptor)};
+        return {registry.at(name)(std::move(sourceConfig))};
     }
     std::cerr << "Data source " << name << " not found.\n";
     return std::nullopt;
 }
 
-bool SourceRegistry::contains(const std::string& name) const
+bool RegistrySourceValidation::contains(const std::string& name) const
 {
     return registry.contains(name);
 }
 
-SourceRegistry& SourceRegistry::instance()
+RegistrySourceValidation& RegistrySourceValidation::instance()
 {
-    static SourceRegistry instance;
+    static RegistrySourceValidation instance;
     return instance;
 }
 

@@ -33,8 +33,8 @@ class CSVSource : public Source
 public:
     struct ConfigParametersCSV
     {
-        static inline const SourceDescriptor::ConfigKey<std::string> FILEPATH{"filepath"};
-        static inline const SourceDescriptor::ConfigKey<bool> SKIP_HEADER{"skipHeader"};
+        static inline const SourceDescriptor::ConfigKey<std::string> FILEPATH{"filePath"};
+        static inline const SourceDescriptor::ConfigKey<bool> SKIP_HEADER{"skipHeader", false};
         static inline const SourceDescriptor::ConfigKey<std::string> DELIMITER{"delimiter"};
         static inline const SourceDescriptor::ConfigKey<uint32_t> NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE{"numberOfTuplesToProducePerBuffer"};
     };
@@ -52,7 +52,8 @@ public:
     /// Close file socket.
     void close() override;
 
-    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) const override;
+    /// validates and formats a string to string configuration
+    static SourceDescriptor::Config validateAndFormat(std::map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

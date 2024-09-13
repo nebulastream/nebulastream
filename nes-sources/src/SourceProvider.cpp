@@ -18,11 +18,10 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
+#include <Sources/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
 
 namespace NES::Sources

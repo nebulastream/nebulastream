@@ -18,6 +18,7 @@
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>

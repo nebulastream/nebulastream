@@ -21,25 +21,22 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
+#include <Sources/GeneratedSourceRegistrar.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceRegistry.hpp>
+#include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
+#include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
 {
-
-void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
-{
-    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
-    registry.registerPlugin((CSVSource::NAME), constructorFunc);
-}
 
 CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
     : fileEnded(false)
@@ -107,25 +104,23 @@ bool CSVSource::fillTupleBuffer(
         return false;
     }
 
-    input.seekg(currentPositionInFile, std::ifstream::beg);
-
-    uint64_t generatedTuplesThisPass = tupleBuffer.getCapacity();
+    /// Todo #72: remove TestTupleBuffer creation.
+    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
+    /// TestTupleBuffer for the same TupleBuffer.
+    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+    uint64_t generatedTuplesThisPass = testTupleBuffer.getCapacity();
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
     std::string line;
     uint64_t tupleCount = 0;
 
+    input.seekg(currentPositionInFile, std::ifstream::beg);
     if (skipHeader && currentPositionInFile == 0)
     {
         NES_TRACE("CSVSource: Skipping header");
         std::getline(input, line);
         currentPositionInFile = input.tellg();
     }
-
-    /// Todo #72: remove TestTupleBuffer creation.
-    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
-    /// TestTupleBuffer for the same TupleBuffer.
-    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
     while (tupleCount < generatedTuplesThisPass)
     {
         ///Check if EOF has reached
@@ -152,14 +147,15 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-bool CSVSource::validateConfig(const SourceDescriptor& config) const
+SourceDescriptor::Config CSVSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    bool isCorrectConfig = true;
-    /// All below config paramaters are mandatory and therefore need to be validated.
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::FILEPATH).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::SKIP_HEADER).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::DELIMITER).has_value();
-    return isCorrectConfig;
+    SourceDescriptor::Config validatedConfig;
+
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::FILEPATH, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::DELIMITER, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersCSV::SKIP_HEADER, config, validatedConfig);
+
+    return validatedConfig;
 }
 
 std::ostream& CSVSource::toString(std::ostream& str) const
@@ -173,16 +169,18 @@ std::ostream& CSVSource::toString(std::ostream& str) const
     return str;
 }
 
-SourceType CSVSource::getType() const
+void GeneratedRegistrarSourceValidation::RegisterSourceValidationCSV(RegistrySourceValidation& registry)
 {
-    return SourceType::CSV_SOURCE;
+    const auto validateFunc = [](std::map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
+    { return CSVSource::validateAndFormat(std::move(sourceConfig)); };
+    registry.registerPlugin((CSVSource::NAME), validateFunc);
 }
 
 void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 {
     const auto constructorFunc = [](const Schema& schema, const SourceDescriptor& sourceDescriptor) -> std::unique_ptr<Source>
     { return std::make_unique<CSVSource>(schema, sourceDescriptor); };
-    registry.registerPlugin((CSVSource::PLUGIN_NAME), constructorFunc);
+    registry.registerPlugin((CSVSource::NAME), constructorFunc);
 }
 
 }

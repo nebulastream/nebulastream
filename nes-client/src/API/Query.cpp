@@ -253,10 +253,10 @@ Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
 
 Query::Query(const Query& query) = default;
 
-Query Query::from(const std::string& sourceName)
+Query Query::from(const std::string& logicalSourceName)
 {
-    NES_DEBUG("Query: create new Query with source {}", sourceName);
-    auto queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
+    NES_DEBUG("Query: create new Query with source {}", logicalSourceName);
+    auto queryPlan = QueryPlanBuilder::createQueryPlan(logicalSourceName);
     return Query(queryPlan);
 }
 

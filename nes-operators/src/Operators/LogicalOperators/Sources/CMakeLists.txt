@@ -12,7 +12,4 @@
 
 add_source_files(nes-operators
         SourceLogicalOperator.cpp
-        CsvSourceDescriptor.cpp
-        LogicalSourceDescriptor.cpp
-        TCPSourceDescriptor.cpp
 )

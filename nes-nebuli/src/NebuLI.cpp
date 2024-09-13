@@ -18,14 +18,8 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
@@ -39,6 +33,9 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
@@ -122,44 +119,31 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
+Sources::SourceDescriptor
+createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map<std::string, std::string>&& sourceConfiguration)
 {
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    /// TODO(#74) We removed almost all sources this needs to be updated
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
-        }
-    }
-}
-
-PhysicalSourceTypePtr
-createPhysicalSourceType(const std::string& logicalName, const std::map<std::string, std::string>& sourceConfiguration)
-{
+    ///-Todo: this function must be called for every physical source
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
     }
+    auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
+    NES_DEBUG("Source type is: {}", sourceType);
 
-    auto modifiedSourceConfiguration = sourceConfiguration;
-    modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = logicalName;
+    auto inputFormat = Configurations::InputFormat::CSV;
+    if (sourceConfiguration.contains(Configurations::INPUT_FORMAT_CONFIG)
+        && sourceConfiguration.at(Configurations::INPUT_FORMAT_CONFIG) != "CSV")
+    {
+        inputFormat = Configurations::InputFormat::JSON;
+    }
 
-    return Configurations::PhysicalSourceTypeFactory::createFromString("", modifiedSourceConfiguration);
+    auto sourceValidationRegistry = Sources::RegistrySourceValidation::instance();
+    if (auto validConfig = sourceValidationRegistry.tryCreate(sourceType, std::move(sourceConfiguration)); validConfig.has_value())
+    {
+        return Sources::SourceDescriptor(std::move(logicalSourceName), schema, sourceType, inputFormat, std::move(validConfig.value()));
+    }
+    auto exception = UnknownSourceType("We don't support the source type: " + sourceType);
+    throw exception;
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -167,10 +151,10 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
+    auto schema = Schema::create();
     for (const auto& [logicalName, schemaFields] : config.logical)
     {
         NES_INFO("Adding logical source: {}", logicalName);
-        auto schema = Schema::create();
         for (const auto& [name, type] : schemaFields)
         {
             schema = schema->addField(name, type);
@@ -178,13 +162,14 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
         sourceCatalog->addLogicalSource(logicalName, std::move(schema));
     }
 
-    for (size_t i = 0; const auto& [logicalName, config] : config.physical)
+    ///-Todo: What to do with physical source?
+    for (auto [logicalName, config] : config.physical)
     {
-        auto sourceType = createPhysicalSourceType(logicalName, config);
+        auto sourceDescriptor = createSourceDescriptor(schema, logicalName, std::move(config));
         sourceCatalog->addPhysicalSource(
             logicalName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceType)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
+                NES::PhysicalSource::create(std::move(sourceDescriptor)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -208,10 +193,11 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     queryRewritePhase->execute(query);
     typeInference->execute(query);
 
+    /// Attaches all source descriptors belonging to a specific logical source.
     for (auto& sourceOperator : query->getSourceOperators())
     {
         auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
+        if (sourceDescriptor.getSourceName() == "Logical") ///-Todo: improve
         {
             /// Fetch logical and physical source name in the descriptor
             auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
@@ -220,11 +206,18 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
             for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
             {
                 NES_DEBUG("Replacing LogicalSourceDescriptor {}", logicalSourceName);
-                if (auto physicalSourceType = entry->getPhysicalSource())
+                if (auto physicalSource = entry->getPhysicalSource())
                 {
-                    auto physicalDescriptor
-                        = createSourceDescriptor(sourceDescriptor.getSchema(), physicalSourceType->getPhysicalSourceType());
-                    NES_DEBUG("Replacement with: {}", physicalDescriptor->toString());
+                    /// Get 'physical' descriptor from catalog. Todo: OperatorLogicalSource(SourceLogicalOperator) should not have a descriptor.
+                    auto physicalDescriptor = physicalSource->getSourceDescriptor();
+                    physicalDescriptor->setSchema(
+                        sourceDescriptor
+                            .getSchema()); ///-Todo: remove when OperatorLogicalSource has no descriptor anymore, and schema attached directly.
+                    std::stringstream ss;
+                    ss << *physicalDescriptor;
+                    std::string ssString = ss.str();
+                    NES_DEBUG("Replacement with: {}", ssString);
+                    ///-Todo: we probably need to attach multiple source descriptors to a logical source here.
                     sourceOperator->setSourceDescriptor(std::move(physicalDescriptor));
                     foundPhysicalSource = true;
                     break;

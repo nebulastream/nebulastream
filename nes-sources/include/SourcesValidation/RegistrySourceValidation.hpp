@@ -16,26 +16,24 @@
 
 #include <functional>
 #include <iostream>
+#include <map> ///-Todo: remove after refactoring to unordered_map
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <API/Schema.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES::Sources
 {
 
-class SourceRegistry final
+class RegistrySourceValidation final
 {
 public:
-    SourceRegistry();
-    virtual ~SourceRegistry() = default;
+    RegistrySourceValidation();
+    ~RegistrySourceValidation() = default;
 
     template <bool update = false>
     void registerPlugin(
-        const std::string& name,
-        const std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>& creator)
+        const std::string& name, const std::function<SourceDescriptor::Config(std::map<std::string, std::string>&& sourceConfig)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -45,16 +43,14 @@ public:
         registry[name] = creator;
     }
 
-    std::optional<std::unique_ptr<Source>>
-    tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const;
+    std::optional<SourceDescriptor::Config> tryCreate(const std::string& name, std::map<std::string, std::string>&& sourceConfig) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
-    static SourceRegistry& instance();
+    static RegistrySourceValidation& instance();
 
 private:
-    std::unordered_map<std::string, std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>>
-        registry;
+    std::unordered_map<std::string, std::function<SourceDescriptor::Config(std::map<std::string, std::string>&& sourceConfig)>> registry;
 };
 
 }

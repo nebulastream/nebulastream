@@ -28,7 +28,7 @@ public:
     explicit SourceLogicalOperator(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
     std::unique_ptr<Sources::SourceDescriptor> getSourceDescriptor();
-    SourceDescriptor& getSourceDescriptorRef();
+    Sources::SourceDescriptor& getSourceDescriptorRef();
 
     void setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
@@ -49,5 +49,6 @@ private:
     SchemaPtr projectSchema;
 };
 
+///-Todo: remove
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 } /// namespace NES

@@ -238,7 +238,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
             if (sourceDescriptor->getSourceName() == Sources::CSVSource::NAME)
             {
                 /// Set socket port and serialize again.
-                csvSourceDescriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
+                sourceDescriptor->setConfigType(Sources::CSVSource::ConfigParametersCSV::FILEPATH.key, newInputFileName);
                 deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 

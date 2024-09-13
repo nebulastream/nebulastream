@@ -26,26 +26,23 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/GeneratedSourceRegistrar.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
+#include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
+#include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <sys/socket.h> /// For socket functions
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include <magic_enum.hpp>
 
 namespace NES::Sources
 {
-
-void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
-{
-    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<TCPSource>(schema, std::move(sourceDescriptor)); };
-    registry.registerPlugin((TCPSource::NAME), constructorFunc);
-}
 
 TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
     : tupleSize(schema.getSchemaSizeInBytes())
@@ -352,20 +349,69 @@ bool TCPSource::fillBuffer(
     /// Return false, if there are tuples in the buffer, or the EoS was reached.
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
-bool TCPSource::validateConfig(const SourceDescriptor& config) const
+
+SourceDescriptor::Config TCPSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    bool isCorrectConfig = true;
-    /// All below config paramaters are mandatory and therefore need to be validated.
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::HOST).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::PORT).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::TYPE).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::DOMAIN).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SEPARATOR).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE).has_value();
-    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE).has_value();
-    return isCorrectConfig;
+    SourceDescriptor::Config validatedConfig;
+
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::HOST, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::PORT, config, validatedConfig);
+    ///-Todo: could move into lambda function in ConfigKey, to keep everything in one place.
+    if (config.contains(ConfigParametersTCP::DOMAIN.key))
+    {
+        const auto socketDomainString = config.at(ConfigParametersTCP::DOMAIN.key);
+        if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN.key, AF_INET));
+        }
+        else if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::DOMAIN.key, AF_INET6));
+        }
+        else
+        {
+            throw UnknownSourceFormat("Domain provided for TCP source was : " + socketDomainString + ", allowed is AF_INET or AF_INET6");
+        }
+    }
+    if (config.contains(ConfigParametersTCP::TYPE.key))
+    {
+        const auto socketTypeString = config.at(ConfigParametersTCP::TYPE.key);
+        if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_STREAM));
+        }
+        else if (strcasecmp(socketTypeString.c_str(), "SOCK_DGRAM") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_DGRAM));
+        }
+        else if (strcasecmp(socketTypeString.c_str(), "SOCK_SEQPACKET") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_SEQPACKET));
+        }
+        else if (strcasecmp(socketTypeString.c_str(), "SOCK_RAW") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_RAW));
+        }
+        else if (strcasecmp(socketTypeString.c_str(), "SOCK_RDM") == 0)
+        {
+            validatedConfig.emplace(std::make_pair(ConfigParametersTCP::TYPE.key, SOCK_RDM));
+        }
+        else
+        {
+            throw UnknownSourceFormat(
+                "Domain provided for TCP source was : " + socketTypeString
+                + ", allowed is SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, and SOCK_RDM");
+        }
+    }
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SEPARATOR, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::FLUSH_INTERVAL_MS, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::DECIDED_MESSAGE_SIZE, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SOCKET_BUFFER_SIZE, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE, config, validatedConfig);
+    SourceDescriptor::validateAndFormatParameter(ConfigParametersTCP::INPUT_FORMAT, config, validatedConfig);
+
+    /// Optional config paramaters
+    return validatedConfig;
 }
 
 void TCPSource::close()
@@ -379,16 +425,18 @@ void TCPSource::close()
     }
 }
 
-SourceType TCPSource::getType() const
+void GeneratedRegistrarSourceValidation::RegisterSourceValidationTCP(RegistrySourceValidation& registry)
 {
-    return SourceType::TCP_SOURCE;
+    const auto validateFunc = [](std::map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
+    { return TCPSource::validateAndFormat(std::move(sourceConfig)); };
+    registry.registerPlugin((TCPSource::NAME), validateFunc);
 }
 
 void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
 {
     const auto constructorFunc = [](const Schema& schema, const SourceDescriptor& sourceDescriptor) -> std::unique_ptr<Source>
     { return std::make_unique<TCPSource>(schema, sourceDescriptor); };
-    registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
+    registry.registerPlugin((TCPSource::NAME), constructorFunc);
 }
 
 }

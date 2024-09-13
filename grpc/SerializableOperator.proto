@@ -69,8 +69,8 @@ message SerializablePhysicalSourceType{
   message SerializableTCPSourceType{
     string socketHost = 1;
     uint32 socketPort = 2;
-    uint32 socketDomain = 3;
-    uint32 socketType = 4;
+    int32 socketDomain = 3;
+    int32 socketType = 4;
     float flushIntervalMS = 6;
     InputFormat inputFormat = 7;
     TCPDecideMessageSize tcpDecideMessageSize = 8;

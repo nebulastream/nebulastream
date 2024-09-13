@@ -25,7 +25,6 @@
 #include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {

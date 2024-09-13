@@ -12,4 +12,5 @@
 
 add_source_files(nes-sources
         SourceRegistry.cpp
+        RegistrySourceValidation.cpp
 )

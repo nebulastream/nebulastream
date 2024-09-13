@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #pragma once
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>

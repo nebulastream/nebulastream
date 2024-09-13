@@ -13,7 +13,6 @@
 */
 #include <sstream>
 #include <utility>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
@@ -21,27 +20,22 @@
 namespace NES
 {
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName, PhysicalSourceTypePtr physicalSourceType)
-    : logicalSourceName(std::move(logicalSourceName)), physicalSourceType(std::move(physicalSourceType))
+PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor)
+    : logicalSourceName(std::move(logicalSourceName)), sourceDescriptor(sourceDescriptor)
 {
 }
 
-PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType)
+PhysicalSourcePtr PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
 {
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(physicalSourceType)));
-}
-
-PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName)
-{
-    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), nullptr));
+    const auto logicalSourceName = sourceDescriptor.logicalSourceName;
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));
 }
 
 std::string PhysicalSource::toString()
 {
     std::stringstream ss;
     ss << "LogicalSource Name" << logicalSourceName;
-    ss << "Source Type" << physicalSourceType->toString();
+    ss << "Source Type" << sourceDescriptor;
     return ss.str();
 }
 
@@ -50,8 +44,8 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::getSourceDescriptor()
 {
-    return physicalSourceType;
+    return std::make_unique<Sources::SourceDescriptor>(sourceDescriptor);
 }
 } /// namespace NES

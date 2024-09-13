@@ -17,7 +17,6 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -112,7 +111,8 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
         auto& sourceDescriptor = source->getSourceDescriptorRef();
 
         /// Filtering for logical sources
-        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
+        ///-Todo: improve
+        if (sourceDescriptor.getSourceName() == "Logical")
         {
             auto sourceName = sourceDescriptor.getLogicalSourceName();
 

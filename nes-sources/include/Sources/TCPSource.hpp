@@ -16,10 +16,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/Util/MMapCircularBuffer.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <SourcesUtils/MMapCircularBuffer.hpp>
 
 namespace NES
 {
@@ -46,13 +46,14 @@ public:
     {
         static inline const SourceDescriptor::ConfigKey<std::string> HOST{"socketHost"};
         static inline const SourceDescriptor::ConfigKey<uint32_t> PORT{"socketPort"};
-        static inline const SourceDescriptor::ConfigKey<uint32_t> DOMAIN{"socketDomain"};
-        static inline const SourceDescriptor::ConfigKey<uint32_t> TYPE{"socketType"};
-        static inline const SourceDescriptor::ConfigKey<char> SEPARATOR{"tupleSeparator"};
+        static inline const SourceDescriptor::ConfigKey<int32_t> DOMAIN{"socketDomain"};
+        static inline const SourceDescriptor::ConfigKey<int32_t> TYPE{"socketType"};
+        static inline const SourceDescriptor::ConfigKey<char> SEPARATOR{"tupleSeparator", '\n'};
         static inline const SourceDescriptor::ConfigKey<float> FLUSH_INTERVAL_MS{"flushIntervalMS"};
-        static inline const SourceDescriptor::ConfigKey<Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{"decidedMessageSize"};
+        static inline const SourceDescriptor::ConfigKey<Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{
+            "decideMessageSize", Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR};
         static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_SIZE{"socketBufferSize"};
-        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{"bytesUsedForSocketBufferSizeTransfer"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{"bytesUsedForSocketBufferSizeTransfer", 0};
         static inline const SourceDescriptor::ConfigKey<Configurations::InputFormat> INPUT_FORMAT{"inputFormat"};
     };
 
@@ -69,7 +70,7 @@ public:
     /// Close TCP connection.
     void close() override;
 
-    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) const override;
+    static SourceDescriptor::Config validateAndFormat(std::map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

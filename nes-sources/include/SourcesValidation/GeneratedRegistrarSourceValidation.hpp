@@ -14,26 +14,27 @@
 
 #pragma once
 
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
+#include <SourcesValidation/RegistrySourceValidation.hpp>
 
 namespace NES::Sources
 {
 
 /// Auto generated, injects all plugins into the SourceRegistry
-class GeneratedSourceRegistrar
+class GeneratedRegistrarSourceValidation
 {
 public:
-    GeneratedSourceRegistrar() = default;
-    ~GeneratedSourceRegistrar() = default;
+    GeneratedRegistrarSourceValidation() = default;
+    ~GeneratedRegistrarSourceValidation() = default;
 
-    static void registerAllPlugins(SourceRegistry& registry)
+    static void registerAllPlugins(RegistrySourceValidation& registry)
     {
         /// External register functions
         /// no external plugins yet
 
         /// Internal register functions
-        RegisterTCPSource(registry);
-        RegisterCSVSource(registry);
+        RegisterSourceValidationTCP(registry);
+        RegisterSourceValidationCSV(registry);
     }
 
 private:
@@ -41,8 +42,8 @@ private:
     /// no external plugins yet
 
     /// Internal Registry Header Functions
-    static void RegisterTCPSource(SourceRegistry& registry);
-    static void RegisterCSVSource(SourceRegistry& registry);
+    static void RegisterSourceValidationTCP(RegistrySourceValidation& registry);
+    static void RegisterSourceValidationCSV(RegistrySourceValidation& registry);
 };
 
 }

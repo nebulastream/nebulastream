@@ -12,14 +12,16 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <sstream>
-#include <utility>
+#include <variant>
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
 namespace NES::Sources
 {
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema)
+SourceDescriptor::SourceDescriptor(std::string logicalSourceName, std::string sourceName)
+    : logicalSourceName(std::move(logicalSourceName)), sourceName(std::move(sourceName))
 {
     this->schema = schema;
 }
@@ -29,14 +31,22 @@ SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceNa
 {
 }
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName)
+SourceDescriptor::SourceDescriptor(std::shared_ptr<Schema> schema, std::string logicalSourceName, std::string sourceName)
     : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceName))
 {
 }
-
-SchemaPtr SourceDescriptor::getSchema() const
+SourceDescriptor::SourceDescriptor(
+    std::string logicalSourceName,
+    std::shared_ptr<Schema> schema,
+    std::string sourceName,
+    Configurations::InputFormat inputFormat,
+    Config&& config)
+    : schema(std::move(schema))
+    , logicalSourceName(std::move(logicalSourceName))
+    , sourceName(std::move(sourceName))
+    , inputFormat(std::move(inputFormat))
+    , config(std::move(config))
 {
-    return schema;
 }
 
 std::string SourceDescriptor::getLogicalSourceName() const
@@ -44,7 +54,13 @@ std::string SourceDescriptor::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-void SourceDescriptor::setSchema(const SchemaPtr& schema)
+
+std::shared_ptr<Schema> SourceDescriptor::getSchema() const
+{
+    return schema;
+}
+
+void SourceDescriptor::setSchema(const std::shared_ptr<Schema>& schema)
 {
     this->schema = schema;
 }
@@ -109,12 +125,12 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor::Config& conf
     return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceHandle)
+std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     return out << "SourceDescriptor:"
-               << "\nSource name: " << sourceHandle.sourceName << "\nSchema: " << sourceHandle.schema->toString()
-               << "\nInputformat: " << std::string(magic_enum::enum_name(sourceHandle.inputFormat)) << "\nConfig:\n"
-               << sourceHandle.config;
+               << "\nSource name: " << sourceDescriptor.sourceName << "\nSchema: " << sourceDescriptor.schema->toString()
+               << "\nInputformat: " << std::string(magic_enum::enum_name(sourceDescriptor.inputFormat)) << "\nConfig:\n"
+               << sourceDescriptor.config;
 }
 
 /// Define a helper struct to generate equal comparison functions for std::visit.

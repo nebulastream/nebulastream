@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <sstream>
-#include <ErrorHandling.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
