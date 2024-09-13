@@ -43,6 +43,7 @@ public:
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/DivFunctionNode.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
+    bool validate() const override;
 
     /**
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
@@ -59,7 +60,7 @@ private:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override;
+    FunctionNodePtr deepCopy() override;
 
 private:
     explicit DivFunctionNode(DivFunctionNode* other);

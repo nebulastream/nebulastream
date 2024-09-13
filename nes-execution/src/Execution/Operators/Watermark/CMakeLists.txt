@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/CMakeLists.txt
 
 add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
@@ -17,3 +18,8 @@ add_source_files(nes-execution
         MultiOriginWatermarkProcessor.cpp
         TimeFunction.cpp
 )
+========
+add_source_files(nes-execution
+        RegistryFunctionExecutable.cpp
+)
+>>>>>>>> 8d070c4b32 (feat(Execution) Creating an executable function registry and porting existing functions to it):nes-execution/src/Execution/Functions/Registry/CMakeLists.txt

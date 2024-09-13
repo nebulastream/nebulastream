@@ -11,20 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Execution/Functions/LogicalFunctions/NotEqualsFunction.hpp>
+#include <memory>
+#include <ErrorHandling.hpp>
+#include <Execution/Functions/LogicalFunctions/NegateFunction.hpp>
 
 namespace NES::Runtime::Execution::Functions {
 
-NotEqualsFunction::NotEqualsFunction(const FunctionPtr& leftSubFunction, const FunctionPtr& rightSubFunction)
-    : leftSubFunction(leftSubFunction), rightSubFunction(rightSubFunction) {}
+NegateFunction::NegateFunction(FunctionPtr subFunction)
+    : subFunction(std::move(subFunction)) {}
 
-VarVal NotEqualsFunction::execute(Record& record) const
+VarVal NegateFunction::execute(Record& record) const
 {
-    const auto leftValue = leftSubFunction->execute(record);
-    const auto rightValue = rightSubFunction->execute(record);
-    const auto result = leftValue != rightValue;
-    return result;
+    const auto value = subFunction->execute(record);
+    return !value;
+}
+
+FunctionPtr RegisterNegateFunction(std::vector<FunctionPtr> subFunctions)
+{
+    PRECONDITION(subFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return std::make_unique<NegateFunction>(std::move(subFunctions[0]));
 }
 
 }

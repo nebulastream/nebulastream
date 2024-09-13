@@ -12,15 +12,25 @@
     limitations under the License.
 */
 #include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <ErrorHandling.hpp>
+namespace NES::Runtime::Execution::Functions
+{
 
-namespace NES::Runtime::Execution::Functions {
-
-VarVal SubFunction::execute(Record& record) const {
+VarVal SubFunction::execute(Record& record) const
+{
     const auto leftValue = leftSubFunction->execute(record);
     const auto rightValue = rightSubFunction->execute(record);
     return leftValue - rightValue;
 }
 SubFunction::SubFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
-    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
+    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction))
+{
+}
 
-}// namespace NES::Runtime::Execution::Functions
+FunctionPtr RegisterSubFunction(std::vector<FunctionPtr> subFunctions)
+{
+    PRECONDITION(subFunctions.size() == 2, "Sub function must have exactly two sub-functions");
+    return std::make_unique<SubFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+}
+
+}

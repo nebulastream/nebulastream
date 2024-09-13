@@ -12,22 +12,7 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
 
-#include <Execution/Functions/Function.hpp>
-
-namespace NES::Runtime::Execution::Functions
-{
-
-/// Returns true if the left and right subfunctions are equal, otherwise false.
-class EqualsFunction final : public Function
-{
-public:
-    EqualsFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
-    VarVal execute(Record& record) const override;
-
-private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
-};
+namespace NES::Execution::Functions {
 }

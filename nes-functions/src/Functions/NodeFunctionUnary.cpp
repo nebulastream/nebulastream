@@ -40,7 +40,7 @@ NodeFunctionPtr NodeFunctionUnary::child() const
 
 namespace NES
 {
-UnaryFunctionNode::UnaryFunctionNode(DataTypePtr stamp) : FunctionNode(std::move(stamp))
+UnaryFunctionNode::UnaryFunctionNode(DataTypePtr stamp, std::string name) : FunctionNode(std::move(stamp), std::move(name))
 {
 }
 

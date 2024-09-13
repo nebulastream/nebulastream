@@ -38,7 +38,7 @@ public:
 class UnaryFunctionNode : public FunctionNode
 {
 public:
-    explicit UnaryFunctionNode(DataTypePtr stamp);
+    explicit UnaryFunctionNode(DataTypePtr stamp, std::string name);
 
     /**
      * @brief set the child node of this function.
@@ -69,7 +69,7 @@ protected:
     * @brief Create a deep copy of this function node.
     * @return FunctionNodePtr
     */
-    FunctionNodePtr copy() override = 0;
+    FunctionNodePtr deepCopy() override = 0;
 
 protected:
     explicit UnaryFunctionNode(UnaryFunctionNode* other);
