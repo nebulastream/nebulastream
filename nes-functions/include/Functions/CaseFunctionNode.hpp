@@ -59,7 +59,7 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;
 
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
     FunctionNodePtr deepCopy() override;
 
 protected:

@@ -66,9 +66,13 @@ FunctionNodePtr ExpFunctionNode::deepCopy()
     return ExpFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-bool ExpFunctionNode::validate() const
+bool ExpFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

@@ -14,15 +14,15 @@
 
 #include <sstream>
 #include <Functions/ArithmeticalFunctions/ModFunctionNode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-ModFunctionNode::ModFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Mod") {};
+ModFunctionNode::ModFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Mod"){};
 
 ModFunctionNode::ModFunctionNode(ModFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -130,9 +130,14 @@ FunctionNodePtr ModFunctionNode::deepCopy()
     return ModFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool ModFunctionNode::validate() const
+bool ModFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric() &&
+        this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

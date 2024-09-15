@@ -56,7 +56,7 @@ public:
 
     /// Checks if the function is valid. This means that the function can be lowered to an executable function.
     /// This entails checking for configuration mismatches and other issues.
-    virtual bool validate() const = 0;
+    virtual bool validateBeforeLowering() const = 0;
 
     /// Create a deep copy of this function node.
     virtual FunctionNodePtr deepCopy() = 0;

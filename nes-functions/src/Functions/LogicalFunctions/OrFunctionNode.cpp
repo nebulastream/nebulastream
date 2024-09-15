@@ -70,9 +70,9 @@ FunctionNodePtr OrFunctionNode::deepCopy()
     return OrFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool OrFunctionNode::validate() const
+bool OrFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    return children.size() == 2;
 }
 
 }

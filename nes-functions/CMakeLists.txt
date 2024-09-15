@@ -31,3 +31,7 @@ install(TARGETS nes-functions
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
+
+if (NES_ENABLES_TESTS)
+    add_subdirectory(tests)
+endif ()

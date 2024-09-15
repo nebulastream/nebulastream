@@ -13,9 +13,11 @@
 */
 
 #include <utility>
+
 #include <Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <ErrorHandling.hpp>
 namespace NES
 {
 
@@ -43,8 +45,7 @@ void ArithmeticalUnaryFunctionNode::inferStamp(SchemaPtr schema)
     auto child_stamp = child->getStamp();
     if (!child_stamp->isNumeric())
     {
-        NES_THROW_RUNTIME_ERROR(
-            "Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()->toString());
+        throw CannotInferSchema("Error during stamp inference. Types need to be Numerical but child was: " + child->getStamp()->toString());
     }
 
     this->stamp = child_stamp;
@@ -66,4 +67,4 @@ std::string ArithmeticalUnaryFunctionNode::toString() const
     return "ArithmeticalFunction()";
 }
 
-} /// namespace NES
+}

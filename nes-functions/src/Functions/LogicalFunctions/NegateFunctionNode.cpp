@@ -66,9 +66,9 @@ FunctionNodePtr NegateFunctionNode::deepCopy()
     return NegateFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-bool NegateFunctionNode::validate() const
+bool NegateFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    return children.size() == 1;
 }
 
-} /// namespace NES
+}

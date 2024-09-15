@@ -19,6 +19,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 namespace NES
 {
 FieldAccessFunctionNode::FieldAccessFunctionNode(DataTypePtr stamp, std::string fieldName)
@@ -65,14 +66,13 @@ std::string FieldAccessFunctionNode::toString() const
 void FieldAccessFunctionNode::inferStamp(SchemaPtr schema)
 {
     /// check if the access field is defined in the schema.
-    auto existingField = schema->getField(fieldName);
-    if (existingField)
+    if (const auto existingField = schema->get(fieldName))
     {
         fieldName = existingField->getName();
         stamp = existingField->getDataType();
         return;
     }
-    throw std::logic_error("FieldAccessFunction: the field " + fieldName + " is not defined in the schema " + schema->toString());
+    throw QueryInvalid("FieldAccessFunction: the field " + fieldName + " is not defined in the schema " + schema->toString());
 }
 
 FunctionNodePtr FieldAccessFunctionNode::deepCopy()
@@ -80,9 +80,8 @@ FunctionNodePtr FieldAccessFunctionNode::deepCopy()
     return std::make_shared<FieldAccessFunctionNode>(*this);
 }
 
-bool FieldAccessFunctionNode::validate() const
+bool FieldAccessFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
-
+    return children.empty();
 }
 }

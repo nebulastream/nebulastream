@@ -67,9 +67,13 @@ FunctionNodePtr AbsFunctionNode::deepCopy()
     return AbsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-bool AbsFunctionNode::validate() const
+bool AbsFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

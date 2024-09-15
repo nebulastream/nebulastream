@@ -62,7 +62,7 @@ class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, pub
 {
     struct Deleter
     {
-        void operator()(void*) { }
+        void operator()(void*) const { }
     };
 
 public:

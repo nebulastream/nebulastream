@@ -108,9 +108,8 @@ FunctionNodePtr FieldAssignmentFunctionNode::deepCopy()
     return FieldAssignmentFunctionNode::create(getField()->deepCopy()->as<FieldAccessFunctionNode>(), getAssignment()->deepCopy());
 }
 
-bool FieldAssignmentFunctionNode::validate() const
+bool FieldAssignmentFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    return children.empty();
 }
-
-} /// namespace NES
+}

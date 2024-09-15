@@ -150,9 +150,10 @@ FunctionNodePtr CaseFunctionNode::deepCopy()
     return CaseFunctionNode::create(copyOfWhenFunctions, getDefaultExp()->deepCopy());
 }
 
-bool CaseFunctionNode::validate() const
+bool CaseFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    /// Currently, we do not have any validation for CaseFunctionNode before lowering
+    return true;
 }
 
 }
