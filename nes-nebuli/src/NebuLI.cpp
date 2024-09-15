@@ -119,8 +119,8 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-Sources::SourceDescriptor
-createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::unordered_map<std::string, std::string>&& sourceConfiguration)
+Sources::DescriptorSource
+createDescriptorSource(SchemaPtr schema, std::string logicalSourceName, std::unordered_map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -135,7 +135,7 @@ createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::uno
     auto sourceValidationRegistry = Sources::RegistrySourceValidation::instance();
     if (auto validConfig = sourceValidationRegistry.tryCreate(sourceType, std::move(sourceConfiguration)); validConfig.has_value())
     {
-        return Sources::SourceDescriptor(schema, std::move(logicalSourceName), sourceType, inputFormat, std::move(validConfig.value()));
+        return Sources::DescriptorSource(schema, std::move(logicalSourceName), sourceType, inputFormat, std::move(validConfig.value()));
     }
     auto exception = UnknownSourceType("We don't support the source type: " + sourceType);
     throw exception;
@@ -162,11 +162,11 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     /// Add physical sources to corresponding logical sources.
     for (auto [logicalName, config] : config.physical)
     {
-        auto sourceDescriptor = createSourceDescriptor(schema, logicalName, std::move(config));
+        auto descriptorSource = createDescriptorSource(schema, logicalName, std::move(config));
         sourceCatalog->addPhysicalSource(
             logicalName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
+                NES::PhysicalSource::create(std::move(descriptorSource)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();

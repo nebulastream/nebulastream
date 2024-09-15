@@ -26,7 +26,7 @@
 #include <Sources/RegistrySource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceCSV.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,12 +38,12 @@
 namespace NES::Sources
 {
 
-SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+SourceCSV::SourceCSV(const Schema& schema, const DescriptorSource& descriptorSource)
     : fileEnded(false)
-    , filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+    , filePath(descriptorSource.getFromConfig(ConfigParametersCSV::FILEPATH))
     , tupleSize(schema.getSchemaSizeInBytes())
-    , delimiter(sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER))
-    , skipHeader(sourceDescriptor.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
+    , delimiter(descriptorSource.getFromConfig(ConfigParametersCSV::DELIMITER))
+    , skipHeader(descriptorSource.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
 {
     /// Determine the physical types and create the inputParser (Todo: remove in #72).
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -147,7 +147,7 @@ bool SourceCSV::fillTupleBuffer(
     return true;
 }
 
-SourceDescriptor::Config SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+DescriptorSource::Config SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersCSV>(std::move(config), NAME);
 }
@@ -165,15 +165,15 @@ std::ostream& SourceCSV::toString(std::ostream& str) const
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationCSV(RegistrySourceValidation& registry)
 {
-    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> DescriptorSource::Config
     { return SourceCSV::validateAndFormat(std::move(sourceConfig)); };
     registry.registerPlugin((SourceCSV::NAME), validateFunc);
 }
 
 void GeneratedRegistrarSource::RegisterSourceCSV(RegistrySource& registry)
 {
-    const auto constructorFunc = [](const Schema& schema, const SourceDescriptor& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<SourceCSV>(schema, sourceDescriptor); };
+    const auto constructorFunc = [](const Schema& schema, const DescriptorSource& descriptorSource) -> std::unique_ptr<Source>
+    { return std::make_unique<SourceCSV>(schema, descriptorSource); };
     registry.registerPlugin((SourceCSV::NAME), constructorFunc);
 }
 

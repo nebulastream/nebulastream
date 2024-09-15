@@ -314,7 +314,7 @@ Third, the `ExternalPlugins` directory contains a `PluginConfig.cmake` file. The
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # Register plugins
-register_plugin("Connectors/SourceDescriptors/SourceDescriptor" OFF)
+register_plugin("Connectors/DescriptorSources/DescriptorSource" OFF)
 register_plugin("Connectors/Sources/MQTTSource" ON)
 register_plugin("Connectors/Sinks/PrintSink" ON)
 register_plugin("Operators/FilterOperator" ON)
@@ -342,7 +342,7 @@ set(final_plugin_types
         Type
         Source
         Sink
-        SourceDescriptor
+        DescriptorSource
 )
 ```
 ## Solution vs Goals 

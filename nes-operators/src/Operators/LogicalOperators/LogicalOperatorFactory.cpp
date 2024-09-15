@@ -39,9 +39,9 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(std::string
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(
-    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+    std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id, OriginId originId)
 {
-    return std::make_shared<OperatorLogicalSourceDescriptor>(std::move(sourceDescriptor), id, originId);
+    return std::make_shared<OperatorLogicalSourceDescriptor>(std::move(DescriptorSource), id, originId);
 }
 
 LogicalUnaryOperatorPtr

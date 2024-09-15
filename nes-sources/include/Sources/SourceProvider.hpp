@@ -16,14 +16,14 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
 namespace NES::Sources
 {
 
-/// Takes a SourceDescriptor and in exchange returns a SourceHandle.
+/// Takes a DescriptorSource and in exchange returns a SourceHandle.
 /// The SourceData spawns an independent thread for data ingestion and it manages the pipeline and task logic.
 /// The Source is owned by the SourceData. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
@@ -38,7 +38,7 @@ public:
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
-        const SourceDescriptor& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
+        const DescriptorSource& descriptorSource, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 

@@ -13,7 +13,7 @@
 */
 
 #include <string>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 
@@ -25,7 +25,7 @@ RegistrySourceValidation::RegistrySourceValidation()
     GeneratedRegistrarSourceValidation::registerAllPlugins(*this);
 }
 
-std::optional<SourceDescriptor::Config>
+std::optional<DescriptorSource::Config>
 RegistrySourceValidation::tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sourceConfig) const
 {
     if (registry.contains(name))

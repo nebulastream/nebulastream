@@ -3391,7 +3391,7 @@
 - Test CPPCheck [\#1330](https://github.com/nebulastream/nebulastream/issues/1330)
 - !! should be replaced by .isValid method [\#1328](https://github.com/nebulastream/nebulastream/issues/1328)
 - Distinguish between Unary and Binary logical operators [\#1325](https://github.com/nebulastream/nebulastream/issues/1325)
-- Remove Operator id from LogicalSourceDescriptor [\#1323](https://github.com/nebulastream/nebulastream/issues/1323)
+- Remove Operator id from LogicalDescriptorSource [\#1323](https://github.com/nebulastream/nebulastream/issues/1323)
 - Gathering intervals between 0 and 1 [\#1319](https://github.com/nebulastream/nebulastream/issues/1319)
 - Make Window Operator run Multithreaded [\#1315](https://github.com/nebulastream/nebulastream/issues/1315)
 - Fix Windowed Join [\#1314](https://github.com/nebulastream/nebulastream/issues/1314)

@@ -15,39 +15,14 @@
 #include <ostream>
 #include <sstream>
 #include <variant>
-#include <API/Schema.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Configurations/Descriptor.hpp>
+
 namespace NES::Sources
 {
 
-SourceDescriptor::SourceDescriptor(std::string logicalSourceName, std::string sourceType)
-    : logicalSourceName(std::move(logicalSourceName)), sourceType(std::move(sourceType))
+Descriptor::Descriptor(Config&& config) : config(std::move(config))
 {
 }
-SourceDescriptor::SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config)
-    : sourceType(std::move(sourceType)), inputFormat(inputFormat), config(std::move(config))
-{
-}
-
-SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config config)
-    : schema(std::move(schema)), sourceType(std::move(sourceType)), inputFormat(std::move(inputFormat)), config(std::move(config))
-{
-}
-SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema,
-    std::string logicalSourceName,
-    std::string sourceType,
-    Configurations::InputFormat inputFormat,
-    Config&& config)
-    : schema(std::move(schema))
-    , logicalSourceName(std::move(logicalSourceName))
-    , sourceType(std::move(sourceType))
-    , inputFormat(std::move(inputFormat))
-    , config(std::move(config))
-{
-}
-
 
 /// Define a ConfigPrinter to generate print functions for all options of the std::variant 'ConfigType'.
 template <typename T>
@@ -72,7 +47,7 @@ struct ConfigPrinter
         out << std::string(magic_enum::enum_name(value));
     }
 };
-std::ostream& operator<<(std::ostream& out, const SourceDescriptor::Config& config)
+std::ostream& operator<<(std::ostream& out, const Descriptor::Config& config)
 {
     for (const auto& [key, value] : config)
     {
@@ -84,12 +59,17 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor::Config& conf
     return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
+std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor)
 {
-    return out << "SourceDescriptor:"
-               << "\nSource type: " << sourceDescriptor.sourceType << "\nSchema: " << sourceDescriptor.schema->toString()
-               << "\nInputformat: " << std::string(magic_enum::enum_name(sourceDescriptor.inputFormat)) << "\nConfig:\n"
-               << sourceDescriptor.config;
+    return out << "\nDescriptor: " << descriptor.config;
+}
+
+
+std::string Descriptor::toStringConfig() const
+{
+    std::stringstream ss;
+    ss << this->config;
+    return ss.str();
 }
 
 /// Define a helper struct to generate equal comparison functions for std::visit.
@@ -108,7 +88,7 @@ struct VariantComparator
         }
     }
 };
-bool operator==(const SourceDescriptor::Config& lhs, const SourceDescriptor::Config& rhs)
+bool operator==(const Descriptor::Config& lhs, const Descriptor::Config& rhs)
 {
     if (lhs.size() != rhs.size())
     {
@@ -130,9 +110,9 @@ bool operator==(const SourceDescriptor::Config& lhs, const SourceDescriptor::Con
 
     return true;
 }
-bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
+bool operator==(const Descriptor& lhs, const Descriptor& rhs)
 {
-    return lhs.schema == rhs.schema && lhs.sourceType == rhs.sourceType && lhs.config == rhs.config;
+    return lhs.config == rhs.config;
 }
 
 } /// namespace NES

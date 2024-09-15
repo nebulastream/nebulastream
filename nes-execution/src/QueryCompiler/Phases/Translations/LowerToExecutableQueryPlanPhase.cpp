@@ -113,8 +113,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<OperatorLogicalSourceDescriptor>();
-    auto sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-    INVARIANT(&sourceDescriptor, "Logical source name lookup is not supported");
+    auto descriptorSource = sourceOperator->getDescriptorSourceRef();
+    INVARIANT(&descriptorSource, "Logical source name lookup is not supported");
 
     /// ReSharper disable once CppDFAUnreachableCode
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
@@ -126,7 +126,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     }
     auto emitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(executableSuccessorPipelines));
     auto source = sourceProvider->lower(
-        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptorRef(), nodeEngine->getBufferManager(), std::move(emitFunction));
+        sourceOperator->getOriginId(), sourceOperator->getDescriptorSourceRef(), nodeEngine->getBufferManager(), std::move(emitFunction));
     sources.emplace_back(std::move(source));
 }
 

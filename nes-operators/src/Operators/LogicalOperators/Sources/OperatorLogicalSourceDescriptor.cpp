@@ -23,14 +23,14 @@ namespace NES
 {
 
 OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
-    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
+    std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), DescriptorSource(std::move(DescriptorSource))
 {
 }
 
 OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
-    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
+    std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), DescriptorSource(std::move(DescriptorSource))
 {
 }
 
@@ -44,7 +44,7 @@ bool OperatorLogicalSourceDescriptor::equal(NodePtr const& rhs) const
     if (rhs->instanceOf<OperatorLogicalSourceDescriptor>())
     {
         const auto sourceOperator = rhs->as<OperatorLogicalSourceDescriptor>();
-        return sourceOperator->getSourceDescriptorRef() == *sourceDescriptor;
+        return sourceOperator->getDescriptorSourceRef() == *DescriptorSource;
     }
     return false;
 }
@@ -52,27 +52,27 @@ bool OperatorLogicalSourceDescriptor::equal(NodePtr const& rhs) const
 std::string OperatorLogicalSourceDescriptor::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
+    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << DescriptorSource << ")";
 
     return ss.str();
 }
 
-const Sources::SourceDescriptor& OperatorLogicalSourceDescriptor::getSourceDescriptorRef() const
+const Sources::DescriptorSource& OperatorLogicalSourceDescriptor::getDescriptorSourceRef() const
 {
-    return *sourceDescriptor;
+    return *DescriptorSource;
 }
 
 bool OperatorLogicalSourceDescriptor::inferSchema()
 {
-    inputSchema = sourceDescriptor->schema;
-    outputSchema = sourceDescriptor->schema;
+    inputSchema = DescriptorSource->schema;
+    outputSchema = DescriptorSource->schema;
     return true;
 }
 
 OperatorPtr OperatorLogicalSourceDescriptor::copy()
 {
     auto exception = InvalidUseOfOperatorFunction(
-        "OperatorLogicalSourceDescriptor does not support copy, because holds a unique pointer to a SourceDescriptor.");
+        "OperatorLogicalSourceDescriptor does not support copy, because holds a unique pointer to a DescriptorSource.");
     throw exception;
 }
 

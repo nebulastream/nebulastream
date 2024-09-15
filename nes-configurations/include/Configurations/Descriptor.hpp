@@ -23,22 +23,19 @@
 #include <unordered_map>
 #include <utility>
 #include <variant>
-#include <API/Schema.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
-#include <Sources/EnumWrapper.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources
 {
 
-/// The SourceDescriptor is an IMMUTABLE struct (all members and functions must be const) that:
+/// The Descriptor is an IMMUTABLE struct (all members and functions must be const) that:
 /// 1. Is a generic descriptor that can fully describe any kind of Source.
 /// 2. Is (de-)serializable, making it possible to send to other nodes.
-/// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a SourceDescriptor and returns a fully configured Source.
+/// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a Descriptor and returns a fully configured Source.
 /// 4. Is used by the frontend to validate and format string configs.
-/// Config: The design principle of the SourceDescriptor config is that the entire definition of the configuration happens in one place.
+/// Config: The design principle of the Descriptor config is that the entire definition of the configuration happens in one place.
 /// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
 /// - the type
 /// - the name
@@ -46,7 +43,7 @@ namespace NES::Sources
 /// All functions that operate on the config operate on ConfigParameters and can therefore access all relevant information.
 /// This design makes it difficult to use the wrong (string) name to access a parameter, the wrong type, e.g., in a templated function, or
 /// to forget to define a validation function. Also, changing the type/name/validation function of a config parameter can be done in a single place.
-struct SourceDescriptor
+struct Descriptor
 {
     using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
     using Config = std::unordered_map<std::string, ConfigType>;
@@ -135,27 +132,13 @@ struct SourceDescriptor
             {std::make_pair(parameters.name, std::forward<Args>(parameters))...});
     }
 
-    /// Constructor used during initial parsing to create an initial SourceDescriptor.
-    explicit SourceDescriptor(std::string logicalSourceName, std::string sourceType);
-    /// Constructor used before applying schema inference.
-    /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
-    explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
-    /// Constructor used after schema inference, when all required information are available.
-    /// Todo: used only in serialization -> can potentially remove, after refactoring serialization
-    explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config config);
+    /// Used by Sources to create a valid Descriptor.
+    Descriptor() = default;
+    explicit Descriptor(Config&& config);
+    ~Descriptor() = default;
 
-    /// Used by Sources to create a valid SourceDescriptor.
-    explicit SourceDescriptor(
-        std::shared_ptr<Schema> schema,
-        std::string logicalSourceName,
-        std::string sourceType,
-        Configurations::InputFormat inputFormat,
-        Config&& config);
-    ~SourceDescriptor() = default;
-
-    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
-    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
+    friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
+    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs);
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
@@ -185,7 +168,7 @@ struct SourceDescriptor
             const auto& value = config.at(configParameter);
             return std::get<typename ConfigParameter::Type>(value);
         }
-        NES_DEBUG("SourceDescriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
         return std::nullopt;
     }
 
@@ -196,7 +179,7 @@ struct SourceDescriptor
         /// No specific validation and formatting function defined, using default formatter.
         if (config.contains(configParameter))
         {
-            return SourceDescriptor::stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
+            return Descriptor::stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
                 config.at(configParameter));
         }
         /// The user did not specify the parameter, if a default value is available, return the default value.
@@ -208,18 +191,12 @@ struct SourceDescriptor
         return std::nullopt;
     };
 
-    /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
-    const std::shared_ptr<Schema> schema;
-    const std::string logicalSourceName;
-    const std::string sourceType;
-    const Configurations::InputFormat inputFormat{};
-
     const Config config;
+protected:
+    std::string toStringConfig() const;
 
 private:
     friend std::ostream& operator<<(std::ostream& out, const Config& config);
-
-
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
@@ -239,7 +216,7 @@ private:
         {
             if (stringParameter.length() != 0)
             {
-                NES_ERROR("Char SourceDescriptor config paramater must not be empty.")
+                NES_ERROR("Char Descriptor config paramater must not be empty.")
                 return std::nullopt;
             }
             return stringParameter[0];
@@ -276,12 +253,12 @@ private:
 
 }
 
-/// Specializing the fmt ostream_formatter to accept SourceDescriptor objects.
-/// Allows to call fmt::format("SourceDescriptor: {}", sourceDescriptorObject); and therefore also works with our logging.
+/// Specializing the fmt ostream_formatter to accept Descriptor objects.
+/// Allows to call fmt::format("Descriptor: {}", descriptorObject); and therefore also works with our logging.
 namespace fmt
 {
 template <>
-struct formatter<NES::Sources::SourceDescriptor> : ostream_formatter
+struct formatter<NES::Sources::Descriptor> : ostream_formatter
 {
 };
 }

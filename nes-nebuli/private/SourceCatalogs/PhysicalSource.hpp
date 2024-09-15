@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <string>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 
 namespace NES
 {
@@ -24,19 +24,19 @@ namespace NES
 class PhysicalSource
 {
 public:
-    static std::shared_ptr<PhysicalSource> create(Sources::SourceDescriptor&& sourceDescriptor);
+    static std::shared_ptr<PhysicalSource> create(Sources::DescriptorSource&& DescriptorSource);
 
     const std::string& getLogicalSourceName() const;
 
-    std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(std::shared_ptr<Schema> schema);
+    std::unique_ptr<Sources::DescriptorSource> createDescriptorSource(std::shared_ptr<Schema> schema);
 
     std::string toString();
 
 private:
-    explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor);
+    explicit PhysicalSource(std::string logicalSourceName, Sources::DescriptorSource&& DescriptorSource);
 
     std::string logicalSourceName;
-    Sources::SourceDescriptor sourceDescriptor;
+    Sources::DescriptorSource descriptorSource;
 };
 
 } /// namespace NES

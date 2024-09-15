@@ -19,7 +19,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/RegistrySource.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceTCP.hpp>
@@ -34,14 +34,14 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
 
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
-    const SourceDescriptor& sourceDescriptor,
+    const DescriptorSource& descriptorSource,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor.schema;
+    auto schema = descriptorSource.schema;
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    const auto& sourceName = sourceDescriptor.sourceType;
-    if (auto source = RegistrySource::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
+    const auto& sourceName = descriptorSource.sourceType;
+    if (auto source = RegistrySource::instance().tryCreate(sourceName, schema, std::move(descriptorSource)); source.has_value())
     {
         return std::make_unique<SourceHandle>(
             std::move(originId),

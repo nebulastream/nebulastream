@@ -18,7 +18,7 @@
 #include <string>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sources
@@ -67,10 +67,10 @@ protected:
     /// Uses default parameters if the user did not specify a parameter.
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SourceSpecificConfiguration>
-    static SourceDescriptor::Config
+    static DescriptorSource::Config
     validateAndFormatImpl(std::unordered_map<std::string, std::string>&& config, const std::string_view sourceName)
     {
-        SourceDescriptor::Config validatedConfig;
+        DescriptorSource::Config validatedConfig;
 
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)

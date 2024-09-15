@@ -52,8 +52,8 @@ public:
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::SourceDescriptor>("default_logical"));
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::SourceDescriptor>("default_logical2"));
+        sourceOp1 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::DescriptorSource>("default_logical"));
+        sourceOp2 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::DescriptorSource>("default_logical2"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);

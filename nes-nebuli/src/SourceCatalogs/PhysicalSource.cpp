@@ -20,22 +20,22 @@
 namespace NES
 {
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor)
-    : logicalSourceName(std::move(logicalSourceName)), sourceDescriptor(sourceDescriptor)
+PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::DescriptorSource&& DescriptorSource)
+    : logicalSourceName(std::move(logicalSourceName)), descriptorSource(DescriptorSource)
 {
 }
 
-std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
+std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::DescriptorSource&& descriptorSource)
 {
-    const auto logicalSourceName = sourceDescriptor.logicalSourceName;
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));
+    const auto logicalSourceName = descriptorSource.logicalSourceName;
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(descriptorSource)));
 }
 
 std::string PhysicalSource::toString()
 {
     std::stringstream ss;
     ss << "LogicalSource Name" << logicalSourceName;
-    ss << "Source Type" << sourceDescriptor;
+    ss << "Source Type" << descriptorSource;
     return ss.str();
 }
 
@@ -44,10 +44,10 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(std::shared_ptr<Schema> schema)
+std::unique_ptr<Sources::DescriptorSource> PhysicalSource::createDescriptorSource(std::shared_ptr<Schema> schema)
 {
-    auto copyOfConfig = sourceDescriptor.config;
-    return std::make_unique<Sources::SourceDescriptor>(
-        schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.inputFormat, std::move(copyOfConfig));
+    auto copyOfConfig = descriptorSource.config;
+    return std::make_unique<Sources::DescriptorSource>(
+        schema, descriptorSource.logicalSourceName, descriptorSource.sourceType, descriptorSource.inputFormat, std::move(copyOfConfig));
 }
 } /// namespace NES

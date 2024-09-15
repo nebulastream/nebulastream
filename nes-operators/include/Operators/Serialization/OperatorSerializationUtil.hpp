@@ -89,11 +89,11 @@ public:
     static Experimental::LogicalBatchJoinOperatorPtr
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
 
-    static void serializeSourceDescriptor(
-        const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
+    static void serializeDescriptorSource(
+        const Sources::DescriptorSource& descriptorSource, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
 
-    static std::unique_ptr<Sources::SourceDescriptor>
-    deserializeSourceDescriptor(const SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor& sourceDescriptor);
+    static std::unique_ptr<Sources::DescriptorSource>
+    deserializeDescriptorSource(const SerializableOperator_OperatorLogicalSourceDescriptor_DescriptorSource& descriptorSource);
 
     static void
     serializeSinkDescriptor(const SinkDescriptor& sinkDescriptor, SerializableOperator_SinkDetails& sinkDetails, uint64_t numberOfOrigins);

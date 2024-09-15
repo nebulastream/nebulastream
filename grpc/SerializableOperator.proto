@@ -51,7 +51,7 @@ message SerializableOperator{
     message EnumWrapper {
         string value = 1;
     }
-    message VariantSourceDescriptor {
+    message VariantDescriptorSource {
       oneof value {
         int32 int_value = 1;
         uint32 uint_value = 2;
@@ -65,16 +65,16 @@ message SerializableOperator{
     }
 
     /* Source Descriptor Definition */
-    message SourceDescriptor {
+    message DescriptorSource {
         SerializableSchema sourceSchema = 1;
         string logicalSourceName = 2;
         string sourceType = 3;
         InputFormat inputFormat = 4;
-        map<string, VariantSourceDescriptor> config = 5;
+        map<string, VariantDescriptorSource> config = 5;
     }
 
     uint64 sourceOriginId = 1;
-    SourceDescriptor sourceDescriptor = 2;
+    DescriptorSource descriptorSource = 2;
   }
 
   /**

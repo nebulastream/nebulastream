@@ -24,11 +24,11 @@ namespace NES
 class OperatorLogicalSourceDescriptor : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit OperatorLogicalSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit OperatorLogicalSourceDescriptor(std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id);
     explicit OperatorLogicalSourceDescriptor(
-        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+        std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id, OriginId originId);
 
-    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
+    const Sources::DescriptorSource& getDescriptorSourceRef() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -42,7 +42,7 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
 
 private:
-    const std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    const std::unique_ptr<Sources::DescriptorSource> DescriptorSource;
 };
 
 }

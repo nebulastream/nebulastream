@@ -13,7 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES

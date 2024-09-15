@@ -22,7 +22,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
@@ -30,21 +30,21 @@ namespace NES::Sources
 
 struct ConfigParametersCSV
 {
-    static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
+    static inline const DescriptorSource::ConfigParameter<std::string> FILEPATH{
         "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(FILEPATH, config);
+            return DescriptorSource::tryGet(FILEPATH, config);
         }};
-    static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
+    static inline const DescriptorSource::ConfigParameter<bool> SKIP_HEADER{
         "skipHeader", false, [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(SKIP_HEADER, config);
+            return DescriptorSource::tryGet(SKIP_HEADER, config);
         }};
-    static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
+    static inline const DescriptorSource::ConfigParameter<std::string> DELIMITER{
         "delimiter", ",", [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(DELIMITER, config);
+            return DescriptorSource::tryGet(DELIMITER, config);
         }};
 
-    static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
-        = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
+    static inline std::unordered_map<std::string, DescriptorSource::ConfigParameterContainer> parameterMap
+        = DescriptorSource::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
 };
 
 class SourceCSV final : public Source
@@ -52,7 +52,7 @@ class SourceCSV final : public Source
 public:
     static inline const std::string NAME = "CSV";
 
-    explicit SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    explicit SourceCSV(const Schema& schema, const DescriptorSource& descriptorSource);
     ~SourceCSV() override = default;
 
     bool fillTupleBuffer(
@@ -64,7 +64,7 @@ public:
     void close() override;
 
     /// validates and formats a string to string configuration
-    static SourceDescriptor::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static DescriptorSource::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

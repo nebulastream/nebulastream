@@ -49,7 +49,7 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Sources/EnumWrapper.hpp>
+#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <Types/SlidingWindow.hpp>
@@ -352,8 +352,8 @@ void OperatorSerializationUtil::serializeSourceOperator(
     NES_TRACE("OperatorSerializationUtil:: serialize to OperatorLogicalSourceName");
 
     auto sourceDetails = SerializableOperator_OperatorLogicalSourceDescriptor();
-    const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
-    serializeSourceDescriptor(sourceDescriptor, sourceDetails);
+    const auto& DescriptorSource = sourceOperator.getDescriptorSourceRef();
+    serializeDescriptorSource(DescriptorSource, sourceDetails);
     sourceDetails.set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
 
     serializedOperator.mutable_details()->PackFrom(sourceDetails);
@@ -362,10 +362,10 @@ void OperatorSerializationUtil::serializeSourceOperator(
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails)
 {
-    const auto serializedSourceDescriptor = sourceDetails.sourcedescriptor();
-    auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
+    const auto serializedDescriptorSource = sourceDetails.descriptorsource();
+    auto descriptorSource = deserializeDescriptorSource(serializedDescriptorSource);
     return LogicalOperatorFactory::createSourceOperator(
-        std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceDetails.sourceoriginid()));
+        std::move(descriptorSource), getNextOperatorId(), OriginId(sourceDetails.sourceoriginid()));
 }
 
 void OperatorSerializationUtil::serializeFilterOperator(
@@ -858,10 +858,10 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
     return retValue;
 }
 
-SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor
-sourceDescriptorConfigTypeToProto(const Sources::SourceDescriptor::ConfigType& var)
+SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource
+DescriptorSourceConfigTypeToProto(const Sources::DescriptorSource::ConfigType& var)
 {
-    SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor proto_var;
+    SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource proto_var;
     std::visit(
         [&proto_var]<typename T>(T&& arg)
         {
@@ -888,86 +888,86 @@ sourceDescriptorConfigTypeToProto(const Sources::SourceDescriptor::ConfigType& v
                 proto_var.set_allocated_enum_value(enumWrapper);
             }
             else
-                static_assert(!std::is_same_v<U, U>, "Unsupported type in sourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
+                static_assert(!std::is_same_v<U, U>, "Unsupported type in DescriptorSourceConfigTypeToProto"); /// is_same_v for logging T
         },
         var);
     return proto_var;
 }
-void OperatorSerializationUtil::serializeSourceDescriptor(
-    const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails)
+void OperatorSerializationUtil::serializeDescriptorSource(
+    const Sources::DescriptorSource& descriptorSource, SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails)
 {
-    auto serializedSourceDescriptor
-        = SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor().New(); /// cleaned up by protobuf
+    auto serializedDescriptorSource
+        = SerializableOperator_OperatorLogicalSourceDescriptor_DescriptorSource().New(); /// cleaned up by protobuf
 
-    SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
-    serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
-    serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
+    SchemaSerializationUtil::serializeSchema(descriptorSource.schema, serializedDescriptorSource->mutable_sourceschema());
+    serializedDescriptorSource->set_logicalsourcename(descriptorSource.logicalSourceName);
+    serializedDescriptorSource->set_sourcetype(descriptorSource.sourceType);
     /// Convert from Configurations::InputFormat to protobuf InputFormat.
-    switch (sourceDescriptor.inputFormat)
+    switch (descriptorSource.inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            serializedSourceDescriptor->set_inputformat(InputFormat::CSV);
+            serializedDescriptorSource->set_inputformat(InputFormat::CSV);
             break;
         default:
             throw InvalidConfigParameter(
-                fmt::format("Serialization of inputFormat: {} is not supported.", magic_enum::enum_name(sourceDescriptor.inputFormat)));
+                fmt::format("Serialization of inputFormat: {} is not supported.", magic_enum::enum_name(descriptorSource.inputFormat)));
     }
-    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sourceDescriptor.config)
+    /// Iterate over DescriptorSource config and serialize all key-value pairs.
+    for (const auto& [key, value] : descriptorSource.config)
     {
-        auto* kv = serializedSourceDescriptor->mutable_config();
-        kv->emplace(key, sourceDescriptorConfigTypeToProto(value));
+        auto* kv = serializedDescriptorSource->mutable_config();
+        kv->emplace(key, DescriptorSourceConfigTypeToProto(value));
     }
-    sourceDetails.set_allocated_sourcedescriptor(serializedSourceDescriptor);
+    sourceDetails.set_allocated_descriptorsource(serializedDescriptorSource);
 }
 
-Sources::SourceDescriptor::ConfigType
-protoToSourceDescriptorConfigType(const SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor& proto_var)
+Sources::DescriptorSource::ConfigType
+protoToDescriptorSourceConfigType(const SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource& proto_var)
 {
     switch (proto_var.value_case())
     {
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kIntValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kIntValue:
             return proto_var.int_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kUintValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kUintValue:
             return proto_var.uint_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kBoolValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kBoolValue:
             return proto_var.bool_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kCharValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kCharValue:
             return static_cast<char>(proto_var.char_value()); /// Convert (fixed32) ascii number to char.
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kFloatValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kFloatValue:
             return proto_var.float_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kDoubleValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kDoubleValue:
             return proto_var.double_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kStringValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kStringValue:
             return proto_var.string_value();
-        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantSourceDescriptor::kEnumValue:
+        case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kEnumValue:
             return Sources::EnumWrapper::create(proto_var.enum_value().value());
         default:
             throw std::runtime_error("Unknown variant type");
     }
 }
-std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(
-    const SerializableOperator_OperatorLogicalSourceDescriptor_SourceDescriptor& sourceDescriptor)
+std::unique_ptr<Sources::DescriptorSource> OperatorSerializationUtil::deserializeDescriptorSource(
+    const SerializableOperator_OperatorLogicalSourceDescriptor_DescriptorSource& descriptorSource)
 {
-    /// Declaring variables outside of SourceDescriptor for readability/debuggability.
-    auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
-    auto logicalSourceName = sourceDescriptor.logicalsourcename();
-    auto sourceType = sourceDescriptor.sourcetype();
-    auto inputFormat = sourceDescriptor.inputformat();
+    /// Declaring variables outside of DescriptorSource for readability/debuggability.
+    auto schema = SchemaSerializationUtil::deserializeSchema(descriptorSource.sourceschema());
+    auto logicalSourceName = descriptorSource.logicalsourcename();
+    auto sourceType = descriptorSource.sourcetype();
+    auto inputFormat = descriptorSource.inputformat();
 
-    /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
-    Sources::SourceDescriptor::Config sourceDescriptorConfig{};
-    for (const auto& kv : sourceDescriptor.config())
+    /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
+    Sources::DescriptorSource::Config DescriptorSourceConfig{};
+    for (const auto& kv : descriptorSource.config())
     {
-        sourceDescriptorConfig[kv.first] = protoToSourceDescriptorConfigType(kv.second);
+        DescriptorSourceConfig[kv.first] = protoToDescriptorSourceConfigType(kv.second);
     }
 
-    return std::make_unique<Sources::SourceDescriptor>(
+    return std::make_unique<Sources::DescriptorSource>(
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
         std::move(static_cast<Configurations::InputFormat>(inputFormat)),
-        std::move(sourceDescriptorConfig));
+        std::move(DescriptorSourceConfig));
 }
 
 void OperatorSerializationUtil::serializeSinkDescriptor(

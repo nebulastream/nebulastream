@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 
 namespace NES
 {
@@ -102,7 +102,7 @@ public:
     createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
 
     static LogicalUnaryOperatorPtr createSourceOperator(
-        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor,
+        std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource,
         OperatorId id = getNextOperatorId(),
         OriginId originId = INVALID_ORIGIN_ID);
 

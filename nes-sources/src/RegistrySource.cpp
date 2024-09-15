@@ -13,7 +13,7 @@
 */
 
 #include <../include/Sources/Source.hpp>
-#include <../include/Sources/SourceDescriptor.hpp>
+#include <../include/Sources/DescriptorSource.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
 #include <Sources/RegistrySource.hpp>
 
@@ -26,11 +26,11 @@ RegistrySource::RegistrySource()
 }
 
 std::optional<std::unique_ptr<Source>>
-RegistrySource::tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const
+RegistrySource::tryCreate(const std::string& name, const Schema& schema, const DescriptorSource& descriptorSource) const
 {
     if (registry.contains(name))
     {
-        return {registry.at(name)(schema, sourceDescriptor)};
+        return {registry.at(name)(schema, descriptorSource)};
     }
     std::cerr << "Data source " << name << " not found.\n";
     return std::nullopt;

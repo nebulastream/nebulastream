@@ -31,7 +31,7 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/RegistrySource.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
@@ -44,19 +44,19 @@
 namespace NES::Sources
 {
 
-SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+SourceTCP::SourceTCP(const Schema& schema, const DescriptorSource& descriptorSource)
     : tupleSize(schema.getSchemaSizeInBytes())
     , circularBuffer(getpagesize() * 2)
-    , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
-    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
-    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
-    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , decideMessageSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
-    , tupleSeparator(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
-    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
+    , inputFormat(descriptorSource.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
+    , socketHost(descriptorSource.getFromConfig(ConfigParametersTCP::HOST))
+    , socketPort(std::to_string(descriptorSource.getFromConfig(ConfigParametersTCP::PORT)))
+    , socketType(descriptorSource.getFromConfig(ConfigParametersTCP::TYPE))
+    , socketDomain(descriptorSource.getFromConfig(ConfigParametersTCP::DOMAIN))
+    , decideMessageSize(descriptorSource.getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
+    , tupleSeparator(descriptorSource.getFromConfig(ConfigParametersTCP::SEPARATOR))
+    , socketBufferSize(descriptorSource.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
+    , bytesUsedForSocketBufferSizeTransfer(descriptorSource.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
+    , flushIntervalInMs(descriptorSource.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
 {
     /// init physical types
     std::vector<std::string> schemaKeys;
@@ -350,7 +350,7 @@ bool SourceTCP::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
-SourceDescriptor::Config SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+DescriptorSource::Config SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
@@ -368,15 +368,15 @@ void SourceTCP::close()
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationTCP(RegistrySourceValidation& registry)
 {
-    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> SourceDescriptor::Config
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> DescriptorSource::Config
     { return SourceTCP::validateAndFormat(std::move(sourceConfig)); };
     registry.registerPlugin((SourceTCP::NAME), validateFunc);
 }
 
 void GeneratedRegistrarSource::RegisterSourceTCP(RegistrySource& registry)
 {
-    const auto constructorFunc = [](const Schema& schema, const SourceDescriptor& sourceDescriptor) -> std::unique_ptr<Source>
-    { return std::make_unique<SourceTCP>(schema, sourceDescriptor); };
+    const auto constructorFunc = [](const Schema& schema, const DescriptorSource& descriptorSource) -> std::unique_ptr<Source>
+    { return std::make_unique<SourceTCP>(schema, descriptorSource); };
     registry.registerPlugin((SourceTCP::NAME), constructorFunc);
 }
 

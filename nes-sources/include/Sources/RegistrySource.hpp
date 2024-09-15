@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 
 namespace NES::Sources
 {
@@ -35,7 +35,7 @@ public:
     template <bool update = false>
     void registerPlugin(
         const std::string& name,
-        const std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>& creator)
+        const std::function<std::unique_ptr<Source>(const Schema& schema, const DescriptorSource& descriptorSource)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -46,14 +46,14 @@ public:
     }
 
     std::optional<std::unique_ptr<Source>>
-    tryCreate(const std::string& name, const Schema& schema, const SourceDescriptor& sourceDescriptor) const;
+    tryCreate(const std::string& name, const Schema& schema, const DescriptorSource& descriptorSource) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
     static RegistrySource& instance();
 
 private:
-    std::unordered_map<std::string, std::function<std::unique_ptr<Source>(const Schema& schema, const SourceDescriptor& sourceDescriptor)>>
+    std::unordered_map<std::string, std::function<std::unique_ptr<Source>(const Schema& schema, const DescriptorSource& descriptorSource)>>
         registry;
 };
 

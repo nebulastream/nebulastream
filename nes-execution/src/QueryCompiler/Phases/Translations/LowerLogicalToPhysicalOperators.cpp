@@ -40,7 +40,7 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
     {
         if (node->instanceOf<PhysicalOperators::PhysicalOperator>() or node->instanceOf<OperatorLogicalSourceDescriptor>())
         {
-            NES_DEBUG("Skipped node: {} as it is already a physical or a LogicalSourceDescriptor operator.", node->toString());
+            NES_DEBUG("Skipped node: {} as it is already a physical or a LogicalDescriptorSource operator.", node->toString());
             continue;
         }
         provider->lower(decomposedQueryPlan, node->as<LogicalOperator>());

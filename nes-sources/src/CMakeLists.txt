@@ -13,7 +13,7 @@
 add_source_files(nes-sources
         SourceCSV.cpp
         SourceData.cpp
-        SourceDescriptor.cpp
+        DescriptorSource.cpp
         SourceHandle.cpp
         SourceProvider.cpp
         Source.cpp

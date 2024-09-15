@@ -20,7 +20,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <Sources/SourceDescriptor.hpp>
+#include <Sources/DescriptorSource.hpp>
 
 namespace NES::Sources
 {
@@ -34,7 +34,7 @@ public:
     template <bool update = false>
     void registerPlugin(
         const std::string& name,
-        const std::function<SourceDescriptor::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>& creator)
+        const std::function<DescriptorSource::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -44,7 +44,7 @@ public:
         registry[name] = creator;
     }
 
-    std::optional<SourceDescriptor::Config>
+    std::optional<DescriptorSource::Config>
     tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sourceConfig) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
@@ -52,7 +52,7 @@ public:
     static RegistrySourceValidation& instance();
 
 private:
-    std::unordered_map<std::string, std::function<SourceDescriptor::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>>
+    std::unordered_map<std::string, std::function<DescriptorSource::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>>
         registry;
 };
 
