@@ -41,7 +41,7 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
     FunctionNodePtr deepCopy() override;
 
 private:

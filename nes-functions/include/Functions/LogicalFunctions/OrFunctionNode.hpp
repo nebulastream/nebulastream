@@ -37,7 +37,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;bool validate() const override;
+    void inferStamp(SchemaPtr schema) override;bool validateBeforeLowering() const override;
     FunctionNodePtr deepCopy() override;
 
 protected:

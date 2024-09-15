@@ -33,7 +33,7 @@ public:
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
 
     /**
      * @brief Infers the stamp of this logical negate function node.

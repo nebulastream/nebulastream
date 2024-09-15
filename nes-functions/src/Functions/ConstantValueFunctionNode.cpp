@@ -62,9 +62,9 @@ FunctionNodePtr ConstantValueFunctionNode::deepCopy()
     return std::make_shared<ConstantValueFunctionNode>(*this);
 }
 
-bool ConstantValueFunctionNode::validate() const
+bool ConstantValueFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    return children.empty();
 }
 
 }

@@ -25,10 +25,10 @@
 namespace NES
 {
 FieldRenameFunctionNode::FieldRenameFunctionNode(const FieldAccessFunctionNodePtr& originalField, std::string newFieldName)
-    : FunctionNode(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
+    : FunctionNode(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)){};
 
 FieldRenameFunctionNode::FieldRenameFunctionNode(const FieldRenameFunctionNodePtr other)
-    : FieldRenameFunctionNode(other->getOriginalField(), other->getNewFieldName()) {};
+    : FieldRenameFunctionNode(other->getOriginalField(), other->getNewFieldName()){};
 
 FunctionNodePtr FieldRenameFunctionNode::create(FieldAccessFunctionNodePtr originalField, std::string newFieldName)
 {
@@ -106,9 +106,10 @@ FunctionNodePtr FieldRenameFunctionNode::deepCopy()
     return FieldRenameFunctionNode::create(originalField->deepCopy()->as<FieldAccessFunctionNode>(), newFieldName);
 }
 
-bool FieldRenameFunctionNode::validate() const
+bool FieldRenameFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    /// Currently, we do not have any validation for FieldRenameFunctionNode before lowering
+    return true;
 }
 
 } /// namespace NES

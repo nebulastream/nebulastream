@@ -16,13 +16,12 @@
 #include <utility>
 
 #include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
-#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
 namespace NES
 {
 
-AddFunctionNode::AddFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Add") {};
+AddFunctionNode::AddFunctionNode(DataTypePtr stamp) : ArithmeticalBinaryFunctionNode(std::move(stamp), "Add"){};
 
 AddFunctionNode::AddFunctionNode(AddFunctionNode* other) : ArithmeticalBinaryFunctionNode(other)
 {
@@ -57,9 +56,14 @@ FunctionNodePtr AddFunctionNode::deepCopy()
     return AddFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
-bool AddFunctionNode::validate() const
+bool AddFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
+        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }
