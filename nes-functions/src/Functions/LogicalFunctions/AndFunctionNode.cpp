@@ -74,9 +74,14 @@ FunctionNodePtr AndFunctionNode::deepCopy()
     return AndFunctionNode::create(Util::as<FunctionNode>(children[0])->copy(), Util::as<FunctionNode>(children[1])->copy());
 }
 
-bool AndFunctionNode::validate() const
+bool AndFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isBoolean()
+        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isBoolean();
 }
 
 }

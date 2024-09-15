@@ -56,9 +56,14 @@ FunctionNodePtr DivFunctionNode::deepCopy()
     return DivFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool DivFunctionNode::validate() const
+bool DivFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
+        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

@@ -67,9 +67,13 @@ FunctionNodePtr FloorFunctionNode::deepCopy()
     return FloorFunctionNode::create(Util::as<FunctionNode>(children[0])->deepCopy());
 }
 
-bool FloorFunctionNode::validate() const
+bool FloorFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

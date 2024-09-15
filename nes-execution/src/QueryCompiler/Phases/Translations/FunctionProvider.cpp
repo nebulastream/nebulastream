@@ -34,13 +34,21 @@ using namespace Runtime::Execution::Functions;
 
 FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
 {
-    NES_INFO("Lower Function {}", functionNode->toString())
-    if (auto constantValue = functionNode->as_if<ConstantValueFunctionNode>())
+    /// 1. Check if the function is valid.
+    if (not functionNode->validateBeforeLowering())
+    {
+        throw InvalidFunction();
+    }
+
+    /// 2. Recursively lower the children of the function node.
+    const auto children = functionNode->getChildren();
+    std::vector<FunctionPtr> subFunctions;
+    for (const auto& child : children)
     {
         subFunctions.emplace_back(lowerFunction(child->as<FunctionNode>()));
     }
 
-    /// The field assignment, field access and constant value nodes are special as they require a different treatment, due to them not simply getting a subFunction as a parameter.
+    /// 3. The field assignment, field access and constant value nodes are special as they require a different treatment, due to them not simply getting a subFunction as a parameter.
     if (functionNode->instanceOf<FieldAssignmentFunctionNode>())
     {
         const auto fieldAssignmentNode = functionNode->as<FieldAssignmentFunctionNode>();
@@ -52,7 +60,7 @@ FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
         return std::make_shared<WriteFieldFunction>(fieldWrite->getField()->getFieldName(), lowerFunction(fieldWrite->getAssignment()));
     }
 
-    /// Calling the registry to create an executable function.
+    /// 4. Calling the registry to create an executable function.
     auto function = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(functionNode->getName(), std::move(subFunctions));
     if (not function.has_value())
     {

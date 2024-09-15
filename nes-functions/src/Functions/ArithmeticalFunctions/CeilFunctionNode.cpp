@@ -66,9 +66,13 @@ FunctionNodePtr CeilFunctionNode::deepCopy()
     return CeilFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-bool CeilFunctionNode::validate() const
+bool CeilFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }
