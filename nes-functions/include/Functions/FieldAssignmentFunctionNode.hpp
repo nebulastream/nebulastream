@@ -36,7 +36,7 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
 
     /**
      * @brief return the field to which a new value is assigned.

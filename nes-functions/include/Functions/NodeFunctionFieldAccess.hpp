@@ -98,7 +98,7 @@ protected:
     */
     FunctionNodePtr deepCopy() override;
 
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
 
 protected:
     explicit FieldAccessFunctionNode(FieldAccessFunctionNode* other);
