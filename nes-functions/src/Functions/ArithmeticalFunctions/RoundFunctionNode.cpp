@@ -70,9 +70,13 @@ FunctionNodePtr RoundFunctionNode::deepCopy()
     return RoundFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy());
 }
 
-bool RoundFunctionNode::validate() const
+bool RoundFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }
