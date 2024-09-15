@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
 
 
     std::string getNewFieldName() const;

@@ -57,9 +57,35 @@ FunctionNodePtr EqualsFunctionNode::deepCopy()
     return EqualsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool EqualsFunctionNode::validate() const
+bool EqualsFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    if (children.size() != 2)
+    {
+        return false;
+    }
+
+    const auto childLeft = children[0]->as<FunctionNode>();
+    const auto childRight = children[1]->as<FunctionNode>();
+
+    /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
+    if (childLeft->getStamp()->isText() != childRight->getStamp()->isText())
+    {
+        return false;
+    }
+
+    /// If one of the children has a stamp of type array, the other child must also have a stamp of type array
+    if (childLeft->getStamp()->isArray() != childRight->getStamp()->isArray())
+    {
+        return false;
+    }
+
+    /// If one of the children has a stamp of type charArray, the other child must also have a stamp of type charArray
+    if (childLeft->getStamp()->isCharArray() != childRight->getStamp()->isCharArray())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 }

@@ -57,9 +57,9 @@ FunctionNodePtr LessEqualsFunctionNode::deepCopy()
     return LessEqualsFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool LessEqualsFunctionNode::validate() const
+bool LessEqualsFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    return children.size() == 2;
 }
 
 }

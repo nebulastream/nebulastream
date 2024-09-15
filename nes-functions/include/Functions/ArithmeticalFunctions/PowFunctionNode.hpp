@@ -40,7 +40,7 @@ public:
      * @param schema: the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
-bool validate() const override;
+    bool validateBeforeLowering() const override;
     FunctionNodePtr deepCopy() override;
 
 private:
