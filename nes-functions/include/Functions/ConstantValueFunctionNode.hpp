@@ -45,7 +45,7 @@ public:
 
     std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
-    bool validate() const override;
+    bool validateBeforeLowering() const override;
 
     /**
     * @brief Create a deep copy of this function node.

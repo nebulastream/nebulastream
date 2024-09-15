@@ -77,9 +77,11 @@ FunctionNodePtr WhenFunctionNode::deepCopy()
     return WhenFunctionNode::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
 }
 
-bool WhenFunctionNode::validate() const
+bool WhenFunctionNode::validateBeforeLowering() const
 {
-    NES_NOT_IMPLEMENTED();
+    /// left function has to be boolean
+    const auto functionLeft = this->getLeft();
+    return functionLeft->getStamp()->isBoolean();
 }
 
 }
