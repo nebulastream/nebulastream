@@ -25,7 +25,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 namespace NES::Sources
 {
 
-struct DescriptorSource : public Descriptor
+struct DescriptorSource : public Configurations::Descriptor
 {
     /// Used by Sources to create a valid DescriptorSource.
     explicit DescriptorSource(
@@ -33,7 +33,7 @@ struct DescriptorSource : public Descriptor
         std::string logicalSourceName,
         std::string sourceType,
         Configurations::InputFormat inputFormat,
-        Config&& config);
+        Configurations::DescriptorConfig::Config&& config);
 
     ~DescriptorSource() = default;
     const std::shared_ptr<Schema> schema;

@@ -24,7 +24,7 @@ DescriptorSource::DescriptorSource(
     std::string logicalSourceName,
     std::string sourceType,
     Configurations::InputFormat inputFormat,
-    Config&& config)
+    Configurations::DescriptorConfig::Config&& config)
     : Descriptor(std::move(config)), schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
     , sourceType(std::move(sourceType))

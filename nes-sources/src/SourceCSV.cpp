@@ -147,7 +147,7 @@ bool SourceCSV::fillTupleBuffer(
     return true;
 }
 
-DescriptorSource::Config SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+Configurations::DescriptorConfig::Config SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersCSV>(std::move(config), NAME);
 }
@@ -165,7 +165,7 @@ std::ostream& SourceCSV::toString(std::ostream& str) const
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationCSV(RegistrySourceValidation& registry)
 {
-    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> DescriptorSource::Config
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> Configurations::DescriptorConfig::Config
     { return SourceCSV::validateAndFormat(std::move(sourceConfig)); };
     registry.registerPlugin((SourceCSV::NAME), validateFunc);
 }

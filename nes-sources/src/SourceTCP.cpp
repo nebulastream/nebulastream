@@ -350,7 +350,7 @@ bool SourceTCP::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
-DescriptorSource::Config SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+Configurations::DescriptorConfig::Config SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
@@ -368,7 +368,7 @@ void SourceTCP::close()
 
 void GeneratedRegistrarSourceValidation::RegisterSourceValidationTCP(RegistrySourceValidation& registry)
 {
-    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> DescriptorSource::Config
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> Configurations::DescriptorConfig::Config
     { return SourceTCP::validateAndFormat(std::move(sourceConfig)); };
     registry.registerPlugin((SourceTCP::NAME), validateFunc);
 }

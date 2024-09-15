@@ -27,14 +27,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 
-namespace NES::Sources
+namespace NES::Configurations
 {
 
-/// The Descriptor is an IMMUTABLE struct (all members and functions must be const) that:
-/// 1. Is a generic descriptor that can fully describe any kind of Source.
-/// 2. Is (de-)serializable, making it possible to send to other nodes.
-/// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a Descriptor and returns a fully configured Source.
-/// 4. Is used by the frontend to validate and format string configs.
 /// Config: The design principle of the Descriptor config is that the entire definition of the configuration happens in one place.
 /// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
 /// - the type
@@ -43,8 +38,8 @@ namespace NES::Sources
 /// All functions that operate on the config operate on ConfigParameters and can therefore access all relevant information.
 /// This design makes it difficult to use the wrong (string) name to access a parameter, the wrong type, e.g., in a templated function, or
 /// to forget to define a validation function. Also, changing the type/name/validation function of a config parameter can be done in a single place.
-struct Descriptor
-{
+class DescriptorConfig {
+public:
     using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
@@ -121,82 +116,7 @@ struct Descriptor
         std::shared_ptr<const Concept> configParameter;
     };
 
-    /// Takes ConfigParameters as inputs and creates an unordered map using the 'key' form the ConfigParameter as key and the ConfigParameter as value.
-    /// This function should be used at the end of the Config definition of a source, e.g., the ConfigParametersTCP definition.
-    /// The map makes it possible that we can simply iterate over all config parameters to check if the user provided all mandatory
-    /// parameters and whether the configuration is valid. Additionally, we can quickly check if there are unsupported parameters.
-    template <typename... Args>
-    static std::unordered_map<std::string, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
-    {
-        return std::unordered_map<std::string, ConfigParameterContainer>(
-            {std::make_pair(parameters.name, std::forward<Args>(parameters))...});
-    }
-
-    /// Used by Sources to create a valid Descriptor.
-    Descriptor() = default;
-    explicit Descriptor(Config&& config);
-    ~Descriptor() = default;
-
-    friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
-    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs);
-
-    /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
-    /// Uses the key to retrieve to lookup the config paramater.
-    /// Uses the taggeg type to retrieve the correct type from the variant value in the configuration.
-    template <typename ConfigParameter>
-    auto getFromConfig(const ConfigParameter& configParameter) const
-    {
-        const auto& value = config.at(configParameter);
-        if constexpr (ConfigParameter::isEnumWrapper())
-        {
-            const EnumWrapper enumWrapper = std::get<EnumWrapper>(value);
-            return enumWrapper.toEnum<typename ConfigParameter::EnumType>().value();
-        }
-        else
-        {
-            return std::get<typename ConfigParameter::Type>(value);
-        }
-    }
-
-    /// In contrast to getFromConfig(), tryGetFromConfig checks if the key exists and if the tagged type is correct.
-    /// If not, tryGetFromConfig returns a nullopt, otherwise it returns an optional containing a value of the tagged type.
-    template <typename ConfigParameter>
-    std::optional<typename ConfigParameter::Type> tryGetFromConfig(const ConfigParameter& configParameter) const
-    {
-        if (config.contains(configParameter) && std::holds_alternative<typename ConfigParameter::Type>(config.at(configParameter)))
-        {
-            const auto& value = config.at(configParameter);
-            return std::get<typename ConfigParameter::Type>(value);
-        }
-        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
-        return std::nullopt;
-    }
-
-    template <typename ConfigParameter>
-    static std::optional<typename ConfigParameter::Type>
-    tryGet(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
-    {
-        /// No specific validation and formatting function defined, using default formatter.
-        if (config.contains(configParameter))
-        {
-            return Descriptor::stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
-                config.at(configParameter));
-        }
-        /// The user did not specify the parameter, if a default value is available, return the default value.
-        if (configParameter.defaultValue.has_value())
-        {
-            return configParameter.defaultValue;
-        }
-        NES_ERROR("ConfigParameter: {}, is not available in config and there is no default value.", configParameter.name);
-        return std::nullopt;
-    };
-
-    const Config config;
-protected:
-    std::string toStringConfig() const;
-
 private:
-    friend std::ostream& operator<<(std::ostream& out, const Config& config);
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
@@ -249,6 +169,92 @@ private:
             return std::nullopt;
         }
     }
+
+public:
+    template <typename ConfigParameter>
+    static std::optional<typename ConfigParameter::Type>
+    tryGet(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
+    {
+        /// No specific validation and formatting function defined, using default formatter.
+        if (config.contains(configParameter))
+        {
+            return stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
+                config.at(configParameter));
+        }
+        /// The user did not specify the parameter, if a default value is available, return the default value.
+        if (configParameter.defaultValue.has_value())
+        {
+            return configParameter.defaultValue;
+        }
+        NES_ERROR("ConfigParameter: {}, is not available in config and there is no default value.", configParameter.name);
+        return std::nullopt;
+    };
+
+    /// Takes ConfigParameters as inputs and creates an unordered map using the 'key' form the ConfigParameter as key and the ConfigParameter as value.
+    /// This function should be used at the end of the Config definition of a source, e.g., the ConfigParametersTCP definition.
+    /// The map makes it possible that we can simply iterate over all config parameters to check if the user provided all mandatory
+    /// parameters and whether the configuration is valid. Additionally, we can quickly check if there are unsupported parameters.
+    template <typename... Args>
+    static std::unordered_map<std::string, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
+    {
+        return std::unordered_map<std::string, ConfigParameterContainer>(
+            {std::make_pair(parameters.name, std::forward<Args>(parameters))...});
+    }
+};
+
+/// The Descriptor is an IMMUTABLE struct (all members and functions must be const) that:
+/// 1. Is a generic descriptor that can fully describe any kind of Source.
+/// 2. Is (de-)serializable, making it possible to send to other nodes.
+/// 3. Is part of the main interface of 'nes-sources': The SourceProvider takes a Descriptor and returns a fully configured Source.
+/// 4. Is used by the frontend to validate and format string configs.
+struct Descriptor
+{
+    /// Used by Sources to create a valid Descriptor.
+    Descriptor() = default;
+    explicit Descriptor(DescriptorConfig::Config&& config);
+    ~Descriptor() = default;
+
+    friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
+    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs);
+
+    /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
+    /// Uses the key to retrieve to lookup the config paramater.
+    /// Uses the taggeg type to retrieve the correct type from the variant value in the configuration.
+    template <typename ConfigParameter>
+    auto getFromConfig(const ConfigParameter& configParameter) const
+    {
+        const auto& value = config.at(configParameter);
+        if constexpr (ConfigParameter::isEnumWrapper())
+        {
+            const EnumWrapper enumWrapper = std::get<EnumWrapper>(value);
+            return enumWrapper.toEnum<typename ConfigParameter::EnumType>().value();
+        }
+        else
+        {
+            return std::get<typename ConfigParameter::Type>(value);
+        }
+    }
+
+    /// In contrast to getFromConfig(), tryGetFromConfig checks if the key exists and if the tagged type is correct.
+    /// If not, tryGetFromConfig returns a nullopt, otherwise it returns an optional containing a value of the tagged type.
+    template <typename ConfigParameter>
+    std::optional<typename ConfigParameter::Type> tryGetFromConfig(const ConfigParameter& configParameter) const
+    {
+        if (config.contains(configParameter) && std::holds_alternative<typename ConfigParameter::Type>(config.at(configParameter)))
+        {
+            const auto& value = config.at(configParameter);
+            return std::get<typename ConfigParameter::Type>(value);
+        }
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        return std::nullopt;
+    }
+
+    const DescriptorConfig::Config config;
+protected:
+    std::string toStringConfig() const;
+
+private:
+    friend std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config);
 };
 
 }
@@ -258,7 +264,7 @@ private:
 namespace fmt
 {
 template <>
-struct formatter<NES::Sources::Descriptor> : ostream_formatter
+struct formatter<NES::Configurations::Descriptor> : ostream_formatter
 {
 };
 }

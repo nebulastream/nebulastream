@@ -236,7 +236,7 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
             if (descriptorSource.sourceType == Sources::SourceCSV::NAME)
             {
                 /// We violate the immutability constrain of the DescriptorSource here to patch in the correct file path.
-                Sources::DescriptorSource::Config configUpdated = descriptorSource.config;
+                Configurations::DescriptorConfig::Config configUpdated = descriptorSource.config;
                 configUpdated.at(Sources::ConfigParametersCSV::FILEPATH) = newInputFileName;
                 auto descriptorSourceUpdated = std::make_unique<Sources::DescriptorSource>(
                     descriptorSource.schema,
@@ -275,7 +275,7 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// We violate the immutability constrain of the DescriptorSource here to patch in the correct port.
-                    Sources::DescriptorSource::Config configUpdated = descriptorSource.config;
+                    Configurations::DescriptorConfig::Config configUpdated = descriptorSource.config;
                     configUpdated.at(Sources::ConfigParametersTCP::PORT) = static_cast<uint32_t>(mockTcpServerPort);
                     auto descriptorSourceUpdated = std::make_unique<Sources::DescriptorSource>(
                         descriptorSource.schema,

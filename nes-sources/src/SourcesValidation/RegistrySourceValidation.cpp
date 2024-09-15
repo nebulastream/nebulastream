@@ -25,7 +25,7 @@ RegistrySourceValidation::RegistrySourceValidation()
     GeneratedRegistrarSourceValidation::registerAllPlugins(*this);
 }
 
-std::optional<DescriptorSource::Config>
+std::optional<Configurations::DescriptorConfig::Config>
 RegistrySourceValidation::tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sourceConfig) const
 {
     if (registry.contains(name))

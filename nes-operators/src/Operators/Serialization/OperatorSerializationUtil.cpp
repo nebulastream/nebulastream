@@ -859,7 +859,7 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
 }
 
 SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource
-DescriptorSourceConfigTypeToProto(const Sources::DescriptorSource::ConfigType& var)
+DescriptorSourceConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
 {
     SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource proto_var;
     std::visit(
@@ -881,7 +881,7 @@ DescriptorSourceConfigTypeToProto(const Sources::DescriptorSource::ConfigType& v
                 proto_var.set_double_value(arg);
             else if constexpr (std::is_same_v<U, std::string>)
                 proto_var.set_string_value(arg);
-            else if constexpr (std::is_same_v<U, Sources::EnumWrapper>)
+            else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
             {
                 auto enumWrapper = SerializableOperator_OperatorLogicalSourceDescriptor_EnumWrapper().New();
                 enumWrapper->set_value(arg.getValue());
@@ -921,7 +921,7 @@ void OperatorSerializationUtil::serializeDescriptorSource(
     sourceDetails.set_allocated_descriptorsource(serializedDescriptorSource);
 }
 
-Sources::DescriptorSource::ConfigType
+Configurations::DescriptorConfig::ConfigType
 protoToDescriptorSourceConfigType(const SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource& proto_var)
 {
     switch (proto_var.value_case())
@@ -941,7 +941,7 @@ protoToDescriptorSourceConfigType(const SerializableOperator_OperatorLogicalSour
         case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kStringValue:
             return proto_var.string_value();
         case SerializableOperator_OperatorLogicalSourceDescriptor_VariantDescriptorSource::kEnumValue:
-            return Sources::EnumWrapper::create(proto_var.enum_value().value());
+            return Configurations::EnumWrapper::create(proto_var.enum_value().value());
         default:
             throw std::runtime_error("Unknown variant type");
     }
@@ -956,7 +956,7 @@ std::unique_ptr<Sources::DescriptorSource> OperatorSerializationUtil::deserializ
     auto inputFormat = descriptorSource.inputformat();
 
     /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
-    Sources::DescriptorSource::Config DescriptorSourceConfig{};
+    Configurations::DescriptorConfig::Config DescriptorSourceConfig{};
     for (const auto& kv : descriptorSource.config())
     {
         DescriptorSourceConfig[kv.first] = protoToDescriptorSourceConfigType(kv.second);

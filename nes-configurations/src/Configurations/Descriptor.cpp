@@ -17,10 +17,10 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 
-namespace NES::Sources
+namespace NES::Configurations
 {
 
-Descriptor::Descriptor(Config&& config) : config(std::move(config))
+Descriptor::Descriptor(DescriptorConfig::Config&& config) : config(std::move(config))
 {
 }
 
@@ -47,7 +47,7 @@ struct ConfigPrinter
         out << std::string(magic_enum::enum_name(value));
     }
 };
-std::ostream& operator<<(std::ostream& out, const Descriptor::Config& config)
+std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config)
 {
     for (const auto& [key, value] : config)
     {
@@ -88,7 +88,7 @@ struct VariantComparator
         }
     }
 };
-bool operator==(const Descriptor::Config& lhs, const Descriptor::Config& rhs)
+bool operator==(const DescriptorConfig::Config& lhs, const DescriptorConfig::Config& rhs)
 {
     if (lhs.size() != rhs.size())
     {

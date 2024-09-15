@@ -18,7 +18,7 @@
 #include <fmt/std.h>
 #include <magic_enum.hpp>
 
-namespace NES::Sources
+namespace NES::Configurations
 {
 class EnumWrapper
 {
@@ -52,7 +52,7 @@ private:
 namespace fmt
 {
 template <>
-struct formatter<NES::Sources::EnumWrapper> : ostream_formatter
+struct formatter<NES::Configurations::EnumWrapper> : ostream_formatter
 {
 };
 }
