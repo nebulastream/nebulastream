@@ -66,8 +66,8 @@ bool NodeFunctionLessEquals::validateBeforeLowering() const
     const auto childRight = children[1]->as<FunctionNode>();
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (childLeft->getStamp()->isText() || childRight->getStamp()->isText() ||
-        childLeft->getStamp()->isArray() || childRight->getStamp()->isArray())
+    if (childLeft->getStamp()->isText() || childRight->getStamp()->isText() || childLeft->getStamp()->isArray()
+        || childRight->getStamp()->isArray())
     {
         return false;
     }

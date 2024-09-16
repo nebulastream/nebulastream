@@ -14,11 +14,11 @@
 
 #include <queue>
 #include <API/Schema.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>

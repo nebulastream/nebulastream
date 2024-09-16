@@ -14,8 +14,8 @@
 
 #include <sstream>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 

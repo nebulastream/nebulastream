@@ -31,8 +31,7 @@ CountAggregationDescriptor::CountAggregationDescriptor(NodeFunctionPtr field, No
     this->aggregationType = Type::Count;
 }
 
-WindowAggregationDescriptorPtr
-CountAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
+WindowAggregationDescriptorPtr CountAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(std::move(onField), std::move(asField)));
 }

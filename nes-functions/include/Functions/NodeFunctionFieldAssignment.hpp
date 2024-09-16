@@ -31,8 +31,7 @@ public:
     /**
      * @brief Create untyped field read.
      */
-    static NodeFunctionFieldAssignmentPtr
-    create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
+    static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;

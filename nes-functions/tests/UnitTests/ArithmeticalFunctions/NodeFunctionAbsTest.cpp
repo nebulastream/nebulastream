@@ -18,8 +18,8 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {

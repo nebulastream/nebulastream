@@ -87,7 +87,9 @@ TEST_F(NodeFunctionModTest, validateBeforeLoweringDifferentChildNumbers)
 
 TEST_F(NodeFunctionModTest, validateBeforeLoweringDifferentDataTypes)
 {
-    auto testValidateBeforeLoweringDifferentDataTypes = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue) {
+    auto testValidateBeforeLoweringDifferentDataTypes
+        = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue)
+    {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create(leftType);
         const auto nodeFunctionReadRight = NodeFunctionFieldAccess::create(rightType);
         const auto nodeFunctionMod = NodeFunctionMod::create(nodeFunctionReadLeft, nodeFunctionReadRight);

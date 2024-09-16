@@ -14,15 +14,12 @@
 
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-NodeFunctionNegate::NodeFunctionNegate() : NodeFunctionLogicalUnary("Negate")
-{
-};
+NodeFunctionNegate::NodeFunctionNegate() : NodeFunctionLogicalUnary("Negate") {};
 
 NodeFunctionNegate::NodeFunctionNegate(NodeFunctionNegate* other) : NodeFunctionLogicalUnary(other)
 {

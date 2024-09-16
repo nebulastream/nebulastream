@@ -16,12 +16,13 @@
 
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name) : NodeFunctionUnary(std::move(stamp), std::move(name))
+NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name)
+    : NodeFunctionUnary(std::move(stamp), std::move(name))
 {
 }
 NodeFunctionArithmeticalUnary::NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other) : NodeFunctionUnary(other)

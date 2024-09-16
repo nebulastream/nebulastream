@@ -44,8 +44,7 @@ public:
     * @param serializedFunction The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedFunction
     */
-    static SerializableFunction*
-    serializeFunction(const NodeFunctionPtr& functionNode, SerializableFunction* serializedFunction);
+    static SerializableFunction* serializeFunction(const NodeFunctionPtr& functionNode, SerializableFunction* serializedFunction);
 
     /**
     * @brief De-serializes the SerializableFunction and all its children to a corresponding NodeFunctionPtr

@@ -15,9 +15,9 @@
 #include <iostream>
 #include <utility>
 #include <API/AttributeField.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>

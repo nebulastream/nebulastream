@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES

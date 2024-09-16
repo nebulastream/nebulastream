@@ -13,8 +13,8 @@
 */
 
 #pragma once
-#include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 namespace NES
 {
 /**

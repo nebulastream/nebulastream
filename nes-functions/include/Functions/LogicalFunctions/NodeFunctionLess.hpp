@@ -33,7 +33,7 @@ public:
     bool equal(NodePtr const& rhs) const override;
 
     std::string toString() const override;
-bool validateBeforeLowering() const override;
+    bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:

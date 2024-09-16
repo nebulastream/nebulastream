@@ -16,9 +16,9 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>

@@ -24,21 +24,21 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionCase.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
-#include <Functions/NodeFunction.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -88,8 +88,7 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
         NES_TRACE("FunctionSerializationUtil:: serialize field rename function node.");
         auto fieldRenameFunction = function->as<NodeFunctionFieldRename>();
         auto serializedFieldRenameFunction = SerializableFunction_FunctionFieldRename();
-        serializeFunction(
-            fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_functionoriginalfieldaccess());
+        serializeFunction(fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_functionoriginalfieldaccess());
         serializedFieldRenameFunction.set_newfieldname(fieldRenameFunction->getNewFieldName());
         serializedFunction->mutable_details()->PackFrom(serializedFieldRenameFunction);
     }
@@ -187,8 +186,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
                     originalFieldAccessFunction->toString());
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-            nodeFunctionPtr
-                = NodeFunctionFieldRename::create(originalFieldAccessFunction->as<NodeFunctionFieldAccess>(), newFieldName);
+            nodeFunctionPtr = NodeFunctionFieldRename::create(originalFieldAccessFunction->as<NodeFunctionFieldAccess>(), newFieldName);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
         {
@@ -200,8 +198,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
             auto fieldAccessNode = NodeFunctionFieldAccess::create(fieldStamp, field->fieldname());
             auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
-            nodeFunctionPtr
-                = NodeFunctionFieldAssignment::create(fieldAccessNode->as<NodeFunctionFieldAccess>(), fieldAssignmentFunction);
+            nodeFunctionPtr = NodeFunctionFieldAssignment::create(fieldAccessNode->as<NodeFunctionFieldAccess>(), fieldAssignmentFunction);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionWhen>())
         {
@@ -248,8 +245,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
     return nodeFunctionPtr;
 }
 
-void FunctionSerializationUtil::serializeArithmeticalFunctions(
-    const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
+void FunctionSerializationUtil::serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", function->toString());
     if (function->instanceOf<NodeFunctionAdd>())
@@ -374,8 +370,7 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(
     }
 }
 
-void FunctionSerializationUtil::serializeLogicalFunctions(
-    const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
+void FunctionSerializationUtil::serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", function->toString());
     if (function->instanceOf<NodeFunctionAnd>())
@@ -461,8 +456,7 @@ void FunctionSerializationUtil::serializeLogicalFunctions(
     }
     else
     {
-        NES_FATAL_ERROR(
-            "FunctionSerializationUtil: No serialization implemented for this logical function node: {}", function->toString());
+        NES_FATAL_ERROR("FunctionSerializationUtil: No serialization implemented for this logical function node: {}", function->toString());
         NES_NOT_IMPLEMENTED();
     }
 }

@@ -29,28 +29,33 @@ public:
         Logger::setupLogging("NodeFunctionConstantValueTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup NodeFunctionConstantValueTest test class.");
     }
-    void SetUp() override
-    {
-        BaseUnitTest::SetUp();
-    }
+    void SetUp() override { BaseUnitTest::SetUp(); }
 };
 
 TEST_F(NodeFunctionConstantValueTest, validateBeforeLoweringDifferentChildNumbers)
 {
     {
-        const auto nodeFunctionConstantValue = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));;
+        const auto nodeFunctionConstantValue
+            = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        ;
         nodeFunctionConstantValue->removeChildren();
         EXPECT_TRUE(nodeFunctionConstantValue->validateBeforeLowering());
     }
 
     {
-        const auto nodeFunctionConstantValue = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));;
+        const auto nodeFunctionConstantValue
+            = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        ;
         EXPECT_TRUE(nodeFunctionConstantValue->validateBeforeLowering());
     }
 
     {
-        const auto nodeFunctionConstantValue = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));;
-        const auto nodeFunctionConstantValue2 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));;
+        const auto nodeFunctionConstantValue
+            = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        ;
+        const auto nodeFunctionConstantValue2
+            = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        ;
 
         ///NodeFunction Adding a child to the ConstantValue ---> should fail
         nodeFunctionConstantValue->addChild(nodeFunctionConstantValue2);

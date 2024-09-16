@@ -79,8 +79,8 @@ bool NodeFunctionPow::validateBeforeLowering() const
     {
         return false;
     }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric() &&
-        this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
+        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

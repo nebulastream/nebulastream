@@ -122,7 +122,8 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
         {
             /// getPredicate() is the first FunctionNegate; first getChildren()[0] is the second FunctionNegate;
             /// second getChildren()[0] is the functionNode that was negated twice. copy() only copies children of this functionNode. (probably not mandatory but no reference to the negations needs to be kept)
-            filterOperator->setPredicate(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<FunctionNode>()->deepCopy());
+            filterOperator->setPredicate(
+                filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<FunctionNode>()->deepCopy());
             splitUpFilters(filterOperator);
         }
     }

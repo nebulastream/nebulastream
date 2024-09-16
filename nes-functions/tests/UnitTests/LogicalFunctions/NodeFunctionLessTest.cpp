@@ -8,7 +8,7 @@
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions equals
+    See the License for the specific language governing permissions and
     limitations under the License.
 */
 
@@ -86,7 +86,9 @@ TEST_F(NodeFunctionLessTest, validateBeforeLoweringDifferentChildNumbers)
 
 TEST_F(NodeFunctionLessTest, validateBeforeLoweringDifferentDataTypes)
 {
-    auto testValidateBeforeLoweringDifferentDataTypes = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue) {
+    auto testValidateBeforeLoweringDifferentDataTypes
+        = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue)
+    {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create(leftType);
         const auto nodeFunctionReadRight = NodeFunctionFieldAccess::create(rightType);
         const auto nodeFunctionLess = NodeFunctionLess::create(nodeFunctionReadLeft, nodeFunctionReadRight);

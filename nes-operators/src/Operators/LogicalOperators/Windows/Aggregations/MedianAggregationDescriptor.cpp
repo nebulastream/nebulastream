@@ -31,8 +31,7 @@ MedianAggregationDescriptor::MedianAggregationDescriptor(NodeFunctionPtr field, 
     this->aggregationType = Type::Median;
 }
 
-WindowAggregationDescriptorPtr
-MedianAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
+WindowAggregationDescriptorPtr MedianAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
 }

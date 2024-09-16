@@ -22,7 +22,7 @@
 namespace NES
 {
 
-NodeFunctionMod::NodeFunctionMod(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod"){};
+NodeFunctionMod::NodeFunctionMod(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
 
 NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeticalBinary(other)
 {
@@ -136,8 +136,8 @@ bool NodeFunctionMod::validateBeforeLowering() const
     {
         return false;
     }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric() &&
-        this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
+    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
+        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
 }
 
 }

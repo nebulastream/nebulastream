@@ -18,17 +18,17 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -110,8 +110,8 @@ NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFuncti
 {
     /// Detect sum/subtraction/multiplication/division of constants inside a predicate and resolve them
     NES_DEBUG("Applying RedundancyEliminationRule.constantFolding to predicate {}", predicate->toString());
-    if (predicate->instanceOf<NodeFunctionAdd>() || predicate->instanceOf<NodeFunctionSub>()
-        || predicate->instanceOf<NodeFunctionMul>() || predicate->instanceOf<NodeFunctionDiv>())
+    if (predicate->instanceOf<NodeFunctionAdd>() || predicate->instanceOf<NodeFunctionSub>() || predicate->instanceOf<NodeFunctionMul>()
+        || predicate->instanceOf<NodeFunctionDiv>())
     {
         NES_DEBUG("The predicate is an addition/multiplication/subtraction/division, constant folding could be applied");
         auto operands = predicate->getChildren();

@@ -13,8 +13,8 @@
 */
 
 #include <Functions/NodeFunctionConstantValue.hpp>
-#include <Common/ValueTypes/ValueType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES
 {

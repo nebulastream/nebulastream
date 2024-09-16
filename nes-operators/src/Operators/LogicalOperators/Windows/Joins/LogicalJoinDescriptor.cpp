@@ -15,9 +15,9 @@
 #include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>

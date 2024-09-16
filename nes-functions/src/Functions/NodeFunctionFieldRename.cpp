@@ -23,10 +23,10 @@
 namespace NES
 {
 NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName)
-    : FunctionNode(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)){};
+    : FunctionNode(originalField->getStamp(), "FieldRename"), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
 NodeFunctionFieldRename::NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other)
-    : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()){};
+    : NodeFunctionFieldRename(other->getOriginalField(), other->getNewFieldName()) {};
 
 NodeFunctionPtr NodeFunctionFieldRename::create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName)
 {

@@ -16,17 +16,16 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES
 {
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName)
     : FunctionNode(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other)
-    : FunctionNode(other), fieldName(other->getFieldName()) {};
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other) : FunctionNode(other), fieldName(other->getFieldName()) {};
 
 NodeFunctionPtr NodeFunctionFieldAccess::create(DataTypePtr stamp, std::string fieldName)
 {

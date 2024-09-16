@@ -18,12 +18,12 @@
 
 namespace NES
 {
-NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(std::string name) : NodeFunctionBinary(DataTypeFactory::createBoolean(), std::move(name)), LogicalFunctionNode()
+NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(std::string name)
+    : NodeFunctionBinary(DataTypeFactory::createBoolean(), std::move(name)), LogicalFunctionNode()
 {
 }
 
-NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* other)
-    : NodeFunctionBinary(other), LogicalFunctionNode()
+NodeFunctionLogicalBinary::NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* other) : NodeFunctionBinary(other), LogicalFunctionNode()
 {
 }
 

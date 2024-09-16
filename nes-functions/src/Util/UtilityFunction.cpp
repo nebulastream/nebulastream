@@ -14,9 +14,9 @@
 
 #include <string>
 #include <unordered_set>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 

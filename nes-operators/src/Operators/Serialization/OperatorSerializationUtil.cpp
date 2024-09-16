@@ -559,10 +559,8 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     std::vector<Windowing::WindowAggregationDescriptorPtr> aggregation;
     for (const auto& serializedWindowAggregation : serializedWindowAggregations)
     {
-        auto onField
-            = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.onfield())->as<NodeFunctionFieldAccess>();
-        auto asField
-            = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.asfield())->as<NodeFunctionFieldAccess>();
+        auto onField = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.onfield())->as<NodeFunctionFieldAccess>();
+        auto asField = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.asfield())->as<NodeFunctionFieldAccess>();
         if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM)
         {
             aggregation.emplace_back(Windowing::SumAggregationDescriptor::create(onField, asField));
@@ -854,10 +852,8 @@ void OperatorSerializationUtil::serializeBatchJoinOperator(
 Experimental::LogicalBatchJoinOperatorPtr
 OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId)
 {
-    auto buildKeyAccessFunction
-        = FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey())->as<NodeFunctionFieldAccess>();
-    auto probeKeyAccessFunction
-        = FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey())->as<NodeFunctionFieldAccess>();
+    auto buildKeyAccessFunction = FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey())->as<NodeFunctionFieldAccess>();
+    auto probeKeyAccessFunction = FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey())->as<NodeFunctionFieldAccess>();
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(
         buildKeyAccessFunction, probeKeyAccessFunction, joinDetails.numberofinputedgesprobe(), joinDetails.numberofinputedgesbuild());
     auto retValue

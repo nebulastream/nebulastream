@@ -19,7 +19,7 @@
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-NodeFunctionMul::NodeFunctionMul(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul"){};
+NodeFunctionMul::NodeFunctionMul(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") {};
 
 NodeFunctionMul::NodeFunctionMul(NodeFunctionMul* other) : NodeFunctionArithmeticalBinary(other)
 {

@@ -17,8 +17,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

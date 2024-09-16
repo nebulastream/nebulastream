@@ -87,14 +87,17 @@ TEST_F(NodeFunctionPowTest, validateBeforeLoweringDifferentChildNumbers)
 
 TEST_F(NodeFunctionPowTest, validateBeforeLoweringDifferentDataTypes)
 {
-    auto testValidateBeforeLoweringDifferentDataTypes = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue) {
+    auto testValidateBeforeLoweringDifferentDataTypes
+        = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue)
+    {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create(leftType);
         const auto nodeFunctionReadRight = NodeFunctionFieldAccess::create(rightType);
         const auto nodeFunctionPow = NodeFunctionPow::create(nodeFunctionReadLeft, nodeFunctionReadRight);
         if (expectedValue)
         {
             nodeFunctionPow->inferStamp(dummySchema);
-        } else
+        }
+        else
         {
             EXPECT_ANY_THROW(nodeFunctionPow->inferStamp(dummySchema));
         }

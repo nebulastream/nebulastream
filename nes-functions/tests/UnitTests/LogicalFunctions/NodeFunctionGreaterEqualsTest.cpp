@@ -8,7 +8,7 @@
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions equals
+    See the License for the specific language governing permissions and
     limitations under the License.
 */
 
@@ -22,7 +22,7 @@
 namespace NES
 {
 
-class nodeFunctionGreaterEqualsTest : public Testing::BaseUnitTest
+class NodeFunctionGreaterEqualsTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestCase()
@@ -46,7 +46,7 @@ protected:
     SchemaPtr dummySchema;
 };
 
-TEST_F(nodeFunctionGreaterEqualsTest, validateBeforeLoweringDifferentChildNumbers)
+TEST_F(NodeFunctionGreaterEqualsTest, validateBeforeLoweringDifferentChildNumbers)
 {
     {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create("i64");
@@ -84,9 +84,11 @@ TEST_F(nodeFunctionGreaterEqualsTest, validateBeforeLoweringDifferentChildNumber
     }
 }
 
-TEST_F(nodeFunctionGreaterEqualsTest, validateBeforeLoweringDifferentDataTypes)
+TEST_F(NodeFunctionGreaterEqualsTest, validateBeforeLoweringDifferentDataTypes)
 {
-    auto testValidateBeforeLoweringDifferentDataTypes = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue) {
+    auto testValidateBeforeLoweringDifferentDataTypes
+        = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue)
+    {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create(leftType);
         const auto nodeFunctionReadRight = NodeFunctionFieldAccess::create(rightType);
         const auto nodeFunctionGreaterEquals = NodeFunctionGreaterEquals::create(nodeFunctionReadLeft, nodeFunctionReadRight);
