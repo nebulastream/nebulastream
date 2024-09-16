@@ -39,8 +39,7 @@ public:
 
 
 private:
-    static Runtime::Execution::Functions::FunctionPtr
-    lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& functionNode);
+    static Runtime::Execution::Functions::FunctionPtr lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& functionNode);
 };
 
 }
