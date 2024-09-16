@@ -15,7 +15,9 @@ add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
 # Add Library
-add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
+add_library(nes-sources ${NES_SOURCES_SOURCE_FILES}
+        tests/Util/TestSource.cpp
+        tests/Util/TestSource.hpp)
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sources
 target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-data-types nes-memory)
