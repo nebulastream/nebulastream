@@ -25,7 +25,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-
+#include <fmt/ranges.h>
 namespace NES
 {
 
@@ -127,14 +127,31 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) const
 {
+    /// This does not work for fields with the same name but different qualifiers
+    /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
+    /// Additionally, it is not clear when and how to use what method to interact with the schema and the underlying attribute fields.
+    auto addSourceQualifierIfNotPresent = [&](const std::string& field) {
+        if (field.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+        {
+            return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + field;
+        }
+        return field;
+    };
+    auto fieldNameToSearchFor = fieldName;
+    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+    {
+        fieldNameToSearchFor = addSourceQualifierIfNotPresent(fieldName);
+    }
+
+
     for (const auto& field : fields)
     {
-        if (field->getName() == fieldName)
+        if (field->getName() == fieldNameToSearchFor)
         {
             return field;
         }
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the identifier {}", fieldName);
+    NES_FATAL_ERROR("Schema: No field in the schema with the identifier {}. Has fields: {}", fieldName, fmt::join(getFieldNames(), ","));
     throw std::invalid_argument("field " + fieldName + " does not exist");
 }
 
