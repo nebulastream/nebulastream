@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
@@ -49,7 +49,7 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan)
                 for (unsigned int i = 1; i < consecutiveFilters.size(); i++)
                 {
                     auto predicate = consecutiveFilters.at(i)->getPredicate();
-                    combinedPredicate = AndExpressionNode::create(combinedPredicate, predicate);
+                    combinedPredicate = NodeFunctionAnd::create(combinedPredicate, predicate);
                 }
                 NES_DEBUG("FilterMergeRule: Create new combined filter with the conjunction of all filter predicates");
                 auto combinedFilter = LogicalOperatorFactory::createFilterOperator(combinedPredicate);

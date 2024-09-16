@@ -41,7 +41,7 @@ public:
       * @param queryPlan the queryPlan to add the projection node
       * @return the updated queryPlan
       */
-    static QueryPlanPtr addProjection(const std::vector<FunctionNodePtr>& functions, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addProjection(const std::vector<NodeFunctionPtr>& functions, QueryPlanPtr queryPlan);
 
     /**
      * @brief this call add the rename operator to the queryPlan, this operator renames the source
@@ -58,7 +58,7 @@ public:
      * @param queryPlanPtr the queryPlan the filter node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(FunctionNodePtr const& filterFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -75,7 +75,7 @@ public:
      * @param queryPlan the queryPlan the map is added to
      * @return the updated queryPlanPtr
      */
-    static QueryPlanPtr addMap(FieldAssignmentFunctionNodePtr const& mapFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -96,7 +96,7 @@ public:
     static QueryPlanPtr addJoin(
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
-        FunctionNodePtr joinFunction,
+        NodeFunctionPtr joinFunction,
         const Windowing::WindowTypePtr& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
@@ -110,7 +110,7 @@ public:
      * @return the updated queryPlan
      */
     static QueryPlanPtr
-    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, FunctionNodePtr onProbeKey, FunctionNodePtr onBuildKey);
+    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
@@ -139,12 +139,12 @@ public:
 
 private:
     /**
-     * @brief This method checks if an FunctionNode is instance Of FieldAccessFunctionNode for Join and BatchJoin
+     * @brief This method checks if an NodeFunction is instance Of NodeFunctionFieldAccess for Join and BatchJoin
      * @param function the function node to test
-     * @param side points out from which side, i.e., left or right query plan, the FunctionNode is
-     * @return functionNode as FieldAccessFunctionNode
+     * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
+     * @return nodeFunction as NodeFunctionFieldAccess
      */
-    static std::shared_ptr<FieldAccessFunctionNode> checkFunction(FunctionNodePtr function, std::string side);
+    static std::shared_ptr<NodeFunctionFieldAccess> checkFunction(NodeFunctionPtr function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources

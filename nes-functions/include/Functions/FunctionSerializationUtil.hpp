@@ -19,16 +19,16 @@
 namespace NES
 {
 
-class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+class NodeFunction;
+using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 class SerializableFunction;
-class SerializableFunction_ConstantValueFunction;
-class SerializableFunction_FieldAccessFunction;
-class SerializableFunction_FieldRenameFunction;
-class SerializableFunction_FieldAssignmentFunction;
-class SerializableFunction_WhenFunction;
-class SerializableFunction_CaseFunction;
+class SerializableFunction_FunctionConstantValue;
+class SerializableFunction_FunctionFieldAccess;
+class SerializableFunction_FunctionFieldRename;
+class SerializableFunction_FunctionFieldAssignment;
+class SerializableFunction_FunctionWhen;
+class SerializableFunction_FunctionCase;
 class SerializableFunction_FunctionFunction;
 
 /**
@@ -40,24 +40,23 @@ class FunctionSerializationUtil
 public:
     /**
     * @brief Serializes a function node and all its children to a SerializableDataType object.
-    * @param functionNode The root function node to serialize.
+    * @param nodeFunction The root function node to serialize.
     * @param serializedFunction The corresponding protobuff object, which is used to capture the state of the object.
     * @return the modified serializedFunction
     */
-    static SerializableFunction*
-    serializeFunction(const FunctionNodePtr& functionNode, SerializableFunction* serializedFunction);
+    static SerializableFunction* serializeFunction(const NodeFunctionPtr& nodeFunction, SerializableFunction* serializedFunction);
 
     /**
-    * @brief De-serializes the SerializableFunction and all its children to a corresponding FunctionNodePtr
+    * @brief De-serializes the SerializableFunction and all its children to a corresponding NodeFunctionPtr
     * @param serializedFunction the serialized function.
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    static FunctionNodePtr deserializeFunction(const SerializableFunction& serializedFunction);
+    static NodeFunctionPtr deserializeFunction(const SerializableFunction& serializedFunction);
 
 private:
-    static void serializeLogicalFunctions(const FunctionNodePtr& function, SerializableFunction* serializedFunction);
-    static void serializeArithmeticalFunctions(const FunctionNodePtr& function, SerializableFunction* serializedFunction);
-    static FunctionNodePtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
-    static FunctionNodePtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
+    static void serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
+    static void serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
+    static NodeFunctionPtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
+    static NodeFunctionPtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
 };
 } /// namespace NES

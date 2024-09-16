@@ -11,16 +11,16 @@
 # limitations under the License.
 
 add_source_files(nes-functions
-        FunctionNode.cpp
-        ConstantValueFunctionNode.cpp
-        FieldAccessFunctionNode.cpp
-        BinaryFunctionNode.cpp
-        UnaryFunctionNode.cpp
-        FieldAssignmentFunctionNode.cpp
-        FieldRenameFunctionNode.cpp
-        WhenFunctionNode.cpp
-        CaseFunctionNode.cpp
         FunctionSerializationUtil.cpp
+        NodeFunction.cpp
+        NodeFunctionBinary.cpp
+        NodeFunctionCase.cpp
+        NodeFunctionConstantValue.cpp
+        NodeFunctionFieldAccess.cpp
+        NodeFunctionFieldAssignment.cpp
+        NodeFunctionFieldRename.cpp
+        NodeFunctionUnary.cpp
+        NodeFunctionWhen.cpp
 )
 add_subdirectory(LogicalFunctions)
 add_subdirectory(ArithmeticalFunctions)

@@ -14,9 +14,8 @@
 
 #pragma once
 
-#include <Functions/FunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES::Windowing
 {
@@ -41,19 +40,19 @@ public:
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    std::shared_ptr<WindowAggregationDescriptor> as(const FunctionNodePtr& asField);
+    std::shared_ptr<WindowAggregationDescriptor> as(const NodeFunctionPtr& asField);
 
     /**
     * Returns the result field of the aggregation
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    FunctionNodePtr as() const;
+    NodeFunctionPtr as() const;
 
     /**
     * Returns the result field of the aggregation
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    FunctionNodePtr on() const;
+    NodeFunctionPtr on() const;
 
     /**
      * @brief Returns the type of this aggregation.
@@ -101,12 +100,12 @@ public:
     bool equal(std::shared_ptr<WindowAggregationDescriptor> otherWindowAggregationDescriptor) const;
 
 protected:
-    explicit WindowAggregationDescriptor(const FieldAccessFunctionNodePtr& onField);
-    WindowAggregationDescriptor(const FunctionNodePtr& onField, const FunctionNodePtr& asField);
+    explicit WindowAggregationDescriptor(const NodeFunctionFieldAccessPtr& onField);
+    WindowAggregationDescriptor(const NodeFunctionPtr& onField, const NodeFunctionPtr& asField);
     WindowAggregationDescriptor() = default;
-    FunctionNodePtr onField;
-    FunctionNodePtr asField;
+    NodeFunctionPtr onField;
+    NodeFunctionPtr asField;
     Type aggregationType;
 };
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
-} /// namespace NES::Windowing
+}

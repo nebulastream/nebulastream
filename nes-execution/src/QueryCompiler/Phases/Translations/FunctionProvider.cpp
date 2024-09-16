@@ -13,26 +13,26 @@
 */
 
 #include <vector>
-#include <Execution/Functions/ReadFieldFunction.hpp>
-#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
-#include <Functions/FunctionNode.hpp>
-#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
+#include <Execution/Functions/WriteFieldFunction.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
+#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <ErrorHandling.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
+FunctionPtr FunctionProvider::lowerFunction(const NodeFunctionPtr& functionNode)
 {
     /// 1. Check if the function is valid.
     if (not functionNode->validateBeforeLowering())
@@ -48,20 +48,24 @@ FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
         subFunctions.emplace_back(lowerFunction(child->as<FunctionNode>()));
     }
 
-    /// 3. The field assignment, field access and constant value nodes are special as they require a different treatment, due to them not simply getting a subFunction as a parameter.
-    if (functionNode->instanceOf<FieldAssignmentFunctionNode>())
+    /// 3. The field assignment, field access and constant value nodes are special as they require a different treatment,
+    /// due to them not simply getting a subFunction as a parameter.
+    if (const auto fieldAssignmentNode = functionNode->as_if<NodeFunctionFieldAssignment>())
     {
-        const auto fieldAssignmentNode = functionNode->as<FieldAssignmentFunctionNode>();
-        const auto field = fieldAssignmentNode->getField()->getFieldName();
-        return std::make_unique<WriteFieldFunction>(field, std::move(subFunctions[0]));
+        return std::make_unique<WriteFieldFunction>(fieldAssignmentNode->getField()->getFieldName(), std::move(subFunctions[0]));
     }
-    if (auto fieldWrite = functionNode->as_if<FieldAssignmentFunctionNode>())
+    if (const auto fieldAccessNode = functionNode->as_if<NodeFunctionFieldAccess>())
     {
-        return std::make_shared<WriteFieldFunction>(fieldWrite->getField()->getFieldName(), lowerFunction(fieldWrite->getAssignment()));
+        return std::make_unique<ReadFieldFunction>(fieldAccessNode->getFieldName());
+    }
+    if (const auto constantValueNode = functionNode->as_if<NodeFunctionConstantValue>())
+    {
+        return lowerConstantFunction(constantValueNode);
     }
 
     /// 4. Calling the registry to create an executable function.
-    auto function = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(functionNode->getName(), std::move(subFunctions));
+    auto function
+        = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(functionNode->getName(), std::move(subFunctions));
     if (not function.has_value())
     {
         throw UnknownFunctionType();
@@ -70,7 +74,7 @@ FunctionPtr FunctionProvider::lowerFunction(const FunctionNodePtr& functionNode)
     return std::move(function.value());
 }
 
-FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<ConstantValueFunctionNode>& constantFunction)
+FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
     auto value = constantFunction->getConstantValue();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());

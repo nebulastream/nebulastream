@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <API/Schema.hpp>
-#include <Functions/FunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Types/WindowType.hpp>
 
@@ -49,14 +49,14 @@ public:
     };
 
     static std::shared_ptr<LogicalJoinDescriptor> create(
-        FunctionNodePtr joinFunction,
+        NodeFunctionPtr joinFunction,
         const Windowing::WindowTypePtr& windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
         JoinType joinType);
 
     explicit LogicalJoinDescriptor(
-        FunctionNodePtr joinFunction,
+        NodeFunctionPtr joinFunction,
         Windowing::WindowTypePtr windowType,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight,
@@ -135,7 +135,7 @@ public:
      * @brief Getter keys
      * @return keys
      */
-    [[nodiscard]] FunctionNodePtr getJoinFunction();
+    [[nodiscard]] NodeFunctionPtr getJoinFunction();
 
     /**
      * @brief Checks if these two are equal
@@ -145,7 +145,7 @@ public:
     bool equals(const LogicalJoinDescriptor& other) const;
 
 private:
-    FunctionNodePtr joinFunction;
+    NodeFunctionPtr joinFunction;
     SchemaPtr leftSourceType = Schema::create();
     SchemaPtr rightSourceType = Schema::create();
     SchemaPtr outputSchema = Schema::create();

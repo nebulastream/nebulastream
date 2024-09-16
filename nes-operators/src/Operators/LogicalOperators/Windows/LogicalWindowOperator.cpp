@@ -15,7 +15,7 @@
 #include <sstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
@@ -145,7 +145,7 @@ bool LogicalWindowOperator::inferSchema()
     for (const auto& agg : windowAggregation)
     {
         outputSchema->addField(
-            AttributeField::create(NES::Util::as<FieldAccessFunctionNode>(agg->as())->getFieldName(), agg->on()->getStamp()));
+            AttributeField::create(NES::Util::as<NodeFunctionFieldAccess>(agg->as())->getFieldName(), agg->on()->getStamp()));
     }
 
     NES_DEBUG("Outputschema for window={}", outputSchema->toString());
@@ -202,7 +202,7 @@ std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
     auto windowDefinition = this->getWindowDefinition();
     if (windowDefinition->isKeyed())
     {
-        std::vector<FieldAccessFunctionNodePtr> groupByKeys = windowDefinition->getKeys();
+        std::vector<NodeFunctionFieldAccessPtr> groupByKeys = windowDefinition->getKeys();
         groupByKeyNames.reserve(groupByKeys.size());
         for (const auto& groupByKey : groupByKeys)
         {

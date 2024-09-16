@@ -15,9 +15,9 @@
 #include <iostream>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -46,7 +46,7 @@ QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName)
     return queryPlanPtr;
 }
 
-QueryPlanPtr QueryPlanBuilder::addProjection(const std::vector<FunctionNodePtr>& functions, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addProjection(const std::vector<NodeFunctionPtr>& functions, QueryPlanPtr queryPlan)
 {
     NES_DEBUG("QueryPlanBuilder: add projection operator to query plan");
     OperatorPtr op = LogicalOperatorFactory::createProjectionOperator(functions);
@@ -62,10 +62,10 @@ QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, Query
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addFilter(FunctionNodePtr const& filterFunction, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan)
 {
     NES_DEBUG("QueryPlanBuilder: add filter operator to query plan");
-    if (!filterFunction->getNodesByType<FieldRenameFunctionNode>().empty())
+    if (!filterFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Filter predicate cannot have a FieldRenameFunction");
     }
@@ -82,10 +82,10 @@ QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr query
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addMap(FieldAssignmentFunctionNodePtr const& mapFunction, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan)
 {
     NES_DEBUG("QueryPlanBuilder: add map operator to query plan");
-    if (!mapFunction->getNodesByType<FieldRenameFunctionNode>().empty())
+    if (!mapFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Map function cannot have a FieldRenameFunction");
     }
@@ -105,20 +105,20 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
 QueryPlanPtr QueryPlanBuilder::addJoin(
     QueryPlanPtr leftQueryPlan,
     QueryPlanPtr rightQueryPlan,
-    FunctionNodePtr joinFunction,
+    NodeFunctionPtr joinFunction,
     const Windowing::WindowTypePtr& windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
     NES_DEBUG("QueryPlanBuilder: joinWith the subQuery to current query");
 
-    NES_DEBUG("QueryPlanBuilder: Iterate over all FunctionNode to check join field.");
-    std::unordered_set<std::shared_ptr<BinaryFunctionNode>> visitedFunctions;
+    NES_DEBUG("QueryPlanBuilder: Iterate over all NodeFunction to check join field.");
+    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (NES::Util::instanceOf<BinaryFunctionNode>(*itr))
+        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr))
         {
-            auto visitingOp = NES::Util::as<BinaryFunctionNode>(*itr);
+            auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
             if (visitedFunctions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -127,8 +127,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
             else
             {
                 visitedFunctions.insert(visitingOp);
-                auto onLeftKey = NES::Util::as<BinaryFunctionNode>(*itr)->getLeft();
-                auto onRightKey = NES::Util::as<BinaryFunctionNode>(*itr)->getRight();
+                auto onLeftKey = NES::Util::as<NodeFunctionBinary>(*itr)->getLeft();
+                auto onRightKey = NES::Util::as<NodeFunctionBinary>(*itr)->getRight();
                 NES_DEBUG("QueryPlanBuilder: Check if Functions are FieldFunctions.");
                 auto leftKeyFieldAccess = checkFunction(onLeftKey, "leftSide");
                 auto rightQueryPlanKeyFieldAccess = checkFunction(onRightKey, "rightSide");
@@ -156,7 +156,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
 }
 
 QueryPlanPtr QueryPlanBuilder::addBatchJoin(
-    QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, FunctionNodePtr onProbeKey, FunctionNodePtr onBuildKey)
+    QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey)
 {
     NES_DEBUG("Query: joinWith the subQuery to current query");
     auto probeKeyFieldAccess = checkFunction(onProbeKey, "onProbeKey");
@@ -208,7 +208,7 @@ QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr query
             return assignWatermark(
                 queryPlan,
                 Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                    FieldAccessFunctionNode::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                    NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                     Windowing::TimeMeasure(0),
                     timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
         }
@@ -227,13 +227,13 @@ QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, Que
     return leftQueryPlan;
 }
 
-std::shared_ptr<FieldAccessFunctionNode> QueryPlanBuilder::checkFunction(FunctionNodePtr function, std::string side)
+std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::checkFunction(NodeFunctionPtr function, std::string side)
 {
-    if (!NES::Util::instanceOf<FieldAccessFunctionNode>(function))
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
     {
         NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessFunction but it was a  {}", side, function->toString());
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessFunction");
     }
-    return NES::Util::as<FieldAccessFunctionNode>(function);
+    return NES::Util::as<NodeFunctionFieldAccess>(function);
 }
-} /// namespace NES
+}
