@@ -22,15 +22,15 @@
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
@@ -38,8 +38,8 @@
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -137,8 +137,8 @@ public:
         auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulFunction2, "sum_charge");
 
         ///   count(*)
-        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(
-            uintegerType, uintegerType, Functions::FunctionPtr(), "count_order");
+        auto countAggFunction5
+            = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType, uintegerType, Functions::FunctionPtr(), "count_order");
 
         std::vector<Functions::FunctionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions

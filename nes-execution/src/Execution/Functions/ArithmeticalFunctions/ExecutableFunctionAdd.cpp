@@ -11,20 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <ErrorHandling.hpp>
-#include <memory>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-VarVal ExecutableFunctionAdd::execute(Record& record) const {
+VarVal ExecutableFunctionAdd::execute(Record& record) const
+{
     const auto leftValue = leftExecutableFunctionSub->execute(record);
     const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue + rightValue;
 }
 
 ExecutableFunctionAdd::ExecutableFunctionAdd(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub)) {}
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+{
+}
 
 FunctionPtr RegisterExecutableFunctionAdd(std::vector<FunctionPtr> subFunctions)
 {

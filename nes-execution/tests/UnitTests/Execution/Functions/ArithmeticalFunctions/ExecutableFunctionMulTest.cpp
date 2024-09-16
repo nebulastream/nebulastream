@@ -24,7 +24,6 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionMulTest : public Testing::BaseUnitTest
 {
 public:
-
     /// Defining some constexpr values for more readable tests
     static constexpr auto someMagicNumber = 23.0;
     static constexpr auto minI8Minus1 = static_cast<int16_t>(std::numeric_limits<int8_t>::min()) - 1;

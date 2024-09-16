@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <utility>
 #include <memory>
+#include <utility>
 #include <vector>
-#include <ErrorHandling.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {

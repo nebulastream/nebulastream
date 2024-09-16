@@ -16,15 +16,17 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
 /// Performs leftExecutableFunctionSub * rightExecutableFunctionSub
-class ExecutableFunctionMul : public Function {
-  public:
+class ExecutableFunctionMul : public Function
+{
+public:
     ExecutableFunctionMul(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
-  private:
+private:
     const FunctionPtr leftExecutableFunctionSub;
     const FunctionPtr rightExecutableFunctionSub;
 };

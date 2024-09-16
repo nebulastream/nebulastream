@@ -16,10 +16,12 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
 /// Negates the result of the subFunction
-class ExecutableFunctionNegate final : public Function {
+class ExecutableFunctionNegate final : public Function
+{
 public:
     explicit ExecutableFunctionNegate(FunctionPtr subFunction);
     VarVal execute(Record& record) const override;

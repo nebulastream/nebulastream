@@ -16,7 +16,8 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
 /// Performs leftExecutableFunctionSub + rightExecutableFunctionSub
 class ExecutableFunctionAdd : public Function

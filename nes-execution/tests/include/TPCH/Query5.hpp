@@ -21,15 +21,15 @@
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterExecutableFunctionEquals.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
@@ -39,8 +39,8 @@
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
-#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -273,8 +273,8 @@ public:
 
         /// Build on Supplier
         std::vector<FunctionPtr> supplierJoinBuildKeys = {std::make_shared<ExecutableFunctionReadField>("s_nationkey")};
-        std::vector<FunctionPtr> supplierJoinBuildValues
-            = {std::make_shared<ExecutableFunctionReadField>("l_extendedprice"), std::make_shared<ExecutableFunctionReadField>("l_discount")};
+        std::vector<FunctionPtr> supplierJoinBuildValues = {
+            std::make_shared<ExecutableFunctionReadField>("l_extendedprice"), std::make_shared<ExecutableFunctionReadField>("l_discount")};
         auto supplierJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
             supplierJoinBuildKeys,

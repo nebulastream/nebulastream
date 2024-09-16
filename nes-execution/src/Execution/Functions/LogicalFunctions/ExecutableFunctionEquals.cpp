@@ -14,19 +14,20 @@
 
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <ErrorHandling.hpp>
+
 namespace NES::Runtime::Execution::Functions
 {
-
-ExecutableFunctionEquals::ExecutableFunctionEquals(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
-{
-}
 
 VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
     const auto leftValue = leftExecutableFunctionSub->execute(record);
     const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue == rightValue;
+}
+
+ExecutableFunctionEquals::ExecutableFunctionEquals(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+{
 }
 
 FunctionPtr RegisterExecutableFunctionEquals(std::vector<FunctionPtr> subFunctions)

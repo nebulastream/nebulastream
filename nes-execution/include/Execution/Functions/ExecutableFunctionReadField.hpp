@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionReadField : public Function
 {
 public:
-    ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
+    explicit ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
     VarVal execute(Record& record) const override;
 
 private:

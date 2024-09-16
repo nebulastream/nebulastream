@@ -13,6 +13,7 @@
 */
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <ErrorHandling.hpp>
+
 namespace NES::Runtime::Execution::Functions
 {
 
@@ -22,6 +23,7 @@ VarVal ExecutableFunctionSub::execute(Record& record) const
     const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue - rightValue;
 }
+
 ExecutableFunctionSub::ExecutableFunctionSub(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {

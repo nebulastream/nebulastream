@@ -12,19 +12,22 @@
     limitations under the License.
 */
 #include <memory>
-#include <ErrorHandling.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
+#include <ErrorHandling.hpp>
 
-namespace NES::Runtime::Execution::Functions {
-
-ExecutableFunctionNegate::ExecutableFunctionNegate(FunctionPtr subFunction)
-    : subFunction(std::move(subFunction)) {}
+namespace NES::Runtime::Execution::Functions
+{
 
 VarVal ExecutableFunctionNegate::execute(Record& record) const
 {
     const auto value = subFunction->execute(record);
     return !value;
 }
+
+ExecutableFunctionNegate::ExecutableFunctionNegate(FunctionPtr subFunction) : subFunction(std::move(subFunction))
+{
+}
+
 
 FunctionPtr RegisterExecutableFunctionNegate(std::vector<FunctionPtr> subFunctions)
 {

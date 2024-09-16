@@ -11,21 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
 #include <memory>
-#include <ErrorHandling.hpp>
 #include <utility>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
+#include <ErrorHandling.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-VarVal ExecutableFunctionDiv::execute(Record& record) const {
+VarVal ExecutableFunctionDiv::execute(Record& record) const
+{
     const auto leftValue = leftExecutableFunctionSub->execute(record);
     const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue / rightValue;
 }
 
 ExecutableFunctionDiv::ExecutableFunctionDiv(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub)) {}
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+{
+}
 
 
 FunctionPtr RegisterExecutableFunctionDiv(std::vector<FunctionPtr> subFunctions)

@@ -21,14 +21,14 @@
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
@@ -36,8 +36,8 @@
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
-#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -148,8 +148,8 @@ public:
 
         /// join build for order_customers
         std::vector<FunctionPtr> order_customersJoinBuildKeys = {std::make_shared<ExecutableFunctionReadField>("o_orderkey")};
-        std::vector<FunctionPtr> order_customersJoinBuildValues
-            = {std::make_shared<ExecutableFunctionReadField>("o_orderdate"), std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
+        std::vector<FunctionPtr> order_customersJoinBuildValues = {
+            std::make_shared<ExecutableFunctionReadField>("o_orderdate"), std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
 
         auto order_customersJoinBuild = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
