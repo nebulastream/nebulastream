@@ -33,7 +33,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 ExecutionResult CompiledExecutablePipelineStage::execute(
     Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
-    // we call the compiled pipeline function with an input buffer and the execution context
+    /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineFunction(
         reinterpret_cast<int8_t*>(&workerContext),
         reinterpret_cast<int8_t*>(&pipelineExecutionContext),
@@ -43,7 +43,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(
 
 auto CompiledExecutablePipelineStage::compilePipeline()
 {
-    // compiler after setup
+    /// compiler after setup
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.getOptionOrDefault<std::string>("engine_backend", ""));
     timer.start();
 
@@ -101,4 +101,4 @@ uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     return 0;
 }
 
-} /// namespace NES::Runtime::Execution
+}

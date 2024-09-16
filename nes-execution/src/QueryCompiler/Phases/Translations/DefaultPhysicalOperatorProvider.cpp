@@ -14,8 +14,8 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/NodeFunctionBinary.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>

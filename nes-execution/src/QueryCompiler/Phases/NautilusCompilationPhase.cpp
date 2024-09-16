@@ -13,8 +13,8 @@
 */
 #include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
@@ -82,7 +82,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
         pipeline->getPipelineId());
 
     /// enable dump to console or file if the compiler options are set
-    options.setOption("toConsole", compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+    options.setOption(
+        "toConsole", compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
     options.setOption("toFile", compilerOptions->getDumpMode() == DumpMode::FILE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
