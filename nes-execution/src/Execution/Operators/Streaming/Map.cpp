@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/Streaming/Map.hpp>
+#include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
