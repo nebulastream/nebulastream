@@ -138,10 +138,7 @@ void writeFieldValueToTupleBuffer(
     auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
-    if (inputString.empty())
-    {
-        throw Exceptions::RuntimeException("Input string for parsing is empty");
-    }
+    INVARIANT(!inputString.empty(), "Input string for parsing is empty");
     /// TODO #371 replace with csv parsing library
     try
     {

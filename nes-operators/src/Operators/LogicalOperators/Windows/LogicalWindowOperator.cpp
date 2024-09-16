@@ -128,7 +128,7 @@ bool LogicalWindowOperator::inferSchema()
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("Unsupported window type" << windowDefinition->getWindowType()->toString());
+        throw CannotInferSchema("Unsupported window type {}", windowDefinition->getWindowType()->toString());
     }
 
     if (windowDefinition->isKeyed())

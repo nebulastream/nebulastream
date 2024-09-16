@@ -310,8 +310,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
         sortAttributesInFunction(right);
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
-    return nullptr;
+    throw NotImplemented("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
@@ -600,8 +599,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
         return NodeFunctionNegate::create(updatedChildFunction);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: ", *function);
-    return nullptr;
+    throw NotImplemented("No conversion to Z3 function implemented for the logical function node: ", *function);
 }
 
 bool AttributeSortRule::replaceCommutativeFunctions(

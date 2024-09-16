@@ -19,6 +19,7 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -84,10 +85,11 @@ template <class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
 RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
-    if (boundaryChecks && fieldIndex >= layout->getFieldOffSets().size())
-    {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldOffSets().size() << " >= " << fieldIndex);
-    }
+    INVARIANT(
+        boundaryChecks && fieldIndex < layout->getFieldOffSets().size(),
+        "fieldIndex out of bounds! {} >= {}",
+        layout->getFieldOffSets().size(),
+        fieldIndex);
 
     /// via pointer arithmetic gets the starting field address
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
@@ -106,17 +108,14 @@ RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::sha
     {
         return RowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
     }
-    NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
+    INVARIANT(false, "Could not find fieldIndex for {}", fieldName);
 }
 
 template <class T, bool boundaryChecks>
 inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
 {
-    if (boundaryChecks && recordIndex >= layout->getCapacity())
-    {
-        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << layout->getCapacity() << " >= " << recordIndex);
-    }
-
+    INVARIANT(
+        boundaryChecks && recordIndex < layout->getCapacity(), "recordIndex out of bounds! {}  >= {}", layout->getCapacity(), recordIndex);
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
 }
 

@@ -100,9 +100,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
     }
     else
     {
-        auto exp = CannotAllocateBuffer();
-        exp.what() += "FixedSizeBufferPool could not allocate buffer before timeout";
-        throw exp;
+        throw BufferAllocationFailure("FixedSizeBufferPool could not allocate buffer before timeout");
     }
 }
 
@@ -117,11 +115,10 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     }
     else
     {
-        if (!memSegment->isAvailable())
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
-        }
+        INVARIANT(
+            memSegment->isAvailable(),
+            "Recycling buffer callback invoked on used memory segment refcnt={}",
+            memSegment->controlBlock->getReferenceCount());
 
         /// add back an exclusive buffer to the local pool
         exclusiveBuffers.write(memSegment);
@@ -130,7 +127,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    NES_THROW_RUNTIME_ERROR("This feature is not supported here");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 size_t FixedSizeBufferPool::getBufferSize() const
 {

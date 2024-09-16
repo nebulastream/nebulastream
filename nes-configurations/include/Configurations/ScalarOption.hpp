@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ostream>
+#include <ErrorHandling.hpp>
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
@@ -166,12 +167,12 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
 {
     if (!inputParams.contains(this->getName()))
     {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw InvalidConfigParameter("Identifier {} is not known.", identifier);
     }
     std::string value = inputParams[this->getName()];
     if (value.empty())
     {
-        throw ConfigurationException("Identifier " + identifier + " is not known.");
+        throw InvalidConfigParameter("Identifier {} is not known.", identifier);
     }
     this->isValid(value);
     try
@@ -180,7 +181,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
     }
     catch (const std::exception& e)
     {
-        throw ConfigurationException("Conversion failed for " + identifier + " with value: " + value + ". Exception: " + e.what());
+        throw InvalidConfigParameter("Conversion failed for {} with value: {}. Exception: {}", identifier, value, e.what());
     }
 }
 

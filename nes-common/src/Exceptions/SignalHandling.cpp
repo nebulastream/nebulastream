@@ -27,34 +27,6 @@ static std::recursive_mutex globalErrorListenerMutex;
 /// this vector contains system-wide error listeners, e.g., Runtime and Services
 static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
-void invokeErrorHandlers(std::shared_ptr<std::exception> exception, std::string&& stacktrace)
-{
-    std::unique_lock lock(globalErrorListenerMutex);
-    if (globalErrorListeners.empty())
-    {
-        if (stacktrace.empty())
-        {
-            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what() << "]\n"
-                      << std::endl;
-        }
-        else
-        {
-            std::cerr << "No error listener is set, you need to revise your bin logic\n got error=[" << exception->what()
-                      << "] with stacktrace=\n"
-                      << stacktrace << std::endl;
-        }
-    }
-    for (auto& listener : globalErrorListeners)
-    {
-        if (!listener.expired())
-        {
-            listener.lock()->onFatalException(exception, stacktrace);
-        }
-    }
-    Logger::getInstance()->shutdown();
-    std::exit(1);
-}
-
 void invokeErrorHandlers(int signal, std::string&& stacktrace)
 {
     std::unique_lock lock(globalErrorListenerMutex);
@@ -81,20 +53,6 @@ void invokeErrorHandlers(int signal, std::string&& stacktrace)
     }
     Logger::getInstance()->shutdown();
     std::exit(1);
-}
-
-void invokeErrorHandlers(const std::string& buffer, std::string&& stacktrace)
-{
-    if (stacktrace.empty())
-    {
-        NES_TRACE("invokeErrorHandlers with buffer={}", buffer);
-    }
-    else
-    {
-        NES_TRACE("invokeErrorHandlers with buffer={} trace={}", buffer, stacktrace);
-    }
-    auto exception = std::make_shared<RuntimeException>(buffer, stacktrace);
-    invokeErrorHandlers(exception, std::move(stacktrace));
 }
 
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener)

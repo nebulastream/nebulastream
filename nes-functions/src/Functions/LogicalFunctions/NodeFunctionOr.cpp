@@ -59,15 +59,8 @@ void NodeFunctionOr::inferStamp(SchemaPtr schema)
     /// delegate stamp inference of children
     NodeFunction::inferStamp(schema);
     /// check if children stamp is correct
-    if (!getLeft()->isPredicate())
-    {
-        NES_THROW_RUNTIME_ERROR("OR Function Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
-    }
-    if (!getRight()->isPredicate())
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "OR Function Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
-    }
+    INVARIANT(getLeft()->isPredicate(), "the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
+    INVARIANT(getRight()->isPredicate(), "the stamp of right child must be boolean, but was: " + getRight()->getStamp()->toString());
 }
 
 NodeFunctionPtr NodeFunctionOr::deepCopy()

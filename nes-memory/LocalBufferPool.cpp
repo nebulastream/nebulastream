@@ -115,18 +115,17 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
     NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable())
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
-    }
+    INVARIANT(
+        memSegment->isAvailable(),
+        "Recycling buffer callback invoked on used memory segment refcnt={}",
+        memSegment->controlBlock->getReferenceCount());
     exclusiveBuffers.write(memSegment);
     exclusiveBufferCount.fetch_add(1);
 }
 
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
 {
-    NES_THROW_RUNTIME_ERROR("This feature is not supported here");
+    throw UnsupportedOperation("This feature is not supported here");
 }
 size_t LocalBufferPool::getBufferSize() const
 {

@@ -17,6 +17,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableDataType.pb.h>
+#include <magic_enum.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -25,6 +26,7 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
+
 namespace NES
 {
 
@@ -68,7 +70,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: serialization is not possible for " + dataType->toString());
+        throw CannotSerialize("serialization is not possible for " + dataType->toString());
     }
     NES_TRACE("DataTypeSerializationUtil:: serialized {} to {}", dataType->toString(), serializedDataType->SerializeAsString());
     return serializedDataType;
@@ -127,8 +129,7 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     {
         return DataTypeFactory::createVariableSizedData();
     }
-    NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
-                            "Deserialization is not possible");
+    throw CannotDeserialize("deserialization is not possible for {}", magic_enum::enum_name(serializedDataType.type()));
 }
 
 }

@@ -99,7 +99,7 @@ public:
      * @param logicalSourceName name of logical source
      * @return smart pointer to a physical source else nullptr
      * @note the source will also contain the schema
-     * @throws RuntimeException
+     * @throws UnknownSourceType
      */
     LogicalSourcePtr getLogicalSourceOrThrowException(const std::string& logicalSourceName);
 

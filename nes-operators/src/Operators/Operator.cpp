@@ -68,19 +68,15 @@ std::shared_ptr<Operator> Operator::duplicate()
     NES_DEBUG("Operator: copy all parents");
     for (const auto& parent : getParents())
     {
-        if (!copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent))))
-        {
-            NES_THROW_RUNTIME_ERROR("Operator: Unable to add parent to copy");
-        }
+        auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
+        INVARIANT(success, "Unable to add parent to copy");
     }
 
     NES_DEBUG("Operator: copy all children");
     for (const auto& child : getChildren())
     {
-        if (!copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate())))
-        {
-            NES_THROW_RUNTIME_ERROR("Operator: Unable to add child to copy");
-        }
+        auto success = copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate()));
+        INVARIANT(success, "Unable to add child to copy");
     }
     return copyOperator;
 }

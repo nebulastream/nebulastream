@@ -25,6 +25,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
@@ -48,7 +49,7 @@ using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 /// The DynamicField allows to read and write a field at a
 /// specific address and a specific data type.
 /// For all field accesses we check that the template type is the same as the selected physical field type.
-/// If the type is not compatible accesses result in a BufferAccessException.
+/// If the type is not compatible accesses result in a CannotAccessBuffer.
 class DynamicField
 {
 public:
@@ -56,22 +57,22 @@ public:
 
     /// Read a pointer type and return the value as a pointer.
     /// @tparam Type of the field requires to be a NesType.
-    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires IsNesType<Type> && std::is_pointer<Type>::value
     [[nodiscard]] Type read() const
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
-            throw BufferAccessException(
-                "Wrong field type passed. Field is of type {}  but accessed as {}", physicalType->toString(), typeid(Type).name());
+            throw CannotAccessBuffer(
+                "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
     };
 
-    /// Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
+    /// @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
     /// @tparam Type of the field requires to be a NesType.
-    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
@@ -79,16 +80,15 @@ public:
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
-            throw BufferAccessException(
+            throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
     };
 
-
-    /// Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
+    /// @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
     /// @tparam Type of the field requires to be a NesType.
-    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     /// @return Value of the field.
     template <class Type>
     requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
@@ -96,39 +96,39 @@ public:
     {
         if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
         {
-            throw BufferAccessException(
+            throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
     };
 
-    /// Writes a value to a specific field address (address is a member variable).
+    /// @brief Writes a value to a specific field address.
     /// @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
     /// @param value of the field.
-    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires(IsNesType<Type>)
     void write(Type value)
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
-            throw BufferAccessException(
+            throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
     };
 
-    /// Writes a value to a specific field address (address is a member variable).
+    /// @brief Writes a value to a specific field address.
     /// @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
     /// @param value of the field.
-    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @throws CannotAccessBuffer if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires(NESIdentifier<Type>)
     void write(Type value)
     {
         if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
         {
-            throw BufferAccessException(
+            throw CannotAccessBuffer(
                 "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
@@ -136,6 +136,10 @@ public:
 
     [[nodiscard]] std::string toString() const;
 
+    /// @brief Compares the two DynamicFields if there underlying memory is equal
+    [[nodiscard]] bool equal(const DynamicField& rhs) const;
+
+    /// @brief Checks if the DynamicField is equal
     bool operator==(const DynamicField& rhs) const;
 
     bool operator!=(const DynamicField& rhs) const;
@@ -157,11 +161,11 @@ public:
     /// Each tuple contains the index, to the memory layout and to the tuple buffer.
     DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
 
-    /// @throws BufferAccessException if field index is invalid
+    /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
 
 
-    /// @throws BufferAccessException if field index is invalid
+    /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::string fieldName) const;
 
     void
@@ -188,7 +192,7 @@ private:
  * This allows for dynamic accesses to a tuple buffer in the sense that at compile-time a user has not to specify a specific memory layout.
  * Therefore, the memory layout can be a runtime option, whereby the code that operates on the tuple buffer stays the same.
  * Furthermore, the TestTupleBuffers trades-off performance for safety.
- * To this end, it checks field bounds and field types and throws BufferAccessException if the passed parameters would lead to invalid buffer accesses.
+ * To this end, it checks field bounds and field types and throws CannotAccessBuffer if the passed parameters would lead to invalid buffer accesses.
  * The TestTupleBuffers supports different access methods:
  *
  *
@@ -236,7 +240,7 @@ public:
     void setNumberOfTuples(uint64_t value);
 
 
-    /// @throws BufferAccessException if index is larger then buffer capacity
+    /// @throws CannotAccessBuffer if index is larger then buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
     Memory::TupleBuffer getBuffer();
@@ -324,6 +328,7 @@ public:
      *
      * @param record: The record to be pushed to the buffer.
      * @param recordIndex: The index at which the record should be pushed to the buffer.
+     * @throws CannotAccessBuffer if the recordIndex is outside the buffer
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
@@ -334,10 +339,9 @@ public:
         uint64_t fieldIndex = 0;
         if (recordIndex >= buffer.getBufferSize())
         {
-            throw BufferAccessException(
-                "Current buffer is not big enough for index. Current buffer size: {}, Index: {}",
-                std::to_string(buffer.getBufferSize()),
-                std::to_string(recordIndex));
+            throw CannotAccessBuffer(
+                "Current buffer is not big enough for index. Current buffer size: " + std::to_string(buffer.getBufferSize())
+                + ", Index: " + std::to_string(recordIndex));
         }
         /// std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         /// On each iteration, the lambda function is called with the current field value, and the field index is increased.

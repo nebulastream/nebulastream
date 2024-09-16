@@ -16,6 +16,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -50,10 +51,7 @@ bool Operator::hasChild() const
 
 void Operator::setChild(Operators::ExecuteOperatorPtr child)
 {
-    if (hasChild())
-    {
-        NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
-    }
+    PRECONDITION(!hasChild(), "This operator already has a child operator");
     this->child = std::move(child);
 }
 

@@ -32,38 +32,21 @@ namespace NES::Memory::MemoryLayouts
 class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout>
 {
 public:
-    /**
-     * @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     */
+    /// @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
     RowLayout(SchemaPtr schema, uint64_t bufferSize);
     RowLayout(const RowLayout&);
 
-    /**
-     * @brief Factory to create a RowLayout
-     * @param schema the underling schema of this memory layout.
-     * @param bufferSize the expected buffer size.
-     * @return std::shared_ptr<RowLayout>
-     */
+    /// @brief Factory to create a RowLayout
     static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
-    /**
-     * Gets the offset in bytes of all fields within a single tuple.
-     * For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
-     * @return vector of field offsets.
-     */
+    /// Gets the offset in bytes of all fields within a single tuple.
+    /// For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
     const std::vector<uint64_t>& getFieldOffSets() const;
 
-    /**
-     * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
-     * For the row layout the field offset is calculated as follows:
-     * \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
-     * @param tupleIndex index of the tuple.
-     * @param fieldIndex index of the field.
-     * @throws BufferAccessException if the tuple index or the field index is out of bounds.
-     * @return offset in the tuple buffer.
-     */
+    /// @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
+    /// For the row layout the field offset is calculated as follows:
+    /// \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
+    /// @throws CannotAccessBuffer if the tuple index or the field index is out of bounds.
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
     std::shared_ptr<MemoryLayout> deepCopy() const override;

@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -36,7 +37,7 @@ bool LogicalUnaryOperator::inferSchema()
 
     if (children.empty())
     {
-        NES_THROW_RUNTIME_ERROR("UnaryOperator: this operator should have at least one child operator");
+        throw CannotInferSchema("UnaryOperator: this operator should have at least one child operator");
     }
 
     auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();

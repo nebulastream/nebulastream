@@ -103,11 +103,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             for (const auto& downStreamOperator : sourceOperator->getParents())
             {
                 /// If downStreamOperator is blocking then remove source operator as its upstream operator.
-                if (!downStreamOperator->removeChild(sourceOperator))
-                {
-                    throw Exceptions::RuntimeException(
-                        "LogicalSourceExpansionRule: Unable to remove non-blocking upstream operator from the blocking operator");
-                }
+                auto success = downStreamOperator->removeChild(sourceOperator);
+                INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
 
                 /// Add information about blocking operator to the source operator
                 addBlockingDownStreamOperator(sourceOperator, NES::Util::as<Operator>(downStreamOperator)->getId());
@@ -209,11 +206,8 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
         else
         {
             /// If downStreamOperator is blocking then remove current operator as its upstream operator.
-            if (!downStreamOperator->removeChild(operatorNode))
-            {
-                throw Exceptions::RuntimeException(
-                    "LogicalSourceExpansionRule: Unable to remove non-blocking upstream operator from the blocking operator");
-            }
+            auto success = downStreamOperator->removeChild(operatorNode);
+            INVARIANT(success, "Unable to remove non-blocking upstream operator from the blocking operator");
 
             /// Add to the current operator information about operator id of the removed downStreamOperator.
             /// We will use this information post expansion to re-add the connection later.
