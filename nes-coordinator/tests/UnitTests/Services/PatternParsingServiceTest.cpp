@@ -376,3 +376,36 @@ TEST_F(PatternParsingServiceTest, SimpleWhereConstantValueRight) {
     //Comparison of the expected and the actual generated query plan
     EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan));
 }
+
+TEST_F(PatternParsingServiceTest, FloatConstantValue) {
+    //pattern string as received from the NES UI
+    std::string patternString = "PATTERN test := (A SEQ B) FROM default_logical AS A, default_logical_b AS B WHERE A.id >= -30.5 "
+                                "WITHIN [3 MINUTE] INTO Print :: outStream";
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
+
+    // create query plan for A
+    QueryPlanPtr queryPlanA = QueryPlan::create();
+    LogicalOperatorPtr source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
+    queryPlanA->addRootOperator(source1);
+    // create query plan for B
+    QueryPlanPtr queryPlanB = QueryPlan::create();
+    LogicalOperatorPtr source2 =
+        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical_b"));
+    // add SEQ and window
+    queryPlanB->addRootOperator(source2);
+    NES::Query qSEQ = NES::Query(queryPlanA)
+                          .seqWith(NES::Query(queryPlanB))
+                          .window(NES::Windowing::SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(3), Minutes(1)));
+    queryPlanA = qSEQ.getQueryPlan();
+    // add filter for WHERE clause
+    LogicalOperatorPtr filter = LogicalOperatorFactory::createFilterOperator(
+        ExpressionNodePtr(GreaterEqualsExpressionNode::create(NES::Attribute("id").getExpressionNode(),
+                                                              NES::ExpressionItem(-30.5).getExpressionNode())));
+    queryPlanA->appendOperatorAsNewRoot(filter);
+    LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator(NES::PrintSinkDescriptor::create());
+    queryPlanA->appendOperatorAsNewRoot(sink);
+
+    //Comparison of the expected and the actual generated query plan
+    EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan));
+}

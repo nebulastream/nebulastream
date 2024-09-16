@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
+// Generated from ./NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_
@@ -113,11 +113,11 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterExpressionAtomPredicate(NesCEPParser::ExpressionAtomPredicateContext* ctx) = 0;
     virtual void exitExpressionAtomPredicate(NesCEPParser::ExpressionAtomPredicateContext* ctx) = 0;
 
+    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* ctx) = 0;
+    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* ctx) = 0;
+
     virtual void enterInPredicate(NesCEPParser::InPredicateContext* ctx) = 0;
     virtual void exitInPredicate(NesCEPParser::InPredicateContext* ctx) = 0;
-
-    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
-    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* ctx) = 0;
 
     virtual void enterIsNullPredicate(NesCEPParser::IsNullPredicateContext* ctx) = 0;
     virtual void exitIsNullPredicate(NesCEPParser::IsNullPredicateContext* ctx) = 0;

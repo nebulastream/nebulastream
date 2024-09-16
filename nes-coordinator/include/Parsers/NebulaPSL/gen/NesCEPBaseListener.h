@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
+// Generated from ./NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPBASELISTENER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPBASELISTENER_H_
@@ -115,11 +115,11 @@ class NesCEPBaseListener : public NesCEPListener {
     virtual void enterExpressionAtomPredicate(NesCEPParser::ExpressionAtomPredicateContext* /*ctx*/) override {}
     virtual void exitExpressionAtomPredicate(NesCEPParser::ExpressionAtomPredicateContext* /*ctx*/) override {}
 
+    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* /*ctx*/) override {}
+    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* /*ctx*/) override {}
+
     virtual void enterInPredicate(NesCEPParser::InPredicateContext* /*ctx*/) override {}
     virtual void exitInPredicate(NesCEPParser::InPredicateContext* /*ctx*/) override {}
-
-    virtual void enterBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
-    virtual void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* /*ctx*/) override {}
 
     virtual void enterIsNullPredicate(NesCEPParser::IsNullPredicateContext* /*ctx*/) override {}
     virtual void exitIsNullPredicate(NesCEPParser::IsNullPredicateContext* /*ctx*/) override {}

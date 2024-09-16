@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
+// Generated from ./NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
@@ -85,8 +85,9 @@ class NesCEPLexer : public antlr4::Lexer {
         LOGXOR = 72,
         NONE = 73,
         INT = 74,
-        NAME = 75,
-        ID = 76
+        FLOAT = 75,
+        NAME = 76,
+        ID = 77
     };
 
     explicit NesCEPLexer(antlr4::CharStream* input);

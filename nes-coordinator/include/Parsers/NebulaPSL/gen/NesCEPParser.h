@@ -1,5 +1,5 @@
 
-// Generated from IoTDB/nes-core/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
+// Generated from ./NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_
@@ -85,8 +85,9 @@ class NesCEPParser : public antlr4::Parser {
         LOGXOR = 72,
         NONE = 73,
         INT = 74,
-        NAME = 75,
-        ID = 76
+        FLOAT = 75,
+        NAME = 76,
+        ID = 77
     };
 
     enum {
@@ -589,6 +590,7 @@ class NesCEPParser : public antlr4::Parser {
         std::vector<antlr4::tree::TerminalNode*> QUOTE();
         antlr4::tree::TerminalNode* QUOTE(size_t i);
         antlr4::tree::TerminalNode* NAME();
+        antlr4::tree::TerminalNode* FLOAT();
         antlr4::tree::TerminalNode* INT();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
@@ -690,6 +692,19 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
+    class BinaryComparisonPredicateContext : public PredicateContext {
+      public:
+        BinaryComparisonPredicateContext(PredicateContext* ctx);
+
+        NesCEPParser::PredicateContext* left = nullptr;
+        NesCEPParser::PredicateContext* right = nullptr;
+        ComparisonOperatorContext* comparisonOperator();
+        std::vector<PredicateContext*> predicate();
+        PredicateContext* predicate(size_t i);
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
     class InPredicateContext : public PredicateContext {
       public:
         InPredicateContext(PredicateContext* ctx);
@@ -700,19 +715,6 @@ class NesCEPParser : public antlr4::Parser {
         ExpressionsContext* expressions();
         antlr4::tree::TerminalNode* RPARENTHESIS();
         antlr4::tree::TerminalNode* NOT();
-        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
-        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
-    };
-
-    class BinaryComparasionPredicateContext : public PredicateContext {
-      public:
-        BinaryComparasionPredicateContext(PredicateContext* ctx);
-
-        NesCEPParser::PredicateContext* left = nullptr;
-        NesCEPParser::PredicateContext* right = nullptr;
-        ComparisonOperatorContext* comparisonOperator();
-        std::vector<PredicateContext*> predicate();
-        PredicateContext* predicate(size_t i);
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
@@ -878,11 +880,11 @@ class NesCEPParser : public antlr4::Parser {
       public:
         AggregationContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
-        antlr4::tree::TerminalNode* AVGNode();
-        antlr4::tree::TerminalNode* SUMNode();
-        antlr4::tree::TerminalNode* MINNode();
-        antlr4::tree::TerminalNode* MAXNode();
-        antlr4::tree::TerminalNode* COUNTNode();
+        antlr4::tree::TerminalNode* AVG();
+        antlr4::tree::TerminalNode* SUM();
+        antlr4::tree::TerminalNode* MIN();
+        antlr4::tree::TerminalNode* MAX();
+        antlr4::tree::TerminalNode* COUNT();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;

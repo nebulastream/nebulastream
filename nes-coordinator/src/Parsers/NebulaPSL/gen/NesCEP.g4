@@ -130,7 +130,7 @@ nullNotnull
     ;
 
 constant
-    : QUOTE NAME QUOTE | INT | NAME
+    : QUOTE NAME QUOTE | FLOAT | INT | NAME
     ;
 
 
@@ -312,18 +312,19 @@ INT:
   DEC_DIGIT+
   ;
 
+FLOAT:
+  DEC_DIGIT+ '.' DEC_DIGIT+
+  ;
 
 NAME
 	:
 	('a'..'z' | 'A'..'Z' | '_' )+ ID*
-
 	;
 
 ID
 	:
 	('a'..'z' | 'A'..'Z' | '_' |INT)+
 	;
-
 
 
 

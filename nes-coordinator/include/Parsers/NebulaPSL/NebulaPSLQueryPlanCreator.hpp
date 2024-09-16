@@ -132,7 +132,7 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
          * @brief extracts WHERE Expressions
          * @param context
          */
-    void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparasionPredicateContext* context) override;
+    void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* context) override;
 
     /**
          * @brief extracts Attributes in the WHERE
