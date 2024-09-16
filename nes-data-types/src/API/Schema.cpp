@@ -19,17 +19,20 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-
 namespace NES
 {
 
-/// TODO REMOVE THIS FUNCTION AFTER REFACTORING
+/// TODO #386 REMOVE THIS FUNCTION AFTER REFACTORING
 bool startsWith(const std::string& fullString, std::string_view ending)
 {
     return (fullString.rfind(ending, 0) == 0);
@@ -61,7 +64,7 @@ SchemaPtr Schema::copy() const
 uint64_t Schema::getSchemaSizeInBytes() const
 {
     uint64_t size = 0;
-    /// todo if we introduce a physical schema.
+    /// TODO #386 if we introduce a physical schema.
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields)
     {
@@ -127,15 +130,24 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) const
 {
-    for (const auto& field : fields)
+    /// This does not work for fields with the same name but different qualifiers
+    /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
+    /// Additionally, it is not clear when and how to use what method to interact with the schema and the underlying attribute fields.
+    PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
+    auto fieldNameToSearchFor = fieldName;
+    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
+        && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        if (field->getName() == fieldName)
-        {
-            return field;
-        }
+        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the identifier {}", fieldName);
-    throw std::invalid_argument("field " + fieldName + " does not exist");
+
+
+    if (auto fieldFound = std::ranges::find(fields, fieldNameToSearchFor, &AttributeField::getName); fieldFound != fields.end())
+    {
+        return *fieldFound;
+    }
+
+    throw InvalidFieldException(fmt::format("field {}  does not exist", fieldName));
 }
 
 AttributeFieldPtr Schema::get(uint32_t index)
@@ -323,7 +335,7 @@ AttributeFieldPtr Schema::getField(const std::string& fieldName) const
     if (matchedFields.size() > 1)
     {
         ///        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
-        ///TODO: workaround we choose the first one to join we will replace this in issue #1543
+        ///TODO #386 workaround we choose the first one to join we will replace this in issue #1543
         return matchedFields[0];
     }
     return nullptr;
@@ -357,7 +369,7 @@ void Schema::setLayoutType(Schema::MemoryLayoutType layoutType)
 std::vector<std::string> Schema::getFieldNames() const
 {
     std::vector<std::string> fieldNames;
-    ///Todo: 4049: size can be corrupted if schema gets corrupted (18446741141687656808 fields)
+    ///TODO #386 size can be corrupted if schema gets corrupted (18446741141687656808 fields) #4049
     for (const auto& attribute : fields)
     {
         fieldNames.emplace_back(attribute->getName());
