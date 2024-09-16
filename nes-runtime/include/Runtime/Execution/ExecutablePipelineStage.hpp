@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include <magic_enum.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution
 {
