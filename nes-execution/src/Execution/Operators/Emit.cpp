@@ -12,20 +12,22 @@
     limitations under the License.
 */
 
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class EmitState : public OperatorState {
+class EmitState : public OperatorState
+{
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer)
-        : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) { }
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferReference;
@@ -33,7 +35,7 @@ public:
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 {
-    // initialize state variable and create new buffer
+    /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
     auto emitState = std::make_unique<EmitState>(resultBuffer);
@@ -43,9 +45,10 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
     const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
-    // emit buffer if it reached the maximal capacity
+    /// emit buffer if it reached the maximal capacity
     const auto result = emitState->outputIndex >= maxRecordsPerBuffer;
-    if (result) {
+    if (result)
+    {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
@@ -91,4 +94,4 @@ Emit::Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProv
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

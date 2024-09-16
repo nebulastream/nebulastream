@@ -22,7 +22,6 @@
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
 namespace NES::Runtime::Execution
 {

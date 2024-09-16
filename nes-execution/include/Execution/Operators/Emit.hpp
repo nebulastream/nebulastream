@@ -26,15 +26,12 @@ namespace NES::Runtime::Execution::Operators
 class Emit : public ExecutableOperator
 {
 public:
-
     Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    static void emitRecordBuffer(ExecutionContext& ctx,
-                          RecordBuffer& recordBuffer,
-                          const nautilus::val<uint64_t>& numRecords,
-                          const nautilus::val<bool>& lastChunk);
+    static void emitRecordBuffer(
+        ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk);
 
 private:
     uint64_t maxRecordsPerBuffer;
