@@ -101,7 +101,7 @@ std::string CPPLoweringProvider::LoweringContext::getType(const IR::Types::Stamp
     {
         return "bool";
     }
-    NES_NOT_IMPLEMENTED();
+    throw NotImplemented("stamp type not supported");
 }
 
 std::stringstream CPPLoweringProvider::LoweringContext::process()
@@ -220,7 +220,7 @@ void CPPLoweringProvider::LoweringContext::process(
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("Unknown Comparator");
     }
 
     blocks[blockIndex] << resultVar << " = " << leftInput << comperator << rightInput << ";\n";

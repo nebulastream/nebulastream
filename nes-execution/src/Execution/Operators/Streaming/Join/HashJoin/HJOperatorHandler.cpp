@@ -16,14 +16,14 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Memory::TupleBuffer>)
 {
-    NES_WARNING("Deserialize Slice function is not implemented for HJOperatorHandler.")
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented("Deserialize Slice function is not implemented for HJOperatorHandler.");
 }
 
 StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd)

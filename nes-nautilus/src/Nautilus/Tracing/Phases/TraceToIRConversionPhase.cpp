@@ -208,7 +208,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(
             processCall(scope, frame, currentIrBlock, operation);
             return;
     }
-    ///  NES_NOT_IMPLEMENTED();
+    ///  throw NotImplemented();
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processJMP(

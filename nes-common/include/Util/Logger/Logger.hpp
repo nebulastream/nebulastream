@@ -323,12 +323,6 @@ struct LogCaller<LogLevel::LOG_WARNING>
         } \
     } while (0)
 
-#define NES_NOT_IMPLEMENTED() \
-    do \
-    { \
-        throw NotImplemented("not implemented"); \
-    } while (0)
-
 #define NES_ERROR_OR_THROW_RUNTIME(THROW_EXCEPTION, ...) \
     do \
     { \

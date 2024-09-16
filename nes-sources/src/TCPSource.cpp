@@ -72,8 +72,7 @@ TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescrip
             inputParser = std::make_unique<CSVParser>(schema.getSize(), physicalTypes, ",");
             break;
         default:
-            NES_ERROR("InputFormat not supported.")
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented("InputFormat not supported.");
     }
 
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");

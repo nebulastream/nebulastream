@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus
 {
@@ -139,7 +140,7 @@ public:
                 }
                 else
                 {
-                    NES_NOT_IMPLEMENTED();
+                    throw NotImplemented("Operation not supported");
                 }
             }
             else

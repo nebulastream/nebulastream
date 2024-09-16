@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES::Nautilus::MemRefUtils
@@ -64,12 +65,11 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
             default: {
                 std::stringstream dataTypeAsString;
                 dataTypeAsString << dataType;
-                NES_ERROR("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented(fmt::format("load for Physical Type: {} is currently not supported", dataTypeAsString.str()));
             };
         }
     }
-    NES_NOT_IMPLEMENTED();
+    throw NotImplemented();
 }
 
 bool memeq(void* ptr1, void* ptr2, uint64_t size)

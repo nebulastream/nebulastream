@@ -16,6 +16,7 @@
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
 #include <Nautilus/Util/Dyncall.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Nautilus::Backends::BC
@@ -381,7 +382,7 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args)
         }
         else
         {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     /// set arguments

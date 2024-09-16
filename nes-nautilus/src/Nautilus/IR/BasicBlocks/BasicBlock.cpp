@@ -22,6 +22,7 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Nautilus::IR
@@ -185,10 +186,7 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     }
     else
     {
-        NES_ERROR(
-            "BasicBlock::getNextBlocks: Tried to get next block for unsupported operation type: {}",
-            magic_enum::enum_name(operations.back()->getOperationType()));
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("Tried to get next block for unsupported operation type:");
     }
 }
 

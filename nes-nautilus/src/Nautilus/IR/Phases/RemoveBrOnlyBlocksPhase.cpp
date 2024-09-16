@@ -23,6 +23,7 @@
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Nautilus::IR
@@ -144,10 +145,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const
             }
             else
             {
-                NES_ERROR(
-                    "RemoveBrOnlyBlocksPhase::updateTerminatorOperation: Case not implemented: {}",
-                    magic_enum::enum_name(terminatorOp->getOperationType()));
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented("Case not implemented");
             }
         }
     }

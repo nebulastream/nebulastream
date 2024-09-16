@@ -24,7 +24,7 @@ namespace NES
 
 std::string JsonFormat::getFormattedSchema()
 {
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented();
 }
 
 JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
@@ -34,7 +34,7 @@ JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferP
 
 std::string JsonFormat::getFormattedBuffer(Memory::TupleBuffer&)
 {
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented();
 }
 
 std::string JsonFormat::toString()

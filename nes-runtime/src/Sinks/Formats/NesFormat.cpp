@@ -48,7 +48,7 @@ FormatTypes NesFormat::getSinkFormat()
 
 FormatIterator NesFormat::getTupleIterator(Memory::TupleBuffer&)
 {
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented();
 }
 
 std::string NesFormat::getFormattedSchema()

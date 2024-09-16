@@ -38,6 +38,7 @@
 #include <mlir/IR/Value.h>
 #include <mlir/IR/Verifier.h>
 #include <mlir/Support/LLVM.h>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Nautilus::Backends::MLIR
@@ -323,7 +324,7 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
             generateMLIR(std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation), frame);
             break;
         default:
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented("MLIRLoweringProvider: Unknown Operation Type");
     }
 }
 
@@ -595,7 +596,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ModOpera
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("MLIRLoweringProvider: stamp type not supported");
     }
 }
 

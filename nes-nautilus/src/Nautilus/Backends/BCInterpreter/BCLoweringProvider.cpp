@@ -20,6 +20,7 @@
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Backends::BC
 {
@@ -169,7 +170,7 @@ Type getType(const IR::Types::StampPtr& stamp)
     {
         return Type::b;
     }
-    NES_NOT_IMPLEMENTED();
+    throw NotImplemented();
 }
 
 void BCLoweringProvider::LoweringContext::process(
@@ -217,7 +218,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::ADD_i64;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -268,7 +269,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::SUB_i64;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -320,7 +321,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::MUL_i64;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -371,7 +372,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::DIV_i64;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -426,7 +427,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::EQ_i64;
                 break;
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -472,7 +473,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::LESS_THAN_i64;
                 break;
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -518,7 +519,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::GREATER_THAN_i64;
                 break;
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -537,7 +538,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::LESS_THAN_d;
                 break;
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -556,7 +557,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::EQ_d;
                 break;
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -564,7 +565,7 @@ void BCLoweringProvider::LoweringContext::process(
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented();
     }
 }
 
@@ -615,7 +616,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::LOAD_b;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
 
@@ -669,7 +670,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::STORE_b;
             break;
         default: {
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     OpCode oc = {bc, addressReg, valueReg, -1};
@@ -1058,7 +1059,7 @@ bool BCLoweringProvider::LoweringContext::processNativeCall(
         else
         {
             /// TODO support void function
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented();
         }
     }
     else if (getType(opt->getStamp()) == Type::i64)

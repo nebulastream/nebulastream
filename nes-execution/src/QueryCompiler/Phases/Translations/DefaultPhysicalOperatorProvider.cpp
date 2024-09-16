@@ -105,7 +105,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("DefaultPhysicalOperatorProvider: lowering of this Operator not supported");
     }
 
     NES_DEBUG("DefaultPhysicalOperatorProvider:: Plan after lowering \n{}", decomposedQueryPlan->toString());

@@ -14,6 +14,7 @@
 #include <utility>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
@@ -70,8 +71,8 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
             default: {
                 std::stringstream type;
                 type << physicalType;
-                NES_ERROR("Aggregation Function::load: Physical Type: {} is currently not supported", type.str());
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType(
+                    fmt::format("Aggregation Function::load: Physical Type: {} is currently not supported", type.str()));
             };
         }
     }
@@ -79,8 +80,8 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
     {
         std::stringstream typeAsString;
         typeAsString << physicalType;
-        NES_ERROR("Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeAsString.str());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format(
+            "Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeAsString.str()));
     }
 }
 
@@ -124,8 +125,8 @@ Nautilus::Value<> AggregationFunction::createMinValue(const PhysicalTypePtr& phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                NES_ERROR("Aggregation Function::createMinValue: Physical Type: {} is currently not supported", type.str());
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType(
+                    fmt::format("Aggregation Function::createMinValue: Physical Type: {} is currently not supported", type.str()));
             };
         }
     }
@@ -133,9 +134,9 @@ Nautilus::Value<> AggregationFunction::createMinValue(const PhysicalTypePtr& phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        NES_ERROR(
-            "Aggregation Function::createMinValue: Physical Type: {} is not a basic type and is currently not supported", typeString.str());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format(
+            "Aggregation Function::createMinValue: Physical Type: {} is not a basic type and is currently not supported",
+            typeString.str()));
     }
 }
 
@@ -179,8 +180,8 @@ Nautilus::Value<> AggregationFunction::createMaxValue(const PhysicalTypePtr& phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                NES_ERROR("Aggregation Function::createMaxValue: Physical Type: {} is currently not supported", type.str());
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType(
+                    fmt::format("Aggregation Function::createMaxValue: Physical Type: {} is currently not supported", type.str()));
             };
         }
     }
@@ -188,9 +189,9 @@ Nautilus::Value<> AggregationFunction::createMaxValue(const PhysicalTypePtr& phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        NES_ERROR(
-            "Aggregation Function::createMaxValue: Physical Type: {} is not a basic type and is currently not supported", typeString.str());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format(
+            "Aggregation Function::createMaxValue: Physical Type: {} is not a basic type and is currently not supported",
+            typeString.str()));
     }
 }
 
@@ -234,8 +235,8 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                NES_ERROR("Aggregation Function::load: Physical Type: {} is currently not supported", type.str());
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType(
+                    fmt::format("Aggregation Function::load: Physical Type: {} is currently not supported", type.str()));
             };
         }
     }
@@ -243,8 +244,8 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        NES_ERROR("Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeString.str());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format(
+            "Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeString.str()));
     }
 }
 

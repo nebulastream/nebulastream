@@ -90,7 +90,7 @@ void fillState(
             }
             else
             {
-                NES_NOT_IMPLEMENTED();
+                throw NotImplemented();
             }
         }
         /// allocate entry and fill encoded fields and full record

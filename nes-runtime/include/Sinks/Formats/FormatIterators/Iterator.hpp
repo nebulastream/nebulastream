@@ -76,7 +76,7 @@ public:
             case FormatTypes::NES_FORMAT:
             case FormatTypes::CSV_FORMAT:
             default:
-                NES_NOT_IMPLEMENTED();
+                throw UnknownSinkFormat();
         }
     };
 

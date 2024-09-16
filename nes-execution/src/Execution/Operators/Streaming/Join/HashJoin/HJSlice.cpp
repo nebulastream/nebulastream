@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -134,7 +135,7 @@ HJSlice::HJSlice(
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw UnknownJoinStrategy();
     }
 
     NES_DEBUG(

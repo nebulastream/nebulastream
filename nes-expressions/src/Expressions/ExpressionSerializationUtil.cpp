@@ -43,6 +43,7 @@
 #include <Expressions/WhenExpressionNode.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <SerializableExpression.pb.h>
 
 namespace NES
@@ -399,9 +400,8 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else
     {
-        NES_FATAL_ERROR(
-            "TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: {}", expression->toString());
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented(fmt::format(
+            "TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: {}", expression->toString()));
     }
 }
 
@@ -492,9 +492,8 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else
     {
-        NES_FATAL_ERROR(
-            "ExpressionSerializationUtil: No serialization implemented for this logical expression node: {}", expression->toString());
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented(fmt::format(
+            "ExpressionSerializationUtil: No serialization implemented for this logical expression node: {}", expression->toString()));
     }
 }
 

@@ -26,6 +26,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -72,7 +73,7 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("JoinBuildSideType not supported");
     }
 }
 

@@ -14,6 +14,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -180,7 +181,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
         }
         return hash;
     }
-    NES_NOT_IMPLEMENTED();
+    throw NotImplemented();
 }
 
 HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, Value<>&, Value<MemRef>&)

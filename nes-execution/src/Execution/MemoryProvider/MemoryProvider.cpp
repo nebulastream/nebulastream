@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
@@ -78,15 +79,13 @@ Nautilus::Value<> MemoryProvider::load(
                 return fieldReference.load<Nautilus::Double>();
             };
             default: {
-                NES_ERROR("Physical Type: {} is currently not supported", type->toString());
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType(fmt::format("Physical Type: {} is currently not supported", type->toString()));
             };
         }
     }
     else if (type->isArrayType())
     {
-        NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format("Physical Type: array type {} is currently not supported", type->toString()));
     }
     else if (type->isTextType())
     {
@@ -96,8 +95,7 @@ Nautilus::Value<> MemoryProvider::load(
     }
     else
     {
-        NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
-        NES_NOT_IMPLEMENTED();
+        throw UnknownPhysicalType(fmt::format("Physical Type: type {} is currently not supported", type->toString()));
     }
 }
 
@@ -127,7 +125,7 @@ Nautilus::Value<> MemoryProvider::store(
         fieldReference.store(childIndex);
         return value;
     }
-    NES_NOT_IMPLEMENTED();
+    throw UnknownPhysicalType(fmt::format("Physical Type: type {} is currently not supported", type->toString()));
 }
 
 bool MemoryProvider::includesField(
@@ -154,7 +152,7 @@ MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize
             return std::make_unique<ColumnMemoryProvider>(columnMemoryLayout);
         }
         default:
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 
