@@ -11,18 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/WriteFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
-WriteFieldFunction::WriteFieldFunction(Record::RecordFieldIdentifier field, FunctionPtr subFunction)
+ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction)
     : field(std::move(field)), subFunction(std::move(subFunction))
 {
 }
 
-VarVal WriteFieldFunction::execute(Record& record) const
+VarVal ExecutableFunctionWriteField::execute(Record& record) const
 {
     VarVal newValue = subFunction->execute(record);
     record.write(field, newValue);

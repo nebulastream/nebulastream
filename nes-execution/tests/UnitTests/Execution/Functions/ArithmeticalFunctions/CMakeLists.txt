@@ -10,4 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_execution_test(arithmetical-function-tests "AddFunctionTest.cpp" "SubFunctionTest.cpp" "MulFunctionTest.cpp" "DivFunctionTest.cpp")
+add_nes_execution_test(arithmetical-function-tests "ExecutableFunctionAddTest.cpp" "ExecutableFunctionSubTest.cpp" "ExecutableFunctionMulTest.cpp" "ExecutableFunctionDivTest.cpp")

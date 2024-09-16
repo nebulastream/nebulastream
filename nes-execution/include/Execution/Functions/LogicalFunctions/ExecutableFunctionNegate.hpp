@@ -12,17 +12,21 @@
     limitations under the License.
 */
 
-#include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Configurations/Enums/DumpMode.hpp>
-#include <Configurations/Enums/NautilusBackend.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Util/Logger/Logger.hpp>
+#pragma once
 
-namespace NES::Configurations
+#include <Execution/Functions/Function.hpp>
+
+namespace NES::Runtime::Execution::Functions
 {
 
-template class EnumOption<NES::QueryCompilation::CompilationStrategy>;
-template class EnumOption<NES::QueryCompilation::DumpMode>;
-template class EnumOption<NES::QueryCompilation::NautilusBackend>;
-template class EnumOption<NES::LogLevel>;
+/// Negates the result of the subFunction
+class ExecutableFunctionNegate final : public Function
+{
+public:
+    explicit ExecutableFunctionNegate(FunctionPtr subFunction);
+    VarVal execute(Record& record) const override;
+
+private:
+    const FunctionPtr subFunction;
+};
 }

@@ -16,17 +16,19 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-/// Performs leftSubFunction / rightSubFunction
-class DivFunction : public Function {
-  public:
-    DivFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+/// Performs leftExecutableFunctionSub / rightExecutableFunctionSub
+class ExecutableFunctionDiv : public Function
+{
+public:
+    ExecutableFunctionDiv(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
-  private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
+private:
+    const FunctionPtr leftExecutableFunctionSub;
+    const FunctionPtr rightExecutableFunctionSub;
 };
 
 }

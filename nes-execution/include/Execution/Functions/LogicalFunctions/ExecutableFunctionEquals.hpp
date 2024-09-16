@@ -16,17 +16,18 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-/// Performs leftSubFunction * rightSubFunction
-class MulFunction : public Function {
-  public:
-    MulFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+/// Returns true if the left and right subfunctions are equal, otherwise false.
+class ExecutableFunctionEquals final : public Function
+{
+public:
+    ExecutableFunctionEquals(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
-  private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
+private:
+    const FunctionPtr leftExecutableFunctionSub;
+    const FunctionPtr rightExecutableFunctionSub;
 };
-
 }

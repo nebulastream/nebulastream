@@ -11,16 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-ReadFieldFunction::ReadFieldFunction(Record::RecordFieldIdentifier field) : field(field)
+ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIdentifier field) : field(field)
 {
 }
 
-VarVal ReadFieldFunction::execute(Record& record) const
+VarVal ExecutableFunctionReadField::execute(Record& record) const
 {
     return record.read(field);
 }
