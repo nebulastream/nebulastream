@@ -17,6 +17,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 namespace NES
 {
 
@@ -57,7 +59,7 @@ void NodeFunctionNegate::inferStamp(SchemaPtr schema)
     /// check if children stamp is correct
     if (!child()->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("Negate Function Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
+        throw CannotInferSchema("Negate Function Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
     }
 }
 NodeFunctionPtr NodeFunctionNegate::deepCopy()
@@ -67,7 +69,11 @@ NodeFunctionPtr NodeFunctionNegate::deepCopy()
 
 bool NodeFunctionNegate::validateBeforeLowering() const
 {
-    return children.size() == 1;
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return children[0]->as<FunctionNode>()->getStamp()->isBoolean();
 }
 
 }
