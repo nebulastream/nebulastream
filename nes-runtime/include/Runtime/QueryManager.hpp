@@ -80,7 +80,6 @@ public:
         std::vector<Memory::BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
-        uint64_t numberOfBuffersPerEpoch,
         std::vector<uint64_t> workerToCoreMapping = {});
 
     ~QueryManager() NES_NOEXCEPT(false) override;
@@ -259,8 +258,6 @@ protected:
 
     /// Todo #241: In #241, we introduce a way to uniquely identify sources globally, which we should use here to map from identifiers to sources
     std::unordered_map<OriginId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
-
-    uint64_t numberOfBuffersPerEpoch;
 
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
