@@ -11,18 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_
+#pragma once
 
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
 /**
  * @brief Implements MemoryProvider. Provides row-wise memory access.
  */
-class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
-  public:
+class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+{
+public:
     /**
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
      * @param Row memory layout pointer used to create the RowTupleBufferMemoryProvider.
@@ -32,18 +35,18 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          nautilus::val<int8_t*>& bufferAddress,
-                          nautilus::val<uint64_t>& recordIndex) const override;
+    Nautilus::Record readRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+        nautilus::val<int8_t*>& bufferAddress,
+        nautilus::val<uint64_t>& recordIndex) const override;
 
-    void writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void
+    writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
 
-  private:
-    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset,
-                                                            const uint64_t fieldIndex) const;
+private:
+    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
 
     const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };
 
-}// namespace NES::Runtime::Execution::MemoryProvider
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_
+}

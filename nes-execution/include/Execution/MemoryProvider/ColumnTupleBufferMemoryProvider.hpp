@@ -11,18 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNTUPLEBUFFERMEMORYPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNTUPLEBUFFERMEMORYPROVIDER_HPP_
-
+#pragma once
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
 /**
  * @brief Implements MemoryProvider. Provides columnar memory access.
  */
-class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
-  public:
+class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+{
+public:
     /**
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
      * @param Column memory layout pointer used to create the ColumnMemoryProvider.
@@ -32,17 +33,18 @@ class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          nautilus::val<int8_t*>& bufferAddress,
-                          nautilus::val<uint64_t>& recordIndex) const override;
+    Nautilus::Record readRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+        nautilus::val<int8_t*>& bufferAddress,
+        nautilus::val<uint64_t>& recordIndex) const override;
 
-    void writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void
+    writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
 
-  private:
+private:
     nautilus::val<int8_t*>
     calculateFieldAddress(nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
     Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
-}// namespace NES::Runtime::Execution::MemoryProvider
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNTUPLEBUFFERMEMORYPROVIDER_HPP_
+}

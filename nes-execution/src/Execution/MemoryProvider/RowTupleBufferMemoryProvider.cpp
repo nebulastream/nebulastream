@@ -15,33 +15,44 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <nautilus/val_ptr.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr)
-    : rowMemoryLayoutPtr(rowMemoryLayoutPtr){};
+    : rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
 
-MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr() { return rowMemoryLayoutPtr; }
+MemoryLayouts::MemoryLayoutPtr RowTupleBufferMemoryProvider::getMemoryLayoutPtr()
+{
+    return rowMemoryLayoutPtr;
+}
 
-nautilus::val<int8_t*> RowTupleBufferMemoryProvider::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const {
+nautilus::val<int8_t*>
+RowTupleBufferMemoryProvider::calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const
+{
     auto& fieldOffset = rowMemoryLayoutPtr->getFieldOffSets()[fieldIndex];
     auto fieldAddress = recordOffset + nautilus::val<uint64_t>(fieldOffset);
     return fieldAddress;
 }
 
-Nautilus::Record RowTupleBufferMemoryProvider::readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                                    nautilus::val<int8_t*>& bufferAddress,
-                                                    nautilus::val<uint64_t>& recordIndex) const {
-    // read all fields
+Nautilus::Record RowTupleBufferMemoryProvider::readRecord(
+    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    nautilus::val<int8_t*>& bufferAddress,
+    nautilus::val<uint64_t>& recordIndex) const
+{
+    /// read all fields
     auto& schema = rowMemoryLayoutPtr->getSchema();
     Nautilus::Record record;
     const auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i) {
+    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i)
+    {
         auto& fieldName = schema->fields[i]->getName();
-        if (!includesField(projections, fieldName)) {
+        if (!includesField(projections, fieldName))
+        {
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
@@ -51,16 +62,19 @@ Nautilus::Record RowTupleBufferMemoryProvider::readRecord(const std::vector<Naut
     return record;
 }
 
-void RowTupleBufferMemoryProvider::writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const {
+void RowTupleBufferMemoryProvider::writeRecord(
+    nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const
+{
     auto fieldSizes = rowMemoryLayoutPtr->getFieldSizes();
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     auto schema = rowMemoryLayoutPtr->getSchema();
-    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i) {
+    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
+    {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         const auto& value = rec.read(schema->fields[i]->getName());
         store(rowMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
     }
 }
 
-}// namespace NES::Runtime::Execution::MemoryProvider
+}

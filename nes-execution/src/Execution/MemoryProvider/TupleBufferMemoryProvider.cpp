@@ -11,76 +11,91 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <string>
 #include <API/Schema.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstdint>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
-#include <string>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
-const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
+const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex)
+{
     auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
 }
 
-Nautilus::VarVal TupleBufferMemoryProvider::load(const PhysicalTypePtr& type,
-                                                 const nautilus::val<int8_t*>& bufferReference,
-                                                       nautilus::val<int8_t*>& fieldReference) {
-    if (type->isBasicType()) {
+Nautilus::VarVal TupleBufferMemoryProvider::load(
+    const PhysicalTypePtr& type, const nautilus::val<int8_t*>& bufferReference, nautilus::val<int8_t*>& fieldReference)
+{
+    if (type->isBasicType())
+    {
         return Nautilus::VarVal::readVarValFromMemory(fieldReference, type);
-    } else if (type->isTextType()) {
+    }
+    else if (type->isTextType())
+    {
         const auto childIndex = readValueFromMemRef(fieldReference, uint32_t);
         const auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
         return Nautilus::VariableSizedData(textPtr);
-    } else {
+    }
+    else
+    {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
 
-uint32_t storeAssociatedTextValue(void* tupleBuffer, const int8_t* textValue) {
+uint32_t storeAssociatedTextValue(void* tupleBuffer, const int8_t* textValue)
+{
     auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
     return tb.storeChildBuffer(textBuffer);
 }
 
-Nautilus::VarVal TupleBufferMemoryProvider::store(const NES::PhysicalTypePtr& type,
-                                                  const nautilus::val<int8_t*>& bufferReference,
-                                                        nautilus::val<int8_t*>& fieldReference,
-                                                        Nautilus::VarVal value) {
-    if (type->isBasicType()) {
+Nautilus::VarVal TupleBufferMemoryProvider::store(
+    const NES::PhysicalTypePtr& type,
+    const nautilus::val<int8_t*>& bufferReference,
+    nautilus::val<int8_t*>& fieldReference,
+    Nautilus::VarVal value)
+{
+    if (type->isBasicType())
+    {
         value.writeToMemory(fieldReference);
         return value;
-    } else if (type->isTextType()) {
+    }
+    else if (type->isTextType())
+    {
         const auto textValue = value.cast<Nautilus::VariableSizedData>();
         const auto childIndex = nautilus::invoke(storeAssociatedTextValue, bufferReference, textValue.getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;
-    } else {
+    }
+    else
+    {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
 
 
-
-
-bool TupleBufferMemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                              const Nautilus::Record::RecordFieldIdentifier& fieldIndex) {
-    if (projections.empty()) {
+bool TupleBufferMemoryProvider::includesField(
+    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex)
+{
+    if (projections.empty())
+    {
         return true;
     }
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
@@ -88,14 +103,20 @@ bool TupleBufferMemoryProvider::includesField(const std::vector<Nautilus::Record
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
-MemoryProviderPtr TupleBufferMemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+MemoryProviderPtr TupleBufferMemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema)
+{
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
         auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    }
+    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }

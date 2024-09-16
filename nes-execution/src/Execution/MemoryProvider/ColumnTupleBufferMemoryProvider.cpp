@@ -12,23 +12,29 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <val_ptr.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
-ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
-    : columnMemoryLayoutPtr(columnMemoryLayoutPtr){};
+ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(Memory::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
+    : columnMemoryLayoutPtr(std::move(std::move(columnMemoryLayoutPtr))) {};
 
-MemoryLayouts::MemoryLayoutPtr ColumnTupleBufferMemoryProvider::getMemoryLayoutPtr() { return columnMemoryLayoutPtr; }
+Memory::MemoryLayouts::MemoryLayoutPtr ColumnTupleBufferMemoryProvider::getMemoryLayoutPtr()
+{
+    return columnMemoryLayoutPtr;
+}
 
-nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(nautilus::val<int8_t*>& bufferAddress,
-                                                                           nautilus::val<uint64_t>& recordIndex,
-                                                                           uint64_t fieldIndex) const {
+nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
+    nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const
+{
     auto& fieldSize = columnMemoryLayoutPtr->getFieldSizes()[fieldIndex];
     auto& columnOffset = columnMemoryLayoutPtr->getColumnOffsets()[fieldIndex];
     auto fieldOffset = recordIndex * fieldSize + columnOffset;
@@ -36,15 +42,19 @@ nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(na
     return fieldAddress;
 }
 
-Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                                       nautilus::val<int8_t*>& bufferAddress,
-                                                       nautilus::val<uint64_t>& recordIndex) const {
+Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(
+    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    nautilus::val<int8_t*>& bufferAddress,
+    nautilus::val<uint64_t>& recordIndex) const
+{
     auto& schema = columnMemoryLayoutPtr->getSchema();
-    // read all fields
+    /// read all fields
     Nautilus::Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i) {
+    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i)
+    {
         auto& fieldName = schema->fields[i]->getName();
-        if (!includesField(projections, fieldName)) {
+        if (!includesField(projections, fieldName))
+        {
             continue;
         }
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
@@ -54,16 +64,17 @@ Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(const std::vector<N
     return record;
 }
 
-void ColumnTupleBufferMemoryProvider::writeRecord(nautilus::val<uint64_t>& recordIndex,
-                                            nautilus::val<int8_t*>& bufferAddress,
-                                            NES::Nautilus::Record& rec) const {
+void ColumnTupleBufferMemoryProvider::writeRecord(
+    nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const
+{
     auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();
     auto& schema = columnMemoryLayoutPtr->getSchema();
-    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i) {
+    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
+    {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
         const auto& value = rec.read(schema->fields[i]->getName());
         store(columnMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);
     }
 }
 
-}// namespace NES::Runtime::Execution::MemoryProvider
+}

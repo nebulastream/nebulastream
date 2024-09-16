@@ -24,8 +24,9 @@ using MemoryProviderPtr = std::unique_ptr<TupleBufferMemoryProvider>;
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
-class TupleBufferMemoryProvider {
-  public:
+class TupleBufferMemoryProvider
+{
+public:
     virtual ~TupleBufferMemoryProvider();
 
     static MemoryProviderPtr createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema);
@@ -36,15 +37,17 @@ class TupleBufferMemoryProvider {
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
     /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be read
-    virtual Nautilus::Record readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                  nautilus::val<int8_t*>& bufferAddress,
-                                  nautilus::val<uint64_t>& recordIndex) const = 0;
+    virtual Nautilus::Record readRecord(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+        nautilus::val<int8_t*>& bufferAddress,
+        nautilus::val<uint64_t>& recordIndex) const
+        = 0;
 
     /// Writes a record from the given bufferAddress and recordIndex.
     /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
-    virtual void
-    writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const = 0;
+    virtual void writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const
+        = 0;
 
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
@@ -55,13 +58,14 @@ class TupleBufferMemoryProvider {
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static Nautilus::VarVal store(const NES::PhysicalTypePtr& type,
-                                  const nautilus::val<int8_t*>& bufferReference,
-                                  nautilus::val<int8_t*>& fieldReference,
-                                  Nautilus::VarVal value);
+    static Nautilus::VarVal store(
+        const NES::PhysicalTypePtr& type,
+        const nautilus::val<int8_t*>& bufferReference,
+        nautilus::val<int8_t*>& fieldReference,
+        Nautilus::VarVal value);
 
-    [[nodiscard]] static bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                            const Nautilus::Record::RecordFieldIdentifier& fieldIndex);
+    [[nodiscard]] static bool includesField(
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex);
 };
 
 } /// namespace NES::Runtime::Execution::MemoryProvider
