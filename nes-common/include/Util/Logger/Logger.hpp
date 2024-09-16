@@ -16,13 +16,12 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>
-#include <ErrorHandling.hpp>
+
 namespace NES
 {
 
@@ -45,10 +44,8 @@ namespace NES
 #    define NES_COMPILE_TIME_LOG_LEVEL 1
 #endif
 
-/**
- * @brief LogCaller is our compile-time trampoline to invoke the Logger method for the desired level of logging L
- * @tparam L the level of logging
- */
+/// @brief LogCaller is our compile-time trampoline to invoke the Logger method for the desired level of logging L
+/// @tparam L the level of logging
 template <LogLevel L>
 struct LogCaller
 {
@@ -300,42 +297,6 @@ struct LogCaller<LogLevel::LOG_WARNING>
                 __os << " error message: " << __VA_ARGS__; \
                 NES::Exceptions::invokeErrorHandlers(__buffer.str(), ""); \
             } \
-        } \
-    } while (0)
-
-#define NES_THROW_RUNTIME_ERROR(...) \
-    do \
-    { \
-        std::stringbuf __buffer; \
-        std::ostream __os(&__buffer); \
-        __os << __VA_ARGS__; \
-        const std::source_location __location = std::source_location::current(); \
-        auto __level = NES::getLogLevel(NES::LogLevel::LOG_DEBUG); \
-        auto __currentlevel = NES::getLogLevel(NES::Logger::getInstance()->getCurrentLogLevel()); \
-        if (__currentlevel >= __level && NES_COMPILE_TIME_LOG_LEVEL >= __level) \
-        { \
-            auto __stacktrace = NES::collectStacktrace(); \
-            throw NES::Exceptions::RuntimeException(__buffer.str(), std::move(__stacktrace), std::move(__location)); \
-        } \
-        else \
-        { \
-            throw NES::Exceptions::RuntimeException(__buffer.str(), "", std::move(__location)); \
-        } \
-    } while (0)
-
-#define NES_ERROR_OR_THROW_RUNTIME(THROW_EXCEPTION, ...) \
-    do \
-    { \
-        if ((THROW_EXCEPTION)) \
-        { \
-            NES_THROW_RUNTIME_ERROR(__VA_ARGS__); \
-        } \
-        else \
-        { \
-            std::stringbuf __buffer; \
-            std::ostream __os(&__buffer); \
-            __os << __VA_ARGS__; \
-            NES_ERROR("{}", __buffer.str()); \
         } \
     } while (0)
 

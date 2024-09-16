@@ -52,8 +52,7 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
         {
             ss << id << ",";
         }
-        NES_THROW_RUNTIME_ERROR(
-            "update watermark for non existing origin " << origin << " number of origins=" << origins.size() << " ids=" << ss.str());
+        INVARIANT(false, "update watermark for non existing origin={} number of origins size={} ids={}", origin, origins.size(), ss.str());
     }
     return getCurrentWatermark();
 }

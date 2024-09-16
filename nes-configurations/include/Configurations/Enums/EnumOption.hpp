@@ -18,6 +18,7 @@
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -72,7 +73,7 @@ protected:
             {
                 ss << name;
             }
-            throw ConfigurationException("Enum for " + node.as<std::string>() + " was not found. Valid options are " + ss.str());
+            throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", node.as<std::string>(), ss.str());
         }
         this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
     };
@@ -87,7 +88,7 @@ protected:
             {
                 ss << name;
             }
-            throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
+            throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", value, ss.str());
         }
         this->value = magic_enum::enum_cast<T>(value).value();
     };

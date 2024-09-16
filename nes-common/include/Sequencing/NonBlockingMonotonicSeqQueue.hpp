@@ -21,7 +21,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/ChunkCollector.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -97,7 +96,6 @@ public:
      * However, only one element with a given sequence number and chunk number can be inserted.
      * @param sequenceData of the new element.
      * @param newValue
-     * @throws RuntimeException if an element with the same sequence number was already inserted.
      */
     void emplace(SequenceData sequenceData, T newValue)
     {
@@ -174,10 +172,7 @@ private:
         }
 
         /// check if we really found the correct block
-        if (!(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize))
-        {
-            throw Exceptions::RuntimeException("The found block is wrong");
-        }
+        INVARIANT(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize)
 
         /// Emplace value in block
         /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
@@ -245,7 +240,7 @@ private:
 
     /**
      * @brief This function traverses the linked list of blocks, till the target block index is found.
-     * It assumes, that the target block index exists. If not, the function throws a runtime exception.
+     * It assumes, that the target block index exists. If not, the function throws an Invariant.
      * @param currentBlock the start block, usually the head.
      * @param targetBlockIndex the target address
      * @return the found block, which contains the target block index.
@@ -256,10 +251,7 @@ private:
         {
             /// append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
-            if (!nextBlock)
-            {
-                throw Exceptions::RuntimeException("The next block dose not exist. This should not happen here.");
-            }
+            INVARIANT(nextBlock, "The next block does not exist. This should not happen here.")
             /// move to the next block
             currentBlock = nextBlock;
         }

@@ -27,10 +27,6 @@ ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowT
     {
         return thresholdWindow;
     }
-    else
-    {
-        NES_ERROR("Can not cast the content based window type to a threshold window");
-        NES_THROW_RUNTIME_ERROR("Can not cast the content based window type to a threshold window");
-    }
+    INVARIANT(false, "Can not cast the content based window type to a threshold window");
 }
 }

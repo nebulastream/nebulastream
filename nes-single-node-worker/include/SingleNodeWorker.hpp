@@ -60,7 +60,6 @@ public:
      * Registers a DecomposedQueryPlan which internally triggers the QueryCompiler and registers the executable query plan. Once
      * returned the query can be started with the QueryId. The registered Query will be in the StoppedState
      * @param plan Fully Specified LogicalQueryPlan.
-     * @throws RuntimeException the QueryCompilation fails
      * @return QueryId which identifies the registered Query
      */
     QueryId registerQuery(DecomposedQueryPlanPtr plan);
@@ -82,7 +81,6 @@ public:
 
     /**
      * Unregisters a stopped Query.
-     * @throws RuntimeException if Query is still running.
      * @param queryId identifies the registered stopped query
      */
     void unregisterQuery(QueryId queryId);

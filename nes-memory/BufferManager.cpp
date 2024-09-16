@@ -74,9 +74,11 @@ void BufferManager::destroy()
         }
         if (!success)
         {
-            NES_THROW_RUNTIME_ERROR(
-                "[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
-                << allBuffers.size() << " available=" << numOfAvailableBuffers);
+            INVARIANT(
+                false,
+                "Requested buffer manager shutdown but a buffer is still used allBuffers={} available={}",
+                allBuffers.size(),
+                numOfAvailableBuffers);
         }
         /// RAII takes care of deallocating memory here
         allBuffers.clear();
@@ -136,12 +138,12 @@ void BufferManager::initialize(uint32_t withAlignment)
     {
         if ((withAlignment & (withAlignment - 1)))
         { /// not a pow of two
-            NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
+            PRECONDITION(false, "NES tries to align memory but alignment is not a pow of two");
         }
     }
     else if (withAlignment > page_size)
     {
-        NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is invalid");
+        PRECONDITION(false, "NES tries to align memory but alignment is invalid");
     }
 
     NES_ASSERT2_FMT(
@@ -163,10 +165,8 @@ void BufferManager::initialize(uint32_t withAlignment)
         numOfBuffers,
         controlBlockSize,
         alignof(detail::BufferControlBlock));
-    if (basePointer == nullptr)
-    {
-        NES_THROW_RUNTIME_ERROR("memory allocation failed");
-    }
+    INVARIANT(basePointer, "memory allocation failed");
+
     uint8_t* ptr = basePointer;
     for (size_t i = 0; i < numOfBuffers; ++i)
     {
@@ -194,9 +194,7 @@ TupleBuffer BufferManager::getBufferBlocking()
         return buffer.value();
     }
     /// Throw exception if no buffer was returned allocated after timeout.
-    auto exception = CannotAllocateBuffer();
-    exception.what() += "Global buffer pool could not allocate buffer before timeout";
-    throw exception;
+    throw BufferAllocationFailure("Global buffer pool could not allocate buffer before timeout");
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
@@ -211,7 +209,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
-    NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(std::chrono::milliseconds timeout_ms)
@@ -227,7 +225,7 @@ std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(std::chrono::mill
     {
         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
-    NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
@@ -250,7 +248,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
                     {
                         return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
                     }
-                    NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+                    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
                 }
             }
             else
@@ -265,10 +263,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto* ptr = static_cast<uint8_t*>(memoryResource->allocate(alignedBufferSizePlusControlBlock, DEFAULT_ALIGNMENT));
-    if (ptr == nullptr)
-    {
-        NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
-    }
+    INVARIANT(ptr, "Unpooled memory allocation failed");
     NES_TRACE(
         "Ptr: {} alignedBufferSize: {} alignedBufferSizePlusControlBlock: {} controlBlockSize: {}",
         reinterpret_cast<uintptr_t>(ptr),
@@ -287,15 +282,12 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
     {
         return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, bufferSize);
     }
-    NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
+    throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
 {
-    if (!segment->isAvailable())
-    {
-        NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
-    }
+    INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     availableBuffers.write(segment);
     numOfAvailableBuffers.fetch_add(1);
 }
@@ -303,10 +295,7 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment)
 {
     std::unique_lock lock(unpooledBuffersMutex);
-    if (!segment->isAvailable())
-    {
-        NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
-    }
+    INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
     UnpooledBufferHolder probe(segment->getSize());
     auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())

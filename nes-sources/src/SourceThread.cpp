@@ -159,8 +159,8 @@ void dataSourceThread(
     threadSetup(originId);
     if (!bufferProvider)
     {
-        emit(originId, SourceReturnType::Error(CannotAllocateBuffer()));
-        result.set_exception(std::make_exception_ptr(CannotAllocateBuffer()));
+        emit(originId, SourceReturnType::Error(BufferAllocationFailure()));
+        result.set_exception(std::make_exception_ptr(BufferAllocationFailure()));
         return;
     }
 

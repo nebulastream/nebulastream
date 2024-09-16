@@ -47,7 +47,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
     {
-        throw BufferAccessException("field name {} does not exist in layout", fieldName);
+        throw CannotAccessBuffer("field name {} does not exist in layout", fieldName);
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
@@ -79,7 +79,7 @@ void DynamicTuple::writeVarSized(
                 }
                 else
                 {
-                    NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+                    PRECONDITION(false, "We expect either a uint64_t or a std::string to access a DynamicField!");
                 }
             },
             field);
@@ -104,7 +104,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
             }
             else
             {
-                NES_THROW_RUNTIME_ERROR("We expect either a uint64_t or a std::string to access a DynamicField!");
+                PRECONDITION(false, "We expect either a uint64_t or a std::string to access a DynamicField!");
             }
         },
         field);
@@ -222,7 +222,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 {
     if (tupleIndex >= getCapacity())
     {
-        throw BufferAccessException("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
+        throw CannotAccessBuffer("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
     }
     return {tupleIndex, memoryLayout, buffer};
 }
@@ -359,7 +359,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
+        throw NotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 

@@ -48,14 +48,14 @@ uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) con
 {
     if (fieldIndex >= fieldOffSets.size())
     {
-        throw BufferAccessException(
+        throw CannotAccessBuffer(
             "field index: {} is larger the number of field in the memory layout {}",
             std::to_string(fieldIndex),
             std::to_string(physicalFieldSizes.size()));
     }
     if (tupleIndex >= getCapacity())
     {
-        throw BufferAccessException(
+        throw CannotAccessBuffer(
             "tuple index: {} is larger the maximal capacity in the memory layout {}",
             std::to_string(tupleIndex),
             std::to_string(getCapacity()));

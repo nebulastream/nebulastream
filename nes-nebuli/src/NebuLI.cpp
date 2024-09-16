@@ -141,10 +141,9 @@ Sources::SourceDescriptor createSourceDescriptor(
     const std::unordered_map<std::string, std::string>& parserConfig,
     std::unordered_map<std::string, std::string> sourceConfiguration)
 {
-    if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
-    {
-        NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
-    }
+    PRECONDITION(
+        sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG),
+        "Missing `Configurations::SOURCE_TYPE_CONFIG` in source configuration");
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 

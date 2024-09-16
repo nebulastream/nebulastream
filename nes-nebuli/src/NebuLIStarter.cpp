@@ -45,11 +45,11 @@ public:
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+            throw NES::QueryRegistrationFailedGRPC(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
-                status.error_details()));
+                status.error_details());
         }
         return reply.queryid();
     }
@@ -68,11 +68,11 @@ public:
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+            throw NES::QueryStopFailedGRPC(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
-                status.error_details()));
+                status.error_details());
         }
     }
 
@@ -85,15 +85,15 @@ public:
         auto status = stub->RequestQuerySummary(&context, request, &response);
         if (status.ok())
         {
-            NES_DEBUG("Stopping was successful.");
+            NES_DEBUG("Status was successful.");
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+            throw NES::QueryStatusFailedGRPC(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
-                status.error_details()));
+                status.error_details());
         }
     }
 
@@ -110,11 +110,11 @@ public:
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+            throw NES::QueryStartFailedGRPC(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
-                status.error_details()));
+                status.error_details());
         }
     }
 
@@ -131,11 +131,11 @@ public:
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+            throw NES::QueryUnregistrationFailedGRPC(
+                "Status: {}\nMessage: {}\nDetail: {}",
                 magic_enum::enum_name(status.error_code()),
                 status.error_message(),
-                status.error_details()));
+                status.error_details());
         }
     }
 };
