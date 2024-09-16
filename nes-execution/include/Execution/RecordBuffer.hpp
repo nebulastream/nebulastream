@@ -17,9 +17,9 @@
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Nautilus
 {
