@@ -17,8 +17,8 @@
 #define NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 #define NES_VERSION_MAJOR 0
 #define NES_VERSION_MINOR 6
-#define NES_VERSION_PATCH 179
-#define NES_VERSION_POST_FIX 
-constexpr char const* NES_VERSION      = "0.6.179";
+#define NES_VERSION_PATCH 180
+#define NES_VERSION_POST_FIX -SNAPSHOT
+constexpr char const* NES_VERSION      = "0.6.180-SNAPSHOT";
 #endif // NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 // clang-format on
