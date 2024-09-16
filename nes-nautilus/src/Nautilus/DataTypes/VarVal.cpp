@@ -173,7 +173,7 @@ std::ostream& operator<<(std::ostream& os, const VarVal& varVal)
         {
             if constexpr (requires(std::ostream& tOs, T t) { operator<<(tOs, t); })
             {
-                return os << value;
+                return operator<<(os, value);
             }
             else
             {
