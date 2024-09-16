@@ -30,7 +30,7 @@ public:
     */
     static WindowAggregationDescriptorPtr on();
 
-    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
@@ -47,7 +47,7 @@ public:
     virtual ~CountAggregationDescriptor() = default;
 
 private:
-    explicit CountAggregationDescriptor(FieldAccessFunctionNodePtr onField);
-    CountAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
+    explicit CountAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
+    CountAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
 } /// namespace NES::Windowing

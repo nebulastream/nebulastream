@@ -15,8 +15,8 @@
 #pragma once
 
 #include <string>
-#include <Functions/BinaryFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES
 {
@@ -25,5 +25,5 @@ namespace NES
  * @param joinFunction : a set of potenitally nested binary functions
  * @param the keyFieldNames as pair
  */
-std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::FunctionNode> joinFunction);
+std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction);
 } /// namespace NES

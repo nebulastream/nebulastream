@@ -13,7 +13,7 @@
 */
 #pragma once
 
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -25,20 +25,20 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalMapOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction);
+    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentFunctionNodePtr& mapFunction);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
     std::string toString() const override;
     OperatorPtr copy() override;
 
     /**
      * @brief Returns the function of this map operator
-     * @return FieldAssignmentFunctionNodePtr
+     * @return NodeFunctionFieldAssignmentPtr
      */
-    FieldAssignmentFunctionNodePtr getMapFunction();
+    NodeFunctionFieldAssignmentPtr getMapFunction();
 
 protected:
-    const FieldAssignmentFunctionNodePtr mapFunction;
+    const NodeFunctionFieldAssignmentPtr mapFunction;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

@@ -14,11 +14,12 @@
 
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/FunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES::Windowing
@@ -32,13 +33,13 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeU
 {
 }
 
-TimeCharacteristicPtr TimeCharacteristic::createEventTime(FunctionNodePtr fieldValue, const TimeUnit& unit)
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(NodeFunctionPtr fieldValue, const TimeUnit& unit)
 {
-    if (!NES::Util::instanceOf<FieldAccessFunctionNode>(fieldValue))
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", fieldValue->toString());
+        throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", fieldValue->toString()));
     }
-    auto fieldAccess = NES::Util::as<FieldAccessFunctionNode>(fieldValue);
+    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }

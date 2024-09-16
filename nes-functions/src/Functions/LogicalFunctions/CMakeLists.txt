@@ -11,15 +11,15 @@
 # limitations under the License.
 
 add_source_files(nes-functions
-        LogicalBinaryFunctionNode.cpp
-        LessEqualsFunctionNode.cpp
-        LessFunctionNode.cpp
-        GreaterFunctionNode.cpp
-        GreaterEqualsFunctionNode.cpp
-        EqualsFunctionNode.cpp
-        AndFunctionNode.cpp
-        OrFunctionNode.cpp
-        LogicalUnaryFunctionNode.cpp
-        NegateFunctionNode.cpp
+        NodeFunctionAnd.cpp
+        NodeFunctionEquals.cpp
+        NodeFunctionGreater.cpp
+        NodeFunctionGreaterEquals.cpp
+        NodeFunctionLess.cpp
+        NodeFunctionLessEquals.cpp
+        NodeFunctionLogicalBinary.cpp
+        NodeFunctionLogicalUnary.cpp
+        NodeFunctionNegate.cpp
+        NodeFunctionOr.cpp
 )
 
