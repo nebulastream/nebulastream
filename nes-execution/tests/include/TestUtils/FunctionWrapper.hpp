@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>
-#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Util/StdInt.hpp>
 namespace NES::Runtime::Execution::Functions
@@ -26,7 +26,7 @@ class UnaryFunctionWrapper
 public:
     UnaryFunctionWrapper()
     {
-        auto input = std::make_unique<ReadFieldFunction>("value");
+        auto input = std::make_unique<ExecutableFunctionReadField>("value");
         function = std::make_unique<FunctionType>(std::move(input));
     }
     VarVal eval(VarVal value) const
@@ -44,8 +44,8 @@ class BinaryFunctionWrapper
 public:
     BinaryFunctionWrapper()
     {
-        auto leftFunction = std::make_unique<ReadFieldFunction>("left");
-        auto rightFunction = std::make_unique<ReadFieldFunction>("right");
+        auto leftFunction = std::make_unique<ExecutableFunctionReadField>("left");
+        auto rightFunction = std::make_unique<ExecutableFunctionReadField>("right");
         function = std::make_unique<FunctionType>(std::move(leftFunction), std::move(rightFunction));
     }
     [[nodiscard]] VarVal eval(VarVal left, VarVal right) const

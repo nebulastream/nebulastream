@@ -13,10 +13,10 @@
 */
 
 #include <vector>
-#include <Execution/Functions/ConstantValueFunction.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
-#include <Execution/Functions/WriteFieldFunction.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -52,11 +52,11 @@ FunctionPtr FunctionProvider::lowerFunction(const NodeFunctionPtr& functionNode)
     /// due to them not simply getting a subFunction as a parameter.
     if (const auto fieldAssignmentNode = functionNode->as_if<NodeFunctionFieldAssignment>())
     {
-        return std::make_unique<WriteFieldFunction>(fieldAssignmentNode->getField()->getFieldName(), std::move(subFunctions[0]));
+        return std::make_unique<ExecutableFunctionWriteField>(fieldAssignmentNode->getField()->getFieldName(), std::move(subFunctions[0]));
     }
     if (const auto fieldAccessNode = functionNode->as_if<NodeFunctionFieldAccess>())
     {
-        return std::make_unique<ReadFieldFunction>(fieldAccessNode->getFieldName());
+        return std::make_unique<ExecutableFunctionReadField>(fieldAccessNode->getFieldName());
     }
     if (const auto constantValueNode = functionNode->as_if<NodeFunctionConstantValue>())
     {
