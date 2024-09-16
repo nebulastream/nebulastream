@@ -26,14 +26,14 @@ namespace NES
  * @brief This file contains the user facing api to create function nodes in a fluent and easy way.
  */
 
-class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+class NodeFunction;
+using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
-class FieldAssignmentFunctionNode;
-using FieldAssignmentFunctionNodePtr = std::shared_ptr<FieldAssignmentFunctionNode>;
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
 /**
  * @brief A function item represents the leaf in an function tree.
@@ -56,7 +56,7 @@ public:
     FunctionItem(const char* value); ///NOLINT(google-explicit-constructor)
     FunctionItem(std::string const& value); ///NOLINT(google-explicit-constructor)
     FunctionItem(ValueTypePtr value); ///NOLINT(google-explicit-constructor)
-    FunctionItem(FunctionNodePtr exp);
+    FunctionItem(NodeFunctionPtr exp);
 
     FunctionItem(FunctionItem const&) = default;
     FunctionItem(FunctionItem&&) = default;
@@ -67,8 +67,8 @@ public:
     /**
      * @brief Gets the function node of this function item.
      */
-    [[nodiscard]] FunctionNodePtr getFunctionNode() const;
-    operator FunctionNodePtr();
+    [[nodiscard]] NodeFunctionPtr getNodeFunction() const;
+    operator NodeFunctionPtr();
 
     /**
      * @brief Rename the function item
@@ -78,7 +78,7 @@ public:
     FunctionItem as(std::string name);
 
 private:
-    FunctionNodePtr function;
+    NodeFunctionPtr function;
 };
 
 /**
@@ -104,10 +104,10 @@ FunctionItem Attribute(std::string name, BasicType type);
  * @param conditionExp : a logical condition which will be evaluated.
  * @param valueExp : the value to return if the condition is the first true one.
  */
-FunctionNodePtr WHEN(const FunctionNodePtr& conditionExp, const FunctionNodePtr& valueExp);
-FunctionNodePtr WHEN(FunctionItem conditionExp, FunctionNodePtr valueExp);
-FunctionNodePtr WHEN(FunctionNodePtr conditionExp, FunctionItem valueExp);
-FunctionNodePtr WHEN(FunctionItem conditionExp, FunctionItem valueExp);
+NodeFunctionPtr WHEN(const NodeFunctionPtr& conditionExp, const NodeFunctionPtr& valueExp);
+NodeFunctionPtr WHEN(FunctionItem conditionExp, NodeFunctionPtr valueExp);
+NodeFunctionPtr WHEN(NodeFunctionPtr conditionExp, FunctionItem valueExp);
+NodeFunctionPtr WHEN(FunctionItem conditionExp, FunctionItem valueExp);
 
 /**
  * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
@@ -116,7 +116,7 @@ FunctionNodePtr WHEN(FunctionItem conditionExp, FunctionItem valueExp);
  * @param whenFunctions : a vector of at least one WHEN function to evaluate.
  * @param defaultValueExp : an function which will be returned if no WHEN condition evaluated to true.
  */
-FunctionNodePtr CASE(const std::vector<FunctionNodePtr>& whenFunctions, FunctionNodePtr defaultValueExp);
-FunctionNodePtr CASE(std::vector<FunctionNodePtr> whenFunctions, FunctionItem defaultValueExp);
+NodeFunctionPtr CASE(const std::vector<NodeFunctionPtr>& whenFunctions, NodeFunctionPtr defaultValueExp);
+NodeFunctionPtr CASE(std::vector<NodeFunctionPtr> whenFunctions, FunctionItem defaultValueExp);
 
-} ///end of namespace NES
+}

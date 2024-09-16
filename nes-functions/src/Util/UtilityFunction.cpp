@@ -14,30 +14,30 @@
 
 #include <string>
 #include <unordered_set>
-#include <Functions/BinaryFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
-std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::FunctionNode> joinFunction)
+std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::NodeFunction> joinFunction)
 {
     std::basic_string<char> leftJoinKeyNameEqui;
     std::basic_string<char> rightJoinKeyNameEqui;
 
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<std::shared_ptr<NES::BinaryFunctionNode>> visitedFunctions;
+    std::unordered_set<std::shared_ptr<NES::NodeFunctionBinary>> visitedFunctions;
 
-    NES_DEBUG("Iterate over all FunctionNode to check join field.");
+    NES_DEBUG("Iterate over all NodeFunction to check join field.");
 
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (Util::instanceOf<BinaryFunctionNode>(*itr))
+        if (Util::instanceOf<NodeFunctionBinary>(*itr))
         {
-            auto visitingOp = NES::Util::as<BinaryFunctionNode>(*itr);
+            auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
             if (visitedFunctions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -47,13 +47,13 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
             {
                 visitedFunctions.insert(visitingOp);
                 ///Find the schema for left and right join key
-                if (!Util::instanceOf<BinaryFunctionNode>(Util::as<BinaryFunctionNode>(*itr)->getLeft())
-                    && Util::instanceOf<EqualsFunctionNode>(*itr))
+                if (!Util::instanceOf<NodeFunctionBinary>(Util::as<NodeFunctionBinary>((*itr))->getLeft())
+                    && Util::instanceOf<NodeFunctionEquals>((*itr)))
                 {
-                    const auto leftJoinKey = Util::as<FieldAccessFunctionNode>(Util::as<BinaryFunctionNode>(*itr)->getLeft());
+                    const auto leftJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>((*itr))->getLeft());
                     leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
-                    const auto rightJoinKey = Util::as<FieldAccessFunctionNode>(Util::as<BinaryFunctionNode>(*itr)->getRight());
+                    const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>((*itr))->getRight());
                     rightJoinKeyNameEqui = rightJoinKey->getFieldName();
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
@@ -64,4 +64,4 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
     } /// for
     return std::make_pair(leftJoinKeyNameEqui, rightJoinKeyNameEqui);
 }
-} /// namespace NES
+}

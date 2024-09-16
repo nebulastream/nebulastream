@@ -15,9 +15,9 @@
 #include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/BinaryFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -27,7 +27,7 @@ namespace NES::Join
 {
 
 LogicalJoinDescriptor::LogicalJoinDescriptor(
-    FunctionNodePtr joinFunction,
+    NodeFunctionPtr joinFunction,
     Windowing::WindowTypePtr windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
@@ -50,7 +50,7 @@ LogicalJoinDescriptor::LogicalJoinDescriptor(
 }
 
 LogicalJoinDescriptorPtr LogicalJoinDescriptor::create(
-    FunctionNodePtr joinFunctions,
+    NodeFunctionPtr joinFunctions,
     const Windowing::WindowTypePtr& windowType,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight,
@@ -134,7 +134,7 @@ void LogicalJoinDescriptor::setOriginId(OriginId originId)
     this->originId = originId;
 }
 
-FunctionNodePtr LogicalJoinDescriptor::getJoinFunction()
+NodeFunctionPtr LogicalJoinDescriptor::getJoinFunction()
 {
     return this->joinFunction;
 }

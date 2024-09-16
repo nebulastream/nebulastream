@@ -14,7 +14,7 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,28 +23,28 @@
 namespace NES::Windowing
 {
 
-SumAggregationDescriptor::SumAggregationDescriptor(FieldAccessFunctionNodePtr field) : WindowAggregationDescriptor(field)
+SumAggregationDescriptor::SumAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Sum;
 }
-SumAggregationDescriptor::SumAggregationDescriptor(FunctionNodePtr field, FunctionNodePtr asField)
+SumAggregationDescriptor::SumAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Sum;
 }
 
-WindowAggregationDescriptorPtr SumAggregationDescriptor::create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField)
+WindowAggregationDescriptorPtr SumAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const FunctionNodePtr& keyFunction)
+WindowAggregationDescriptorPtr SumAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    if (!NES::Util::instanceOf<FieldAccessFunctionNode>(keyFunction))
+    if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
     }
-    auto fieldAccess = NES::Util::as<FieldAccessFunctionNode>(keyFunction);
+    auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
     return std::make_shared<SumAggregationDescriptor>(SumAggregationDescriptor(fieldAccess));
 }
 
@@ -58,19 +58,19 @@ void SumAggregationDescriptor::inferStamp(SchemaPtr schema)
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = NES::Util::as<FieldAccessFunctionNode>(onField)->getFieldName();
-    auto asFieldName = NES::Util::as<FieldAccessFunctionNode>(asField)->getFieldName();
+    auto onFieldName = NES::Util::as<NodeFunctionFieldAccess>(onField)->getFieldName();
+    auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        NES::Util::as<FieldAccessFunctionNode>(asField)->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        NES::Util::as<FieldAccessFunctionNode>(asField)->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<NodeFunctionFieldAccess>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

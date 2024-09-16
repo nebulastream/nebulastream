@@ -63,7 +63,7 @@ public:
      * @brief Getter for join function, i.e. a set of binary functions
      * @return joinFunctions
      */
-    const FunctionNodePtr getJoinFunction() const;
+    const NodeFunctionPtr getJoinFunction() const;
 
     /**
      * @brief Sets the window start, end, and key field name during the serialization of the operator

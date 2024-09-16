@@ -17,7 +17,7 @@
 #include <filesystem>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
@@ -28,7 +28,7 @@ namespace NES::InferModel
 {
 
 LogicalInferModelOperator::LogicalInferModelOperator(
-    std::string model, std::vector<FunctionNodePtr> inputFields, std::vector<FunctionNodePtr> outputFields, OperatorId id)
+    std::string model, std::vector<NodeFunctionPtr> inputFields, std::vector<NodeFunctionPtr> outputFields, OperatorId id)
     : Operator(id)
     , LogicalUnaryOperator(id)
     , model(std::move(model))
@@ -74,7 +74,7 @@ bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const
     return equal(rhs) && NES::Util::as<LogicalInferModelOperator>(rhs)->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessFunctionNodePtr field) const
+void LogicalInferModelOperator::updateToFullyQualifiedFieldName(NodeFunctionFieldAccessPtr field) const
 {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
@@ -109,7 +109,7 @@ bool LogicalInferModelOperator::inferSchema()
 
     for (auto inputField : inputFields)
     {
-        auto inputFunction = NES::Util::as<FieldAccessFunctionNode>(inputField);
+        auto inputFunction = NES::Util::as<NodeFunctionFieldAccess>(inputField);
         updateToFullyQualifiedFieldName(inputFunction);
         inputFunction->inferStamp(inputSchema);
         auto fieldName = inputFunction->getFieldName();
@@ -118,7 +118,7 @@ bool LogicalInferModelOperator::inferSchema()
 
     for (auto outputField : outputFields)
     {
-        auto outputFunction = NES::Util::as<FieldAccessFunctionNode>(outputField);
+        auto outputFunction = NES::Util::as<NodeFunctionFieldAccess>(outputField);
         updateToFullyQualifiedFieldName(outputFunction);
         auto fieldName = outputFunction->getFieldName();
         if (outputSchema->getField(fieldName))
@@ -180,12 +180,12 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const
     return path;
 }
 
-const std::vector<FunctionNodePtr>& LogicalInferModelOperator::getInputFields() const
+const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getInputFields() const
 {
     return inputFields;
 }
 
-const std::vector<FunctionNodePtr>& LogicalInferModelOperator::getOutputFields() const
+const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getOutputFields() const
 {
     return outputFields;
 }
