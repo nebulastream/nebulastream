@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -28,10 +28,7 @@ SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
         newSchema->copyFields(it->second);
         return newSchema;
     }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("Schema not found");
-    }
+    PRECONDITION(false, "Schema not found");
 }
 
 std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog = {

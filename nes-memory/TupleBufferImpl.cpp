@@ -48,14 +48,8 @@ MemorySegment::MemorySegment(
 {
     this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
     this->ptr = ptr;
-    if (!this->ptr)
-    {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
-    }
-    if (!this->size)
-    {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
-    }
+    INVARIANT(this->ptr, "invalid pointer");
+    INVARIANT(this->size, "invalid size");
 }
 
 MemorySegment::MemorySegment(

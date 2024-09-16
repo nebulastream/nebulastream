@@ -35,6 +35,7 @@ EXCEPTION(FieldNotFound, 2004, "field not found")
 EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
 EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
+EXCEPTION(UnsupportedQuery, 2008, "specified query is (currently) not supported")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
@@ -58,9 +59,8 @@ EXCEPTION(UnknownWatermarkStrategy, 2117, "unknown watermark strategy")
 EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
 EXCEPTION(UnknownExecutablePipelineProviderType, 2119, "unknown executable pipeline provider type")
 EXCEPTION(UnknownCompilationBackendType, 2120, "unknown compilation backend type")
-EXCEPTION(InvalidUseOfFunction, 2121, "function is not valid")
-EXCEPTION(UnsupportedOperation, 2122, "tried to execute an unsupported operation")
-EXCEPTION(UnknownParserType, 2123, "unknown parser type")
+EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
+EXCEPTION(UnknownParserType, 2122, "unknown parser type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -82,7 +82,7 @@ EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 /// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
-EXCEPTION(BufferAccessException, 3008, "buffer allocation failure")
+EXCEPTION(CannotAccessBuffer, 3008, "cannot access buffer")
 EXCEPTION(QueryRuntimeError, 3009, "general query runtime error")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
@@ -100,17 +100,22 @@ EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
 
 /// 6XXX API error
 EXCEPTION(BadApiRequest, 6000, "bad api request")
+EXCEPTION(QueryNotFound, 6001, "query is not registered")
+EXCEPTION(QueryRegistrationFailedGRPC, 6002, "query registration via grpc failed")
+EXCEPTION(QueryStartFailedGRPC, 6003, "query start via grpc failed")
+EXCEPTION(QueryStopFailedGRPC, 6004, "query stop via grpc failed")
+EXCEPTION(QueryUnregistrationFailedGRPC, 6005, "query unregistration via grpc failed")
+EXCEPTION(QueryStatusFailedGRPC, 6006, "query status via grpc failed")
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(PreconditionViolated, 9000, "precondition violated")
 EXCEPTION(InvariantViolated, 9001, "invariant violated")
 EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
 EXCEPTION(DeprecatedFeatureUsed, 9003, "deprecated feature used")
-EXCEPTION(CannotAllocateBuffer, 9004, "cannot allocate buffer")
-EXCEPTION(InvalidRefCountForBuffer, 9005, "invalid reference counter for buffer")
-EXCEPTION(InvalidDynamicCast, 9006, "Invalid dynamic cast")
-EXCEPTION(UnknownOperator, 9007, "unknown operator")
-EXCEPTION(NotImplemented, 9008, "not implemented")
+EXCEPTION(InvalidRefCountForBuffer, 9004, "invalid reference counter for buffer")
+EXCEPTION(InvalidDynamicCast, 9005, "Invalid dynamic cast")
+EXCEPTION(UnknownOperator, 9006, "unknown operator")
+EXCEPTION(NotImplemented, 9007, "not implemented")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")

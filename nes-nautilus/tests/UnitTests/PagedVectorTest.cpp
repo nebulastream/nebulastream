@@ -90,7 +90,7 @@ public:
                     }
                     else
                     {
-                        NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
+                        INVARIANT(false, "No unpooled TupleBuffer available!");
                     }
                 }
                 else if (NES::Util::instanceOf<Integer>(fieldType))

@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -73,7 +74,7 @@ bool LogicalSelectionOperator::inferSchema()
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter function is not a valid predicate");
+        throw CannotInferSchema("FilterLogicalOperator: the filter expression is not a valid predicate");
     }
     return true;
 }

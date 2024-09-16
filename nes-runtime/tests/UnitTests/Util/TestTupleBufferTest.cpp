@@ -77,7 +77,7 @@ TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
     }
     catch (const Exception& e)
     {
-        if (e.code() == ErrorCode::CannotAllocateBuffer)
+        if (e.code() == ErrorCode::BufferAllocationFailure)
         {
             tryLogCurrentException();
             SUCCEED();
@@ -108,7 +108,7 @@ TEST_P(TestTupleBufferTest, throwErrorIfEmptyAfterSequenceOfPulls)
     }
     catch (const Exception& e)
     {
-        if (e.code() == ErrorCode::CannotAllocateBuffer)
+        if (e.code() == ErrorCode::BufferAllocationFailure)
         {
             tryLogCurrentException();
             SUCCEED();

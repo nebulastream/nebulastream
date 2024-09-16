@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <Exceptions/RuntimeException.hpp>
 
 namespace NES
 {
@@ -63,7 +62,7 @@ public:
         {
             return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
         }
-        throw Exceptions::RuntimeException("We performed an invalid cast");
+        INVARIANT(false, "invalid cast");
     }
 };
 }

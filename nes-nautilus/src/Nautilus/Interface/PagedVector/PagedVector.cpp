@@ -72,7 +72,7 @@ const Memory::TupleBuffer& PagedVector::getTupleBufferForEntry(const uint64_t en
         bufferPos -= numTuplesOnPage;
     }
 
-    throw BufferAccessException("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
+    throw CannotAccessBuffer("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
 }
 
 uint64_t PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
@@ -89,7 +89,7 @@ uint64_t PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
         bufferPos -= numTuplesOnPage;
     }
 
-    throw BufferAccessException("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
+    throw CannotAccessBuffer("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
 }
 
 uint64_t PagedVector::getTotalNumberOfEntries() const

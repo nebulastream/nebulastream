@@ -84,7 +84,7 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
     NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
     if (!selectionFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
-        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Selection predicate cannot have a FieldRenameFunction");
+        throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
     }
     std::shared_ptr<Operator> const op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
@@ -104,7 +104,7 @@ QueryPlanPtr QueryPlanBuilder::addMap(NodeFunctionFieldAssignmentPtr const& mapF
     NES_TRACE("QueryPlanBuilder: add map operator to query plan");
     if (!mapFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
-        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Map function cannot have a FieldRenameFunction");
+        throw UnsupportedQuery("Map function cannot have a FieldRenameFunction");
     }
     std::shared_ptr<Operator> const op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
@@ -299,8 +299,7 @@ std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::asNodeFunctionFieldAc
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
     {
-        NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessFunction but it was a  {}", side, *function);
-        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessFunction");
+        throw UnsupportedQuery("Window key ({}) has to be an FieldAccessFunction but it was a  {}", side, *function);
     }
     return NES::Util::as<NodeFunctionFieldAccess>(function);
 }

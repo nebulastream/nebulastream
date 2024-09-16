@@ -53,7 +53,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + dataType->toString());
+        throw UnknownPhysicalType("It was not possible to infer a physical type for: " + dataType->toString());
     }
 }
 
@@ -80,7 +80,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& in
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + integer->toString());
+            throw UnknownPhysicalType("It was not possible to infer a physical type for: " + integer->toString());
         }
     }
     else
@@ -103,7 +103,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const IntegerPtr& in
         }
         else
         {
-            NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + integer->toString());
+            throw UnknownPhysicalType("It was not possible to infer a physical type for: " + integer->toString());
         }
     }
 }
@@ -120,7 +120,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("It was not possible to infer a physical type for: " + floatType->toString());
+        throw UnknownPhysicalType("It was not possible to infer a physical type for: " + floatType->toString());
     }
 }
 
