@@ -13,11 +13,22 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLessEquals.hpp
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
 namespace NES
 {
 
 class NodeFunctionLessEquals : public NodeFunctionLogicalBinary
+========
+#include <Functions/LogicalFunctions/NodeFunctionLogical.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+namespace NES
+{
+/**
+ * @brief This node represents a logical binary function.
+ */
+class NodeFunctionLogicalBinary : public NodeFunctionBinary, public LogicalFunctionNode
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp
 {
 public:
     NodeFunctionLessEquals();
@@ -28,6 +39,12 @@ public:
     NodeFunctionPtr deepCopy() override;
 
 protected:
+<<<<<<<< HEAD:nes-functions/include/Functions/LogicalFunctions/NodeFunctionLessEquals.hpp
     explicit NodeFunctionLessEquals(NodeFunctionLessEquals* other);
+========
+    NodeFunctionLogicalBinary(std::string name);
+    ~NodeFunctionLogicalBinary() override = default;
+    explicit NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* other);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp
 };
 }

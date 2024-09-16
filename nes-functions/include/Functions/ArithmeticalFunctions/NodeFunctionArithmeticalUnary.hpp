@@ -14,6 +14,7 @@
 
 #pragma once
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
 #include <Functions/NodeFunctionUnary.hpp>
 namespace NES
@@ -23,13 +24,21 @@ class NodeFunctionArithmeticalUnary : public NodeFunctionUnary, public NodeFunct
 ========
 #include <Functions/ArithmeticalFunctions/ArithmeticalFunctionNode.hpp>
 #include <Functions/BinaryFunctionNode.hpp>
+========
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmetical.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp
 namespace NES
 {
 /**
  * @brief This node represents a arithmetical function.
  */
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp
 class ArithmeticalBinaryFunctionNode : public BinaryFunctionNode, public ArithmeticalFunctionNode
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/ArithmeticalBinaryFunctionNode.hpp
+========
+class NodeFunctionArithmeticalBinary : public NodeFunctionBinary, public ArithmeticalFunctionNode
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp
 {
 public:
     /**
@@ -45,6 +54,7 @@ public:
 
 protected:
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp
     explicit NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name);
     explicit NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other);
     ~NodeFunctionArithmeticalUnary() noexcept override = default;
@@ -53,6 +63,11 @@ protected:
     explicit ArithmeticalBinaryFunctionNode(ArithmeticalBinaryFunctionNode* other);
     ~ArithmeticalBinaryFunctionNode() noexcept override = default;
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/ArithmeticalBinaryFunctionNode.hpp
+========
+    explicit NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other);
+    ~NodeFunctionArithmeticalBinary() noexcept override = default;
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp
 };
 
 }

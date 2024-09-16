@@ -11,33 +11,33 @@
 # limitations under the License.
 
 add_nes_test_functions(arithmetical-functions-test
-        "ArithmeticalFunctions/AbsFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/AddFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/CeilFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/DivFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/ExpFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/FloorFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/ModFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/MulFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/PowFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/RoundFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/SqrtFunctionNodeTest.cpp"
-        "ArithmeticalFunctions/SubFunctionNodeTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionAbsTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionAddTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionCeilTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionDivTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionExpTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionFloorTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionModTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionMulTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionPowTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionRoundTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionSqrtTest.cpp"
+        "ArithmeticalFunctions/NodeFunctionSubTest.cpp"
 )
 
 add_nes_test_functions(logical-functions-test
-        "LogicalFunctions/AndFunctionNodeTest.cpp"
-        "LogicalFunctions/EqualsFunctionNodeTest.cpp"
-        "LogicalFunctions/GreaterEqualsFunctionNodeTest.cpp"
-        "LogicalFunctions/GreaterFunctionNodeTest.cpp"
-        "LogicalFunctions/LessEqualsFunctionNodeTest.cpp"
-        "LogicalFunctions/LessFunctionNodeTest.cpp"
-        "LogicalFunctions/NegateFunctionNodeTest.cpp"
-        "LogicalFunctions/OrFunctionNodeTest.cpp"
+        "LogicalFunctions/NodeFunctionAndTest.cpp"
+        "LogicalFunctions/NodeFunctionEqualsTest.cpp"
+        "LogicalFunctions/NodeFunctionGreaterEqualsTest.cpp"
+        "LogicalFunctions/NodeFunctionGreaterTest.cpp"
+        "LogicalFunctions/NodeFunctionLessEqualsTest.cpp"
+        "LogicalFunctions/NodeFunctionLessTest.cpp"
+        "LogicalFunctions/NodeFunctionNegateTest.cpp"
+        "LogicalFunctions/NodeFunctionOrTest.cpp"
 )
 
 add_nes_test_functions(leaf-functions-test
-        "ConstantValueFunctionNodeTest.cpp"
-        "FieldAccessFunctionNodeTest.cpp"
-        "FieldAssignmentFunctionNodeTest.cpp"
+        "NodeFunctionConstantValueTest.cpp"
+        "NodeFunctionFieldAccessTest.cpp"
+        "NodeFunctionFieldAssignmentTest.cpp"
 )

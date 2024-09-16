@@ -13,6 +13,7 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 namespace NES
 {
@@ -30,6 +31,30 @@ public:
 
 private:
     explicit NodeFunctionCeil(NodeFunctionCeil* other);
+========
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
+namespace NES
+{
+/**
+ * @brief This node represents an ADD function.
+ */
+class NodeFunctionAdd final : public NodeFunctionArithmeticalBinary
+{
+public:
+    explicit NodeFunctionAdd(DataTypePtr stamp);
+    ~NodeFunctionAdd() noexcept override = default;
+    /**
+     * @brief Create a new ADD function
+     */
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+    bool validateBeforeLowering() const override;
+    NodeFunctionPtr deepCopy() override;
+
+private:
+    explicit NodeFunctionAdd(NodeFunctionAdd* other);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp
 };
 
 }

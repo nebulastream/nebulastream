@@ -14,6 +14,7 @@
 
 #pragma once
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 namespace NES
 {
@@ -28,21 +29,28 @@ public:
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
 ========
 #include <Functions/ArithmeticalFunctions/ArithmeticalUnaryFunctionNode.hpp>
+========
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
 namespace NES
 {
 /**
  * @brief This node represents an ROUND (absolut value) function.
  */
-class RoundFunctionNode final : public ArithmeticalUnaryFunctionNode
+class NodeFunctionRound final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit RoundFunctionNode(DataTypePtr stamp);
-    ~RoundFunctionNode() noexcept override = default;
+    explicit NodeFunctionRound(DataTypePtr stamp);
+    ~NodeFunctionRound() noexcept override = default;
     /**
      * @brief Create a new ROUND function
      */
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
     [[nodiscard]] static FunctionNodePtr create(FunctionNodePtr const& child);
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/RoundFunctionNode.hpp
+========
+    [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
@@ -52,6 +60,7 @@ public:
      * @param schema
      */
     void inferStamp(SchemaPtr schema) override;
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp
     NodeFunctionPtr deepCopy() override;
 
@@ -68,6 +77,13 @@ private:
 private:
     explicit RoundFunctionNode(RoundFunctionNode* other);
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/RoundFunctionNode.hpp
+========
+    bool validateBeforeLowering() const override;
+    NodeFunctionPtr deepCopy() override;
+
+private:
+    explicit NodeFunctionRound(NodeFunctionRound* other);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
 };
 
 }

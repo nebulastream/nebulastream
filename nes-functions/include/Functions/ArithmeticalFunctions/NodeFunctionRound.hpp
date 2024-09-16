@@ -14,6 +14,7 @@
 
 #pragma once
 <<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 namespace NES
 {
@@ -25,22 +26,29 @@ public:
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
 ========
 #include <Functions/ArithmeticalFunctions/ArithmeticalBinaryFunctionNode.hpp>
+========
+#include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp
 namespace NES
 {
 
 /**
  * @brief This node represents a division function.
  */
-class DivFunctionNode final : public ArithmeticalBinaryFunctionNode
+class NodeFunctionDiv final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit DivFunctionNode(DataTypePtr stamp);
-    ~DivFunctionNode() noexcept override = default;
+    explicit NodeFunctionDiv(DataTypePtr stamp);
+    ~NodeFunctionDiv() noexcept override = default;
     /**
      * @brief Create a new DIV function
      */
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
     static FunctionNodePtr create(FunctionNodePtr const& left, FunctionNodePtr const& right);
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/DivFunctionNode.hpp
+========
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     bool validate() const override;
@@ -58,13 +66,17 @@ private:
     explicit NodeFunctionRound(NodeFunctionRound* other);
 ========
     * @brief Create a deep copy of this function node.
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    FunctionNodePtr deepCopy() override;
+    NodeFunctionPtr deepCopy() override;
 
 private:
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionRound.hpp
     explicit DivFunctionNode(DivFunctionNode* other);
 >>>>>>>> 29ee9426db (chore(Expressions/Functions) Renamed expression to function):nes-functions/include/Functions/ArithmeticalFunctions/DivFunctionNode.hpp
+========
+    explicit NodeFunctionDiv(NodeFunctionDiv* other);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp
 };
 
 }

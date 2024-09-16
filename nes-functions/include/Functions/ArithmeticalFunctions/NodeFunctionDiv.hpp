@@ -13,6 +13,7 @@
 */
 
 #pragma once
+<<<<<<<< HEAD:nes-functions/include/Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 namespace NES
 {
@@ -29,6 +30,31 @@ public:
 
 private:
     explicit NodeFunctionDiv(NodeFunctionDiv* other);
+========
+#include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
+namespace NES
+{
+
+/**
+ * @brief This node represents a greater comparision between the two children.
+ */
+class NodeFunctionGreater : public NodeFunctionLogicalBinary
+{
+public:
+    NodeFunctionGreater() noexcept;
+    ~NodeFunctionGreater() override = default;
+    /**
+    * @brief Create a new greater function
+    */
+    static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
+    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+bool validateBeforeLowering() const override;
+    NodeFunctionPtr deepCopy() override;
+
+protected:
+    explicit NodeFunctionGreater(NodeFunctionGreater* other);
+>>>>>>>> a212ae69ac (chore(Functions) Renamed FunctionNode --> NodeFunction):nes-functions/include/Functions/LogicalFunctions/NodeFunctionGreater.hpp
 };
 
 }
