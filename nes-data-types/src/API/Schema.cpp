@@ -21,11 +21,11 @@
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <fmt/ranges.h>
 namespace NES
 {
 
@@ -130,7 +130,8 @@ AttributeFieldPtr Schema::get(const std::string& fieldName) const
     /// This does not work for fields with the same name but different qualifiers
     /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
     /// Additionally, it is not clear when and how to use what method to interact with the schema and the underlying attribute fields.
-    auto addSourceQualifierIfNotPresent = [&](const std::string& field) {
+    auto addSourceQualifierIfNotPresent = [&](const std::string& field)
+    {
         if (field.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
         {
             return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + field;

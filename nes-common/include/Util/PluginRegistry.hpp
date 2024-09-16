@@ -13,9 +13,13 @@
 */
 
 #pragma once
+#include <algorithm>
 #include <functional>
+#include <memory>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
+
 namespace NES
 {
 
