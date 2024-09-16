@@ -23,10 +23,10 @@ namespace NES::Runtime::Execution::Functions
 /**
  * @brief This function writes a particular Value to a specific field of an record.
  */
-class WriteFieldFunction : public Function
+class ExecutableFunctionWriteField : public Function
 {
 public:
-    WriteFieldFunction(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
+    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
     VarVal execute(Record& record) const override;
 
 private:

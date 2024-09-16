@@ -23,10 +23,10 @@ namespace NES::Runtime::Execution::Functions
 /**
  * @brief This function reads a specific field from the input record and returns its value.
  */
-class ReadFieldFunction : public Function
+class ExecutableFunctionReadField : public Function
 {
 public:
-    ReadFieldFunction(Record::RecordFieldIdentifier field);
+    ExecutableFunctionReadField(Record::RecordFieldIdentifier field);
     VarVal execute(Record& record) const override;
 
 private:

@@ -19,9 +19,9 @@
 namespace NES::Runtime::Execution::Functions {
 
 /// Negates the result of the subFunction
-class NegateFunction final : public Function {
+class ExecutableFunctionNegate final : public Function {
 public:
-    explicit NegateFunction(FunctionPtr subFunction);
+    explicit ExecutableFunctionNegate(FunctionPtr subFunction);
     VarVal execute(Record& record) const override;
 
 private:

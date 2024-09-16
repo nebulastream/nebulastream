@@ -12,27 +12,27 @@
     limitations under the License.
 */
 
-#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Functions
 {
 
-EqualsFunction::EqualsFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
-    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction))
+ExecutableFunctionEquals::ExecutableFunctionEquals(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-VarVal EqualsFunction::execute(Record& record) const
+VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
-    const auto leftValue = leftSubFunction->execute(record);
-    const auto rightValue = rightSubFunction->execute(record);
+    const auto leftValue = leftExecutableFunctionSub->execute(record);
+    const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue == rightValue;
 }
 
-FunctionPtr RegisterEqualsFunction(std::vector<FunctionPtr> subFunctions)
+FunctionPtr RegisterExecutableFunctionEquals(std::vector<FunctionPtr> subFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Equals function must have exactly two sub-functions");
-    return std::make_unique<EqualsFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    return std::make_unique<ExecutableFunctionEquals>(std::move(subFunctions[0]), std::move(subFunctions[1]));
 }
 
 }

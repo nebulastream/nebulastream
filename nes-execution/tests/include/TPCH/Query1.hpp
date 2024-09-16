@@ -18,16 +18,16 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
-#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
-#include <Execution/Functions/WriteFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -78,7 +78,7 @@ public:
      *  1998-09-02
      */
         auto const_1998_09_02 = std::make_shared<ConstantInt32ValueFunction>(19980831);
-        auto readShipdate = std::make_shared<ReadFieldFunction>("l_shipdate");
+        auto readShipdate = std::make_shared<ExecutableFunctionReadField>("l_shipdate");
         auto lessThanFunction1 = std::make_shared<LessThanFunction>(readShipdate, const_1998_09_02);
         auto selection = std::make_shared<Selection>(lessThanFunction1);
         scan->setChild(selection);
@@ -105,35 +105,35 @@ public:
         sum(disc_price * (one + l_tax[i]))
         count(*)
      */
-        auto l_returnflagField = std::make_shared<ReadFieldFunction>("l_returnflag");
-        auto l_linestatusFiled = std::make_shared<ReadFieldFunction>("l_linestatus");
+        auto l_returnflagField = std::make_shared<ExecutableFunctionReadField>("l_returnflag");
+        auto l_linestatusFiled = std::make_shared<ExecutableFunctionReadField>("l_linestatus");
 
         ///  sum(l_quantity) as sum_qty,
-        auto l_quantityField = std::make_shared<ReadFieldFunction>("l_quantity");
+        auto l_quantityField = std::make_shared<ExecutableFunctionReadField>("l_quantity");
         auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
 
         /// sum(l_extendedprice) as sum_base_price,
-        auto l_extendedpriceField = std::make_shared<ReadFieldFunction>("l_extendedprice");
+        auto l_extendedpriceField = std::make_shared<ExecutableFunctionReadField>("l_extendedprice");
         auto sumAggFunction2
             = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
 
         /// disc_price = l_extendedprice * (1 - l_discount)
-        auto l_discountField = std::make_shared<ReadFieldFunction>("l_discount");
+        auto l_discountField = std::make_shared<ExecutableFunctionReadField>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueFunction>(1.0f);
-        auto subFunction = std::make_shared<SubFunction>(oneConst, l_discountField);
-        auto mulFunction = std::make_shared<MulFunction>(l_extendedpriceField, subFunction);
-        auto disc_priceFunction = std::make_shared<WriteFieldFunction>("disc_price", mulFunction);
+        auto subFunction = std::make_shared<ExecutableFunctionSub>(oneConst, l_discountField);
+        auto mulFunction = std::make_shared<ExecutableFunctionMul>(l_extendedpriceField, subFunction);
+        auto disc_priceFunction = std::make_shared<ExecutableFunctionWriteField>("disc_price", mulFunction);
         auto map = std::make_shared<Map>(disc_priceFunction);
         selection->setChild(map);
 
         ///  sum(disc_price)
-        auto disc_price = std::make_shared<ReadFieldFunction>("disc_price");
+        auto disc_price = std::make_shared<ExecutableFunctionReadField>("disc_price");
         auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
 
         ///  sum(disc_price * (one + l_tax[i]))
-        auto l_taxField = std::make_shared<ReadFieldFunction>("l_tax");
-        auto addFunction = std::make_shared<AddFunction>(oneConst, l_taxField);
-        auto mulFunction2 = std::make_shared<AddFunction>(disc_price, addFunction);
+        auto l_taxField = std::make_shared<ExecutableFunctionReadField>("l_tax");
+        auto addFunction = std::make_shared<ExecutableFunctionAdd>(oneConst, l_taxField);
+        auto mulFunction2 = std::make_shared<ExecutableFunctionAdd>(disc_price, addFunction);
         auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulFunction2, "sum_charge");
 
         ///   count(*)

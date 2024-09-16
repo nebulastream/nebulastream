@@ -25,14 +25,14 @@ namespace NES
 namespace Runtime::Execution::Functions
 {
 /// Defining all arithmetic supported functions
-std::unique_ptr<Function> RegisterAddFunction(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterMulFunction(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterSubFunction(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterDivFunction(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<FunctionPtr> subFunctions);
 
 /// Defining all logical supported functions
-std::unique_ptr<Function> RegisterEqualsFunction(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterNegateFunction(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<FunctionPtr> subFunctions);
 }
 
 template <>
@@ -43,14 +43,14 @@ Registrar<std::string, Runtime::Execution::Functions::Function, std::vector<Runt
     using namespace NES::Runtime::Execution::Functions;
 
     /// Registering all arithmetic supported functions
-    registry.registerPlugin("Add", RegisterAddFunction);
-    registry.registerPlugin("Mul", RegisterMulFunction);
-    registry.registerPlugin("Sub", RegisterSubFunction);
-    registry.registerPlugin("Div", RegisterDivFunction);
+    registry.registerPlugin("Add", RegisterExecutableFunctionAdd);
+    registry.registerPlugin("Mul", RegisterExecutableFunctionMul);
+    registry.registerPlugin("Sub", RegisterExecutableFunctionSub);
+    registry.registerPlugin("Div", RegisterExecutableFunctionDiv);
 
     /// Registering all logical supported functions
-    registry.registerPlugin("Equals", RegisterEqualsFunction);
-    registry.registerPlugin("Negate", RegisterNegateFunction);
+    registry.registerPlugin("Equals", RegisterExecutableFunctionEquals);
+    registry.registerPlugin("Negate", RegisterExecutableFunctionNegate);
 }
 
 }

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -23,7 +23,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-class AddFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionAddTest : public Testing::BaseUnitTest
 {
 public:
 
@@ -40,17 +40,17 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("AddFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionAddTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionAddTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down AddFunctionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionAddTest test class."); }
 
-    const BinaryFunctionWrapper<AddFunction> function;
+    const BinaryFunctionWrapper<ExecutableFunctionAdd> function;
 
     template <typename LHS, typename RHS>
-    void testAddFunction(const LHS& leftValue, const RHS& rightValue)
+    void testExecutableFunctionAdd(const LHS& leftValue, const RHS& rightValue)
     {
         /// We assume that the VarVal is of type nautilus::val<>
         const auto leftNautilus = nautilus::val<LHS>(leftValue);
@@ -70,81 +70,81 @@ public:
 };
 
 
-TEST_F(AddFunctionTest, SignedIntegers)
+TEST_F(ExecutableFunctionAddTest, SignedIntegers)
 {
-    testAddFunction<int8_t, int8_t>(rand(), rand());
-    testAddFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber);
-    testAddFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
-    testAddFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1);
-    testAddFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
-    testAddFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1);
-    testAddFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
-    testAddFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1);
-    testAddFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
+    testExecutableFunctionAdd<int8_t, int8_t>(rand(), rand());
+    testExecutableFunctionAdd<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionAdd<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionAdd<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testExecutableFunctionAdd<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testExecutableFunctionAdd<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testExecutableFunctionAdd<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testExecutableFunctionAdd<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testExecutableFunctionAdd<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    testAddFunction<int16_t, int16_t>(rand(), rand());
-    testAddFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1);
-    testAddFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
-    testAddFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1);
-    testAddFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
-    testAddFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1);
-    testAddFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
+    testExecutableFunctionAdd<int16_t, int16_t>(rand(), rand());
+    testExecutableFunctionAdd<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testExecutableFunctionAdd<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testExecutableFunctionAdd<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testExecutableFunctionAdd<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testExecutableFunctionAdd<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testExecutableFunctionAdd<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    testAddFunction<int32_t, int32_t>(rand(), rand());
-    testAddFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1);
-    testAddFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
-    testAddFunction<int32_t, int64_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionAdd<int32_t, int32_t>(rand(), rand());
+    testExecutableFunctionAdd<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionAdd<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testExecutableFunctionAdd<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    testAddFunction<int64_t, int64_t>(rand(), rand());
-    testAddFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1);
-    testAddFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
+    testExecutableFunctionAdd<int64_t, int64_t>(rand(), rand());
+    testExecutableFunctionAdd<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testExecutableFunctionAdd<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
-TEST_F(AddFunctionTest, UnsignedIntegers)
+TEST_F(ExecutableFunctionAddTest, UnsignedIntegers)
 {
-    testAddFunction<uint8_t, uint8_t>(rand(), rand());
-    testAddFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
-    testAddFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
-    testAddFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
-    testAddFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
-    testAddFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
-    testAddFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
-    testAddFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
-    testAddFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
+    testExecutableFunctionAdd<uint8_t, uint8_t>(rand(), rand());
+    testExecutableFunctionAdd<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionAdd<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionAdd<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testExecutableFunctionAdd<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testExecutableFunctionAdd<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testExecutableFunctionAdd<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testExecutableFunctionAdd<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testExecutableFunctionAdd<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    testAddFunction<uint16_t, uint16_t>(rand(), rand());
-    testAddFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
-    testAddFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
-    testAddFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
-    testAddFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
-    testAddFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
-    testAddFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionAdd<uint16_t, uint16_t>(rand(), rand());
+    testExecutableFunctionAdd<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testExecutableFunctionAdd<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testExecutableFunctionAdd<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testExecutableFunctionAdd<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionAdd<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testExecutableFunctionAdd<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    testAddFunction<uint32_t, uint32_t>(rand(), rand());
-    testAddFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
-    testAddFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
-    testAddFunction<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionAdd<uint32_t, uint32_t>(rand(), rand());
+    testExecutableFunctionAdd<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionAdd<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionAdd<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    testAddFunction<uint64_t, uint64_t>(rand(), rand());
-    testAddFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
-    testAddFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionAdd<uint64_t, uint64_t>(rand(), rand());
+    testExecutableFunctionAdd<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testExecutableFunctionAdd<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
-TEST_F(AddFunctionTest, FloatingPoints)
+TEST_F(ExecutableFunctionAddTest, FloatingPoints)
 {
-    testAddFunction<float, float>(rand(), rand());
-    testAddFunction<float, float>(someMagicNumber, someMagicNumber);
-    testAddFunction<float, float>(someMagicNumber, someMagicNumber + 0.1);
-    testAddFunction<float, double>(someMagicNumber, someMagicNumber);
-    testAddFunction<float, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionAdd<float, float>(rand(), rand());
+    testExecutableFunctionAdd<float, float>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionAdd<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionAdd<float, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionAdd<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    testAddFunction<double, double>(rand(), rand());
-    testAddFunction<double, double>(someMagicNumber, someMagicNumber);
-    testAddFunction<double, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionAdd<double, double>(rand(), rand());
+    testExecutableFunctionAdd<double, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionAdd<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
-/// We test here, if an exception gets thrown, as we have not implemented the AddFunction on VariableSizedData
-TEST_F(AddFunctionTest, VariableSizedDataTest)
+/// We test here, if an exception gets thrown, as we have not implemented the ExecutableFunctionAdd on VariableSizedData
+TEST_F(ExecutableFunctionAddTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        AddFunction.cpp
-        MulFunction.cpp
-        DivFunction.cpp
-        SubFunction.cpp
+        ExecutableFunctionAdd.cpp
+        ExecutableFunctionMul.cpp
+        ExecutableFunctionDiv.cpp
+        ExecutableFunctionSub.cpp
         )

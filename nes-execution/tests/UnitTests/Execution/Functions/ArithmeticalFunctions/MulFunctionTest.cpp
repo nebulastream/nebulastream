@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-class MulFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionMulTest : public Testing::BaseUnitTest
 {
 public:
 
@@ -38,17 +38,17 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("MulFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup MulFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionMulTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionMulTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down MulFunctionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionMulTest test class."); }
 
-    const BinaryFunctionWrapper<MulFunction> function;
+    const BinaryFunctionWrapper<ExecutableFunctionMul> function;
 
     template <typename LHS, typename RHS>
-    void testMulFunction(const LHS& leftValue, const RHS& rightValue)
+    void testExecutableFunctionMul(const LHS& leftValue, const RHS& rightValue)
     {
         const auto leftNautilus = nautilus::val<LHS>(leftValue);
         const auto rightNautilus = nautilus::val<RHS>(rightValue);
@@ -67,81 +67,81 @@ public:
 };
 
 
-TEST_F(MulFunctionTest, SignedIntegers)
+TEST_F(ExecutableFunctionMulTest, SignedIntegers)
 {
-    testMulFunction<int8_t, int8_t>(rand(), rand());
-    testMulFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber);
-    testMulFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
-    testMulFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1);
-    testMulFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
-    testMulFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1);
-    testMulFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
-    testMulFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1);
-    testMulFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
+    testExecutableFunctionMul<int8_t, int8_t>(rand(), rand());
+    testExecutableFunctionMul<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionMul<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionMul<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testExecutableFunctionMul<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testExecutableFunctionMul<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testExecutableFunctionMul<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testExecutableFunctionMul<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testExecutableFunctionMul<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    testMulFunction<int16_t, int16_t>(rand(), rand());
-    testMulFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1);
-    testMulFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
-    testMulFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1);
-    testMulFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
-    testMulFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1);
-    testMulFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
+    testExecutableFunctionMul<int16_t, int16_t>(rand(), rand());
+    testExecutableFunctionMul<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testExecutableFunctionMul<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testExecutableFunctionMul<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testExecutableFunctionMul<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testExecutableFunctionMul<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testExecutableFunctionMul<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    testMulFunction<int32_t, int32_t>(rand(), rand());
-    testMulFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1);
-    testMulFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
-    testMulFunction<int32_t, int64_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionMul<int32_t, int32_t>(rand(), rand());
+    testExecutableFunctionMul<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionMul<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testExecutableFunctionMul<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    testMulFunction<int64_t, int64_t>(rand(), rand());
-    testMulFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1);
-    testMulFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
+    testExecutableFunctionMul<int64_t, int64_t>(rand(), rand());
+    testExecutableFunctionMul<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testExecutableFunctionMul<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
-TEST_F(MulFunctionTest, UnsignedIntegers)
+TEST_F(ExecutableFunctionMulTest, UnsignedIntegers)
 {
-    testMulFunction<uint8_t, uint8_t>(rand(), rand());
-    testMulFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
-    testMulFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
-    testMulFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
-    testMulFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
-    testMulFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
-    testMulFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
-    testMulFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
-    testMulFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
+    testExecutableFunctionMul<uint8_t, uint8_t>(rand(), rand());
+    testExecutableFunctionMul<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionMul<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionMul<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testExecutableFunctionMul<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testExecutableFunctionMul<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testExecutableFunctionMul<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testExecutableFunctionMul<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testExecutableFunctionMul<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    testMulFunction<uint16_t, uint16_t>(rand(), rand());
-    testMulFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
-    testMulFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
-    testMulFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
-    testMulFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
-    testMulFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
-    testMulFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionMul<uint16_t, uint16_t>(rand(), rand());
+    testExecutableFunctionMul<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testExecutableFunctionMul<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testExecutableFunctionMul<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testExecutableFunctionMul<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionMul<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testExecutableFunctionMul<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    testMulFunction<uint32_t, uint32_t>(rand(), rand());
-    testMulFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
-    testMulFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
-    testMulFunction<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionMul<uint32_t, uint32_t>(rand(), rand());
+    testExecutableFunctionMul<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionMul<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionMul<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    testMulFunction<uint64_t, uint64_t>(rand(), rand());
-    testMulFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
-    testMulFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionMul<uint64_t, uint64_t>(rand(), rand());
+    testExecutableFunctionMul<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testExecutableFunctionMul<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
-TEST_F(MulFunctionTest, FloatingPoints)
+TEST_F(ExecutableFunctionMulTest, FloatingPoints)
 {
-    testMulFunction<float, float>(rand(), rand());
-    testMulFunction<float, float>(someMagicNumber, someMagicNumber);
-    testMulFunction<float, float>(someMagicNumber, someMagicNumber + 0.1);
-    testMulFunction<float, double>(someMagicNumber, someMagicNumber);
-    testMulFunction<float, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionMul<float, float>(rand(), rand());
+    testExecutableFunctionMul<float, float>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionMul<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionMul<float, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionMul<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    testMulFunction<double, double>(rand(), rand());
-    testMulFunction<double, double>(someMagicNumber, someMagicNumber);
-    testMulFunction<double, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionMul<double, double>(rand(), rand());
+    testExecutableFunctionMul<double, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionMul<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
-/// We test here, if an exception gets thrown, as we have not implemented the MulFunction on VariableSizedData
-TEST_F(MulFunctionTest, VariableSizedDataTest)
+/// We test here, if an exception gets thrown, as we have not implemented the ExecutableFunctionMul on VariableSizedData
+TEST_F(ExecutableFunctionMulTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

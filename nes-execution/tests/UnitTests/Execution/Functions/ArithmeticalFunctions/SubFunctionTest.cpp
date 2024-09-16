@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-class SubFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionSubTest : public Testing::BaseUnitTest
 {
 public:
 
@@ -38,17 +38,17 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("SubFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup SubFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionSubTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionSubTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down SubFunctionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionSubTest test class."); }
 
-    const BinaryFunctionWrapper<SubFunction> function;
+    const BinaryFunctionWrapper<ExecutableFunctionSub> function;
 
     template <typename LHS, typename RHS>
-    void testSubFunction(const LHS& leftValue, const RHS& rightValue)
+    void testExecutableFunctionSub(const LHS& leftValue, const RHS& rightValue)
     {
         const auto leftNautilus = nautilus::val<LHS>(leftValue);
         const auto rightNautilus = nautilus::val<RHS>(rightValue);
@@ -67,81 +67,81 @@ public:
 };
 
 
-TEST_F(SubFunctionTest, SignedIntegers)
+TEST_F(ExecutableFunctionSubTest, SignedIntegers)
 {
-    testSubFunction<int8_t, int8_t>(rand(), rand());
-    testSubFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber);
-    testSubFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
-    testSubFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1);
-    testSubFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
-    testSubFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1);
-    testSubFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
-    testSubFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1);
-    testSubFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
+    testExecutableFunctionSub<int8_t, int8_t>(rand(), rand());
+    testExecutableFunctionSub<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionSub<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionSub<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testExecutableFunctionSub<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testExecutableFunctionSub<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testExecutableFunctionSub<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testExecutableFunctionSub<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testExecutableFunctionSub<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    testSubFunction<int16_t, int16_t>(rand(), rand());
-    testSubFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1);
-    testSubFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
-    testSubFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1);
-    testSubFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
-    testSubFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1);
-    testSubFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
+    testExecutableFunctionSub<int16_t, int16_t>(rand(), rand());
+    testExecutableFunctionSub<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testExecutableFunctionSub<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testExecutableFunctionSub<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testExecutableFunctionSub<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testExecutableFunctionSub<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testExecutableFunctionSub<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    testSubFunction<int32_t, int32_t>(rand(), rand());
-    testSubFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1);
-    testSubFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
-    testSubFunction<int32_t, int64_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionSub<int32_t, int32_t>(rand(), rand());
+    testExecutableFunctionSub<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionSub<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testExecutableFunctionSub<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    testSubFunction<int64_t, int64_t>(rand(), rand());
-    testSubFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1);
-    testSubFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
+    testExecutableFunctionSub<int64_t, int64_t>(rand(), rand());
+    testExecutableFunctionSub<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testExecutableFunctionSub<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
-TEST_F(SubFunctionTest, UnsignedIntegers)
+TEST_F(ExecutableFunctionSubTest, UnsignedIntegers)
 {
-    testSubFunction<uint8_t, uint8_t>(rand(), rand());
-    testSubFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
-    testSubFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
-    testSubFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
-    testSubFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
-    testSubFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
-    testSubFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
-    testSubFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
-    testSubFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
+    testExecutableFunctionSub<uint8_t, uint8_t>(rand(), rand());
+    testExecutableFunctionSub<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionSub<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionSub<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testExecutableFunctionSub<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testExecutableFunctionSub<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testExecutableFunctionSub<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testExecutableFunctionSub<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testExecutableFunctionSub<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    testSubFunction<uint16_t, uint16_t>(rand(), rand());
-    testSubFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
-    testSubFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
-    testSubFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
-    testSubFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
-    testSubFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
-    testSubFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionSub<uint16_t, uint16_t>(rand(), rand());
+    testExecutableFunctionSub<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testExecutableFunctionSub<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testExecutableFunctionSub<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testExecutableFunctionSub<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionSub<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testExecutableFunctionSub<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    testSubFunction<uint32_t, uint32_t>(rand(), rand());
-    testSubFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
-    testSubFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
-    testSubFunction<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionSub<uint32_t, uint32_t>(rand(), rand());
+    testExecutableFunctionSub<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionSub<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionSub<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    testSubFunction<uint64_t, uint64_t>(rand(), rand());
-    testSubFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
-    testSubFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionSub<uint64_t, uint64_t>(rand(), rand());
+    testExecutableFunctionSub<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testExecutableFunctionSub<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
-TEST_F(SubFunctionTest, FloatingPoints)
+TEST_F(ExecutableFunctionSubTest, FloatingPoints)
 {
-    testSubFunction<float, float>(rand(), rand());
-    testSubFunction<float, float>(someMagicNumber, someMagicNumber);
-    testSubFunction<float, float>(someMagicNumber, someMagicNumber + 0.1);
-    testSubFunction<float, double>(someMagicNumber, someMagicNumber);
-    testSubFunction<float, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionSub<float, float>(rand(), rand());
+    testExecutableFunctionSub<float, float>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionSub<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionSub<float, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionSub<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    testSubFunction<double, double>(rand(), rand());
-    testSubFunction<double, double>(someMagicNumber, someMagicNumber);
-    testSubFunction<double, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionSub<double, double>(rand(), rand());
+    testExecutableFunctionSub<double, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionSub<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
-/// We test here, if an exception gets thrown, as we have not implemented the SubFunction on VariableSizedData
-TEST_F(SubFunctionTest, VariableSizedDataTest)
+/// We test here, if an exception gets thrown, as we have not implemented the ExecutableFunctionSub on VariableSizedData
+TEST_F(ExecutableFunctionSubTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

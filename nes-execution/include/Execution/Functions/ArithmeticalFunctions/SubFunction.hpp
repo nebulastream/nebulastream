@@ -18,15 +18,15 @@
 
 namespace NES::Runtime::Execution::Functions {
 
-/// Performs leftSubFunction - rightSubFunction
-class SubFunction : public Function {
+/// Performs leftExecutableFunctionSub - rightExecutableFunctionSub
+class ExecutableFunctionSub : public Function {
   public:
-    SubFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+    ExecutableFunctionSub(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
   private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
+    const FunctionPtr leftExecutableFunctionSub;
+    const FunctionPtr rightExecutableFunctionSub;
 };
 
 }

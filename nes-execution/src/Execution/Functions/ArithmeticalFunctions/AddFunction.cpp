@@ -11,25 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ArithmeticalFunctions/AddFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
 #include <ErrorHandling.hpp>
 #include <memory>
 
 namespace NES::Runtime::Execution::Functions {
 
-VarVal AddFunction::execute(Record& record) const {
-    const auto leftValue = leftSubFunction->execute(record);
-    const auto rightValue = rightSubFunction->execute(record);
+VarVal ExecutableFunctionAdd::execute(Record& record) const {
+    const auto leftValue = leftExecutableFunctionSub->execute(record);
+    const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue + rightValue;
 }
 
-AddFunction::AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
-    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
+ExecutableFunctionAdd::ExecutableFunctionAdd(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub)) {}
 
-FunctionPtr RegisterAddFunction(std::vector<FunctionPtr> subFunctions)
+FunctionPtr RegisterExecutableFunctionAdd(std::vector<FunctionPtr> subFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Add function must have exactly two sub-functions");
-    return std::make_unique<AddFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    return std::make_unique<ExecutableFunctionAdd>(std::move(subFunctions[0]), std::move(subFunctions[1]));
 }
 
 }

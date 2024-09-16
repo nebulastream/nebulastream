@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -21,7 +21,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-class EqualsFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionEqualsTest : public Testing::BaseUnitTest
 {
 public:
 
@@ -38,17 +38,17 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("EqualsFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup EqualsFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionEqualsTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionEqualsTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down EqualsFunctionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionEqualsTest test class."); }
 
-    const BinaryFunctionWrapper<EqualsFunction> function;
+    const BinaryFunctionWrapper<ExecutableFunctionEquals> function;
 
     template <typename LHS, typename RHS>
-    void testEqualsFunction(const LHS& leftValue, const RHS& rightValue)
+    void testExecutableFunctionEquals(const LHS& leftValue, const RHS& rightValue)
     {
         const auto left = VarVal(nautilus::val<LHS>(leftValue));
         const auto right = VarVal(nautilus::val<RHS>(rightValue));
@@ -61,80 +61,80 @@ public:
 };
 
 
-TEST_F(EqualsFunctionTest, signedIntegers)
+TEST_F(ExecutableFunctionEqualsTest, signedIntegers)
 {
-    testEqualsFunction<int8_t, int8_t>(rand(), rand());
-    testEqualsFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber);
-    testEqualsFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
-    testEqualsFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1);
-    testEqualsFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
-    testEqualsFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1);
-    testEqualsFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
-    testEqualsFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1);
-    testEqualsFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
+    testExecutableFunctionEquals<int8_t, int8_t>(rand(), rand());
+    testExecutableFunctionEquals<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionEquals<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionEquals<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testExecutableFunctionEquals<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testExecutableFunctionEquals<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testExecutableFunctionEquals<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testExecutableFunctionEquals<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testExecutableFunctionEquals<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    testEqualsFunction<int16_t, int16_t>(rand(), rand());
-    testEqualsFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1);
-    testEqualsFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
-    testEqualsFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1);
-    testEqualsFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
-    testEqualsFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1);
-    testEqualsFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
+    testExecutableFunctionEquals<int16_t, int16_t>(rand(), rand());
+    testExecutableFunctionEquals<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testExecutableFunctionEquals<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testExecutableFunctionEquals<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testExecutableFunctionEquals<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testExecutableFunctionEquals<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testExecutableFunctionEquals<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    testEqualsFunction<int32_t, int32_t>(rand(), rand());
-    testEqualsFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1);
-    testEqualsFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
-    testEqualsFunction<int32_t, int64_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionEquals<int32_t, int32_t>(rand(), rand());
+    testExecutableFunctionEquals<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionEquals<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testExecutableFunctionEquals<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    testEqualsFunction<int64_t, int64_t>(rand(), rand());
-    testEqualsFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1);
-    testEqualsFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
+    testExecutableFunctionEquals<int64_t, int64_t>(rand(), rand());
+    testExecutableFunctionEquals<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testExecutableFunctionEquals<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
-TEST_F(EqualsFunctionTest, UnsignedIntegers)
+TEST_F(ExecutableFunctionEqualsTest, UnsignedIntegers)
 {
-    testEqualsFunction<uint8_t, uint8_t>(rand(), rand());
-    testEqualsFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
-    testEqualsFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
-    testEqualsFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
-    testEqualsFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
-    testEqualsFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
-    testEqualsFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
-    testEqualsFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
-    testEqualsFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
+    testExecutableFunctionEquals<uint8_t, uint8_t>(rand(), rand());
+    testExecutableFunctionEquals<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionEquals<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionEquals<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testExecutableFunctionEquals<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testExecutableFunctionEquals<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testExecutableFunctionEquals<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testExecutableFunctionEquals<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testExecutableFunctionEquals<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    testEqualsFunction<uint16_t, uint16_t>(rand(), rand());
-    testEqualsFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
-    testEqualsFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
-    testEqualsFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
-    testEqualsFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
-    testEqualsFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
-    testEqualsFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionEquals<uint16_t, uint16_t>(rand(), rand());
+    testExecutableFunctionEquals<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testExecutableFunctionEquals<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testExecutableFunctionEquals<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testExecutableFunctionEquals<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionEquals<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testExecutableFunctionEquals<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    testEqualsFunction<uint32_t, uint32_t>(rand(), rand());
-    testEqualsFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
-    testEqualsFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
-    testEqualsFunction<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionEquals<uint32_t, uint32_t>(rand(), rand());
+    testExecutableFunctionEquals<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionEquals<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionEquals<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    testEqualsFunction<uint64_t, uint64_t>(rand(), rand());
-    testEqualsFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
-    testEqualsFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionEquals<uint64_t, uint64_t>(rand(), rand());
+    testExecutableFunctionEquals<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testExecutableFunctionEquals<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
-TEST_F(EqualsFunctionTest, FloatingPoints)
+TEST_F(ExecutableFunctionEqualsTest, FloatingPoints)
 {
-    testEqualsFunction<float, float>(rand(), rand());
-    testEqualsFunction<float, float>(someMagicNumber, someMagicNumber);
-    testEqualsFunction<float, float>(someMagicNumber, someMagicNumber + 0.1);
-    testEqualsFunction<float, double>(someMagicNumber, someMagicNumber);
-    testEqualsFunction<float, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionEquals<float, float>(rand(), rand());
+    testExecutableFunctionEquals<float, float>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionEquals<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionEquals<float, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionEquals<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    testEqualsFunction<double, double>(rand(), rand());
-    testEqualsFunction<double, double>(someMagicNumber, someMagicNumber);
-    testEqualsFunction<double, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionEquals<double, double>(rand(), rand());
+    testExecutableFunctionEquals<double, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionEquals<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
-TEST_F(EqualsFunctionTest, VariableSizedDataTest)
+TEST_F(ExecutableFunctionEqualsTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

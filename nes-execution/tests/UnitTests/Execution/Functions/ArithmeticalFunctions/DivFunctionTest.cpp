@@ -13,7 +13,7 @@
 */
 #include <memory>
 
-#include <Execution/Functions/ArithmeticalFunctions/DivFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -23,7 +23,7 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-class DivFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionDivTest : public Testing::BaseUnitTest
 {
 public:
 
@@ -40,17 +40,17 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("DivFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup DivFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionDivTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionDivTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down DivFunctionTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionDivTest test class."); }
 
-    const BinaryFunctionWrapper<DivFunction> function;
+    const BinaryFunctionWrapper<ExecutableFunctionDiv> function;
 
     template <typename LHS, typename RHS>
-    void testDivFunction(const LHS& leftValue, const RHS& rightValue)
+    void testExecutableFunctionDiv(const LHS& leftValue, const RHS& rightValue)
     {
         const auto leftNautilus = nautilus::val<LHS>(leftValue);
         const auto rightNautilus = nautilus::val<RHS>(rightValue);
@@ -69,81 +69,81 @@ public:
 };
 
 
-TEST_F(DivFunctionTest, SignedIntegers)
+TEST_F(ExecutableFunctionDivTest, SignedIntegers)
 {
-    testDivFunction<int8_t, int8_t>(rand(), rand());
-    testDivFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber);
-    testDivFunction<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
-    testDivFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1);
-    testDivFunction<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
-    testDivFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1);
-    testDivFunction<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
-    testDivFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1);
-    testDivFunction<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
+    testExecutableFunctionDiv<int8_t, int8_t>(rand(), rand());
+    testExecutableFunctionDiv<int8_t, int8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionDiv<int8_t, int8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionDiv<int8_t, int16_t>(someMagicNumber, minI8Minus1);
+    testExecutableFunctionDiv<int8_t, int16_t>(someMagicNumber, minI8Minus1 + 1);
+    testExecutableFunctionDiv<int8_t, int32_t>(someMagicNumber, minI16Minus1);
+    testExecutableFunctionDiv<int8_t, int32_t>(someMagicNumber, minI16Minus1 + 1);
+    testExecutableFunctionDiv<int8_t, int64_t>(someMagicNumber, minI32Minus1);
+    testExecutableFunctionDiv<int8_t, int64_t>(someMagicNumber, minI32Minus1 + 1);
 
-    testDivFunction<int16_t, int16_t>(rand(), rand());
-    testDivFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1);
-    testDivFunction<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
-    testDivFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1);
-    testDivFunction<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
-    testDivFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1);
-    testDivFunction<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
+    testExecutableFunctionDiv<int16_t, int16_t>(rand(), rand());
+    testExecutableFunctionDiv<int16_t, int16_t>(minI8Minus1, minI8Minus1);
+    testExecutableFunctionDiv<int16_t, int16_t>(minI8Minus1, minI8Minus1 + 1);
+    testExecutableFunctionDiv<int16_t, int32_t>(minI8Minus1, minI16Minus1);
+    testExecutableFunctionDiv<int16_t, int32_t>(minI8Minus1, minI16Minus1 + 1);
+    testExecutableFunctionDiv<int16_t, int64_t>(minI8Minus1, minI32Minus1);
+    testExecutableFunctionDiv<int16_t, int64_t>(minI8Minus1, minI32Minus1 + 1);
 
-    testDivFunction<int32_t, int32_t>(rand(), rand());
-    testDivFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1);
-    testDivFunction<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
-    testDivFunction<int32_t, int64_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionDiv<int32_t, int32_t>(rand(), rand());
+    testExecutableFunctionDiv<int32_t, int32_t>(minI16Minus1, minI16Minus1);
+    testExecutableFunctionDiv<int32_t, int32_t>(minI16Minus1, minI16Minus1 + 1);
+    testExecutableFunctionDiv<int32_t, int64_t>(minI16Minus1, minI16Minus1);
 
-    testDivFunction<int64_t, int64_t>(rand(), rand());
-    testDivFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1);
-    testDivFunction<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
+    testExecutableFunctionDiv<int64_t, int64_t>(rand(), rand());
+    testExecutableFunctionDiv<int64_t, int64_t>(minI32Minus1, minI32Minus1);
+    testExecutableFunctionDiv<int64_t, int64_t>(minI32Minus1, minI32Minus1 + 1);
 }
 
-TEST_F(DivFunctionTest, UnsignedIntegers)
+TEST_F(ExecutableFunctionDivTest, UnsignedIntegers)
 {
-    testDivFunction<uint8_t, uint8_t>(rand(), rand());
-    testDivFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
-    testDivFunction<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
-    testDivFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
-    testDivFunction<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
-    testDivFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
-    testDivFunction<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
-    testDivFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
-    testDivFunction<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
+    testExecutableFunctionDiv<uint8_t, uint8_t>(rand(), rand());
+    testExecutableFunctionDiv<uint8_t, uint8_t>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionDiv<uint8_t, uint8_t>(someMagicNumber, someMagicNumber + 1);
+    testExecutableFunctionDiv<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1);
+    testExecutableFunctionDiv<uint8_t, uint16_t>(someMagicNumber, maxUI8Plus1 + 1);
+    testExecutableFunctionDiv<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1);
+    testExecutableFunctionDiv<uint8_t, uint32_t>(someMagicNumber, maxUI16Plus1 + 1);
+    testExecutableFunctionDiv<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1);
+    testExecutableFunctionDiv<uint8_t, uint64_t>(someMagicNumber, maxUI32Plus1 + 1);
 
-    testDivFunction<uint16_t, uint16_t>(rand(), rand());
-    testDivFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
-    testDivFunction<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
-    testDivFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
-    testDivFunction<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
-    testDivFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
-    testDivFunction<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionDiv<uint16_t, uint16_t>(rand(), rand());
+    testExecutableFunctionDiv<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1);
+    testExecutableFunctionDiv<uint16_t, uint16_t>(maxUI8Plus1, maxUI8Plus1 + 1);
+    testExecutableFunctionDiv<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1);
+    testExecutableFunctionDiv<uint16_t, uint32_t>(maxUI8Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionDiv<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1);
+    testExecutableFunctionDiv<uint16_t, uint64_t>(maxUI8Plus1, maxUI32Plus1 + 1);
 
-    testDivFunction<uint32_t, uint32_t>(rand(), rand());
-    testDivFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
-    testDivFunction<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
-    testDivFunction<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionDiv<uint32_t, uint32_t>(rand(), rand());
+    testExecutableFunctionDiv<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1);
+    testExecutableFunctionDiv<uint32_t, uint32_t>(maxUI16Plus1, maxUI16Plus1 + 1);
+    testExecutableFunctionDiv<uint32_t, uint64_t>(maxUI16Plus1, maxUI16Plus1);
 
-    testDivFunction<uint64_t, uint64_t>(rand(), rand());
-    testDivFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
-    testDivFunction<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
+    testExecutableFunctionDiv<uint64_t, uint64_t>(rand(), rand());
+    testExecutableFunctionDiv<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1);
+    testExecutableFunctionDiv<uint64_t, uint64_t>(maxUI32Plus1, maxUI32Plus1 + 1);
 }
 
-TEST_F(DivFunctionTest, FloatingPoints)
+TEST_F(ExecutableFunctionDivTest, FloatingPoints)
 {
-    testDivFunction<float, float>(rand(), rand());
-    testDivFunction<float, float>(someMagicNumber, someMagicNumber);
-    testDivFunction<float, float>(someMagicNumber, someMagicNumber + 0.1);
-    testDivFunction<float, double>(someMagicNumber, someMagicNumber);
-    testDivFunction<float, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionDiv<float, float>(rand(), rand());
+    testExecutableFunctionDiv<float, float>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionDiv<float, float>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionDiv<float, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionDiv<float, double>(someMagicNumber, someMagicNumber + 0.1);
 
-    testDivFunction<double, double>(rand(), rand());
-    testDivFunction<double, double>(someMagicNumber, someMagicNumber);
-    testDivFunction<double, double>(someMagicNumber, someMagicNumber + 0.1);
+    testExecutableFunctionDiv<double, double>(rand(), rand());
+    testExecutableFunctionDiv<double, double>(someMagicNumber, someMagicNumber);
+    testExecutableFunctionDiv<double, double>(someMagicNumber, someMagicNumber + 0.1);
 }
 
 /// We test here, if an exception gets thrown, as we have not implemented the Divxpression on VariableSizedData
-TEST_F(DivFunctionTest, VariableSizedDataTest)
+TEST_F(ExecutableFunctionDivTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

@@ -18,14 +18,14 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
-#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
-#include <Execution/Functions/LogicalFunctions/EqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
@@ -79,13 +79,13 @@ public:
 
         /// c_mksegment = 'BUILDING' -> currently modeled as 1
         auto BUILDING = std::make_shared<ConstantInt32ValueFunction>(1);
-        auto readC_mktsegment = std::make_shared<ReadFieldFunction>("c_mksegment");
-        auto equalsFunction = std::make_shared<EqualsFunction>(readC_mktsegment, BUILDING);
+        auto readC_mktsegment = std::make_shared<ExecutableFunctionReadField>("c_mksegment");
+        auto equalsFunction = std::make_shared<ExecutableFunctionEquals>(readC_mktsegment, BUILDING);
         auto selection = std::make_shared<Selection>(equalsFunction);
         customersScan->setChild(selection);
 
         /// build ht for first join
-        auto readC_key = std::make_shared<ReadFieldFunction>("c_custkey");
+        auto readC_key = std::make_shared<ExecutableFunctionReadField>("c_custkey");
         auto joinOp = std::make_shared<Operators::BatchJoinBuild>(
             0 /*handler index*/,
             std::vector<Functions::FunctionPtr>{readC_key},
@@ -127,14 +127,14 @@ public:
 
         ///  o_orderdate < date '1995-03-15'
         auto const_1995_03_15 = std::make_shared<ConstantInt32ValueFunction>(19950315);
-        auto readO_orderdate = std::make_shared<ReadFieldFunction>("o_orderdate");
+        auto readO_orderdate = std::make_shared<ExecutableFunctionReadField>("o_orderdate");
         auto orderDateSelection = std::make_shared<Selection>(std::make_shared<LessThanFunction>(readO_orderdate, const_1995_03_15));
         orderScan->setChild(orderDateSelection);
 
         /// join probe with customers
         std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
         std::vector<IR::Types::StampPtr> valueStamps = {};
-        std::vector<FunctionPtr> ordersProbeKeys = {std::make_shared<ReadFieldFunction>("o_custkey")};
+        std::vector<FunctionPtr> ordersProbeKeys = {std::make_shared<ExecutableFunctionReadField>("o_custkey")};
 
         std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_custkey", "o_orderkey", "o_orderdate", "o_shippriority"};
         auto customersJoinProbe = std::make_shared<BatchJoinProbe>(
@@ -147,9 +147,9 @@ public:
         orderDateSelection->setChild(customersJoinProbe);
 
         /// join build for order_customers
-        std::vector<FunctionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldFunction>("o_orderkey")};
+        std::vector<FunctionPtr> order_customersJoinBuildKeys = {std::make_shared<ExecutableFunctionReadField>("o_orderkey")};
         std::vector<FunctionPtr> order_customersJoinBuildValues
-            = {std::make_shared<ReadFieldFunction>("o_orderdate"), std::make_shared<ReadFieldFunction>("o_shippriority")};
+            = {std::make_shared<ExecutableFunctionReadField>("o_orderdate"), std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
 
         auto order_customersJoinBuild = std::make_shared<Operators::BatchJoinBuild>(
             1 /*handler index*/,
@@ -193,7 +193,7 @@ public:
         auto lineitemsScan = std::make_shared<Operators::Scan>(std::move(lineitemsMP), lineItemProjection);
 
         ///   date '1995-03-15' < l_shipdate
-        auto readL_shipdate = std::make_shared<ReadFieldFunction>("l_shipdate");
+        auto readL_shipdate = std::make_shared<ExecutableFunctionReadField>("l_shipdate");
         auto const_1995_03_15 = std::make_shared<ConstantInt32ValueFunction>(19950315);
         auto shipDateSelection = std::make_shared<Selection>(std::make_shared<LessThanFunction>(const_1995_03_15, readL_shipdate));
         lineitemsScan->setChild(shipDateSelection);
@@ -201,7 +201,7 @@ public:
         /// join probe with customers
 
         ///  l_orderkey,
-        auto l_orderkey = std::make_shared<ReadFieldFunction>("l_orderkey");
+        auto l_orderkey = std::make_shared<ExecutableFunctionReadField>("l_orderkey");
         std::vector<FunctionPtr> lineitemProbeKeys = {l_orderkey};
 
         std::vector<Record::RecordFieldIdentifier> orderProbeFieldNames = {"o_shippriority", "o_orderdate"};
@@ -216,15 +216,15 @@ public:
         shipDateSelection->setChild(lineitemJoinProbe);
 
         ///  sum(l_extendedprice * (1 - l_discount)) as revenue,
-        auto l_extendedpriceField = std::make_shared<ReadFieldFunction>("l_extendedprice");
-        auto l_discountField = std::make_shared<ReadFieldFunction>("l_discount");
+        auto l_extendedpriceField = std::make_shared<ExecutableFunctionReadField>("l_extendedprice");
+        auto l_discountField = std::make_shared<ExecutableFunctionReadField>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueFunction>(1.0f);
-        auto subFunction = std::make_shared<SubFunction>(oneConst, l_discountField);
-        auto revenueFunction = std::make_shared<MulFunction>(l_extendedpriceField, subFunction);
+        auto subFunction = std::make_shared<ExecutableFunctionSub>(oneConst, l_discountField);
+        auto revenueFunction = std::make_shared<ExecutableFunctionMul>(l_extendedpriceField, subFunction);
         auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueFunction, "sum_revenue");
-        auto readO_orderdate = std::make_shared<ReadFieldFunction>("o_orderdate");
+        auto readO_orderdate = std::make_shared<ExecutableFunctionReadField>("o_orderdate");
         std::vector<Functions::FunctionPtr> keyFields
-            = {l_orderkey, readO_orderdate, std::make_shared<ReadFieldFunction>("o_shippriority")};
+            = {l_orderkey, readO_orderdate, std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
         std::vector<Functions::FunctionPtr> aggregationFunctions = {revenueFunction};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
 

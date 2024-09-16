@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <Execution/Functions/LogicalFunctions/NegateFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <TestUtils/FunctionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Functions
 
 {
 
-class NegateFunctionTest : public Testing::BaseUnitTest
+class ExecutableFunctionNegateTest : public Testing::BaseUnitTest
 {
 public:
     /// Defining some constexpr values for more readable tests
@@ -38,16 +38,16 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("NegateFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup NegateFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionNegateTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionNegateTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down NegateFunctionTest test class."); }
-    const UnaryFunctionWrapper<NegateFunction> function;
+    static void TearDownTestCase() { NES_INFO("Tear down ExecutableFunctionNegateTest test class."); }
+    const UnaryFunctionWrapper<ExecutableFunctionNegate> function;
 
     template <typename T>
-    void testNegateFunction(const T& value)
+    void testExecutableFunctionNegate(const T& value)
     {
         const auto varVal = VarVal(nautilus::val<T>(value));
         auto resultValue = function.eval(varVal);
@@ -55,31 +55,31 @@ public:
     }
 };
 
-TEST_F(NegateFunctionTest, fixedDataTypes)
+TEST_F(ExecutableFunctionNegateTest, fixedDataTypes)
 {
     /// Signed Integers
-    testNegateFunction<int8_t>(rand());
-    testNegateFunction<int16_t>(rand());
-    testNegateFunction<int32_t>(rand());
-    testNegateFunction<int64_t>(rand());
+    testExecutableFunctionNegate<int8_t>(rand());
+    testExecutableFunctionNegate<int16_t>(rand());
+    testExecutableFunctionNegate<int32_t>(rand());
+    testExecutableFunctionNegate<int64_t>(rand());
 
     /// Unsigned Integers
-    testNegateFunction<uint8_t>(rand());
-    testNegateFunction<uint16_t>(rand());
-    testNegateFunction<uint32_t>(rand());
-    testNegateFunction<uint64_t>(rand());
+    testExecutableFunctionNegate<uint8_t>(rand());
+    testExecutableFunctionNegate<uint16_t>(rand());
+    testExecutableFunctionNegate<uint32_t>(rand());
+    testExecutableFunctionNegate<uint64_t>(rand());
 
     /// Floating Points
-    testNegateFunction<float>(rand());
-    testNegateFunction<double>(rand());
+    testExecutableFunctionNegate<float>(rand());
+    testExecutableFunctionNegate<double>(rand());
 
 
     /// Booleans
-    testNegateFunction<bool>(true);
-    testNegateFunction<bool>(false);
+    testExecutableFunctionNegate<bool>(true);
+    testExecutableFunctionNegate<bool>(false);
 }
 
-TEST_F(NegateFunctionTest, VariableSizedDataTest)
+TEST_F(ExecutableFunctionNegateTest, VariableSizedDataTest)
 {
     auto createVariableSizedRandomData = [](const uint32_t size)
     {

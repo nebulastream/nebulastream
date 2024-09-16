@@ -11,27 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ArithmeticalFunctions/DivFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
 #include <memory>
 #include <ErrorHandling.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Functions {
 
-VarVal DivFunction::execute(Record& record) const {
-    const auto leftValue = leftSubFunction->execute(record);
-    const auto rightValue = rightSubFunction->execute(record);
+VarVal ExecutableFunctionDiv::execute(Record& record) const {
+    const auto leftValue = leftExecutableFunctionSub->execute(record);
+    const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue / rightValue;
 }
 
-DivFunction::DivFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
-    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction)) {}
+ExecutableFunctionDiv::ExecutableFunctionDiv(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub)) {}
 
 
-FunctionPtr RegisterDivFunction(std::vector<FunctionPtr> subFunctions)
+FunctionPtr RegisterExecutableFunctionDiv(std::vector<FunctionPtr> subFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Div function must have exactly two sub-functions");
-    return std::make_unique<DivFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    return std::make_unique<ExecutableFunctionDiv>(std::move(subFunctions[0]), std::move(subFunctions[1]));
 }
 
 }
