@@ -38,7 +38,8 @@ public:
                           ->addField("i64", BasicType::INT64)
                           ->addField("f32", BasicType::FLOAT32)
                           ->addField("bool", BasicType::BOOLEAN)
-                          ->addField("text", DataTypeFactory::createText());
+                          ->addField("text", DataTypeFactory::createText())
+                          ->updateSourceName("src");
     }
 
 protected:
@@ -53,7 +54,7 @@ TEST_F(NodeFunctionLessTest, validateBeforeLoweringDifferentChildNumbers)
         const auto nodeFunctionLess = NodeFunctionLess::create(nodeFunctionReadLeft, nodeFunctionReadRight);
         nodeFunctionLess->inferStamp(dummySchema);
         nodeFunctionLess->removeChildren();
-        EXPECT_TRUE(nodeFunctionLess->validateBeforeLowering());
+        EXPECT_FALSE(nodeFunctionLess->validateBeforeLowering());
     }
 
     {
