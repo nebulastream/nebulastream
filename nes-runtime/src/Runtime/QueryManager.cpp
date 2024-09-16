@@ -39,7 +39,6 @@ QueryManager::QueryManager(
     std::vector<Memory::BufferManagerPtr> bufferManagers,
     WorkerId nodeEngineId,
     uint16_t numThreads,
-    uint64_t numberOfBuffersPerEpoch,
     std::vector<uint64_t> workerToCoreMapping)
     : taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
     , nodeEngineId(nodeEngineId)
@@ -47,7 +46,6 @@ QueryManager::QueryManager(
     , numThreads(numThreads)
     , workerToCoreMapping(std::move(workerToCoreMapping))
     , queryStatusListener(std::move(queryStatusListener))
-    , numberOfBuffersPerEpoch(numberOfBuffersPerEpoch)
 {
     tempCounterTasksCompleted.resize(numThreads);
 
