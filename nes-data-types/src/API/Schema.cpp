@@ -19,13 +19,16 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-
 namespace NES
 {
 
@@ -127,15 +130,25 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
 
 AttributeFieldPtr Schema::get(const std::string& fieldName) const
 {
-    for (const auto& field : fields)
+    /// This does not work for fields with the same name but different qualifiers
+    /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
+    /// Additionally, it is not clear when and how to use what method to interact with the schema and the underlying attribute fields.
+    PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
+    auto fieldNameToSearchFor = fieldName;
+    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
+        && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        if (field->getName() == fieldName)
-        {
-            return field;
-        }
+        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the identifier {}", fieldName);
-    throw std::invalid_argument("field " + fieldName + " does not exist");
+
+
+    if (auto fieldFound = std::ranges::find_if(fields, [&](const auto& field) { return field->getName() == fieldNameToSearchFor; });
+        fieldFound != fields.end())
+    {
+        return *fieldFound;
+    }
+
+    throw InvalidFieldException(fmt::format("field {}  does not exist", fieldName));
 }
 
 AttributeFieldPtr Schema::get(uint32_t index)
