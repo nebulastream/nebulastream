@@ -17,9 +17,9 @@
 #include <nautilus/std/cstring.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include "Common/PhysicalTypes/PhysicalType.hpp"
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus
 {

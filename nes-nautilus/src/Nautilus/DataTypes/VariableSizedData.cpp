@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <iomanip>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
-#include <iomanip>
 
 namespace NES::Nautilus
 {
@@ -118,8 +118,9 @@ nautilus::val<bool> VariableSizedData::operator!() const
     oss << "Size(" << varSizedData.size << "): ";
     for (nautilus::val<uint32_t> i = 0; i < varSizedData.size; ++i)
     {
-        oss << std::hex << (readValueFromMemRef((varSizedData.content + i + nautilus::val<uint64_t>(sizeof(uint32_t))), int8_t) & 0xff) << " ";
+        oss << std::hex << (readValueFromMemRef((varSizedData.content + i + nautilus::val<uint64_t>(sizeof(uint32_t))), int8_t) & 0xff)
+            << " ";
     }
     return oss;
 }
-} // namespace NES::Nautilus
+}

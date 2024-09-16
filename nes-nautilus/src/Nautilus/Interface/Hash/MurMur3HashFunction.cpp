@@ -31,12 +31,6 @@ VarVal hashVarVal(const VarVal& input)
 {
     /// Somehow we can not use the same variable here. It will cause a "VarVal move assignment with mismatching types"
     /// We have to think if it is okay that the underlying value changes its type. Without thinking too much about it, I would say it is not okay.
-    // const auto x = (input >> VarVal(33));
-    // const auto x1 = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
-    // const auto x2 = x1 ^ (x1 >> VarVal(33));
-    // const auto x3 = x2 * VarVal(nautilus::val<uint64_t>(UINT64_C(0xc4ceb9fe1a85ec53)));
-    // const auto x4 = x3 ^ (x3 >> VarVal(33));
-    // return x4;
     auto x = input ^ (input >> VarVal(33));
     x = x * VarVal(nautilus::val<uint64_t>(UINT64_C(0xff51afd7ed558ccd)));
     x = x ^ (x >> VarVal(33));

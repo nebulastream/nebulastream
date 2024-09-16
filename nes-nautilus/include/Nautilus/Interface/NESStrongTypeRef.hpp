@@ -33,14 +33,14 @@ constexpr Type to_type()
 
 /// This class is a nautilus wrapper for our NESStrongType
 template <typename T, typename Tag, T invalid, T initial>
-class val<NES::NESStrongType<T, Tag, invalid, initial>> {
+class val<NES::NESStrongType<T, Tag, invalid, initial>>
+{
 public:
     using Underlying = typename NES::NESStrongType<T, Tag, invalid, initial>::Underlying;
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const Underlying t) : value(t.value) {}
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const NES::NESStrongType<T, Tag, invalid, initial> t) : value(t.getRawValue()) {}
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) {}
+    val<NES::NESStrongType<T, Tag, invalid, initial>>(const Underlying t) : value(t.value) { }
+    val<NES::NESStrongType<T, Tag, invalid, initial>>(const NES::NESStrongType<T, Tag, invalid, initial> t) : value(t.getRawValue()) { }
+    val<NES::NESStrongType<T, Tag, invalid, initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
 
     val<Underlying> value;
 };
 }
-
