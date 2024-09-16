@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.178](https://github.com/nebulastream/nebulastream/tree/v0.6.178) (2024-09-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.177...v0.6.178)
+
+**Implemented enhancements:**
+
+- \[TASK\] Define abstraction for creating persistent sources to store stateful objects between successive restart of a data source instance [\#5084](https://github.com/nebulastream/nebulastream/issues/5084)
+
 ## [v0.6.177](https://github.com/nebulastream/nebulastream/tree/v0.6.177) (2024-09-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.176...v0.6.177)
