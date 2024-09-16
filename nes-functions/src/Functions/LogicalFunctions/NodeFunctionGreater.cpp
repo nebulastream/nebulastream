@@ -55,7 +55,28 @@ std::string NodeFunctionGreater::toString() const
 NodeFunctionPtr NodeFunctionGreater::deepCopy()
 {
 {
-    return children.size() == 2;
+    if (children.size() != 2)
+    {
+        return false;
+    }
+
+    const auto childLeft = children[0]->as<FunctionNode>();
+    const auto childRight = children[1]->as<FunctionNode>();
+
+    /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
+    if (childLeft->getStamp()->isText() || childRight->getStamp()->isText() ||
+        childLeft->getStamp()->isArray() || childRight->getStamp()->isArray())
+    {
+        return false;
+    }
+
+    /// If one of the children has a stamp of type charArray, the other child must also have a stamp of type charArray
+    if (childLeft->getStamp()->isCharArray() != childRight->getStamp()->isCharArray())
+    {
+        return false;
+    }
+
+    return true;
 }
 
 }
