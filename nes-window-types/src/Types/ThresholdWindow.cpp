@@ -12,28 +12,28 @@
     limitations under the License.
 */
 
-#include <Functions/FunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing
 {
 
-ThresholdWindow::ThresholdWindow(FunctionNodePtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
+ThresholdWindow::ThresholdWindow(NodeFunctionPtr predicate) : ContentBasedWindowType(), predicate(std::move(predicate))
 {
 }
 
-ThresholdWindow::ThresholdWindow(FunctionNodePtr predicate, uint64_t minCount)
+ThresholdWindow::ThresholdWindow(NodeFunctionPtr predicate, uint64_t minCount)
     : ContentBasedWindowType(), predicate(predicate), minimumCount(minCount)
 {
 }
 
-WindowTypePtr ThresholdWindow::of(FunctionNodePtr predicate)
+WindowTypePtr ThresholdWindow::of(NodeFunctionPtr predicate)
 {
     return std::reinterpret_pointer_cast<WindowType>(std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate))));
 }
 
-WindowTypePtr ThresholdWindow::of(FunctionNodePtr predicate, uint64_t minimumCount)
+WindowTypePtr ThresholdWindow::of(NodeFunctionPtr predicate, uint64_t minimumCount)
 {
     return std::reinterpret_pointer_cast<WindowType>(
         std::make_shared<ThresholdWindow>(ThresholdWindow(std::move(predicate), minimumCount)));
@@ -53,7 +53,7 @@ ContentBasedWindowType::ContentBasedSubWindowType ThresholdWindow::getContentBas
     return ContentBasedSubWindowType::THRESHOLDWINDOW;
 }
 
-const FunctionNodePtr& ThresholdWindow::getPredicate() const
+const NodeFunctionPtr& ThresholdWindow::getPredicate() const
 {
     return predicate;
 }

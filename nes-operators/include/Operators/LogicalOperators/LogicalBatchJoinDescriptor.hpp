@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES::Join::Experimental
 {
@@ -30,26 +30,26 @@ class LogicalBatchJoinDescriptor
 
 public:
     static std::shared_ptr<LogicalBatchJoinDescriptor> create(
-        const FieldAccessFunctionNodePtr& keyTypeBuild,
-        const FieldAccessFunctionNodePtr& keyTypeProbe,
+        const NodeFunctionFieldAccessPtr& keyTypeBuild,
+        const NodeFunctionFieldAccessPtr& keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     explicit LogicalBatchJoinDescriptor(
-        FieldAccessFunctionNodePtr keyTypeBuild,
-        FieldAccessFunctionNodePtr keyTypeProbe,
+        NodeFunctionFieldAccessPtr keyTypeBuild,
+        NodeFunctionFieldAccessPtr keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key
     */
-    FieldAccessFunctionNodePtr getBuildJoinKey() const;
+    NodeFunctionFieldAccessPtr getBuildJoinKey() const;
 
     /**
    * @brief getter/setter for on probe join key
    */
-    FieldAccessFunctionNodePtr getProbeJoinKey() const;
+    NodeFunctionFieldAccessPtr getProbeJoinKey() const;
 
     /**
    * @brief getter build schema
@@ -97,8 +97,8 @@ public:
     void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
 private:
-    FieldAccessFunctionNodePtr keyTypeBuild;
-    FieldAccessFunctionNodePtr keyTypeProbe;
+    NodeFunctionFieldAccessPtr keyTypeBuild;
+    NodeFunctionFieldAccessPtr keyTypeProbe;
     SchemaPtr buildSchema{nullptr};
     SchemaPtr probeSchema{nullptr};
     SchemaPtr outputSchema{nullptr};

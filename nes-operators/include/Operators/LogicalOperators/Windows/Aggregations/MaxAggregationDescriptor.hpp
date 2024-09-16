@@ -28,9 +28,9 @@ public:
     /**
      * Factory method to create a MaxAggregationDescriptor aggregation on a particular field.
      */
-    static WindowAggregationDescriptorPtr on(const FunctionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
@@ -44,11 +44,11 @@ public:
     void inferStamp(SchemaPtr schema) override;
 
     WindowAggregationDescriptorPtr copy() override;
-    MaxAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
+    MaxAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 
     virtual ~MaxAggregationDescriptor() = default;
 
 private:
-    explicit MaxAggregationDescriptor(FieldAccessFunctionNodePtr onField);
+    explicit MaxAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
 };
 } /// namespace NES::Windowing

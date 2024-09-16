@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <set>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES

@@ -16,7 +16,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
@@ -404,7 +404,7 @@ LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
 {
     /// serialize and append children if the node has any
-    std::vector<FunctionNodePtr> exps;
+    std::vector<NodeFunctionPtr> exps;
     for (const auto& serializedFunction : projectionDetails.function())
     {
         auto projectFunction = FunctionSerializationUtil::deserializeFunction(serializedFunction);
@@ -441,7 +441,7 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeMapOperator(const 
 {
     auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
     return LogicalOperatorFactory::createMapOperator(
-        NES::Util::as<FieldAssignmentFunctionNode>(fieldAssignmentFunction), getNextOperatorId());
+        NES::Util::as<NodeFunctionFieldAssignment>(fieldAssignmentFunction), getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator)
@@ -568,9 +568,9 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     for (const auto& serializedWindowAggregation : serializedWindowAggregations)
     {
         auto onField
-            = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.onfield())->as<FieldAccessFunctionNode>();
+            = Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.onfield()));
         auto asField
-            = FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.asfield())->as<FieldAccessFunctionNode>();
+            = Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.asfield()));
         if (serializedWindowAggregation.type() == SerializableOperator_WindowDetails_Aggregation_Type_SUM)
         {
             aggregation.emplace_back(Windowing::SumAggregationDescriptor::create(onField, asField));
@@ -611,7 +611,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = FieldAccessFunctionNode::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -636,7 +636,7 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = FieldAccessFunctionNode::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::SlidingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -670,10 +670,10 @@ OperatorSerializationUtil::deserializeWindowOperator(const SerializableOperator_
     }
 
     auto allowedLateness = windowDetails.allowedlateness();
-    std::vector<FieldAccessFunctionNodePtr> keyAccessFunction;
+    std::vector<NodeFunctionFieldAccessPtr> keyAccessFunction;
     for (auto& key : windowDetails.keys())
     {
-        keyAccessFunction.emplace_back(FunctionSerializationUtil::deserializeFunction(key)->as<FieldAccessFunctionNode>());
+        keyAccessFunction.emplace_back(Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(key)));
     }
     auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window, allowedLateness);
     windowDef->setOriginId(OriginId(windowDetails.origin()));
@@ -769,7 +769,7 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = FieldAccessFunctionNode::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -794,7 +794,7 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
         auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = FieldAccessFunctionNode::create(serializedTimeCharacteristic.field());
+            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::SlidingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -821,7 +821,7 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
 
     LogicalOperatorPtr ptr;
     auto serializedJoinFunction = joinDetails.joinfunction();
-    auto joinFunction = FunctionSerializationUtil::deserializeFunction(serializedJoinFunction)->as<BinaryFunctionNode>();
+    auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
     auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
@@ -852,9 +852,9 @@ Experimental::LogicalBatchJoinOperatorPtr
 OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId)
 {
     auto buildKeyAccessFunction
-        = FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey())->as<FieldAccessFunctionNode>();
+        = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey()));
     auto probeKeyAccessFunction
-        = FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey())->as<FieldAccessFunctionNode>();
+        = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey()));
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(
         buildKeyAccessFunction, probeKeyAccessFunction, joinDetails.numberofinputedgesprobe(), joinDetails.numberofinputedgesbuild());
     auto retValue = NES::Util::as<Experimental::LogicalBatchJoinOperator>(
@@ -1149,21 +1149,11 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
             = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         deserializedWatermarkStrategyDescriptor.UnpackTo(&serializedEventTimeWatermarkStrategyDescriptor);
 
-        auto onField = Util::as<FieldAccessFunctionNode>(
-        auto onField = NES::Util::as<FieldAccessFunctionNode>(
-            FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.onfield()));
-        auto asField = NES::Util::as<FieldAccessFunctionNode>(
-            FunctionSerializationUtil::deserializeFunction(serializedWindowAggregation.asfield()));
-    auto serializedJoinExpression = joinDetails.joinexpression();
-    auto joinExpression = NES::Util::as<BinaryExpressionNode>(ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression));
-    auto buildKeyAccessFunction
-        = NES::Util::as<FieldAccessFunctionNode>(FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey()));
-    auto probeKeyAccessFunction
-        = NES::Util::as<FieldAccessFunctionNode>(FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey()));
+        auto onField = Util::as<NodeFunctionFieldAccess>(
             FunctionSerializationUtil::deserializeFunction(serializedEventTimeWatermarkStrategyDescriptor.onfield()));
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            FieldAccessFunctionNode::create(onField->getFieldName()),
+            NodeFunctionFieldAccess::create(onField->getFieldName()),
             Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),
             Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
         return eventTimeWatermarkStrategyDescriptor;
@@ -1243,8 +1233,8 @@ void OperatorSerializationUtil::serializeInferModelOperator(
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
 {
-    std::vector<FunctionNodePtr> inputFields;
-    std::vector<FunctionNodePtr> outputFields;
+    std::vector<NodeFunctionPtr> inputFields;
+    std::vector<NodeFunctionPtr> outputFields;
 
     for (const auto& serializedInputField : inferModelDetails.inputfields())
     {

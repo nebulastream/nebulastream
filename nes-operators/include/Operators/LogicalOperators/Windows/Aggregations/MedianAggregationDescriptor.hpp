@@ -29,14 +29,14 @@ public:
     * @brief Factory method to creates a median aggregation on a particular field.
     * @param onField field on which the aggregation should be performed
     */
-    static WindowAggregationDescriptorPtr on(const FunctionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
     /**
      * @brief Factory method to creates a median aggregation on a particular field.
      * @param onField field on which the aggregation should be performed
      * @param asField function describing how the aggregated field should be called
      */
-    static WindowAggregationDescriptorPtr create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
@@ -58,13 +58,13 @@ private:
      * @brief Creates a new MedianAggregationDescriptor
      * @param onField field on which the aggregation should be performed
      */
-    explicit MedianAggregationDescriptor(FieldAccessFunctionNodePtr onField);
+    explicit MedianAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
 
     /**
      * @brief Creates a new MedianAggregationDescriptor
      * @param onField field on which the aggregation should be performed
      * @param asField function describing how the aggregated field should be called
      */
-    MedianAggregationDescriptor(FunctionNodePtr onField, FunctionNodePtr asField);
+    MedianAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
 } /// namespace NES::Windowing

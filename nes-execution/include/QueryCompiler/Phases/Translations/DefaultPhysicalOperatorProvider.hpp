@@ -118,12 +118,7 @@ protected:
 
     void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-     * @brief Get a join build input generator
-     * @param joinOperator join operator
-     * @param schema the operator schema
-     * @param children the upstream operators
-     */
+
     OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
 private:
@@ -131,12 +126,6 @@ private:
     [[nodiscard]] std::shared_ptr<Node>
     replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties, const LogicalOperatorPtr& operatorNode);
 
-    /**
-     * @brief Returns the left and right timestamp
-     * @param joinOperator
-     * @param windowType
-     * @return {
-     */
     [[nodiscard]] std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
         const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType) const;
 };
