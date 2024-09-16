@@ -13,12 +13,17 @@
 */
 
 #pragma once
-#include <Util/PluginRegistry.hpp>
 #include <Execution/Functions/Function.hpp>
-namespace NES::Execution::Functions {
+#include <Util/PluginRegistry.hpp>
+namespace NES::Execution::Functions
+{
 
-class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutable, std::string, Runtime::Execution::Functions::Function, std::vector<Runtime::Execution::Functions::FunctionPtr>> {
-
+class RegistryFunctionExecutable : public BaseRegistry<
+                                       RegistryFunctionExecutable,
+                                       std::string,
+                                       Runtime::Execution::Functions::Function,
+                                       std::vector<Runtime::Execution::Functions::FunctionPtr>>
+{
 };
 }
 

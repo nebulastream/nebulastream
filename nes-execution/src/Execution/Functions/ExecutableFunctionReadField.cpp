@@ -11,23 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 
-#pragma once
-
-#include <Execution/Functions/Function.hpp>
-
-namespace NES::Runtime::Execution::Functions {
-
-/// Performs leftSubFunction + rightSubFunction
-class AddFunction : public Function
+namespace NES::Runtime::Execution::Functions
 {
-public:
-    AddFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
-    VarVal execute(Record& record) const override;
 
-private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
-};
-
+ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIdentifier field) : field(field)
+{
 }
+
+VarVal ExecutableFunctionReadField::execute(Record& record) const
+{
+    return record.read(field);
+}
+
+} /// namespace NES::Runtime::Execution::Functions

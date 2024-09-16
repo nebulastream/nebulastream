@@ -24,26 +24,26 @@ namespace NES::Runtime::Execution::Functions
  */
 template <typename T>
 requires std::is_integral_v<T> || std::is_floating_point_v<T>
-class ConstantValueFunction : public Function
+class ExecutableFunctionConstantValue : public Function
 {
 public:
-    explicit ConstantValueFunction(T value);
+    explicit ExecutableFunctionConstantValue(T value);
     VarVal execute(Record& record) const override;
 
 private:
     const T value;
 };
 
-using ConstantInt8ValueFunction = ConstantValueFunction<int8_t>;
-using ConstantInt16ValueFunction = ConstantValueFunction<int16_t>;
-using ConstantInt32ValueFunction = ConstantValueFunction<int32_t>;
-using ConstantInt64ValueFunction = ConstantValueFunction<int64_t>;
-using ConstantUInt8ValueFunction = ConstantValueFunction<uint8_t>;
-using ConstantUInt16ValueFunction = ConstantValueFunction<uint16_t>;
-using ConstantUInt32ValueFunction = ConstantValueFunction<uint32_t>;
-using ConstantUInt64ValueFunction = ConstantValueFunction<uint64_t>;
-using ConstantFloatValueFunction = ConstantValueFunction<float>;
-using ConstantDoubleValueFunction = ConstantValueFunction<double>;
-using ConstantBooleanValueFunction = ConstantValueFunction<bool>;
+using ConstantInt8ValueFunction = ExecutableFunctionConstantValue<int8_t>;
+using ConstantInt16ValueFunction = ExecutableFunctionConstantValue<int16_t>;
+using ConstantInt32ValueFunction = ExecutableFunctionConstantValue<int32_t>;
+using ConstantInt64ValueFunction = ExecutableFunctionConstantValue<int64_t>;
+using ConstantUInt8ValueFunction = ExecutableFunctionConstantValue<uint8_t>;
+using ConstantUInt16ValueFunction = ExecutableFunctionConstantValue<uint16_t>;
+using ConstantUInt32ValueFunction = ExecutableFunctionConstantValue<uint32_t>;
+using ConstantUInt64ValueFunction = ExecutableFunctionConstantValue<uint64_t>;
+using ConstantFloatValueFunction = ExecutableFunctionConstantValue<float>;
+using ConstantDoubleValueFunction = ExecutableFunctionConstantValue<double>;
+using ConstantBooleanValueFunction = ExecutableFunctionConstantValue<bool>;
 
 } /// namespace NES::Runtime::Execution::Functions

@@ -11,18 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ReadFieldFunction.hpp>
+
+#pragma once
+
+#include <Execution/Functions/Function.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-ReadFieldFunction::ReadFieldFunction(Record::RecordFieldIdentifier field) : field(field)
+/**
+ * @brief This function writes a particular Value to a specific field of an record.
+ */
+class ExecutableFunctionWriteField : public Function
 {
-}
+public:
+    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
+    VarVal execute(Record& record) const override;
 
-VarVal ReadFieldFunction::execute(Record& record) const
-{
-    return record.read(field);
-}
-
+private:
+    const Nautilus::Record::RecordFieldIdentifier field;
+    const FunctionPtr subFunction;
+};
 } /// namespace NES::Runtime::Execution::Functions

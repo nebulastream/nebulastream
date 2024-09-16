@@ -16,15 +16,19 @@
 
 #include <Execution/Functions/Function.hpp>
 
-namespace NES::Runtime::Execution::Functions {
+namespace NES::Runtime::Execution::Functions
+{
 
-/// Negates the result of the subFunction
-class NegateFunction final : public Function {
+/// Performs leftExecutableFunctionSub - rightExecutableFunctionSub
+class ExecutableFunctionSub : public Function
+{
 public:
-    explicit NegateFunction(FunctionPtr subFunction);
+    ExecutableFunctionSub(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
 private:
-    const FunctionPtr subFunction;
+    const FunctionPtr leftExecutableFunctionSub;
+    const FunctionPtr rightExecutableFunctionSub;
 };
+
 }

@@ -11,31 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <utility>
 #include <memory>
+#include <utility>
 #include <vector>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
 #include <ErrorHandling.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-VarVal MulFunction::execute(Record& record) const
+VarVal ExecutableFunctionMul::execute(Record& record) const
 {
-    const auto leftValue = leftSubFunction->execute(record);
-    const auto rightValue = rightSubFunction->execute(record);
+    const auto leftValue = leftExecutableFunctionSub->execute(record);
+    const auto rightValue = rightExecutableFunctionSub->execute(record);
     return leftValue * rightValue;
 }
 
-MulFunction::MulFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction)
-    : leftSubFunction(std::move(leftSubFunction)), rightSubFunction(std::move(rightSubFunction))
+ExecutableFunctionMul::ExecutableFunctionMul(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-FunctionPtr RegisterMulFunction(std::vector<FunctionPtr> subFunctions)
+FunctionPtr RegisterExecutableFunctionMul(std::vector<FunctionPtr> subFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Mul function must have exactly two sub-functions");
-    return std::make_unique<MulFunction>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    return std::make_unique<ExecutableFunctionMul>(std::move(subFunctions[0]), std::move(subFunctions[1]));
 }
 
 }

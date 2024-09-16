@@ -17,14 +17,13 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
-#include <Execution/Functions/WriteFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Project.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Selection.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
@@ -198,7 +197,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto assignmentField = mapOperator->getMapFunction()->getField();
     auto assignmentFunction = mapOperator->getMapFunction()->getAssignment();
     auto function = FunctionProvider::lowerFunction(assignmentFunction);
-    auto writeField = std::make_unique<Runtime::Execution::Functions::WriteFieldFunction>(
+    auto writeField = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionWriteField>(
         assignmentField->getFieldName(), std::move(function));
     return std::make_shared<Runtime::Execution::Operators::Map>(std::move(writeField));
 }
