@@ -38,7 +38,8 @@ public:
                           ->addField("i64", BasicType::INT64)
                           ->addField("f32", BasicType::FLOAT32)
                           ->addField("bool", BasicType::BOOLEAN)
-                          ->addField("text", DataTypeFactory::createText());
+                          ->addField("text", DataTypeFactory::createText())
+                          ->updateSourceName("src");
     }
 
 protected:
@@ -53,7 +54,7 @@ TEST_F(NodeFunctionOrTest, validateBeforeLoweringDifferentChildNumbers)
         const auto nodeFunctionOr = NodeFunctionOr::create(nodeFunctionReadLeft, nodeFunctionReadRight);
         nodeFunctionOr->inferStamp(dummySchema);
         nodeFunctionOr->removeChildren();
-        EXPECT_TRUE(nodeFunctionOr->validateBeforeLowering());
+        EXPECT_FALSE(nodeFunctionOr->validateBeforeLowering());
     }
 
     {
@@ -85,11 +86,20 @@ TEST_F(NodeFunctionOrTest, validateBeforeLoweringDifferentChildNumbers)
 
 TEST_F(NodeFunctionOrTest, validateBeforeLoweringDifferentDataTypes)
 {
-    auto testValidateBeforeLoweringDifferentDataTypes = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue) {
+    auto testValidateBeforeLoweringDifferentDataTypes
+        = [&](const std::string& leftType, const std::string& rightType, const bool expectedValue)
+    {
         const auto nodeFunctionReadLeft = NodeFunctionFieldAccess::create(leftType);
         const auto nodeFunctionReadRight = NodeFunctionFieldAccess::create(rightType);
         const auto nodeFunctionOr = NodeFunctionOr::create(nodeFunctionReadLeft, nodeFunctionReadRight);
-        nodeFunctionOr->inferStamp(dummySchema);
+        if (expectedValue)
+        {
+            nodeFunctionOr->inferStamp(dummySchema);
+        }
+        else
+        {
+            EXPECT_ANY_THROW(nodeFunctionOr->inferStamp(dummySchema));
+        }
         EXPECT_EQ(nodeFunctionOr->validateBeforeLowering(), expectedValue);
     };
 

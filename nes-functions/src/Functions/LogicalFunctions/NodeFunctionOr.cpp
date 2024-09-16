@@ -56,8 +56,7 @@ void NodeFunctionOr::inferStamp(SchemaPtr schema)
     /// check if children stamp is correct
     if (!getLeft()->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR(
-            "OR Function Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
+        NES_THROW_RUNTIME_ERROR("OR Function Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
     }
     if (!getRight()->isPredicate())
     {
@@ -65,6 +64,7 @@ void NodeFunctionOr::inferStamp(SchemaPtr schema)
             "OR Function Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }
+
 NodeFunctionPtr NodeFunctionOr::deepCopy()
 {
     return NodeFunctionOr::create(children[0]->as<FunctionNode>()->deepCopy(), children[1]->as<FunctionNode>()->deepCopy());
@@ -72,7 +72,11 @@ NodeFunctionPtr NodeFunctionOr::deepCopy()
 
 bool NodeFunctionOr::validateBeforeLowering() const
 {
-    return children.size() == 2;
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return children[0]->as<FunctionNode>()->getStamp()->isBoolean() && children[1]->as<FunctionNode>()->getStamp()->isBoolean();
 }
 
 }

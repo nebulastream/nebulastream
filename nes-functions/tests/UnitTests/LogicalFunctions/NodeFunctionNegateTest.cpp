@@ -39,7 +39,9 @@ public:
                           ->addField("i64", BasicType::INT64)
                           ->addField("f32", BasicType::FLOAT32)
                           ->addField("bool", BasicType::BOOLEAN)
-                          ->addField("text", DataTypeFactory::createText());
+                          ->addField("bool2", BasicType::BOOLEAN)
+                          ->addField("text", DataTypeFactory::createText())
+                          ->updateSourceName("src");
     }
 
 protected:
@@ -49,7 +51,7 @@ protected:
 TEST_F(NodeFunctionNegateTest, validateBeforeLoweringDifferentChildNumbers)
 {
     {
-        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("i64");
+        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("bool");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
         nodeFunctionNegate->inferStamp(dummySchema);
         nodeFunctionNegate->removeChildren();
@@ -57,15 +59,15 @@ TEST_F(NodeFunctionNegateTest, validateBeforeLoweringDifferentChildNumbers)
     }
 
     {
-        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("i64");
+        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("bool");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
         nodeFunctionNegate->inferStamp(dummySchema);
         EXPECT_TRUE(nodeFunctionNegate->validateBeforeLowering());
     }
 
     {
-        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("i64");
-        const auto nodeFunctionRead2 = NodeFunctionFieldAccess::create("i64");
+        const auto nodeFunctionRead = NodeFunctionFieldAccess::create("bool");
+        const auto nodeFunctionRead2 = NodeFunctionFieldAccess::create("bool2");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
 
         ///NodeFunction Adding a second child to the Negate ---> should fail
@@ -78,19 +80,19 @@ TEST_F(NodeFunctionNegateTest, validateBeforeLoweringDifferentChildNumbers)
 TEST_F(NodeFunctionNegateTest, validateBeforeLoweringDifferentDataTypes)
 {
     {
-        ///NodeFunction Negate with a child of type i64 --> should pass
+        ///NodeFunction Negate with a child of type i64 --> should fail
         const auto nodeFunctionRead = NodeFunctionFieldAccess::create("i64");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
-        nodeFunctionNegate->inferStamp(dummySchema);
-        EXPECT_TRUE(nodeFunctionNegate->validateBeforeLowering());
+        EXPECT_ANY_THROW(nodeFunctionNegate->inferStamp(dummySchema));
+        EXPECT_FALSE(nodeFunctionNegate->validateBeforeLowering());
     }
 
     {
-        ///NodeFunction Negate with a child of type f32 --> should pass
+        ///NodeFunction Negate with a child of type f32 --> should fail
         const auto nodeFunctionRead = NodeFunctionFieldAccess::create("f32");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
-        nodeFunctionNegate->inferStamp(dummySchema);
-        EXPECT_TRUE(nodeFunctionNegate->validateBeforeLowering());
+        EXPECT_ANY_THROW(nodeFunctionNegate->inferStamp(dummySchema));
+        EXPECT_FALSE(nodeFunctionNegate->validateBeforeLowering());
     }
 
     {
@@ -102,11 +104,11 @@ TEST_F(NodeFunctionNegateTest, validateBeforeLoweringDifferentDataTypes)
     }
 
     {
-        ///NodeFunction Negate with a child of type text --> should pass
+        ///NodeFunction Negate with a child of type text --> should fail
         const auto nodeFunctionRead = NodeFunctionFieldAccess::create("text");
         const auto nodeFunctionNegate = NodeFunctionNegate::create(nodeFunctionRead);
-        nodeFunctionNegate->inferStamp(dummySchema);
-        EXPECT_TRUE(nodeFunctionNegate->validateBeforeLowering());
+        EXPECT_ANY_THROW(nodeFunctionNegate->inferStamp(dummySchema));
+        EXPECT_FALSE(nodeFunctionNegate->validateBeforeLowering());
     }
 }
 

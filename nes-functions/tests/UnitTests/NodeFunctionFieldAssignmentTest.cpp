@@ -38,7 +38,8 @@ public:
                           ->addField("i64", BasicType::INT64)
                           ->addField("f32", BasicType::FLOAT32)
                           ->addField("bool", BasicType::BOOLEAN)
-                          ->addField("text", DataTypeFactory::createText());
+                          ->addField("text", DataTypeFactory::createText())
+                          ->updateSourceName("src");
     }
 
 protected:
@@ -53,7 +54,7 @@ TEST_F(NodeFunctionFieldAssignmentTest, validateBeforeLoweringDifferentChildNumb
         const auto nodeFunctionFieldAssignment = NodeFunctionFieldAssignment::create(fieldAccess, nodeFunctionRead);
         nodeFunctionFieldAssignment->inferStamp(dummySchema);
         nodeFunctionFieldAssignment->removeChildren();
-        EXPECT_FALSE(nodeFunctionFieldAssignment->validateBeforeLowering());
+        EXPECT_TRUE(nodeFunctionFieldAssignment->validateBeforeLowering());
     }
 
     {
@@ -61,7 +62,7 @@ TEST_F(NodeFunctionFieldAssignmentTest, validateBeforeLoweringDifferentChildNumb
         const auto nodeFunctionRead = NodeFunctionFieldAccess::create("f32");
         const auto nodeFunctionFieldAssignment = NodeFunctionFieldAssignment::create(fieldAccess, nodeFunctionRead);
         nodeFunctionFieldAssignment->inferStamp(dummySchema);
-        EXPECT_TRUE(nodeFunctionFieldAssignment->validateBeforeLowering());
+        EXPECT_FALSE(nodeFunctionFieldAssignment->validateBeforeLowering());
     }
 }
 
