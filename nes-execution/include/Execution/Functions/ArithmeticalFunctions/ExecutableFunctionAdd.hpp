@@ -19,11 +19,21 @@
 namespace NES::Runtime::Execution::Functions
 {
 
+<<<<<<<< HEAD:nes-execution/include/Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp
 /// Performs leftExecutableFunctionSub + rightExecutableFunctionSub
 class ExecutableFunctionAdd : public Function
 {
 public:
     ExecutableFunctionAdd(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+========
+/**
+ * @brief This function writes a particular Value to a specific field of an record.
+ */
+class ExecutableFunctionWriteField : public Function
+{
+public:
+    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
+>>>>>>>> 5405d3812e (chore(Functions) Renamed Function --> ExecutableFunction):nes-execution/include/Execution/Functions/ExecutableFunctionWriteField.hpp
     VarVal execute(Record& record) const override;
 
 private:

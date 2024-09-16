@@ -14,5 +14,6 @@
 
 #include <Execution/Functions/Registry/RegistryFunctionExecutable.hpp>
 
-namespace NES::Execution::Functions {
+namespace NES::Execution::Functions
+{
 }

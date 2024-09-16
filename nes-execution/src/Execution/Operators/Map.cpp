@@ -11,13 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Map.cpp
+========
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+>>>>>>>> 5405d3812e (chore(Functions) Renamed Function --> ExecutableFunction):nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 
 #include <Execution/Operators/Map.hpp>
 #include <Nautilus/Interface/Record.hpp>
 namespace NES::Runtime::Execution::Operators
 {
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Map.cpp
 void Map::execute(ExecutionContext& ctx, Record& record) const
+========
+ExecutableFunctionReadField::ExecutableFunctionReadField(Record::RecordFieldIdentifier field) : field(field)
+>>>>>>>> 5405d3812e (chore(Functions) Renamed Function --> ExecutableFunction):nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 {
     /// assume that map function performs a field write
     mapFunction->execute(record);
@@ -25,4 +33,10 @@ void Map::execute(ExecutionContext& ctx, Record& record) const
     child->execute(ctx, record);
 }
 
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Map.cpp
+========
+VarVal ExecutableFunctionReadField::execute(Record& record) const
+{
+    return record.read(field);
+>>>>>>>> 5405d3812e (chore(Functions) Renamed Function --> ExecutableFunction):nes-execution/src/Execution/Functions/ExecutableFunctionReadField.cpp
 }
