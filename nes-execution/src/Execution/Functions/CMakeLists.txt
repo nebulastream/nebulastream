@@ -11,11 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        ReadFieldFunction.cpp
-        WriteFieldFunction.cpp
-        ConstantValueFunction.cpp
+        ExecutableFunctionReadField.cpp
+        ExecutableFunctionWriteField.cpp
         )
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(LogicalFunctions)
-add_subdirectory(Registry)
