@@ -11,33 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 namespace NES::Runtime::Execution::Functions
 {
 
 template <typename T>
 requires std::is_integral_v<T> || std::is_floating_point_v<T>
-ConstantValueFunction<T>::ConstantValueFunction(T value) : value(value)
+ExecutableFunctionConstantValue<T>::ExecutableFunctionConstantValue(T value) : value(value)
 {
 }
 
 template <typename T>
 requires std::is_integral_v<T> || std::is_floating_point_v<T>
-VarVal ConstantValueFunction<T>::execute(Record&) const
+VarVal ExecutableFunctionConstantValue<T>::execute(Record&) const
 {
     return VarVal(value);
 }
 
-template class ConstantValueFunction<int8_t>;
-template class ConstantValueFunction<int16_t>;
-template class ConstantValueFunction<int32_t>;
-template class ConstantValueFunction<int64_t>;
-template class ConstantValueFunction<uint8_t>;
-template class ConstantValueFunction<uint16_t>;
-template class ConstantValueFunction<uint32_t>;
-template class ConstantValueFunction<uint64_t>;
-template class ConstantValueFunction<float>;
-template class ConstantValueFunction<bool>;
-template class ConstantValueFunction<double>;
+template class ExecutableFunctionConstantValue<int8_t>;
+template class ExecutableFunctionConstantValue<int16_t>;
+template class ExecutableFunctionConstantValue<int32_t>;
+template class ExecutableFunctionConstantValue<int64_t>;
+template class ExecutableFunctionConstantValue<uint8_t>;
+template class ExecutableFunctionConstantValue<uint16_t>;
+template class ExecutableFunctionConstantValue<uint32_t>;
+template class ExecutableFunctionConstantValue<uint64_t>;
+template class ExecutableFunctionConstantValue<float>;
+template class ExecutableFunctionConstantValue<bool>;
+template class ExecutableFunctionConstantValue<double>;
 
 } /// namespace NES::Runtime::Execution::Functions

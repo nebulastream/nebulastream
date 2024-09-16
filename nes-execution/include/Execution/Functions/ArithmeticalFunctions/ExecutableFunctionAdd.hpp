@@ -19,15 +19,16 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-/// Returns true if the left and right subfunctions are equal, otherwise false.
-class EqualsFunction final : public Function
+/// Performs leftExecutableFunctionSub + rightExecutableFunctionSub
+class ExecutableFunctionAdd : public Function
 {
 public:
-    EqualsFunction(FunctionPtr leftSubFunction, FunctionPtr rightSubFunction);
+    ExecutableFunctionAdd(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
 private:
-    const FunctionPtr leftSubFunction;
-    const FunctionPtr rightSubFunction;
+    const FunctionPtr leftExecutableFunctionSub;
+    const FunctionPtr rightExecutableFunctionSub;
 };
+
 }

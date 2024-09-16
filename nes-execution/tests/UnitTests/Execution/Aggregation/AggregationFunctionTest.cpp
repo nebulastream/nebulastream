@@ -19,7 +19,7 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
@@ -36,8 +36,8 @@ public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("AddFunctionTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup AddFunctionTest test class.");
+        NES::Logger::setupLogging("ExecutableFunctionAddTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ExecutableFunctionAddTest test class.");
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -51,7 +51,7 @@ TEST_F(AggregationFunctionTest, sumAggregation)
 {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
-    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto readFieldFunction = std::make_shared<Functions::ExecutableFunctionReadField>("value");
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType, readFieldFunction, "result");
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&sumValue);
@@ -81,7 +81,7 @@ TEST_F(AggregationFunctionTest, sumAggregation)
  */
 TEST_F(AggregationFunctionTest, countAggregation)
 {
-    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto readFieldFunction = std::make_shared<Functions::ExecutableFunctionReadField>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
@@ -116,7 +116,7 @@ TEST_F(AggregationFunctionTest, countAggregation)
  */
 TEST_F(AggregationFunctionTest, AvgAggregation)
 {
-    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto readFieldFunction = std::make_shared<Functions::ExecutableFunctionReadField>("value");
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
@@ -153,7 +153,7 @@ TEST_F(AggregationFunctionTest, AvgAggregation)
  */
 TEST_F(AggregationFunctionTest, MinAggregation)
 {
-    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto readFieldFunction = std::make_shared<Functions::ExecutableFunctionReadField>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
@@ -220,7 +220,7 @@ TEST_F(AggregationFunctionTest, MinAggregation)
  */
 TEST_F(AggregationFunctionTest, MaxAggregation)
 {
-    auto readFieldFunction = std::make_shared<Functions::ReadFieldFunction>("value");
+    auto readFieldFunction = std::make_shared<Functions::ExecutableFunctionReadField>("value");
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());

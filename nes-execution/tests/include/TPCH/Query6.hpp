@@ -18,23 +18,23 @@
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/MulFunction.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/SubFunction.hpp>
-#include <Execution/Functions/ConstantValueFunction.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/LogicalFunctions/AndFunction.hpp>
 #include <Execution/Functions/LogicalFunctions/GreaterThanFunction.hpp>
-#include <Execution/Functions/LogicalFunctions/LessEqualsFunction.hpp>
+#include <Execution/Functions/LogicalFunctions/LessExecutableFunctionEquals.hpp>
 #include <Execution/Functions/LogicalFunctions/LessThanFunction.hpp>
-#include <Execution/Functions/ReadFieldFunction.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
-#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -70,8 +70,8 @@ public:
         */
         auto const_1994_01_01 = std::make_shared<ConstantInt32ValueFunction>(19940101);
         auto const_1995_01_01 = std::make_shared<ConstantInt32ValueFunction>(19950101);
-        auto readShipdate = std::make_shared<ReadFieldFunction>("l_shipdate");
-        auto lessThanFunction1 = std::make_shared<LessEqualsFunction>(const_1994_01_01, readShipdate);
+        auto readShipdate = std::make_shared<ExecutableFunctionReadField>("l_shipdate");
+        auto lessThanFunction1 = std::make_shared<LessExecutableFunctionEquals>(const_1994_01_01, readShipdate);
         auto lessThanFunction2 = std::make_shared<LessThanFunction>(readShipdate, const_1995_01_01);
         auto andFunction = std::make_shared<AndFunction>(lessThanFunction1, lessThanFunction2);
 
@@ -79,7 +79,7 @@ public:
         scan->setChild(selection1);
 
         /// l_discount between 0.06 - 0.01 and 0.06 + 0.01
-        auto readDiscount = std::make_shared<ReadFieldFunction>("l_discount");
+        auto readDiscount = std::make_shared<ExecutableFunctionReadField>("l_discount");
         auto const_0_05 = std::make_shared<ConstantFloatValueFunction>(0.04);
         auto const_0_07 = std::make_shared<ConstantFloatValueFunction>(0.08);
         auto lessThanFunction3 = std::make_shared<LessThanFunction>(const_0_05, readDiscount);
@@ -89,7 +89,7 @@ public:
 
         /// l_quantity < 24
         auto const_24 = std::make_shared<ConstantInt32ValueFunction>(24);
-        auto readQuantity = std::make_shared<ReadFieldFunction>("l_quantity");
+        auto readQuantity = std::make_shared<ExecutableFunctionReadField>("l_quantity");
         auto lessThanFunction5 = std::make_shared<LessThanFunction>(readQuantity, const_24);
 
         auto andFunction4 = std::make_shared<AndFunction>(andFunction3, lessThanFunction5);
@@ -98,9 +98,9 @@ public:
         selection1->setChild(selection2);
 
         /// sum(l_extendedprice * l_discount)
-        auto l_extendedprice = std::make_shared<Functions::ReadFieldFunction>("l_extendedprice");
-        auto l_discount = std::make_shared<Functions::ReadFieldFunction>("l_discount");
-        auto revenue = std::make_shared<Functions::MulFunction>(l_extendedprice, l_discount);
+        auto l_extendedprice = std::make_shared<Functions::ExecutableFunctionReadField>("l_extendedprice");
+        auto l_discount = std::make_shared<Functions::ExecutableFunctionReadField>("l_discount");
+        auto revenue = std::make_shared<Functions::ExecutableFunctionMul>(l_extendedprice, l_discount);
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions

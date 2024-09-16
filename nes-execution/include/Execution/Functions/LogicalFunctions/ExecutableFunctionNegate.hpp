@@ -15,22 +15,18 @@
 #pragma once
 
 #include <Execution/Functions/Function.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-/**
- * @brief This function writes a particular Value to a specific field of an record.
- */
-class WriteFieldFunction : public Function
+/// Negates the result of the subFunction
+class ExecutableFunctionNegate final : public Function
 {
 public:
-    WriteFieldFunction(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
+    explicit ExecutableFunctionNegate(FunctionPtr subFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const Nautilus::Record::RecordFieldIdentifier field;
     const FunctionPtr subFunction;
 };
-} /// namespace NES::Runtime::Execution::Functions
+}
