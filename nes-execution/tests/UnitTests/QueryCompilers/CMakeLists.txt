@@ -10,5 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Execution)
-add_subdirectory(QueryCompilers)
+
+add_nes_execution_test(function-provider-test "FunctionProviderTest.cpp")
