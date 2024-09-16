@@ -59,7 +59,7 @@ Dtype.googleapis.com/NES.SerializableFunction.FieldAccessFunction
 csv_source$idÄ
 VR
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails ÿÿÿÿ€€€€øÿÿÿÿé
-Ftype.googleapis.com/NES.SerializableFunction.ConstantValueFunctionž
+Ftype.googleapis.com/NES.SerializableFunction.FunctionConstantValuež
 ›
 ˜
 8type.googleapis.com/NES.SerializableDataValue.BasicValue\

@@ -22,77 +22,77 @@ namespace NES
 class FunctionNode;
 
 class FunctionItem;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
 /// Defines common arithmetical operations between function nodes.
-FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator/(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator%(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr ABS(const FunctionNodePtr& exp);
-FunctionNodePtr SQRT(const FunctionNodePtr& exp);
-FunctionNodePtr EXP(const FunctionNodePtr& exp);
-FunctionNodePtr LN(const FunctionNodePtr& exp);
-FunctionNodePtr LOG2(const FunctionNodePtr& exp);
-FunctionNodePtr LOG10(const FunctionNodePtr& exp);
-FunctionNodePtr SIN(const FunctionNodePtr& exp);
-FunctionNodePtr COS(const FunctionNodePtr& exp);
-FunctionNodePtr RADIANS(const FunctionNodePtr& exp);
-FunctionNodePtr ROUND(const FunctionNodePtr& exp);
-FunctionNodePtr CEIL(const FunctionNodePtr& exp);
-FunctionNodePtr FLOOR(const FunctionNodePtr& exp);
-FunctionNodePtr operator++(FunctionNodePtr exp);
-FunctionNodePtr operator--(FunctionNodePtr exp);
-FunctionNodePtr operator++(FunctionNodePtr exp, int value);
-FunctionNodePtr operator--(FunctionNodePtr exp, int value);
+NodeFunctionPtr operator-(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator+(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator*(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator/(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator%(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr MOD(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr POWER(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr ABS(const NodeFunctionPtr& exp);
+NodeFunctionPtr SQRT(const NodeFunctionPtr& exp);
+NodeFunctionPtr EXP(const NodeFunctionPtr& exp);
+NodeFunctionPtr LN(const NodeFunctionPtr& exp);
+NodeFunctionPtr LOG2(const NodeFunctionPtr& exp);
+NodeFunctionPtr LOG10(const NodeFunctionPtr& exp);
+NodeFunctionPtr SIN(const NodeFunctionPtr& exp);
+NodeFunctionPtr COS(const NodeFunctionPtr& exp);
+NodeFunctionPtr RADIANS(const NodeFunctionPtr& exp);
+NodeFunctionPtr ROUND(const NodeFunctionPtr& exp);
+NodeFunctionPtr CEIL(const NodeFunctionPtr& exp);
+NodeFunctionPtr FLOOR(const NodeFunctionPtr& exp);
+NodeFunctionPtr operator++(NodeFunctionPtr exp);
+NodeFunctionPtr operator--(NodeFunctionPtr exp);
+NodeFunctionPtr operator++(NodeFunctionPtr exp, int value);
+NodeFunctionPtr operator--(NodeFunctionPtr exp, int value);
 
 /// Defines common binary arithmetical operations between a constant and an function node.
-FunctionNodePtr operator+(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator-(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator*(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator/(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr operator%(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr MOD(FunctionItem leftExp, FunctionNodePtr rightExp);
-FunctionNodePtr POWER(FunctionItem leftExp, FunctionNodePtr rightExp);
+NodeFunctionPtr operator+(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator-(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator*(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator/(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr operator%(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr MOD(FunctionItem leftExp, NodeFunctionPtr rightExp);
+NodeFunctionPtr POWER(FunctionItem leftExp, NodeFunctionPtr rightExp);
 
 /// Defines common binary arithmetical operations between an function node and a constant.
-FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr operator/(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr operator%(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionItem rightExp);
-FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator+(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator-(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator*(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator/(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator%(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr MOD(NodeFunctionPtr leftExp, FunctionItem rightExp);
+NodeFunctionPtr POWER(NodeFunctionPtr leftExp, FunctionItem rightExp);
 
 /// Defines common binary arithmetical operations between two function items
-FunctionNodePtr operator+(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr operator-(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr operator*(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr operator/(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr operator%(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr MOD(FunctionItem leftExp, FunctionItem rightExp);
-FunctionNodePtr POWER(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator+(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator-(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator*(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator/(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr operator%(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr MOD(FunctionItem leftExp, FunctionItem rightExp);
+NodeFunctionPtr POWER(FunctionItem leftExp, FunctionItem rightExp);
 
 
 /// Defines common unary arithmetical operations on an function items.
-/// FunctionNodePtr ABS(FunctionItem exp);
-FunctionNodePtr SQRT(FunctionItem exp);
-FunctionNodePtr EXP(FunctionItem exp);
-FunctionNodePtr LN(FunctionItem exp);
-FunctionNodePtr LOG2(FunctionItem exp);
-FunctionNodePtr LOG10(FunctionItem exp);
-FunctionNodePtr SIN(FunctionItem exp);
-FunctionNodePtr COS(FunctionItem exp);
-FunctionNodePtr RADIANS(FunctionItem exp);
-FunctionNodePtr ROUND(FunctionItem exp);
-FunctionNodePtr CEIL(FunctionItem exp);
-FunctionNodePtr FLOOR(FunctionItem exp);
-FunctionNodePtr operator++(FunctionItem exp);
-FunctionNodePtr operator--(FunctionItem exp);
-FunctionNodePtr operator++(FunctionItem exp, int);
-FunctionNodePtr operator--(FunctionItem exp, int);
+///NodeFunction Ptr ABS(FunctionItem exp);
+NodeFunctionPtr SQRT(FunctionItem exp);
+NodeFunctionPtr EXP(FunctionItem exp);
+NodeFunctionPtr LN(FunctionItem exp);
+NodeFunctionPtr LOG2(FunctionItem exp);
+NodeFunctionPtr LOG10(FunctionItem exp);
+NodeFunctionPtr SIN(FunctionItem exp);
+NodeFunctionPtr COS(FunctionItem exp);
+NodeFunctionPtr RADIANS(FunctionItem exp);
+NodeFunctionPtr ROUND(FunctionItem exp);
+NodeFunctionPtr CEIL(FunctionItem exp);
+NodeFunctionPtr FLOOR(FunctionItem exp);
+NodeFunctionPtr operator++(FunctionItem exp);
+NodeFunctionPtr operator--(FunctionItem exp);
+NodeFunctionPtr operator++(FunctionItem exp, int);
+NodeFunctionPtr operator--(FunctionItem exp, int);
 
 }

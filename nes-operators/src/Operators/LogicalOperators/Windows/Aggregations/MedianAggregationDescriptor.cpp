@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MedianAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -21,29 +21,29 @@
 namespace NES::Windowing
 {
 
-MedianAggregationDescriptor::MedianAggregationDescriptor(FieldAccessFunctionNodePtr field) : WindowAggregationDescriptor(field)
+MedianAggregationDescriptor::MedianAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Median;
 }
-MedianAggregationDescriptor::MedianAggregationDescriptor(FunctionNodePtr field, FunctionNodePtr asField)
+MedianAggregationDescriptor::MedianAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Median;
 }
 
 WindowAggregationDescriptorPtr
-MedianAggregationDescriptor::create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField)
+MedianAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr MedianAggregationDescriptor::on(const FunctionNodePtr& keyFunction)
+WindowAggregationDescriptorPtr MedianAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    if (!keyFunction->instanceOf<FieldAccessFunctionNode>())
+    if (!keyFunction->instanceOf<NodeFunctionFieldAccess>())
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
     }
-    auto fieldAccess = keyFunction->as<FieldAccessFunctionNode>();
+    auto fieldAccess = keyFunction->as<NodeFunctionFieldAccess>();
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));
 }
 
@@ -56,19 +56,19 @@ void MedianAggregationDescriptor::inferStamp(SchemaPtr schema)
         NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
-    auto onFieldName = onField->as<FieldAccessFunctionNode>()->getFieldName();
-    auto asFieldName = asField->as<FieldAccessFunctionNode>()->getFieldName();
+    auto onFieldName = onField->as<NodeFunctionFieldAccess>()->getFieldName();
+    auto asFieldName = asField->as<NodeFunctionFieldAccess>()->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + fieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

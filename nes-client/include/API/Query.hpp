@@ -29,10 +29,10 @@ class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
-class FieldAssignmentFunctionNode;
-using FieldAssignmentFunctionNodePtr = std::shared_ptr<FieldAssignmentFunctionNode>;
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
@@ -94,7 +94,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which window function is defined and can be called.
      */
-    [[nodiscard]] JoinWhere where(FunctionNodePtr joinFunction) const;
+    [[nodiscard]] JoinWhere where(NodeFunctionPtr joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -110,7 +110,7 @@ public:
      * @param originalQuery
      * @param joinFunction : a set of binary functions to compare left and right tuples
      */
-    JoinWhere(const Query& subQueryRhs, Query& originalQuery, FunctionNodePtr joinFunctions);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, NodeFunctionPtr joinFunctions);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
@@ -122,7 +122,7 @@ public:
 private:
     const Query& subQueryRhs;
     Query& originalQuery;
-    FunctionNodePtr joinFunctions;
+    NodeFunctionPtr joinFunctions;
 };
 
 } ///namespace JoinOperatorBuilder
@@ -153,7 +153,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] Query& where(const FunctionNodePtr joinFunction) const;
+    [[nodiscard]] Query& where(const NodeFunctionPtr joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -185,7 +185,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    FunctionNodePtr joinFunction;
+    NodeFunctionPtr joinFunction;
 };
 
 class Seq
@@ -208,7 +208,7 @@ public:
 private:
     Query& subQueryRhs;
     Query& originalQuery;
-    FunctionNodePtr joinFunction;
+    NodeFunctionPtr joinFunction;
 };
 
 /**
@@ -371,7 +371,7 @@ public:
     template <typename... Args>
     auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<FunctionItem, Args>...>, Query&>
     {
-        return project({std::forward<Args>(args).getFunctionNode()...});
+        return project({std::forward<Args>(args).getNodeFunction()...});
     }
 
     /**
@@ -379,7 +379,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(std::vector<FunctionNodePtr> functions);
+    Query& project(std::vector<NodeFunctionPtr> functions);
 
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -394,7 +394,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& filter(FunctionNodePtr const& filterFunction);
+    Query& filter(NodeFunctionPtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -416,7 +416,7 @@ public:
      * @param map function
      * @return query
      */
-    Query& map(FieldAssignmentFunctionNodePtr const& mapFunction);
+    Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
     /**
      * @brief: inferModel
@@ -424,8 +424,7 @@ public:
      * @param param
      * @return query
      */
-    Query&
-    inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
+    Query& inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
 
     /**
      * @brief Add sink operator for the query.
@@ -459,7 +458,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -470,7 +469,7 @@ private:
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction);
+    Query& batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -482,7 +481,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs, FunctionNodePtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -494,7 +493,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs, FunctionNodePtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -513,7 +512,7 @@ private:
       * @return query.
       */
     Query& windowByKey(
-        std::vector<FunctionNodePtr> joinFunctions,
+        std::vector<NodeFunctionPtr> joinFunctions,
         Windowing::WindowTypePtr const& windowType,
         std::vector<API::WindowAggregationPtr> aggregations);
 
@@ -523,7 +522,7 @@ private:
       * @param joinFunctions key functions
       * @return joinType
       */
-    Join::LogicalJoinDescriptor::JoinType identifyJoinType(FunctionNodePtr joinFunctions);
+    Join::LogicalJoinDescriptor::JoinType identifyJoinType(NodeFunctionPtr joinFunctions);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

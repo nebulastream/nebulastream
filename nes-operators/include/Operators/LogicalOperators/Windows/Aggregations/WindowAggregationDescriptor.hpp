@@ -40,19 +40,19 @@ public:
     * @param asField
     * @return WindowAggregationDescriptor
     */
-    WindowAggregationDescriptorPtr as(const FunctionNodePtr& asField);
+    WindowAggregationDescriptorPtr as(const NodeFunctionPtr& asField);
 
     /**
     * Returns the result field of the aggregation
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    FunctionNodePtr as() const;
+    NodeFunctionPtr as() const;
 
     /**
     * Returns the result field of the aggregation
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    FunctionNodePtr on() const;
+    NodeFunctionPtr on() const;
 
     /**
      * @brief Returns the type of this aggregation.
@@ -100,11 +100,11 @@ public:
     bool equal(WindowAggregationDescriptorPtr otherWindowAggregationDescriptor) const;
 
 protected:
-    explicit WindowAggregationDescriptor(const FieldAccessFunctionNodePtr& onField);
-    WindowAggregationDescriptor(const FunctionNodePtr& onField, const FunctionNodePtr& asField);
+    explicit WindowAggregationDescriptor(const NodeFunctionFieldAccessPtr& onField);
+    WindowAggregationDescriptor(const NodeFunctionPtr& onField, const NodeFunctionPtr& asField);
     WindowAggregationDescriptor() = default;
-    FunctionNodePtr onField;
-    FunctionNodePtr asField;
+    NodeFunctionPtr onField;
+    NodeFunctionPtr asField;
     Type aggregationType;
 };
 } /// namespace NES::Windowing

@@ -18,23 +18,23 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr predicate)
+PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate))
 {
 }
 
 PhysicalOperatorPtr PhysicalFilterOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FunctionNodePtr& function)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
 {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, function);
 }
 
-FunctionNodePtr PhysicalFilterOperator::getPredicate()
+NodeFunctionPtr PhysicalFilterOperator::getPredicate()
 {
     return predicate;
 }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr function)
+PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }

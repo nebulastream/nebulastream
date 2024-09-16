@@ -13,8 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
@@ -69,19 +69,19 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
     /// Fetch source and destination schema fields
     auto sourceFields = sourceSchema->fields;
     auto destinationFields = destinationSchema->fields;
-    std::vector<ExpressionNodePtr> projectExpressions;
-    /// Compute projection expressions
+    std::vector<NodeFunctionPtr> projectFunctions;
+    /// Compute projection functions
     for (uint64_t i = 0; i < sourceSchema->getSize(); i++)
     {
         auto field = sourceFields[i];
         auto updatedFieldName = destinationFields[i]->getName();
-        /// Compute field access and field rename expression
-        auto originalField = FieldAccessExpressionNode::create(field->getDataType(), field->getName());
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
-        projectExpressions.push_back(fieldRenameExpression);
+        /// Compute field access and field rename function
+        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
+        auto fieldRenameFunction = NodeFunctionFieldRename::create(originalField->as<NodeFunctionFieldAccess>(), updatedFieldName);
+        projectFunctions.push_back(fieldRenameFunction);
     }
     /// Create Projection operator
-    return LogicalOperatorFactory::createProjectionOperator(projectExpressions);
+    return LogicalOperatorFactory::createProjectionOperator(projectFunctions);
 }
 
 } /// namespace NES::Optimizer

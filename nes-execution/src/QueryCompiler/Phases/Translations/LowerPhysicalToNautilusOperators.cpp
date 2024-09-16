@@ -27,8 +27,8 @@
 #include <Execution/Operators/Streaming/Map.hpp>
 #include <Execution/Operators/Streaming/Selection.hpp>
 #include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>

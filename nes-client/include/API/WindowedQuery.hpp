@@ -25,10 +25,10 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class FunctionItem;
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
-class FieldAssignmentFunctionNode;
-using FieldAssignmentFunctionNodePtr = std::shared_ptr<FieldAssignmentFunctionNode>;
+class NodeFunctionFieldAssignment;
+using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
 namespace API
 {
@@ -53,7 +53,7 @@ public:
     * @param originalQuery
     * @param windowType
     */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<FunctionNodePtr> keys);
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<NodeFunctionPtr> keys);
 
     /**
     * @brief: Applies a set of aggregation functions to the window and returns a query object.
@@ -71,7 +71,7 @@ public:
 private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
-    std::vector<FunctionNodePtr> keys;
+    std::vector<NodeFunctionPtr> keys;
 };
 
 /**
@@ -96,8 +96,8 @@ public:
     template <class... FunctionItems>
     [[nodiscard]] KeyedWindowedQuery byKey(FunctionItems... onKeys)
     {
-        std::vector<FunctionNodePtr> keyFunctions;
-        (keyFunctions.emplace_back(std::forward<FunctionItems>(onKeys).getFunctionNode()), ...);
+        std::vector<NodeFunctionPtr> keyFunctions;
+        (keyFunctions.emplace_back(std::forward<FunctionItems>(onKeys).getNodeFunction()), ...);
         return KeyedWindowedQuery(originalQuery, windowType, keyFunctions);
     };
 

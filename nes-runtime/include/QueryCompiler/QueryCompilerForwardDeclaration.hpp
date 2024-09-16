@@ -43,7 +43,7 @@ using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 } /// namespace Runtime
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;

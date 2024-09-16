@@ -14,18 +14,18 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES
 {
 
-LogicalMapOperator::LogicalMapOperator(const FieldAssignmentFunctionNodePtr& mapFunction, OperatorId id)
+LogicalMapOperator::LogicalMapOperator(const NodeFunctionFieldAssignmentPtr& mapFunction, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), mapFunction(mapFunction)
 {
 }
 
-FieldAssignmentFunctionNodePtr LogicalMapOperator::getMapFunction() const
+NodeFunctionFieldAssignmentPtr LogicalMapOperator::getMapFunction() const
 {
     return mapFunction;
 }
@@ -85,7 +85,7 @@ std::string LogicalMapOperator::toString() const
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(mapFunction->deepCopy()->as<FieldAssignmentFunctionNode>(), id);
+    auto copy = LogicalOperatorFactory::createMapOperator(mapFunction->deepCopy()->as<NodeFunctionFieldAssignment>(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

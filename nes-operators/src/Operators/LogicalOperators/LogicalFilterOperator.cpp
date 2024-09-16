@@ -13,7 +13,7 @@
 */
 
 #include <utility>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -21,17 +21,17 @@
 namespace NES
 {
 
-LogicalFilterOperator::LogicalFilterOperator(FunctionNodePtr const& predicate, OperatorId id)
+LogicalFilterOperator::LogicalFilterOperator(NodeFunctionPtr const& predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(predicate)
 {
 }
 
-FunctionNodePtr LogicalFilterOperator::getPredicate() const
+NodeFunctionPtr LogicalFilterOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalFilterOperator::setPredicate(FunctionNodePtr newPredicate)
+void LogicalFilterOperator::setPredicate(NodeFunctionPtr newPredicate)
 {
     predicate = std::move(newPredicate);
 }
@@ -129,10 +129,10 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
     DepthFirstNodeIterator depthFirstNodeIterator(predicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        ///if it finds a fieldAccessFunctionNode this means that the predicate uses this specific field that comes from any source
-        if ((*itr)->instanceOf<FieldAccessFunctionNode>())
+        ///NodeFunctionif it finds a fieldAccess this means that the predicate uses this specific field that comes from any source
+        if ((*itr)->instanceOf<NodeFunctionFieldAccess>())
         {
-            const FieldAccessFunctionNodePtr accessFunctionNode = (*itr)->as<FieldAccessFunctionNode>();
+            const NodeFunctionFieldAccessPtr accessFunctionNode = (*itr)->as<NodeFunctionFieldAccess>();
             fieldsInPredicate.push_back(accessFunctionNode->getFieldName());
         }
     }

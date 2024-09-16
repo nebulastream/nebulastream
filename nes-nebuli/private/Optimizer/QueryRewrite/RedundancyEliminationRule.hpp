@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
@@ -63,7 +63,7 @@ private:
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr eliminatePredicateRedundancy(const ExpressionNodePtr& predicate);
+    static NES::NodeFunctionPtr eliminatePredicateRedundancy(const NodeFunctionPtr& predicate);
 
     /**
      * @note Currently not implemented
@@ -71,15 +71,15 @@ private:
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr constantMoving(const ExpressionNodePtr& predicate);
+    static NES::NodeFunctionPtr constantMoving(const NodeFunctionPtr& predicate);
 
     /**
      * @note Already done by the compiler
-     * @brief Expressions involving only constants are folded into a single constant (e.g. 2 + 2 becomes 4, 2 = 2 becomes True)
+     * @brief Functions involving only constants are folded into a single constant (e.g. 2 + 2 becomes 4, 2 = 2 becomes True)
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr constantFolding(const ExpressionNodePtr& predicate);
+    static NES::NodeFunctionPtr constantFolding(const NodeFunctionPtr& predicate);
 
     /**
      * @note Already done by the compiler
@@ -87,7 +87,7 @@ private:
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr arithmeticSimplification(const ExpressionNodePtr& predicate);
+    static NES::NodeFunctionPtr arithmeticSimplification(const NodeFunctionPtr& predicate);
 
     /**
      * @note Currently not implemented, since boolean values in the queries are not supported
@@ -98,7 +98,7 @@ private:
      * @param predicate
      * @return updated predicate
      */
-    static NES::ExpressionNodePtr conjunctionDisjunctionSimplification(const ExpressionNodePtr& predicate);
+    static NES::NodeFunctionPtr conjunctionDisjunctionSimplification(const NodeFunctionPtr& predicate);
 };
 
 } /// namespace NES::Optimizer

@@ -26,10 +26,10 @@ class AttributeField;
 using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
-class FieldAccessFunctionNode;
-using FieldAccessFunctionNodePtr = std::shared_ptr<FieldAccessFunctionNode>;
+class NodeFunctionFieldAccess;
+using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;

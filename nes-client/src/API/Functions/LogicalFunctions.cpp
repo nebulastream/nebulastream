@@ -14,65 +14,65 @@
 
 #include <utility>
 #include <API/Functions/Functions.hpp>
-#include <Functions/LogicalFunctions/AndFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/NegateFunctionNode.hpp>
-#include <Functions/LogicalFunctions/OrFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 
 namespace NES
 {
 
-FunctionNodePtr operator||(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator||(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return OrFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionOr::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator&&(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator&&(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return AndFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionAnd::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator==(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator==(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return EqualsFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionEquals::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator!=(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator!=(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return NegateFunctionNode::create(EqualsFunctionNode::create(std::move(leftExp), std::move(rightExp)));
+    return NodeFunctionNegate::create(NodeFunctionEquals::create(std::move(leftExp), std::move(rightExp)));
 }
 
-FunctionNodePtr operator<=(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator<=(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return LessEqualsFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionLessEquals::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator<(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator<(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return LessFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionLess::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator>=(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator>=(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return GreaterEqualsFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionGreaterEquals::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator>(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator>(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return GreaterFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionGreater::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator!(FunctionNodePtr exp)
+NodeFunctionPtr operator!(NodeFunctionPtr exp)
 {
-    return NegateFunctionNode::create(std::move(exp));
+    return NodeFunctionNegate::create(std::move(exp));
 }
-FunctionNodePtr operator!(FunctionItem exp)
+NodeFunctionPtr operator!(FunctionItem exp)
 {
-    return !exp.getFunctionNode();
+    return !exp.getNodeFunction();
 }
 
 } /// namespace NES

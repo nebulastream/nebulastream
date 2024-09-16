@@ -25,19 +25,19 @@ namespace NES
 class LogicalFilterOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalFilterOperator(FunctionNodePtr const&, OperatorId id);
+    explicit LogicalFilterOperator(NodeFunctionPtr const&, OperatorId id);
     ~LogicalFilterOperator() override = default;
 
     /**
    * @brief get the filter predicate.
    * @return PredicatePtr
    */
-    FunctionNodePtr getPredicate() const;
+    NodeFunctionPtr getPredicate() const;
     /**
      * @brief exchanges the predicate of a filter with a new predicate
      * @param newPredicate the predicate which will be the new predicate of the filter
      */
-    void setPredicate(FunctionNodePtr newPredicate);
+    void setPredicate(NodeFunctionPtr newPredicate);
     float getSelectivity() const;
     void setSelectivity(float newSelectivity);
 
@@ -67,7 +67,7 @@ public:
     std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
 
 private:
-    FunctionNodePtr predicate;
+    NodeFunctionPtr predicate;
     float selectivity = 1.0f;
 };
 

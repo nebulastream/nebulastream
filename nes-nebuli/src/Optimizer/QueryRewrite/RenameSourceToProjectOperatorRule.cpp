@@ -13,8 +13,8 @@
 */
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
@@ -49,18 +49,18 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
     auto newSourceName = renameSourceOperator->getNewSourceName();
     auto inputSchema = renameSourceOperator->getInputSchema();
 
-    std::vector<ExpressionNodePtr> projectionAttributes;
-    /// Iterate over the input schema and add a new field rename expression
+    std::vector<NodeFunctionPtr> projectionAttributes;
+    /// Iterate over the input schema and add a new field rename function
     for (const auto& field : inputSchema->fields)
     {
         /// compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
         /// Compute new name without field qualifier
         std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
-        /// Compute field access and field rename expression
-        auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
-        projectionAttributes.push_back(fieldRenameExpression);
+        /// Compute field access and field rename function
+        auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), fieldName);
+        auto fieldRenameFunction = NodeFunctionFieldRename::create(originalField->as<NodeFunctionFieldAccess>(), updatedFieldName);
+        projectionAttributes.push_back(fieldRenameFunction);
     }
     /// Construct a new project operator
     auto projectOperator = LogicalOperatorFactory::createProjectionOperator(projectionAttributes);

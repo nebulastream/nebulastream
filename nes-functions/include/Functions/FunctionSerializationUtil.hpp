@@ -20,15 +20,15 @@ namespace NES
 {
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
 class SerializableFunction;
-class SerializableFunction_ConstantValueFunction;
-class SerializableFunction_FieldAccessFunction;
-class SerializableFunction_FieldRenameFunction;
-class SerializableFunction_FieldAssignmentFunction;
-class SerializableFunction_WhenFunction;
-class SerializableFunction_CaseFunction;
+class SerializableFunction_FunctionConstantValue;
+class SerializableFunction_FunctionFieldAccess;
+class SerializableFunction_FunctionFieldRename;
+class SerializableFunction_FunctionFieldAssignment;
+class SerializableFunction_FunctionWhen;
+class SerializableFunction_FunctionCase;
 class SerializableFunction_FunctionFunction;
 
 /**
@@ -45,19 +45,19 @@ public:
     * @return the modified serializedFunction
     */
     static SerializableFunction*
-    serializeFunction(const FunctionNodePtr& functionNode, SerializableFunction* serializedFunction);
+    serializeFunction(const NodeFunctionPtr& functionNode, SerializableFunction* serializedFunction);
 
     /**
-    * @brief De-serializes the SerializableFunction and all its children to a corresponding FunctionNodePtr
+    * @brief De-serializes the SerializableFunction and all its children to a corresponding NodeFunctionPtr
     * @param serializedFunction the serialized function.
-    * @return FunctionNodePtr
+    * @return NodeFunctionPtr
     */
-    static FunctionNodePtr deserializeFunction(const SerializableFunction& serializedFunction);
+    static NodeFunctionPtr deserializeFunction(const SerializableFunction& serializedFunction);
 
 private:
-    static void serializeLogicalFunctions(const FunctionNodePtr& function, SerializableFunction* serializedFunction);
-    static void serializeArithmeticalFunctions(const FunctionNodePtr& function, SerializableFunction* serializedFunction);
-    static FunctionNodePtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
-    static FunctionNodePtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
+    static void serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
+    static void serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction);
+    static NodeFunctionPtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
+    static NodeFunctionPtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
 };
 } /// namespace NES

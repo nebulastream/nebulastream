@@ -21,7 +21,7 @@
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Functions/FunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>

@@ -14,8 +14,8 @@
 
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Functions/FunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -30,13 +30,13 @@ TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeU
 {
 }
 
-TimeCharacteristicPtr TimeCharacteristic::createEventTime(FunctionNodePtr fieldValue, const TimeUnit& unit)
+TimeCharacteristicPtr TimeCharacteristic::createEventTime(NodeFunctionPtr fieldValue, const TimeUnit& unit)
 {
-    if (!fieldValue->instanceOf<FieldAccessFunctionNode>())
+    if (!fieldValue->instanceOf<NodeFunctionFieldAccess>())
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", fieldValue->toString());
     }
-    auto fieldAccess = fieldValue->as<FieldAccessFunctionNode>();
+    auto fieldAccess = fieldValue->as<NodeFunctionFieldAccess>();
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
     return std::make_shared<TimeCharacteristic>(Type::EventTime, keyField, unit);
 }

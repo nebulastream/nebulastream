@@ -11,19 +11,19 @@
 # limitations under the License.
 
 add_source_files(nes-functions
-        ArithmeticalUnaryFunctionNode.cpp
-        ArithmeticalBinaryFunctionNode.cpp
-        AbsFunctionNode.cpp
-        AddFunctionNode.cpp
-        CeilFunctionNode.cpp
-        DivFunctionNode.cpp
-        ExpFunctionNode.cpp
-        FloorFunctionNode.cpp
-        ModFunctionNode.cpp
-        MulFunctionNode.cpp
-        PowFunctionNode.cpp
-        RoundFunctionNode.cpp
-        SqrtFunctionNode.cpp
-        SubFunctionNode.cpp
+        NodeFunctionAbs.cpp
+        NodeFunctionAdd.cpp
+        NodeFunctionArithmeticalBinary.cpp
+        NodeFunctionArithmeticalUnary.cpp
+        NodeFunctionCeil.cpp
+        NodeFunctionDiv.cpp
+        NodeFunctionExp.cpp
+        NodeFunctionFloor.cpp
+        NodeFunctionMod.cpp
+        NodeFunctionMul.cpp
+        NodeFunctionPow.cpp
+        NodeFunctionRound.cpp
+        NodeFunctionSqrt.cpp
+        NodeFunctionSub.cpp
 )
 

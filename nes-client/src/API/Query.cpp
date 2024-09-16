@@ -19,9 +19,9 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -34,9 +34,9 @@
 namespace NES
 {
 
-FunctionNodePtr getFunctionNodePtr(FunctionItem& functionItem)
+NodeFunctionPtr getNodeFunctionPtr(FunctionItem& functionItem)
 {
-    return functionItem.getFunctionNode();
+    return functionItem.getNodeFunction();
 }
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs)
@@ -77,7 +77,7 @@ CEPOperatorBuilder::Times Query::times()
 namespace JoinOperatorBuilder
 {
 
-JoinWhere Join::where(FunctionNodePtr joinFunction) const
+JoinWhere Join::where(NodeFunctionPtr joinFunction) const
 {
     return JoinWhere(subQueryRhs, originalQuery, joinFunction);
 }
@@ -86,7 +86,7 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, FunctionNodePtr joinFunction)
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, NodeFunctionPtr joinFunction)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(joinFunction)
 {
 }
@@ -105,7 +105,7 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-Query& Join::where(const FunctionNodePtr joinFunction) const
+Query& Join::where(const NodeFunctionPtr joinFunction) const
 {
     return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
@@ -127,8 +127,7 @@ And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     ///last, define the artificial attributes as key attributes
     NES_DEBUG("Query: add name cepLeftKey {}", cepLeftKey);
     NES_DEBUG("Query: add name cepRightKey {}", cepRightKey);
-    joinFunction
-        = FunctionItem(Attribute(cepLeftKey)).getFunctionNode() == FunctionItem(Attribute(cepRightKey)).getFunctionNode();
+    joinFunction = FunctionItem(Attribute(cepLeftKey)).getNodeFunction() == FunctionItem(Attribute(cepRightKey)).getNodeFunction();
 }
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const
@@ -146,8 +145,7 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     ///last, define the artificial attributes as key attributes
-    joinFunction
-        = FunctionItem(Attribute(cepLeftKey)).getFunctionNode() == FunctionItem(Attribute(cepRightKey)).getFunctionNode();
+    joinFunction = FunctionItem(Attribute(cepLeftKey)).getNodeFunction() == FunctionItem(Attribute(cepRightKey)).getNodeFunction();
 }
 
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
@@ -260,7 +258,7 @@ Query Query::from(const std::string& sourceName)
     return Query(queryPlan);
 }
 
-Query& Query::project(std::vector<FunctionNodePtr> functions)
+Query& Query::project(std::vector<NodeFunctionPtr> functions)
 {
     NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(functions, this->queryPlan);
@@ -281,38 +279,38 @@ Query& Query::unionWith(const Query& subQuery)
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query& Query::joinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, FunctionNodePtr joinFunction)
+Query& Query::batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction)
 {
     NES_DEBUG("Query: add Batch Join Operator to Query");
-    if (joinFunction->as<EqualsFunctionNode>())
+    if (joinFunction->as<NodeFunctionEquals>())
     {
-        auto onProbeKey = joinFunction->as<BinaryFunctionNode>()->getLeft();
-        auto onBuildKey = joinFunction->as<BinaryFunctionNode>()->getRight();
+        auto onProbeKey = joinFunction->as<NodeFunctionBinary>()->getLeft();
+        auto onBuildKey = joinFunction->as<NodeFunctionBinary>()->getRight();
 
         this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("Query:joinFunction has to be a EqualsFunctionNode");
+        NES_THROW_RUNTIME_ERROR("Query:joinFunction has to be a NodeFunctionEquals");
     }
     return *this;
 }
 
-Query& Query::andWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query& Query::andWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(const Query& subQueryRhs, FunctionNodePtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query& Query::seqWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
@@ -326,7 +324,7 @@ Query& Query::orWith(const Query& subQueryRhs)
     return *this;
 }
 
-Query& Query::filter(const FunctionNodePtr& filterFunction)
+Query& Query::filter(const NodeFunctionPtr& filterFunction)
 {
     NES_DEBUG("Query: add filter operator to query");
     this->queryPlan = QueryPlanBuilder::addFilter(filterFunction, this->queryPlan);
@@ -339,7 +337,7 @@ Query& Query::limit(const uint64_t limit)
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
-Query& Query::map(const FieldAssignmentFunctionNodePtr& mapExpression)
+Query& Query::map(const NodeFunctionFieldAssignmentPtr& mapFunction)
 {
     NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapFunction, this->queryPlan);
@@ -347,22 +345,20 @@ Query& Query::map(const FieldAssignmentFunctionNodePtr& mapExpression)
 }
 
 Query& Query::inferModel(
-    const std::string model,
-    const std::initializer_list<FunctionItem> inputFields,
-    const std::initializer_list<FunctionItem> outputFields)
+    const std::string model, const std::initializer_list<FunctionItem> inputFields, const std::initializer_list<FunctionItem> outputFields)
 {
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
-    std::vector<FunctionNodePtr> inputFieldsPtr;
-    std::vector<FunctionNodePtr> outputFieldsPtr;
+    std::vector<NodeFunctionPtr> inputFieldsPtr;
+    std::vector<NodeFunctionPtr> outputFieldsPtr;
     for (const auto& inputField : inputFieldVector)
     {
-        inputFieldsPtr.push_back(inputField.getFunctionNode());
+        inputFieldsPtr.push_back(inputField.getNodeFunction());
     }
     for (const auto& outputField : outputFieldVector)
     {
-        outputFieldsPtr.push_back(outputField.getFunctionNode());
+        outputFieldsPtr.push_back(outputField.getNodeFunction());
     }
 
     OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
@@ -391,18 +387,18 @@ QueryPlanPtr Query::getQueryPlan() const
 }
 
 ///
-Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(FunctionNodePtr joinFunction)
+Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(NodeFunctionPtr joinFunction)
 {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     NES_DEBUG("Query: Iterate over all FunctionNode to check join field.");
-    std::unordered_set<std::shared_ptr<BinaryFunctionNode>> visitedFunctions;
+    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<BinaryFunctionNode>())
+        if ((*itr)->instanceOf<NodeFunctionBinary>())
         {
-            auto visitingOp = (*itr)->as<BinaryFunctionNode>();
+            auto visitingOp = (*itr)->as<NodeFunctionBinary>();
             if (visitedFunctions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -411,7 +407,7 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(FunctionNodePtr jo
             else
             {
                 visitedFunctions.insert(visitingOp);
-                if ((*itr)->instanceOf<EqualsFunctionNode>())
+                if ((*itr)->instanceOf<NodeFunctionEquals>())
                 {
                     NES_DEBUG("Query: identify Join Type: INNER JOIN");
                     joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;

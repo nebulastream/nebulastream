@@ -21,7 +21,7 @@ namespace NES
 {
 
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 
 class FunctionItem;
 
@@ -182,8 +182,8 @@ Windowing::TimeUnit Days();
 /**
  * @brief This function provides access to the creation ts (ingestion ts) of an individual record.
  * This is assigned by the data source.
- * @return FunctionNodePtr
+ * @return NodeFunctionPtr
  */
-[[maybe_unused]] FunctionNodePtr RecordCreationTs();
+[[maybe_unused]] NodeFunctionPtr RecordCreationTs();
 
 } /// namespace NES::API

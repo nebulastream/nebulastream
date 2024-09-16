@@ -24,20 +24,20 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalProjectOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<FunctionNodePtr> functions);
+    PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<FunctionNodePtr>& functions);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<FunctionNodePtr> functions);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<NodeFunctionPtr>& functions);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions);
     /**
      * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<FunctionNodePtr>
+     * @return  std::vector<NodeFunctionPtr>
      */
-    std::vector<FunctionNodePtr> getFunctions();
+    std::vector<NodeFunctionPtr> getFunctions();
     std::string toString() const override;
     OperatorPtr copy() override;
 
 private:
-    std::vector<FunctionNodePtr> functions;
+    std::vector<NodeFunctionPtr> functions;
 };
 
 } /// namespace NES::QueryCompilation::PhysicalOperators

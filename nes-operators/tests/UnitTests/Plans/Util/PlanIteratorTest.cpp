@@ -13,8 +13,8 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -45,13 +45,13 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-        pred2 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
-        pred3 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
-        pred4 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
-        pred5 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-        pred6 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
-        pred7 = ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
+        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
+        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
+        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
+        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
+        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
         sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"));
         sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical2"));
@@ -68,7 +68,7 @@ public:
     }
 
 protected:
-    FunctionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    NodeFunctionPtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorPtr sourceOp1, sourceOp2;
 
     LogicalOperatorPtr filterOp1, filterOp2, filterOp3, filterOp4;

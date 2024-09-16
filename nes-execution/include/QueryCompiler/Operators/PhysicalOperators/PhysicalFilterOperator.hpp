@@ -24,20 +24,15 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalFilterOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr predicate);
+    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FunctionNodePtr& function);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, FunctionNodePtr function);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function);
     std::string toString() const override;
     OperatorPtr copy() override;
-
-    /**
-   * @brief get the filter predicate.
-   * @return PredicatePtr
-   */
-    FunctionNodePtr getPredicate();
+    NodeFunctionPtr getPredicate();
 
 private:
-    FunctionNodePtr predicate;
+    NodeFunctionPtr predicate;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

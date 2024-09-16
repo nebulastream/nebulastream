@@ -15,290 +15,290 @@
 #include <utility>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
-#include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/CeilFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/DivFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/ExpFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/FloorFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/ModFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/MulFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/RoundFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/SqrtFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-/// calls of binary operators with two FunctionNodes
-FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+///NodeFunction calls of binary operators with two s
+NodeFunctionPtr operator+(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return AddFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionAdd::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator-(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return SubFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionSub::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator*(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return MulFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionMul::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator/(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator/(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return DivFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionDiv::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr operator%(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator%(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
-    return ModFunctionNode::create(std::move(leftExp), std::move(rightExp));
+    return NodeFunctionMod::create(std::move(leftExp), std::move(rightExp));
 }
 
-FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr MOD(NodeFunctionPtr leftExp, NodeFunctionPtr rightExp)
 {
     return std::move(leftExp) % std::move(rightExp);
 }
 
-FunctionNodePtr SQRT(const FunctionNodePtr& exp)
+NodeFunctionPtr SQRT(const NodeFunctionPtr& exp)
 {
-    return SqrtFunctionNode::create(exp);
+    return NodeFunctionSqrt::create(exp);
 }
 
-FunctionNodePtr EXP(const FunctionNodePtr& exp)
+NodeFunctionPtr EXP(const NodeFunctionPtr& exp)
 {
-    return ExpFunctionNode::create(exp);
+    return NodeFunctionExp::create(exp);
 }
 
-FunctionNodePtr ROUND(const FunctionNodePtr& exp)
+NodeFunctionPtr ROUND(const NodeFunctionPtr& exp)
 {
-    return RoundFunctionNode::create(exp);
+    return NodeFunctionRound::create(exp);
 }
 
-FunctionNodePtr CEIL(const FunctionNodePtr& exp)
+NodeFunctionPtr CEIL(const NodeFunctionPtr& exp)
 {
-    return CeilFunctionNode::create(exp);
+    return NodeFunctionCeil::create(exp);
 }
 
-FunctionNodePtr FLOOR(const FunctionNodePtr& exp)
+NodeFunctionPtr FLOOR(const NodeFunctionPtr& exp)
 {
-    return FloorFunctionNode::create(exp);
+    return NodeFunctionFloor::create(exp);
 }
 
-FunctionNodePtr operator++(FunctionNodePtr leftExp)
+NodeFunctionPtr operator++(NodeFunctionPtr leftExp)
 {
     return std::move(leftExp)
-        + ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        + NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
-FunctionNodePtr operator--(FunctionNodePtr leftExp)
+NodeFunctionPtr operator--(NodeFunctionPtr leftExp)
 {
     return std::move(leftExp)
-        - ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        - NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
-FunctionNodePtr operator++(FunctionNodePtr leftExp, int)
+NodeFunctionPtr operator++(NodeFunctionPtr leftExp, int)
 {
     return std::move(leftExp)
-        + ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        + NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
-FunctionNodePtr operator--(FunctionNodePtr leftExp, int)
+NodeFunctionPtr operator--(NodeFunctionPtr leftExp, int)
 {
     return std::move(leftExp)
-        - ConstantValueFunctionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
+        - NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
 /// calls of Binary operators with one or two FunctionItems
 /// leftExp: item, rightExp: node
-FunctionNodePtr operator+(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator+(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() + std::move(rightExp);
+    return leftExp.getNodeFunction() + std::move(rightExp);
 }
 
-FunctionNodePtr operator-(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator-(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() - std::move(rightExp);
+    return leftExp.getNodeFunction() - std::move(rightExp);
 }
 
-FunctionNodePtr operator*(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator*(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() * std::move(rightExp);
+    return leftExp.getNodeFunction() * std::move(rightExp);
 }
 
-FunctionNodePtr operator/(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator/(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() / std::move(rightExp);
+    return leftExp.getNodeFunction() / std::move(rightExp);
 }
 
-FunctionNodePtr operator%(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr operator%(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() % std::move(rightExp);
+    return leftExp.getNodeFunction() % std::move(rightExp);
 }
 
-FunctionNodePtr MOD(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr MOD(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return leftExp.getFunctionNode() % std::move(rightExp);
+    return leftExp.getNodeFunction() % std::move(rightExp);
 }
 
-FunctionNodePtr POWER(FunctionItem leftExp, FunctionNodePtr rightExp)
+NodeFunctionPtr POWER(FunctionItem leftExp, NodeFunctionPtr rightExp)
 {
-    return POWER(leftExp.getFunctionNode(), std::move(rightExp));
+    return POWER(leftExp.getNodeFunction(), std::move(rightExp));
 }
 
 /// leftExp: node, rightExp: item
-FunctionNodePtr operator+(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator+(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) + rightExp.getFunctionNode();
+    return std::move(leftExp) + rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator-(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator-(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) - rightExp.getFunctionNode();
+    return std::move(leftExp) - rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator*(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator*(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) * rightExp.getFunctionNode();
+    return std::move(leftExp) * rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator/(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator/(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) / rightExp.getFunctionNode();
+    return std::move(leftExp) / rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator%(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator%(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) % rightExp.getFunctionNode();
+    return std::move(leftExp) % rightExp.getNodeFunction();
 }
 
-FunctionNodePtr MOD(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr MOD(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return std::move(leftExp) % rightExp.getFunctionNode();
+    return std::move(leftExp) % rightExp.getNodeFunction();
 }
 
-FunctionNodePtr POWER(FunctionNodePtr leftExp, FunctionItem rightExp)
+NodeFunctionPtr POWER(NodeFunctionPtr leftExp, FunctionItem rightExp)
 {
-    return POWER(std::move(leftExp), rightExp.getFunctionNode());
+    return POWER(std::move(leftExp), rightExp.getNodeFunction());
 }
 
 /// leftExp: item, rightWxp: item
-FunctionNodePtr operator+(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator+(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() + rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() + rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator-(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator-(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() - rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() - rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator*(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator*(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() * rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() * rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator/(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator/(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() / rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() / rightExp.getNodeFunction();
 }
 
-FunctionNodePtr operator%(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr operator%(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() % rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() % rightExp.getNodeFunction();
 }
 
-FunctionNodePtr MOD(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr MOD(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return leftExp.getFunctionNode() % rightExp.getFunctionNode();
+    return leftExp.getNodeFunction() % rightExp.getNodeFunction();
 }
 
-FunctionNodePtr POWER(FunctionItem leftExp, FunctionItem rightExp)
+NodeFunctionPtr POWER(FunctionItem leftExp, FunctionItem rightExp)
 {
-    return POWER(leftExp.getFunctionNode(), rightExp.getFunctionNode());
+    return POWER(leftExp.getNodeFunction(), rightExp.getNodeFunction());
 }
 
 /// calls of Unary operators with FunctionItem
-FunctionNodePtr ABS(FunctionItem exp)
+NodeFunctionPtr ABS(FunctionItem exp)
 {
-    return ABS(exp.getFunctionNode());
+    return ABS(exp.getNodeFunction());
 }
 
-FunctionNodePtr SQRT(FunctionItem exp)
+NodeFunctionPtr SQRT(FunctionItem exp)
 {
-    return SQRT(exp.getFunctionNode());
+    return SQRT(exp.getNodeFunction());
 }
 
-FunctionNodePtr EXP(FunctionItem exp)
+NodeFunctionPtr EXP(FunctionItem exp)
 {
-    return EXP(exp.getFunctionNode());
+    return EXP(exp.getNodeFunction());
 }
 
-FunctionNodePtr LN(FunctionItem exp)
+NodeFunctionPtr LN(FunctionItem exp)
 {
-    return LN(exp.getFunctionNode());
+    return LN(exp.getNodeFunction());
 }
 
-FunctionNodePtr LOG2(FunctionItem exp)
+NodeFunctionPtr LOG2(FunctionItem exp)
 {
-    return LOG2(exp.getFunctionNode());
+    return LOG2(exp.getNodeFunction());
 }
 
-FunctionNodePtr LOG10(FunctionItem exp)
+NodeFunctionPtr LOG10(FunctionItem exp)
 {
-    return LOG10(exp.getFunctionNode());
+    return LOG10(exp.getNodeFunction());
 }
 
-FunctionNodePtr SIN(FunctionItem exp)
+NodeFunctionPtr SIN(FunctionItem exp)
 {
-    return SIN(exp.getFunctionNode());
+    return SIN(exp.getNodeFunction());
 }
 
-FunctionNodePtr COS(FunctionItem exp)
+NodeFunctionPtr COS(FunctionItem exp)
 {
-    return COS(exp.getFunctionNode());
+    return COS(exp.getNodeFunction());
 }
 
-FunctionNodePtr RADIANS(FunctionItem exp)
+NodeFunctionPtr RADIANS(FunctionItem exp)
 {
-    return RADIANS(exp.getFunctionNode());
+    return RADIANS(exp.getNodeFunction());
 }
 
-FunctionNodePtr ROUND(FunctionItem exp)
+NodeFunctionPtr ROUND(FunctionItem exp)
 {
-    return ROUND(exp.getFunctionNode());
+    return ROUND(exp.getNodeFunction());
 }
 
-FunctionNodePtr CEIL(FunctionItem exp)
+NodeFunctionPtr CEIL(FunctionItem exp)
 {
-    return CEIL(exp.getFunctionNode());
+    return CEIL(exp.getNodeFunction());
 }
 
-FunctionNodePtr FLOOR(FunctionItem exp)
+NodeFunctionPtr FLOOR(FunctionItem exp)
 {
-    return FLOOR(exp.getFunctionNode());
+    return FLOOR(exp.getNodeFunction());
 }
 
-FunctionNodePtr operator++(FunctionItem exp)
+NodeFunctionPtr operator++(FunctionItem exp)
 {
-    return ++exp.getFunctionNode();
+    return ++exp.getNodeFunction();
 }
 
-FunctionNodePtr operator++(FunctionItem exp, int)
+NodeFunctionPtr operator++(FunctionItem exp, int)
 {
-    return exp.getFunctionNode()++;
+    return exp.getNodeFunction()++;
 }
 
-FunctionNodePtr operator--(FunctionItem exp)
+NodeFunctionPtr operator--(FunctionItem exp)
 {
-    return --exp.getFunctionNode();
+    return --exp.getNodeFunction();
 }
 
-FunctionNodePtr operator--(FunctionItem exp, int)
+NodeFunctionPtr operator--(FunctionItem exp, int)
 {
-    return exp.getFunctionNode()--;
+    return exp.getNodeFunction()--;
 }
 
 }

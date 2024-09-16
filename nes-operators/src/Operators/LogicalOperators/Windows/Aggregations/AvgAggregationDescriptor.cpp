@@ -14,8 +14,8 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/FunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -23,28 +23,28 @@
 namespace NES::Windowing
 {
 
-AvgAggregationDescriptor::AvgAggregationDescriptor(FieldAccessFunctionNodePtr field) : WindowAggregationDescriptor(field)
+AvgAggregationDescriptor::AvgAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Avg;
 }
-AvgAggregationDescriptor::AvgAggregationDescriptor(FunctionNodePtr field, FunctionNodePtr asField)
+AvgAggregationDescriptor::AvgAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Avg;
 }
 
-WindowAggregationDescriptorPtr AvgAggregationDescriptor::create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField)
+WindowAggregationDescriptorPtr AvgAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(std::move(onField), std::move(asField)));
 }
 
-WindowAggregationDescriptorPtr AvgAggregationDescriptor::on(const FunctionNodePtr& keyFunction)
+WindowAggregationDescriptorPtr AvgAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    if (!keyFunction->instanceOf<FieldAccessFunctionNode>())
+    if (!keyFunction->instanceOf<NodeFunctionFieldAccess>())
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
     }
-    auto fieldAccess = keyFunction->as<FieldAccessFunctionNode>();
+    auto fieldAccess = keyFunction->as<NodeFunctionFieldAccess>();
     return std::make_shared<AvgAggregationDescriptor>(AvgAggregationDescriptor(fieldAccess));
 }
 
@@ -57,19 +57,19 @@ void AvgAggregationDescriptor::inferStamp(SchemaPtr schema)
         NES_FATAL_ERROR("AvgAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     ///Set fully qualified name for the as Field
-    auto onFieldName = onField->as<FieldAccessFunctionNode>()->getFieldName();
-    auto asFieldName = asField->as<FieldAccessFunctionNode>()->getFieldName();
+    auto onFieldName = onField->as<NodeFunctionFieldAccess>()->getFieldName();
+    auto asFieldName = asField->as<NodeFunctionFieldAccess>()->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + fieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

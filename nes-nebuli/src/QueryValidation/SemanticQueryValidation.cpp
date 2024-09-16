@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -184,7 +184,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         {
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
-                auto field = inputField->as<FieldAccessExpressionNode>();
+                auto field = inputField->as<NodeFunctionFieldAccess>();
                 if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
                 {
                     throw QueryInvalid(

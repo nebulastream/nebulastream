@@ -14,9 +14,9 @@
 
 #include <string>
 #include <unordered_set>
-#include <Functions/BinaryFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -28,16 +28,16 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
     std::basic_string<char> rightJoinKeyNameEqui;
 
     /// Maintain a list of visited nodes as there are multiple root nodes
-    std::unordered_set<std::shared_ptr<NES::BinaryFunctionNode>> visitedFunctions;
+    std::unordered_set<std::shared_ptr<NES::NodeFunctionBinary>> visitedFunctions;
 
     NES_DEBUG("Iterate over all FunctionNode to check join field.");
 
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<BinaryFunctionNode>())
+        if ((*itr)->instanceOf<NodeFunctionBinary>())
         {
-            auto visitingOp = (*itr)->as<BinaryFunctionNode>();
+            auto visitingOp = (*itr)->as<NodeFunctionBinary>();
             if (visitedFunctions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -47,13 +47,13 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
             {
                 visitedFunctions.insert(visitingOp);
                 ///Find the schema for left and right join key
-                if (!(*itr)->as<BinaryFunctionNode>()->getLeft()->instanceOf<BinaryFunctionNode>()
-                    && (*itr)->instanceOf<EqualsFunctionNode>())
+                if (!(*itr)->as<NodeFunctionBinary>()->getLeft()->instanceOf<NodeFunctionBinary>()
+                    && (*itr)->instanceOf<NodeFunctionEquals>())
                 {
-                    const auto leftJoinKey = (*itr)->as<BinaryFunctionNode>()->getLeft()->as<FieldAccessFunctionNode>();
+                    const auto leftJoinKey = (*itr)->as<NodeFunctionBinary>()->getLeft()->as<NodeFunctionFieldAccess>();
                     leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
-                    const auto rightJoinKey = (*itr)->as<BinaryFunctionNode>()->getRight()->as<FieldAccessFunctionNode>();
+                    const auto rightJoinKey = (*itr)->as<NodeFunctionBinary>()->getRight()->as<NodeFunctionFieldAccess>();
                     rightJoinKeyNameEqui = rightJoinKey->getFieldName();
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");

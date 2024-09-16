@@ -12,34 +12,34 @@
     limitations under the License.
 */
 
-#include <Functions/ArithmeticalFunctions/AbsFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/AddFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/CeilFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/DivFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/ExpFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/FloorFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/ModFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/MulFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/PowFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/RoundFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/SqrtFunctionNode.hpp>
-#include <Functions/ArithmeticalFunctions/SubFunctionNode.hpp>
-#include <Functions/CaseFunctionNode.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/FunctionNode.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMod.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/NodeFunctionCase.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/FunctionSerializationUtil.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
-#include <Functions/LogicalFunctions/AndFunctionNode.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/GreaterFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessEqualsFunctionNode.hpp>
-#include <Functions/LogicalFunctions/LessFunctionNode.hpp>
-#include <Functions/LogicalFunctions/NegateFunctionNode.hpp>
-#include <Functions/LogicalFunctions/OrFunctionNode.hpp>
-#include <Functions/WhenFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableFunction.pb.h>
@@ -48,7 +48,7 @@ namespace NES
 {
 
 SerializableFunction*
-FunctionSerializationUtil::serializeFunction(const FunctionNodePtr& function, SerializableFunction* serializedFunction)
+FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize function {}", function->toString());
     /// serialize function node depending on its type.
@@ -62,43 +62,43 @@ FunctionSerializationUtil::serializeFunction(const FunctionNodePtr& function, Se
         /// serialize arithmetical functions
         serializeArithmeticalFunctions(function, serializedFunction);
     }
-    else if (function->instanceOf<ConstantValueFunctionNode>())
+    else if (function->instanceOf<NodeFunctionConstantValue>())
     {
         /// serialize constant value function node.
         NES_TRACE("FunctionSerializationUtil:: serialize constant value function node.");
-        auto constantValueFunction = function->as<ConstantValueFunctionNode>();
+        auto constantValueFunction = function->as<NodeFunctionConstantValue>();
         auto value = constantValueFunction->getConstantValue();
         /// serialize value
-        auto serializedConstantValue = SerializableFunction_ConstantValueFunction();
+        auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
         DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue.mutable_value());
         serializedFunction->mutable_details()->PackFrom(serializedConstantValue);
     }
-    else if (function->instanceOf<FieldAccessFunctionNode>())
+    else if (function->instanceOf<NodeFunctionFieldAccess>())
     {
         /// serialize field access function node
         NES_TRACE("FunctionSerializationUtil:: serialize field access function node.");
-        auto fieldAccessFunction = function->as<FieldAccessFunctionNode>();
-        auto serializedFieldAccessFunction = SerializableFunction_FieldAccessFunction();
+        auto fieldAccessFunction = function->as<NodeFunctionFieldAccess>();
+        auto serializedFieldAccessFunction = SerializableFunction_FunctionFieldAccess();
         serializedFieldAccessFunction.set_fieldname(fieldAccessFunction->getFieldName());
         serializedFunction->mutable_details()->PackFrom(serializedFieldAccessFunction);
     }
-    else if (function->instanceOf<FieldRenameFunctionNode>())
+    else if (function->instanceOf<NodeFunctionFieldRename>())
     {
         /// serialize field rename function node
         NES_TRACE("FunctionSerializationUtil:: serialize field rename function node.");
-        auto fieldRenameFunction = function->as<FieldRenameFunctionNode>();
-        auto serializedFieldRenameFunction = SerializableFunction_FieldRenameFunction();
+        auto fieldRenameFunction = function->as<NodeFunctionFieldRename>();
+        auto serializedFieldRenameFunction = SerializableFunction_FunctionFieldRename();
         serializeFunction(
-            fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_originalfieldaccessfunction());
+            fieldRenameFunction->getOriginalField(), serializedFieldRenameFunction.mutable_functionoriginalfieldaccess());
         serializedFieldRenameFunction.set_newfieldname(fieldRenameFunction->getNewFieldName());
         serializedFunction->mutable_details()->PackFrom(serializedFieldRenameFunction);
     }
-    else if (function->instanceOf<FieldAssignmentFunctionNode>())
+    else if (function->instanceOf<NodeFunctionFieldAssignment>())
     {
         /// serialize field assignment function node.
         NES_TRACE("FunctionSerializationUtil:: serialize field assignment function node.");
-        auto fieldAssignmentFunctionNode = function->as<FieldAssignmentFunctionNode>();
-        auto serializedFieldAssignmentFunction = SerializableFunction_FieldAssignmentFunction();
+        auto fieldAssignmentFunctionNode = function->as<NodeFunctionFieldAssignment>();
+        auto serializedFieldAssignmentFunction = SerializableFunction_FunctionFieldAssignment();
         auto* serializedFieldAccessFunction = serializedFieldAssignmentFunction.mutable_field();
         serializedFieldAccessFunction->set_fieldname(fieldAssignmentFunctionNode->getField()->getFieldName());
         DataTypeSerializationUtil::serializeDataType(
@@ -107,22 +107,22 @@ FunctionSerializationUtil::serializeFunction(const FunctionNodePtr& function, Se
         serializeFunction(fieldAssignmentFunctionNode->getAssignment(), serializedFieldAssignmentFunction.mutable_assignment());
         serializedFunction->mutable_details()->PackFrom(serializedFieldAssignmentFunction);
     }
-    else if (function->instanceOf<WhenFunctionNode>())
+    else if (function->instanceOf<NodeFunctionWhen>())
     {
         /// serialize when function node.
         NES_TRACE("FunctionSerializationUtil:: serialize when function {}.", function->toString());
-        auto whenFunctionNode = function->as<WhenFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_WhenFunction();
+        auto whenFunctionNode = function->as<NodeFunctionWhen>();
+        auto serializedFunctionNode = SerializableFunction_FunctionWhen();
         serializeFunction(whenFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(whenFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<CaseFunctionNode>())
+    else if (function->instanceOf<NodeFunctionCase>())
     {
         /// serialize case function node.
         NES_TRACE("FunctionSerializationUtil:: serialize case function {}.", function->toString());
-        auto caseFunctionNode = function->as<CaseFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_CaseFunction();
+        auto caseFunctionNode = function->as<NodeFunctionCase>();
+        auto serializedFunctionNode = SerializableFunction_FunctionCase();
         for (const auto& elem : caseFunctionNode->getWhenChildren())
         {
             serializeFunction(elem, serializedFunctionNode.add_left());
@@ -140,86 +140,86 @@ FunctionSerializationUtil::serializeFunction(const FunctionNodePtr& function, Se
     return serializedFunction;
 }
 
-FunctionNodePtr FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
+NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const SerializableFunction& serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: deserialize function {}", serializedFunction.details().type_url());
     /// de-serialize function
     /// 1. check if the serialized function is a logical function
-    auto functionNodePtr = deserializeLogicalFunctions(serializedFunction);
+    auto nodeFunctionPtr = deserializeLogicalFunctions(serializedFunction);
     /// 2. if the function was not de-serialized then try if it's an arithmetical function
-    if (!functionNodePtr)
+    if (!nodeFunctionPtr)
     {
-        functionNodePtr = deserializeArithmeticalFunctions(serializedFunction);
+        nodeFunctionPtr = deserializeArithmeticalFunctions(serializedFunction);
     }
     /// 3. if the function was not de-serialized try remaining function types
-    if (!functionNodePtr)
+    if (!nodeFunctionPtr)
     {
-        if (serializedFunction.details().Is<SerializableFunction_ConstantValueFunction>())
+        if (serializedFunction.details().Is<SerializableFunction_FunctionConstantValue>())
         {
             /// de-serialize constant value function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Constant Value function node.");
-            auto serializedConstantValue = SerializableFunction_ConstantValueFunction();
+            auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
             serializedFunction.details().UnpackTo(&serializedConstantValue);
             auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedConstantValue.value());
-            functionNodePtr = ConstantValueFunctionNode::create(valueType);
+            nodeFunctionPtr = NodeFunctionConstantValue::create(valueType);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_FieldAccessFunction>())
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
         {
             /// de-serialize field access function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as FieldAccess function node.");
-            SerializableFunction_FieldAccessFunction serializedFieldAccessFunction;
+            SerializableFunction_FunctionFieldAccess serializedFieldAccessFunction;
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto& name = serializedFieldAccessFunction.fieldname();
-            functionNodePtr = FieldAccessFunctionNode::create(name);
+            nodeFunctionPtr = NodeFunctionFieldAccess::create(name);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_FieldRenameFunction>())
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldRename>())
         {
             /// de-serialize field rename function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Field Rename function node.");
-            SerializableFunction_FieldRenameFunction serializedFieldRenameFunction;
+            SerializableFunction_FunctionFieldRename serializedFieldRenameFunction;
             serializedFunction.details().UnpackTo(&serializedFieldRenameFunction);
-            auto originalFieldAccessFunction = deserializeFunction(serializedFieldRenameFunction.originalfieldaccessfunction());
-            if (!originalFieldAccessFunction->instanceOf<FieldAccessFunctionNode>())
+            auto originalFieldAccessFunction = deserializeFunction(serializedFieldRenameFunction.functionoriginalfieldaccess());
+            if (!originalFieldAccessFunction->instanceOf<NodeFunctionFieldAccess>())
             {
                 NES_FATAL_ERROR(
                     "FunctionSerializationUtil: the original field access function "
-                    "should be of type FieldAccessFunctionNode, but was a {}",
+                    "should be of type NodeFunctionFieldAccess, but was a {}",
                     originalFieldAccessFunction->toString());
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
-            functionNodePtr
-                = FieldRenameFunctionNode::create(originalFieldAccessFunction->as<FieldAccessFunctionNode>(), newFieldName);
+            nodeFunctionPtr
+                = NodeFunctionFieldRename::create(originalFieldAccessFunction->as<NodeFunctionFieldAccess>(), newFieldName);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_FieldAssignmentFunction>())
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAssignment>())
         {
             /// de-serialize field read function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as FieldAssignment function node.");
-            SerializableFunction_FieldAssignmentFunction serializedFieldAccessFunction;
+            SerializableFunction_FunctionFieldAssignment serializedFieldAccessFunction;
             serializedFunction.details().UnpackTo(&serializedFieldAccessFunction);
             const auto* field = serializedFieldAccessFunction.mutable_field();
             auto fieldStamp = DataTypeSerializationUtil::deserializeDataType(field->type());
-            auto fieldAccessNode = FieldAccessFunctionNode::create(fieldStamp, field->fieldname());
+            auto fieldAccessNode = NodeFunctionFieldAccess::create(fieldStamp, field->fieldname());
             auto fieldAssignmentFunction = deserializeFunction(serializedFieldAccessFunction.assignment());
-            functionNodePtr
-                = FieldAssignmentFunctionNode::create(fieldAccessNode->as<FieldAccessFunctionNode>(), fieldAssignmentFunction);
+            nodeFunctionPtr
+                = NodeFunctionFieldAssignment::create(fieldAccessNode->as<NodeFunctionFieldAccess>(), fieldAssignmentFunction);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_WhenFunction>())
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionWhen>())
         {
             /// de-serialize WHEN function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as When function node.");
-            auto serializedFunctionNode = SerializableFunction_WhenFunction();
+            auto serializedFunctionNode = SerializableFunction_FunctionWhen();
             serializedFunction.details().UnpackTo(&serializedFunctionNode);
             auto left = deserializeFunction(serializedFunctionNode.left());
             auto right = deserializeFunction(serializedFunctionNode.right());
-            return WhenFunctionNode::create(left, right);
+            return NodeFunctionWhen::create(left, right);
         }
-        else if (serializedFunction.details().Is<SerializableFunction_CaseFunction>())
+        else if (serializedFunction.details().Is<SerializableFunction_FunctionCase>())
         {
             /// de-serialize CASE function node.
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Case function node.");
-            auto serializedFunctionNode = SerializableFunction_CaseFunction();
+            auto serializedFunctionNode = SerializableFunction_FunctionCase();
             serializedFunction.details().UnpackTo(&serializedFunctionNode);
-            std::vector<FunctionNodePtr> leftExps;
+            std::vector<NodeFunctionPtr> leftExps;
 
             ///todo: deserialization might be possible more efficiently
             for (int i = 0; i < serializedFunctionNode.left_size(); i++)
@@ -228,7 +228,7 @@ FunctionNodePtr FunctionSerializationUtil::deserializeFunction(const Serializabl
                 leftExps.push_back(deserializeFunction(leftNode));
             }
             auto right = deserializeFunction(serializedFunctionNode.right());
-            return CaseFunctionNode::create(leftExps, right);
+            return NodeFunctionCase::create(leftExps, right);
         }
         else
         {
@@ -236,133 +236,133 @@ FunctionNodePtr FunctionSerializationUtil::deserializeFunction(const Serializabl
         }
     }
 
-    if (!functionNodePtr)
+    if (!nodeFunctionPtr)
     {
         NES_FATAL_ERROR("FunctionSerializationUtil:: fatal error during de-serialization. The function node must not be null");
     }
 
     /// deserialize function stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
-    functionNodePtr->setStamp(stamp);
-    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", functionNodePtr->toString());
-    return functionNodePtr;
+    nodeFunctionPtr->setStamp(stamp);
+    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", nodeFunctionPtr->toString());
+    return nodeFunctionPtr;
 }
 
 void FunctionSerializationUtil::serializeArithmeticalFunctions(
-    const FunctionNodePtr& function, SerializableFunction* serializedFunction)
+    const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", function->toString());
-    if (function->instanceOf<AddFunctionNode>())
+    if (function->instanceOf<NodeFunctionAdd>())
     {
         /// serialize add function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize ADD arithmetical function to SerializableFunction_AddFunction");
-        auto addFunctionNode = function->as<AddFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_AddFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize ADD arithmetical function to SerializableFunction_FunctionAdd");
+        auto addFunctionNode = function->as<NodeFunctionAdd>();
+        auto serializedFunctionNode = SerializableFunction_FunctionAdd();
         serializeFunction(addFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(addFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<SubFunctionNode>())
+    else if (function->instanceOf<NodeFunctionSub>())
     {
         /// serialize sub function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize SUB arithmetical function to SerializableFunction_SubFunction");
-        auto subFunctionNode = function->as<SubFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_SubFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize SUB arithmetical function to SerializableFunction_FunctionSub");
+        auto subFunctionNode = function->as<NodeFunctionSub>();
+        auto serializedFunctionNode = SerializableFunction_FunctionSub();
         serializeFunction(subFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(subFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<MulFunctionNode>())
+    else if (function->instanceOf<NodeFunctionMul>())
     {
         /// serialize mul function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize MUL arithmetical function to SerializableFunction_MulFunction");
-        auto mulFunctionNode = function->as<MulFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_MulFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize MUL arithmetical function to SerializableFunction_FunctionMul");
+        auto mulFunctionNode = function->as<NodeFunctionMul>();
+        auto serializedFunctionNode = SerializableFunction_FunctionMul();
         serializeFunction(mulFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(mulFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<DivFunctionNode>())
+    else if (function->instanceOf<NodeFunctionDiv>())
     {
         /// serialize div function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize DIV arithmetical function to SerializableFunction_DivFunction");
-        auto divFunctionNode = function->as<DivFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_DivFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize DIV arithmetical function to SerializableFunction_FunctionDiv");
+        auto divFunctionNode = function->as<NodeFunctionDiv>();
+        auto serializedFunctionNode = SerializableFunction_FunctionDiv();
         serializeFunction(divFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(divFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<ModFunctionNode>())
+    else if (function->instanceOf<NodeFunctionMod>())
     {
         /// serialize mod function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize MODULO arithmetical function to SerializableFunction_PowFunction");
-        auto modFunctionNode = function->as<ModFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_ModFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize MODULO arithmetical function to SerializableFunction_FunctionPow");
+        auto modFunctionNode = function->as<NodeFunctionMod>();
+        auto serializedFunctionNode = SerializableFunction_FunctionMod();
         serializeFunction(modFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(modFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<PowFunctionNode>())
+    else if (function->instanceOf<NodeFunctionPow>())
     {
         /// serialize pow function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize POWER arithmetical function to SerializableFunction_PowFunction");
-        auto powFunctionNode = function->as<PowFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_PowFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize POWER arithmetical function to SerializableFunction_FunctionPow");
+        auto powFunctionNode = function->as<NodeFunctionPow>();
+        auto serializedFunctionNode = SerializableFunction_FunctionPow();
         serializeFunction(powFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(powFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<AbsFunctionNode>())
+    else if (function->instanceOf<NodeFunctionAbs>())
     {
         /// serialize abs function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize ABS arithmetical function to SerializableFunction_AbsFunction");
-        auto absFunctionNode = function->as<AbsFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_AbsFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize ABS arithmetical function to SerializableFunction_FunctionAbs");
+        auto absFunctionNode = function->as<NodeFunctionAbs>();
+        auto serializedFunctionNode = SerializableFunction_FunctionAbs();
         serializeFunction(absFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<CeilFunctionNode>())
+    else if (function->instanceOf<NodeFunctionCeil>())
     {
         /// serialize ceil function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize CEIL arithmetical function to SerializableFunction_CeilFunction");
-        auto ceilFunctionNode = function->as<CeilFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_CeilFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize CEIL arithmetical function to SerializableFunction_FunctionCeil");
+        auto ceilFunctionNode = function->as<NodeFunctionCeil>();
+        auto serializedFunctionNode = SerializableFunction_FunctionCeil();
         serializeFunction(ceilFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<ExpFunctionNode>())
+    else if (function->instanceOf<NodeFunctionExp>())
     {
         /// serialize exp function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize EXP arithmetical function to SerializableFunction_ExpFunction");
-        auto expFunctionNode = function->as<ExpFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_ExpFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize EXP arithmetical function to SerializableFunction_FunctionExp");
+        auto expFunctionNode = function->as<NodeFunctionExp>();
+        auto serializedFunctionNode = SerializableFunction_FunctionExp();
         serializeFunction(expFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<FloorFunctionNode>())
+    else if (function->instanceOf<NodeFunctionFloor>())
     {
         /// serialize floor function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize FLOOR arithmetical function to SerializableFunction_FloorFunction");
-        auto floorFunctionNode = function->as<FloorFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_FloorFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize FLOOR arithmetical function to SerializableFunction_FunctionFloor");
+        auto floorFunctionNode = function->as<NodeFunctionFloor>();
+        auto serializedFunctionNode = SerializableFunction_FunctionFloor();
         serializeFunction(floorFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<RoundFunctionNode>())
+    else if (function->instanceOf<NodeFunctionRound>())
     {
         /// serialize round function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize ROUND arithmetical function to SerializableFunction_RoundFunction");
-        auto roundFunctionNode = function->as<RoundFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_RoundFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize ROUND arithmetical function to SerializableFunction_FunctionRound");
+        auto roundFunctionNode = function->as<NodeFunctionRound>();
+        auto serializedFunctionNode = SerializableFunction_FunctionRound();
         serializeFunction(roundFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<SqrtFunctionNode>())
+    else if (function->instanceOf<NodeFunctionSqrt>())
     {
         /// serialize sqrt function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize SQRT arithmetical function to SerializableFunction_SqrtFunction");
-        auto sqrtFunctionNode = function->as<SqrtFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_SqrtFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize SQRT arithmetical function to SerializableFunction_FunctionSqrt");
+        auto sqrtFunctionNode = function->as<NodeFunctionSqrt>();
+        auto serializedFunctionNode = SerializableFunction_FunctionSqrt();
         serializeFunction(sqrtFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
@@ -375,87 +375,87 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(
 }
 
 void FunctionSerializationUtil::serializeLogicalFunctions(
-    const FunctionNodePtr& function, SerializableFunction* serializedFunction)
+    const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", function->toString());
-    if (function->instanceOf<AndFunctionNode>())
+    if (function->instanceOf<NodeFunctionAnd>())
     {
         /// serialize and function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize AND logical function to SerializableFunction_AndFunction");
-        auto andFunctionNode = function->as<AndFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_AndFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize AND logical function to SerializableFunction_FunctionAnd");
+        auto andFunctionNode = function->as<NodeFunctionAnd>();
+        auto serializedFunctionNode = SerializableFunction_FunctionAnd();
         serializeFunction(andFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(andFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<OrFunctionNode>())
+    else if (function->instanceOf<NodeFunctionOr>())
     {
         /// serialize or function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize OR logical function to SerializableFunction_OrFunction");
-        auto orFunctionNode = function->as<OrFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_OrFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize OR logical function to SerializableFunction_FunctionOr");
+        auto orFunctionNode = function->as<NodeFunctionOr>();
+        auto serializedFunctionNode = SerializableFunction_FunctionOr();
         serializeFunction(orFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(orFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<LessFunctionNode>())
+    else if (function->instanceOf<NodeFunctionLess>())
     {
         /// serialize less function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize Less logical function to SerializableFunction_LessFunction");
-        auto lessFunctionNode = function->as<LessFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_LessFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize Less logical function to SerializableFunction_FunctionLess");
+        auto lessFunctionNode = function->as<NodeFunctionLess>();
+        auto serializedFunctionNode = SerializableFunction_FunctionLess();
         serializeFunction(lessFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(lessFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<LessEqualsFunctionNode>())
+    else if (function->instanceOf<NodeFunctionLessEquals>())
     {
         /// serialize less equals function node.
         NES_TRACE("FunctionSerializationUtil:: serialize Less Equals logical function to "
-                  "SerializableFunction_LessEqualsFunction");
-        auto lessEqualsFunctionNode = function->as<LessEqualsFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_LessEqualsFunction();
-        serializeFunction(lessEqualsFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
-        serializeFunction(lessEqualsFunctionNode->getRight(), serializedFunctionNode.mutable_right());
+                  "SerializableFunction_FunctionLessEquals");
+        auto lessNodeFunctionEquals = function->as<NodeFunctionLessEquals>();
+        auto serializedFunctionNode = SerializableFunction_FunctionLessEquals();
+        serializeFunction(lessNodeFunctionEquals->getLeft(), serializedFunctionNode.mutable_left());
+        serializeFunction(lessNodeFunctionEquals->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<GreaterFunctionNode>())
+    else if (function->instanceOf<NodeFunctionGreater>())
     {
         /// serialize greater function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize Greater logical function to SerializableFunction_GreaterFunction");
-        auto greaterFunctionNode = function->as<GreaterFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_GreaterFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize Greater logical function to SerializableFunction_FunctionGreater");
+        auto greaterFunctionNode = function->as<NodeFunctionGreater>();
+        auto serializedFunctionNode = SerializableFunction_FunctionGreater();
         serializeFunction(greaterFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(greaterFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<GreaterEqualsFunctionNode>())
+    else if (function->instanceOf<NodeFunctionGreaterEquals>())
     {
         /// serialize greater equals function node.
         NES_TRACE("FunctionSerializationUtil:: serialize Greater Equals logical function to "
-                  "SerializableFunction_GreaterEqualsFunction");
-        auto greaterEqualsFunctionNode = function->as<GreaterEqualsFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_GreaterEqualsFunction();
-        serializeFunction(greaterEqualsFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
-        serializeFunction(greaterEqualsFunctionNode->getRight(), serializedFunctionNode.mutable_right());
+                  "SerializableFunction_FunctionGreaterEquals");
+        auto greaterNodeFunctionEquals = function->as<NodeFunctionGreaterEquals>();
+        auto serializedFunctionNode = SerializableFunction_FunctionGreaterEquals();
+        serializeFunction(greaterNodeFunctionEquals->getLeft(), serializedFunctionNode.mutable_left());
+        serializeFunction(greaterNodeFunctionEquals->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<EqualsFunctionNode>())
+    else if (function->instanceOf<NodeFunctionEquals>())
     {
         /// serialize equals function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize Equals logical function to SerializableFunction_EqualsFunction");
-        auto equalsFunctionNode = function->as<EqualsFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_EqualsFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize Equals logical function to SerializableFunction_FunctionEquals");
+        auto equalsFunctionNode = function->as<NodeFunctionEquals>();
+        auto serializedFunctionNode = SerializableFunction_FunctionEquals();
         serializeFunction(equalsFunctionNode->getLeft(), serializedFunctionNode.mutable_left());
         serializeFunction(equalsFunctionNode->getRight(), serializedFunctionNode.mutable_right());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
-    else if (function->instanceOf<NegateFunctionNode>())
+    else if (function->instanceOf<NodeFunctionNegate>())
     {
         /// serialize negate function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize negate logical function to SerializableFunction_NegateFunction");
-        auto equalsFunctionNode = function->as<NegateFunctionNode>();
-        auto serializedFunctionNode = SerializableFunction_NegateFunction();
+        NES_TRACE("FunctionSerializationUtil:: serialize negate logical function to SerializableFunction_FunctionNegate");
+        auto equalsFunctionNode = function->as<NodeFunctionNegate>();
+        auto serializedFunctionNode = SerializableFunction_FunctionNegate();
         serializeFunction(equalsFunctionNode->child(), serializedFunctionNode.mutable_child());
         serializedFunction->mutable_details()->PackFrom(serializedFunctionNode);
     }
@@ -467,206 +467,206 @@ void FunctionSerializationUtil::serializeLogicalFunctions(
     }
 }
 
-FunctionNodePtr FunctionSerializationUtil::deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction)
+NodeFunctionPtr FunctionSerializationUtil::deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction)
 {
-    if (serializedFunction.details().Is<SerializableFunction_AddFunction>())
+    if (serializedFunction.details().Is<SerializableFunction_FunctionAdd>())
     {
         /// de-serialize ADD function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as Add function node.");
-        auto serializedFunctionNode = SerializableFunction_AddFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionAdd();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return AddFunctionNode::create(left, right);
+        return NodeFunctionAdd::create(left, right);
     }
-    if (serializedFunction.details().Is<SerializableFunction_SubFunction>())
+    if (serializedFunction.details().Is<SerializableFunction_FunctionSub>())
     {
         /// de-serialize SUB function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as SUB function node.");
-        auto serializedFunctionNode = SerializableFunction_SubFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionSub();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return SubFunctionNode::create(left, right);
+        return NodeFunctionSub::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_MulFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionMul>())
     {
         /// de-serialize MUL function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as MUL function node.");
-        auto serializedFunctionNode = SerializableFunction_MulFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionMul();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return MulFunctionNode::create(left, right);
+        return NodeFunctionMul::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_DivFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionDiv>())
     {
         /// de-serialize DIV function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as DIV function node.");
-        auto serializedFunctionNode = SerializableFunction_DivFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionDiv();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return DivFunctionNode::create(left, right);
+        return NodeFunctionDiv::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_ModFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionMod>())
     {
         /// de-serialize MODULO function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as MODULO function node.");
-        auto serializedFunctionNode = SerializableFunction_ModFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionMod();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return ModFunctionNode::create(left, right);
+        return NodeFunctionMod::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_PowFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionPow>())
     {
         /// de-serialize POWER function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as POWER function node.");
-        auto serializedFunctionNode = SerializableFunction_PowFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionPow();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return PowFunctionNode::create(left, right);
+        return NodeFunctionPow::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_AbsFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionAbs>())
     {
         /// de-serialize ABS function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as ABS function node.");
-        auto serializedFunctionNode = SerializableFunction_AbsFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionAbs();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return AbsFunctionNode::create(child);
+        return NodeFunctionAbs::create(child);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_CeilFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionCeil>())
     {
         /// de-serialize CEIL function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as CEIL function node.");
-        auto serializedFunctionNode = SerializableFunction_CeilFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionCeil();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return CeilFunctionNode::create(child);
+        return NodeFunctionCeil::create(child);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_ExpFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionExp>())
     {
         /// de-serialize EXP function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as EXP function node.");
-        auto serializedFunctionNode = SerializableFunction_ExpFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionExp();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return ExpFunctionNode::create(child);
+        return NodeFunctionExp::create(child);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_FloorFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionFloor>())
     {
         /// de-serialize FLOOR function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as FLOOR function node.");
-        auto serializedFunctionNode = SerializableFunction_FloorFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionFloor();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return FloorFunctionNode::create(child);
+        return NodeFunctionFloor::create(child);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_RoundFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionRound>())
     {
         /// de-serialize ROUND function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as ROUND function node.");
-        auto serializedFunctionNode = SerializableFunction_RoundFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionRound();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return RoundFunctionNode::create(child);
+        return NodeFunctionRound::create(child);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_SqrtFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionSqrt>())
     {
         /// de-serialize SQRT function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize arithmetical function as SQRT function node.");
-        auto serializedFunctionNode = SerializableFunction_SqrtFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionSqrt();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return SqrtFunctionNode::create(child);
+        return NodeFunctionSqrt::create(child);
     }
     return nullptr;
 }
 
-FunctionNodePtr FunctionSerializationUtil::deserializeLogicalFunctions(const SerializableFunction& serializedFunction)
+NodeFunctionPtr FunctionSerializationUtil::deserializeLogicalFunctions(const SerializableFunction& serializedFunction)
 {
     NES_DEBUG("FunctionSerializationUtil:: de-serialize logical function {}", serializedFunction.details().type_url());
-    if (serializedFunction.details().Is<SerializableFunction_AndFunction>())
+    if (serializedFunction.details().Is<SerializableFunction_FunctionAnd>())
     {
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as AND function node.");
         /// de-serialize and function node.
-        auto serializedFunctionNode = SerializableFunction_AndFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionAnd();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return AndFunctionNode::create(left, right);
+        return NodeFunctionAnd::create(left, right);
     }
-    if (serializedFunction.details().Is<SerializableFunction_OrFunction>())
+    if (serializedFunction.details().Is<SerializableFunction_FunctionOr>())
     {
         /// de-serialize or function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as OR function node.");
-        auto serializedFunctionNode = SerializableFunction_OrFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionOr();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return OrFunctionNode::create(left, right);
+        return NodeFunctionOr::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_LessFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionLess>())
     {
         /// de-serialize less function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as LESS function node.");
-        auto serializedFunctionNode = SerializableFunction_LessFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionLess();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return LessFunctionNode::create(left, right);
+        return NodeFunctionLess::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_LessEqualsFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionLessEquals>())
     {
         /// de-serialize less equals function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as LESS Equals function node.");
-        auto serializedFunctionNode = SerializableFunction_LessEqualsFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionLessEquals();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return LessEqualsFunctionNode::create(left, right);
+        return NodeFunctionLessEquals::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_GreaterFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionGreater>())
     {
         /// de-serialize greater function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as Greater function node.");
-        auto serializedFunctionNode = SerializableFunction_GreaterFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionGreater();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return GreaterFunctionNode::create(left, right);
+        return NodeFunctionGreater::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_GreaterEqualsFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionGreaterEquals>())
     {
         /// de-serialize greater equals function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as GreaterEquals function node.");
-        auto serializedFunctionNode = SerializableFunction_GreaterEqualsFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionGreaterEquals();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return GreaterEqualsFunctionNode::create(left, right);
+        return NodeFunctionGreaterEquals::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_EqualsFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionEquals>())
     {
         /// de-serialize equals function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as Equals function node.");
-        auto serializedFunctionNode = SerializableFunction_EqualsFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionEquals();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto left = deserializeFunction(serializedFunctionNode.left());
         auto right = deserializeFunction(serializedFunctionNode.right());
-        return EqualsFunctionNode::create(left, right);
+        return NodeFunctionEquals::create(left, right);
     }
-    else if (serializedFunction.details().Is<SerializableFunction_NegateFunction>())
+    else if (serializedFunction.details().Is<SerializableFunction_FunctionNegate>())
     {
         /// de-serialize negate function node.
         NES_TRACE("FunctionSerializationUtil:: de-serialize logical function as Negate function node.");
-        auto serializedFunctionNode = SerializableFunction_NegateFunction();
+        auto serializedFunctionNode = SerializableFunction_FunctionNegate();
         serializedFunction.details().UnpackTo(&serializedFunctionNode);
         auto child = deserializeFunction(serializedFunctionNode.child());
-        return NegateFunctionNode::create(child);
+        return NodeFunctionNegate::create(child);
     }
     return nullptr;
 }

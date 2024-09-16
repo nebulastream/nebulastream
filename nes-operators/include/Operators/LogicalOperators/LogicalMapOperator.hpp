@@ -26,13 +26,13 @@ namespace NES
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(FieldAssignmentFunctionNodePtr const& mapFunction, OperatorId id);
+    LogicalMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id);
 
     /**
     * @brief Returns the function of this map operator
-    * @return FieldAssignmentFunctionNodePtr
+    * @return NodeFunctionFieldAssignmentPtr
     */
-    FieldAssignmentFunctionNodePtr getMapFunction() const;
+    NodeFunctionFieldAssignmentPtr getMapFunction() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -50,7 +50,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    const FieldAssignmentFunctionNodePtr mapFunction;
+    const NodeFunctionFieldAssignmentPtr mapFunction;
 };
 
 } /// namespace NES

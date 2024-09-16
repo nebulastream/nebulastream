@@ -14,37 +14,37 @@
 
 #include <utility>
 #include <API/Schema.hpp>
-#include <Functions/FunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Windowing
 {
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(FieldAccessFunctionNodePtr field) : WindowAggregationDescriptor(field)
+MaxAggregationDescriptor::MaxAggregationDescriptor(NodeFunctionFieldAccessPtr field) : WindowAggregationDescriptor(field)
 {
     this->aggregationType = Type::Max;
 }
 
-MaxAggregationDescriptor::MaxAggregationDescriptor(FunctionNodePtr field, FunctionNodePtr asField)
+MaxAggregationDescriptor::MaxAggregationDescriptor(NodeFunctionPtr field, NodeFunctionPtr asField)
     : WindowAggregationDescriptor(field, asField)
 {
     this->aggregationType = Type::Max;
 }
 
-WindowAggregationDescriptorPtr MaxAggregationDescriptor::create(FieldAccessFunctionNodePtr onField, FieldAccessFunctionNodePtr asField)
+WindowAggregationDescriptorPtr MaxAggregationDescriptor::create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField)
 {
     return std::make_shared<MaxAggregationDescriptor>(std::move(onField), std::move(asField));
 }
 
-WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const FunctionNodePtr& keyFunction)
+WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const NodeFunctionPtr& keyFunction)
 {
-    if (!keyFunction->instanceOf<FieldAccessFunctionNode>())
+    if (!keyFunction->instanceOf<NodeFunctionFieldAccess>())
     {
         NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
     }
-    auto fieldAccess = keyFunction->as<FieldAccessFunctionNode>();
+    auto fieldAccess = keyFunction->as<NodeFunctionFieldAccess>();
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
@@ -58,19 +58,19 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema)
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = onField->as<FieldAccessFunctionNode>()->getFieldName();
-    auto asFieldName = asField->as<FieldAccessFunctionNode>()->getFieldName();
+    auto onFieldName = onField->as<NodeFunctionFieldAccess>()->getFieldName();
+    auto asFieldName = asField->as<NodeFunctionFieldAccess>()->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessFunctionNode>()->updateFieldName(attributeNameResolver + fieldName);
+        asField->as<NodeFunctionFieldAccess>()->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

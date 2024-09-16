@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Functions/ConstantValueFunctionNode.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
@@ -38,7 +38,7 @@ public:
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createFilterOperator(FunctionNodePtr const& predicate, OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createFilterOperator(NodeFunctionPtr const& predicate, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source rename operator.
@@ -62,7 +62,7 @@ public:
     * @return LogicalOperatorPtr
     */
     static LogicalUnaryOperatorPtr
-    createProjectionOperator(const std::vector<FunctionNodePtr>& functions, OperatorId id = getNextOperatorId());
+    createProjectionOperator(const std::vector<NodeFunctionPtr>& functions, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -76,12 +76,12 @@ public:
 
     /**
      * @brief Create a new map operator with a field assignment function as a map function.
-     * @param mapFunction the FieldAssignmentFunctionNode.
+     * @param mapFunction the NodeFunctionFieldAssignment.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr
-    createMapOperator(FieldAssignmentFunctionNodePtr const& mapFunction, OperatorId id = getNextOperatorId());
+    createMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -93,8 +93,8 @@ public:
      */
     static LogicalUnaryOperatorPtr createInferModelOperator(
         std::string model,
-        std::vector<FunctionNodePtr> inputFields,
-        std::vector<FunctionNodePtr> outputFields,
+        std::vector<NodeFunctionPtr> inputFields,
+        std::vector<NodeFunctionPtr> outputFields,
         OperatorId id = getNextOperatorId());
 
     /**

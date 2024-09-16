@@ -13,31 +13,31 @@
 */
 #include <sstream>
 #include <utility>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalMapOperator::PhysicalMapOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapFunction(std::move(mapFunction))
 {
 }
 
-FieldAssignmentFunctionNodePtr PhysicalMapOperator::getMapFunction()
+NodeFunctionFieldAssignmentPtr PhysicalMapOperator::getMapFunction()
 {
     return mapFunction;
 }
 
 PhysicalOperatorPtr PhysicalMapOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentFunctionNodePtr& mapFunction)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction)
 {
     return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapFunction);
 }
 
 PhysicalOperatorPtr
-PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentFunctionNodePtr mapFunction)
+PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapFunction));
 }

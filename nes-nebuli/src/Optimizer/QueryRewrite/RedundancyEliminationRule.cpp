@@ -14,21 +14,21 @@
 
 #include <queue>
 #include <string>
-#include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Expressions/ExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/NodeFunction.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -59,8 +59,8 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan)
     auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
     for (auto& filter : filterOperators)
     {
-        const ExpressionNodePtr filterPredicate = filter->getPredicate();
-        ExpressionNodePtr updatedPredicate;
+        const NodeFunctionPtr filterPredicate = filter->getPredicate();
+        NodeFunctionPtr updatedPredicate;
         while (updatedPredicate != filterPredicate)
         {
             updatedPredicate = eliminatePredicateRedundancy(filterPredicate);
@@ -72,24 +72,24 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan)
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     for (auto& map : mapOperators)
     {
-        const ExpressionNodePtr mapExpression = map->getMapExpression();
-        ExpressionNodePtr updatedMapExpression;
-        while (updatedMapExpression != mapExpression)
+        const NodeFunctionPtr mapFunction = map->getMapFunction();
+        NodeFunctionPtr updatedMapFunction;
+        while (updatedMapFunction != mapFunction)
         {
-            updatedMapExpression = eliminatePredicateRedundancy(mapExpression);
+            updatedMapFunction = eliminatePredicateRedundancy(mapFunction);
         }
-        auto updatedMap = LogicalOperatorFactory::createFilterOperator(updatedMapExpression);
-        mapExpression->replace(updatedMap);
+        auto updatedMap = LogicalOperatorFactory::createFilterOperator(updatedMapFunction);
+        mapFunction->replace(updatedMap);
     }
     return queryPlan;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::eliminatePredicateRedundancy(const ExpressionNodePtr& predicate)
+NES::NodeFunctionPtr RedundancyEliminationRule::eliminatePredicateRedundancy(const NodeFunctionPtr& predicate)
 {
     /// Given a predicate, perform a series of optimizations by calling specific rewrite methods
-    if (predicate->instanceOf<EqualsExpressionNode>() || predicate->instanceOf<GreaterEqualsExpressionNode>()
-        || predicate->instanceOf<GreaterExpressionNode>() || predicate->instanceOf<LessEqualsExpressionNode>()
-        || predicate->instanceOf<LessExpressionNode>())
+    if (predicate->instanceOf<NodeFunctionEquals>() || predicate->instanceOf<NodeFunctionGreaterEquals>()
+        || predicate->instanceOf<NodeFunctionGreater>() || predicate->instanceOf<NodeFunctionLessEquals>()
+        || predicate->instanceOf<NodeFunctionLess>())
     {
         NES_DEBUG("The predicate has a comparison operator, proceed by moving constants if possible");
         return constantMoving(predicate);
@@ -98,51 +98,51 @@ NES::ExpressionNodePtr RedundancyEliminationRule::eliminatePredicateRedundancy(c
     return predicate;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::constantMoving(const ExpressionNodePtr& predicate)
+NES::NodeFunctionPtr RedundancyEliminationRule::constantMoving(const NodeFunctionPtr& predicate)
 {
-    /// Move all constant values to the same side of the expression. Apply the change when comparison operators
+    /// Move all constant values to the same side of the function. Apply the change when comparison operators
     /// are found, e.g.: equals, greaterThan,...
     NES_DEBUG("RedundancyEliminationRule.constantMoving not implemented yet");
     return predicate;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::constantFolding(const ExpressionNodePtr& predicate)
+NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFunctionPtr& predicate)
 {
     /// Detect sum/subtraction/multiplication/division of constants inside a predicate and resolve them
     NES_DEBUG("Applying RedundancyEliminationRule.constantFolding to predicate {}", predicate->toString());
-    if (predicate->instanceOf<AddExpressionNode>() || predicate->instanceOf<SubExpressionNode>()
-        || predicate->instanceOf<MulExpressionNode>() || predicate->instanceOf<DivExpressionNode>())
+    if (predicate->instanceOf<NodeFunctionAdd>() || predicate->instanceOf<NodeFunctionSub>()
+        || predicate->instanceOf<NodeFunctionMul>() || predicate->instanceOf<NodeFunctionDiv>())
     {
         NES_DEBUG("The predicate is an addition/multiplication/subtraction/division, constant folding could be applied");
         auto operands = predicate->getChildren();
         auto leftOperand = operands.at(0);
         auto rightOperand = operands.at(1);
-        if (leftOperand->instanceOf<ConstantValueExpressionNode>() && rightOperand->instanceOf<ConstantValueExpressionNode>())
+        if (leftOperand->instanceOf<NodeFunctionConstantValue>() && rightOperand->instanceOf<NodeFunctionConstantValue>())
         {
-            NES_DEBUG("Both of the predicate expressions are constant and can be folded together");
-            auto leftOperandValue = leftOperand->as<ConstantValueExpressionNode>()->getConstantValue();
+            NES_DEBUG("Both of the predicate functions are constant and can be folded together");
+            auto leftOperandValue = leftOperand->as<NodeFunctionConstantValue>()->getConstantValue();
             auto leftValueType = std::dynamic_pointer_cast<BasicValue>(leftOperandValue);
             auto leftValue = stoi(leftValueType->value);
-            auto rightOperandValue = rightOperand->as<ConstantValueExpressionNode>()->getConstantValue();
+            auto rightOperandValue = rightOperand->as<NodeFunctionConstantValue>()->getConstantValue();
             auto rightValueType = std::dynamic_pointer_cast<BasicValue>(leftOperandValue);
             auto rightValue = stoi(rightValueType->value);
             auto resultValue = 0;
-            if (predicate->instanceOf<AddExpressionNode>())
+            if (predicate->instanceOf<NodeFunctionAdd>())
             {
                 NES_DEBUG("Summing the operands");
                 resultValue = leftValue + rightValue;
             }
-            else if (predicate->instanceOf<SubExpressionNode>())
+            else if (predicate->instanceOf<NodeFunctionSub>())
             {
                 NES_DEBUG("Subtracting the operands");
                 resultValue = leftValue - rightValue;
             }
-            else if (predicate->instanceOf<MulExpressionNode>())
+            else if (predicate->instanceOf<NodeFunctionMul>())
             {
                 NES_DEBUG("Multiplying the operands");
                 resultValue = leftValue * rightValue;
             }
-            else if (predicate->instanceOf<DivExpressionNode>())
+            else if (predicate->instanceOf<NodeFunctionDiv>())
             {
                 if (rightValue != 0)
                 {
@@ -154,14 +154,14 @@ NES::ExpressionNodePtr RedundancyEliminationRule::constantFolding(const Expressi
                 }
             }
             NES_DEBUG("Computed the result, which is equal to ", resultValue);
-            NES_DEBUG("Creating a new constant expression node with the result value");
-            ExpressionNodePtr resultExpressionNode = ConstantValueExpressionNode::create(
+            NES_DEBUG("Creating a new constant function node with the result value");
+            NodeFunctionPtr resultFunctionNode = NodeFunctionConstantValue::create(
                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(resultValue)));
-            return resultExpressionNode;
+            return resultFunctionNode;
         }
         else
         {
-            NES_DEBUG("Not all the predicate expressions are constant, cannot apply folding");
+            NES_DEBUG("Not all the predicate functions are constant, cannot apply folding");
         }
     }
     else
@@ -172,53 +172,53 @@ NES::ExpressionNodePtr RedundancyEliminationRule::constantFolding(const Expressi
     return predicate;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::arithmeticSimplification(const NES::ExpressionNodePtr& predicate)
+NES::NodeFunctionPtr RedundancyEliminationRule::arithmeticSimplification(const NES::NodeFunctionPtr& predicate)
 {
-    /// Handle cases when a field value is multiplied by 0, 1 or summed with 0. Replace the two expressions with
-    /// one equivalent expression
+    /// Handle cases when a field value is multiplied by 0, 1 or summed with 0. Replace the two functions with
+    /// one equivalent function
     NES_DEBUG("Applying RedundancyEliminationRule.arithmeticSimplification to predicate {}", predicate->toString());
-    if (predicate->instanceOf<AddExpressionNode>() || predicate->instanceOf<MulExpressionNode>())
+    if (predicate->instanceOf<NodeFunctionAdd>() || predicate->instanceOf<NodeFunctionMul>())
     {
         NES_DEBUG("The predicate involves an addition or multiplication, the rule can be applied");
         auto operands = predicate->getChildren();
         NES_DEBUG("Extracted the operands of the predicate");
-        ConstantValueExpressionNodePtr constantOperand = nullptr;
-        FieldAccessExpressionNodePtr fieldAccessOperand = nullptr;
+        NodeFunctionConstantValuePtr constantOperand = nullptr;
+        NodeFunctionFieldAccessPtr fieldAccessOperand = nullptr;
         if (operands.size() == 2)
         {
             NES_DEBUG("Check if the operands are a combination of a field access and a constant");
             for (const auto& addend : operands)
             {
-                if (addend->instanceOf<ConstantValueExpressionNode>())
+                if (addend->instanceOf<NodeFunctionConstantValue>())
                 {
-                    constantOperand = addend->as<ConstantValueExpressionNode>();
+                    constantOperand = addend->as<NodeFunctionConstantValue>();
                 }
-                else if (addend->instanceOf<FieldAccessExpressionNode>())
+                else if (addend->instanceOf<NodeFunctionFieldAccess>())
                 {
-                    fieldAccessOperand = addend->as<FieldAccessExpressionNode>();
+                    fieldAccessOperand = addend->as<NodeFunctionFieldAccess>();
                 }
             }
             if (constantOperand && fieldAccessOperand)
             {
                 NES_DEBUG("The operands contains of a field access and a constant");
-                auto constantOperandValue = constantOperand->as<ConstantValueExpressionNode>()->getConstantValue();
+                auto constantOperandValue = constantOperand->as<NodeFunctionConstantValue>()->getConstantValue();
                 auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantOperandValue);
                 auto constantValue = stoi(basicValueType->value);
                 NES_DEBUG("Extracted the constant value from the constant operand");
-                if (constantValue == 0 && predicate->instanceOf<AddExpressionNode>())
+                if (constantValue == 0 && predicate->instanceOf<NodeFunctionAdd>())
                 {
-                    NES_DEBUG("Case 1: Sum with 0: return the FieldAccessExpressionNode");
-                    return fieldAccessOperand->as<ExpressionNode>();
+                    NES_DEBUG("Case 1: Sum with 0: return the NodeFunctionFieldAccess");
+                    return fieldAccessOperand->as<FunctionNode>();
                 }
-                else if (constantValue == 0 && predicate->instanceOf<MulExpressionNode>())
+                else if (constantValue == 0 && predicate->instanceOf<NodeFunctionMul>())
                 {
-                    NES_DEBUG("Case 2: Multiplication by 0: return the ConstantValueExpressionNode, that is 0");
-                    return constantOperand->as<ExpressionNode>();
+                    NES_DEBUG("Case 2: Multiplication by 0: return the NodeFunctionConstantValue, that is 0");
+                    return constantOperand->as<FunctionNode>();
                 }
-                else if (constantValue == 1 && predicate->instanceOf<MulExpressionNode>())
+                else if (constantValue == 1 && predicate->instanceOf<NodeFunctionMul>())
                 {
-                    NES_DEBUG("Case 3: Multiplication by 1: return the FieldAccessExpressionNode");
-                    return fieldAccessOperand->as<ExpressionNode>();
+                    NES_DEBUG("Case 3: Multiplication by 1: return the NodeFunctionFieldAccess");
+                    return fieldAccessOperand->as<FunctionNode>();
                 }
                 else
                 {
@@ -243,11 +243,11 @@ NES::ExpressionNodePtr RedundancyEliminationRule::arithmeticSimplification(const
     return predicate;
 }
 
-NES::ExpressionNodePtr RedundancyEliminationRule::conjunctionDisjunctionSimplification(const NES::ExpressionNodePtr& predicate)
+NES::NodeFunctionPtr RedundancyEliminationRule::conjunctionDisjunctionSimplification(const NES::NodeFunctionPtr& predicate)
 {
     /// Perform optimizations with some combinations of boolean values:
-    /// - FALSE in AND operation, TRUE in OR operation -> the result of the expression is FALSE
-    /// - TRUE in AND operation, FALSE in OR operation -> expression can be omitted
+    /// - FALSE in AND operation, TRUE in OR operation -> the result of the function is FALSE
+    /// - TRUE in AND operation, FALSE in OR operation -> function can be omitted
     NES_DEBUG("At the moment boolean operator cannot be specified in the queries, no simplification is possible");
     NES_DEBUG("Returning original unmodified predicate");
     return predicate;

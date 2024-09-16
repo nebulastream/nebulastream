@@ -17,7 +17,7 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -44,7 +44,7 @@ WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr wind
 {
 }
 
-KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<FunctionNodePtr> keys)
+KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, std::vector<NodeFunctionPtr> keys)
     : originalQuery(originalQuery), windowType(std::move(windowType)), keys(keys)
 {
 }
@@ -71,7 +71,7 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
             {
                 queryPlan->appendOperatorAsNewRoot(
                     LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        FieldAccessFunctionNode::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
                         timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
             }
@@ -113,17 +113,17 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
 }
 
 Query& Query::windowByKey(
-    std::vector<FunctionNodePtr> onKeys, const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations)
+    std::vector<NodeFunctionPtr> onKeys, const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations)
 {
     NES_DEBUG("Query: add keyed window operator");
-    std::vector<FieldAccessFunctionNodePtr> functionNodes;
+    std::vector<NodeFunctionFieldAccessPtr> functionNodes;
     for (const auto& onKey : onKeys)
     {
-        if (!onKey->instanceOf<FieldAccessFunctionNode>())
+        if (!onKey->instanceOf<NodeFunctionFieldAccess>())
         {
             NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a {}", onKey->toString());
         }
-        functionNodes.emplace_back(onKey->as<FieldAccessFunctionNode>());
+        functionNodes.emplace_back(onKey->as<NodeFunctionFieldAccess>());
     }
 
     uint64_t allowedLateness = 0;
@@ -143,7 +143,7 @@ Query& Query::windowByKey(
             {
                 queryPlan->appendOperatorAsNewRoot(
                     LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                        FieldAccessFunctionNode::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
                         timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
             }

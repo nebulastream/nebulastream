@@ -16,8 +16,8 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,12 +25,12 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<FunctionNodePtr> functions, OperatorId id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
 }
 
-std::vector<FunctionNodePtr> LogicalProjectionOperator::getFunctions() const
+std::vector<NodeFunctionPtr> LogicalProjectionOperator::getFunctions() const
 {
     return functions;
 }
@@ -71,14 +71,14 @@ bool LogicalProjectionOperator::inferSchema()
         function->inferStamp(inputSchema);
 
         /// Build the output schema
-        if (function->instanceOf<FieldRenameFunctionNode>())
+        if (function->instanceOf<NodeFunctionFieldRename>())
         {
-            auto fieldRename = function->as<FieldRenameFunctionNode>();
+            auto fieldRename = function->as<NodeFunctionFieldRename>();
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
         }
-        else if (function->instanceOf<FieldAccessFunctionNode>())
+        else if (function->instanceOf<NodeFunctionFieldAccess>())
         {
-            auto fieldAccess = function->as<FieldAccessFunctionNode>();
+            auto fieldAccess = function->as<NodeFunctionFieldAccess>();
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else
@@ -98,7 +98,7 @@ bool LogicalProjectionOperator::inferSchema()
 
 OperatorPtr LogicalProjectionOperator::copy()
 {
-    std::vector<FunctionNodePtr> copyOfProjectionFunctions;
+    std::vector<NodeFunctionPtr> copyOfProjectionFunctions;
     for (const auto& originalFunction : functions)
     {
         copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());

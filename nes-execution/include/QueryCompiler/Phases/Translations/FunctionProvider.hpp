@@ -14,12 +14,12 @@
 
 #pragma once
 #include <memory>
-#include <Functions/ConstantValueFunctionNode.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
 
 namespace NES
 {
 class FunctionNode;
-using FunctionNodePtr = std::shared_ptr<FunctionNode>;
+using NodeFunctionPtr = std::shared_ptr<FunctionNode>;
 class FunctionFunction;
 
 namespace Runtime::Execution::Functions
@@ -34,13 +34,13 @@ class FunctionProvider
 {
 public:
     /// Lowers a function node to a function by calling for each of its sub-functions recursively the lowerFunction until we reach
-    /// a ConstantValueFunctionNode, FieldAccessFunctionNode or FieldAssignmentFunctionNode
-    static Runtime::Execution::Functions::FunctionPtr lowerFunction(const FunctionNodePtr& functionNode);
+    ///NodeFunction a NodeFunctionConstantValue, NodeFunctionFieldAccess or FieldAssignment
+    static Runtime::Execution::Functions::FunctionPtr lowerFunction(const NodeFunctionPtr& functionNode);
 
 
 private:
     static Runtime::Execution::Functions::FunctionPtr
-    lowerConstantFunction(const std::shared_ptr<ConstantValueFunctionNode>& functionNode);
+    lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& functionNode);
 };
 
 }
