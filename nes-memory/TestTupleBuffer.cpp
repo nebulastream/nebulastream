@@ -22,6 +22,7 @@
 #include <include/Runtime/BufferManager.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/TextType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -370,7 +371,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw NotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 

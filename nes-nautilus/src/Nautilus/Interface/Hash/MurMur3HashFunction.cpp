@@ -13,6 +13,7 @@
 */
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <nautilus/function.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
 {
