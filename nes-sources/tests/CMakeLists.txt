@@ -19,4 +19,8 @@ function(add_nes_test_sources)
     target_link_libraries(${TARGET_NAME} nes-sources)
 endfunction()
 
+add_library(nes-source-test-utils Util/TestSource.cpp)
+target_include_directories(nes-source-test-utils PUBLIC Util)
+target_link_libraries(nes-source-test-utils PUBLIC nes-sources)
+
 add_subdirectory(UnitTests)
