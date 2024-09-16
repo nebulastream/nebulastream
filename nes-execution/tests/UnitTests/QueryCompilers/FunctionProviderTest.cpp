@@ -13,11 +13,17 @@
 */
 
 #include <API/Schema.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
+#include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
-#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -25,12 +31,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
-#include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
-#include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
-#include <Execution/Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 
 namespace NES
 {
@@ -54,7 +54,6 @@ public:
         nodeFunctionReadLeft = NodeFunctionFieldAccess::create("f1");
         nodeFunctionReadRight = NodeFunctionFieldAccess::create("f2");
         nodeFunctionReadBool = NodeFunctionFieldAccess::create("f3");
-
     }
 
 protected:
