@@ -43,10 +43,11 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
 {
     const auto state = static_cast<WatermarkState*>(ctx.getLocalState(this));
     const auto tsField = timeFunction->getTs(ctx, record);
-    if (tsField > state->currentWatermark) {
+    if (tsField > state->currentWatermark)
+    {
         state->currentWatermark = tsField;
     }
-    // call next operator
+    /// call next operator
     child->execute(ctx, record);
 }
 
@@ -57,4 +58,4 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
     Operator::close(executionCtx, recordBuffer);
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

@@ -13,10 +13,10 @@
 */
 
 #include <utility>
-#include <Execution/RecordBuffer.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Operators
