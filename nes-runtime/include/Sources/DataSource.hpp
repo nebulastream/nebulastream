@@ -63,6 +63,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @param numSourceLocalBuffers number of local source buffers
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param physicalSourceName the name and unique identifier of a physical source
+     * @param persistentSource if the source has to persist properties that can be loaded when restarting the source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
      * @param taskQueueId the ID of the queue to which the task is pushed
@@ -76,6 +77,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
                         size_t numSourceLocalBuffers,
                         GatheringMode gatheringMode,
                         const std::string& physicalSourceName,
+                        bool persistentSource,
                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
                         uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
@@ -119,6 +121,21 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      * @return returns a tuple buffer
      */
     virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
+
+    /**
+     * @brief This method defines the logic to load the properties persisted during the previous run of the data source
+     */
+    virtual void createOrLoadPersistedProperties();
+
+    /**
+     * @brief This method stores all properties that need to be persisted for future retrieval during createOrLoadPersistedProperties call
+     */
+    virtual void storePersistedProperties();
+
+    /**
+     * @brief This method clears the persisted properties of the data source on had stop.
+     */
+    virtual void clearPersistedProperties();
 
     /**
      * @brief virtual function to get a string describing the particular source
@@ -268,7 +285,18 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
+    // bool indicating if the data source has to persist runtime properties
+    // that can be loaded during the restart of the query.
+    const bool persistentSource;
+
+    // Key to identify the source when loading persisted properties
+    const std::string persistentSourceKey;
+
   protected:
+    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
+
+    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
+
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
@@ -294,16 +322,9 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     uint64_t taskQueueId;
     bool sourceSharing = false;
     const std::string physicalSourceName;
-
     //this counter is used to count the number of queries that use this source
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
-
-    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
-
-    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
-
-  protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
 
   private:

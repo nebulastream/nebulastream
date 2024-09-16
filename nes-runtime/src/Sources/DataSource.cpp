@@ -39,17 +39,6 @@
 using namespace std::string_literals;
 namespace NES {
 
-std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
-    return executableSuccessors;
-}
-
-void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
-    successorModifyMutex.lock();
-    for (auto& pipe : newPipelines) {
-        executableSuccessors.push_back(pipe);
-    }
-}
-
 DataSource::DataSource(SchemaPtr pSchema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
@@ -59,14 +48,17 @@ DataSource::DataSource(SchemaPtr pSchema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        const std::string& physicalSourceName,
+                       bool persistentSource,
                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
                        uint64_t sourceAffinity,
                        uint64_t taskQueueId)
-    : Runtime::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)),
+    : Runtime::Reconfigurable(), DataEmitter(), persistentSource(persistentSource),
+      persistentSourceKey(operatorId.toString() + "-" + physicalSourceName), queryManager(std::move(queryManager)),
       localBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId),
       originId(originId), statisticId(statisticId), schema(std::move(pSchema)), numSourceLocalBuffers(numSourceLocalBuffers),
       gatheringMode(gatheringMode), sourceAffinity(sourceAffinity), taskQueueId(taskQueueId),
       physicalSourceName(physicalSourceName) {
+
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -116,6 +108,18 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
             queryManager->addWorkForNextPipeline(buffer, successor, queueId);
         }
     }
+}
+
+std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
+    return executableSuccessors;
+}
+
+void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
+    successorModifyMutex.lock();
+    for (auto& pipe : newPipelines) {
+        executableSuccessors.push_back(pipe);
+    }
+    successorModifyMutex.unlock();
 }
 
 OperatorId DataSource::getOperatorId() const { return operatorId; }
@@ -270,7 +274,11 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful) {
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::open() { bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+void DataSource::open() {
+    bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+    createOrLoadPersistedProperties();
+    storePersistedProperties();
+}
 
 void DataSource::close() {
     NES_WARNING("Close Called")
@@ -279,6 +287,11 @@ void DataSource::close() {
         std::unique_lock lock(startStopMutex);
         queryTerminationType = this->wasGracefullyStopped;
     }
+
+    if (persistentSource) {
+        clearPersistedProperties();
+    }
+
     if (queryTerminationType != Runtime::QueryTerminationType::Graceful
         || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType)) {
         // inject reconfiguration task containing end of stream
@@ -519,5 +532,13 @@ void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG("DataSource::onEvent(event, wrkContext) called. operatorId:  {}", this->operatorId);
     onEvent(event);
 }
+
+void DataSource::createOrLoadPersistedProperties() {
+    NES_WARNING("No implementation found for creating or loading persistent source properties.");
+}
+
+void DataSource::storePersistedProperties() { NES_WARNING("No implementation found to store persistent source properties."); }
+
+void DataSource::clearPersistedProperties() { NES_WARNING("No implementation found to clear persistent source properties."); }
 
 }// namespace NES

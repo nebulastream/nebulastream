@@ -60,6 +60,7 @@ OPCSource::OPCSource(const SchemaPtr& schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  physicalSourceName,
+                 false,
                  std::move(executableSuccessors)),
       connected(false), url(url), nodeId(nodeId), user(std::move(std::move(user))), password(std::move(password)),
       retval(UA_STATUSCODE_GOOD), client(UA_Client_new()) {

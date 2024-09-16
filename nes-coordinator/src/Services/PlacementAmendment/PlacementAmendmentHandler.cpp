@@ -18,7 +18,7 @@
 
 namespace NES::Optimizer {
 PlacementAmendmentHandler::PlacementAmendmentHandler(uint16_t numOfHandler) : running(false), numOfHandler(numOfHandler) {
-    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
+    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, true>>();
 }
 
 PlacementAmendmentHandler::~PlacementAmendmentHandler() {
@@ -27,13 +27,10 @@ PlacementAmendmentHandler::~PlacementAmendmentHandler() {
 }
 
 void PlacementAmendmentHandler::start() {
-    std::unique_lock lock(mutex);
-    if (running) {
+    if (running.exchange(true)) {
         NES_WARNING("Trying to start already running placement amendment handler. Skipping remaining operation.");
         return;
     }
-    // Mark handler as running
-    running = true;
     // Initiate amendment runners
     NES_INFO("Initializing placement amendment handler {}", numOfHandler);
     for (uint16_t i = 0; i < numOfHandler; i++) {
@@ -45,40 +42,32 @@ void PlacementAmendmentHandler::start() {
 
 void PlacementAmendmentHandler::shutDown() {
     NES_INFO("Shutting down the placement amendment handler");
-    std::unique_lock lock(mutex);
-    running = false;
-    lock.unlock();
-    cv.notify_all();
-    //Join all runners and wait them to be completed before returning the call
-    for (auto& amendmentRunner : amendmentRunners) {
-        if (amendmentRunner.joinable()) {
-            amendmentRunner.join();
+    if (running.exchange(false)) {
+        //Join all runners and wait them to be completed before returning the call
+        for (auto& amendmentRunner : amendmentRunners) {
+            if (amendmentRunner.joinable()) {
+                amendmentRunner.join();
+            }
         }
-    }
+    } else {
+        NES_WARNING("Placement amendment handler not running. Skipped shutdown operation.")
+        return;
+    };
     NES_INFO("Placement amendment handler shutdown completed !!!");
 }
 
 void PlacementAmendmentHandler::enqueueRequest(const NES::Optimizer::PlacementAmendmentInstancePtr& placementAmendmentInstance) {
     // Enqueue the request to the multi-producer multi-consumer queue.
     placementAmendmentQueue->enqueue(placementAmendmentInstance);
-    //Notify all waiting handlers that new work is available
-    cv.notify_all();
 }
 
 void PlacementAmendmentHandler::handleRequest() {
     NES_INFO("Initializing New Handler");
     while (running) {
         PlacementAmendmentInstancePtr placementAmendmentInstance;
-        if (!placementAmendmentQueue->try_dequeue(placementAmendmentInstance)) {
-            std::unique_lock lock(mutex);
-            // Note: we do not care about spurious starts as we use a concurrent queue and do not require to lock the mutex
-            // to perform the read operation. This also simplifies this code.
-            if (running) {// check if system is still running
-                cv.wait(lock);
-            }
-            continue;
+        if (placementAmendmentQueue->try_dequeue_for(placementAmendmentInstance, std::chrono::milliseconds(100))) {
+            placementAmendmentInstance->execute();
         }
-        placementAmendmentInstance->execute();
     }
     NES_ERROR("Exiting the thread is running {}", running);
 }

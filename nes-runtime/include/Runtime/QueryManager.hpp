@@ -51,6 +51,7 @@
 
 namespace NES {
 class NesWorker;
+class BasePersistentSourceProperties;
 namespace Runtime {
 
 class ThreadPool;
@@ -327,8 +328,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     void
     notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
-    folly::Synchronized<std::unordered_map<std::string, uint64_t>> persistentTCPFileDescriptors;
-    folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<MMapCircularBuffer>>> persistentTCPSourceCircularBuffer;
+    // Map containing persistent source properties
+    folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<BasePersistentSourceProperties>>>
+        persistentSourceProperties;
 
   private:
     friend class ThreadPool;

@@ -53,6 +53,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,
+                 false,
                  std::move(successors)),
       networkManager(std::move(networkManager)), nesPartition(nesPartition), sinkLocation(std::move(sinkLocation)),
       waitTime(waitTime), retryTimes(retryTimes), version(version), uniqueNetworkSourceIdentifier(uniqueNetworkSourceIdentifier) {

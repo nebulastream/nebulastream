@@ -58,7 +58,7 @@ using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, true>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;

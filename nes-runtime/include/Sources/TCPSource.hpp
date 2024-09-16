@@ -50,7 +50,7 @@ class TCPSource : public DataSource {
     explicit TCPSource(SchemaPtr schema,
                        Runtime::BufferManagerPtr bufferManager,
                        Runtime::QueryManagerPtr queryManager,
-                       TCPSourceTypePtr tcpSourceType,
+                       const TCPSourceTypePtr& tcpSourceType,
                        OperatorId operatorId,
                        OriginId originId,
                        StatisticId statisticId,
@@ -70,6 +70,12 @@ class TCPSource : public DataSource {
      *  @param buffer to be filled
      */
     bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
+
+    void createOrLoadPersistedProperties() override;
+
+    void storePersistedProperties() override;
+
+    void clearPersistedProperties() override;
 
     /**
      * @brief override the toString method for the csv source

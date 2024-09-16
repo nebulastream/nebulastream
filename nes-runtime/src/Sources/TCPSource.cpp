@@ -19,6 +19,7 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Sources/Parsers/NESBinaryParser.hpp>
+#include <Sources/PersistentSourceProperties/PersistentTCPSourceProperties.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <arpa/inet.h>
@@ -39,7 +40,7 @@ namespace NES {
 TCPSource::TCPSource(SchemaPtr schema,
                      Runtime::BufferManagerPtr bufferManager,
                      Runtime::QueryManagerPtr queryManager,
-                     TCPSourceTypePtr tcpSourceType,
+                     const TCPSourceTypePtr& tcpSourceType,
                      OperatorId operatorId,
                      OriginId originId,
                      StatisticId statisticId,
@@ -56,6 +57,7 @@ TCPSource::TCPSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  gatheringMode,
                  physicalSourceName,
+                 tcpSourceType->getPersistentTcpSource()->getValue(),
                  std::move(executableSuccessors)),
       tupleSize(schema->getSchemaSizeInBytes()), sourceConfig(std::move(tcpSourceType)) {
 
@@ -64,26 +66,13 @@ TCPSource::TCPSource(SchemaPtr schema,
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
 
-    std::string persistentTCPSessionKey = operatorId.toString() + "-" + sourceConfig->getPhysicalSourceName();
-    if (sourceConfig->getPersistentTcpSource()->getValue()) {
-        auto wlockedPersistentTCPSourceCircularBuffer = this->queryManager->persistentTCPSourceCircularBuffer.wlock();
-        if (wlockedPersistentTCPSourceCircularBuffer->contains(persistentTCPSessionKey)) {
-            circularBuffer = (*wlockedPersistentTCPSourceCircularBuffer)[persistentTCPSessionKey];
-        } else {
-            circularBuffer = std::make_shared<MMapCircularBuffer>(getpagesize() * 2);
-            (*wlockedPersistentTCPSourceCircularBuffer)[persistentTCPSessionKey] = circularBuffer;
-        }
-    } else {
-        circularBuffer = std::make_shared<MMapCircularBuffer>(getpagesize() * 2);
-    }
-
     //Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     //Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
     for (const auto& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
         fieldName = field->getName();
-        NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
+        NES_TRACE("Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
 
@@ -100,7 +89,7 @@ TCPSource::TCPSource(SchemaPtr schema,
             break;
     }
 
-    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
+    NES_TRACE("Init TCPSource.");
 }
 
 std::string TCPSource::toString() const {
@@ -113,46 +102,11 @@ std::string TCPSource::toString() const {
 
 void TCPSource::open() {
     DataSource::open();
-    std::string persistentTCPSessionKey = operatorId.toString() + "-" + sourceConfig->getPhysicalSourceName();
-    auto wlockedPersistentTCPFileDescriptors = this->queryManager->persistentTCPFileDescriptors.wlock();
-    if (sourceConfig->getPersistentTcpSource()->getValue()
-        && wlockedPersistentTCPFileDescriptors->contains(persistentTCPSessionKey)) {
-        sockfd = (*wlockedPersistentTCPFileDescriptors)[persistentTCPSessionKey];
-        connection = 0;
-    } else {
-        NES_TRACE("TCPSource::connected: Trying to create socket.");
-        sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
-        NES_TRACE("Socket created with  {}", sockfd);
-        if (sockfd < 0) {
-            NES_ERROR("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
-            connection = -1;
-            return;
-        }
-
-        if (sourceConfig->getPersistentTcpSource()->getValue()) {
-            (*wlockedPersistentTCPFileDescriptors)[persistentTCPSessionKey] = sockfd;
-        }
-    }
-    wlockedPersistentTCPFileDescriptors.unlock();
-
-    NES_TRACE("Created socket");
-    struct sockaddr_in servaddr;
-    servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
-    servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
-    servaddr.sin_port =
-        htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
-
-    if (connection < 0) {
-        NES_TRACE("Try connecting to server: {}:{}",
-                  sourceConfig->getSocketHost()->getValue(),
-                  sourceConfig->getSocketPort()->getValue());
-        connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
-    }
     if (connection < 0) {
         connection = -1;
-        NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
+        NES_THROW_RUNTIME_ERROR("Connection with server failed. Error: " << strerror(errno));
     }
-    NES_TRACE("TCPSource::connected: Connected to server.");
+    NES_TRACE("Connected to server.");
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
@@ -167,7 +121,7 @@ std::optional<Runtime::TupleBuffer> TCPSource::receiveData() {
             fillBuffer(tupleBuffer);
         } while (tupleBuffer.getNumberOfTuples() == 0);
     } catch (const std::exception& e) {
-        NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
+        NES_ERROR("Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
     return tupleBuffer.getBuffer();
@@ -196,7 +150,6 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const {
     if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY) {
         return binaryBufferSize(data);
     }
-
     return asciiBufferSize(data);
 }
 
@@ -204,7 +157,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
+    NES_DEBUG("Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     //init tuple count for buffer
     uint64_t tupleCount = 0;
     //init timer for flush interval
@@ -219,7 +172,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
             //if read method returned -1 an error occurred during read.
             if (bufferSizeReceived == -1) {
-                NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
+                NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
                 return false;
             }
             writer.consume(bufferSizeReceived);
@@ -298,7 +251,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                     // break the while loop as otherwise we will overwrite the tuple buffer.
                     flushIntervalPassed = true;
                 } else {
-                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
+                    NES_TRACE("Client consume message: '{}'.", buf);
                     inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                     tupleCount++;
                 }
@@ -311,7 +264,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart)
                      .count()
                  >= sourceConfig->getFlushIntervalMS()->getValue())) {
-            NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
+            NES_DEBUG("Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
         }
     }
@@ -322,28 +275,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 }
 
 void TCPSource::close() {
-    NES_TRACE("TCPSource::close: trying to close connection.");
+    NES_TRACE("Trying to close connection.");
     DataSource::close();
     // close socket if persistent TCP source is not configured or persistent tcp source is configured but hard stop is requested
-    bool closeSocket = !sourceConfig->getPersistentTcpSource()->getValue()
-        || (sourceConfig->getPersistentTcpSource()->getValue()
-            && wasGracefullyStopped == Runtime::QueryTerminationType::HardStop);
+    bool closeSocket = !persistentSource || (persistentSource && wasGracefullyStopped == Runtime::QueryTerminationType::HardStop);
     if (connection >= 0 && closeSocket) {
         ::close(sockfd);
-        std::string persistentTCPSessionKey = operatorId.toString() + "-" + sourceConfig->getPhysicalSourceName();
-        {
-            auto wlockedPersistentTCPSourceCircularBuffer = queryManager->persistentTCPSourceCircularBuffer.wlock();
-            if (wlockedPersistentTCPSourceCircularBuffer->contains(persistentTCPSessionKey)) {
-                wlockedPersistentTCPSourceCircularBuffer->erase(persistentTCPSessionKey);
-            }
-        }
-        {
-            auto wlockedPersistentTCPFileDescriptor = queryManager->persistentTCPFileDescriptors.wlock();
-            if (wlockedPersistentTCPFileDescriptor->contains(persistentTCPSessionKey)) {
-                wlockedPersistentTCPFileDescriptor->erase(persistentTCPSessionKey);
-            }
-        }
-        NES_ERROR("TCPSource::close: connection closed.");
+        NES_ERROR("connection closed.");
     } else {
         NES_ERROR("Skipped connection closer.");
     }
@@ -352,5 +290,69 @@ void TCPSource::close() {
 SourceType TCPSource::getType() const { return SourceType::TCP_SOURCE; }
 
 const TCPSourceTypePtr& TCPSource::getSourceConfig() const { return sourceConfig; }
+
+void TCPSource::createOrLoadPersistedProperties() {
+    if (persistentSource) {
+        NES_TRACE("Trying to load persistent TCP socket properties.");
+        auto lockedPersistentSourceProperties = this->queryManager->persistentSourceProperties.ulock();
+        if (lockedPersistentSourceProperties->contains(persistentSourceKey)) {
+            NES_TRACE("Found and loading persistent TCP socket properties.");
+            auto wLocked = lockedPersistentSourceProperties.moveFromUpgradeToWrite();
+            auto persistentProperties = (*wLocked)[persistentSourceKey];
+            auto persistentTPSourceProperties = std::static_pointer_cast<PersistentTCPSourceProperties>(persistentProperties);
+            sockfd = persistentTPSourceProperties->socketFd;
+            circularBuffer = persistentTPSourceProperties->circularBuffer;
+            connection = 0;
+            return;
+        }
+    }
+
+    NES_TRACE("Trying to create socket.");
+    circularBuffer = std::make_shared<MMapCircularBuffer>(getpagesize() * 2);
+    sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
+    NES_TRACE("Socket created with  {}", sockfd);
+    if (sockfd < 0) {
+        NES_ERROR("Failed to create socket. Error: {}", strerror(errno));
+        connection = -1;
+        return;
+    }
+
+    NES_TRACE("Created socket");
+    struct sockaddr_in servaddr;
+    servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
+    servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
+    servaddr.sin_port =
+        htons(sourceConfig->getSocketPort()->getValue());// htons is necessary to convert a number to network byte order
+
+    if (connection < 0) {
+        NES_TRACE("Try connecting to server: {}:{}",
+                  sourceConfig->getSocketHost()->getValue(),
+                  sourceConfig->getSocketPort()->getValue());
+        connection = connect(sockfd, (struct sockaddr*) &servaddr, sizeof(servaddr));
+    }
+}
+
+void TCPSource::storePersistedProperties() {
+    if (persistentSource) {
+        auto lockedPersistentSourceProperties = this->queryManager->persistentSourceProperties.ulock();
+        if (!lockedPersistentSourceProperties->contains(persistentSourceKey)) {
+            NES_WARNING("Storing tcp source persistent properties.");
+            auto wLocked = lockedPersistentSourceProperties.moveFromUpgradeToWrite();
+            auto persistentTCPSourceProperties = std::make_shared<PersistentTCPSourceProperties>(sockfd, circularBuffer);
+            (*wLocked)[persistentSourceKey] = persistentTCPSourceProperties;
+        }
+    }
+}
+
+void TCPSource::clearPersistedProperties() {
+    if (persistentSource) {
+        // close socket if persistent TCP source is not configured or persistent tcp source is configured but hard stop is requested
+        if (wasGracefullyStopped == Runtime::QueryTerminationType::HardStop) {
+            NES_WARNING("Deleting tcp source persistent properties.");
+            auto lockedPersistentSourceProperties = queryManager->persistentSourceProperties.wlock();
+            lockedPersistentSourceProperties->erase(persistentSourceKey);
+        }
+    }
+}
 
 }// namespace NES

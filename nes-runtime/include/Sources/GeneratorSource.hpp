@@ -31,19 +31,19 @@ namespace NES {
 class GeneratorSource : public DataSource {
   public:
     /**
-   * @brief constructor to create a generator source
-   * @param schema of the data that this source produces
-   * @param bufferManager pointer to the buffer manager
-   * @param queryManager pointer to the query manager
-   * @param numberOfBuffersToProduce the number of buffers to be produced by the source
-   * @param operatorId current operator id
-   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-   * @param statisticId represents the unique identifier of components that we can track statistics for
-   * @param numSourceLocalBuffers the number of buffers allocated to a source
-   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
-   * @param physicalSourceName the name and unique identifier of a physical source
-   * @param successors the subsequent operators in the pipeline to which the data is pushed
-   */
+     * @brief constructor to create a generator source
+     * @param schema of the data that this source produces
+     * @param bufferManager pointer to the buffer manager
+     * @param queryManager pointer to the query manager
+     * @param numberOfBuffersToProduce the number of buffers to be produced by the source
+     * @param operatorId current operator id
+     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
+     * @param statisticId represents the unique identifier of components that we can track statistics for
+     * @param numSourceLocalBuffers the number of buffers allocated to a source
+     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
+     * @param physicalSourceName the name and unique identifier of a physical source
+     * @param successors the subsequent operators in the pipeline to which the data is pushed
+     */
     GeneratorSource(SchemaPtr schema,
                     Runtime::BufferManagerPtr bufferManager,
                     Runtime::QueryManagerPtr queryManager,
@@ -64,6 +64,7 @@ class GeneratorSource : public DataSource {
                      numSourceLocalBuffers,
                      gatheringMode,
                      physicalSourceName,
+                     false,
                      std::move(successors)) {
         this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }

@@ -24,7 +24,7 @@ namespace NES::Optimizer {
 class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
+using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, true>>;
 
 /**
  * @brief The placement amendment handler class is responsible for processing placement amendments of updated shared query plans.
@@ -67,9 +67,7 @@ class PlacementAmendmentHandler {
      */
     void handleRequest();
 
-    bool running;
-    std::mutex mutex;
-    std::condition_variable cv;
+    std::atomic<bool> running;
     uint16_t numOfHandler;
     UMPMCAmendmentQueuePtr placementAmendmentQueue;
     std::vector<std::thread> amendmentRunners;

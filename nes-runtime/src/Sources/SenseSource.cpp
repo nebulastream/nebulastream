@@ -44,6 +44,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  GatheringMode::INTERVAL_MODE,
                  physicalSourceName,
+                 false,
                  std::move(successors)),
       udfs(std::move(udfs)) {}
 
