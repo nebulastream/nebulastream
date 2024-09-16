@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.179](https://github.com/nebulastream/nebulastream/tree/v0.6.179) (2024-09-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.178...v0.6.179)
+
+**Implemented enhancements:**
+
+- \[TASK\] add float values as constant values to PSL grammar [\#5081](https://github.com/nebulastream/nebulastream/issues/5081)
+
 ## [v0.6.178](https://github.com/nebulastream/nebulastream/tree/v0.6.178) (2024-09-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.177...v0.6.178)
