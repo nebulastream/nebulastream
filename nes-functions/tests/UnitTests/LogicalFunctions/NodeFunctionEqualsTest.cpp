@@ -38,7 +38,8 @@ public:
                           ->addField("i64", BasicType::INT64)
                           ->addField("f32", BasicType::FLOAT32)
                           ->addField("bool", BasicType::BOOLEAN)
-                          ->addField("text", DataTypeFactory::createText());
+                          ->addField("text", DataTypeFactory::createText())
+                          ->updateSourceName("src");
     }
 
 protected:
@@ -53,7 +54,7 @@ TEST_F(NodeFunctionEqualsTest, validateBeforeLoweringDifferentChildNumbers)
         const auto nodeFunctionEquals = NodeFunctionEquals::create(nodeFunctionReadLeft, nodeFunctionReadRight);
         nodeFunctionEquals->inferStamp(dummySchema);
         nodeFunctionEquals->removeChildren();
-        EXPECT_TRUE(nodeFunctionEquals->validateBeforeLowering());
+        EXPECT_FALSE(nodeFunctionEquals->validateBeforeLowering());
     }
 
     {
@@ -108,7 +109,7 @@ TEST_F(NodeFunctionEqualsTest, validateBeforeLoweringDifferentDataTypes)
     testValidateBeforeLoweringDifferentDataTypes("text", "i64", false);
     testValidateBeforeLoweringDifferentDataTypes("text", "f32", false);
     testValidateBeforeLoweringDifferentDataTypes("text", "bool", false);
-    testValidateBeforeLoweringDifferentDataTypes("text", "text", false);
+    testValidateBeforeLoweringDifferentDataTypes("text", "text", true);
 
     testValidateBeforeLoweringDifferentDataTypes("bool", "i64", true);
     testValidateBeforeLoweringDifferentDataTypes("bool", "f32", true);
