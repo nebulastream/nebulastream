@@ -30,8 +30,7 @@ PhysicalOperatorPtr PhysicalProjectOperator::create(
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, functions);
 }
 
-PhysicalOperatorPtr
-PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions)
+PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<NodeFunctionPtr> functions)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(functions));
 }

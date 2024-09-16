@@ -23,8 +23,8 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSch
 {
 }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(
-    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
+PhysicalOperatorPtr
+PhysicalFilterOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
 {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, function);
 }

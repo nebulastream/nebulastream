@@ -25,8 +25,8 @@ class PhysicalMapOperator : public PhysicalUnaryOperator
 {
 public:
     PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
-    static PhysicalOperatorPtr create(
-        OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
+    static PhysicalOperatorPtr
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
     std::string toString() const override;
     OperatorPtr copy() override;
