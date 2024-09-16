@@ -25,5 +25,4 @@ template class EnumOption<NES::QueryCompilation::CompilationStrategy>;
 template class EnumOption<NES::QueryCompilation::DumpMode>;
 template class EnumOption<NES::QueryCompilation::NautilusBackend>;
 template class EnumOption<NES::LogLevel>;
-
 }

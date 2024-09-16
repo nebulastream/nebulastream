@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <API/Query.hpp>
-#include <Functions/LogicalFunctions/EqualsFunctionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -57,13 +57,13 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
     ///test addFilter
     auto filterFunction
-        = FunctionNodePtr(EqualsFunctionNode::create(NES::Attribute("a").getFunctionNode(), NES::Attribute("b").getFunctionNode()));
+        = NodeFunctionPtr(NodeFunctionEquals::create(NES::Attribute("a").getNodeFunction(), NES::Attribute("b").getNodeFunction()));
     queryPlan = QueryPlanBuilder::addFilter(filterFunction, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
-    std::vector<FunctionNodePtr> functions;
-    functions.push_back(Attribute("id").getFunctionNode());
+    std::vector<NodeFunctionPtr> functions;
+    functions.push_back(Attribute("id").getNodeFunction());
     queryPlan = QueryPlanBuilder::addProjection(functions, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalProjectionOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getFunctions(), functions);

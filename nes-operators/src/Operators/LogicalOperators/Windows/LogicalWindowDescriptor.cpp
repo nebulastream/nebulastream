@@ -13,7 +13,7 @@
 */
 
 #include <utility>
-#include <Functions/FieldAccessFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Types/WindowType.hpp>
@@ -23,7 +23,7 @@ namespace NES::Windowing
 {
 
 LogicalWindowDescriptor::LogicalWindowDescriptor(
-    const std::vector<FieldAccessFunctionNodePtr>& keys,
+    const std::vector<NodeFunctionFieldAccessPtr>& keys,
     std::vector<WindowAggregationDescriptorPtr> windowAggregation,
     WindowTypePtr windowType,
     uint64_t allowedLateness)
@@ -44,7 +44,7 @@ LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
 }
 
 LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
-    std::vector<FieldAccessFunctionNodePtr> keys,
+    std::vector<NodeFunctionFieldAccessPtr> keys,
     std::vector<WindowAggregationDescriptorPtr> windowAggregation,
     const WindowTypePtr& windowType,
     uint64_t allowedLateness)
@@ -70,7 +70,7 @@ WindowTypePtr LogicalWindowDescriptor::getWindowType() const
     return windowType;
 }
 
-std::vector<FieldAccessFunctionNodePtr> LogicalWindowDescriptor::getKeys() const
+std::vector<NodeFunctionFieldAccessPtr> LogicalWindowDescriptor::getKeys() const
 {
     return onKey;
 }
@@ -85,7 +85,7 @@ void LogicalWindowDescriptor::setWindowType(WindowTypePtr windowType)
     this->windowType = windowType;
 }
 
-void LogicalWindowDescriptor::setOnKey(const std::vector<FieldAccessFunctionNodePtr>& onKey)
+void LogicalWindowDescriptor::setOnKey(const std::vector<NodeFunctionFieldAccessPtr>& onKey)
 {
     this->onKey = onKey;
 }

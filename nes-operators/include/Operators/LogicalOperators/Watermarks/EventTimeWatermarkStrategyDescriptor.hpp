@@ -26,11 +26,11 @@ using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWaterma
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
 {
 public:
-    static WatermarkStrategyDescriptorPtr create(const FunctionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    static WatermarkStrategyDescriptorPtr create(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
 
-    FunctionNodePtr getOnField() const;
+    NodeFunctionPtr getOnField() const;
 
-    void setOnField(const FunctionNodePtr& newField);
+    void setOnField(const NodeFunctionPtr& newField);
 
     TimeMeasure getAllowedLateness() const;
 
@@ -46,11 +46,11 @@ public:
 
 private:
     /// Field where the watermark should be retrieved
-    FunctionNodePtr onField;
+    NodeFunctionPtr onField;
     TimeUnit unit;
     TimeMeasure allowedLateness;
 
-    explicit EventTimeWatermarkStrategyDescriptor(const FunctionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    explicit EventTimeWatermarkStrategyDescriptor(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
 } /// namespace NES::Windowing

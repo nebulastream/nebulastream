@@ -16,13 +16,14 @@
 #include <vector>
 #include <API/Functions/ArithmeticalFunctions.hpp>
 #include <API/Functions/Functions.hpp>
-#include <Functions/CaseFunctionNode.hpp>
-#include <Functions/ConstantValueFunctionNode.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldAssignmentFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
-#include <Functions/WhenFunctionNode.hpp>
+#include <Functions/NodeFunctionCase.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
@@ -91,84 +92,77 @@ FunctionItem::FunctionItem(std::string const& value) : FunctionItem(DataTypeFact
 {
 }
 
-FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(ConstantValueFunctionNode::create(std::move(value)))
+FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(NodeFunctionConstantValue::create(std::move(value)))
 {
 }
 
-FunctionItem::FunctionItem(FunctionNodePtr exp) : function(std::move(exp))
+FunctionItem::FunctionItem(NodeFunctionPtr exp) : function(std::move(exp))
 {
 }
 
 FunctionItem FunctionItem::as(std::string newName)
 {
     ///rename function node
-    if (!function->instanceOf<FieldAccessFunctionNode>())
-    {
-        NES_ERROR("Renaming is only allowed on Field Access Attributes");
-        NES_NOT_IMPLEMENTED();
-    }
-    auto fieldAccessFunction = function->as<FieldAccessFunctionNode>();
-    return FieldRenameFunctionNode::create(fieldAccessFunction, std::move(newName));
+    PRECONDITION(Util::instanceOf<NodeFunctionFieldAccess>(function), "Renaming is only allowed on Field Access Attributes")
+    auto fieldAccessFunction = Util::as<NodeFunctionFieldAccess>(function);
+    return NodeFunctionFieldRename::create(fieldAccessFunction, std::move(newName));
 }
 
-FieldAssignmentFunctionNodePtr FunctionItem::operator=(FunctionItem assignItem)
+NodeFunctionFieldAssignmentPtr FunctionItem::operator=(FunctionItem assignItem)
 {
-    return operator=(assignItem.getFunctionNode());
+    return operator=(assignItem.getNodeFunction());
 }
 
-FieldAssignmentFunctionNodePtr FunctionItem::operator=(FunctionNodePtr assignFunction)
+NodeFunctionFieldAssignmentPtr FunctionItem::operator=(NodeFunctionPtr assignFunction)
 {
-    if (function->instanceOf<FieldAccessFunctionNode>())
-    {
-        return FieldAssignmentFunctionNode::create(function->as<FieldAccessFunctionNode>(), assignFunction);
-    }
-    NES_FATAL_ERROR("Function API: we can only assign something to a field access function");
-    throw Exceptions::RuntimeException("Function API: we can only assign something to a field access function");
+    PRECONDITION(
+        Util::instanceOf<NodeFunctionFieldAccess>(function), "Function API: we can only assign something to a field access function")
+    return NodeFunctionFieldAssignment::create(Util::as<NodeFunctionFieldAccess>(function), assignFunction);
 }
 
 FunctionItem Attribute(std::string fieldName)
 {
-    return FunctionItem(FieldAccessFunctionNode::create(std::move(fieldName)));
+    return FunctionItem(NodeFunctionFieldAccess::create(std::move(fieldName)));
 }
 
 FunctionItem Attribute(std::string fieldName, BasicType type)
 {
-    return FunctionItem(FieldAccessFunctionNode::create(DataTypeFactory::createType(type), std::move(fieldName)));
+    return FunctionItem(NodeFunctionFieldAccess::create(DataTypeFactory::createType(type), std::move(fieldName)));
 }
 
-FunctionNodePtr WHEN(const FunctionNodePtr& conditionExp, const FunctionNodePtr& valueExp)
+NodeFunctionPtr WHEN(const NodeFunctionPtr& conditionExp, const NodeFunctionPtr& valueExp)
 {
-    return WhenFunctionNode::create(std::move(conditionExp), std::move(valueExp));
+    return NodeFunctionWhen::create(std::move(conditionExp), std::move(valueExp));
 }
 
-FunctionNodePtr WHEN(FunctionItem conditionExp, FunctionNodePtr valueExp)
+NodeFunctionPtr WHEN(FunctionItem conditionExp, NodeFunctionPtr valueExp)
 {
-    return WHEN(conditionExp.getFunctionNode(), std::move(valueExp));
+    return WHEN(conditionExp.getNodeFunction(), std::move(valueExp));
 }
-FunctionNodePtr WHEN(FunctionNodePtr conditionExp, FunctionItem valueExp)
+NodeFunctionPtr WHEN(NodeFunctionPtr conditionExp, FunctionItem valueExp)
 {
-    return WHEN(std::move(conditionExp), valueExp.getFunctionNode());
+    return WHEN(std::move(conditionExp), valueExp.getNodeFunction());
 }
-FunctionNodePtr WHEN(FunctionItem conditionExp, FunctionItem valueExp)
+NodeFunctionPtr WHEN(FunctionItem conditionExp, FunctionItem valueExp)
 {
-    return WHEN(conditionExp.getFunctionNode(), valueExp.getFunctionNode());
-}
-
-FunctionNodePtr CASE(const std::vector<FunctionNodePtr>& whenFunctions, FunctionNodePtr valueExp)
-{
-    return CaseFunctionNode::create(std::move(whenFunctions), std::move(valueExp));
-}
-FunctionNodePtr CASE(std::vector<FunctionNodePtr> whenFunctions, FunctionItem valueExp)
-{
-    return CASE(std::move(whenFunctions), valueExp.getFunctionNode());
+    return WHEN(conditionExp.getNodeFunction(), valueExp.getNodeFunction());
 }
 
-FunctionNodePtr FunctionItem::getFunctionNode() const
+NodeFunctionPtr CASE(const std::vector<NodeFunctionPtr>& whenFunctions, NodeFunctionPtr valueExp)
+{
+    return NodeFunctionCase::create(std::move(whenFunctions), std::move(valueExp));
+}
+NodeFunctionPtr CASE(std::vector<NodeFunctionPtr> whenFunctions, FunctionItem valueExp)
+{
+    return CASE(std::move(whenFunctions), valueExp.getNodeFunction());
+}
+
+NodeFunctionPtr FunctionItem::getNodeFunction() const
 {
     return function;
 }
 
-FunctionItem::operator FunctionNodePtr()
+FunctionItem::operator NodeFunctionPtr()
 {
     return function;
 }

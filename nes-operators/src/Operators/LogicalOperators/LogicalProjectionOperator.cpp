@@ -16,8 +16,8 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FieldAccessFunctionNode.hpp>
-#include <Functions/FieldRenameFunctionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
@@ -27,12 +27,12 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<FunctionNodePtr> functions, OperatorId id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
 }
 
-std::vector<FunctionNodePtr> LogicalProjectionOperator::getFunctions() const
+std::vector<NodeFunctionPtr> LogicalProjectionOperator::getFunctions() const
 {
     return functions;
 }
@@ -73,14 +73,14 @@ bool LogicalProjectionOperator::inferSchema()
         function->inferStamp(inputSchema);
 
         /// Build the output schema
-        if (NES::Util::instanceOf<FieldRenameFunctionNode>(function))
+        if (NES::Util::instanceOf<NodeFunctionFieldRename>(function))
         {
-            auto fieldRename = NES::Util::as<FieldRenameFunctionNode>(function);
+            auto fieldRename = NES::Util::as<NodeFunctionFieldRename>(function);
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
         }
-        else if (NES::Util::instanceOf<FieldAccessFunctionNode>(function))
+        else if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {
-            auto fieldAccess = NES::Util::as<FieldAccessFunctionNode>(function);
+            auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else
@@ -100,7 +100,7 @@ bool LogicalProjectionOperator::inferSchema()
 
 OperatorPtr LogicalProjectionOperator::copy()
 {
-    std::vector<FunctionNodePtr> copyOfProjectionFunctions;
+    std::vector<NodeFunctionPtr> copyOfProjectionFunctions;
     for (const auto& originalFunction : functions)
     {
         copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());

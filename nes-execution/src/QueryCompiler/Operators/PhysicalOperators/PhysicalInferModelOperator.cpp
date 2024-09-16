@@ -22,8 +22,8 @@ PhysicalInferModelOperator::PhysicalInferModelOperator(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
-    std::vector<FunctionNodePtr> inputFields,
-    std::vector<FunctionNodePtr> outputFields)
+    std::vector<NodeFunctionPtr> inputFields,
+    std::vector<NodeFunctionPtr> outputFields)
     : Operator(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields)
 {
 }
@@ -33,8 +33,8 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
-    std::vector<FunctionNodePtr> inputFields,
-    std::vector<FunctionNodePtr> outputFields)
+    std::vector<NodeFunctionPtr> inputFields,
+    std::vector<NodeFunctionPtr> outputFields)
 {
     return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields, outputFields);
 }
@@ -43,8 +43,8 @@ PhysicalOperatorPtr PhysicalInferModelOperator::create(
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
-    std::vector<FunctionNodePtr> inputFields,
-    std::vector<FunctionNodePtr> outputFields)
+    std::vector<NodeFunctionPtr> inputFields,
+    std::vector<NodeFunctionPtr> outputFields)
 {
     return create(getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
 }
@@ -71,11 +71,11 @@ const std::string& PhysicalInferModelOperator::getModel() const
 {
     return model;
 }
-const std::vector<FunctionNodePtr>& PhysicalInferModelOperator::getInputFields() const
+const std::vector<NodeFunctionPtr>& PhysicalInferModelOperator::getInputFields() const
 {
     return inputFields;
 }
-const std::vector<FunctionNodePtr>& PhysicalInferModelOperator::getOutputFields() const
+const std::vector<NodeFunctionPtr>& PhysicalInferModelOperator::getOutputFields() const
 {
     return outputFields;
 }
