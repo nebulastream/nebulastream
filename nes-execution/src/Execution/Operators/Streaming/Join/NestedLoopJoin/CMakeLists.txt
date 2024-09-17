@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Bucketing)
 add_subdirectory(Slicing)
 
 add_source_files(nes-execution

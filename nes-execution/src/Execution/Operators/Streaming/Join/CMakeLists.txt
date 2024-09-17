@@ -17,10 +17,8 @@ add_source_files(nes-execution
         StreamJoinOperatorHandler.cpp
         StreamJoinBuild.cpp
         StreamJoinProbe.cpp
-        StreamJoinBuildBucketing.cpp
         StreamSlice.cpp
         StreamJoinUtil.cpp
         StreamJoinOperatorHandlerSlicing.cpp
-        StreamJoinOperatorHandlerBucketing.cpp
         StreamJoinOperator.cpp
         )
