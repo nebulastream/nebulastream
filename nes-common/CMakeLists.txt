@@ -81,3 +81,5 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
+
+add_subdirectory(benchmarks)
