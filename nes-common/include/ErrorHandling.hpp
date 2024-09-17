@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 #include <Util/StacktraceLoader.hpp>
+#include <cpptrace/cpptrace.hpp>
 
 namespace NES
 {
@@ -27,22 +28,20 @@ namespace NES
  * @note do NOT inherit from this class, use the EXCEPTION macro to define exceptions. They should only be defined in
  * <ExceptionDefinitions.hpp>
  */
-class Exception final : public std::exception
+class Exception final : public cpptrace::lazy_exception
 {
 public:
-    Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace);
+    Exception(std::string message, const uint64_t code, std::source_location loc);
 
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] uint64_t code() const noexcept;
     [[nodiscard]] const std::source_location& where() const noexcept;
-    [[nodiscard]] const std::string& stack() const noexcept;
 
 private:
     std::string message;
     uint64_t errorCode;
     std::source_location location;
-    std::string stacktrace;
 };
 
 /**
@@ -54,14 +53,13 @@ private:
  * @note the enum value of the exception can be used to compare with the code of the exception in the catch block
  */
 #define EXCEPTION(name, code, message) \
-    inline Exception name(const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    inline Exception name(const std::source_location& loc = std::source_location::current()) \
     { \
-        return Exception(message, code, loc, trace); \
+        return Exception(message, code, loc); \
     } \
-    inline Exception name( \
-        std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    inline Exception name(std::string msg, const std::source_location& loc = std::source_location::current()) \
     { \
-        return Exception(std::string(message) + "; " + msg, code, loc, trace); \
+        return Exception(std::string(message) + "; " + msg, code, loc); \
     } \
     namespace ErrorCode \
     { \
