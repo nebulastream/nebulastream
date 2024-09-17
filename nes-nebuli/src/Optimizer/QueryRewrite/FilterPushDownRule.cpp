@@ -283,7 +283,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
 
 void FilterPushDownRule::pushBelowProjection(LogicalFilterOperatorPtr filterOperator, NodePtr projectionOperator)
 {
-    renameFilterAttributesByFunctionNodes(filterOperator, NES::Util::as<LogicalProjectionOperator>(projectionOperator)->getFunctions());
+    renameFilterAttributesByNodeFunctions(filterOperator, NES::Util::as<LogicalProjectionOperator>(projectionOperator)->getFunctions());
     pushDownFilter(filterOperator, projectionOperator->getChildren()[0], projectionOperator);
 }
 
@@ -343,45 +343,45 @@ std::vector<NodeFunctionFieldAccessPtr> FilterPushDownRule::getFilterAccessFunct
         NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessFunction Node");
         if ((NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr)))
         {
-            const NodeFunctionFieldAccessPtr accessFunctionNode = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
             NES_TRACE("FilterPushDownRule: Add the field name to the list of filter attribute names");
-            filterAccessFunctions.push_back(accessFunctionNode);
+            filterAccessFunctions.push_back(accessNodeFunction);
         }
     }
     return filterAccessFunctions;
 }
 
 void FilterPushDownRule::renameNodeFunctionFieldAccesss(
-    NodeFunctionPtr functionNode, const std::string toReplace, const std::string replacement)
+    NodeFunctionPtr nodeFunction, const std::string toReplace, const std::string replacement)
 {
-    DepthFirstNodeIterator depthFirstNodeIterator(functionNode);
+    DepthFirstNodeIterator depthFirstNodeIterator(nodeFunction);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
         if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
-            const NodeFunctionFieldAccessPtr accessFunctionNode = NES::Util::as<NodeFunctionFieldAccess>(*itr);
-            if (accessFunctionNode->getFieldName() == toReplace)
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            if (accessNodeFunction->getFieldName() == toReplace)
             {
-                accessFunctionNode->updateFieldName(replacement);
+                accessNodeFunction->updateFieldName(replacement);
             }
         }
     }
 }
 
-void FilterPushDownRule::renameFilterAttributesByFunctionNodes(
-    const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& functionNodes)
+void FilterPushDownRule::renameFilterAttributesByNodeFunctions(
+    const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& nodeFunctions)
 {
     NodeFunctionPtr predicateCopy = filterOperator->getPredicate()->deepCopy();
     NES_TRACE("FilterPushDownRule: Iterate over all functions in the projection operator");
 
-    for (auto& functionNode : functionNodes)
+    for (auto& nodeFunction : nodeFunctions)
     {
         NES_TRACE("FilterPushDownRule: Check if the function node is of type NodeFunctionFieldRename")
-        if (functionNode->instanceOf<NodeFunctionFieldRename>())
+        if (Util::instanceOf<NodeFunctionFieldRename>(nodeFunction))
         {
-            NodeFunctionFieldRenamePtr fieldRenameFunctionNode = functionNode->as<NodeFunctionFieldRename>();
-            std::string newFieldName = fieldRenameFunctionNode->getNewFieldName();
-            std::string originalFieldName = fieldRenameFunctionNode->getOriginalField()->getFieldName();
+            NodeFunctionFieldRenamePtr fieldRenameNodeFunction = Util::as<NodeFunctionFieldRename>(nodeFunction);
+            std::string newFieldName = fieldRenameNodeFunction->getNewFieldName();
+            std::string originalFieldName = fieldRenameNodeFunction->getOriginalField()->getFieldName();
             renameNodeFunctionFieldAccesss(predicateCopy, newFieldName, originalFieldName);
         }
     }

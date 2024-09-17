@@ -32,7 +32,7 @@ bool Integer::equals(DataTypePtr otherDataType)
     return false;
 }
 
-DataTypePtr Integer::join(DataTypePtr otherDataType)
+DataTypePtr Integer::join(const DataTypePtr otherDataType)
 {
     /// An integer can be joined with integer types and float types.
     if (otherDataType->isFloat())
@@ -58,7 +58,7 @@ DataTypePtr Integer::join(DataTypePtr otherDataType)
 
 std::string Integer::toString()
 {
-    return fmt::format("INTEGER({} bits)", bits);
+    return fmt::format("INTEGER({} bits {})", bits, lowerBound == 0 ? "unsigned" : "signed");
 }
 
 } /// namespace NES

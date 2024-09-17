@@ -111,15 +111,14 @@ NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFuncti
 {
     /// Detect sum/subtraction/multiplication/division of constants inside a predicate and resolve them
     NES_DEBUG("Applying RedundancyEliminationRule.constantFolding to predicate {}", predicate->toString());
-    if (predicate->instanceOf<NodeFunctionAdd>() || predicate->instanceOf<NodeFunctionSub>() || predicate->instanceOf<NodeFunctionMul>()
-        || predicate->instanceOf<NodeFunctionDiv>())
+    if (Util::instanceOf<NodeFunctionAdd>(predicate) || Util::instanceOf<NodeFunctionSub>(predicate)
+        || Util::instanceOf<NodeFunctionMul>(predicate) || Util::instanceOf<NodeFunctionDiv>(predicate))
     {
         NES_DEBUG("The predicate is an addition/multiplication/subtraction/division, constant folding could be applied");
         auto operands = predicate->getChildren();
         auto leftOperand = operands.at(0);
         auto rightOperand = operands.at(1);
-        if (NES::Util::instanceOf<NodeFunctionConstantValue>(leftOperand)
-            && NES::Util::instanceOf<NodeFunctionConstantValue>(rightOperand))
+        if (NES::Util::instanceOf<NodeFunctionConstantValue>(leftOperand) && NES::Util::instanceOf<NodeFunctionConstantValue>(rightOperand))
         {
             NES_DEBUG("Both of the predicate functions are constant and can be folded together");
             auto leftOperandValue = NES::Util::as<NodeFunctionConstantValue>(leftOperand)->getConstantValue();
@@ -157,9 +156,9 @@ NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFuncti
             }
             NES_DEBUG("Computed the result, which is equal to ", resultValue);
             NES_DEBUG("Creating a new constant function node with the result value");
-            NodeFunctionPtr resultFunctionNode = NodeFunctionConstantValue::create(
+            NodeFunctionPtr resultNodeFunction = NodeFunctionConstantValue::create(
                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(resultValue)));
-            return resultFunctionNode;
+            return resultNodeFunction;
         }
         else
         {
@@ -210,17 +209,17 @@ NES::NodeFunctionPtr RedundancyEliminationRule::arithmeticSimplification(const N
                 if (constantValue == 0 && NES::Util::instanceOf<NodeFunctionAdd>(predicate))
                 {
                     NES_DEBUG("Case 1: Sum with 0: return the NodeFunctionFieldAccess");
-                    return NES::Util::as<FunctionNode>(fieldAccessOperand);
+                    return NES::Util::as<NodeFunction>(fieldAccessOperand);
                 }
                 else if (constantValue == 0 && NES::Util::instanceOf<NodeFunctionMul>(predicate))
                 {
                     NES_DEBUG("Case 2: Multiplication by 0: return the NodeFunctionConstantValue, that is 0");
-                    return NES::Util::as<FunctionNode>(constantOperand);
+                    return NES::Util::as<NodeFunction>(constantOperand);
                 }
                 else if (constantValue == 1 && NES::Util::instanceOf<NodeFunctionMul>(predicate))
                 {
                     NES_DEBUG("Case 3: Multiplication by 1: return the NodeFunctionFieldAccess");
-                    return NES::Util::as<FunctionNode>(fieldAccessOperand);
+                    return NES::Util::as<NodeFunction>(fieldAccessOperand);
                 }
                 else
                 {

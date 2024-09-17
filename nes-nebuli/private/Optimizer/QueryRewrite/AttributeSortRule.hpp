@@ -96,15 +96,15 @@ private:
     std::vector<NodeFunctionPtr> fetchCommutativeFields(const NodeFunctionPtr& function)
     {
         std::vector<NodeFunctionPtr> commutativeFields;
-        if (function->instanceOf<NodeFunctionFieldAccess>() || function->instanceOf<NodeFunctionConstantValue>())
+        if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
         {
             commutativeFields.push_back(function);
         }
-        else if (function->template instanceOf<FunctionType>())
+        else if (Util::instanceOf<FunctionType>(function))
         {
             for (const auto& child : function->getChildren())
             {
-                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(child->template as<FunctionNode>());
+                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<NodeFunction>(child));
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }

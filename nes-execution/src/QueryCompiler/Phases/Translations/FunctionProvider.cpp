@@ -23,6 +23,7 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -32,40 +33,39 @@ namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Functions;
 
-FunctionPtr FunctionProvider::lowerFunction(const NodeFunctionPtr& functionNode)
+std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr& nodeFunction)
 {
     /// 1. Check if the function is valid.
-    if (not functionNode->validateBeforeLowering())
+    if (not nodeFunction->validateBeforeLowering())
     {
-        throw InvalidFunction();
+        throw InvalidUseOfFunction(nodeFunction->toString());
     }
 
     /// 2. Recursively lower the children of the function node.
-    const auto children = functionNode->getChildren();
-    std::vector<FunctionPtr> subFunctions;
-    for (const auto& child : children)
+    std::vector<std::unique_ptr<Function>> childFunction;
+    for (const auto& child : nodeFunction->getChildren())
     {
-        subFunctions.emplace_back(lowerFunction(child->as<FunctionNode>()));
+        childFunction.emplace_back(lowerFunction(NES::Util::as<NodeFunction>(child)));
     }
 
     /// 3. The field assignment, field access and constant value nodes are special as they require a different treatment,
-    /// due to them not simply getting a subFunction as a parameter.
-    if (const auto fieldAssignmentNode = functionNode->as_if<NodeFunctionFieldAssignment>())
+    /// due to them not simply getting a childFunction as a parameter.
+    if (const auto fieldAssignmentNode = NES::Util::as_if<NodeFunctionFieldAssignment>(nodeFunction); fieldAssignmentNode != nullptr)
     {
-        return std::make_unique<ExecutableFunctionWriteField>(fieldAssignmentNode->getField()->getFieldName(), std::move(subFunctions[0]));
+        return std::make_unique<ExecutableFunctionWriteField>(fieldAssignmentNode->getField()->getFieldName(), std::move(childFunction[0]));
     }
-    if (const auto fieldAccessNode = functionNode->as_if<NodeFunctionFieldAccess>())
+    if (const auto fieldAccessNode = NES::Util::as_if<NodeFunctionFieldAccess>(nodeFunction); fieldAccessNode != nullptr)
     {
         return std::make_unique<ExecutableFunctionReadField>(fieldAccessNode->getFieldName());
     }
-    if (const auto constantValueNode = functionNode->as_if<NodeFunctionConstantValue>())
+    if (const auto constantValueNode = NES::Util::as_if<NodeFunctionConstantValue>(nodeFunction); constantValueNode != nullptr)
     {
         return lowerConstantFunction(constantValueNode);
     }
 
     /// 4. Calling the registry to create an executable function.
     auto function
-        = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(functionNode->getType(), std::move(subFunctions));
+        = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(nodeFunction->getType(), std::move(childFunction));
     if (not function.has_value())
     {
         throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));
@@ -74,7 +74,7 @@ FunctionPtr FunctionProvider::lowerFunction(const NodeFunctionPtr& functionNode)
     return std::move(function.value());
 }
 
-FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
+std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
     auto value = constantFunction->getConstantValue();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
@@ -131,10 +131,11 @@ FunctionPtr FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFu
                 return std::make_unique<ConstantBooleanValueFunction>(boolValue);
             };
             default: {
-                throw UnknownPhysicalType("the basic type is not supported");
+                throw UnknownPhysicalType(fmt::format("the basic type {} is not supported", basicType->toString()));
             }
         }
     }
-    throw UnknownPhysicalType("type must be a basic types");
+    throw UnknownPhysicalType(
+        fmt::format("couldn't create ConstantValueFunction for: {}, not a BasicPhysicalType.", physicalType->toString()));
 }
 }
