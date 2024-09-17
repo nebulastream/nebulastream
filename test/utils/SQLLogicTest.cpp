@@ -61,7 +61,8 @@ public:
         Logger::setupLogging(logFileName, LogLevel::LOG_DEBUG, LOG_TO_STDOUT);
         std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
         /// file:// to make the link clickable in the console
-        std::cout << "Find the test log at: file://" << logPath.string() << std::endl;
+        std::cout << "Find the log at: file://" << logPath.string() << std::endl;
+        std::cout << "Find the test file at: file://" SYSTEM_TEST_FILE_PATH << std::endl;
 
         IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" + systemTestName + std::to_string(testId) + ".csv");
 
