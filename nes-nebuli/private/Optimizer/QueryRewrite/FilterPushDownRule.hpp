@@ -196,7 +196,7 @@ private:
      * @param filterOperator filter operator whose predicate need to be checked and updated
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
-    static void renameFilterAttributesByFunctionNodes(
+    static void renameFilterAttributesByNodeFunctions(
         const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& expressionNodes);
 
     /**

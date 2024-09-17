@@ -10,5 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_execution_test(execution-sort-operator-test "BatchSortOperatorTest.cpp")
-add_nes_execution_test(execution-sortscan-operator-test "BatchSortScanOperatorTest.cpp")
+include(ExternalProject)
+include(GoogleTest)
+
+function(add_nes_test_sources)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-sources)
+endfunction()
+
+add_subdirectory(UnitTests)

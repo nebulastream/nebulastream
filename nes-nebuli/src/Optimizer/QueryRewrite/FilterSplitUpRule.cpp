@@ -67,17 +67,17 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.
-    if (filterOperator->getPredicate()->instanceOf<NodeFunctionAnd>())
+    if (Util::instanceOf<NodeFunctionAnd>(filterOperator->getPredicate()))
     {
         /// create filter that contains function1 of the andFunction
-        auto child1 = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto child1 = Util::as<LogicalFilterOperator>(filterOperator->copy());
         child1->setId(getNextOperatorId());
-        child1->setPredicate(filterOperator->getPredicate()->getChildren()[0]->as<FunctionNode>());
+        child1->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]));
 
         /// create filter that contains function2 of the andFunction
-        auto child2 = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto child2 = Util::as<LogicalFilterOperator>(filterOperator->copy());
         child2->setId(getNextOperatorId());
-        child2->setPredicate(filterOperator->getPredicate()->getChildren()[1]->as<FunctionNode>());
+        child2->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[1]));
 
         /// insert new filter with function1 of the andFunction
         if (!filterOperator->insertBetweenThisAndChildNodes(child1))
@@ -103,27 +103,27 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
         splitUpFilters(child2);
     }
     /// it might be possible to reformulate negated functions
-    else if (filterOperator->getPredicate()->instanceOf<NodeFunctionNegate>())
+    else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()))
     {
         /// In the case that the predicate is of the form !( function1 || function2 ) it can be reformulated to ( !function1 && !function2 ).
         /// The reformulated predicate can be used to apply the split up filter rule again.
-        if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<NodeFunctionOr>())
+        if (Util::instanceOf<NodeFunctionOr>(filterOperator->getPredicate()->getChildren()[0]))
         {
             auto orFunction = filterOperator->getPredicate()->getChildren()[0];
-            auto negatedChild1 = NodeFunctionNegate::create(orFunction->getChildren()[0]->as<FunctionNode>());
-            auto negatedChild2 = NodeFunctionNegate::create(orFunction->getChildren()[1]->as<FunctionNode>());
+            auto negatedChild1 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[0]));
+            auto negatedChild2 = NodeFunctionNegate::create(Util::as<NodeFunction>(orFunction->getChildren()[1]));
 
             auto equivalentAndFunction = NodeFunctionAnd::create(negatedChild1, negatedChild2);
             filterOperator->setPredicate(equivalentAndFunction); /// changing predicate to equivalent AndFunction
             splitUpFilters(filterOperator); /// splitting up the filter
         }
         /// Reformulates predicates in the form (!!function) to (function)
-        else if (filterOperator->getPredicate()->getChildren()[0]->instanceOf<NodeFunctionNegate>())
+        else if (Util::instanceOf<NodeFunctionNegate>(filterOperator->getPredicate()->getChildren()[0]))
         {
             /// getPredicate() is the first FunctionNegate; first getChildren()[0] is the second FunctionNegate;
-            /// second getChildren()[0] is the functionNode that was negated twice. copy() only copies children of this functionNode. (probably not mandatory but no reference to the negations needs to be kept)
+            /// second getChildren()[0] is the nodeFunction that was negated twice. copy() only copies children of this nodeFunction. (probably not mandatory but no reference to the negations needs to be kept)
             filterOperator->setPredicate(
-                filterOperator->getPredicate()->getChildren()[0]->getChildren()[0]->as<FunctionNode>()->deepCopy());
+                Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]->getChildren()[0])->deepCopy());
             splitUpFilters(filterOperator);
         }
     }
