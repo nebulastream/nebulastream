@@ -1,0 +1,38 @@
+##
+#
+#
+#
+#
+
+
+#
+#
+Source e123 UINT32 id
+1
+1
+1
+1
+
+SourceCSV e124 INT8 i UINT8 i INT16 i UINT16 i INT32 i UINT32 i INT64 i FLOAT32 i UINT64 i FLOAT64 i BOOLEAN i CHAR i xyz.txt
+
+
+#
+Query::from("e124")
+# Commenting parts of the query
+    .filter(Attribute("i") >= 10)
+    .SINK;
+----
+1,1,1
+1,1,1
+1,1,1
+
+Query::from("e123").filter(Attribute("i") >= 10).SINK;
+----
+# Result, comma-separated
+1,1,1
+1,1,1
+1,1,1
+
+# many empty lines at the end
+
+
