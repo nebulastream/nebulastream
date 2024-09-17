@@ -14,16 +14,27 @@
 
 #pragma once
 
-#include <fstream>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
-#include <string_view>
-#include <unordered_map>
 #include <vector>
-#include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES
+namespace NES::SLTParser
 {
 using namespace std::literals;
+
+/// Tokens ///
+enum class TokenType : uint8_t
+{
+    INVALID,
+    CSV_SOURCE,
+    SLT_SOURCE,
+    QUERY,
+    RESULT_DELIMITER,
+};
 
 /// This is a parser for a dialect of the sqllogictest format. We follow a pull-based parser design as proposed in:
 /// https://www.think-cell.com/assets/en/career/talks/pdf/think-cell_talk_json.pdf
@@ -44,60 +55,70 @@ public:
 
     [[nodiscard]] bool loadFile(const std::string& filePath);
 
-    using QueryCallback = std::function<void(const std::string& /* Query String */)>;
-    using QueryResultTuplesCallback = std::function<void(std::vector<std::string>&& /* Tpls */)>;
-    using SourceInFileTuplesCallback
-        = std::function<void(std::vector<std::string>&& /* Source Def */, std::vector<std::string>&& /* Tpls */)>;
-    using SourceCallback = std::function<void(std::vector<std::string>&& /* Source Def */)>;
+    /// Type defintions ///
+    struct Field
+    {
+        BasicType type;
+        std::string name;
+        bool operator==(const Field& other) const = default;
+    };
+    using Schema = std::vector<Field>;
+
+    struct CSVSource
+    {
+        std::string name;
+        Schema fields;
+        std::string csvFilePath;
+        bool operator==(const CSVSource& other) const = default;
+    };
+
+    struct SLTSource
+    {
+        std::string name;
+        Schema fields;
+        std::vector<std::string> tuples;
+        bool operator==(const SLTSource& other) const = default;
+    };
+
+    using Query = std::string;
+    using ResultTuples = std::vector<std::string>;
+
+    using QueryCallback = std::function<void(Query&&)>;
+    using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
+    using SLTSourceCallback = std::function<void(SLTSource&&)>;
+    using CSVSourceCallback = std::function<void(CSVSource&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
-    void registerOnQueryResultTuplesCallback(QueryResultTuplesCallback callback);
-    void registerOnSourceInFileTuplesCallback(SourceInFileTuplesCallback callback);
-    void registerOnSourceCallback(SourceCallback callback);
+    void registerOnResultTuplesCallback(ResultTuplesCallback callback);
+    void registerOnSLTSourceCallback(SLTSourceCallback callback);
+    void registerOnCSVSourceCallback(CSVSourceCallback callback);
 
-    [[nodiscard]] bool parse();
+    void parse();
 
 private:
+    /// Substitution rules ///
     std::vector<SubstitutionRule> substitutionRules;
     void applySubstitutionRules(std::string& line);
 
-    enum class TokenType : uint8_t
-    {
-        INVALID,
-        SOURCE_CSV,
-        SOURCE,
-        QUERY,
-        RESULT_DELIMITER,
-        END,
-    };
+    /// Parsing utils ///
+    [[nodiscard]] static std::optional<TokenType> getTokenIfValid(std::string potentialToken);
+    /// Parse the next token and return its type.
+    [[nodiscard]] std::optional<TokenType> nextToken();
+    /// Got the the next token. Returns false if reached end of file.
+    [[nodiscard]] bool moveToNextToken();
 
-    inline bool isSource(TokenType type) const noexcept { return type == TokenType::SOURCE; }
-    inline bool isCSVSource(TokenType type) const noexcept { return type == TokenType::SOURCE_CSV; }
-    inline bool isQuery(TokenType type) const noexcept { return type == TokenType::QUERY; }
-    inline bool isInvalid(TokenType type) const noexcept { return type == TokenType::INVALID; }
-    inline bool isEnd(TokenType type) const noexcept { return type == TokenType::END; }
-    inline bool isResultDelimiter(TokenType type) const noexcept { return type == TokenType::RESULT_DELIMITER; }
-
-    static constexpr std::array<std::pair<std::string_view, TokenType>, 4> stringToToken
-        = {{{"SourceCSV"sv, TokenType::SOURCE_CSV},
-            {"Source"sv, TokenType::SOURCE},
-            {"Query::from"sv, TokenType::QUERY},
-            {"----"sv, TokenType::RESULT_DELIMITER}}};
-
-    [[nodiscard]] TokenType nextToken();
-
-    [[nodiscard]] std::vector<std::string> expectSource();
-    [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst = false);
-    [[nodiscard]] std::string expectQuery();
-
-    [[nodiscard]] static bool emptyOrComment(const std::string& line);
+    [[nodiscard]] SLTSource expectSLTSource();
+    [[nodiscard]] CSVSource expectCSVSource() const;
+    [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
+    [[nodiscard]] Query expectQuery();
 
     QueryCallback onQueryCallback;
-    QueryResultTuplesCallback onQueryResultTuplesCallback;
-    SourceInFileTuplesCallback onSourceInFileTuplesCallback;
-    SourceCallback onSourceCallback;
+    ResultTuplesCallback onResultTuplesCallback;
+    SLTSourceCallback onSLTSourceCallback;
+    CSVSourceCallback onCSVSourceCallback;
 
+    bool firstToken = true;
     size_t currentLine = 0;
     std::vector<std::string> lines;
 };

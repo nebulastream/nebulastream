@@ -258,7 +258,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 {
     std::vector<DecomposedQueryPlanPtr> plans{};
     QueryConfig config{};
-    SLTParser parser{};
+    SLTParser::SLTParser parser{};
 
     parser.registerSubstitutionRule(
         {"SINK",
@@ -279,50 +279,47 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
     }
 
     /// We add new found sources to our config
-    parser.registerOnSourceCallback(
-        [&](const std::vector<std::string>& parameters)
+    parser.registerOnCSVSourceCallback(
+        [&](SLTParser::SLTParser::CSVSource&& source)
         {
-            NES::CLI::LogicalSource logicalSource;
-            logicalSource.name = parameters[1];
-            /// Read schema fields till reached last parameter
-            for (size_t i = 2; i < parameters.size() - 1; i += 2)
-            {
-                NES::CLI::SchemaField schemaField;
-                schemaField.type = *magic_enum::enum_cast<BasicType>(parameters[i]);
-                schemaField.name = parameters[i + 1];
-                logicalSource.schema.push_back(schemaField);
-            }
+            config.logical.emplace_back(LogicalSource{
+                .name = source.name,
+                .schema = [&source]()
+                {
+                    std::vector<SchemaField> schema;
+                    for (const auto& field : source.fields)
+                    {
+                        schema.push_back({.name = field.name, .type = field.type});
+                    }
+                    return schema;
+                }()});
 
-            NES::CLI::PhysicalSource physicalSource;
-            physicalSource.logical = logicalSource.name;
-            physicalSource.config["type"] = "CSV_SOURCE";
-            physicalSource.config["filePath"] = parameters.back();
-
-            config.logical.push_back(logicalSource);
-            config.physical.push_back(physicalSource);
+            config.physical.emplace_back(
+                PhysicalSource{.logical = source.name, .config = {{"type", "CSV_SOURCE"}, {"filePath", source.csvFilePath}}});
         });
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/test/";
-    parser.registerOnSourceInFileTuplesCallback(
-        [&](const std::vector<std::string>& SourceParameters, const std::vector<std::string>& tuples)
+    parser.registerOnSLTSourceCallback(
+        [&](SLTParser::SLTParser::SLTSource&& source)
         {
             static uint64_t sourceIndex = 0;
 
-            NES::CLI::LogicalSource logicalSource;
-            logicalSource.name = SourceParameters[1];
-            /// Read schema fields till reached last parameter
-            for (size_t i = 2; i < SourceParameters.size() - 1; i += 2)
-            {
-                SchemaField schemaField;
-                schemaField.type = *magic_enum::enum_cast<BasicType>(SourceParameters[i]);
-                schemaField.name = SourceParameters[i + 1];
-                logicalSource.schema.push_back(schemaField);
-            }
+            config.logical.emplace_back(LogicalSource{
+                .name = source.name,
+                .schema = [&source]()
+                {
+                    std::vector<SchemaField> schema;
+                    for (const auto& field : source.fields)
+                    {
+                        schema.push_back({.name = field.name, .type = field.type});
+                    }
+                    return schema;
+                }()});
 
-            NES::CLI::PhysicalSource physicalSource;
-            physicalSource.logical = logicalSource.name;
-            physicalSource.config["type"] = "CSV_SOURCE";
-            physicalSource.config["filePath"] = tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv";
+            config.physical.emplace_back(PhysicalSource{
+                .logical = source.name,
+                .config = {{"type", "CSV_SOURCE"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
+
 
             /// Write the tuples to a tmp file
             std::ofstream sourceFile(tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
@@ -333,18 +330,15 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
             }
 
             /// Write tuples to csv file
-            for (const auto& tuple : tuples)
+            for (const auto& tuple : source.tuples)
             {
                 sourceFile << tuple << std::endl;
             }
-
-            config.logical.push_back(logicalSource);
-            config.physical.push_back(physicalSource);
         });
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](const std::string_view query)
+        [&](SLTParser::SLTParser::Query&& query)
         {
             config.query = query;
             try
@@ -358,21 +352,25 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                 exit(-1);
             }
         });
-    if (!parser.parse())
+    try
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        parser.parse();
+    }
+    catch (const Exception&)
+    {
+        tryLogCurrentException();
         return {};
     }
-
     return plans;
 }
 
 bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
 {
-    std::ifstream resultFile(PATH_TO_BINARY_DIR "/test/result/" + testName + std::to_string(queryNr) + ".csv");
+    std::string resultFileName = PATH_TO_BINARY_DIR "/test/result/" + testName + std::to_string(queryNr) + ".csv";
+    std::ifstream resultFile(resultFileName);
     if (!resultFile)
     {
-        NES_FATAL_ERROR("Failed to open result file: {}", PATH_TO_BINARY_DIR "/test/result/" + testName + ".csv");
+        NES_FATAL_ERROR("Failed to open result file: {}", resultFileName);
         return false;
     }
 
@@ -392,7 +390,7 @@ bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector
 
 bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr)
 {
-    SLTParser parser{};
+    SLTParser::SLTParser parser{};
     if (!parser.loadFile(testFilePath))
     {
         NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
@@ -402,12 +400,12 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
     bool same = true;
     std::string printMessages;
     std::string errorMessages;
-    uint64_t seenResultTupleSections = 1;
-    uint64_t seenQuerySections = 1;
+    uint64_t seenResultTupleSections = 0;
+    uint64_t seenQuerySections = 0;
 
     constexpr bool printOnlyDifferences = true;
-    parser.registerOnQueryResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, queryNr, testName, &same](std::vector<std::string>&& resultLines)
+    parser.registerOnResultTuplesCallback(
+        [&seenResultTupleSections, &errorMessages, queryNr, testName, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
         {
             /// Result section matches with query --> we found the expected result to check for
             if (seenResultTupleSections == queryNr)
@@ -522,9 +520,13 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
             seenQuerySections++;
         });
 
-    if (!parser.parse())
+    try
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
+        parser.parse();
+    }
+    catch (const Exception&)
+    {
+        tryLogCurrentException();
         return false;
     }
 
