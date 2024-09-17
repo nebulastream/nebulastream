@@ -19,12 +19,13 @@ set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
 
+get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-compiler COMPILER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES})
+add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
 target_compile_definitions(nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -38,7 +39,7 @@ target_include_directories(nebuli-lib
 
 target_link_libraries(nebuli-lib
         PUBLIC nes-operators
-        PRIVATE yaml-cpp::yaml-cpp nes-client
+        PRIVATE yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
 )
 
 add_executable(nebuli src/NebuLIStarter.cpp)
