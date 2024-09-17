@@ -24,8 +24,8 @@ constexpr bool logWithStacktrace = true;
 constexpr bool logWithStacktrace = false;
 #endif
 
-Exception::Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace)
-    : message(std::move(message)), errorCode(code), location(loc), stacktrace(std::move(trace))
+Exception::Exception(std::string message, const uint64_t code, std::source_location loc)
+    : message(std::move(message)), errorCode(code), location(loc)
 {
 }
 
@@ -49,12 +49,6 @@ const std::source_location& Exception::where() const noexcept
     return location;
 }
 
-const std::string& Exception::stack() const noexcept
-{
-    return stacktrace;
-}
-
-
 std::string formatLogMessage(const Exception& e)
 {
     if constexpr (logWithStacktrace)
@@ -67,7 +61,7 @@ std::string formatLogMessage(const Exception& e)
             e.where().line(),
             e.where().column(),
             e.where().function_name(),
-            e.stack());
+            e.trace().to_string());
     }
     else
     {
