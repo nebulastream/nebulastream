@@ -15,8 +15,8 @@
 #pragma once
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
 
@@ -27,4 +27,8 @@ class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, 
 {
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}
+
+#define INCLUDED_FROM_SOURCE_REGISTRY
+#include <Sources/SourceGeneratedRegistrar.hpp>
+#undef INCLUDED_FROM_SOURCE_REGISTRY

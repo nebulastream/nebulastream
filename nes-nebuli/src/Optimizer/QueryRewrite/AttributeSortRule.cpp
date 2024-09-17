@@ -56,7 +56,8 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
         auto updatedPredicate = sortAttributesInFunction(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
-        updatedFilter->as_if<LogicalOperator>()->setOutputSchema(filterOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        Util::as_if<LogicalOperator>(updatedFilter)
+            ->setOutputSchema(Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
         filterOperator->replace(updatedFilter);
     }
 
@@ -64,10 +65,10 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     for (auto const& mapOperator : mapOperators)
     {
         auto mapFunction = mapOperator->getMapFunction();
-        auto updatedMapFunction = sortAttributesInFunction(mapFunction)->as<NodeFunctionFieldAssignment>();
+        auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapFunction);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperator>()->setOutputSchema(mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;
@@ -76,23 +77,23 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFunctionPtr function)
 {
     NES_DEBUG("Sorting attributed for input function {}", function->toString());
-    if (function->instanceOf<NES::LogicalFunctionNode>())
+    if (Util::instanceOf<NES::LogicalNodeFunction>(function))
     {
         return sortAttributesInLogicalFunctions(function);
     }
-    if (function->instanceOf<NES::ArithmeticalFunctionNode>())
+    if (Util::instanceOf<NES::NodeFunctionArithmetical>(function))
     {
         return sortAttributesInArithmeticalFunctions(function);
     }
-    else if (function->instanceOf<NES::NodeFunctionFieldAssignment>())
+    else if (Util::instanceOf<NES::NodeFunctionFieldAssignment>(function))
     {
-        auto fieldAssignmentFunctionNode = function->as<NES::NodeFunctionFieldAssignment>();
-        auto assignment = fieldAssignmentFunctionNode->getAssignment();
+        auto fieldAssignmentNodeFunction = Util::as<NES::NodeFunctionFieldAssignment>(function);
+        auto assignment = fieldAssignmentNodeFunction->getAssignment();
         auto updatedAssignment = sortAttributesInFunction(assignment);
-        auto field = fieldAssignmentFunctionNode->getField();
+        auto field = fieldAssignmentNodeFunction->getField();
         return NES::NodeFunctionFieldAssignment::create(field, updatedAssignment);
     }
-    else if (function->instanceOf<NES::NodeFunctionConstantValue>() || function->instanceOf<NES::NodeFunctionFieldAccess>())
+    else if (Util::instanceOf<NES::NodeFunctionConstantValue>(function) || Util::instanceOf<NES::NodeFunctionFieldAccess>(function))
     {
         return function;
     }
@@ -103,12 +104,12 @@ NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFuncti
 NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
 {
     NES_DEBUG("Create Z3 function for arithmetical function {}", function->toString());
-    if (function->instanceOf<NES::NodeFunctionAdd>())
+    if (Util::instanceOf<NES::NodeFunctionAdd>(function))
     {
-        auto addFunctionNode = function->as<NES::NodeFunctionAdd>();
+        auto addNodeFunction = Util::as<NES::NodeFunctionAdd>(function);
 
-        auto sortedLeft = sortAttributesInFunction(addFunctionNode->getLeft());
-        auto sortedRight = sortAttributesInFunction(addFunctionNode->getRight());
+        auto sortedLeft = sortAttributesInFunction(addNodeFunction->getLeft());
+        auto sortedRight = sortAttributesInFunction(addNodeFunction->getRight());
 
         auto leftCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedLeft);
         auto rightCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedRight);
@@ -132,26 +133,26 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NES::NodeFunctionConstantValue>())
+                if (Util::instanceOf<NES::NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NES::NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NES::NodeFunctionFieldAccess>()->getFieldName();
+                    leftValue = Util::as<NES::NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NES::NodeFunctionFieldAccess>()->getFieldName();
+                    rightValue = Util::as<NES::NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -165,7 +166,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<NodeFunctionFieldAccess>() || sortedLeft->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -178,7 +179,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<NodeFunctionFieldAccess>() || sortedRight->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -188,7 +189,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             }
         }
 
-        if (!sortedLeft->instanceOf<NodeFunctionAdd>() || !sortedRight->instanceOf<NodeFunctionAdd>())
+        if (!Util::instanceOf<NodeFunctionAdd>(sortedLeft) || !Util::instanceOf<NodeFunctionAdd>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -201,20 +202,20 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
         return NodeFunctionAdd::create(sortedLeft, sortedRight);
     }
-    if (function->instanceOf<NodeFunctionSub>())
+    if (Util::instanceOf<NodeFunctionSub>(function))
     {
-        auto subFunctionNode = function->as<NodeFunctionSub>();
-        auto left = subFunctionNode->getLeft();
-        auto right = subFunctionNode->getRight();
+        auto subNodeFunction = Util::as<NodeFunctionSub>(function);
+        auto left = subNodeFunction->getLeft();
+        auto right = subNodeFunction->getRight();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
     }
-    else if (function->instanceOf<NodeFunctionMul>())
+    else if (Util::instanceOf<NodeFunctionMul>(function))
     {
-        auto mulFunctionNode = function->as<NodeFunctionMul>();
-        auto left = mulFunctionNode->getLeft();
-        auto right = mulFunctionNode->getRight();
+        auto mulNodeFunction = Util::as<NodeFunctionMul>(function);
+        auto left = mulNodeFunction->getLeft();
+        auto right = mulNodeFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -241,26 +242,26 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -274,7 +275,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<NodeFunctionFieldAccess>() || sortedLeft->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -287,7 +288,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<NodeFunctionFieldAccess>() || sortedRight->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -297,7 +298,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
             }
         }
 
-        if (!sortedLeft->instanceOf<NodeFunctionMul>() || !sortedRight->instanceOf<NodeFunctionMul>())
+        if (!Util::instanceOf<NodeFunctionMul>(sortedLeft) || !Util::instanceOf<NodeFunctionMul>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -310,11 +311,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
         return NodeFunctionMul::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionDiv>())
+    else if (Util::instanceOf<NodeFunctionDiv>(function))
     {
-        auto divFunctionNode = function->as<NodeFunctionDiv>();
-        auto left = divFunctionNode->getLeft();
-        auto right = divFunctionNode->getRight();
+        auto divNodeFunction = Util::as<NodeFunctionDiv>(function);
+        auto left = divNodeFunction->getLeft();
+        auto right = divNodeFunction->getRight();
         sortAttributesInFunction(left);
         sortAttributesInFunction(right);
         return function;
@@ -326,11 +327,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
 {
     NES_DEBUG("Create Z3 function node for logical function {}", function->toString());
-    if (function->instanceOf<NodeFunctionAnd>())
+    if (Util::instanceOf<NodeFunctionAnd>(function))
     {
-        auto andFunctionNode = function->as<NodeFunctionAnd>();
-        auto left = andFunctionNode->getLeft();
-        auto right = andFunctionNode->getRight();
+        auto andNodeFunction = Util::as<NodeFunctionAnd>(function);
+        auto left = andNodeFunction->getLeft();
+        auto right = andNodeFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -356,26 +357,26 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -389,7 +390,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<NodeFunctionFieldAccess>() || sortedLeft->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -402,7 +403,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<NodeFunctionFieldAccess>() || sortedRight->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -412,7 +413,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             }
         }
 
-        if (!sortedLeft->instanceOf<NodeFunctionAnd>() || !sortedRight->instanceOf<NodeFunctionAnd>())
+        if (!Util::instanceOf<NodeFunctionAnd>(sortedLeft) || !Util::instanceOf<NodeFunctionAnd>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -424,11 +425,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionAnd::create(sortedLeft, sortedRight);
     }
-    if (function->instanceOf<NodeFunctionOr>())
+    if (Util::instanceOf<NodeFunctionOr>(function))
     {
-        auto orFunctionNode = function->as<NodeFunctionOr>();
-        auto left = orFunctionNode->getLeft();
-        auto right = orFunctionNode->getRight();
+        auto orNodeFunction = Util::as<NodeFunctionOr>(function);
+        auto left = orNodeFunction->getLeft();
+        auto right = orNodeFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -454,26 +455,26 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<NodeFunctionConstantValue>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<NodeFunctionConstantValue>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NodeFunctionFieldAccess>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -487,7 +488,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<NodeFunctionFieldAccess>() || sortedLeft->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -500,7 +501,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<NodeFunctionFieldAccess>() || sortedRight->instanceOf<NodeFunctionConstantValue>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
                 bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -510,7 +511,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
             }
         }
 
-        if (!sortedLeft->instanceOf<NodeFunctionOr>() || !sortedRight->instanceOf<NodeFunctionOr>())
+        if (!Util::instanceOf<NodeFunctionOr>(sortedLeft) || !Util::instanceOf<NodeFunctionOr>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -522,11 +523,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionOr::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionLess>())
+    else if (Util::instanceOf<NodeFunctionLess>(function))
     {
-        auto lessFunctionNode = function->as<NodeFunctionLess>();
-        auto left = lessFunctionNode->getLeft();
-        auto right = lessFunctionNode->getRight();
+        auto lessNodeFunction = Util::as<NodeFunctionLess>(function);
+        auto left = lessNodeFunction->getLeft();
+        auto right = lessNodeFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -540,9 +541,9 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionLess::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionLessEquals>())
+    else if (Util::instanceOf<NodeFunctionLessEquals>(function))
     {
-        auto lessNodeFunctionEquals = function->as<NodeFunctionLessEquals>();
+        auto lessNodeFunctionEquals = Util::as<NodeFunctionLessEquals>(function);
         auto left = lessNodeFunctionEquals->getLeft();
         auto right = lessNodeFunctionEquals->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
@@ -557,11 +558,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionLessEquals::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionGreater>())
+    else if (Util::instanceOf<NodeFunctionGreater>(function))
     {
-        auto greaterFunctionNode = function->as<NodeFunctionGreater>();
-        auto left = greaterFunctionNode->getLeft();
-        auto right = greaterFunctionNode->getRight();
+        auto greaterNodeFunction = Util::as<NodeFunctionGreater>(function);
+        auto left = greaterNodeFunction->getLeft();
+        auto right = greaterNodeFunction->getRight();
 
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
@@ -575,9 +576,9 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionGreater::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionGreaterEquals>())
+    else if (Util::instanceOf<NodeFunctionGreaterEquals>(function))
     {
-        auto greaterNodeFunctionEquals = function->as<NodeFunctionGreaterEquals>();
+        auto greaterNodeFunctionEquals = Util::as<NodeFunctionGreaterEquals>(function);
         auto left = greaterNodeFunctionEquals->getLeft();
         auto right = greaterNodeFunctionEquals->getRight();
 
@@ -593,11 +594,11 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionGreaterEquals::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionEquals>())
+    else if (Util::instanceOf<NodeFunctionEquals>(function))
     {
-        auto equalsFunctionNode = function->as<NodeFunctionEquals>();
-        auto left = equalsFunctionNode->getLeft();
-        auto right = equalsFunctionNode->getRight();
+        auto equalsNodeFunction = Util::as<NodeFunctionEquals>(function);
+        auto left = equalsNodeFunction->getLeft();
+        auto right = equalsNodeFunction->getRight();
         auto sortedLeft = sortAttributesInFunction(left);
         auto sortedRight = sortAttributesInFunction(right);
 
@@ -610,10 +611,10 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         }
         return NodeFunctionEquals::create(sortedLeft, sortedRight);
     }
-    else if (function->instanceOf<NodeFunctionNegate>())
+    else if (Util::instanceOf<NodeFunctionNegate>(function))
     {
-        auto negateFunctionNode = function->as<NodeFunctionNegate>();
-        auto childFunction = negateFunctionNode->child();
+        auto negateNodeFunction = Util::as<NodeFunctionNegate>(function);
+        auto childFunction = negateNodeFunction->child();
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
         return NodeFunctionNegate::create(updatedChildFunction);
     }
@@ -624,7 +625,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 bool AttributeSortRule::replaceCommutativeFunctions(
     const NodeFunctionPtr& parentFunction, const NodeFunctionPtr& originalFunction, const NodeFunctionPtr& updatedFunction)
 {
-    auto binaryFunction = parentFunction->as<NodeFunctionBinary>();
+    auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
 
     const NodeFunctionPtr& leftChild = binaryFunction->getLeft();
     const NodeFunctionPtr& rightChild = binaryFunction->getRight();
@@ -645,9 +646,9 @@ bool AttributeSortRule::replaceCommutativeFunctions(
         auto children = parentFunction->getChildren();
         for (const auto& child : children)
         {
-            if (!(child->instanceOf<NodeFunctionFieldAccess>() || child->instanceOf<NodeFunctionConstantValue>()))
+            if (!(Util::instanceOf<NodeFunctionFieldAccess>(child) || Util::instanceOf<NodeFunctionConstantValue>(child)))
             {
-                bool replaced = replaceCommutativeFunctions(child->as<FunctionNode>(), originalFunction, updatedFunction);
+                bool replaced = replaceCommutativeFunctions(Util::as<NodeFunction>(child), originalFunction, updatedFunction);
                 if (replaced)
                 {
                     return true;
@@ -661,16 +662,16 @@ bool AttributeSortRule::replaceCommutativeFunctions(
 std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function)
 {
     NodeFunctionPtr startPoint = std::move(function);
-    while (!(startPoint->instanceOf<NodeFunctionFieldAccess>() || startPoint->instanceOf<NodeFunctionConstantValue>()))
+    while (!(Util::instanceOf<NodeFunctionFieldAccess>(startPoint) || Util::instanceOf<NodeFunctionConstantValue>(startPoint)))
     {
-        startPoint = startPoint->getChildren()[0]->as<FunctionNode>();
+        startPoint = Util::as<NodeFunction>(startPoint->getChildren()[0]);
     }
 
-    if (startPoint->instanceOf<NodeFunctionFieldAccess>())
+    if (Util::instanceOf<NodeFunctionFieldAccess>(startPoint))
     {
-        return startPoint->template as<NodeFunctionFieldAccess>()->getFieldName();
+        return Util::as<NodeFunctionFieldAccess>(startPoint)->getFieldName();
     }
-    const ValueTypePtr& constantValue = startPoint->as<NodeFunctionConstantValue>()->getConstantValue();
+    const ValueTypePtr& constantValue = Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
     if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
     {
         return basicValueType->value;
