@@ -32,10 +32,6 @@
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregation.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
@@ -48,12 +44,10 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
@@ -335,24 +329,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         std::move(timeFunction),
         buildOperator->getJoinStrategy());
 }
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
-    std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
-    uint64_t operatorHandlerIndex,
-    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-    uint64_t windowSize,
-    uint64_t windowSlide)
-{
-    return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(
-        operatorHandlerIndex,
-        buildOperator->getInputSchema(),
-        buildOperator->getJoinFieldName(),
-        buildOperator->getBuildSide(),
-        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-        std::move(timeFunction),
-        buildOperator->getJoinStrategy(),
-        windowSize,
-        windowSlide);
-}
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicing(
     const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
@@ -382,25 +358,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
         buildOperator->getJoinStrategy());
-}
-
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJBucketing(
-    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
-    uint64_t operatorHandlerIndex,
-    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-    uint64_t windowSize,
-    uint64_t windowSlide)
-{
-    return std::make_shared<Runtime::Execution::Operators::HJBuildBucketing>(
-        operatorHandlerIndex,
-        buildOperator->getInputSchema(),
-        buildOperator->getJoinFieldName(),
-        buildOperator->getBuildSide(),
-        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-        std::move(timeFunction),
-        buildOperator->getJoinStrategy(),
-        windowSize,
-        windowSlide);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerWindowSinkOperator(
