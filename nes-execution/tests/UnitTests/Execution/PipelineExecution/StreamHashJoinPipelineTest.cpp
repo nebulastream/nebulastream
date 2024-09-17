@@ -313,4 +313,4 @@ INSTANTIATE_TEST_CASE_P(
         "PipelineCompiler"), ///CPPPipelineCompiler is currently not working
     [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) { return info.param; });
 
-} /// namespace NES::Runtime::Execution
+}

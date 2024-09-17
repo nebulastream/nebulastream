@@ -132,4 +132,4 @@ NLJBuildSlicing::NLJBuildSlicing(
     , StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy)
 {
 }
-} /// namespace NES::Runtime::Execution::Operators
+}

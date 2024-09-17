@@ -30,51 +30,40 @@ public:
     OptimizerConfiguration() : BaseConfiguration() {};
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
 
-    /**
-     * @brief allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP
-     * if set to true, the containment identification is slower but more accurate
-     * also, if the containment identification detects that a newly arrived query contains the already running one
-     * this entails un-deployment and re-deployment of the already running SQP
-     */
+    /// allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP
+    /// if set to true, the containment identification is slower but more accurate
+    /// also, if the containment identification detects that a newly arrived query contains the already running one
+    /// this entails un-deployment and re-deployment of the already running SQP
     BoolOption allowExhaustiveContainmentCheck
         = {ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK,
            "false",
            "Allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP.",
            {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
-     */
+    /// Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
     BoolOption performOnlySourceOperatorExpansion
         = {PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION,
            "false",
            "Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule. (Default: false)",
            {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping.
-     * @warning This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
-     * Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
-     */
+    /// Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping.
+    /// This option is set to false by default as currently not all operators are supported by Z3 based signature generator.
+    /// Because of this, in some cases, enabling this check may result in a crash or incorrect behavior.
     BoolOption performAdvanceSemanticValidation
         = {PERFORM_ADVANCE_SEMANTIC_VALIDATION,
            "false",
            "Perform advance semantic validation on the incoming queryIdAndCatalogEntryMapping. (Default: false)",
            {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Enable for distributed windows the NEMO placement where aggregation happens based on the params
-     * distributedWindowChildThreshold and distributedWindowCombinerThreshold.
-     */
+    /// Enable for distributed windows the NEMO placement where aggregation happens based on the params
+    /// distributedWindowChildThreshold and distributedWindowCombinerThreshold.
     BoolOption enableNemoPlacement
         = {ENABLE_NEMO_PLACEMENT,
            "false",
            "Enables NEMO distributed window rule to use central windows instead of the distributed windows. (Default: false)",
            {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Set the thread count for running concurrent placement amenders
-     */
     UIntOption placementAmendmentThreadCount
         = {PLACEMENT_AMENDMENT_THREAD_COUNT, "1", "set the placement amender thread count", {std::make_shared<NumberValidation>()}};
 
@@ -97,4 +86,4 @@ private:
     }
 };
 
-} /// namespace NES::Configurations
+}

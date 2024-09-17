@@ -48,4 +48,4 @@ protected:
     const SchemaPtr leftSchema;
     const SchemaPtr rightSchema;
 };
-}; /// namespace NES::Runtime::Execution::Operators
+};

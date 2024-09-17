@@ -49,4 +49,4 @@ protected:
     const MemoryProvider::MemoryProviderPtr leftMemProvider;
     const MemoryProvider::MemoryProviderPtr rightMemProvider;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

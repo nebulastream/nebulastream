@@ -173,4 +173,4 @@ HJProbeVarSized::HJProbeVarSized(
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

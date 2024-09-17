@@ -88,4 +88,4 @@ StreamJoinBuild::StreamJoinBuild(
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

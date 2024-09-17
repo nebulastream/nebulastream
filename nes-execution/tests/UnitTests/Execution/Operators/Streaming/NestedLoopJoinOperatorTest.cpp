@@ -685,4 +685,4 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpression
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
-} /// namespace NES::Runtime::Execution
+}

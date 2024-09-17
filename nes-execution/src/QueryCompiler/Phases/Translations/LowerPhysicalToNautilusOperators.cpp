@@ -1025,4 +1025,4 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
-} /// namespace NES::QueryCompilation
+}

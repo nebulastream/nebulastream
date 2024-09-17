@@ -86,4 +86,4 @@ HJBuildBucketing::HJBuildBucketing(
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

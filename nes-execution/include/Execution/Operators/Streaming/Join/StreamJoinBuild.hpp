@@ -71,4 +71,4 @@ protected:
     const uint64_t entrySize;
     const TimeFunctionPtr timeFunction;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

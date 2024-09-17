@@ -126,4 +126,4 @@ void StreamJoinProbe::terminate(ExecutionContext& ctx) const
     Operator::terminate(ctx);
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

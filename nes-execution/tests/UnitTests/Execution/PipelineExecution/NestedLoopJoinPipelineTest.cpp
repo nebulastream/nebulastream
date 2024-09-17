@@ -530,4 +530,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) { return info.param; });
 
-} /// namespace NES::Runtime::Execution
+}

@@ -26,19 +26,10 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalStreamJoinOperator
 {
 public:
-    /**
-     * @brief Constructor for a PhysicalStreamJoinOperator
-     * @param joinOperatorHandler
-     * @param joinStrategy
-     */
     PhysicalStreamJoinOperator(
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Getter for the join strategy
-     * @return StreamJoinStrategy
-     */
     StreamJoinStrategy getJoinStrategy() const;
 
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& getJoinOperatorHandler() const;
@@ -47,4 +38,4 @@ protected:
     Runtime::Execution::Operators::StreamJoinOperator streamJoinOperator;
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}
