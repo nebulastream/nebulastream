@@ -94,4 +94,4 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     return pipeline;
 }
 
-} /// namespace NES::QueryCompilation
+}

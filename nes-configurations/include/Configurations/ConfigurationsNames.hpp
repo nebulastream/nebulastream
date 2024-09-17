@@ -193,4 +193,4 @@ const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
-} /// namespace NES::Configurations
+}

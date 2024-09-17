@@ -40,10 +40,7 @@ public:
     QueryCompilerConfiguration() = default;
     QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
-    /**
-     * @brief Sets the dump mode for the query compiler. We differentiate between NONE, CONSOLE, FILE, and FILE_AND_CONSOLE.
-     * @note This setting is only for the nautilus compiler
-     */
+    /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     EnumOption<QueryCompilation::DumpMode> queryCompilerDumpMode
         = {QUERY_COMPILER_DUMP_MODE,
            QueryCompilation::DumpMode::NONE,
@@ -62,9 +59,6 @@ public:
            "Nautilus backend for the nautilus query compiler "
            "[MLIR_COMPILER_BACKEND|INTERPRETER|BC_INTERPRETER_BACKEND|FLOUNDER_COMPILER_BACKEND]."};
 
-    /**
-     * @brief Enables compilation cache
-     * */
     BoolOption useCompilationCache
         = {ENABLE_USE_COMPILATION_CACHE_CONFIG, "false", "Enable use compilation caching", {std::make_shared<BooleanValidation>()}};
 
@@ -113,4 +107,4 @@ private:
     }
 };
 
-} /// namespace NES::Configurations
+}

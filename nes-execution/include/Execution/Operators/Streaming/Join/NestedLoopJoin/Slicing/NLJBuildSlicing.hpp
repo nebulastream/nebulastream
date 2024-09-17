@@ -82,4 +82,4 @@ public:
         Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
         Nautilus::Value<Nautilus::UInt64>& timestamp) const;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

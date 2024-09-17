@@ -93,4 +93,4 @@ private:
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
 };
-} /// namespace NES::Optimizer
+}

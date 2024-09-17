@@ -221,4 +221,4 @@ HJProbe::HJProbe(
     , rightMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema))
 {
 }
-} /// namespace NES::Runtime::Execution::Operators
+}

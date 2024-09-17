@@ -95,4 +95,4 @@ protected:
 
     const WindowMetaData windowMetaData;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

@@ -132,4 +132,4 @@ private:
     uint64_t windowSize;
     uint64_t windowSlide;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

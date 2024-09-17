@@ -148,4 +148,4 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

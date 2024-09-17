@@ -22,23 +22,11 @@
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
-/**
- * @brief This class represents the physical stream join probe operator and gets translated to a join probe operator
- */
+/// This class represents the physical stream join probe operator and gets translated to a join probe operator
 class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator
 {
 public:
-    /**
-     * @brief creates a PhysicalStreamJoinProbeOperator with a provided operatorId
-     * @param id
-     * @param leftSchema
-     * @param rightSchema
-     * @param outputSchema
-     * @param operatorHandler
-     * @param windowStartFieldName: name for the field name that stores the window start value
-     * @param windowEndFieldName: name for the field name that stores the window end value
-     * @return PhysicalStreamJoinProbeOperator
-     */
+    /// creates a PhysicalStreamJoinProbeOperator with a provided operatorId
     static PhysicalOperatorPtr create(
         OperatorId id,
         const SchemaPtr& leftSchema,
@@ -50,16 +38,7 @@ public:
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
-     * @param leftSchema
-     * @param rightSchema
-     * @param outputSchema
-     * @param operatorHandler
-     * @param windowStartFieldName
-     * @param windowEndFieldName
-     * @return PhysicalStreamJoinProbeOperator
-     */
+    /// Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
     static PhysicalOperatorPtr create(
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
@@ -70,14 +49,6 @@ public:
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Constructor for a PhysicalStreamJoinProbeOperator
-     * @param id
-     * @param leftSchema
-     * @param rightSchema
-     * @param outputSchema
-     * @param operatorHandler
-     */
     PhysicalStreamJoinProbeOperator(
         OperatorId id,
         const SchemaPtr& leftSchema,
@@ -89,38 +60,19 @@ public:
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Creates a string containing the name of this physical operator
-     * @return String
-     */
+    /// Creates a string containing the name of this physical operator
     [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Performs a deep copy of this physical operator
-     * @return OperatorPtr
-     */
     OperatorPtr copy() override;
 
-    /**
-     * @brief Getter for the window meta data
-     * @return WindowMetaData
-     */
     const Runtime::Execution::Operators::WindowMetaData& getWindowMetaData() const;
 
-    /**
-     * @brief Getter for the join schema
-     * @return JoinSchema
-     */
     Runtime::Execution::Operators::JoinSchema getJoinSchema();
 
-    /**
-     * @brief Getter for joinExpression
-     * @return joinExpression
-     */
     ExpressionNodePtr getJoinExpression() const;
 
 protected:
     ExpressionNodePtr joinExpression;
     const Runtime::Execution::Operators::WindowMetaData windowMetaData;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}
