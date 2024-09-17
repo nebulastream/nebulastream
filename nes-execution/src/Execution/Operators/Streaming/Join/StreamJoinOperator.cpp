@@ -21,4 +21,4 @@ StreamJoinOperator::StreamJoinOperator(QueryCompilation::StreamJoinStrategy join
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

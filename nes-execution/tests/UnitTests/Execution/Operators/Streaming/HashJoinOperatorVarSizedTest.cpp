@@ -744,4 +744,4 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleWindows)
     ASSERT_TRUE(hashJoinProbeAndCheck(hashJoinProbeHelper));
 }
 
-} /// namespace NES::Runtime::Execution
+}

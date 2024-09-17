@@ -114,4 +114,4 @@ ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const
     return joinExpression;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

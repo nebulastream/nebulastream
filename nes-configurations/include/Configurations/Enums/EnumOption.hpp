@@ -31,20 +31,11 @@ template <IsEnum T>
 class EnumOption : public TypedBaseOption<T>
 {
 public:
-    /**
-     * @brief Constructor to define a EnumOption with a specific default value.
-     * @param name of the EnumOption.
-     * @param defaultValue of the EnumOption, has to be an member of the T.
-     * @param description of the EnumOption.
-     */
+    /// Constructor to define a EnumOption with a specific default value.
     EnumOption(const std::string& name, T defaultValue, const std::string& description)
         : TypedBaseOption<T>(name, defaultValue, description) {};
 
-    /**
-     * @brief Operator to assign a new value as a value of this option.
-     * @param value that will be assigned
-     * @return Reference to this option.
-     */
+    /// Operator to assign a new value as a value of this option.
     EnumOption<T>& operator=(const T& value)
     {
         this->value = value;

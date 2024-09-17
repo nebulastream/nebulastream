@@ -519,4 +519,4 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     }
 }
 
-} /// namespace NES::QueryCompilation
+}

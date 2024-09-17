@@ -25,18 +25,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalStreamJoinBuildOperator : public PhysicalStreamJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator
 {
 public:
-    /**
-     * @brief creates a PhysicalStreamJoinBuildOperator with a provided operatorId
-     * @param id
-     * @param leftSchema
-     * @param rightSchema
-     * @param outputSchema
-     * @param operatorHandler
-     * @param buildSide
-     * @param timeStampFieldName
-     * @param joinFieldName
-     * @return PhysicalStreamJoinSinkOperator
-     */
+    /// creates a PhysicalStreamJoinBuildOperator with a provided operatorId
     static PhysicalOperatorPtr create(
         OperatorId id,
         const SchemaPtr& inputSchema,
@@ -47,17 +36,7 @@ public:
         const std::string& joinFieldName,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
-     * @param leftSchema
-     * @param rightSchema
-     * @param outputSchema
-     * @param operatorHandler
-     * @param buildSide
-     * @param timeStampFieldName
-     * @param joinFieldName
-     * @return PhysicalStreamJoinBuildOperator
-     */
+    /// creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
     static PhysicalOperatorPtr create(
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
@@ -67,16 +46,6 @@ public:
         const std::string& joinFieldName,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Constructor for PhysicalStreamJoinBuildOperator
-     * @param id
-     * @param inputSchema
-     * @param outputSchema
-     * @param operatorHandler
-     * @param buildSide
-     * @param timeStampFieldName
-     * @param joinFieldName
-     */
     explicit PhysicalStreamJoinBuildOperator(
         const OperatorId id,
         const SchemaPtr& inputSchema,
@@ -87,39 +56,19 @@ public:
         const std::string& joinFieldName,
         QueryCompilation::StreamJoinStrategy joinStrategy);
 
-    /**
-     * @brief Deconstructor
-     */
     ~PhysicalStreamJoinBuildOperator() noexcept override = default;
 
-    /**
-     * @brief Returns a string containing the name of this physical operator
-     * @return String
-     */
+
+    /// Returns a string containing the name of this physical operator
     [[nodiscard]] std::string toString() const override;
 
-    /**
-     * @brief Performs a deep copy of this physical operator
-     * @return OperatorPtr
-     */
     OperatorPtr copy() override;
 
-    /**
-     * @brief Getter for the build side, either left or right
-     * @return JoinBuildSideType
-     */
+    /// Getter for the build side, either left or right
     JoinBuildSideType getBuildSide() const;
 
-    /**
-     * @brief Getter for the timestamp fieldname
-     * @return String
-     */
     const TimestampField& getTimeStampField() const;
 
-    /**
-     * @brief Getter for the timestamp join field name
-     * @return String
-     */
     const std::string& getJoinFieldName() const;
 
 private:
@@ -127,4 +76,4 @@ private:
     std::string joinFieldName;
     JoinBuildSideType buildSide;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

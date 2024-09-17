@@ -52,4 +52,4 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

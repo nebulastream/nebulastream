@@ -160,4 +160,4 @@ NLJProbe::NLJProbe(
 {
 }
 
-}; /// namespace NES::Runtime::Execution::Operators
+};

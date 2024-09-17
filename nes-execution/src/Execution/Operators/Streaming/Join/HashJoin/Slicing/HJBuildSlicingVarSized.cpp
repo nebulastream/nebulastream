@@ -141,4 +141,4 @@ void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuf
     auto joinState = std::make_unique<LocalHashJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }
-} /// namespace NES::Runtime::Execution::Operators
+}

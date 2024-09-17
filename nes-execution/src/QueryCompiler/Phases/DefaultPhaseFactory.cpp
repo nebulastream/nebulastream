@@ -62,4 +62,4 @@ LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQ
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
 
-} /// namespace NES::QueryCompilation::Phases
+}

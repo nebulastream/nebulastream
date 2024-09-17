@@ -69,4 +69,4 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan)
     return predicateReorderingRule->apply(duplicateQueryPlan);
 }
 
-} /// namespace NES::Optimizer
+}

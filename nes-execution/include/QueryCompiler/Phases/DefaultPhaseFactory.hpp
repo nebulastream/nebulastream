@@ -28,4 +28,4 @@ public:
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() override;
 };
 
-} /// namespace NES::QueryCompilation::Phases
+}
