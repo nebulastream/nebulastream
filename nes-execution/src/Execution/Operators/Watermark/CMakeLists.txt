@@ -11,6 +11,7 @@
 # limitations under the License.
 
 <<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/CMakeLists.txt
+<<<<<<<< HEAD:nes-execution/src/Execution/Operators/Watermark/CMakeLists.txt
 
 add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
@@ -23,3 +24,9 @@ add_source_files(nes-execution
         RegistryFunctionExecutable.cpp
 )
 >>>>>>>> 8d070c4b32 (feat(Execution) Creating an executable function registry and porting existing functions to it):nes-execution/src/Execution/Functions/Registry/CMakeLists.txt
+========
+add_source_files(nes-sources
+        Parser.cpp
+        CSVParser.cpp
+)
+>>>>>>>> ba050f6ff9 (chore(Build) Fixed rebase errors):nes-sources/src/Parsers/CMakeLists.txt
