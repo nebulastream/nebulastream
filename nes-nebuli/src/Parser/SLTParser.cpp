@@ -12,17 +12,37 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <array>
+#include <cstddef>
 #include <fstream>
+#include <functional>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Parser/SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
-namespace NES
+namespace NES::SLTParser
 {
+
+static constexpr std::array<std::pair<std::string_view, TokenType>, 4> stringToToken
+    = {{{"SourceCSV"sv, TokenType::CSV_SOURCE},
+        {"Source"sv, TokenType::SLT_SOURCE},
+        {"Query::from"sv, TokenType::QUERY},
+        {"----"sv, TokenType::RESULT_DELIMITER}}};
+
+bool emptyOrComment(const std::string& line)
+{
+    return line.empty() /// completely empty
+        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
+        || line.starts_with('#'); /// slt comment
+}
 
 void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -30,12 +50,12 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
         substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
-        "Substitution rule keywords must be unique. Tried to register for the second time: " << rule.keyword);
+        "substitution rule keywords must be unique. Tried to register for the second time: " << rule.keyword);
     substitutionRules.emplace_back(rule);
 }
 
 /// We do not load the file in a constructor, as we want to be able to handle errors
-[[nodiscard]] bool SLTParser::loadFile(const std::string& filePath)
+bool SLTParser::loadFile(const std::string& filePath)
 {
     currentLine = 0;
     lines.clear();
@@ -49,103 +69,95 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
     std::string line;
     while (std::getline(infile, line))
     {
-        applySubstitutionRules(line);
-        lines.push_back(line);
+        /// Remove commented code
+        size_t const commentPos = line.find('#');
+        if (commentPos != std::string::npos)
+        {
+            line = line.substr(0, commentPos);
+        }
+        /// add lines that do not start with a comment
+        if (commentPos != 0)
+        {
+            /// Apply subsitutions & add to parsing lines
+            applySubstitutionRules(line);
+            lines.push_back(line);
+        }
     }
     return true;
 }
-
-using QueryCallback = std::function<void(const std::string&)>;
-using QueryResultTuplesCallback = std::function<void(std::vector<std::string>&&)>;
-using SourceInFileTuplesCallback = std::function<void(std::vector<std::string>&&, std::vector<std::string>&&)>;
-using SourceCallback = std::function<void(std::vector<std::string>&&)>;
 
 void SLTParser::registerOnQueryCallback(QueryCallback callback)
 {
     this->onQueryCallback = std::move(callback);
 }
 
-void SLTParser::registerOnQueryResultTuplesCallback(QueryResultTuplesCallback callback)
+void SLTParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
 {
-    this->onQueryResultTuplesCallback = std::move(callback);
+    this->onResultTuplesCallback = std::move(callback);
 }
 
-void SLTParser::registerOnSourceInFileTuplesCallback(SourceInFileTuplesCallback callback)
+void SLTParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
-    this->onSourceInFileTuplesCallback = std::move(callback);
+    this->onSLTSourceCallback = std::move(callback);
 }
 
-void SLTParser::registerOnSourceCallback(SourceCallback callback)
+void SLTParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 {
-    this->onSourceCallback = std::move(callback);
+    this->onCSVSourceCallback = std::move(callback);
 }
 
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
-[[nodiscard]] bool SLTParser::parse()
+void SLTParser::parse()
 {
-    /// check if file is open
-    if (lines.empty())
+    while (auto token = nextToken())
     {
-        NES_ERROR("file is not open");
-        return false;
-    }
-
-    auto token = nextToken();
-    while (token != TokenType::END)
-    {
-        if (isCSVSource(token))
+        if (token.value() == TokenType::CSV_SOURCE)
         {
-            auto source = expectSource();
-            if (onSourceCallback)
+            auto source = expectCSVSource();
+            if (onCSVSourceCallback)
             {
-                onSourceCallback(std::move(source));
+                onCSVSourceCallback(std::move(source));
             }
         }
-        else if (isSource(token))
+        else if (token.value() == TokenType::SLT_SOURCE)
         {
-            auto source = expectSource();
-            auto tuples = expectTuples(true);
-            if (onSourceInFileTuplesCallback)
+            auto source = expectSLTSource();
+            if (onSLTSourceCallback)
             {
-                onSourceInFileTuplesCallback(std::move(source), std::move(tuples));
+                onSLTSourceCallback(std::move(source));
             }
         }
-        else if (isQuery(token))
+        else if (token.value() == TokenType::QUERY)
         {
             auto query = expectQuery();
             if (onQueryCallback)
             {
-                onQueryCallback(query);
+                onQueryCallback(std::move(query));
             }
-            auto token = nextToken();
-            if (isResultDelimiter(token))
+            token = nextToken();
+            if (token.has_value() && token.value() == TokenType::RESULT_DELIMITER)
             {
                 auto tuples = expectTuples();
-                if (onQueryResultTuplesCallback)
+                if (onResultTuplesCallback)
                 {
-                    onQueryResultTuplesCallback(std::move(tuples));
+                    onResultTuplesCallback(std::move(tuples));
                 }
             }
             else
             {
-                NES_ERROR("expected result delimiter after query");
-                return false;
+                throw SLTUnexpectedToken("expected result delimiter `----` after query");
             }
         }
-        else if (isResultDelimiter(token))
+        else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            NES_ERROR("got result delimiter without query");
-            return false;
+            throw SLTUnexpectedToken("unexpected occurence of result delimiter `----`");
         }
-        else if (isInvalid(token))
+        else if (token.value() == TokenType::INVALID)
         {
-            NES_ERROR("invalid token");
-            return false;
+            throw SLTUnexpectedToken("got invalid token in line: " + lines[currentLine]);
         }
-        token = nextToken();
     }
-    return true;
 }
 
 void SLTParser::applySubstitutionRules(std::string& line)
@@ -168,117 +180,212 @@ void SLTParser::applySubstitutionRules(std::string& line)
     }
 }
 
-[[nodiscard]] SLTParser::TokenType SLTParser::nextToken()
+std::optional<TokenType> SLTParser::getTokenIfValid(std::string potentialToken)
 {
-    if (++currentLine >= lines.size())
+    /// Query is a special case as it's idenfying token is not space seperated
+    if (potentialToken.compare(0, 11, "Query::from") == 0)
     {
-        return TokenType::END;
+        return TokenType::QUERY;
+    }
+    /// Lookup in map
+    const auto* it = std::find_if(
+        stringToToken.begin(), stringToToken.end(), [&potentialToken](const auto& pair) { return pair.first == potentialToken; });
+    if (it != stringToToken.end())
+    {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+bool SLTParser::moveToNextToken()
+{
+    /// Do not move to next token if its the first
+    if (firstToken)
+    {
+        firstToken = false;
+    }
+    else
+    {
+        ++currentLine;
     }
 
+    /// Ignore comments
     while (currentLine < lines.size() && emptyOrComment(lines[currentLine]))
     {
         ++currentLine;
     }
 
-    /// Prevents errors when we reach the end of the file after a comment
-    if (currentLine >= lines.size())
+    /// Return false if we reached the end of the file
+    return currentLine < lines.size();
+}
+
+
+std::optional<TokenType> SLTParser::nextToken()
+{
+    if (!moveToNextToken())
     {
-        return TokenType::END;
+        return std::nullopt;
     }
 
-    std::vector<std::string> argumentList = {};
+    std::string potentialToken;
+    std::istringstream stream(lines[currentLine]);
+    stream >> potentialToken;
+
+    INVARIANT(!potentialToken.empty(), "a potential token should never be empty");
+
+    return getTokenIfValid(potentialToken);
+}
+
+SLTParser::SLTSource SLTParser::expectSLTSource()
+{
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+
+    SLTSource source;
     auto& line = lines[currentLine];
     std::istringstream stream(line);
-    std::string token;
 
-    while (stream >> token)
+    /// Read and discard the first word as it is always Source
+    std::string discard;
+    if (!(stream >> discard))
     {
-        if (token.compare(0, 11, "Query::from") == 0)
+        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+    }
+    INVARIANT(discard == SLTSourceToken, "Expected first word to be `" + SLTSourceToken + "` for source statement");
+
+    /// Read the source name and check if successful
+    if (!(stream >> source.name))
+    {
+        throw SLTUnexpectedToken("failed to read source name in: " + line);
+    }
+
+    std::vector<std::string> arguments;
+    std::string argument;
+    while (stream >> argument)
+    {
+        arguments.push_back(argument);
+    }
+
+    if (arguments.size() % 2 != 0)
+    {
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        std::string fieldtype = arguments[i];
+        std::string fieldname = arguments[i + 1];
+        if (auto type = magic_enum::enum_cast<BasicType>(fieldtype))
         {
-            argumentList.push_back("Query::from");
-            argumentList.push_back(token.substr(11));
+            source.fields.emplace_back(type.value(), fieldname);
         }
         else
         {
-            argumentList.push_back(token);
+            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
         }
     }
 
-    if (!argumentList.empty())
-    {
-        auto it = std::find_if(
-            stringToToken.begin(), stringToToken.end(), [&argumentList](const auto& pair) { return pair.first == argumentList[0]; });
+    /// After the source defintion line we expect result tuples
+    source.tuples = expectTuples(true);
 
-        if (it != stringToToken.end())
-        {
-            return it->second;
-        }
-        NES_ERROR("Unrecognized parameter {}", argumentList[0]);
-        return TokenType::INVALID;
-    }
-
-    NES_ERROR("No tokens found in line {}", currentLine);
-    return TokenType::INVALID;
+    return source;
 }
 
-[[nodiscard]] std::vector<std::string> SLTParser::expectSource()
+
+SLTParser::CSVSource SLTParser::expectCSVSource() const
 {
-    std::vector<std::string> argumentList = {};
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+    CSVSource source;
     auto& line = lines[currentLine];
     std::istringstream stream(line);
-    std::string token;
-    while (stream >> token)
+
+    /// Read and discard the first word as it is always CSVSource
+    std::string discard;
+    if (!(stream >> discard))
     {
-        argumentList.push_back(token);
+        throw SLTUnexpectedToken("failed to read the first word in: " + line);
     }
-    return argumentList;
+    INVARIANT(discard == CSVSourceToken, "Expected first word to be `" + CSVSourceToken + "` for csv source statement");
+
+    /// Read the source name and check if successful
+    if (!(stream >> source.name))
+    {
+        throw SLTUnexpectedToken("failed to read source name in: " + line);
+    }
+
+    std::vector<std::string> arguments;
+    std::string argument;
+    while (stream >> argument)
+    {
+        arguments.push_back(argument);
+    }
+
+    source.csvFilePath = arguments.back();
+    arguments.pop_back();
+
+    if (arguments.size() % 2 != 0)
+    {
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        std::string const fieldtype = arguments[i];
+        std::string const fieldname = arguments[i + 1];
+        if (auto type = magic_enum::enum_cast<BasicType>(fieldtype))
+        {
+            source.fields.emplace_back(type.value(), fieldname);
+        }
+        else
+        {
+            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
+        }
+    }
+    return source;
 }
 
-bool SLTParser::emptyOrComment(const std::string& line)
+SLTParser::ResultTuples SLTParser::expectTuples(bool ignoreFirst)
 {
-    return line.empty() /// completely empty
-        || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
-        || line.find('#') == 0; /// slt comment
-}
-
-
-[[nodiscard]] std::vector<std::string> SLTParser::expectTuples(bool ignoreFirst)
-{
-    std::vector<std::string> result;
-    /// skip the result line (----) if we are still reading that
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
+    std::vector<std::string> tuples;
+    /// skip the result line `----`
     if (currentLine < lines.size() && (lines[currentLine] == "----" || ignoreFirst))
     {
         currentLine++;
     }
-    /// read the tuples until we encounter a new line
+    /// read the tuples until we encounter an empty line
     while (currentLine < lines.size() && !lines[currentLine].empty())
     {
-        result.push_back(lines[currentLine]);
+        tuples.push_back(lines[currentLine]);
         currentLine++;
     }
-    return result;
+    return tuples;
 }
 
-[[nodiscard]] std::string SLTParser::expectQuery()
+SLTParser::Query SLTParser::expectQuery()
 {
+    INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::string query;
     bool firstLine = true;
-    while (currentLine < lines.size() && !emptyOrComment(lines[currentLine]))
+    while (currentLine < lines.size())
     {
-        if (lines[currentLine] == "----")
+        if (!emptyOrComment(lines[currentLine]))
         {
-            --currentLine;
-            break;
+            /// Query definition ends with result delimiter.
+            if (lines[currentLine] == "----")
+            {
+                --currentLine;
+                break;
+            }
+            if (!firstLine)
+            {
+                query += "\n";
+            }
+            query += lines[currentLine];
+            firstLine = false;
         }
-        if (!firstLine)
-        {
-            query += "\n";
-        }
-        query += lines[currentLine];
-        firstLine = false;
-
         currentLine++;
     }
+    INVARIANT(!query.empty(), "when expecting a query keyword the query should not be empty");
     return query;
 }
-} /// namespace NES
+}
