@@ -63,7 +63,7 @@ public:
         /// file:// to make the link clickable in the console
         std::cout << "Find the test log at: file://" << logPath.string() << std::endl;
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" + systemTestName + std::to_string(testId + 1) + ".csv");
+        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" + systemTestName + std::to_string(testId) + ".csv");
 
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cachedQueryPlanFile);
@@ -73,16 +73,16 @@ public:
             GTEST_SKIP();
         }
 
-        auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, *SystemTestTemplate::uut);
+        auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, *uut);
         ASSERT_NE(queryId, INVALID_QUERY_ID);
-        IntegrationTestUtil::startQuery(queryId, *SystemTestTemplate::uut);
-        while (!IntegrationTestUtil::isQueryStopped(queryId, *SystemTestTemplate::uut))
+        IntegrationTestUtil::startQuery(queryId, *uut);
+        while (!IntegrationTestUtil::isQueryStopped(queryId, *uut))
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
-        IntegrationTestUtil::unregisterQuery(queryId, *SystemTestTemplate::uut);
+        IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
-        ASSERT_TRUE(NES::CLI::checkResult(testFile, systemTestName, testId + 1));
+        ASSERT_TRUE(NES::CLI::checkResult(testFile, systemTestName, testId));
     }
 
 private:
