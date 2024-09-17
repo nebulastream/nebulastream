@@ -340,3 +340,12 @@ struct LogCaller<LogLevel::LOG_WARNING>
     } while (0)
 
 }
+
+#define FMT_OSTREAM(TypeName) \
+    namespace fmt \
+    { \
+    template <> \
+    struct formatter<typename TypeName> : ostream_formatter \
+    { \
+    }; \
+    }

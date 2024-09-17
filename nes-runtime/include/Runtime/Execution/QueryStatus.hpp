@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
 namespace NES::Runtime::Execution
 {
 enum class QueryStatus : uint8_t
@@ -26,6 +28,11 @@ enum class QueryStatus : uint8_t
     Failed,
     Invalid
 };
+
+inline std::ostream& operator<<(std::ostream& os, const QueryStatus& qs)
+{
+    return os << magic_enum::enum_name(qs);
+}
 
 namespace QueryStatusUtil
 {
@@ -41,3 +48,5 @@ inline bool isRegisteredButNotRunning(QueryStatus status)
 }
 }
 }
+
+FMT_OSTREAM(NES::Runtime::Execution::QueryStatus)
