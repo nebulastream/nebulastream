@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
-
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/Source.hpp>
-#include <Util/PluginRegistry.hpp>
-
-
-namespace NES::Sources
+#include <memory>
+#include <string>
+namespace NES::Compiler
 {
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, const Schema&, const SourceDescriptor&>
-{
-};
+class SourceCode;
+enum class Language;
+class DynamicObject;
+class LanguageCompiler;
+class CompilationResult;
+class CompilationRequest;
+class LanguageCompiler;
+class JITCompiler;
+class ExternalAPI;
 
-} /// namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Compiler

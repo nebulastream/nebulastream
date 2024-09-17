@@ -22,7 +22,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -120,7 +119,7 @@ struct SplitFunctionHelper
         auto result = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result_value);
         if (result.ec == std::errc::invalid_argument)
         {
-            NES_THROW_RUNTIME_ERROR("Could not convert");
+            throw FunctionNotImplemented("Could not convert");
         }
         return result_value;
     };
@@ -268,7 +267,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw DynamicCast(fmt::format("Invalid dynamic cast: from {} to {}", typeid(In).name(), typeid(Out).name()));
+    throw DynamicCast(std::format("Invalid dynamic cast: from {} to {}", typeid(In).name(), typeid(Out).name()));
 }
 
 /// cast the given object to the specified type.

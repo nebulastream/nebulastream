@@ -10,5 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_execution_test(execution-nonkeyed-threshold-window-operator-test "NonKeyedThresholdWindowOperatorTest.cpp")
-add_nes_execution_test(execution-keyed-threshold-window-operator-test "KeyedThresholdWindowOperatorTest.cpp")
+add_source_files(nes-sources
+        Parser.cpp
+        CSVParser.cpp
+)

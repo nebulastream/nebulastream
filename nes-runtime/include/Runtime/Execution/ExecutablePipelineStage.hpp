@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
