@@ -151,24 +151,10 @@ private:
         uint64_t operatorHandlerIndex,
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
 
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerHJBucketing(
-        const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& hashJoinBuildOperator,
-        uint64_t operatorHandlerIndex,
-        Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-        uint64_t windowSize,
-        uint64_t windowSlide);
-
     Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJSlicing(
         std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
         uint64_t operatorHandlerIndex,
         Runtime::Execution::Operators::TimeFunctionPtr timeFunction);
-
-    Runtime::Execution::Operators::ExecutableOperatorPtr lowerNLJBucketing(
-        std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> nestedLoopJoinBuildOperator,
-        uint64_t operatorHandlerIndex,
-        Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-        uint64_t windowSize,
-        uint64_t windowSlide);
 
     std::shared_ptr<QueryCompilerOptions> options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
