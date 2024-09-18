@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <string>
@@ -53,7 +54,9 @@ public:
     /// Register a substitution rule to be applied to the file before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
-    [[nodiscard]] bool loadFile(const std::string& filePath);
+    /// Loading overrides exsing parse content
+    [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
+    [[nodiscard]] bool loadString(const std::string& str);
 
     /// Type defintions ///
     struct Field

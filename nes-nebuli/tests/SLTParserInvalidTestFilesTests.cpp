@@ -38,10 +38,11 @@ TEST_F(SLTParserInvalidTestFilesTest, InvalidTestFile)
     std::string const filename = TEST_DATA_DIR "invalid.test";
 
     SLTParser parser{};
-    parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&)
-    {
-        /// nop, ensure parsing
-    });
+    parser.registerOnCSVSourceCallback(
+        [&](SLTParser::CSVSource&&)
+        {
+            /// nop, ensure parsing of CSVSource token
+        });
 
     ASSERT_TRUE(parser.loadFile(filename));
     try
