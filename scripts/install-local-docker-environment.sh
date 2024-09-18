@@ -12,10 +12,15 @@ usage() {
 
 # If set we built rebuilt all docker images locally
 BUILD_LOCAL=0
+FORCE_ROOTLESS=0
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -l|--local)
             BUILD_LOCAL=1
+            shift
+            ;;
+        -r|--rootless)
+            FORCE_ROOTLESS=1
             shift
             ;;
         -*)
@@ -40,7 +45,7 @@ USE_ROOTLESS=false
 USE_UID=$(id -u)
 USE_GID=$(id -g)
 USE_USERNAME=$(whoami)
-if docker info -f "{{println .SecurityOptions}}" | grep rootless; then
+if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE_ROOTLESS" = 1 ]; then
   echo "Detected docker rootless mode. Container internal user will be root"
   USE_ROOTLESS=true
   USE_UID=0
