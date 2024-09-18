@@ -30,7 +30,7 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
 
         add_custom_command(
                 OUTPUT ${CACHE_FILE}
-                COMMAND nebuli dump --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR}
+                COMMAND nebuli dump --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR} || ( echo "-- Error: Failed to create cache file for ${SYSTEM_TEST_FILE_PATH} nebuli dump --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR} Proceeding with the build process." )
                 DEPENDS nebuli nes-single-node-worker ${SYSTEM_TEST_FILE_PATH}
         )
 
