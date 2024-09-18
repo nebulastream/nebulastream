@@ -45,15 +45,7 @@ TEST_F(SLTParserInvalidTestFilesTest, InvalidTestFile)
         });
 
     ASSERT_TRUE(parser.loadFile(filename));
-    try
-    {
-        parser.parse();
-        FAIL();
-    }
-    catch (const Exception& ex)
-    {
-        ASSERT_EQ(ex.code(), ErrorCode::SLTUnexpectedToken);
-    }
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
 }

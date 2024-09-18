@@ -22,6 +22,17 @@
 namespace NES::Testing
 {
 
+#define ASSERT_EXCEPTION_ERRORCODE(statement, errorCode) \
+    try \
+    { \
+        statement; \
+        FAIL(); \
+    } \
+    catch (const Exception& ex) \
+    { \
+        ASSERT_EQ(ex.code(), errorCode); \
+    }
+
 namespace detail
 {
 class TestWaitingHelper
