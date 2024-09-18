@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.180](https://github.com/nebulastream/nebulastream/tree/v0.6.180) (2024-09-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.179...v0.6.180)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Add timeout to TCPSource [\#5094](https://github.com/nebulastream/nebulastream/issues/5094)
+
 ## [v0.6.179](https://github.com/nebulastream/nebulastream/tree/v0.6.179) (2024-09-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.178...v0.6.179)
