@@ -154,10 +154,9 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const {
 }
 
 bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) {
-
     // determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
-    NES_DEBUG("Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
+    NES_DEBUG("Fill buffer with #tuplesThisPass={} of size={}, operatorId={}", tuplesThisPass, tupleSize, operatorId);
     //init tuple count for buffer
     uint64_t tupleCount = 0;
     //init timer for flush interval
@@ -165,6 +164,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
     //init flush interval value
     bool flushIntervalPassed = false;
     //receive data until tupleBuffer capacity reached or flushIntervalPassed
+    NES_DEBUG("operatorId={}, circularBufferSize={}", operatorId, circularBuffer->size());
     while (tupleCount < tuplesThisPass && !flushIntervalPassed) {
         //if circular buffer is not full obtain data from socket
         if (!circularBuffer->full()) {
@@ -172,14 +172,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
             //if read method returned -1 an error occurred during read.
             if (bufferSizeReceived == -1) {
-                NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
-                return false;
-            }
-            writer.consume(bufferSizeReceived);
-            if (bufferSizeReceived == 0 && circularBuffer->empty()) {
+                NES_WARNING("An error or timeout occurred while reading from socket. Error: {}", strerror(errno));
+            } else if (bufferSizeReceived == 0 && circularBuffer->empty()) {
                 NES_WARNING("TCP Source detected EoS");
                 this->running.exchange(false);
                 break;
+            } else {
+                writer.consume(bufferSizeReceived);
             }
         }
 
@@ -315,6 +314,14 @@ void TCPSource::createOrLoadPersistedProperties() {
         NES_ERROR("Failed to create socket. Error: {}", strerror(errno));
         connection = -1;
         return;
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;          // timeout in seconds
+    timeout.tv_usec = 100 * 1000;// timeout, 100ms converted to microseconds
+    // Set the receive timeout option
+    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        NES_ERROR("setsockopt failed");
     }
 
     NES_TRACE("Created socket");

@@ -387,11 +387,11 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidJoinQueryWithNemo) {
     NES_INFO("start coordinator");
     uint64_t tuplesPerBuffer = 100;
     uint64_t bufferSizeInBytes = 25600;
-    uint64_t expectedBuffers = 93;//37 with top down, 93 with nemo
+    uint64_t expectedBuffers = 1000;
 
     uint64_t gatheringIntervalMs = 100;
-    uint64_t buffers = 0;
-    uint64_t expectedTuples = 31028;//tuples * nodesPerNode * leafNodesPerNode - header line
+    uint64_t buffers = 5;
+    uint64_t expectedTuples = 1001;
 
     // the query
     std::string outputFilePath = getTestResourceFolder() / "testExecutingValidJoinQueryWithNemo.out";
@@ -400,7 +400,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidJoinQueryWithNemo) {
     querySs << "{\"userQuery\" : ";
     querySs << "\"Query::from(\\\"left\\\").joinWith(Query::from(\\\"right\\\")).where(Attribute(\\\"location\\\") == Attribute("
                "\\\"location\\\"))"
-               ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Milliseconds(1000)))"
+               ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Milliseconds(1)))"
                ".sink(FileSinkDescriptor::create(\\\"";
     querySs << outputFilePath;
     querySs << R"(\", \"CSV_FORMAT\", \"APPEND\", true)";
@@ -587,6 +587,214 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidJoinQueryWithNemo) {
 
     int response = remove(outputFilePath.c_str());
     ASSERT_TRUE(response == 0);
+}
+
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidJoinQueryWithNemoTcpSource) {
+    NES_INFO("start coordinator");
+    uint64_t bufferSizeInBytes = 1024;
+    uint64_t socketBufferSize = 32;
+
+    uint64_t expectedBuffers = 20;//37 with top down, 93 with nemo
+    uint64_t expectedTuples = 20; //tuples * nodesPerNode * leafNodesPerNode - header line
+
+    // the query
+    std::string outputFilePath = getTestResourceFolder() / "testExecutingValidJoinQueryWithNemo.out";
+    remove(outputFilePath.c_str());
+    std::stringstream querySs;
+    querySs << "{\"userQuery\" : ";
+    querySs << "\"Query::from(\\\"left\\\").joinWith(Query::from(\\\"right\\\")).where(Attribute(\\\"sequence\\\") == Attribute("
+               "\\\"sequence\\\"))"
+               ".window(TumblingWindow::of(EventTime(Attribute(\\\"sequence\\\")), Milliseconds(1)))"
+               ".sink(FileSinkDescriptor::create(\\\"";
+    querySs << outputFilePath;
+    querySs << R"(\", \"CSV_FORMAT\", \"APPEND\", true)";
+    querySs << R"());","placement" : "BottomUp"})";
+    querySs << endl;
+
+    uint64_t healthWaitTime = 100;
+    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
+                                                    TestUtils::restPort(*restPort),
+                                                    TestUtils::bufferSizeInBytes(bufferSizeInBytes, "worker."),
+                                                    TestUtils::enableNemoJoin(),// same result with and without
+                                                    TestUtils::enableDebug()});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 0));
+
+    std::stringstream schemaLeft;
+    schemaLeft << "{\"logicalSourceName\" : \"left\",\"schema\" : \"Schema::create()"
+                  "->addField(createField(\\\"id\\\", BasicType::UINT64))"
+                  "->addField(createField(\\\"sequence\\\", BasicType::UINT64))"
+                  "->addField(createField(\\\"eventTime\\\", BasicType::UINT64))"
+                  "->addField(createField(\\\"ingestionTime\\\", BasicType::UINT64));\"}";
+    schemaLeft << endl;
+    NES_INFO("schema left submit={}", schemaLeft.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schemaLeft.str(), std::to_string(*restPort)));
+
+    std::stringstream schemaRight;
+    schemaRight << "{\"logicalSourceName\" : \"right\",\"schema\" : \"Schema::create()"
+                   "->addField(createField(\\\"id\\\", BasicType::UINT64))"
+                   "->addField(createField(\\\"sequence\\\", BasicType::UINT64))"
+                   "->addField(createField(\\\"eventTime\\\", BasicType::UINT64))"
+                   "->addField(createField(\\\"ingestionTime\\\", BasicType::UINT64));\"}";
+    schemaRight << endl;
+    NES_INFO("schema left submit={}", schemaRight.str());
+    ASSERT_TRUE(TestUtils::addLogicalSource(schemaRight.str(), std::to_string(*restPort)));
+
+    auto joinWorker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                               TestUtils::dataPort(0),
+                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                               TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                               TestUtils::workerHealthCheckWaitTime(healthWaitTime)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 1));
+
+    auto joinWorker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                               TestUtils::dataPort(0),
+                                               TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                               TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                               TestUtils::workerHealthCheckWaitTime(healthWaitTime)});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 2));
+
+    auto leftJoinSource1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                                   TestUtils::dataPort(0),
+                                                   TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                   TestUtils::parentId(2),
+                                                   TestUtils::physicalSourceName("test_stream_left_1"),
+                                                   TestUtils::logicalSourceName("left"),
+                                                   TestUtils::workerHealthCheckWaitTime(healthWaitTime),
+                                                   TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                                   TestUtils::enableDebug(),
+                                                   TestUtils::sourceType(SourceType::TCP_SOURCE),
+                                                   TestUtils::inputFormat("NES_BINARY"),
+                                                   TestUtils::tcpSocketHost("127.0.0.1"),
+                                                   TestUtils::tcpSocketPort("3000"),
+                                                   TestUtils::tcpSocketPersistentSource("true"),
+                                                   TestUtils::tcpSocketDecidedMessageSize("USER_SPECIFIED_BUFFER_SIZE"),
+                                                   TestUtils::tcpSocketBufferSize(std::to_string(socketBufferSize))});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 3));
+
+    auto rightJoinSource1 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                                    TestUtils::dataPort(0),
+                                                    TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                    TestUtils::parentId(2),
+                                                    TestUtils::physicalSourceName("test_stream_right_1"),
+                                                    TestUtils::logicalSourceName("right"),
+                                                    TestUtils::workerHealthCheckWaitTime(healthWaitTime),
+                                                    TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::sourceType(SourceType::TCP_SOURCE),
+                                                    TestUtils::inputFormat("NES_BINARY"),
+                                                    TestUtils::tcpSocketHost("127.0.0.1"),
+                                                    TestUtils::tcpSocketPort("3000"),
+                                                    TestUtils::tcpSocketPersistentSource("true"),
+                                                    TestUtils::tcpSocketDecidedMessageSize("USER_SPECIFIED_BUFFER_SIZE"),
+                                                    TestUtils::tcpSocketBufferSize(std::to_string(socketBufferSize))});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 4));
+
+    auto leftJoinSource2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                                   TestUtils::dataPort(0),
+                                                   TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                   TestUtils::parentId(3),
+                                                   TestUtils::physicalSourceName("test_stream_left_2"),
+                                                   TestUtils::logicalSourceName("left"),
+                                                   TestUtils::workerHealthCheckWaitTime(healthWaitTime),
+                                                   TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                                   TestUtils::enableDebug(),
+                                                   TestUtils::sourceType(SourceType::TCP_SOURCE),
+                                                   TestUtils::inputFormat("NES_BINARY"),
+                                                   TestUtils::tcpSocketHost("127.0.0.1"),
+                                                   TestUtils::tcpSocketPort("3000"),
+                                                   TestUtils::tcpSocketPersistentSource("true"),
+                                                   TestUtils::tcpSocketDecidedMessageSize("USER_SPECIFIED_BUFFER_SIZE"),
+                                                   TestUtils::tcpSocketBufferSize(std::to_string(socketBufferSize))});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 5));
+
+    auto rightJoinSource2 = TestUtils::startWorker({TestUtils::rpcPort(0),
+                                                    TestUtils::dataPort(0),
+                                                    TestUtils::coordinatorPort(*rpcCoordinatorPort),
+                                                    TestUtils::parentId(3),
+                                                    TestUtils::physicalSourceName("test_stream_right_2"),
+                                                    TestUtils::logicalSourceName("right"),
+                                                    TestUtils::workerHealthCheckWaitTime(healthWaitTime),
+                                                    TestUtils::bufferSizeInBytes(bufferSizeInBytes),
+                                                    TestUtils::enableDebug(),
+                                                    TestUtils::sourceType(SourceType::TCP_SOURCE),
+                                                    TestUtils::inputFormat("NES_BINARY"),
+                                                    TestUtils::tcpSocketHost("127.0.0.1"),
+                                                    TestUtils::tcpSocketPort("3000"),
+                                                    TestUtils::tcpSocketPersistentSource("true"),
+                                                    TestUtils::tcpSocketDecidedMessageSize("USER_SPECIFIED_BUFFER_SIZE"),
+                                                    TestUtils::tcpSocketBufferSize(std::to_string(socketBufferSize))});
+    ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeoutMs, 6));
+
+    auto topology = TestUtils::getTopology(*restPort);
+    NES_INFO("The final topology:\n{}", topology.dump());
+    //check edges
+    for (uint64_t i = 0; i < topology.at("edges").size(); i++) {
+        auto source = topology["edges"][i]["source"].get<int>();
+        auto target = topology["edges"][i]["target"].get<int>();
+
+        if (source <= 3) {
+            EXPECT_EQ(target, 1);
+        } else if (source <= 5) {
+            EXPECT_EQ(target, 2);
+        } else {
+            EXPECT_EQ(target, 3);
+        }
+    }
+
+    // deploy values for statistics
+    nlohmann::json request;
+    request["topologyNodeId"] = 4;
+    request["logicalSource"] = "left";
+    request["physicalSource"] = "test_stream_left_1";
+    request["fieldName"] = "location";
+    request["value"] = std::to_string(1);
+    auto success = TestUtils::addSourceStatistics(request.dump(), std::to_string(*restPort));
+    ASSERT_TRUE(success["success"]);
+
+    request["topologyNodeId"] = 5;
+    request["logicalSource"] = "right";
+    request["physicalSource"] = "test_stream_right_1";
+    request["fieldName"] = "location";
+    request["value"] = std::to_string(1);
+    success = TestUtils::addSourceStatistics(request.dump(), std::to_string(*restPort));
+    ASSERT_TRUE(success["success"]);
+
+    request["topologyNodeId"] = 6;
+    request["logicalSource"] = "left";
+    request["physicalSource"] = "test_stream_left_2";
+    request["fieldName"] = "location";
+    request["value"] = std::to_string(2);
+    success = TestUtils::addSourceStatistics(request.dump(), std::to_string(*restPort));
+    ASSERT_TRUE(success["success"]);
+
+    request["topologyNodeId"] = 7;
+    request["logicalSource"] = "right";
+    request["physicalSource"] = "test_stream_right_2";
+    request["fieldName"] = "location";
+    request["value"] = std::to_string(2);
+    success = TestUtils::addSourceStatistics(request.dump(), std::to_string(*restPort));
+    ASSERT_TRUE(success["success"]);
+
+    NES_INFO("query string submit={}", querySs.str());
+    nlohmann::json json_return = TestUtils::startQueryViaRest(querySs.str(), std::to_string(*restPort));
+    QueryId queryId = json_return.at("queryId").get<QueryId>();
+
+    NES_INFO("try to acc return");
+    NES_INFO("Query ID: {}", queryId);
+    ASSERT_NE(queryId, INVALID_QUERY_ID);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, expectedBuffers, std::to_string(*restPort)));
+    nlohmann::json jsonPlan = TestUtils::getExecutionPlan(queryId, std::to_string(*restPort));
+
+    std::ifstream ifs(outputFilePath.c_str());
+    ASSERT_TRUE(ifs.good());
+
+    uint64_t lineCnt = Util::countLines(ifs);
+    NES_INFO("json execution plan:{}", jsonPlan.dump());
+    EXPECT_EQ(expectedTuples + 1, lineCnt);
+
+    //int response = remove(outputFilePath.c_str());
+    //ASSERT_TRUE(response == 0);
 }
 
 }// namespace NES

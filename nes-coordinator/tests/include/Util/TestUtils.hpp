@@ -276,6 +276,42 @@ template<typename T>
 [[nodiscard]] std::string sourceGatheringInterval(uint64_t sourceGatheringInterval);
 
 /**
+ * @brief Enables the usage of tcp socket host
+ * @return Command line argument
+ */
+[[nodiscard]] std::string tcpSocketHost(std::string host);
+
+/**
+ * @brief Enables the usage of tcp socket port
+ * @return Command line argument
+ */
+[[nodiscard]] std::string tcpSocketPort(std::string port);
+
+/**
+ * @brief Enables the usage of tcp socket input format
+ * @return Command line argument
+ */
+[[nodiscard]] std::string inputFormat(std::string format);
+
+/**
+ * @brief Enables the usage of tcp socket persistent source
+ * @return Command line argument
+ */
+[[nodiscard]] std::string tcpSocketPersistentSource(std::string persistentSource);
+
+/**
+ * @brief Enables the usage of tcp socket decided message size
+ * @return Command line argument
+ */
+[[nodiscard]] std::string tcpSocketDecidedMessageSize(std::string decidedSize);
+
+/**
+ * @brief Enables the usage of tcp socket decided message size
+ * @return Command line argument
+ */
+[[nodiscard]] std::string tcpSocketBufferSize(std::string bufferSize);
+
+/**
  * @brief Creates the command line argument for setting the rest port
  * @param restPort
  * @return Command line argument
