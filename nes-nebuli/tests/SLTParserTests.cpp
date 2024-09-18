@@ -27,50 +27,31 @@ namespace NES::SLTParser
 class SLTParserTest : public Testing::BaseUnitTest
 {
 public:
-    static std::string testFileName;
-
     static void SetUpTestCase()
     {
-        testFileName = "SLTParserTest.test";
-        std::ofstream outfile(testFileName);
-        outfile << "Default content for " << testFileName;
-        outfile.close();
-
         Logger::setupLogging("SLTParserTest.log", LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SLTParserTest test class.");
     }
 
-    static void TearDownTestCase()
-    {
-        std::remove(testFileName.c_str());
-        NES_DEBUG("Tear down SLTParserTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("Tear down SLTParserTest test class."); }
 };
-
-std::string SLTParserTest::testFileName;
 
 TEST_F(SLTParserTest, testEmptyFile)
 {
     SLTParser parser{};
-    std::ofstream outfile(testFileName);
-    outfile << "";
-    outfile.close();
+    const std::string str = "";
 
-    ASSERT_EQ(true, parser.loadFile(testFileName));
+    ASSERT_EQ(true, parser.loadString(str));
     parser.parse();
 }
 
 TEST_F(SLTParserTest, testEmptyLinesAndCommasFile)
 {
     SLTParser parser{};
-    std::ofstream outfile(testFileName);
-    outfile << "#\n"; /// Comment
-    outfile << "\n"; /// Unix/Linux
-    outfile << "\r\n"; /// Windows
-    outfile << "\r"; /// Older Mac systems
-    outfile.close();
+    /// Comment, new line in Unix/Linux, Windows, Older Mac systems
+    const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
+    ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
 }
 
@@ -81,9 +62,7 @@ TEST_F(SLTParserTest, testCallbackSourceCSV)
 
     bool callbackCalled = false;
 
-    std::ofstream outfile(testFileName);
-    outfile << sourceIn;
-    outfile.close();
+    const std::string str = sourceIn + "\n";
 
     parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
     parser.registerOnResultTuplesCallback([&](SLTParser::ResultTuples&&) { FAIL(); });
@@ -102,7 +81,7 @@ TEST_F(SLTParserTest, testCallbackSourceCSV)
             callbackCalled = true;
         });
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
+    ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
@@ -118,10 +97,7 @@ TEST_F(SLTParserTest, testCallbackQuery)
     bool queryCallbackCalled = false;
     bool resultCallbackCalled = false;
 
-    std::ofstream outfile(testFileName);
-    outfile << queryIn << "\n";
-    outfile << delimiter << "\n" << tpl1 << "\n" << tpl2 << "\n";
-    outfile.close();
+    const std::string str = queryIn + "\n" + delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback(
         [&](SLTParser::Query&& queryOut)
@@ -139,7 +115,7 @@ TEST_F(SLTParserTest, testCallbackQuery)
     parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
+    ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(queryCallbackCalled);
     ASSERT_TRUE(resultCallbackCalled);
@@ -154,9 +130,7 @@ TEST_F(SLTParserTest, testCallbackSLTSource)
 
     bool callbackCalled = false;
 
-    std::ofstream outfile(testFileName);
-    outfile << sourceIn << "\n" << tpl1 << "\n" << tpl2 << "\n";
-    outfile.close();
+    const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
     parser.registerOnResultTuplesCallback([&](SLTParser::ResultTuples&&) { FAIL(); });
@@ -176,7 +150,7 @@ TEST_F(SLTParserTest, testCallbackSLTSource)
         });
     parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
+    ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
@@ -188,9 +162,7 @@ TEST_F(SLTParserTest, testResultTuplesWithoutQuery)
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
 
-    std::ofstream outfile(testFileName);
-    outfile << delimiter << "\n" << tpl1 << "\n" << tpl2 << "\n";
-    outfile.close();
+    const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
@@ -201,16 +173,7 @@ TEST_F(SLTParserTest, testResultTuplesWithoutQuery)
     parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
-    try
-    {
-        parser.parse();
-        FAIL();
-    }
-    catch (const Exception& ex)
-    {
-        ASSERT_EQ(ex.code(), ErrorCode::SLTUnexpectedToken);
-    }
+    ASSERT_TRUE(parser.loadString(str));
 }
 
 TEST_F(SLTParserTest, testSubstitutionRule)
@@ -224,9 +187,7 @@ TEST_F(SLTParserTest, testSubstitutionRule)
 
     bool callbackCalled = false;
 
-    std::ofstream outfile(testFileName);
-    outfile << queryIn << "\n" << delim << "\n" << result << "\n";
-    outfile.close();
+    const std::string str = queryIn + "\n" + delim + "\n" + result + "\n";
 
     SLTParser::SubstitutionRule const rule{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
     parser.registerSubstitutionRule(rule);
@@ -238,7 +199,7 @@ TEST_F(SLTParserTest, testSubstitutionRule)
     };
     parser.registerOnQueryCallback(callback);
 
-    ASSERT_TRUE(parser.loadFile(testFileName));
+    ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
