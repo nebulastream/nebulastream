@@ -174,6 +174,7 @@ TEST_F(SLTParserTest, testResultTuplesWithoutQuery)
     parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
+    ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
 TEST_F(SLTParserTest, testSubstitutionRule)
@@ -211,15 +212,7 @@ TEST_F(SLTParserTest, testRegisterSubstitutionKeywordTwoTimes)
 
     SLTParser parser{};
     parser.registerSubstitutionRule(rule1);
-    try
-    {
-        parser.registerSubstitutionRule(rule2);
-        FAIL();
-    }
-    catch (const Exception& ex)
-    {
-        ASSERT_EQ(ex.code(), ErrorCode::PreconditionViolated);
-    }
+    ASSERT_EXCEPTION_ERRORCODE({ parser.registerSubstitutionRule(rule2); }, ErrorCode::PreconditionViolated)
 }
 
 }
