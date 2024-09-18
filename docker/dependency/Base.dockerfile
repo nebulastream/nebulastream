@@ -48,7 +48,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cm
     && tar -xf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
     && ./configure --parallel=$(nproc) --prefix=/usr \
-    && make install -j \
+    && make install -j $(nproc)\
     && cd .. \
     && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
     && cmake --version
