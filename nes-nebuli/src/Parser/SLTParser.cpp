@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <optional>
@@ -59,19 +60,26 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
 }
 
 /// We do not load the file in a constructor, as we want to be able to handle errors
-bool SLTParser::loadFile(const std::string& filePath)
+bool SLTParser::loadFile(const std::filesystem::path& filePath)
 {
-    currentLine = 0;
-    lines.clear();
-
     std::ifstream infile(filePath);
     if (!infile.is_open() || infile.bad())
     {
         return false;
     }
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    return loadString(buffer.str());
+}
 
+bool SLTParser::loadString(const std::string& str)
+{
+    currentLine = 0;
+    lines.clear();
+
+    std::istringstream stream(str);
     std::string line;
-    while (std::getline(infile, line))
+    while (std::getline(stream, line))
     {
         /// Remove commented code
         size_t const commentPos = line.find('#');
