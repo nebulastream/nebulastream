@@ -30,12 +30,16 @@
 
 namespace NES::SLTParser
 {
+static constexpr std::string CSVSourceToken = "SourceCSV";
+static constexpr std::string SLTSourceToken = "Source";
+static constexpr std::string QueryToken = "Query::from";
+static constexpr std::string ResultDelimiter = "----";
 
 static constexpr std::array<std::pair<std::string_view, TokenType>, 4> stringToToken
-    = {{{"SourceCSV"sv, TokenType::CSV_SOURCE},
-        {"Source"sv, TokenType::SLT_SOURCE},
-        {"Query::from"sv, TokenType::QUERY},
-        {"----"sv, TokenType::RESULT_DELIMITER}}};
+    = {{{CSVSourceToken, TokenType::CSV_SOURCE},
+        {SLTSourceToken, TokenType::SLT_SOURCE},
+        {QueryToken, TokenType::QUERY},
+        {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
 
 bool emptyOrComment(const std::string& line)
 {
@@ -146,12 +150,12 @@ void SLTParser::parse()
             }
             else
             {
-                throw SLTUnexpectedToken("expected result delimiter `----` after query");
+                throw SLTUnexpectedToken("expected result delimiter `" + ResultDelimiter + "` after query");
             }
         }
         else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            throw SLTUnexpectedToken("unexpected occurence of result delimiter `----`");
+            throw SLTUnexpectedToken("unexpected occurence of result delimiter " + ResultDelimiter + "`");
         }
         else if (token.value() == TokenType::INVALID)
         {
@@ -183,7 +187,7 @@ void SLTParser::applySubstitutionRules(std::string& line)
 std::optional<TokenType> SLTParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's idenfying token is not space seperated
-    if (potentialToken.compare(0, 11, "Query::from") == 0)
+    if (potentialToken.compare(0, QueryToken.size(), QueryToken) == 0)
     {
         return TokenType::QUERY;
     }
@@ -348,7 +352,7 @@ SLTParser::ResultTuples SLTParser::expectTuples(bool ignoreFirst)
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::vector<std::string> tuples;
     /// skip the result line `----`
-    if (currentLine < lines.size() && (lines[currentLine] == "----" || ignoreFirst))
+    if (currentLine < lines.size() && (lines[currentLine] == ResultDelimiter || ignoreFirst))
     {
         currentLine++;
     }
@@ -371,7 +375,7 @@ SLTParser::Query SLTParser::expectQuery()
         if (!emptyOrComment(lines[currentLine]))
         {
             /// Query definition ends with result delimiter.
-            if (lines[currentLine] == "----")
+            if (lines[currentLine] == ResultDelimiter)
             {
                 --currentLine;
                 break;
