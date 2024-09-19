@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <vector>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 
 namespace NES::QueryCompilation

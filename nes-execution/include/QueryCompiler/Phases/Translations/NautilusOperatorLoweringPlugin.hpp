@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <optional>
+#include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::Runtime::Execution::Operators
