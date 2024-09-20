@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.181](https://github.com/nebulastream/nebulastream/tree/v0.6.181) (2024-09-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.180...v0.6.181)
+
+**Implemented enhancements:**
+
+- \[TASK\] Create reconfiguration marker message [\#5091](https://github.com/nebulastream/nebulastream/issues/5091)
+
 ## [v0.6.180](https://github.com/nebulastream/nebulastream/tree/v0.6.180) (2024-09-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.179...v0.6.180)
