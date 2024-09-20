@@ -37,14 +37,9 @@ ArrowFileSink::ArrowFileSink(SinkFormatPtr format,
                              const std::string& filePath,
                              bool append,
                              SharedQueryId sharedQueryId,
-                             DecomposedQueryPlanId decomposedQueryPlanId,
+                             DecomposedQueryId decomposedQueryId,
                              uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format),
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 sharedQueryId,
-                 decomposedQueryPlanId,
-                 numberOfOrigins) {
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins) {
     this->filePath = filePath;
     this->append = append;
     if (!append) {

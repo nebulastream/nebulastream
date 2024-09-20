@@ -45,7 +45,7 @@ class ArrowFileSink : public SinkMedium {
                            const std::string& filePath,
                            bool append,
                            SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           DecomposedQueryId decomposedQueryId,
                            uint64_t numberOfOrigins = 1);
 
     /**

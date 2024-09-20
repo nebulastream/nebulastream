@@ -117,7 +117,7 @@ void QueryStatistics::clear() {
 }
 
 SharedQueryId QueryStatistics::getQueryId() const { return queryId.load(); }
-DecomposedQueryPlanId QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
+DecomposedQueryId QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 
 QueryStatistics::QueryStatistics(const QueryStatistics& other) {
     processedTasks = other.processedTasks.load();

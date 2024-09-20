@@ -90,7 +90,7 @@ class PlacementRemovalStrategy {
      * @param querySubPlanVersion: the new version of the updated query sub plans
      * @return map of deployment context containing updated decomposed query plans
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+    std::map<DecomposedQueryId, DeploymentContextPtr>
     updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
@@ -136,10 +136,9 @@ class PlacementRemovalStrategy {
      * @param upStreamPinnedOperators: the pinned upstream operators
      * @return vector of deployment contexts
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
-    updateExecutionNodes(SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                         std::set<LogicalOperatorPtr>& upStreamPinnedOperators);
+    std::map<DecomposedQueryId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
+                                                                           DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                                           std::set<LogicalOperatorPtr>& upStreamPinnedOperators);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
@@ -155,7 +154,7 @@ class PlacementRemovalStrategy {
     std::vector<OperatorId> idsOfOperatorsToBeProcessed;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
-    std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
+    std::unordered_map<WorkerId, std::set<DecomposedQueryId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
     std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> workerIdToUpdatedDecomposedQueryPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;

@@ -159,14 +159,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param id : the query sub plan id
      * @return status of the query sub plan
      */
-    Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryPlanId id);
+    Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryId id);
 
     /**
      * @brief Provides the QEP object for an id
      * @param id the plan to lookup
      * @return the QEP or null, if not found
      */
-    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(DecomposedQueryPlanId id) const;
+    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(DecomposedQueryId id) const;
 
     [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
 
@@ -182,16 +182,16 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief method to return the query statistics
-     * @param decomposedQueryPlanId id of the particular decomposed query
+     * @param decomposedQueryId id of the particular decomposed query
      * @return
      */
-    QueryStatisticsPtr getQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId);
+    QueryStatisticsPtr getQueryStatistics(DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief Reset statistics for the decomposed query plan
-     * @param decomposedQueryPlanId : the decomposed query plan id
+     * @param decomposedQueryId : the decomposed query plan id
      */
-    void resetQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId);
+    void resetQueryStatistics(DecomposedQueryId decomposedQueryId);
 
     /**
      * Get the id of the current node
@@ -210,7 +210,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                           DecomposedQueryPlanId queryExecutionPlanId,
+                                           DecomposedQueryId queryExecutionPlanId,
                                            const ReconfigurationMessage& reconfigurationMessage,
                                            bool blocking = false) = 0;
 
@@ -232,7 +232,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                           DecomposedQueryPlanId queryExecutionPlanId,
+                                           DecomposedQueryId queryExecutionPlanId,
                                            TupleBuffer&& buffer,
                                            bool blocking = false) = 0;
 
@@ -266,10 +266,10 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @return shared query id
      */
-    SharedQueryId getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const;
+    SharedQueryId getSharedQueryId(DecomposedQueryId decomposedQueryId) const;
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
@@ -311,22 +311,21 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     /**
      * @brief Notifies that a pipeline is done with its execution
-     * @param decomposedQueryPlanId the plan the pipeline belongs to
+     * @param decomposedQueryId the plan the pipeline belongs to
      * @param pipeline the terminated pipeline
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifyPipelineCompletion(DecomposedQueryPlanId decomposedQueryPlanId,
+    void notifyPipelineCompletion(DecomposedQueryId decomposedQueryId,
                                   Execution::ExecutablePipelinePtr pipeline,
                                   QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a sink operator is done with its execution
-     * @param decomposedQueryPlanId the plan the sink belongs to
+     * @param decomposedQueryId the plan the sink belongs to
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void
-    notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void notifySinkCompletion(DecomposedQueryId decomposedQueryId, DataSinkPtr sink, QueryTerminationType terminationType);
 
     // Map containing persistent source properties
     folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<BasePersistentSourceProperties>>>
@@ -357,13 +356,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @brief Method to update the statistics
      * @param task
      * @param sharedQueryId
-     * @param decomposedQueryPlanId
+     * @param decomposedQueryId
      * @param pipelineId
      * @param workerContext
      */
     virtual void updateStatistics(const Task& task,
                                   SharedQueryId sharedQueryId,
-                                  DecomposedQueryPlanId decomposedQueryPlanId,
+                                  DecomposedQueryId decomposedQueryId,
                                   PipelineId pipelineId,
                                   WorkerContext& workerContext);
 
@@ -414,11 +413,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     /// worker thread for async maintenance task, e.g., fail queryIdAndCatalogEntryMapping
     AsyncTaskExecutorPtr asyncTaskExecutor;
 
-    std::unordered_map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<DecomposedQueryId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    cuckoohash_map<DecomposedQueryPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+    cuckoohash_map<DecomposedQueryId, QueryStatisticsPtr> queryToStatisticsMap;
 
     mutable std::mutex reconfigurationMutex;
 
@@ -431,7 +430,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
-    std::unordered_map<DecomposedQueryPlanId, std::vector<OperatorId>> decomposeQueryToSourceIdMapping;
+    std::unordered_map<DecomposedQueryId, std::vector<OperatorId>> decomposeQueryToSourceIdMapping;
 
     std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
@@ -482,13 +481,13 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @brief
      * @param task
      * @param sharedQueryId
-     * @param decomposedQueryPlanId
+     * @param decomposedQueryId
      * @param pipeId
      * @param workerContext
      */
     void updateStatistics(const Task& task,
                           SharedQueryId sharedQueryId,
-                          DecomposedQueryPlanId decomposedQueryPlanId,
+                          DecomposedQueryId decomposedQueryId,
                           PipelineId pipeId,
                           WorkerContext& workerContext) override;
 
@@ -507,12 +506,12 @@ class DynamicQueryManager : public AbstractQueryManager {
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
      * @param sharedQueryId: the local QEP to reconfigure
-     * @param decomposedQueryPlanId: the local szb QEP to reconfigure
+     * @param decomposedQueryId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   DecomposedQueryId decomposedQueryId,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
 
@@ -527,7 +526,7 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
+                                   DecomposedQueryId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;
 
@@ -600,13 +599,13 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     /**
      * @brief
      * @param sharedQueryId
-     * @param decomposedQueryPlanId
+     * @param decomposedQueryId
      * @param pipeId
      * @param workerContext
      */
     void updateStatistics(const Task& task,
                           SharedQueryId sharedQueryId,
-                          DecomposedQueryPlanId decomposedQueryPlanId,
+                          DecomposedQueryId decomposedQueryId,
                           PipelineId pipeId,
                           WorkerContext& workerContext) override;
 
@@ -622,7 +621,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
+                                   DecomposedQueryId queryExecutionPlanId,
                                    TupleBuffer&& buffer,
                                    bool blocking = false) override;
 
@@ -637,7 +636,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
     bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
+                                   DecomposedQueryId queryExecutionPlanId,
                                    const ReconfigurationMessage& reconfigurationMessage,
                                    bool blocking = false) override;
 
@@ -655,7 +654,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     uint16_t numberOfQueues = 1;
     uint16_t numberOfThreadsPerQueue;
-    std::unordered_map<DecomposedQueryPlanId, uint64_t> queryToTaskQueueIdMap;
+    std::unordered_map<DecomposedQueryId, uint64_t> queryToTaskQueueIdMap;
     std::atomic<uint64_t> currentTaskQueueId = 0;
 };
 

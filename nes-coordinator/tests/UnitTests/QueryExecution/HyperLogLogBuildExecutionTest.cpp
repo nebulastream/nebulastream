@@ -123,7 +123,7 @@ class HyperLogLogBuildExecutionTest
 
         // Creating query and submitting it to the execution engine
         NES_INFO("Submitting query: {}", query.getQueryPlan()->toString())
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(defaultDecomposedQueryPlanId),
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryId(defaultDecomposedQueryPlanId),
                                                                SharedQueryId(defaultSharedQueryId),
                                                                INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());

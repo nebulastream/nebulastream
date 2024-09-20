@@ -33,7 +33,7 @@ class StreamJoinQueryExecutionTest : public Testing::BaseUnitTest,
                                          std::tuple<QueryCompilation::StreamJoinStrategy, QueryCompilation::WindowingStrategy>> {
   public:
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
     static constexpr std::chrono::milliseconds defaultTimeout = 1s;
 

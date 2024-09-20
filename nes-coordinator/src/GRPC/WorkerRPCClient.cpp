@@ -32,11 +32,11 @@ WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPC
 
 bool WorkerRPCClient::registerDecomposedQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
-    auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerDecomposedQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+    auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
+    NES_DEBUG("WorkerRPCClient::registerDecomposedQuery address={} sharedQueryId={} decomposedQueryId = {} ",
               address,
               sharedQueryId,
-              decomposedQueryPlanId);
+              decomposedQueryId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterDecomposedQueryRequest request;
@@ -68,11 +68,11 @@ void WorkerRPCClient::registerDecomposedQueryAsync(const std::string& address,
                                                    const DecomposedQueryPlanPtr& decomposedQueryPlan,
                                                    const CompletionQueuePtr& cq) {
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerDecomposedQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
+    DecomposedQueryId decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
+    NES_DEBUG("WorkerRPCClient::registerDecomposedQueryAsync address={} sharedQueryId={} decomposedQueryId = {}",
               address,
               sharedQueryId,
-              decomposedQueryPlanId);
+              decomposedQueryId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterDecomposedQueryRequest request;
@@ -85,7 +85,7 @@ void WorkerRPCClient::registerDecomposedQueryAsync(const std::string& address,
     ClientContext context;
 
     grpc::ChannelArguments args;
-    args.SetInt("test_key", decomposedQueryPlanId.getRawValue());
+    args.SetInt("test_key", decomposedQueryId.getRawValue());
     std::shared_ptr<::grpc::Channel> channel = grpc::CreateCustomChannel(address, grpc::InsecureChannelCredentials(), args);
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
@@ -151,13 +151,13 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
 
 void WorkerRPCClient::unregisterDecomposedQueryAsync(const std::string& address,
                                                      SharedQueryId sharedQueryId,
-                                                     DecomposedQueryPlanId decomposedQueryPlanId,
+                                                     DecomposedQueryId decomposedQueryId,
                                                      const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::unregisterDecomposedQueryAsync address={} queryId={}", address, sharedQueryId);
 
     UnregisterDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
 
     UnregisterDecomposedQueryReply reply;
     ClientContext context;
@@ -185,12 +185,12 @@ void WorkerRPCClient::unregisterDecomposedQueryAsync(const std::string& address,
 
 bool WorkerRPCClient::unregisterDecomposedQuery(const std::string& address,
                                                 SharedQueryId sharedQueryId,
-                                                DecomposedQueryPlanId decomposedQueryPlanId) {
+                                                DecomposedQueryId decomposedQueryId) {
     NES_DEBUG("WorkerRPCClient::unregisterDecomposedQuery address={} queryId={}", address, sharedQueryId);
 
     UnregisterDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
 
     UnregisterDecomposedQueryReply reply;
     ClientContext context;
@@ -209,15 +209,15 @@ bool WorkerRPCClient::unregisterDecomposedQuery(const std::string& address,
 
 bool WorkerRPCClient::startDecomposedQuery(const std::string& address,
                                            SharedQueryId sharedQueryId,
-                                           DecomposedQueryPlanId decomposedQueryPlanId) {
+                                           DecomposedQueryId decomposedQueryId) {
     NES_DEBUG("WorkerRPCClient::startDecomposedQuery address={} shared queryId={} decomposed query plan {}",
               address,
               sharedQueryId,
-              decomposedQueryPlanId);
+              decomposedQueryId);
 
     StartDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
 
     StartDecomposedQueryReply reply;
     ClientContext context;
@@ -237,16 +237,16 @@ bool WorkerRPCClient::startDecomposedQuery(const std::string& address,
 
 void WorkerRPCClient::startDecomposedQueryAsync(const std::string& address,
                                                 SharedQueryId sharedQueryId,
-                                                DecomposedQueryPlanId decomposedQueryPlanId,
+                                                DecomposedQueryId decomposedQueryId,
                                                 const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::startDecomposedQueryAsync address={} shared queryId={} decomposed queryId={}",
               address,
               sharedQueryId,
-              decomposedQueryPlanId);
+              decomposedQueryId);
 
     StartDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
 
     StartDecomposedQueryReply reply;
     ClientContext context;
@@ -274,13 +274,13 @@ void WorkerRPCClient::startDecomposedQueryAsync(const std::string& address,
 
 bool WorkerRPCClient::stopDecomposedQuery(const std::string& address,
                                           SharedQueryId sharedQueryId,
-                                          DecomposedQueryPlanId decomposedQueryPlanId,
+                                          DecomposedQueryId decomposedQueryId,
                                           Runtime::QueryTerminationType terminationType) {
     NES_DEBUG("WorkerRPCClient::markQueryForStop address={} shared queryId={}", address, sharedQueryId);
 
     StopDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopDecomposedQueryReply reply;
@@ -300,14 +300,14 @@ bool WorkerRPCClient::stopDecomposedQuery(const std::string& address,
 
 void WorkerRPCClient::stopDecomposedQueryAsync(const std::string& address,
                                                SharedQueryId sharedQueryId,
-                                               DecomposedQueryPlanId decomposedQueryPlanId,
+                                               DecomposedQueryId decomposedQueryId,
                                                Runtime::QueryTerminationType terminationType,
                                                const CompletionQueuePtr& cq) {
     NES_DEBUG("WorkerRPCClient::stopDecomposedQueryAsync address={} shared queryId={}", address, sharedQueryId);
 
     StopDecomposedQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
-    request.set_decomposedqueryid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_queryterminationtype(static_cast<uint64_t>(terminationType));
 
     StopDecomposedQueryReply reply;
@@ -393,11 +393,11 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
 }
 
 bool WorkerRPCClient::bufferData(const std::string& address,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
+                                 DecomposedQueryId decomposedQueryId,
                                  uint64_t uniqueNetworkSinDescriptorId) {
     NES_DEBUG("WorkerRPCClient::buffering Data on address={}", address);
     BufferRequest request;
-    request.set_decomposedqueryplanid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
     BufferReply reply;
     ClientContext context;
@@ -421,13 +421,13 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
                                         uint64_t newNodeId,
                                         const std::string& newHostname,
                                         uint32_t newPort,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        DecomposedQueryId decomposedQueryId,
                                         uint64_t uniqueNetworkSinDescriptorId) {
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
     request.set_newport(newPort);
-    request.set_decomposedqueryplanid(decomposedQueryPlanId.getRawValue());
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
     request.set_uniquenetworksinkdescriptorid(uniqueNetworkSinDescriptorId);
 
     UpdateNetworkSinkReply reply;

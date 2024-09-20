@@ -17,21 +17,21 @@
 
 namespace NES {
 
-DecomposedQueryPlanMetaDataPtr DecomposedQueryPlanMetaData::create(DecomposedQueryPlanId decomposedQueryPlanId,
+DecomposedQueryPlanMetaDataPtr DecomposedQueryPlanMetaData::create(DecomposedQueryId decomposedQueryId,
                                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                                    QueryState decomposedQueryPlanState,
                                                                    WorkerId workerId) {
-    return std::make_shared<DecomposedQueryPlanMetaData>(decomposedQueryPlanId,
+    return std::make_shared<DecomposedQueryPlanMetaData>(decomposedQueryId,
                                                          decomposedQueryPlanVersion,
                                                          decomposedQueryPlanState,
                                                          workerId);
 }
 
-DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+DecomposedQueryPlanMetaData::DecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId,
                                                          DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                          QueryState decomposedQueryPlanState,
                                                          WorkerId workerId)
-    : decomposedQueryPlanId(decomposedQueryPlanId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
+    : decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion),
       decomposedQueryPlanState(decomposedQueryPlanState), workerId(workerId) {}
 
 void DecomposedQueryPlanMetaData::updateState(QueryState newDecomposedQueryPlanState) {
@@ -45,7 +45,7 @@ void DecomposedQueryPlanMetaData::setTerminationReason(const std::string& termin
     this->terminationReason = terminationReason;
 }
 
-DecomposedQueryPlanId DecomposedQueryPlanMetaData::getDecomposedQueryPlanId() const { return decomposedQueryPlanId; }
+DecomposedQueryId DecomposedQueryPlanMetaData::getDecomposedQueryId() const { return decomposedQueryId; }
 
 QueryState DecomposedQueryPlanMetaData::getDecomposedQueryPlanStatus() const { return decomposedQueryPlanState; }
 

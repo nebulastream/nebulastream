@@ -54,7 +54,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
 
     //Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId().getRawValue());
+    serializableDecomposedQueryPlan->set_decomposedqueryid(decomposedQueryPlan->getDecomposedQueryId().getRawValue());
     serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId().getRawValue());
     serializableDecomposedQueryPlan->set_state(serializeQueryState(decomposedQueryPlan->getState()));
 }
@@ -90,8 +90,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     }
 
     //set properties of the query plan
-    DecomposedQueryPlanId decomposableQueryPlanId =
-        DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
+    DecomposedQueryId decomposableQueryPlanId = DecomposedQueryId(serializableDecomposedQueryPlan->decomposedqueryid());
     SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
     auto decomposedQueryPlan =

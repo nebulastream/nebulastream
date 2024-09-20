@@ -97,7 +97,7 @@ class MockedDeploymentPhase : public DeploymentPhase {
             SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
             for (const auto& deploymentContext : deploymentContexts) {
                 sharedQueryId = deploymentContext->getSharedQueryId();
-                auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+                auto decomposedQueryId = deploymentContext->getDecomposedQueryId();
                 auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
                 auto workerId = deploymentContext->getWorkerId();
                 auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
@@ -114,7 +114,7 @@ class MockedDeploymentPhase : public DeploymentPhase {
                         }
                         // Update decomposed query plan status
                         queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                      decomposedQueryPlanId,
+                                                                      decomposedQueryId,
                                                                       decomposedQueryPlanVersion,
                                                                       decomposedQueryPlanState,
                                                                       workerId);
@@ -124,7 +124,7 @@ class MockedDeploymentPhase : public DeploymentPhase {
                         if (requestType == RequestType::AddQuery) {
                             // Update decomposed query plan status
                             queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryId,
                                                                           decomposedQueryPlanVersion,
                                                                           decomposedQueryPlanState,
                                                                           workerId);
@@ -132,7 +132,7 @@ class MockedDeploymentPhase : public DeploymentPhase {
                             sharedQueryState = QueryState::STOPPED;
                             // Update decomposed query plan status
                             queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryId,
                                                                           decomposedQueryPlanVersion,
                                                                           QueryState::MARKED_FOR_HARD_STOP,
                                                                           workerId);
@@ -140,7 +140,7 @@ class MockedDeploymentPhase : public DeploymentPhase {
                             sharedQueryState = QueryState::FAILED;
                             // Update decomposed query plan status
                             queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryId,
                                                                           decomposedQueryPlanVersion,
                                                                           QueryState::MARKED_FOR_FAILURE,
                                                                           workerId);

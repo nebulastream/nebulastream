@@ -30,6 +30,9 @@ using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 class DeploymentPhase;
 using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+
 namespace Configurations {
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -50,6 +53,7 @@ class PlacementAmendmentInstance;
 using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
 
 class PlacementAmendmentHandler;
+struct DeploymentUnit;
 
 /**
  * @brief class representing the placement amendment instance
@@ -99,6 +103,13 @@ class PlacementAmendmentInstance {
     void execute();
 
   private:
+    /**
+     * @brief Compute reconfiguration marker for reconfiguring the plan
+     * @param deploymentUnit: the deployment unit using which the marker needs to be computed
+     * @return pointer to the ReconfigurationMarker
+     */
+    ReconfigurationMarkerPtr computeReconfigurationMarker(DeploymentUnit& deploymentUnit);
+
     SharedQueryPlanPtr sharedQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

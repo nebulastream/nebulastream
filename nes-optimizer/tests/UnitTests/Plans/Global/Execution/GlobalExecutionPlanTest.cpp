@@ -79,9 +79,9 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query = Query::from("truck").unionWith(subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     SharedQueryId sharedQueryId = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryId = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, topologyNodeId, plan->getRootOperators());
+        DecomposedQueryPlan::create(decomposedQueryId, sharedQueryId, topologyNodeId, plan->getRootOperators());
     decomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
     auto lockedTopologyNode = topology->lockTopologyNode(topologyNodeId);
     globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
@@ -97,7 +97,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId.toString()
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryId.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -135,7 +135,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 =
         DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId, topologyNodeId, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -144,7 +144,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto printSinkDescriptor2 = PrintSinkDescriptor::create();
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
-    DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 =
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId, topologyNodeId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -162,7 +162,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -172,7 +172,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -204,7 +204,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor1);
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 =
         DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, topologyNodeId, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -214,7 +214,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor2);
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 =
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, topologyNodeId, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -233,7 +233,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -243,7 +243,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan1->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -276,7 +276,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query11 = Query::from("default_logical").sink(printSinkDescriptor11);
     auto plan11 = query11.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId11 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId11 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan11 =
         DecomposedQueryPlan::create(decomposedQueryPlanId11, sharedQueryId1, topologyNodeId, plan11->getRootOperators());
     decomposedQueryPlan11->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -285,7 +285,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto printSinkDescriptor12 = PrintSinkDescriptor::create();
     auto query12 = Query::from("default_logical").sink(printSinkDescriptor12);
     auto plan12 = query12.getQueryPlan();
-    DecomposedQueryPlanId decomposedQueryPlanId12 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId12 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan12 =
         DecomposedQueryPlan::create(decomposedQueryPlanId12, sharedQueryId1, topologyNodeId, plan12->getRootOperators());
     decomposedQueryPlan12->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -296,7 +296,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto query21 = Query::from("default_logical").sink(printSinkDescriptor21);
     auto plan21 = query21.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId21 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId21 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan21 =
         DecomposedQueryPlan::create(decomposedQueryPlanId21, sharedQueryId2, topologyNodeId, plan21->getRootOperators());
     decomposedQueryPlan21->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -305,7 +305,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     auto printSinkDescriptor22 = PrintSinkDescriptor::create();
     auto query22 = Query::from("default_logical").sink(printSinkDescriptor22);
     auto plan22 = query22.getQueryPlan();
-    DecomposedQueryPlanId decomposedQueryPlanId22 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId22 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan22 =
         DecomposedQueryPlan::create(decomposedQueryPlanId22, sharedQueryId2, topologyNodeId, plan22->getRootOperators());
     decomposedQueryPlan22->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -324,7 +324,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     std::string expectedPlan = "ExecutionNode(id:" + topologyNodeId.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId11.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId11.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -334,7 +334,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan11->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId12.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId12.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -344,7 +344,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan12->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId21.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId21.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -354,7 +354,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
         + plan21->getRootOperators()[0]->getChildren()[0]->toString()
         + "\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId22.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId22.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -394,7 +394,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 =
         DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, node1Id, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -404,7 +404,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 =
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, node2Id, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -424,7 +424,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -437,7 +437,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
@@ -483,7 +483,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query1 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan1 = query1.getQueryPlan();
     SharedQueryId sharedQueryId1 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId1 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan1 =
         DecomposedQueryPlan::create(decomposedQueryPlanId1, sharedQueryId1, node1Id, plan1->getRootOperators());
     decomposedQueryPlan1->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -494,7 +494,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query2 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan2 = query2.getQueryPlan();
     SharedQueryId sharedQueryId2 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId2 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan2 =
         DecomposedQueryPlan::create(decomposedQueryPlanId2, sharedQueryId2, node2Id, plan2->getRootOperators());
     decomposedQueryPlan2->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -505,7 +505,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query3 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan3 = query3.getQueryPlan();
     SharedQueryId sharedQueryId3 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId3 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId3 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan3 =
         DecomposedQueryPlan::create(decomposedQueryPlanId3, sharedQueryId3, node3Id, plan3->getRootOperators());
     decomposedQueryPlan3->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -516,7 +516,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     auto query4 = Query::from("default_logical").sink(printSinkDescriptor);
     auto plan4 = query4.getQueryPlan();
     SharedQueryId sharedQueryId4 = PlanIdGenerator::getNextSharedQueryId();
-    DecomposedQueryPlanId decomposedQueryPlanId4 = PlanIdGenerator::getNextDecomposedQueryPlanId();
+    DecomposedQueryId decomposedQueryPlanId4 = PlanIdGenerator::getNextDecomposedQueryPlanId();
     auto decomposedQueryPlan4 =
         DecomposedQueryPlan::create(decomposedQueryPlanId4, sharedQueryId4, node4Id, plan4->getRootOperators());
     decomposedQueryPlan4->setState(QueryState::MARKED_FOR_DEPLOYMENT);
@@ -542,7 +542,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     std::string expectedPlan = "ExecutionNode(id:" + node1Id.toString()
         + ")\n"
           "| QuerySubPlan(SharedQueryId:"
-        + sharedQueryId1.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId1.toString()
+        + sharedQueryId1.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId1.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  "
@@ -555,7 +555,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node2Id.toString()
         + ")\n"
           "|  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId2.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId2.toString()
+        + sharedQueryId2.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId2.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  "
@@ -568,7 +568,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node3Id.toString()
         + ")\n"
           "|  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId3.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId3.toString()
+        + sharedQueryId3.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId3.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  "
@@ -581,7 +581,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
         + node4Id.toString()
         + ")\n"
           "|  |  |  | QuerySubPlan(SharedQueryId:"
-        + sharedQueryId4.toString() + ", DecomposedQueryPlanId:" + decomposedQueryPlanId4.toString()
+        + sharedQueryId4.toString() + ", DecomposedQueryId:" + decomposedQueryPlanId4.toString()
         + ", queryState:" + std::string(magic_enum::enum_name(QueryState::MARKED_FOR_DEPLOYMENT))
         + ")\n"
           "|  |  |  |  "

@@ -86,7 +86,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     if (enableIncrementalPlacement) {
 
         // Create container to record all deployment contexts
-        std::map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
+        std::map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
         std::vector<ChangeLogEntryPtr> failedChangelogEntries;
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
@@ -121,7 +121,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         }
 
         // Extract placement deployment contexts
-        for (const auto& [decomposedQueryPlanId, deploymentContext] : deploymentContexts) {
+        for (const auto& [decomposedQueryId, deploymentContext] : deploymentContexts) {
             computedDeploymentAdditionContexts.emplace(deploymentContext);
         }
     } else {
@@ -147,7 +147,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
             };
 
             //4. fetch placement removal deployment contexts
-            std::map<DecomposedQueryPlanId, DeploymentContextPtr> placementRemovalDeploymentContexts;
+            std::map<DecomposedQueryId, DeploymentContextPtr> placementRemovalDeploymentContexts;
             handlePlacementRemoval(sharedQueryId,
                                    pinnedUpstreamOperators,
                                    pinnedDownStreamOperators,
@@ -159,7 +159,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                 computedDeploymentRemovalContexts.insert(deploymentContext);
             }
 
-            std::map<DecomposedQueryPlanId, DeploymentContextPtr> placementAdditionDeploymentContexts;
+            std::map<DecomposedQueryId, DeploymentContextPtr> placementAdditionDeploymentContexts;
             handlePlacementAddition(placementStrategy,
                                     sharedQueryId,
                                     pinnedUpstreamOperators,
@@ -189,12 +189,11 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts};
 }
 
-void QueryPlacementAmendmentPhase::handlePlacementRemoval(
-    NES::SharedQueryId sharedQueryId,
-    const std::set<LogicalOperatorPtr>& upstreamOperators,
-    const std::set<LogicalOperatorPtr>& downstreamOperators,
-    NES::DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts) {
+void QueryPlacementAmendmentPhase::handlePlacementRemoval(NES::SharedQueryId sharedQueryId,
+                                                          const std::set<LogicalOperatorPtr>& upstreamOperators,
+                                                          const std::set<LogicalOperatorPtr>& downstreamOperators,
+                                                          NES::DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+                                                          std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts) {
 
     //1. Fetch all upstream pinned operators that are not removed
     std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
@@ -235,8 +234,8 @@ void QueryPlacementAmendmentPhase::handlePlacementRemoval(
                                                                 nextDecomposedQueryPlanVersion);
 
         // Collect all deployment contexts returned by placement removal strategy
-        for (const auto& [decomposedQueryPlanId, deploymentContext] : placementRemovalDeploymentContexts) {
-            deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+        for (const auto& [decomposedQueryId, deploymentContext] : placementRemovalDeploymentContexts) {
+            deploymentContexts[decomposedQueryId] = deploymentContext;
         }
     } else {
         NES_WARNING("Skipping placement removal phase as no pinned downstream operator in the state TO_BE_REMOVED or "
@@ -250,7 +249,7 @@ void QueryPlacementAmendmentPhase::handlePlacementAddition(
     const std::set<LogicalOperatorPtr>& upstreamOperators,
     const std::set<LogicalOperatorPtr>& downstreamOperators,
     DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts) {
+    std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts) {
 
     //1. Fetch all upstream pinned operators that are not removed
     std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
@@ -277,8 +276,8 @@ void QueryPlacementAmendmentPhase::handlePlacementAddition(
                                                                                              nextDecomposedQueryPlanVersion);
 
         // Collect all deployment contexts returned by placement removal strategy
-        for (const auto& [decomposedQueryPlanId, deploymentContext] : placementAdditionResults.deploymentContexts) {
-            deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+        for (const auto& [decomposedQueryId, deploymentContext] : placementAdditionResults.deploymentContexts) {
+            deploymentContexts[decomposedQueryId] = deploymentContext;
         }
 
         if (!placementAdditionResults.completedSuccessfully) {

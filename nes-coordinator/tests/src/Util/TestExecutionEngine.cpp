@@ -92,9 +92,9 @@ TestExecutionEngine::submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan) {
     decomposedQueryPlan = statisticIdInferencePhase->execute(decomposedQueryPlan);
     NES_ASSERT(nodeEngine->registerDecomposableQueryPlan(decomposedQueryPlan), "query plan could not be started.");
     NES_ASSERT(nodeEngine->startDecomposedQueryPlan(decomposedQueryPlan->getSharedQueryId(),
-                                                    decomposedQueryPlan->getDecomposedQueryPlanId()),
+                                                    decomposedQueryPlan->getDecomposedQueryId()),
                "query plan could not be started.");
-    return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getDecomposedQueryPlanId());
+    return nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlan->getDecomposedQueryId());
 }
 
 std::shared_ptr<NonRunnableDataSource>

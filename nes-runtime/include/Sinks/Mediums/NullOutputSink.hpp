@@ -37,7 +37,7 @@ class NullOutputSink : public SinkMedium {
     explicit NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
                             SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId decomposedQueryPlanId,
+                            DecomposedQueryId decomposedQueryId,
                             uint64_t numberOfOrigins = 1);
 
     /**

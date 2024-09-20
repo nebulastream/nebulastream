@@ -80,14 +80,14 @@ class GlobalExecutionPlan {
      * plan version.
      * @param WorkerId: the id of the execution node
      * @param sharedQueryId: the shared query id
-     * @param decomposedQueryPlanId: the decomposed query id
+     * @param decomposedQueryId: the decomposed query id
      * @param expectedVersion: the expected version
      * @param newDecomposedQueryPlanState: the new state
      * @return true if successful else false
      */
     bool updateDecomposedQueryPlanState(WorkerId WorkerId,
                                         SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        DecomposedQueryId decomposedQueryId,
                                         DecomposedQueryPlanVersion expectedVersion,
                                         QueryState newDecomposedQueryPlanState);
 
@@ -102,11 +102,11 @@ class GlobalExecutionPlan {
      * @brief Get the copy of the decomposed query plan with the given id
      * @param WorkerId : the execution node hosting the shared query id
      * @param sharedQueryId : the shared query id
-     * @param decomposedQueryPlanId : the decomposed query id
+     * @param decomposedQueryId : the decomposed query id
      * @return copy of the decomposed query plan
      */
     DecomposedQueryPlanPtr
-    getCopyOfDecomposedQueryPlan(WorkerId WorkerId, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    getCopyOfDecomposedQueryPlan(WorkerId WorkerId, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief Get the copy of all decomposed query plans originating from the given shared query id and hosted on the
@@ -135,13 +135,13 @@ class GlobalExecutionPlan {
      * @brief Remove the decomposed query plan
      * @param WorkerId: the execution node id
      * @param sharedQueryId: the shared query id
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @param decomposedQueryPlanVersion: the decomposed query plan version
      * @return
      */
     bool removeDecomposedQueryPlan(WorkerId WorkerId,
                                    SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   DecomposedQueryId decomposedQueryId,
                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
     /**

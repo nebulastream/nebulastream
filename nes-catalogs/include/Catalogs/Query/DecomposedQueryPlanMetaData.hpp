@@ -31,7 +31,7 @@ using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaDa
 class DecomposedQueryPlanMetaData {
 
   public:
-    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryPlanId decomposedQueryPlanId,
+    static DecomposedQueryPlanMetaDataPtr create(DecomposedQueryId decomposedQueryId,
                                                  DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                  QueryState decomposedQueryPlanState,
                                                  WorkerId workerId);
@@ -58,7 +58,7 @@ class DecomposedQueryPlanMetaData {
      * @brief Get the decomposed query id
      * @return id of the decomposed query
      */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+    DecomposedQueryId getDecomposedQueryId() const;
 
     /**
      * @brief Get the worker id where decomposed plan is located
@@ -81,7 +81,7 @@ class DecomposedQueryPlanMetaData {
      */
     DecomposedQueryPlanVersion getDecomposedQueryPlanVersion() const;
 
-    DecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+    DecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId,
                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                 QueryState decomposedQueryPlanState,
                                 WorkerId workerId);
@@ -90,7 +90,7 @@ class DecomposedQueryPlanMetaData {
     /**
      * Id of the decomposed query plan
      */
-    DecomposedQueryPlanId decomposedQueryPlanId;
+    DecomposedQueryId decomposedQueryId;
 
     /**
      * @brief the current version of the decomposed query plan

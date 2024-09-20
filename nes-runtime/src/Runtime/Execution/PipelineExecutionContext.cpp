@@ -22,7 +22,7 @@
 namespace NES::Runtime::Execution {
 
 PipelineExecutionContext::PipelineExecutionContext(PipelineId pipelineId,
-                                                   DecomposedQueryPlanId queryId,
+                                                   DecomposedQueryId queryId,
                                                    Runtime::BufferManagerPtr bufferProvider,
                                                    size_t numberOfWorkerThreads,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,

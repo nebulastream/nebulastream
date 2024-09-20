@@ -116,44 +116,41 @@ class WorkerRPCClient {
     /**
      * @brief unregisters a decomposed query
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-     * @param decomposedQueryPlanId: id of the decomposed query to unregister
+     * @param decomposedQueryId: id of the decomposed query to unregister
      * @return true if succeeded, else false
      */
-    bool unregisterDecomposedQuery(const std::string& address,
-                                   SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId);
+    bool unregisterDecomposedQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief un-registers a decomposed query asynchronously
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-     * @param decomposedQueryPlanId: id of the decomposed query to unregister
+     * @param decomposedQueryId: id of the decomposed query to unregister
      */
     void unregisterDecomposedQueryAsync(const std::string& address,
                                         SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        DecomposedQueryId decomposedQueryId,
                                         const CompletionQueuePtr& cq);
 
     /**
      * @brief method to start a already deployed decomposed query
      * @note if query is not deploy, false is returned
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-     * @param decomposedQueryPlanId: id of the decomposed query to start
+     * @param decomposedQueryId: id of the decomposed query to start
      * @return bool indicating success
      */
-    bool
-    startDecomposedQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool startDecomposedQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
       * @brief method to start a already deployed query asynchronously
       * @note if query is not deploy, false is returned
       * @param address the address of the worker
       * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-      * @param decomposedQueryPlanId: id of the decomposed query to start
+      * @param decomposedQueryId: id of the decomposed query to start
       * @param cq the completion queue
       */
     void startDecomposedQueryAsync(const std::string& address,
                                    SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   DecomposedQueryId decomposedQueryId,
                                    const CompletionQueuePtr& cq);
 
     /**
@@ -161,25 +158,25 @@ class WorkerRPCClient {
      * @param address address of the new worker
      * @param sharedQueryId to stop
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-     * @param decomposedQueryPlanId: id of the decomposed query to stop
+     * @param decomposedQueryId: id of the decomposed query to stop
      * @return bool indicating success
      */
     bool stopDecomposedQuery(const std::string& address,
                              SharedQueryId sharedQueryId,
-                             DecomposedQueryPlanId decomposedQueryPlanId,
+                             DecomposedQueryId decomposedQueryId,
                              Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
      * @param address : address of the worker
      * @param sharedQueryId: id of the shared query plan to which the decomposed query plan serves
-     * @param decomposedQueryPlanId: id of the decomposed query to stop
+     * @param decomposedQueryId: id of the decomposed query to stop
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
      */
     void stopDecomposedQueryAsync(const std::string& address,
                                   SharedQueryId sharedQueryId,
-                                  DecomposedQueryPlanId decomposedQueryPlanId,
+                                  DecomposedQueryId decomposedQueryId,
                                   Runtime::QueryTerminationType terminationType,
                                   const CompletionQueuePtr& cq);
 
@@ -203,12 +200,11 @@ class WorkerRPCClient {
      * a query sub plan Id and a global sinkId.
      * Once buffering starts, the Network Sink no longer sends data downstream
      * @param ipAddress
-     * @param decomposedQueryPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param decomposedQueryId : the id of the query sub plan to which the Network Sink belongs
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    bool
-    bufferData(const std::string& address, DecomposedQueryPlanId decomposedQueryPlanId, uint64_t uniqueNetworkSinDescriptorId);
+    bool bufferData(const std::string& address, DecomposedQueryId decomposedQueryId, uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief requests a remote worker to reconfigure a NetworkSink so that the NetworkSink changes where it sends data to (changes downstream node)
@@ -216,7 +212,7 @@ class WorkerRPCClient {
      * @param newNodeId : the id of the node that the Network Sink will send data to after reconfiguration
      * @param newHostname : the hostname of the node that the NetworkSink should send data to
      * @param newPort : the port of the node that the NetworkSink should send data to
-     * @param decomposedQueryPlanId : the id of the query sub plan to which the Network Sink belongs
+     * @param decomposedQueryId : the id of the query sub plan to which the Network Sink belongs
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
@@ -224,7 +220,7 @@ class WorkerRPCClient {
                            uint64_t newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           DecomposedQueryId decomposedQueryId,
                            uint64_t uniqueNetworkSinDescriptorId);
 
     /**

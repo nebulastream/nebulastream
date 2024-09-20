@@ -30,14 +30,9 @@ MonitoringSink::MonitoringSink(SinkFormatPtr sinkFormat,
                                Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                SharedQueryId sharedQueryId,
-                               DecomposedQueryPlanId decomposedQueryPlanId,
+                               DecomposedQueryId decomposedQueryId,
                                uint64_t numberOfOrigins)
-    : SinkMedium(std::move(sinkFormat),
-                 std::move(nodeEngine),
-                 numOfProducers,
-                 sharedQueryId,
-                 decomposedQueryPlanId,
-                 numberOfOrigins),
+    : SinkMedium(std::move(sinkFormat), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins),
       metricStore(metricStore), collectorType(collectorType) {
     NES_ASSERT(metricStore != nullptr, "MonitoringSink: MetricStore is null.");
 }

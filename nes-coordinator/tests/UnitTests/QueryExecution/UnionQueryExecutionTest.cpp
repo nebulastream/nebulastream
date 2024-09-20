@@ -89,7 +89,7 @@ class UnionQueryExecutionTest : public Testing::BaseUnitTest,
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr uint64_t millisecondsToHours = 3600000;
     static constexpr uint64_t defaultTimeoutInMilliseconds = 5000;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 

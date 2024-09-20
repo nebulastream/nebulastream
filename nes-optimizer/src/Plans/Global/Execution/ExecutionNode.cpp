@@ -35,7 +35,7 @@ ExecutionNode::ExecutionNode(WorkerId workerId) : workerId(workerId) {}
 
 bool ExecutionNode::registerDecomposedQueryPlan(const DecomposedQueryPlanPtr& decomposedQueryPlan) {
     auto sharedQueryId = decomposedQueryPlan->getSharedQueryId();
-    auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryPlanId();
+    auto decomposedQueryId = decomposedQueryPlan->getDecomposedQueryId();
     NES_DEBUG("Adding a new decomposed query plan with id {} to the collection for the shared query plan with id {}",
               decomposedQueryId,
               sharedQueryId);
@@ -49,8 +49,7 @@ void ExecutionNode::updateDecomposedQueryPlans(NES::SharedQueryId sharedQueryId,
               sharedQueryId);
     for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
         auto copiedDecomposedPlan = decomposedQueryPlan->copy();
-        mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryPlan->getDecomposedQueryPlanId()] =
-            copiedDecomposedPlan;
+        mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId][decomposedQueryPlan->getDecomposedQueryId()] = copiedDecomposedPlan;
     }
     NES_DEBUG("ExecutionNode: Updated the decomposed query plan with id : {} to the collection of query sub plans",
               sharedQueryId);
@@ -61,7 +60,7 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found query sub plan with id  {}", sharedQueryId);
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans.at(sharedQueryId);
-        for (const auto& [decomposedQueryPlanId, decomposedQueryPlan] : decomposedQueryPlanMap) {
+        for (const auto& [decomposedQueryId, decomposedQueryPlan] : decomposedQueryPlanMap) {
             decomposedQueryPlans.emplace_back(decomposedQueryPlan);
         }
         return decomposedQueryPlans;
@@ -71,14 +70,14 @@ std::vector<DecomposedQueryPlanPtr> ExecutionNode::getAllDecomposedQueryPlans(Sh
 }
 
 DecomposedQueryPlanPtr ExecutionNode::getDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                                                             DecomposedQueryPlanId decomposedQueryPlanId) const {
+                                                             DecomposedQueryId decomposedQueryId) const {
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         NES_DEBUG("ExecutionNode : Found shared query plan with id  {}", sharedQueryId);
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans.at(sharedQueryId);
-        if (decomposedQueryPlanMap.contains(decomposedQueryPlanId)) {
-            return decomposedQueryPlanMap[decomposedQueryPlanId];
+        if (decomposedQueryPlanMap.contains(decomposedQueryId)) {
+            return decomposedQueryPlanMap[decomposedQueryId];
         }
-        NES_ERROR("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryPlanId);
+        NES_ERROR("ExecutionNode: Unable to find decomposed query plan with id {}", decomposedQueryId);
         return nullptr;
     }
     NES_ERROR("ExecutionNode: Unable to find shared query plan with id {}", sharedQueryId);
@@ -98,14 +97,14 @@ bool ExecutionNode::hasRegisteredDecomposedQueryPlans(NES::SharedQueryId sharedQ
     return mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId);
 }
 
-bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) {
+bool ExecutionNode::removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) {
 
     //Check if the map contains an entry for the shared query id
     if (mapOfSharedQueryToDecomposedQueryPlans.contains(sharedQueryId)) {
         auto decomposedQueryPlanMap = mapOfSharedQueryToDecomposedQueryPlans[sharedQueryId];
         //Check if query sub plan exists in the map
-        if (decomposedQueryPlanMap.contains(decomposedQueryPlanId)) {
-            decomposedQueryPlanMap.erase(decomposedQueryPlanId);
+        if (decomposedQueryPlanMap.contains(decomposedQueryId)) {
+            decomposedQueryPlanMap.erase(decomposedQueryId);
             //If no query sub plan exist then remove the entry from the mapOfSharedQueryToQuerySubPlans
             if (decomposedQueryPlanMap.empty()) {
                 mapOfSharedQueryToDecomposedQueryPlans.erase(sharedQueryId);
@@ -131,9 +130,9 @@ std::vector<std::string> ExecutionNode::toMultilineString() {
 
     for (const auto& mapOfQuerySubPlan : mapOfSharedQueryToDecomposedQueryPlans) {
         for (const auto& [querySubPlanId, querySubPlan] : mapOfQuerySubPlan.second) {
-            lines.push_back(fmt::format("QuerySubPlan(SharedQueryId:{}, DecomposedQueryPlanId:{}, queryState:{})",
+            lines.push_back(fmt::format("QuerySubPlan(SharedQueryId:{}, DecomposedQueryId:{}, queryState:{})",
                                         mapOfQuerySubPlan.first,
-                                        querySubPlan->getDecomposedQueryPlanId(),
+                                        querySubPlan->getDecomposedQueryId(),
                                         magic_enum::enum_name(querySubPlan->getState())));
 
             // Split the string representation of the queryPlan into multiple lines

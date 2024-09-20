@@ -178,7 +178,7 @@ class QueryPlacementAmendmentPhase {
                                 const std::set<LogicalOperatorPtr>& upstreamOperators,
                                 const std::set<LogicalOperatorPtr>& downstreamOperators,
                                 DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-                                std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts);
+                                std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
 
     /**
      * @brief perform placement addition for all operators with missing placements
@@ -193,7 +193,7 @@ class QueryPlacementAmendmentPhase {
                                  const std::set<LogicalOperatorPtr>& upstreamOperators,
                                  const std::set<LogicalOperatorPtr>& downstreamOperators,
                                  DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-                                 std::map<DecomposedQueryPlanId, DeploymentContextPtr>& deploymentContexts);
+                                 std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

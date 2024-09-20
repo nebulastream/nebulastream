@@ -85,11 +85,11 @@ using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
 struct PlacementAdditionResult {
     PlacementAdditionResult(bool completedSuccessfully,
-                            std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts)
+                            std::unordered_map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts)
         : completedSuccessfully(completedSuccessfully), deploymentContexts(deploymentContexts){};
 
     bool completedSuccessfully;
-    std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
+    std::unordered_map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
 };
 
 using PlacementMatrix = std::vector<std::vector<bool>>;

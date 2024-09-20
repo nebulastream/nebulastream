@@ -126,7 +126,7 @@ message UpdateNetworkSinkRequest{
   uint64 newNodeId = 1;
   string newHostname = 2;
   uint32 newPort = 3;
-  uint64 decomposedQueryPlanId = 4;
+  uint64 decomposedQueryId = 4;
   uint64 uniqueNetworkSinkDescriptorId = 5;
 }
 
@@ -135,7 +135,7 @@ message UpdateNetworkSinkReply {
 }
 
 message BufferRequest {
-  uint64 decomposedQueryPlanId = 1;
+  uint64 decomposedQueryId = 1;
   uint64 uniqueNetworkSinkDescriptorId = 2;
 }
 

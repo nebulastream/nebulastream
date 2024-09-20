@@ -42,8 +42,8 @@ class CountMinPipelineExecutionContext : public Runtime::Execution::PipelineExec
   public:
     CountMinPipelineExecutionContext(BufferManagerPtr bufferManager, OperatorHandlerPtr operatorHandler)
         : PipelineExecutionContext(
-            PipelineId(1),           // mock pipeline id
-            DecomposedQueryPlanId(1),// mock query id
+            PipelineId(1),       // mock pipeline id
+            DecomposedQueryId(1),// mock query id
             bufferManager,
             1,// numberOfWorkerThreads
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {

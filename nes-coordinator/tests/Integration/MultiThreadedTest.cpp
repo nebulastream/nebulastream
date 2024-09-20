@@ -34,7 +34,7 @@ class MultiThreadedTest : public Testing::BaseIntegrationTest,
   public:
     const uint64_t numTuplesPerBuffer = 1;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;

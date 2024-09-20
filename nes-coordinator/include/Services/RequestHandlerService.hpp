@@ -173,12 +173,12 @@ class RequestHandlerService {
      * @warning: this method is primarily designed to be called only by the system.
      *
      * @param sharedQueryId : shared query plan id of the shared query plan to be stopped.
-     * @param decomposedQueryPlanId: id of the subquery plan that failed
+     * @param decomposedQueryId: id of the subquery plan that failed
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
     bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                          DecomposedQueryPlanId decomposedQueryPlanId,
+                                          DecomposedQueryId decomposedQueryId,
                                           const std::string& failureReason);
 
     /**

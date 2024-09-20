@@ -35,7 +35,7 @@ class StatisticSink : public SinkMedium {
                   const Runtime::NodeEnginePtr& nodeEngine,
                   uint32_t numOfProducers,
                   SharedQueryId sharedQueryId,
-                  DecomposedQueryPlanId decomposedQueryPlanId,
+                  DecomposedQueryId decomposedQueryId,
                   uint64_t numberOfOrigins,
                   StatisticStorePtr statisticStore,
                   StatisticFormatPtr statisticSinkFormat);

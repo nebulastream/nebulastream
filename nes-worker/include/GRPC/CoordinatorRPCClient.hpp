@@ -163,7 +163,7 @@ class CoordinatorRPCClient {
      * @return bool indicating success
      */
     bool notifyQueryFailure(SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId subQueryId,
+                            DecomposedQueryId subQueryId,
                             WorkerId workerId,
                             OperatorId operatorId,
                             std::string errorMsg);
@@ -199,27 +199,27 @@ class CoordinatorRPCClient {
      * @param sharedQueryId : the query id for which soft stop to be performed
      * @return true if coordinator marks the query for soft stop else false
      */
-    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId);
+    bool checkAndMarkForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId, OperatorId sourceId);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not
      * @param sharedQueryId: the query id to which the subquery plan belongs to
-     * @param decomposedQueryPlanId: the query sub plan id
+     * @param decomposedQueryId: the query sub plan id
      * @param sourceId: the source id
      * @return true if coordinator successfully recorded the information else false
      */
     bool notifySourceStopTriggered(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
+                                   DecomposedQueryId decomposedQueryId,
                                    OperatorId sourceId,
                                    Runtime::QueryTerminationType queryTermination);
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not
      * @param sharedQueryId: the query id to which the subquery plan belongs to
-     * @param decomposedQueryPlanId: the query sub plan id
+     * @param decomposedQueryId: the query sub plan id
      * @return true if coordinator successfully recorded the information else false
      */
-    bool notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool notifySoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief this method is used by a mobile worker to inform the coordinator that location or time of the next expected reconnect

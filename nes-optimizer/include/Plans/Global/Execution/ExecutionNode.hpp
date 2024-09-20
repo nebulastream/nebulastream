@@ -35,7 +35,7 @@ namespace Optimizer {
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
-using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQueryPlanId, DecomposedQueryPlanPtr>>;
+using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQueryId, DecomposedQueryPlanPtr>>;
 
 /**
  * This class contains information about the physical node, a map of decomposed query plans that need to be executed
@@ -81,10 +81,10 @@ class ExecutionNode : public Node {
     /**
       * @brief Get the decomposed query plan belonging to a given shared query id and has the provided decomposed query plan id
       * @param sharedQueryId: shared query id
-      * @param decomposedQueryPlanId: decomposed query plan id
+      * @param decomposedQueryId: decomposed query plan id
       * @return the decomposed query plan
       */
-    DecomposedQueryPlanPtr getDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId) const;
+    DecomposedQueryPlanPtr getDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId) const;
 
     /**
      * Remove existing decomposed query plans belonging to a shared query plan
@@ -103,10 +103,10 @@ class ExecutionNode : public Node {
     /**
      * Remove a decomposed query plan belonging to a shared query plan with given decomposed query plan id
      * @param sharedQueryId the id of the shared query
-     * @param decomposedQueryPlanId the id of the decomposed query plan to remove
+     * @param decomposedQueryId the id of the decomposed query plan to remove
      * @return true if operation succeeds
      */
-    bool removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool removeDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * Get the map of all decomposed query plans

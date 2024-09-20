@@ -25,17 +25,17 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
-                       DecomposedQueryPlanId decomposedQueryPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1) {}
+                       DecomposedQueryId decomposedQueryId)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, 1) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
-                       DecomposedQueryPlanId decomposedQueryPlanId,
+                       DecomposedQueryId decomposedQueryId,
                        uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
-      sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId), numberOfOrigins(numberOfOrigins) {
+      sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), numberOfOrigins(numberOfOrigins) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
@@ -57,7 +57,7 @@ SchemaPtr SinkMedium::getSchemaPtr() const { return sinkFormat->getSchemaPtr(); 
 
 std::string SinkMedium::getSinkFormat() { return sinkFormat->toString(); }
 
-DecomposedQueryPlanId SinkMedium::getParentPlanId() const { return decomposedQueryPlanId; }
+DecomposedQueryId SinkMedium::getParentPlanId() const { return decomposedQueryId; }
 
 SharedQueryId SinkMedium::getSharedQueryId() const { return sharedQueryId; }
 
@@ -89,7 +89,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         NES_DEBUG("Got EoS on Sink  {}", toString());
         if (activeProducers.fetch_sub(1) == 1) {
             shutdown();
-            nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryPlanId,
+            nodeEngine->getQueryManager()->notifySinkCompletion(decomposedQueryId,
                                                                 std::static_pointer_cast<SinkMedium>(shared_from_this()),
                                                                 terminationType);
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);

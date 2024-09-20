@@ -51,7 +51,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
         auto grpcAddress = deploymentContext->getGrpcAddress();
         sharedQueryId = deploymentContext->getSharedQueryId();
-        auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+        auto decomposedQueryId = deploymentContext->getDecomposedQueryId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlan = deploymentContext->getDecomposedQueryPlan();
@@ -72,7 +72,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 workerRPCClient->registerDecomposedQueryAsync(grpcAddress, decomposedQueryPlan, queueForDeploymentContext);
                 // Update decomposed query plan status
                 queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                              decomposedQueryPlanId,
+                                                              decomposedQueryId,
                                                               decomposedQueryPlanVersion,
                                                               decomposedQueryPlanState,
                                                               workerId);
@@ -83,7 +83,7 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   decomposedQueryPlanState,
                                                                   workerId);
@@ -91,12 +91,12 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                     sharedQueryState = QueryState::STOPPED;
                     workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
                                                               sharedQueryId,
-                                                              decomposedQueryPlanId,
+                                                              decomposedQueryId,
                                                               Runtime::QueryTerminationType::HardStop,
                                                               queueForDeploymentContext);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_HARD_STOP,
                                                                   workerId);
@@ -105,12 +105,12 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                     sharedQueryState = QueryState::STOPPED;
                     workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
                                                               sharedQueryId,
-                                                              decomposedQueryPlanId,
+                                                              decomposedQueryId,
                                                               Runtime::QueryTerminationType::Graceful,
                                                               queueForDeploymentContext);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_SOFT_STOP,
                                                                   workerId);
@@ -120,12 +120,12 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
                     // Fail the decomposed query plan
                     workerRPCClient->stopDecomposedQueryAsync(grpcAddress,
                                                               sharedQueryId,
-                                                              decomposedQueryPlanId,
+                                                              decomposedQueryId,
                                                               Runtime::QueryTerminationType::Failure,
                                                               queueForDeploymentContext);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MARKED_FOR_FAILURE,
                                                                   workerId);
@@ -153,7 +153,7 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
         auto queueForDeploymentContext = std::make_shared<CompletionQueue>();
         auto grpcAddress = deploymentContext->getGrpcAddress();
         auto sharedQueryId = deploymentContext->getSharedQueryId();
-        auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+        auto decomposedQueryId = deploymentContext->getDecomposedQueryId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
@@ -162,11 +162,11 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
             case QueryState::MARKED_FOR_REDEPLOYMENT: {
                 workerRPCClient->startDecomposedQueryAsync(grpcAddress,
                                                            sharedQueryId,
-                                                           decomposedQueryPlanId,
+                                                           decomposedQueryId,
                                                            queueForDeploymentContext);
                 // Update decomposed query plan status
                 queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                              decomposedQueryPlanId,
+                                                              decomposedQueryId,
                                                               decomposedQueryPlanVersion,
                                                               QueryState::RUNNING,
                                                               workerId);
@@ -177,7 +177,7 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                 if (requestType == RequestType::AddQuery) {
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::MIGRATING,
                                                                   workerId);
@@ -185,11 +185,11 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                     // Unregister the decomposed query plan
                     workerRPCClient->unregisterDecomposedQueryAsync(grpcAddress,
                                                                     sharedQueryId,
-                                                                    decomposedQueryPlanId,
+                                                                    decomposedQueryId,
                                                                     queueForDeploymentContext);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::STOPPED,
                                                                   workerId);
@@ -198,11 +198,11 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
                     // Unregister the decomposed query plan
                     workerRPCClient->unregisterDecomposedQueryAsync(grpcAddress,
                                                                     sharedQueryId,
-                                                                    decomposedQueryPlanId,
+                                                                    decomposedQueryId,
                                                                     queueForDeploymentContext);
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                  decomposedQueryPlanId,
+                                                                  decomposedQueryId,
                                                                   decomposedQueryPlanVersion,
                                                                   QueryState::FAILED,
                                                                   workerId);

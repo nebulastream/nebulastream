@@ -37,7 +37,7 @@ class JoinMultiThreadedTest
     const uint64_t numTuplesPerBuffer = 2;
     static constexpr auto dumpNone = QueryCompilation::DumpMode::NONE;
     static constexpr auto waitTillStoppingQuery = std::chrono::milliseconds(100);
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;

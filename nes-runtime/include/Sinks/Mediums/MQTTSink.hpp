@@ -47,7 +47,7 @@ class MQTTSink : public SinkMedium {
                       Runtime::NodeEnginePtr nodeEngine,
                       uint32_t numOfProducers,
                       SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
+                      DecomposedQueryId decomposedQueryId,
                       std::string const& address,
                       std::string const& clientId,
                       std::string const& topic,
@@ -142,7 +142,7 @@ class MQTTSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
-    [[maybe_unused]] DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    [[maybe_unused]] DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     std::string address;
     std::string clientId;
     std::string topic;

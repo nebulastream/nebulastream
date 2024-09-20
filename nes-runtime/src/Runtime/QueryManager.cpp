@@ -234,16 +234,16 @@ void AbstractQueryManager::destroy() {
     }
 }
 
-SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const {
+SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryId decomposedQueryId) const {
     std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(decomposedQueryPlanId);
+    auto iterator = runningQEPs.find(decomposedQueryId);
     if (iterator != runningQEPs.end()) {
         return iterator->second->getSharedQueryId();
     }
     return INVALID_SHARED_QUERY_ID;
 }
 
-Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryPlanId id) {
+Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryId id) {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
     if (it != runningQEPs.end()) {
@@ -252,7 +252,7 @@ Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(Decompos
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const {
+Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryId id) const {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
     if (it != runningQEPs.end()) {
@@ -261,15 +261,15 @@ Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(De
     return nullptr;
 }
 
-QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanId decomposedQueryPlanId) {
+QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryId decomposedQueryId) {
     QueryStatisticsPtr statistic = nullptr;
-    queryToStatisticsMap.find(decomposedQueryPlanId, statistic);
+    queryToStatisticsMap.find(decomposedQueryId, statistic);
     return statistic;//either value or null
 }
 
-void AbstractQueryManager::resetQueryStatistics(NES::DecomposedQueryPlanId decomposedQueryPlanId) {
+void AbstractQueryManager::resetQueryStatistics(NES::DecomposedQueryId decomposedQueryId) {
     QueryStatisticsPtr statistic = nullptr;
-    queryToStatisticsMap.find(decomposedQueryPlanId, statistic);
+    queryToStatisticsMap.find(decomposedQueryId, statistic);
     if (statistic) {
         statistic->clear();
     }

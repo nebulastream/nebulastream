@@ -105,10 +105,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief Stops and undeploy a decomposed query plan
      * @param sharedQueryId the shared query plan id that is served by the decomposed query plan
-     * @param decomposedQueryPlanId id of the decomposed query plan to undeploy
+     * @param decomposedQueryId id of the decomposed query plan to undeploy
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool undeployDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    [[nodiscard]] bool undeployDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief registers a decomposed query plan
@@ -120,53 +120,53 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief unregisters a decomposed query
      * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
-     * @param decomposedQueryPlanId: id of the decomposed query plan to be unregistered
+     * @param decomposedQueryId: id of the decomposed query plan to be unregistered
      * @return true if succeeded, else false
      */
-    [[nodiscard]] bool unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    [[nodiscard]] bool unregisterDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
      * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
-     * @param decomposedQueryPlanId: id of the decomposed query plan to be started
+     * @param decomposedQueryId: id of the decomposed query plan to be started
      * @return bool indicating success
      */
-    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    [[nodiscard]] bool startDecomposedQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief method to stop a decomposed query plan
      * @param sharedQueryId: id of the shared query which is served by the decomposed query plan
-     * @param decomposedQueryPlanId: id of the decomposed query plan to be stopped
+     * @param decomposedQueryId: id of the decomposed query plan to be stopped
      * @param graceful hard or soft termination
      * @return bool indicating success
      */
     [[nodiscard]] bool
     stopDecomposedQueryPlan(SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId decomposedQueryPlanId,
+                            DecomposedQueryId decomposedQueryId,
                             Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
      * @brief method to trigger the buffering of data on a NetworkSink of a Query Sub Plan with the given id
-     * @param decomposedQueryPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryId : the id of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink on which to buffer data
      * @return bool indicating success
      */
-    bool bufferData(DecomposedQueryPlanId decomposedQueryPlanId, OperatorId uniqueNetworkSinkDescriptorId);
+    bool bufferData(DecomposedQueryId decomposedQueryId, OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
      * @brief method to trigger the reconfiguration of a NetworkSink so that it points to a new downstream node.
      * @param newNodeId : the id of the new node
      * @param newHostname : the hostname of the new node
      * @param newPort : the port of the new node
-     * @param decomposedQueryPlanId : the id of the Query Sub Plan to which the Network Sink belongs to
+     * @param decomposedQueryId : the id of the Query Sub Plan to which the Network Sink belongs to
      * @param uniqueNetworkSinkDescriptorId : the id of the Network Sink Descriptor. Helps identify the Network Sink to reconfigure.
      * @return bool indicating success
      */
     bool updateNetworkSink(WorkerId newNodeId,
                            const std::string& newHostname,
                            uint32_t newPort,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           DecomposedQueryId decomposedQueryId,
                            OperatorId uniqueNetworkSinkDescriptorId);
 
     /**
@@ -269,18 +269,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
     /**
      * @brief finds executable query plan for a given sub query id
-     * @param decomposedQueryPlanId query sub plan id
+     * @param decomposedQueryId query sub plan id
      * @return executable query plan
      */
-    std::shared_ptr<const Execution::ExecutableQueryPlan>
-    getExecutableQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId) const;
+    std::shared_ptr<const Execution::ExecutableQueryPlan> getExecutableQueryPlan(DecomposedQueryId decomposedQueryId) const;
 
     /**
      * @brief finds sub query ids for a given query id
      * @param sharedQueryId query id
      * @return vector of subQueryIds
      */
-    std::vector<DecomposedQueryPlanId> getDecomposedQueryIds(SharedQueryId sharedQueryId);
+    std::vector<DecomposedQueryId> getDecomposedQueryIds(SharedQueryId sharedQueryId);
 
     /**
      * Getter for the metric store
@@ -350,8 +349,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     WorkerId nodeId;
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    std::map<SharedQueryId, std::vector<DecomposedQueryPlanId>> sharedQueryIdToDecomposedQueryPlanIds;
-    std::map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
+    std::map<SharedQueryId, std::vector<DecomposedQueryId>> sharedQueryIdToDecomposedQueryPlanIds;
+    std::map<DecomposedQueryId, Execution::ExecutableQueryPlanPtr> deployedExecutableQueryPlans;
     HardwareManagerPtr hardwareManager;
     std::vector<BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;

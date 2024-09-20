@@ -48,8 +48,8 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
                                            OperatorHandlerPtr hashJoinOpHandler,
                                            PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId,              // mock pipeline id
-            DecomposedQueryPlanId(1),// mock query id
+            pipelineId,          // mock pipeline id
+            DecomposedQueryId(1),// mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) {

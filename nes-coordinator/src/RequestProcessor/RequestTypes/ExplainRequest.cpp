@@ -249,7 +249,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         //28. Iterate over deployment context and update execution plan
         for (const auto& deploymentContext : deploymentUnit.getAllDeploymentContexts()) {
             auto WorkerId = deploymentContext->getWorkerId();
-            auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
+            auto decomposedQueryId = deploymentContext->getDecomposedQueryId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
             auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
             switch (decomposedQueryPlanState) {
@@ -257,7 +257,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                 case QueryState::MARKED_FOR_DEPLOYMENT: {
                     globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
-                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryId,
                                                                         decomposedQueryPlanVersion,
                                                                         QueryState::RUNNING);
                     break;
@@ -265,12 +265,12 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                 case QueryState::MARKED_FOR_MIGRATION: {
                     globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
                                                                         sharedQueryId,
-                                                                        decomposedQueryPlanId,
+                                                                        decomposedQueryId,
                                                                         decomposedQueryPlanVersion,
                                                                         QueryState::STOPPED);
                     globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
                                                                    sharedQueryId,
-                                                                   decomposedQueryPlanId,
+                                                                   decomposedQueryId,
                                                                    decomposedQueryPlanVersion);
                     break;
                 }
@@ -325,7 +325,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             nlohmann::json currentQuerySubPlanMetaData{};
 
             // id of current query sub plan
-            currentQuerySubPlanMetaData["querySubPlanId"] = decomposedQueryPlan->getDecomposedQueryPlanId();
+            currentQuerySubPlanMetaData["querySubPlanId"] = decomposedQueryPlan->getDecomposedQueryId();
 
             // add open cl acceleration code
             if (accelerateJavaUDFs) {
@@ -400,7 +400,7 @@ void ExplainRequest::addOpenCLAccelerationCode(const std::string& accelerationSe
                                            cpr::Timeout(ELEGANT_SERVICE_TIMEOUT));
         if (response.status_code != 200) {
             throw QueryDeploymentException(
-                UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), SharedQueryId),
+                UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), SharedQueryId),
                 "Error in call to Elegant acceleration service with code " + std::to_string(response.status_code) + " and msg "
                     + response.reason);
         }

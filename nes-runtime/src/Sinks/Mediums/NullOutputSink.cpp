@@ -22,9 +22,9 @@ namespace NES {
 NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                uint32_t numOfProducers,
                                SharedQueryId sharedQueryId,
-                               DecomposedQueryPlanId decomposedQueryPlanId,
+                               DecomposedQueryId decomposedQueryId,
                                uint64_t numberOfOrigins)
-    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins) {}
+    : SinkMedium(nullptr, std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins) {}
 
 NullOutputSink::~NullOutputSink() = default;
 

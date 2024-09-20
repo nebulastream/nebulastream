@@ -2505,7 +2505,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                               INVALID_OPERATOR_ID,
                                                               PartitionId(0),
                                                               SubpartitionId(0));
-    DecomposedQueryPlanId subPlanIdToRemoveInNextIteration = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    DecomposedQueryId subPlanIdToRemoveInNextIteration = INVALID_DECOMPOSED_QUERY_PLAN_ID;
 
     {
         auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
@@ -2548,7 +2548,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                 ->getSourceDescriptor()
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
-                    subPlanIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
+                    subPlanIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryId();
                 } else if (executionNode->operator*()->getId() == WorkerId(3)) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
@@ -2632,10 +2632,10 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
-                           && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
+                           && decomposedQueryPlan->getDecomposedQueryId() == subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
-                           && decomposedQueryPlan->getDecomposedQueryPlanId() != subPlanIdToRemoveInNextIteration) {
+                           && decomposedQueryPlan->getDecomposedQueryId() != subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     auto sink = ops[0];
@@ -2778,7 +2778,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                               INVALID_OPERATOR_ID,
                                                               PartitionId(0),
                                                               SubpartitionId(0));
-    DecomposedQueryPlanId planIdToRemoveInNextIteration = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    DecomposedQueryId planIdToRemoveInNextIteration = INVALID_DECOMPOSED_QUERY_PLAN_ID;
 
     {
         auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
@@ -2813,7 +2813,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                 ->getSourceDescriptor()
                                                                 ->as<Network::NetworkSourceDescriptor>()
                                                                 ->getNesPartition();
-                    planIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryPlanId();
+                    planIdToRemoveInNextIteration = decomposedQueryPlan->getDecomposedQueryId();
                 } else if (executionNode->operator*()->getId() == WorkerId(3)) {
                     auto sink = ops[0];
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
@@ -2891,10 +2891,10 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
-                           && decomposedQueryPlan->getDecomposedQueryPlanId() == planIdToRemoveInNextIteration) {
+                           && decomposedQueryPlan->getDecomposedQueryId() == planIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
-                           && decomposedQueryPlan->getDecomposedQueryPlanId() != planIdToRemoveInNextIteration) {
+                           && decomposedQueryPlan->getDecomposedQueryId() != planIdToRemoveInNextIteration) {
                     EXPECT_EQ(ops.size(), 1);
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     auto sink = ops[0];

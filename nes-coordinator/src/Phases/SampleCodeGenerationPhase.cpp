@@ -55,13 +55,13 @@ class SampleCPPCodeGenerator : public NautilusQueryCompiler {
         try {
             Timer timer("DefaultQueryCompiler");
             auto sharedQueryId = request->getDecomposedQueryPlan()->getSharedQueryId();
-            auto decomposedQueryPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
-            auto query = fmt::format("{}-{}", sharedQueryId, decomposedQueryPlanId);
+            auto decomposedQueryId = request->getDecomposedQueryPlan()->getDecomposedQueryId();
+            auto query = fmt::format("{}-{}", sharedQueryId, decomposedQueryId);
             // create new context for handling debug output
             auto dumpContext = DumpContext::create("QueryCompilation-" + query);
 
             timer.start();
-            NES_DEBUG("compile query with id: {} subPlanId: {}", sharedQueryId, decomposedQueryPlanId);
+            NES_DEBUG("compile query with id: {} subPlanId: {}", sharedQueryId, decomposedQueryId);
             auto inputPlan = request->getDecomposedQueryPlan();
             auto logicalQueryPlan = inputPlan->copy();
             dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
@@ -141,7 +141,7 @@ QueryPlanPtr SampleCodeGenerationPhase::execute(const QueryPlanPtr& queryPlan) {
     // use query compiler to generate operator code
     // we append a property to "code" some operators
     auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(UNSURE_CONVERSION_TODO_4761(queryPlan->getQueryId(), DecomposedQueryPlanId),
+        DecomposedQueryPlan::create(UNSURE_CONVERSION_TODO_4761(queryPlan->getQueryId(), DecomposedQueryId),
                                     INVALID_SHARED_QUERY_ID,
                                     INVALID_WORKER_NODE_ID,
                                     queryPlan->getRootOperators());

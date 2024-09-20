@@ -108,7 +108,7 @@ class NetworkStackIntegrationTest : public Testing::BaseIntegrationTest, public 
   protected:
     Testing::BorrowedPortPtr dataPort1;
     Testing::BorrowedPortPtr dataPort2;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
@@ -121,12 +121,12 @@ class TestSink : public SinkMedium {
              const Runtime::BufferManagerPtr& bufferManager,
              uint32_t numOfProducers = 1,
              SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-             DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
+             DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                      nodeEngine,
                      numOfProducers,
                      sharedQueryId,
-                     decomposedQueryPlanId) {
+                     decomposedQueryId) {
         // nop
     }
 
@@ -184,17 +184,15 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
           public:
             virtual ~DummyQueryListener() {}
 
-            bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
+            bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryId, OperatorId, Runtime::QueryTerminationType) override {
                 return true;
             }
+            bool notifySourceTermination(SharedQueryId, DecomposedQueryId, OperatorId, Runtime::QueryTerminationType) override {
+                return true;
+            }
+            bool notifyQueryFailure(SharedQueryId, DecomposedQueryId, std::string) override { return true; }
             bool
-            notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
-                return true;
-            }
-            bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string) override { return true; }
-            bool notifyQueryStatusChange(SharedQueryId,
-                                         DecomposedQueryPlanId,
-                                         Runtime::Execution::ExecutableQueryPlanStatus) override {
+            notifyQueryStatusChange(SharedQueryId, DecomposedQueryId, Runtime::Execution::ExecutableQueryPlanStatus) override {
                 return true;
             }
             bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
@@ -548,12 +546,12 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                    nodeEngineReceiver->getBufferManager(),
                                                    1,
                                                    SharedQueryId(i),
-                                                   DecomposedQueryPlanId(subPlanId));
+                                                   DecomposedQueryId(subPlanId));
         finalSinks.emplace_back(testSink);
         auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
         auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
-        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId++),
+        auto decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryId(subPlanId++),
                                                                SharedQueryId(i),
                                                                INVALID_WORKER_NODE_ID,
                                                                query.getQueryPlan()->getRootOperators());
@@ -588,7 +586,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          OperatorId(i),
                                                          SharedQueryId(i),
-                                                         DecomposedQueryPlanId(subPlanId),
+                                                         DecomposedQueryId(subPlanId),
                                                          nodeLocationReceiver,
                                                          nesPartition,
                                                          nodeEngineSender,
@@ -599,7 +597,7 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
                                                          INITIAL_VERSION);
         auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
         auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
-        auto decomposedQueryPlan2 = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId++),
+        auto decomposedQueryPlan2 = DecomposedQueryPlan::create(DecomposedQueryId(subPlanId++),
                                                                 SharedQueryId(i),
                                                                 INVALID_WORKER_NODE_ID,
                                                                 query2.getQueryPlan()->getRootOperators());
@@ -623,9 +621,9 @@ TEST_F(NetworkStackIntegrationTest, testQEPNetworkSinkSource) {
         ASSERT_TRUE(f1.get());
         ASSERT_TRUE(f2.get());
         ASSERT_TRUE(nodeEngineSender->startDecomposedQueryPlan(builderGeneratorQEP->getSharedQueryId(),
-                                                               builderGeneratorQEP->getDecomposedQueryPlanId()));
+                                                               builderGeneratorQEP->getDecomposedQueryId()));
         ASSERT_TRUE(nodeEngineReceiver->startDecomposedQueryPlan(builderReceiverQEP->getSharedQueryId(),
-                                                                 builderReceiverQEP->getDecomposedQueryPlanId()));
+                                                                 builderReceiverQEP->getDecomposedQueryId()));
     }
 
     ASSERT_EQ(numQueries, finalSinks.size());
@@ -784,7 +782,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
         explicit TestQueryListener(std::promise<bool>& queryCompleted) : queryCompleted(queryCompleted) {}
 
         bool notifyQueryStatusChange(SharedQueryId id,
-                                     DecomposedQueryPlanId planId,
+                                     DecomposedQueryId planId,
                                      Runtime::Execution::ExecutableQueryPlanStatus status) override {
             queryCompleted.set_value(true);
             return DummyQueryListener::notifyQueryStatusChange(id, planId, status);
@@ -890,17 +888,17 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
                                const Runtime::BufferManagerPtr& bufferManager,
                                uint32_t numOfProducers = 1,
                                SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-                               DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
+                               DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
             : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                          nodeEngine,
                          numOfProducers,
                          sharedQueryId,
-                         decomposedQueryPlanId) {
+                         decomposedQueryId) {
             // nop
         }
 
         bool writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef context) override {
-            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryPlanId);
+            auto parentPlan = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryId);
             for (auto& dataSources : parentPlan->getSources()) {
                 auto senderChannel = context.getEventOnlyNetworkChannel(dataSources->getOperatorId());
                 senderChannel->sendEvent<detail::TestEvent>(Runtime::EventType::kCustomEvent, 123);
@@ -964,7 +962,7 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
 
     auto networkSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(networkSink);
     auto query2 = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(networkSinkDescriptor);
-    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(DecomposedQueryPlanId(1),
+    auto decomposedQueryPlan2 = DecomposedQueryPlan::create(DecomposedQueryId(1),
                                                             SharedQueryId(0),
                                                             INVALID_WORKER_NODE_ID,
                                                             query2.getQueryPlan()->getRootOperators());
@@ -988,9 +986,9 @@ TEST_F(NetworkStackIntegrationTest, DISABLED_testSendEventBackward) {
     auto future = networkSink->completed.get_future();
 
     ASSERT_TRUE(nodeEngineSender->startDecomposedQueryPlan(builderGeneratorQEP->getSharedQueryId(),
-                                                           builderGeneratorQEP->getDecomposedQueryPlanId()));
+                                                           builderGeneratorQEP->getDecomposedQueryId()));
     ASSERT_TRUE(nodeEngineReceiver->startDecomposedQueryPlan(builderReceiverQEP->getSharedQueryId(),
-                                                             builderReceiverQEP->getDecomposedQueryPlanId()));
+                                                             builderReceiverQEP->getDecomposedQueryId()));
 
     ASSERT_TRUE(future.get());
 

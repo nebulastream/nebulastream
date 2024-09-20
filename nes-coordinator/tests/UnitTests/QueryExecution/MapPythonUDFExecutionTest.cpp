@@ -52,7 +52,7 @@ class MapPythonUDFQueryExecutionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_DEBUG("MapPythonUDFQueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     std::shared_ptr<NES::Testing::TestExecutionEngine> executionEngine;
-    static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    static constexpr DecomposedQueryId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 

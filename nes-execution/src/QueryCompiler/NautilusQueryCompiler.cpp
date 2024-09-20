@@ -54,7 +54,7 @@ NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr
     try {
         Timer timer("NautilusQueryCompiler");
         auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
-        auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
+        auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryId();
         auto query = fmt::format("{}-{}", queryId, subPlanId);
         // create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);

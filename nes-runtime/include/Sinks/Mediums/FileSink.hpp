@@ -35,7 +35,7 @@ class FileSink : public SinkMedium {
      * @param filePath Name of the file to which the stream is written.
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
      * @param sharedQueryId ?
-     * @param decomposedQueryPlanId ?
+     * @param decomposedQueryId ?
      * @param numberOfOrigins number of origins of a given query
      */
     explicit FileSink(SinkFormatPtr format,
@@ -44,7 +44,7 @@ class FileSink : public SinkMedium {
                       const std::string& filePath,
                       bool append,
                       SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
+                      DecomposedQueryId decomposedQueryId,
                       uint64_t numberOfOrigins = 1);
 
     /**

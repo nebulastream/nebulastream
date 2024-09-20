@@ -35,7 +35,7 @@
 namespace NES::RequestProcessor {
 
 FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId,
-                                   const DecomposedQueryPlanId failedDecomposedPlanId,
+                                   const DecomposedQueryId failedDecomposedPlanId,
                                    const std::string& failureReason,
                                    const uint8_t maxRetries,
                                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler)
@@ -48,11 +48,11 @@ FailQueryRequest::FailQueryRequest(const SharedQueryId sharedQueryId,
                           ResourceType::CoordinatorConfiguration,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
-      sharedQueryId(sharedQueryId), decomposedQueryPlanId(failedDecomposedPlanId), failureReason(failureReason),
+      sharedQueryId(sharedQueryId), decomposedQueryId(failedDecomposedPlanId), failureReason(failureReason),
       placementAmendmentHandler(placementAmendmentHandler) {}
 
 FailQueryRequestPtr FailQueryRequest::create(SharedQueryId sharedQueryId,
-                                             DecomposedQueryPlanId failedDecomposedQueryId,
+                                             DecomposedQueryId failedDecomposedQueryId,
                                              const std::string& failureReason,
                                              uint8_t maxRetries,
                                              const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler) {
@@ -88,7 +88,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
     typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
 
     //todo 4255: allow requests to skip to the front of the line
-    queryCatalog->checkAndMarkSharedQueryForFailure(sharedQueryId, decomposedQueryPlanId);
+    queryCatalog->checkAndMarkSharedQueryForFailure(sharedQueryId, decomposedQueryId);
 
     // 1. Remove shared query plan from the global query plan and mark it as failed
     globalQueryPlan->removeQuery(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), RequestType::FailQuery);
@@ -118,7 +118,7 @@ std::vector<AbstractRequestPtr> FailQueryRequest::executeRequestLogic(const Stor
         //todo #3727: catch exceptions for error handling
     }
     NES_ERROR("Failed to process Failed query request. Queuing another fail query request for the request executor.")
-    return {FailQueryRequest::create(sharedQueryId, decomposedQueryPlanId, failureReason, 1, placementAmendmentHandler)};
+    return {FailQueryRequest::create(sharedQueryId, decomposedQueryId, failureReason, 1, placementAmendmentHandler)};
 }
 
 }// namespace NES::RequestProcessor

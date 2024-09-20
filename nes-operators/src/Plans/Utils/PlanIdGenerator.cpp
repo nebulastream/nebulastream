@@ -26,9 +26,9 @@ SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
     return SharedQueryId(id++);
 }
 
-DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId() {
+DecomposedQueryId PlanIdGenerator::getNextDecomposedQueryPlanId() {
     static std::atomic_uint64_t id = INITIAL_DECOMPOSED_QUERY_PLAN_ID.getRawValue();
-    return DecomposedQueryPlanId(id++);
+    return DecomposedQueryId(id++);
 }
 
 }// namespace NES

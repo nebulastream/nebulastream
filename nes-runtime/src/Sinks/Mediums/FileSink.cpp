@@ -34,9 +34,9 @@ FileSink::FileSink(SinkFormatPtr format,
                    const std::string& filePath,
                    bool append,
                    SharedQueryId sharedQueryId,
-                   DecomposedQueryPlanId decomposedQueryPlanId,
+                   DecomposedQueryId decomposedQueryId,
                    uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryId, numberOfOrigins),
       filePath(filePath), append(append) {}
 
 std::string FileSink::toString() const {

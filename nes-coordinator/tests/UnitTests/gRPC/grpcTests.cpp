@@ -89,7 +89,7 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    auto subQueryId = DecomposedQueryPlanId(1);
+    auto subQueryId = DecomposedQueryId(1);
     std::string errormsg = "Query failed.";
     bool successOfNotifyingQueryFailure =
         wrk->notifyQueryFailure(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId, errormsg);

@@ -100,12 +100,12 @@ class TestSink : public SinkMedium {
              const Runtime::BufferManagerPtr& bufferManager,
              uint32_t numOfProducers = 1,
              SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-             DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
+             DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager),
                      nodeEngine,
                      numOfProducers,
                      sharedQueryId,
-                     decomposedQueryPlanId){};
+                     decomposedQueryId){};
 
     bool writeData(Runtime::TupleBuffer& input_buffer, Runtime::WorkerContextRef) override {
         std::unique_lock lock(m);
@@ -283,14 +283,12 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
             ExecutionResult processNextTask(bool, Runtime::WorkerContext&) override { return ExecutionResult::Error; };
             void addWorkForNextPipeline(TupleBuffer&, Runtime::Execution::SuccessorExecutablePipeline, uint32_t) override{};
             void poisonWorkers() override{};
-            bool addReconfigurationMessage(SharedQueryId,
-                                           DecomposedQueryPlanId,
-                                           const Runtime::ReconfigurationMessage&,
-                                           bool) override {
+            bool
+            addReconfigurationMessage(SharedQueryId, DecomposedQueryId, const Runtime::ReconfigurationMessage&, bool) override {
                 receivedCallback = true;
                 return true;
             };
-            bool addReconfigurationMessage(SharedQueryId, DecomposedQueryPlanId, TupleBuffer&&, bool) override { return false; };
+            bool addReconfigurationMessage(SharedQueryId, DecomposedQueryId, TupleBuffer&&, bool) override { return false; };
 
             uint64_t getNumberOfTasksInWorkerQueues() const override { return 0; };
             bool startThreadPool(uint64_t) override { return false; };
@@ -332,7 +330,7 @@ TEST_F(NetworkStackTest, startCloseChannelAsyncIndefiniteRetries) {
         NodeLocation nodeLocation(INVALID_WORKER_NODE_ID, "127.0.0.1", *freeDataPort);
         auto queryManager = std::make_shared<DummyQueryManager>();
         auto reconf = Runtime::ReconfigurationMessage(SharedQueryId(1),
-                                                      DecomposedQueryPlanId(1),
+                                                      DecomposedQueryId(1),
                                                       Runtime::ReconfigurationType::ConnectionEstablished,
                                                       {},
                                                       std::make_any<uint32_t>(1));

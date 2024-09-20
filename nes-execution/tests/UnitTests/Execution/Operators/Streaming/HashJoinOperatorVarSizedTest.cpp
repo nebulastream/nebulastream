@@ -226,8 +226,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID,     // mock pipeline id
-        DecomposedQueryPlanId(1),// mock query id
+        INVALID_PIPELINE_ID, // mock pipeline id
+        DecomposedQueryId(1),// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef) {

@@ -38,7 +38,7 @@ class DeploymentContext {
     DeploymentContext(const std::string& ipAddress,
                       uint32_t grpcPort,
                       SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
+                      DecomposedQueryId decomposedQueryId,
                       DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                       WorkerId workerId,
                       QueryState decomposedQueryState,
@@ -54,7 +54,7 @@ class DeploymentContext {
      * @brief Get the id of the decomposed query plan
      * @return decomposed query plan id
      */
-    DecomposedQueryPlanId getDecomposedQueryPlanId();
+    DecomposedQueryId getDecomposedQueryId();
 
     /**
      * @brief Get the decomposed query plan version
@@ -90,7 +90,7 @@ class DeploymentContext {
     std::string ipAddress;
     uint32_t grpcPort;
     SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
+    DecomposedQueryId decomposedQueryId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;
     WorkerId workerId;
     QueryState decomposedQueryState;

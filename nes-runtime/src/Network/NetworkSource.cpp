@@ -90,13 +90,13 @@ bool NetworkSource::start() {
     auto expected = false;
     if (running.compare_exchange_strong(expected, true)) {
         for (const auto& successor : executableSuccessors) {
-            auto decomposedQueryPlanId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
-                                                                           return sink->getParentPlanId();
-                                                                       },
-                                                                       [](Execution::ExecutablePipelinePtr pipeline) {
-                                                                           return pipeline->getDecomposedQueryPlanId();
-                                                                       }},
-                                                    successor);
+            auto decomposedQueryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
+                                                                       return sink->getParentPlanId();
+                                                                   },
+                                                                   [](Execution::ExecutablePipelinePtr pipeline) {
+                                                                       return pipeline->getDecomposedQueryId();
+                                                                   }},
+                                                successor);
             auto sharedQueryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                                    return sink->getSharedQueryId();
                                                                },
@@ -106,10 +106,10 @@ bool NetworkSource::start() {
                                             successor);
 
             auto newReconf = ReconfigurationMessage(sharedQueryId,
-                                                    decomposedQueryPlanId,
+                                                    decomposedQueryId,
                                                     Runtime::ReconfigurationType::Initialize,
                                                     shared_from_base<DataSource>());
-            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, true);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, true);
             break;// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);

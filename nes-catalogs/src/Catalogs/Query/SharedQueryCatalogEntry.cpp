@@ -44,24 +44,21 @@ std::vector<DecomposedQueryPlanMetaDataPtr> SharedQueryCatalogEntry::getAllDecom
     return decomposedQueryPlan;
 }
 
-DecomposedQueryPlanMetaDataPtr
-SharedQueryCatalogEntry::getDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId) {
-    if (!decomposedQueryPlanMetaData.contains(decomposedQueryPlanId)) {
-        NES_ERROR("No decomposed query plan with id {} exists.", decomposedQueryPlanId);
+DecomposedQueryPlanMetaDataPtr SharedQueryCatalogEntry::getDecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId) {
+    if (!decomposedQueryPlanMetaData.contains(decomposedQueryId)) {
+        NES_ERROR("No decomposed query plan with id {} exists.", decomposedQueryId);
     }
-    return decomposedQueryPlanMetaData[decomposedQueryPlanId];
+    return decomposedQueryPlanMetaData[decomposedQueryId];
 }
 
-void SharedQueryCatalogEntry::addDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+void SharedQueryCatalogEntry::addDecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId,
                                                              DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                                              WorkerId workerId,
                                                              QueryState decomposedQueryPlanState) {
 
-    auto decomposedQueryPlanMetaDatum = DecomposedQueryPlanMetaData::create(decomposedQueryPlanId,
-                                                                            decomposedQueryPlanVersion,
-                                                                            decomposedQueryPlanState,
-                                                                            workerId);
-    decomposedQueryPlanMetaData[decomposedQueryPlanId] = std::move(decomposedQueryPlanMetaDatum);
+    auto decomposedQueryPlanMetaDatum =
+        DecomposedQueryPlanMetaData::create(decomposedQueryId, decomposedQueryPlanVersion, decomposedQueryPlanState, workerId);
+    decomposedQueryPlanMetaData[decomposedQueryId] = std::move(decomposedQueryPlanMetaDatum);
 }
 
 SharedQueryId SharedQueryCatalogEntry::getSharedQueryId() const noexcept { return sharedQueryId; }

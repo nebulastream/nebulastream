@@ -166,7 +166,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                       {sink});
 
     auto executionPlan = ExecutableQueryPlan::create(SharedQueryId(queryId),
-                                                     DecomposedQueryPlanId(queryId),
+                                                     DecomposedQueryId(queryId),
                                                      {source},
                                                      {sink},
                                                      {},
@@ -174,7 +174,7 @@ TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
                                                      this->nodeEngine->getBufferManager());
     EXPECT_TRUE(this->nodeEngine->registerExecutableQueryPlan(executionPlan));
     EXPECT_TRUE(
-        this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryPlanId()));
+        this->nodeEngine->startDecomposedQueryPlan(executionPlan->getSharedQueryId(), executionPlan->getDecomposedQueryId()));
     EXPECT_EQ(this->nodeEngine->getQueryStatus(SharedQueryId(queryId)), ExecutableQueryPlanStatus::Running);
     sink->waitTillCompleted(numberOfBuffers * numberOfTuplesToProcess);
     auto theThing = sink->getResult();

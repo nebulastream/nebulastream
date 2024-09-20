@@ -516,18 +516,18 @@ bool NesWorker::waitForConnect() const {
 }
 
 bool NesWorker::notifyQueryStatusChange(SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        DecomposedQueryId decomposedQueryId,
                                         Runtime::Execution::ExecutableQueryPlanStatus newStatus) {
     NES_ASSERT(waitForConnect(), "cannot connect");
     NES_ASSERT2_FMT(newStatus != Runtime::Execution::ExecutableQueryPlanStatus::Stopped,
-                    "Hard Stop called for query=" << sharedQueryId << " subQueryId=" << decomposedQueryPlanId
+                    "Hard Stop called for query=" << sharedQueryId << " subQueryId=" << decomposedQueryId
                                                   << " should not call notifyQueryStatusChange");
     if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::Finished) {
         NES_DEBUG("NesWorker {} about to notify soft stop completion for query {} subPlan {}",
                   getWorkerId(),
                   sharedQueryId,
-                  decomposedQueryPlanId);
-        return coordinatorRpcClient->notifySoftStopCompleted(sharedQueryId, decomposedQueryPlanId);
+                  decomposedQueryId);
+        return coordinatorRpcClient->notifySoftStopCompleted(sharedQueryId, decomposedQueryId);
     } else if (newStatus == Runtime::Execution::ExecutableQueryPlanStatus::ErrorState) {
         return true;// rpc to coordinator executed from async runner
     }
@@ -535,23 +535,23 @@ bool NesWorker::notifyQueryStatusChange(SharedQueryId sharedQueryId,
 }
 
 bool NesWorker::canTriggerEndOfStream(SharedQueryId sharedQueryId,
-                                      DecomposedQueryPlanId decomposedQueryPlanId,
+                                      DecomposedQueryId decomposedQueryId,
                                       OperatorId sourceId,
                                       Runtime::QueryTerminationType terminationType) {
     NES_ASSERT(waitForConnect(), "cannot connect");
     NES_ASSERT(terminationType == Runtime::QueryTerminationType::Graceful, "invalid termination type");
-    return coordinatorRpcClient->checkAndMarkForSoftStop(sharedQueryId, decomposedQueryPlanId, sourceId);
+    return coordinatorRpcClient->checkAndMarkForSoftStop(sharedQueryId, decomposedQueryId, sourceId);
 }
 
 bool NesWorker::notifySourceTermination(SharedQueryId sharedQueryId,
-                                        DecomposedQueryPlanId decomposedQueryPlanId,
+                                        DecomposedQueryId decomposedQueryId,
                                         OperatorId sourceId,
                                         Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT(waitForConnect(), "cannot connect");
-    return coordinatorRpcClient->notifySourceStopTriggered(sharedQueryId, decomposedQueryPlanId, sourceId, queryTermination);
+    return coordinatorRpcClient->notifySourceStopTriggered(sharedQueryId, decomposedQueryId, sourceId, queryTermination);
 }
 
-bool NesWorker::notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) {
+bool NesWorker::notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryId subQueryId, std::string errorMsg) {
     bool con = waitForConnect();
     NES_ASSERT(con, "Connection failed");
     bool success =

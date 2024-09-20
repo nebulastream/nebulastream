@@ -31,11 +31,11 @@ class RawBufferSink : public SinkMedium {
     /**
      * @brief Create a file sink in migrate format.
      * @param nodeEngine The node engine of the worker.
-     * @param numOfProducers
+     * @param numOfProducers number of producers
      * @param filePath Name of the file to which the stream is written.
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
-     * @param sharedQueryId
-     * @param decomposedQueryPlanId
+     * @param sharedQueryId shared query plan id
+     * @param decomposedQueryId decomposed query plan id
      * @param numberOfOrigins number of origins of a given query
      */
     explicit RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
@@ -43,7 +43,7 @@ class RawBufferSink : public SinkMedium {
                            const std::string& filePath,
                            bool append,
                            SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           DecomposedQueryId decomposedQueryId,
                            uint64_t numberOfOrigins = 1);
 
     ~RawBufferSink() override;

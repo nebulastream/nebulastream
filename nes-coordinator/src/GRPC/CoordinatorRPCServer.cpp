@@ -324,10 +324,10 @@ Status CoordinatorRPCServer::NotifyQueryFailure(ServerContext*,
                                                                    << " from worker: " << request->workerid());
 
         auto sharedQueryId = SharedQueryId(request->queryid());
-        auto decomposedQueryPlanId = DecomposedQueryPlanId(request->subqueryid());
+        auto decomposedQueryId = DecomposedQueryId(request->subqueryid());
 
         //Send one failure request for the shared query plan
-        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, decomposedQueryPlanId, request->errormsg())) {
+        if (!requestHandlerService->validateAndQueueFailQueryRequest(sharedQueryId, decomposedQueryId, request->errormsg())) {
             NES_ERROR("Failed to create Query Failure request for shared query plan {}", sharedQueryId);
             return Status::CANCELLED;
         }
@@ -375,12 +375,12 @@ Status CoordinatorRPCServer::RequestSoftStop(::grpc::ServerContext*,
                                              const ::RequestSoftStopMessage* request,
                                              ::StopRequestReply* response) {
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryPlanId = DecomposedQueryPlanId(request->subqueryid());
+    auto decomposedQueryId = DecomposedQueryId(request->subqueryid());
     NES_WARNING("CoordinatorRPCServer: received request for soft stopping the shared query plan id: {}", sharedQueryId)
 
     //Check with query catalog service if the request possible
     auto softStopPossible = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                          decomposedQueryPlanId,
+                                                                          decomposedQueryId,
                                                                           INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                                           QueryState::MARKED_FOR_SOFT_STOP,
                                                                           INVALID_WORKER_NODE_ID);
@@ -394,14 +394,14 @@ Status CoordinatorRPCServer::notifySourceStopTriggered(::grpc::ServerContext*,
                                                        const ::SoftStopTriggeredMessage* request,
                                                        ::SoftStopTriggeredReply* response) {
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryPlanId = DecomposedQueryPlanId(request->querysubplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->querysubplanid());
     NES_INFO("CoordinatorRPCServer: received request for soft stopping the sub pan : {}  shared query plan id:{}",
-             decomposedQueryPlanId,
+             decomposedQueryId,
              sharedQueryId)
 
     //inform catalog service
     bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                 decomposedQueryPlanId,
+                                                                 decomposedQueryId,
                                                                  INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                                  QueryState::SOFT_STOP_TRIGGERED,
                                                                  INVALID_WORKER_NODE_ID);
@@ -416,11 +416,11 @@ Status CoordinatorRPCServer::NotifySoftStopCompleted(::grpc::ServerContext*,
                                                      ::SoftStopCompletionReply* response) {
     //Fetch the request
     auto sharedQueryId = SharedQueryId(request->queryid());
-    auto decomposedQueryPlanId = DecomposedQueryPlanId(request->querysubplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->querysubplanid());
 
     //inform catalog service
     bool success = queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
-                                                                 decomposedQueryPlanId,
+                                                                 decomposedQueryId,
                                                                  INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                                  QueryState::SOFT_STOP_COMPLETED,
                                                                  INVALID_WORKER_NODE_ID);

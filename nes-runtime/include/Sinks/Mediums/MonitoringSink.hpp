@@ -46,7 +46,7 @@ class MonitoringSink : public SinkMedium {
                             Runtime::NodeEnginePtr nodeEngine,
                             uint32_t numOfProducers,
                             SharedQueryId sharedQueryId,
-                            DecomposedQueryPlanId decomposedQueryPlanId,
+                            DecomposedQueryId decomposedQueryId,
                             uint64_t numberOfOrigins = 1);
 
     /**

@@ -28,8 +28,7 @@ using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class QueryStatistics {
   public:
-    QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId)
-        : queryId(sharedQueryId), subQueryId(subQueryId){};
+    QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryId subQueryId) : queryId(sharedQueryId), subQueryId(subQueryId){};
 
     QueryStatistics(const QueryStatistics& other);
 
@@ -203,7 +202,7 @@ class QueryStatistics {
      * @brief get the sub id of this qep (the pipeline stage)
      * @return subqueryID
      */
-    [[nodiscard]] DecomposedQueryPlanId getSubQueryId() const;
+    [[nodiscard]] DecomposedQueryId getSubQueryId() const;
 
     /**
      * Add for the current time stamp (now) a new latency value
@@ -238,7 +237,7 @@ class QueryStatistics {
     std::atomic<uint64_t> timestampLastProcessedTask = 0;
 
     std::atomic<SharedQueryId> queryId = INVALID_SHARED_QUERY_ID;
-    std::atomic<DecomposedQueryPlanId> subQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    std::atomic<DecomposedQueryId> subQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>> tsToLatencyMap;
     folly::Synchronized<std::map<PipelineId, std::map<WorkerThreadId, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };

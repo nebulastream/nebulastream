@@ -80,21 +80,21 @@ class SharedQueryCatalogEntry {
 
     /**
      * Add decomposed query plan metadata
-     * @param decomposedQueryPlanId : the sub query plan id
+     * @param decomposedQueryId : the sub query plan id
      * @param decomposedQueryPlanVersion: the decomposed query plan version
      * @param workerId : the worker node on which the query is running
      * @param queryState : the state of the decomposed plan
      */
-    void addDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId,
+    void addDecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId,
                                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                         WorkerId workerId,
                                         QueryState queryState);
 
     /**
      * Get sub query plan meta data
-     * @param decomposedQueryPlanId : the decomposed query plan id
+     * @param decomposedQueryId : the decomposed query plan id
      */
-    DecomposedQueryPlanMetaDataPtr getDecomposedQueryPlanMetaData(DecomposedQueryPlanId decomposedQueryPlanId);
+    DecomposedQueryPlanMetaDataPtr getDecomposedQueryPlanMetaData(DecomposedQueryId decomposedQueryId);
 
     /**
      * Get all sub query plan mea data
@@ -111,7 +111,7 @@ class SharedQueryCatalogEntry {
     SharedQueryId sharedQueryId;
     std::set<QueryId> containedQueryIds;
     QueryState queryState;
-    std::map<DecomposedQueryPlanId, DecomposedQueryPlanMetaDataPtr> decomposedQueryPlanMetaData;
+    std::map<DecomposedQueryId, DecomposedQueryPlanMetaDataPtr> decomposedQueryPlanMetaData;
     std::string terminationReason;
     QueryStateHistory history;
 };

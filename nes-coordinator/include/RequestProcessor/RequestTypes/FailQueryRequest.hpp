@@ -60,7 +60,7 @@ class FailQueryRequest : public AbstractUniRequest {
      * @param placementAmendmentHandler: placement amendment handler for updating and un-deploying the operators of the failed shared query
      */
     FailQueryRequest(SharedQueryId sharedQueryId,
-                     DecomposedQueryPlanId failedDecomposedPlanId,
+                     DecomposedQueryId failedDecomposedPlanId,
                      const std::string& failureReason,
                      uint8_t maxRetries,
                      const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
@@ -74,7 +74,7 @@ class FailQueryRequest : public AbstractUniRequest {
     * @return a smart pointer to the newly created object
     */
     static FailQueryRequestPtr create(SharedQueryId sharedQueryId,
-                                      DecomposedQueryPlanId failedDecomposedQueryId,
+                                      DecomposedQueryId failedDecomposedQueryId,
                                       const std::string& failureReason,
                                       uint8_t maxRetries,
                                       const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
@@ -119,7 +119,7 @@ class FailQueryRequest : public AbstractUniRequest {
 
   private:
     SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
+    DecomposedQueryId decomposedQueryId;
     std::string failureReason;
     GlobalQueryPlanPtr globalQueryPlan;
     Catalogs::Query::QueryCatalogPtr queryCatalog;

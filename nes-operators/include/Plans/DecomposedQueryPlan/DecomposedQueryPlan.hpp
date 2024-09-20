@@ -49,43 +49,42 @@ class DecomposedQueryPlan {
   public:
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @param sharedQueryId: the shared query plan
      * @param workerId: the worker id
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr
-    create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
+    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      * @param rootOperators: the root operators
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr create(DecomposedQueryPlanId decomposedQueryPlanId,
+    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId,
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
                                          std::vector<OperatorPtr> rootOperators);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      */
-    explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
+    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      * @param rootOperators: the root operators
      */
-    explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId,
+    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                  SharedQueryId sharedQueryId,
                                  WorkerId workerId,
                                  std::vector<OperatorPtr> rootOperators);
@@ -133,13 +132,13 @@ class DecomposedQueryPlan {
      * @brief Return the id of the decomposed query plan
      * @return decomposed query plan id
      */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+    DecomposedQueryId getDecomposedQueryId() const;
 
     /**
      * @brief Get the new decomposed query plan id
      * @param newDecomposedQueryPlanId: the new decomposed query plan id
      */
-    void setDecomposedQueryPlanId(DecomposedQueryPlanId newDecomposedQueryPlanId);
+    void setDecomposedQueryPlanId(DecomposedQueryId newDecomposedQueryPlanId);
 
     /**
      * @brief Get the shared query id
@@ -255,7 +254,7 @@ class DecomposedQueryPlan {
 
   private:
     SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
+    DecomposedQueryId decomposedQueryId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;

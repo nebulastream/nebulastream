@@ -49,7 +49,7 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
     NES_DEBUG("WorkerRPCServer::RegisterQuery: got decomposed query plan with shared query Id: {} and decomposed query plan Id: "
               "{} plan={}",
               decomposedQueryPlan->getSharedQueryId(),
-              decomposedQueryPlan->getDecomposedQueryPlanId(),
+              decomposedQueryPlan->getDecomposedQueryId(),
               decomposedQueryPlan->toString());
     bool success = false;
     try {
@@ -78,7 +78,7 @@ Status WorkerRPCServer::UnregisterDecomposedQuery(ServerContext*,
                                                   UnregisterDecomposedQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::UnregisterQuery: got request for {}", request->sharedqueryid());
     bool success = nodeEngine->unregisterDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                             DecomposedQueryPlanId(request->decomposedqueryid()));
+                                                             DecomposedQueryId(request->decomposedqueryid()));
     if (success) {
         NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
@@ -94,7 +94,7 @@ Status WorkerRPCServer::StartDecomposedQuery(ServerContext*,
                                              StartDecomposedQueryReply* reply) {
     NES_DEBUG("WorkerRPCServer::StartQuery: got request for {}", request->sharedqueryid());
     bool success = nodeEngine->startDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                        DecomposedQueryPlanId(request->decomposedqueryid()));
+                                                        DecomposedQueryId(request->decomposedqueryid()));
     if (success) {
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
@@ -111,7 +111,7 @@ WorkerRPCServer::StopDecomposedQuery(ServerContext*, const StopDecomposedQueryRe
     auto terminationType = Runtime::QueryTerminationType(request->queryterminationtype());
     NES_ASSERT2_FMT(terminationType != Runtime::QueryTerminationType::Invalid, "Invalid termination type requested");
     bool success = nodeEngine->stopDecomposedQueryPlan(SharedQueryId(request->sharedqueryid()),
-                                                       DecomposedQueryPlanId(request->decomposedqueryid()),
+                                                       DecomposedQueryId(request->decomposedqueryid()),
                                                        terminationType);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
@@ -157,9 +157,9 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer request received");
 
-    auto decomposedQueryPlanId = DecomposedQueryPlanId(request->decomposedqueryplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
-    bool success = nodeEngine->bufferData(decomposedQueryPlanId, uniqueNetworkSinkDescriptorId);
+    bool success = nodeEngine->bufferData(decomposedQueryId, uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
@@ -173,14 +173,14 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
 Status
 WorkerRPCServer::UpdateNetworkSink(ServerContext*, const UpdateNetworkSinkRequest* request, UpdateNetworkSinkReply* reply) {
     NES_DEBUG("WorkerRPCServer::Sink Reconfiguration request received");
-    auto decomposedQueryPlanId = DecomposedQueryPlanId(request->decomposedqueryplanid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
     auto uniqueNetworkSinkDescriptorId = OperatorId(request->uniquenetworksinkdescriptorid());
     auto newNodeId = WorkerId(request->newnodeid());
     std::string newHostname = request->newhostname();
     uint32_t newPort = request->newport();
 
     bool success =
-        nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, decomposedQueryPlanId, uniqueNetworkSinkDescriptorId);
+        nodeEngine->updateNetworkSink(newNodeId, newHostname, newPort, decomposedQueryId, uniqueNetworkSinkDescriptorId);
     if (success) {
         NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);

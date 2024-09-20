@@ -71,7 +71,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     Nautilus::CompilationOptions options;
     auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
                                   pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
-                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
+                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryId(),
                                   pipeline->getPipelineId());
     options.setIdentifier(identifier);
 

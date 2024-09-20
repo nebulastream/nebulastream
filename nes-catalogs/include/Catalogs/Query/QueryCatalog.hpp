@@ -111,33 +111,33 @@ class QueryCatalog {
     /**
      * @brief check and mark the shared query for soft stop
      * @param sharedQueryId: the query which is being soft stopped
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param decomposedQueryId: the decomposed query plan id
      * @return true if successful else false
      */
-    bool handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool handleDecomposedQueryPlanMarkedForSoftStop(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief Handle decomposed query plan soft stop completed
      * @param sharedQueryId : the shared query id
-     * @param decomposedQueryPlanId : the decomposed query plan id
+     * @param decomposedQueryId : the decomposed query plan id
      * @return true if handled or false
      */
-    bool handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool handleDecomposedQueryPlanSoftStopCompleted(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief Handle decomposed query plan soft stop triggered
      * @param sharedQueryId : the shared query id
-     * @param decomposedQueryPlanId : the decomposed query plan id
+     * @param decomposedQueryId : the decomposed query plan id
      * @return true if handled or false
      */
-    bool handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    bool handleDecomposedQueryPlanSoftStopTriggered(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * @brief Check and mark shared query for failure
      * @param sharedQueryId
-     * @param decomposedQueryPlanId
+     * @param decomposedQueryId
      */
-    void checkAndMarkSharedQueryForFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
+    void checkAndMarkSharedQueryForFailure(SharedQueryId sharedQueryId, DecomposedQueryId decomposedQueryId);
 
     /**
      * Add update query plans to the query catalog
@@ -150,13 +150,13 @@ class QueryCatalog {
     /**
      * Update decomposed query plan status
      * @param sharedQueryId: the query id to which sub plan is added
-     * @param decomposedQueryPlanId: the query sub plan id
+     * @param decomposedQueryId: the query sub plan id
      * @param decomposedQueryPlanVersion: the decomposed query plan
      * @param decomposedQueryState : the new decomposed query plan status
      * @param workerId: the worker id
      */
     bool updateDecomposedQueryPlanStatus(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
+                                         DecomposedQueryId decomposedQueryId,
                                          DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                          QueryState decomposedQueryState,
                                          WorkerId workerId);

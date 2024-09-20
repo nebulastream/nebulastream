@@ -13,6 +13,7 @@
 add_subdirectory(Exceptions)
 add_subdirectory(Nodes)
 add_subdirectory(Sequencing)
+add_subdirectory(Reconfiguration)
 add_subdirectory(Util)
 add_source_files(nes-common
         cpp-base64/base64.cpp
