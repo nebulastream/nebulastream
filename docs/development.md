@@ -55,7 +55,7 @@ To run all tests you have to run ctest inside the docker container. The '-j' fla
 refer to the [ctest guide](https://cmake.org/cmake/help/latest/manual/ctest.1.html) for further instruction.
 
 ```shell
-docker run 
+docker run \
     --workdir $(pwd) \
     -v $(pwd):$(pwd) \
      nebulastream/nes-development:local \
