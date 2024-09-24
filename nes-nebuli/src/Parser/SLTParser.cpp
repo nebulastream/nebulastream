@@ -55,7 +55,8 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
         substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
-        "substitution rule keywords must be unique. Tried to register for the second time: " << rule.keyword);
+        "substitution rule keywords must be unique. Tried to register for the second time: {}",
+        rule.keyword);
     substitutionRules.emplace_back(rule);
 }
 
@@ -158,16 +159,16 @@ void SLTParser::parse()
             }
             else
             {
-                throw SLTUnexpectedToken("expected result delimiter `" + ResultDelimiter + "` after query");
+                throw SLTUnexpectedToken("expected result delimiter `{}` after query", ResultDelimiter);
             }
         }
         else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            throw SLTUnexpectedToken("unexpected occurence of result delimiter " + ResultDelimiter + "`");
+            throw SLTUnexpectedToken("unexpected occurence of result delimiter `{}`", ResultDelimiter);
         }
         else if (token.value() == TokenType::INVALID)
         {
-            throw SLTUnexpectedToken("got invalid token in line: " + lines[currentLine]);
+            throw SLTUnexpectedToken("got invalid token in line: {}", lines[currentLine]);
         }
     }
 }
@@ -260,14 +261,14 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
     std::string discard;
     if (!(stream >> discard))
     {
-        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(discard == SLTSourceToken, "Expected first word to be `" + SLTSourceToken + "` for source statement");
+    INVARIANT(discard == SLTSourceToken, "Expected first word to be `{}` for source statement", SLTSourceToken);
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
     {
-        throw SLTUnexpectedToken("failed to read source name in: " + line);
+        throw SLTUnexpectedToken("failed to read source name in {}", line);
     }
 
     std::vector<std::string> arguments;
