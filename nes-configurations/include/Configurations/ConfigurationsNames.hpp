@@ -14,7 +14,6 @@
 #pragma once
 #include <cstdint>
 #include <string>
-#include <Util/Logger/Logger.hpp>
 
 using namespace std::string_literals;
 

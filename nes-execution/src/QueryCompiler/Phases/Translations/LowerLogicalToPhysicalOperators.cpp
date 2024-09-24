@@ -13,6 +13,7 @@
 */
 #include <utility>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -38,7 +39,8 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
     std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
     for (const auto& node : nodes)
     {
-        if (node->instanceOf<PhysicalOperators::PhysicalOperator>() or node->instanceOf<OperatorLogicalSourceDescriptor>())
+        if (node->instanceOf<PhysicalOperators::PhysicalOperator>() or node->instanceOf<OperatorLogicalSourceDescriptor>()
+            or node->instanceOf<SinkLogicalOperator>())
         {
             NES_DEBUG("Skipped node: {} as it is already a physical or a LogicalDescriptorSource operator.", node->toString());
             continue;

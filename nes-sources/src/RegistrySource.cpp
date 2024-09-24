@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <../include/Sources/Source.hpp>
 #include <../include/Sources/DescriptorSource.hpp>
+#include <../include/Sources/Source.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
 #include <Sources/RegistrySource.hpp>
 

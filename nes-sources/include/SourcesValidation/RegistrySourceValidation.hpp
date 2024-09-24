@@ -52,7 +52,9 @@ public:
     static RegistrySourceValidation& instance();
 
 private:
-    std::unordered_map<std::string, std::function<Configurations::DescriptorConfig::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>>
+    std::unordered_map<
+        std::string,
+        std::function<Configurations::DescriptorConfig::Config(std::unordered_map<std::string, std::string>&& sourceConfig)>>
         registry;
 };
 

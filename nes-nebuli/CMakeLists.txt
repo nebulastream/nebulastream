@@ -83,6 +83,8 @@ add_nebuli_header(nes-operators Plans/Query/ Plans/Query)
 add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
 add_nebuli_header(nes-window-types Measures/ Measures)
 add_nebuli_header(nes-window-types Types/ Types)
+add_nebuli_header(nes-sinks Sinks/ Sinks)
+add_nebuli_header(nes-configurations Configurations/ Configurations)
 
 # install Nebuli and all its dependencies + the file_set with the headers
 install(TARGETS nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc

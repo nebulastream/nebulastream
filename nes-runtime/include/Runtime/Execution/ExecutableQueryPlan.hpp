@@ -16,13 +16,14 @@
 
 #include <atomic>
 #include <future>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Sinks/SinksForwaredRefs.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sources/SourceHandle.hpp>
 
 namespace NES::Runtime
@@ -39,15 +40,15 @@ public:
     explicit ExecutableQueryPlan(
         QueryId queryId,
         std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
-        std::vector<DataSinkPtr>&& sinks,
+        std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
         Memory::BufferManagerPtr&& bufferManager);
 
     static ExecutableQueryPlanPtr create(
         QueryId queryId,
-        std::vector<std::unique_ptr<Sources::SourceHandle>> sources,
-        std::vector<DataSinkPtr> sinks,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
+        std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>&& sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
         QueryManagerPtr queryManager,
         Memory::BufferManagerPtr bufferManager);
@@ -55,7 +56,6 @@ public:
 
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
     void notifyPipelineCompletion(ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
-    void notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType);
 
     /// Setup the query plan, e.g., instantiate state variables.
     bool setup();
@@ -80,7 +80,7 @@ public:
 
     [[nodiscard]] QueryStatus getStatus() const;
     [[nodiscard]] const std::vector<std::unique_ptr<Sources::SourceHandle>>& getSources() const;
-    [[nodiscard]] const std::vector<DataSinkPtr>& getSinks() const;
+    [[nodiscard]] const std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& getSinks() const;
     [[nodiscard]] const std::vector<ExecutablePipelinePtr>& getPipelines() const;
     [[nodiscard]] QueryManagerPtr getQueryManager() const;
     [[nodiscard]] Memory::BufferManagerPtr getBufferManager() const;
@@ -107,7 +107,7 @@ private:
 private:
     const QueryId queryId;
     std::vector<std::unique_ptr<Sources::SourceHandle>> sources;
-    std::vector<DataSinkPtr> sinks;
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
     Memory::BufferManagerPtr bufferManager;

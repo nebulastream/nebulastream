@@ -15,7 +15,6 @@
 #include <Exceptions/TaskExecutionException.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 namespace NES
 {
 

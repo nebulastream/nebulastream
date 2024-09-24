@@ -87,9 +87,6 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
-
 namespace QueryCompilation
 {
 
@@ -146,8 +143,6 @@ using PipeliningPhasePtr = std::shared_ptr<PipeliningPhase>;
 class OperatorFusionPolicy;
 using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 
-class DataSinkProvider;
-using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
 namespace Phases
 {
 

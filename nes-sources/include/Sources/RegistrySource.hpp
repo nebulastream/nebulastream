@@ -20,8 +20,8 @@
 #include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/DescriptorSource.hpp>
+#include <Sources/Source.hpp>
 
 namespace NES::Sources
 {

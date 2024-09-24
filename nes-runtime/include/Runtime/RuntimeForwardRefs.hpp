@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <Sinks/Sink.hpp>
+
+
 #include <memory>
 #include <variant>
 
@@ -42,9 +45,6 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-
-class SinkMedium;
-using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 class SourceData;
 
@@ -101,7 +101,12 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
+/// Todo: can the sink pointer be unique?
+namespace Sinks
+{
+class Sink;
+}
+using SuccessorExecutablePipeline = std::variant<std::shared_ptr<NES::Sinks::Sink>, ExecutablePipelinePtr>;
 using PredecessorExecutablePipeline = std::variant<std::weak_ptr<SourceData>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;

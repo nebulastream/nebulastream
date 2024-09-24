@@ -27,11 +27,11 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/RegistrySource.hpp>
-#include <Sources/DescriptorSource.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>

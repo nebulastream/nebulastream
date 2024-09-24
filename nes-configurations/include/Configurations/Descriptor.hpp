@@ -38,7 +38,8 @@ namespace NES::Configurations
 /// All functions that operate on the config operate on ConfigParameters and can therefore access all relevant information.
 /// This design makes it difficult to use the wrong (string) name to access a parameter, the wrong type, e.g., in a templated function, or
 /// to forget to define a validation function. Also, changing the type/name/validation function of a config parameter can be done in a single place.
-class DescriptorConfig {
+class DescriptorConfig
+{
 public:
     using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, EnumWrapper>;
     using Config = std::unordered_map<std::string, ConfigType>;
@@ -178,8 +179,7 @@ public:
         /// No specific validation and formatting function defined, using default formatter.
         if (config.contains(configParameter))
         {
-            return stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(
-                config.at(configParameter));
+            return stringParameterAs<typename ConfigParameter::Type, typename ConfigParameter::EnumType>(config.at(configParameter));
         }
         /// The user did not specify the parameter, if a default value is available, return the default value.
         if (configParameter.defaultValue.has_value())
@@ -250,6 +250,7 @@ struct Descriptor
     }
 
     const DescriptorConfig::Config config;
+
 protected:
     std::string toStringConfig() const;
 

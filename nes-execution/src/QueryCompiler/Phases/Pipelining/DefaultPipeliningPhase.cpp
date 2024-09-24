@@ -18,13 +18,13 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -49,7 +49,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomp
     {
         /// create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();
-        pipeline->prependOperator(sinkOperator->copy());
+        pipeline->prependOperator(sinkOperator);
         pipelinePlan->addPipeline(pipeline);
         process(pipelinePlan, pipelineOperatorMap, pipeline, sinkOperator);
     }
@@ -144,9 +144,9 @@ void DefaultPipeliningPhase::processSink(
     const PipelineQueryPlanPtr& pipelinePlan,
     std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
-    const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
+    const SinkLogicalOperator& currentOperator)
 {
-    for (const auto& child : currentOperator->getChildren())
+    for (const auto& child : currentOperator.getChildren())
     {
         auto cp = OperatorPipeline::create();
         pipelinePlan->addPipeline(cp);
@@ -180,8 +180,8 @@ void DefaultPipeliningPhase::process(
     const OperatorPtr& currentOperator)
 {
     PRECONDITION(
-        currentOperator->instanceOf<PhysicalOperators::PhysicalOperator>()
-            or currentOperator->instanceOf<OperatorLogicalSourceDescriptor>(),
+        currentOperator->instanceOf<PhysicalOperators::PhysicalOperator>() or currentOperator->instanceOf<OperatorLogicalSourceDescriptor>()
+            or currentOperator->instanceOf<SinkLogicalOperator>(),
         "expected a PhysicalOperator, but got " + currentOperator->toString());
 
     /// Depending on the operator we apply different pipelining strategies
@@ -189,9 +189,9 @@ void DefaultPipeliningPhase::process(
     {
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator->as<OperatorLogicalSourceDescriptor>());
     }
-    else if (currentOperator->instanceOf<PhysicalOperators::PhysicalSinkOperator>())
+    else if (currentOperator->instanceOf<SinkLogicalOperator>())
     {
-        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperator->as<PhysicalOperators::PhysicalOperator>());
+        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, *currentOperator->as<SinkLogicalOperator>());
     }
     else if (currentOperator->instanceOf<PhysicalOperators::PhysicalUnionOperator>())
     {

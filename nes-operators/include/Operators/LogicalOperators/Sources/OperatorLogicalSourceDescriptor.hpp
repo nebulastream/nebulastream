@@ -42,7 +42,7 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
 
 private:
-    const std::unique_ptr<Sources::DescriptorSource> DescriptorSource;
+    const std::unique_ptr<Sources::DescriptorSource> descriptorSource;
 };
 
 }

@@ -88,7 +88,7 @@ public:
     Memory::TupleBuffer const& getBufferRef() const;
 
 private:
-    Execution::SuccessorExecutablePipeline pipeline{};
+    Execution::SuccessorExecutablePipeline pipeline;
     Memory::TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
     uint64_t inputTupleCount = 0;

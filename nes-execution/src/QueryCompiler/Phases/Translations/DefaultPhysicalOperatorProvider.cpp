@@ -28,8 +28,6 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -45,7 +43,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -100,7 +97,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 
     if (operatorNode->instanceOf<UnaryOperator>())
     {
-        lowerUnaryOperator(decomposedQueryPlan, operatorNode);
+        lowerUnaryOperator(operatorNode);
     }
     else if (operatorNode->instanceOf<BinaryOperator>())
     {
@@ -114,8 +111,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
     NES_DEBUG("DefaultPhysicalOperatorProvider:: Plan after lowering \n{}", decomposedQueryPlan->toString());
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
-    const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPtr& operatorNode)
 {
     PRECONDITION(operatorNode->getParents().size() <= 1, "A unary operator should have at most one parent.");
 
@@ -125,17 +121,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (operatorNode->instanceOf<SinkLogicalOperator>())
-    {
-        auto logicalSinkOperator = operatorNode->as<SinkLogicalOperator>();
-
-        auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(
-            logicalSinkOperator->getInputSchema(), logicalSinkOperator->getOutputSchema(), logicalSinkOperator->getSinkDescriptor());
-        physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-        operatorNode->replace(physicalSinkOperator);
-        decomposedQueryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
-    }
-    else if (operatorNode->instanceOf<LogicalFilterOperator>())
+    if (operatorNode->instanceOf<LogicalFilterOperator>())
     {
         auto filterOperator = operatorNode->as<LogicalFilterOperator>();
         auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(

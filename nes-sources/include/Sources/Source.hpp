@@ -34,6 +34,8 @@ public:
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
+    /// Todo: make input of interface function abstract. As a result, we can easily switch out the type of input, without needing to change every single source.
+    /// - could do: SourceInput that has a generic interface.
     virtual bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer,
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
@@ -106,8 +108,6 @@ protected:
 
 }
 
-/// Specializing the fmt ostream_formatter to accept Source objects.
-/// Allows to call fmt::format("Source: {}", sourceObject); and therefore also works with our logging.
 namespace fmt
 {
 template <>

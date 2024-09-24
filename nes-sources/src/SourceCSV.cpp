@@ -21,12 +21,12 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Sources/DescriptorSource.hpp>
 #include <Sources/GeneratedRegistrarSource.hpp>
 #include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/RegistrySource.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceCSV.hpp>
-#include <Sources/DescriptorSource.hpp>
 #include <SourcesValidation/GeneratedRegistrarSourceValidation.hpp>
 #include <SourcesValidation/RegistrySourceValidation.hpp>
 #include <Util/Logger/Logger.hpp>

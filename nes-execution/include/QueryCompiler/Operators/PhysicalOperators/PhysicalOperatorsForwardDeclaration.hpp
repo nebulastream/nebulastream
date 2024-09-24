@@ -66,9 +66,6 @@ using PhysicalDemultiplexOperatorPtr = std::shared_ptr<PhysicalDemultiplexOperat
 class PhysicalProjectOperator;
 using PhysicalProjectOperatorPtr = std::shared_ptr<PhysicalProjectOperator>;
 
-class PhysicalSinkOperator;
-using PhysicalSinkOperatorPtr = std::shared_ptr<PhysicalSinkOperator>;
-
 class PhysicalUnaryOperator;
 using PhysicalUnaryOperatorPtr = std::shared_ptr<PhysicalUnaryOperator>;
 
@@ -99,5 +96,5 @@ using PhysicalWatermarkAssignmentOperatorPtr = std::shared_ptr<PhysicalWatermark
 class PhysicalJoinSinkOperator;
 using PhysicalJoinSinkOperatorPtr = std::shared_ptr<PhysicalJoinSinkOperator>;
 
-} /// namespace QueryCompilation::PhysicalOperators
-} /// namespace NES
+}
+}

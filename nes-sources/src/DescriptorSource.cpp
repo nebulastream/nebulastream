@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -25,7 +25,8 @@ DescriptorSource::DescriptorSource(
     std::string sourceType,
     Configurations::InputFormat inputFormat,
     Configurations::DescriptorConfig::Config&& config)
-    : Descriptor(std::move(config)), schema(std::move(schema))
+    : Descriptor(std::move(config))
+    , schema(std::move(schema))
     , logicalSourceName(std::move(logicalSourceName))
     , sourceType(std::move(sourceType))
     , inputFormat(std::move(inputFormat))
@@ -35,7 +36,8 @@ DescriptorSource::DescriptorSource(
 std::ostream& operator<<(std::ostream& out, const DescriptorSource& descriptorSource)
 {
     return out << "DescriptorSource:"
-               << "\nSource type: " << descriptorSource.sourceType << "\nSchema: " << descriptorSource.schema->toString()
+               << "\nlogical source name: " << descriptorSource.logicalSourceName << "\nSource type: " << descriptorSource.sourceType
+               << "\nSchema: " << descriptorSource.schema->toString()
                << "\nInputformat: " << std::string(magic_enum::enum_name(descriptorSource.inputFormat)) << "\nConfig:\n"
                << descriptorSource.toStringConfig(); ///-Todo: use ostream(Config) from Descriptor?
 }

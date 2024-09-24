@@ -98,12 +98,16 @@ RuntimePathConfig loadRuntimePathConfig()
         const std::string clientBinaryDir = PATH_TO_BINARY_DIR "/nes-client/";
         const std::string operatorsBinaryDir = PATH_TO_BINARY_DIR "/nes-operators/";
         const std::string dataTypesBinaryDir = PATH_TO_BINARY_DIR "/nes-data-types/";
+        const std::string sinksBinaryDir = PATH_TO_BINARY_DIR "/nes-sinks/";
         runtimePathConfig.clangBinaryPath = CLANG_EXECUTABLE;
         runtimePathConfig.libPaths.push_back(clientBinaryDir);
         runtimePathConfig.libPaths.push_back(commonBinaryDir);
         runtimePathConfig.libPaths.push_back(dataTypesBinaryDir);
         runtimePathConfig.libPaths.push_back(operatorsBinaryDir);
+        runtimePathConfig.libPaths.push_back(sinksBinaryDir);
         runtimePathConfig.includePaths.push_back(PATH_TO_BINARY_DIR "/include/nebulastream");
+        /// support fmt/magic_enum Todo: add todo to remove after adding support for logical sinks and parsing of logical sinks.
+        runtimePathConfig.libs.push_back("-I/" PATH_TO_BINARY_DIR "/vcpkg_installed/x64-linux-nes/include/");
     }
     else
     {

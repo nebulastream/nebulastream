@@ -18,6 +18,7 @@
 #include <fstream>
 #include <numeric>
 #include <Runtime/BufferManager.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
@@ -61,9 +62,7 @@ public:
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
 
-/**
- * @brief Takes a serialized fully-specified query plan, executes it and checks if the correct results are produced.
- */
+/// Takes a serialized fully-specified query plan, executes it and checks if the correct results are produced.
 TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 {
     using ResultSchema = struct

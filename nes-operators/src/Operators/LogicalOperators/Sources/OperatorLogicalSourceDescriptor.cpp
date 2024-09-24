@@ -24,13 +24,13 @@ namespace NES
 
 OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
     std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), DescriptorSource(std::move(DescriptorSource))
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), descriptorSource(std::move(DescriptorSource))
 {
 }
 
 OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
     std::unique_ptr<Sources::DescriptorSource>&& DescriptorSource, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), DescriptorSource(std::move(DescriptorSource))
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), descriptorSource(std::move(DescriptorSource))
 {
 }
 
@@ -44,7 +44,7 @@ bool OperatorLogicalSourceDescriptor::equal(NodePtr const& rhs) const
     if (rhs->instanceOf<OperatorLogicalSourceDescriptor>())
     {
         const auto sourceOperator = rhs->as<OperatorLogicalSourceDescriptor>();
-        return sourceOperator->getDescriptorSourceRef() == *DescriptorSource;
+        return *this->descriptorSource == sourceOperator->getDescriptorSourceRef();
     }
     return false;
 }
@@ -52,20 +52,20 @@ bool OperatorLogicalSourceDescriptor::equal(NodePtr const& rhs) const
 std::string OperatorLogicalSourceDescriptor::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << DescriptorSource << ")";
+    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << descriptorSource << ")";
 
     return ss.str();
 }
 
 const Sources::DescriptorSource& OperatorLogicalSourceDescriptor::getDescriptorSourceRef() const
 {
-    return *DescriptorSource;
+    return *descriptorSource;
 }
 
 bool OperatorLogicalSourceDescriptor::inferSchema()
 {
-    inputSchema = DescriptorSource->schema;
-    outputSchema = DescriptorSource->schema;
+    inputSchema = descriptorSource->schema;
+    outputSchema = descriptorSource->schema;
     return true;
 }
 

@@ -15,22 +15,13 @@
 #include <utility>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-SinkLogicalOperator::SinkLogicalOperator(const SinkDescriptorPtr& sinkDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), sinkDescriptor(sinkDescriptor)
+SinkLogicalOperator::SinkLogicalOperator(std::unique_ptr<Sinks::SinkDescriptor> sinkDescriptor, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), sinkDescriptor(std::move(sinkDescriptor))
 {
-}
-
-SinkDescriptorPtr SinkLogicalOperator::getSinkDescriptor() const
-{
-    return sinkDescriptor;
-}
-
-void SinkLogicalOperator::setSinkDescriptor(SinkDescriptorPtr sd)
-{
-    this->sinkDescriptor = std::move(sd);
 }
 
 bool SinkLogicalOperator::isIdentical(NodePtr const& rhs) const
@@ -42,8 +33,8 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 {
     if (rhs->instanceOf<SinkLogicalOperator>())
     {
-        auto sinkOperator = rhs->as<SinkLogicalOperator>();
-        return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor);
+        const auto sinkOperator = rhs->as<SinkLogicalOperator>();
+        return *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef();
     }
     return false;
 };
@@ -51,30 +42,25 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SINK(opId: " << id << ": {" << sinkDescriptor->toString() << "})";
+    ss << "SINK(opId: " << id << ": {" << sinkDescriptor << "})";
     return ss.str();
+}
+const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
+{
+    return *sinkDescriptor;
 }
 
 OperatorPtr SinkLogicalOperator::copy()
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
-    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setOperatorState(operatorState);
-    for (const auto& pair : properties)
-    {
-        copy->addProperty(pair.first, pair.second);
-    }
-    return copy;
+    auto exception = InvalidUseOfOperatorFunction(
+        "OperatorLogicalSinkDescriptor does not support copy, because holds a unique pointer to a SinkDescriptor.");
+    throw exception;
 }
 
 void SinkLogicalOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    const OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     ///Infer query signatures for child operators

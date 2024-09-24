@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/DescriptorSource.hpp>
 
 namespace NES
@@ -65,15 +66,10 @@ public:
     static LogicalUnaryOperatorPtr
     createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id = getNextOperatorId());
 
-    /**
-     * @brief Create a new sink operator with a specific sink descriptor.
-     * @param sinkDescriptor the SinkDescriptor.
-     * @param workerId: the id of the worker where the sink is placed
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return LogicalOperatorPtr
-     */
     static LogicalUnaryOperatorPtr createSinkOperator(
-        SinkDescriptorPtr const& sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
+        std::unique_ptr<Sinks::SinkDescriptor>&& sinkDescriptor,
+        WorkerId workerId = INVALID_WORKER_NODE_ID,
+        OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.

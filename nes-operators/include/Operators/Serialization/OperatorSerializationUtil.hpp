@@ -17,6 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp> ///-Todo: remove
 #include <SerializableOperator.pb.h>
@@ -25,7 +26,6 @@ namespace NES
 {
 
 class SerializableOperator;
-class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
 class SerializableOperator_BatchJoinDetails;
@@ -58,6 +58,10 @@ public:
 
     static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_OperatorLogicalSourceDescriptor& sourceDetails);
 
+    static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
+
+    static LogicalUnaryOperatorPtr deserializeSinkOperator(const SerializableOperator_OperatorLogicalSinkDescriptor& sinkDetails);
+
     static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
 
     static LogicalUnaryOperatorPtr deserializeFilterOperator(const SerializableOperator_FilterDetails& filterDetails);
@@ -65,10 +69,6 @@ public:
     static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator);
 
     static LogicalUnaryOperatorPtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails);
-
-    static void serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator);
-
-    static LogicalUnaryOperatorPtr deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails);
 
     static void serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator);
 
@@ -95,10 +95,13 @@ public:
     static std::unique_ptr<Sources::DescriptorSource>
     deserializeDescriptorSource(const SerializableOperator_OperatorLogicalSourceDescriptor_DescriptorSource& descriptorSource);
 
-    static void
-    serializeSinkDescriptor(const SinkDescriptor& sinkDescriptor, SerializableOperator_SinkDetails& sinkDetails, uint64_t numberOfOrigins);
+    static void serializeSinkDescriptor(
+        std::shared_ptr<Schema> schema,
+        const Sinks::SinkDescriptor& sinkDescriptor,
+        SerializableOperator_OperatorLogicalSinkDescriptor& sinkDetails);
 
-    static SinkDescriptorPtr deserializeSinkDescriptor(const SerializableOperator_SinkDetails& sinkDetails);
+    static std::unique_ptr<Sinks::SinkDescriptor> deserializeSinkDescriptor(
+        const SerializableOperator_OperatorLogicalSinkDescriptor_SerializableSinkDescriptor& serializableSinkDescriptor);
 
     static void serializeLimitOperator(const LogicalLimitOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
 

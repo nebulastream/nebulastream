@@ -18,8 +18,8 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/RegistrySource.hpp>
 #include <Sources/DescriptorSource.hpp>
+#include <Sources/RegistrySource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceTCP.hpp>

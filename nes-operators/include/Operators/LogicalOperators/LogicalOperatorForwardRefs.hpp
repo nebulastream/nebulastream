@@ -62,9 +62,6 @@ using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 class OperatorLogicalSourceName;
 using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
 
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 
@@ -86,9 +83,6 @@ using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressi
 class ConstantValueExpressionNode;
 using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNode>;
 
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
-
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 
@@ -97,9 +91,6 @@ using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLog
 
 class CentralWindowOperator;
 using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
-
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;

@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
@@ -24,6 +24,7 @@
 #include <Sources/SourceTCP.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+#include "Sinks/SinkFile.hpp"
 
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -36,7 +37,7 @@ SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = queryPlan.mutable_operatormap()->at(rootOperatorId);
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkDetails>())
+    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_OperatorLogicalSinkDescriptor>())
         << "Redirection expects the single root operator to be a sink operator";
     return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
 }
@@ -200,20 +201,27 @@ bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view
     return true;
 }
 
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName)
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootOperatorId);
 
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkDetails>())
+    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_OperatorLogicalSinkDescriptor>())
         << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkperator = OperatorSerializationUtil::deserializeOperator(rootOperator);
-    auto descriptor = deserializedSinkperator->as<SinkLogicalOperator>()->getSinkDescriptor()->as_if<FileSinkDescriptor>();
-    if (descriptor)
+    auto descriptor = deserializedSinkperator->as<SinkLogicalOperator>()->getSinkDescriptorRef();
+    if (descriptor.sinkType == Sinks::SinkFile::NAME)
     {
-        descriptor->setFileName(fileName);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSinkperator);
+        const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
+        auto configCopy = descriptor.config;
+        configCopy.at(Sinks::ConfigParametersFile::FILEPATH) = filePathNew;
+        auto sinkDescriptorUpdated = std::make_unique<Sinks::SinkDescriptor>(
+            deserializedOutputSchema, descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
+        const auto operatorLogicalSinkDescriptorUpdated
+            = std::make_shared<SinkLogicalOperator>(std::move(sinkDescriptorUpdated), deserializedSinkperator->getId());
+        operatorLogicalSinkDescriptorUpdated->setOutputSchema(deserializedOutputSchema);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(operatorLogicalSinkDescriptorUpdated);
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
         serializedOperator.set_operatorid(rootOperator.operatorid());
@@ -227,7 +235,6 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
-        google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
         if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
@@ -264,7 +271,6 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
     int queryPlanSourceTcpCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
-        google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
         if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {

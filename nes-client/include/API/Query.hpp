@@ -20,6 +20,9 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <fmt/core.h>
+#include <fmt/std.h>
 
 namespace NES
 {
@@ -39,9 +42,6 @@ using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -423,13 +423,7 @@ public:
     Query&
     inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
 
-    /**
-     * @brief Add sink operator for the query.
-     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor
-     * @param workerId: location where sink is to be placed
-     */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    virtual Query& sink(std::unique_ptr<Sinks::SinkDescriptor>&& sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.
