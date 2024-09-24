@@ -50,11 +50,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
         const auto textPtr = nautilus::invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
         return Nautilus::VariableSizedData(textPtr);
     }
-    else
-    {
-        NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
-        NES_NOT_IMPLEMENTED();
-    }
+    throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
 uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, const int8_t* textValue)
@@ -82,11 +78,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
         *fieldReferenceCastedU32 = childIndex;
         return value;
     }
-    else
-    {
-        NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
-        NES_NOT_IMPLEMENTED();
-    }
+    throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
 
 
@@ -114,10 +106,7 @@ MemoryProviderPtr TupleBufferMemoryProvider::create(const uint64_t bufferSize, c
         auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
     }
-    else
-    {
-        NES_NOT_IMPLEMENTED();
-    }
+    throw NotImplemented("Currently only row and column layout are supported");
 }
 
 }

@@ -67,6 +67,6 @@ void SyntacticQueryValidation::handleException(const std::exception& ex)
     {
         clean_error_message = error_message.substr(start_idx, end_idx - start_idx);
     }
-    throw QueryInvalid(fmt::format(": SyntacticQueryValidation:\n{}", clean_error_message));
+    throw QueryInvalid(": SyntacticQueryValidation:\n{}", clean_error_message);
 }
 }
