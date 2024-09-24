@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <cpptrace/cpptrace.hpp>
 #include <fmt/core.h>
@@ -21,11 +22,8 @@
 namespace NES
 {
 
-/**
- * This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
- * @note do NOT inherit from this class, use the EXCEPTION macro to define exceptions. They should only be defined in
- * <ExceptionDefinitions.hpp>
- */
+/// This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
+/// We use cpptrace's lazy stacktrace collection because the eager stacktrace collection became too slow with static project linking.
 class Exception final : public cpptrace::lazy_exception
 {
 public:
@@ -34,7 +32,7 @@ public:
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] uint64_t code() const noexcept;
-    [[nodiscard]] const cpptrace::stacktrace_frame& where() const noexcept;
+    [[nodiscard]] std::optional<const cpptrace::stacktrace_frame> where() const noexcept;
 
 private:
     std::string message;
