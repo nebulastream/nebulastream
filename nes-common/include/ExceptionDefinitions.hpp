@@ -91,7 +91,7 @@ EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
 EXCEPTION(DeprecatedFeatureUsed, 9003, "deprecated feature used")
 EXCEPTION(CannotAllocateBuffer, 9004, "cannot allocate buffer")
 EXCEPTION(InvalidRefCountForBuffer, 9005, "invalid reference counter for buffer")
-EXCEPTION(DynamicCast, 9006, "Invalid dynamic cast")
+EXCEPTION(InvalidDynamicCast, 9006, "Invalid dynamic cast")
 EXCEPTION(UnknownOperator, 9007, "unknown operator")
 
 /// Special errors

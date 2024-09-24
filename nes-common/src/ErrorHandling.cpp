@@ -13,7 +13,28 @@
 */
 
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
+
+/// formater for cpptrace::nullable
+namespace fmt
+{
+template <>
+struct formatter<cpptrace::nullable<unsigned int>>
+{
+    static constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) { return ctx.end(); }
+
+    template <typename FormatContext>
+    auto format(const cpptrace::nullable<unsigned int>& nullable, FormatContext& ctx) const -> decltype(ctx.out())
+    {
+        if (nullable.has_value())
+        {
+            return format_to(ctx.out(), "{}", nullable.value());
+        }
+        return format_to(ctx.out(), "unknown");
+    }
+};
+}
 
 namespace NES
 {
@@ -24,8 +45,7 @@ constexpr bool logWithStacktrace = true;
 constexpr bool logWithStacktrace = false;
 #endif
 
-Exception::Exception(std::string message, const uint64_t code, std::source_location loc)
-    : message(std::move(message)), errorCode(code), location(loc)
+Exception::Exception(std::string message, const uint64_t code) : message(std::move(message)), errorCode(code)
 {
 }
 
@@ -44,23 +64,25 @@ uint64_t Exception::code() const noexcept
     return errorCode;
 }
 
-const std::source_location& Exception::where() const noexcept
+const cpptrace::stacktrace_frame& Exception::where() const noexcept
 {
-    return location;
+    constexpr size_t exceptionFrame = 2; /// we need to go two frames back to the exception source
+    return this->trace().frames[exceptionFrame];
 }
 
 std::string formatLogMessage(const Exception& e)
 {
+    const auto& exceptionLocation = e.where();
     if constexpr (logWithStacktrace)
     {
         return fmt::format(
             "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}\n",
             e.code(),
             e.what(),
-            e.where().file_name(),
-            e.where().line(),
-            e.where().column(),
-            e.where().function_name(),
+            exceptionLocation.filename,
+            exceptionLocation.line,
+            exceptionLocation.column,
+            exceptionLocation.symbol,
             e.trace().to_string());
     }
     else
@@ -69,10 +91,10 @@ std::string formatLogMessage(const Exception& e)
             "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n",
             e.code(),
             e.what(),
-            e.where().file_name(),
-            e.where().line(),
-            e.where().column(),
-            e.where().function_name());
+            exceptionLocation.filename,
+            exceptionLocation.line,
+            exceptionLocation.column,
+            exceptionLocation.symbol);
     }
 }
 
