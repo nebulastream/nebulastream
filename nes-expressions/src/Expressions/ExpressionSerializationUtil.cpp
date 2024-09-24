@@ -400,8 +400,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else
     {
-        throw NotImplemented(fmt::format(
-            "TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: {}", expression->toString()));
+        throw NotImplemented("No serialization implemented for this arithmetical expression node: {}", expression->toString());
     }
 }
 
@@ -492,8 +491,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else
     {
-        throw NotImplemented(fmt::format(
-            "ExpressionSerializationUtil: No serialization implemented for this logical expression node: {}", expression->toString()));
+        throw NotImplemented("no serialization implemented for this logical expression node: {}", expression->toString());
     }
 }
 

@@ -70,8 +70,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema)
     {
         if (!fieldAttribute)
         {
-            throw InvalidField(
-                fmt::format("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString()));
+            throw InvalidField("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
         }
         newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
     }

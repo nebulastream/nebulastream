@@ -35,7 +35,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         auto existingField = schema->getField(fieldName);
         if (!existingField->getDataType()->isInteger())
         {
-            throw InvalidField(fmt::format("TimeBasedWindow should use a uint for time field {}", fieldName));
+            throw InvalidField("TimeBasedWindow should use a uint for time field {}", fieldName);
         }
         else if (existingField)
         {
@@ -48,7 +48,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         }
         else
         {
-            throw InvalidField(fmt::format("TimeBasedWindow using a non existing time field {}", fieldName));
+            throw InvalidField("TimeBasedWindow using a non existing time field {}", fieldName);
         }
     }
     return true;

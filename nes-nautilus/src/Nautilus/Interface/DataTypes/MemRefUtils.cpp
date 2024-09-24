@@ -65,7 +65,7 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
             default: {
                 std::stringstream dataTypeAsString;
                 dataTypeAsString << dataType;
-                throw NotImplemented(fmt::format("load for Physical Type: {} is currently not supported", dataTypeAsString.str()));
+                throw NotImplemented("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
             };
         }
     }

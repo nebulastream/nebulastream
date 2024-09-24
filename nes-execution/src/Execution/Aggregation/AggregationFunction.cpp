@@ -71,8 +71,7 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
             default: {
                 std::stringstream type;
                 type << physicalType;
-                throw UnknownPhysicalType(
-                    fmt::format("Aggregation Function::load: Physical Type: {} is currently not supported", type.str()));
+                throw UnknownPhysicalType("{} is currently not supported", type.str());
             };
         }
     }
@@ -80,8 +79,7 @@ Nautilus::Value<> AggregationFunction::loadFromMemref(Nautilus::Value<Nautilus::
     {
         std::stringstream typeAsString;
         typeAsString << physicalType;
-        throw UnknownPhysicalType(fmt::format(
-            "Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeAsString.str()));
+        throw UnknownPhysicalType(" {} is not a basic type and is currently not supported", typeAsString.str());
     }
 }
 
@@ -125,8 +123,7 @@ Nautilus::Value<> AggregationFunction::createMinValue(const PhysicalTypePtr& phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                throw UnknownPhysicalType(
-                    fmt::format("Aggregation Function::createMinValue: Physical Type: {} is currently not supported", type.str()));
+                throw UnknownPhysicalType("{} is currently not supported", type.str());
             };
         }
     }
@@ -134,9 +131,7 @@ Nautilus::Value<> AggregationFunction::createMinValue(const PhysicalTypePtr& phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        throw UnknownPhysicalType(fmt::format(
-            "Aggregation Function::createMinValue: Physical Type: {} is not a basic type and is currently not supported",
-            typeString.str()));
+        throw UnknownPhysicalType("{} is not a basic type and is currently not supported", typeString.str());
     }
 }
 
@@ -180,8 +175,7 @@ Nautilus::Value<> AggregationFunction::createMaxValue(const PhysicalTypePtr& phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                throw UnknownPhysicalType(
-                    fmt::format("Aggregation Function::createMaxValue: Physical Type: {} is currently not supported", type.str()));
+                throw UnknownPhysicalType("{} is currently not supported", type.str());
             };
         }
     }
@@ -189,9 +183,7 @@ Nautilus::Value<> AggregationFunction::createMaxValue(const PhysicalTypePtr& phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        throw UnknownPhysicalType(fmt::format(
-            "Aggregation Function::createMaxValue: Physical Type: {} is not a basic type and is currently not supported",
-            typeString.str()));
+        throw UnknownPhysicalType("{} is not a basic type and is currently not supported", typeString.str());
     }
 }
 
@@ -235,8 +227,7 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
             default: {
                 std::stringstream type;
                 type << physicalType;
-                throw UnknownPhysicalType(
-                    fmt::format("Aggregation Function::load: Physical Type: {} is currently not supported", type.str()));
+                throw UnknownPhysicalType("{} is currently not supported", type.str());
             };
         }
     }
@@ -244,8 +235,7 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
     {
         std::stringstream typeString;
         typeString << physicalType;
-        throw UnknownPhysicalType(fmt::format(
-            "Aggregation Function::load: Physical Type: {} is not a basic type and is currently not supported", typeString.str()));
+        throw UnknownPhysicalType("{} is not a basic type and is currently not supported", typeString.str());
     }
 }
 

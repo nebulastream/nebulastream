@@ -79,13 +79,13 @@ Nautilus::Value<> MemoryProvider::load(
                 return fieldReference.load<Nautilus::Double>();
             };
             default: {
-                throw UnknownPhysicalType(fmt::format("Physical Type: {} is currently not supported", type->toString()));
+                throw UnknownPhysicalType("{} is currently not supported", type->toString());
             };
         }
     }
     else if (type->isArrayType())
     {
-        throw UnknownPhysicalType(fmt::format("Physical Type: array type {} is currently not supported", type->toString()));
+        throw UnknownPhysicalType("array type {} is currently not supported", type->toString());
     }
     else if (type->isTextType())
     {
@@ -95,7 +95,7 @@ Nautilus::Value<> MemoryProvider::load(
     }
     else
     {
-        throw UnknownPhysicalType(fmt::format("Physical Type: type {} is currently not supported", type->toString()));
+        throw UnknownPhysicalType(" type {} is currently not supported", type->toString());
     }
 }
 
@@ -125,7 +125,7 @@ Nautilus::Value<> MemoryProvider::store(
         fieldReference.store(childIndex);
         return value;
     }
-    throw UnknownPhysicalType(fmt::format("Physical Type: type {} is currently not supported", type->toString()));
+    throw UnknownPhysicalType("{} is currently not supported", type->toString());
 }
 
 bool MemoryProvider::includesField(

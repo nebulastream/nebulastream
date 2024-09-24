@@ -110,7 +110,7 @@ void TypeInferencePhase::performTypeInference(
     {
         if (!sink->inferSchema())
         {
-            throw CannotInferSchema(fmt::format("Schema inference for sink failed in plan id: {}", planId.toString()));
+            throw CannotInferSchema("Schema inference for sink failed in plan id: {}", planId.toString());
         }
     }
 }

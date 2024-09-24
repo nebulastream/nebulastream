@@ -112,7 +112,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline " + pipeline->getDecomposedQueryPlan()->toString());
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];

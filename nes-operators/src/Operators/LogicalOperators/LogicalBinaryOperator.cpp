@@ -60,8 +60,7 @@ bool LogicalBinaryOperator::inferSchema()
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() > 2)
     {
-        throw CannotInferSchema(
-            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 or less distinct schemas.", distinctSchemas.size()));
+        throw CannotInferSchema(" Found {} distinct schemas but expected 2 or less distinct schemas.", distinctSchemas.size());
     }
 
     return true;

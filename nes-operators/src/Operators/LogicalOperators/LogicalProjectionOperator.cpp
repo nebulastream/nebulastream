@@ -84,10 +84,8 @@ bool LogicalProjectionOperator::inferSchema()
         }
         else
         {
-            throw CannotInferSchema(fmt::format(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a "
-                "FieldRenameExpression but it was a {}.",
-                expression->toString()));
+            throw CannotInferSchema(
+                "expression has to be an FieldAccessExpression or a FieldRenameExpression but it was a {}", expression->toString());
         }
     }
     return true;

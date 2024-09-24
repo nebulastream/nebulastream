@@ -62,8 +62,7 @@ bool LogicalJoinOperator::inferSchema()
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
     {
-        throw CannotInferSchema(
-            fmt::format("LogicalJoinOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
+        throw CannotInferSchema("Found {} distinct schemas but expected 2 distinct schemas", distinctSchemas.size());
     }
 
     ///reset left and right schema
@@ -124,14 +123,14 @@ bool LogicalJoinOperator::inferSchema()
                     const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
                     if (!foundLeftKey)
                     {
-                        throw CannotInferSchema(fmt::format("unable to find left join key {} in schemas.", leftJoinKeyName));
+                        throw CannotInferSchema("unable to find left join key {} in schemas", leftJoinKeyName);
                     }
                     const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
                     const auto rightJoinKeyName = rightJoinKey->getFieldName();
                     const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
                     if (!foundRightKey)
                     {
-                        throw CannotInferSchema(fmt::format("unable to find right join key {} in schemas.", rightJoinKeyName));
+                        throw CannotInferSchema("unable to find right join key {} in schemas", rightJoinKeyName);
                     }
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedExpressions.insert(visitingOp);

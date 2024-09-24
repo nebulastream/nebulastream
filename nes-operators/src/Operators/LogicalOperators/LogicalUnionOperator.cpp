@@ -68,10 +68,10 @@ bool LogicalUnionOperator::inferSchema()
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema))
     {
-        throw CannotInferSchema(fmt::format(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
+        throw CannotInferSchema(
+            "found schema mismatch for left and right schema types. Left schema {} and Right schema {}",
             leftInputSchema->toString(),
-            rightInputSchema->toString()));
+            rightInputSchema->toString());
     }
 
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())

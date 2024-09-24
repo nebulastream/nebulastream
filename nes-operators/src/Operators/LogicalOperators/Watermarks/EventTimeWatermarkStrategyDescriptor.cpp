@@ -95,7 +95,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     {
         return true;
     }
-    throw InvalidField(fmt::format("EventTimeWaterMark is using a non existing field {}", fieldName));
+    throw InvalidField("EventTimeWaterMark is using a non existing field {}", fieldName);
 }
 
 } /// namespace NES::Windowing

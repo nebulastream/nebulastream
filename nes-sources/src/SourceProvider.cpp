@@ -50,7 +50,7 @@ SourceHandlePtr SourceProvider::lower(
             NUM_SOURCE_LOCAL_BUFFERS,
             std::move(source));
     }
-    throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.getSourceType()));
+    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
 
 }

@@ -57,8 +57,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
     {
-        throw CannotInferSchema(
-            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
+        throw CannotInferSchema("found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size());
     }
 
     ///reset left and right schema

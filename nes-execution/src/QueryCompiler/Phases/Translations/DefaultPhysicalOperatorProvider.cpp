@@ -246,7 +246,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
 OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<OperatorPtr> children)
 {
-    PRECONDITION(!children.empty(), "There should be at least one child for the join operator " + joinOperator->toString());
+    PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", joinOperator->toString());
 
     if (children.size() > 1)
     {
