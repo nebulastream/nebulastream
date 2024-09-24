@@ -86,7 +86,7 @@ grpc::Status NES::GRPCServer::RequestQuerySummary(grpc::ServerContext*, const Qu
                 error.set_message(exception.what());
                 error.set_stacktrace(exception.trace().to_string());
                 error.set_code(exception.code());
-                error.set_location(std::string(exception.where().file_name()) + ":" + std::to_string(exception.where().line()));
+                error.set_location(std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
                 reply->add_error()->CopyFrom(error);
             }
         }
@@ -125,8 +125,8 @@ grpc::Status NES::GRPCServer::RequestQueryLog(grpc::ServerContext*, const QueryL
                     error.set_stacktrace(entry.exception.value().trace().to_string());
                     error.set_code(entry.exception.value().code());
                     error.set_location(
-                        std::string(entry.exception.value().where().file_name()) + ":"
-                        + std::to_string(entry.exception.value().where().line()));
+                        std::string(entry.exception.value().where()->filename) + ":"
+                        + std::to_string(entry.exception.value().where()->line.value_or(0)));
                     logEntry.mutable_error()->CopyFrom(error);
                 }
                 reply->add_entries()->CopyFrom(logEntry);
