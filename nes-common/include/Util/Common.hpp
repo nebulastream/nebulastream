@@ -22,7 +22,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -101,6 +100,11 @@ std::string_view trimWhiteSpaces(std::string_view in);
 */
 std::string_view trimChar(std::string_view in, char trimFor);
 
+/// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
+/// Can should be removed once we have our own query parser
+void throwDynamicCastException(std::string message);
+void throwFunctionNotImplemented(std::string message);
+
 namespace detail
 {
 
@@ -119,7 +123,8 @@ struct SplitFunctionHelper
         auto result = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result_value);
         if (result.ec == std::errc::invalid_argument)
         {
-            throw FunctionNotImplemented("Could not parse: " + std::string(trimmed));
+            /// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
+            throwFunctionNotImplemented("Could not parse: " + std::string(trimmed));
         }
         return result_value;
     };
@@ -267,7 +272,9 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw DynamicCast(std::format("Invalid dynamic cast: from {} to {}", typeid(In).name(), typeid(Out).name()));
+    /// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
+    throwDynamicCastException("Invalid dynamic cast: from " + std::string(typeid(In).name()) + " to " + std::string(typeid(Out).name()));
+    return nullptr;
 }
 
 /// cast the given object to the specified type.
