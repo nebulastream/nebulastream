@@ -77,8 +77,7 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
             inputParser = std::make_unique<ParserCSV>(schema.getSize(), physicalTypes, ",");
             break;
         default:
-            NES_ERROR("InputFormat not supported.")
-            NES_NOT_IMPLEMENTED();
+            throw NotImplemented("InputFormat not supported.");
     }
 
     NES_TRACE("SourceTCP::SourceTCP: Init SourceTCP.");

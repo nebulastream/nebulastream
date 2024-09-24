@@ -21,7 +21,6 @@
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
-
 namespace NES
 {
 
@@ -91,55 +90,50 @@ void LogicalOperator::setOperatorState(NES::OperatorState newOperatorState)
             /// an operator can be marked as TO_BE_PLACED only if it is in the state TO_BE_PLACED or TO_BE_REPLACED.
             INVARIANT(
                 this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REPLACED,
-                fmt::format(
-                    "Operator with id {} was found in state {} "
-                    "but expected TO_BE_REMOVED or TO_BE_REPLACED",
-                    id,
-                    magic_enum::enum_name(this->operatorState)));
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_REMOVED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
             this->operatorState = TO_BE_PLACED;
             break;
         case TO_BE_REMOVED:
             /// an operator can be marked as TO_BE_REMOVED only if it is not in the state REMOVED.
             INVARIANT(
                 this->operatorState != REMOVED,
-                fmt::format(
-                    "Operator with id {} was found in state {} "
-                    "but expected TO_BE_REMOVED, TO_BE_PLACED, PLACED or TO_BE_REPLACED",
-                    id,
-                    magic_enum::enum_name(this->operatorState)));
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_REMOVED, TO_BE_PLACED, PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
             this->operatorState = TO_BE_REMOVED;
             break;
         case TO_BE_REPLACED:
             /// an operator can be marked as TO_BE_REPLACED only if it is not in the state REMOVED or TO_BE_REMOVED.
             INVARIANT(
                 this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED,
-                fmt::format(
-                    "Operator with id {} was found in state {} "
-                    "but expected TO_BE_PLACED, PLACED or TO_BE_REPLACED",
-                    id,
-                    magic_enum::enum_name(this->operatorState)));
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED, PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
             this->operatorState = TO_BE_REPLACED;
             break;
         case PLACED:
             /// an operator can be marked as PLACED only if it is not in the state REMOVED or TO_BE_REMOVED or already PLACED.
             INVARIANT(
                 this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED,
-                fmt::format(
-                    "Operator with id {} was found in state {} "
-                    "but expected TO_BE_PLACED or TO_BE_REPLACED",
-                    id,
-                    magic_enum::enum_name(this->operatorState)));
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
             this->operatorState = PLACED;
             break;
         case REMOVED:
             /// an operator can be marked as REMOVED only if it is in the state TO_BE_REMOVED.
             INVARIANT(
                 this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REMOVED,
-                fmt::format(
-                    "Operator with id {} was found in state {} "
-                    "but expected TO_BE_PLACED or TO_BE_REMOVED",
-                    id,
-                    magic_enum::enum_name(this->operatorState)));
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED or TO_BE_REMOVED",
+                id,
+                magic_enum::enum_name(this->operatorState));
             this->operatorState = REMOVED;
             break;
     }
