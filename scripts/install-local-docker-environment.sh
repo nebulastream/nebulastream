@@ -36,6 +36,12 @@ done
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
 
+# Docker on macOS appears to always enable the mapping from the container root user to the hosts current 
+# user
+if [[ $OSTYPE == 'darwin'* ]]; then
+  FORCE_ROOTLESS=1
+fi
+
 # If Docker is running in rootless mode, the root user inside the container
 # maps to the user running the rootless Docker daemon (likely the current user).
 # Therefore, we can safely use the root user within the container.
