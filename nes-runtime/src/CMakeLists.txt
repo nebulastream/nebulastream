@@ -12,7 +12,6 @@
 
 add_subdirectory(Exceptions)
 add_subdirectory(Runtime)
-add_subdirectory(Sinks)
 add_subdirectory(Util)
 add_subdirectory(QueryCompiler)
 add_subdirectory(Listeners)

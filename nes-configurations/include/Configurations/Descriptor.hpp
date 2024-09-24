@@ -83,6 +83,7 @@ public:
     {
     public:
         template <typename T>
+        requires(!std::same_as<std::decay_t<T>, ConfigParameterContainer>)
         ConfigParameterContainer(T&& configParameter)
             : configParameter(std::make_shared<ConfigParameterModel<T>>(std::forward<T>(configParameter)))
         {
@@ -135,13 +136,14 @@ private:
         }
         else if constexpr (std::is_same_v<T, bool>)
         {
-            auto caseInsensitiveEqual = [](unsigned char a, unsigned char b) { return std::tolower(a) == std::tolower(b); };
+            auto caseInsensitiveEqual = [](const unsigned char leftChar, const unsigned char rightChar)
+            { return std::tolower(leftChar) == std::tolower(rightChar); };
 
-            if (std::ranges::equal(stringParameter, "true", caseInsensitiveEqual))
+            if (std::ranges::equal(stringParameter, std::string_view("true"), caseInsensitiveEqual))
             {
                 return true;
             }
-            if (std::ranges::equal(stringParameter, "false", caseInsensitiveEqual))
+            if (std::ranges::equal(stringParameter, std::string_view("false"), caseInsensitiveEqual))
             {
                 return false;
             }
@@ -172,7 +174,7 @@ private:
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
-            if (const auto enumWrapperValue = EnumWrapper(stringParameter); enumWrapperValue.asEnum<EnumType>().has_value()
+            if (auto enumWrapperValue = EnumWrapper(stringParameter); enumWrapperValue.asEnum<EnumType>().has_value()
                 && magic_enum::enum_contains<EnumType>(enumWrapperValue.asEnum<EnumType>().value()))
             {
                 return enumWrapperValue;
@@ -224,8 +226,6 @@ public:
 /// 4. Is used by the frontend to validate and format string configs.
 struct Descriptor
 {
-    /// Used by Sources to create a valid Descriptor.
-    Descriptor() = default;
     explicit Descriptor(DescriptorConfig::Config&& config);
     ~Descriptor() = default;
 

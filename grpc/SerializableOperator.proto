@@ -41,28 +41,29 @@ enum InputFormat{
   CSV = 0;
 };
 
+message SerializableEnumWrapper {
+    string value = 1;
+}
+
+message SerializableVariantDescriptor {
+  oneof value {
+    int32 int_value = 1;
+    uint32 uint_value = 2;
+    bool bool_value = 3;
+    fixed32 char_value = 4;  // Represents a single byte (0-255)
+    float float_value = 5;
+    double double_value = 6;
+    string string_value = 7;
+    SerializableEnumWrapper enum_value = 8;
+  }
+}
+
 /*
 The serializable wrapper definition for operator nodes
  */
-message SerializableOperator{
+message SerializableOperator {
 
   message SourceDescriptorLogicalOperator {
-    /* Source Descriptor Helper Messages */
-    message EnumWrapper {
-        string value = 1;
-    }
-    message VariantSourceDescriptor {
-      oneof value {
-        int32 int_value = 1;
-        uint32 uint_value = 2;
-        bool bool_value = 3;
-        fixed32 char_value = 4;  // Represents a single byte (0-255)
-        float float_value = 5;
-        double double_value = 6;
-        string string_value = 7;
-        EnumWrapper enum_value = 8;
-      }
-    }
 
     /* Source Descriptor Definition */
     message SourceDescriptor {
@@ -70,29 +71,23 @@ message SerializableOperator{
         string logicalSourceName = 2;
         string sourceType = 3;
         InputFormat inputFormat = 4;
-        map<string, VariantSourceDescriptor> config = 5;
+        map<string, SerializableVariantDescriptor> config = 5;
     }
 
     uint64 sourceOriginId = 1;
     SourceDescriptor sourceDescriptor = 2;
   }
 
-  /**
-  Sink Details contains properties for the sink operator, such as the sink descriptor
-  */
-  message SinkDetails {
-    message SerializableFileSinkDescriptor {
-      string filePath = 1;
-      bool append = 2;
-      string sinkFormat = 3;
-      bool addTimestamp = 4;
+  message SinkLogicalOperator {
+    message SerializableSinkDescriptor {
+        SerializableSchema sinkSchema = 1;
+        string sinkType = 2;
+        bool addTimestamp = 3;
+        map<string, SerializableVariantDescriptor> config = 4;
     }
 
-    message SerializablePrintSinkDescriptor {
-    }
-
-    google.protobuf.Any sinkDescriptor = 1;
-    uint64 numberOfOriginIds = 3;
+    string sinkName = 1;
+    SerializableSinkDescriptor sinkDescriptor = 2;
   }
 
   /**

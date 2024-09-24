@@ -23,7 +23,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+
 
 namespace NES::Runtime
 {
@@ -164,7 +164,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext)
 
 void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable)
 {
-    if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline)
+    if (const auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable))
     {
         if (!(*nextPipeline)->isRunning())
         {
@@ -175,13 +175,9 @@ void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     }
-    else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink)
+    else if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executable))
     {
-        std::stringstream s;
-        s << buffer;
-        std::string bufferString = s.str();
-        NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {}", sink->get()->toString(), bufferString);
-
+        NES_DEBUG("QueryManager: added Task for Sink {} inputBuffer {}", **sink, fmt::streamed(buffer));
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     }
     else
@@ -257,9 +253,9 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx)
     QueryId queryId = INVALID_QUERY_ID;
     PipelineId pipelineId = INVALID_PIPELINE_ID;
     auto executable = task.getExecutable();
-    if (auto* sink = std::get_if<DataSinkPtr>(&executable))
+    if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executable))
     {
-        queryId = (*sink)->getQueryId();
+        queryId = (*sink)->queryId;
         NES_TRACE("QueryManager::completedWork: task for sink querySubPlanId={}", queryId);
     }
     else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable))

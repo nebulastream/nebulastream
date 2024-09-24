@@ -37,12 +37,6 @@ using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignme
 class SourceNameLogicalOperator;
 using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
-
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -50,7 +44,7 @@ namespace API
 {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-} /// namespace API
+}
 
 namespace WindowOperatorBuilder
 {
@@ -58,7 +52,7 @@ namespace WindowOperatorBuilder
 class WindowedQuery;
 class KeyedWindowedQuery;
 
-} /// namespace WindowOperatorBuilder
+}
 namespace Windowing
 {
 class WindowType;
@@ -69,7 +63,7 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-} /// namespace Windowing
+}
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
@@ -407,21 +401,9 @@ public:
      */
     Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
-    /**
-     * @brief: inferModel
-     * @example example
-     * @param param
-     * @return query
-     */
     Query& inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
-
-    /**
-     * @brief Add sink operator for the query.
-     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor
-     * @param workerId: location where sink is to be placed
-     */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    
+    virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.

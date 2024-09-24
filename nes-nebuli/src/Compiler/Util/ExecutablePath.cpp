@@ -326,4 +326,4 @@ std::filesystem::path getClangPath()
     throw CompilerException("Path to clang executable not found");
 }
 
-} /// namespace NES::Compiler::ExecutablePath
+}

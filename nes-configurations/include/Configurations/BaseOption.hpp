@@ -17,10 +17,6 @@
 namespace NES::Configurations
 {
 
-/**
- * @brief This class is the basis of all option.
- * All option can define a name and a description.
- */
 class BaseOption
 {
 public:

@@ -107,14 +107,8 @@ public:
      */
     static QueryPlanPtr
     addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey);
-    /**
-     * @brief Adds the sink operator to the queryPlan.
-     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor to add to the queryPlan
-     * @param workerId id of the worker node where sink need to be placed
-     * @return the updated queryPlan
-     */
-    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
+
+    static QueryPlanPtr addSink(std::string sinkName, QueryPlanPtr queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Create watermark assigner operator and adds it to the queryPlan
