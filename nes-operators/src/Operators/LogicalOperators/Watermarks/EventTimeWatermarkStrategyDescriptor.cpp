@@ -96,7 +96,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     {
         return true;
     }
-    throw FieldNotFound("EventTimeWaterMark is using a non existing field " + fieldName);
+    throw FieldNotFound("EventTimeWaterMark is using a non existing field {}", fieldName);
 }
 
 }

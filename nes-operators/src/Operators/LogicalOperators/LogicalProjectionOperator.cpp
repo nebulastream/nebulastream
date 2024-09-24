@@ -86,7 +86,7 @@ bool LogicalProjectionOperator::inferSchema()
         else
         {
             throw CannotInferSchema(
-                "Expression has to be an FieldAccessExpression or a FieldRenameExpression but it was a {}", function->toString());
+                "function has to be an NodeFunctionFieldAccess or a NodeFunctionFieldRename but it was a {}", function->toString());
         }
     }
     return true;

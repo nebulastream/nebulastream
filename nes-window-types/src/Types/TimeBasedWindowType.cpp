@@ -36,7 +36,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         auto existingField = schema->getField(fieldName);
         if (!NES::Util::instanceOf<Integer>(existingField->getDataType()))
         {
-            throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
+            throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
         }
         else if (existingField)
         {
@@ -49,7 +49,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         }
         else
         {
-            throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field " + fieldName);
+            throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field {}", fieldName);
         }
     }
     return true;
