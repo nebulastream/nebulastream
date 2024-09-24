@@ -64,29 +64,36 @@ uint64_t Exception::code() const noexcept
     return errorCode;
 }
 
-const cpptrace::stacktrace_frame& Exception::where() const noexcept
+std::optional<const cpptrace::stacktrace_frame> Exception::where() const noexcept
 {
     constexpr size_t exceptionFrame = 2; /// we need to go two frames back to the exception source
-    return this->trace().frames[exceptionFrame];
+
+    if (this->trace().frames.size() > exceptionFrame)
+    {
+        return this->trace().frames[exceptionFrame];
+    }
+
+    /// This cases should never happen
+    return std::nullopt;
 }
 
 std::string formatLogMessage(const Exception& e)
 {
-    const auto& exceptionLocation = e.where();
-    if constexpr (logWithStacktrace)
+    if (e.where().has_value())
     {
-        return fmt::format(
-            "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}\n",
-            e.code(),
-            e.what(),
-            exceptionLocation.filename,
-            exceptionLocation.line,
-            exceptionLocation.column,
-            exceptionLocation.symbol,
-            e.trace().to_string());
-    }
-    else
-    {
+        auto exceptionLocation = e.where().value();
+        if constexpr (logWithStacktrace)
+        {
+            return fmt::format(
+                "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n\n{}\n",
+                e.code(),
+                e.what(),
+                exceptionLocation.filename,
+                exceptionLocation.line,
+                exceptionLocation.column,
+                exceptionLocation.symbol,
+                e.trace().to_string());
+        }
         return fmt::format(
             "failed to process with error code ({}) : {}\n{}:{}:{} in function `{}`\n",
             e.code(),
@@ -96,6 +103,7 @@ std::string formatLogMessage(const Exception& e)
             exceptionLocation.column,
             exceptionLocation.symbol);
     }
+    return fmt::format("failed to process with error code ({}) : {}\n\n{}\n", e.code(), e.what(), e.trace().to_string());
 }
 
 void tryLogCurrentException()
