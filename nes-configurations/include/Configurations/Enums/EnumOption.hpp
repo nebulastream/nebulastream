@@ -17,6 +17,7 @@
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
+#include <Configurations/OptionVisitor.hpp>
 
 namespace NES::Configurations
 {
@@ -33,7 +34,7 @@ class EnumOption : public TypedBaseOption<T>
 public:
     /// Constructor to define a EnumOption with a specific default value.
     EnumOption(const std::string& name, T defaultValue, const std::string& description)
-        : TypedBaseOption<T>(name, defaultValue, description) {};
+        : TypedBaseOption<T>(name, defaultValue, description){};
 
     /// Operator to assign a new value as a value of this option.
     EnumOption<T>& operator=(const T& value)
@@ -81,6 +82,12 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(value).value();
     };
+
+public:
+    void accept(OptionVisitor& visitor) override
+    {
+        visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue()));
+    }
 };
 
 }

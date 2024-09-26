@@ -19,6 +19,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
+#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES::Configurations
 {
@@ -169,6 +171,38 @@ void BaseConfiguration::clear()
         option->clear();
     }
 };
+
+void BaseConfiguration::accept(OptionVisitor& visitor)
+{
+    visitor.enterBase(*this);
+    for (auto& option : getOptions())
+    {
+        option->accept(visitor);
+    }
+    visitor.exitBase(*this);
+};
+
+void BaseConfiguration::generateHelpOutput(std::ostream& ostream, OptionVisitor& visitor,
+                                           std::map<std::string, Configurations::BaseOption*> optionMap, const std::string& indent)
+{
+    for (const auto& pair : optionMap)
+    {
+        pair.second->accept(visitor);
+        PrintingVisitor& printingVisitor = dynamic_cast<PrintingVisitor&>(visitor);
+        BaseConfiguration* config = dynamic_cast<BaseConfiguration*>(optionMap[pair.second->getName()]);
+        if (config)
+        {
+            ostream << indent << "- " << pair.second->getName() << ": " << pair.second->getDescription() << "\n";
+            printingVisitor.stringBuilder.str("");
+            generateHelpOutput(ostream, visitor, config->getOptionMap(), indent + "\t");
+        }
+        else
+        {
+            ostream << indent << "- " << pair.second->getName() << ": " << pair.second->getDescription() << printingVisitor.toString() << "\n";
+            printingVisitor.stringBuilder.str("");
+        }
+    }
+}
 
 std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
 {

@@ -16,6 +16,7 @@
 #include <string>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES::Configuration
 {
@@ -37,6 +38,8 @@ connections.  Valid values include dns:///localhost:1234,
 
 protected:
     std::vector<BaseOption*> getOptions() override { return {&engineConfiguration, &queryCompilerConfiguration, &grpcAddressUri}; }
+    template <typename T>
+    friend void generateHelp(std::ostream& ostream);
 
 public:
     SingleNodeWorkerConfiguration() = default;
@@ -44,7 +47,15 @@ public:
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration = {"queryCompilerConfiguration", "QueryCompiler Configuration"};
 };
 
-///TODO #130: Generalize and move into `nes-configuration`
+template <typename T>
+void generateHelp(std::ostream& ostream)
+{
+    T config;
+    Configurations::PrintingVisitor visitor;
+    config.generateHelpOutput(ostream, visitor, config.getOptionMap());
+}
+
+///TODO(#130): Generalize and move into `nes-configuration`
 /// CLI > ConfigFile
 template <typename T>
 auto loadConfiguration(const int argc, const char** argv)
@@ -55,6 +66,10 @@ auto loadConfiguration(const int argc, const char** argv)
     {
         const size_t pos = std::string(argv[i]).find('=');
         const std::string arg{argv[i]};
+        if (arg == "--help")
+        {
+            generateHelp<T>(std::cout);
+        }
         commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
     }
 
