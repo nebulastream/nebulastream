@@ -14,6 +14,7 @@
 #pragma once
 #include <string>
 #include <type_traits>
+#include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
@@ -81,6 +82,9 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(value).value();
     };
+
+public:
+    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue())); }
 };
 
 }

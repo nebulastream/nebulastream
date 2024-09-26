@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <vector>
-#include "Configurations/BaseOption.hpp"
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/TypedBaseOption.hpp"
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations
 {
@@ -71,6 +73,9 @@ protected:
     void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
+public:
+    void accept(OptionVisitor&) override;
+
 private:
     std::vector<T> options;
 };
@@ -107,6 +112,12 @@ void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::st
     auto option = T();
     option.parseFromString(identifier, inputParams);
     options.push_back(option);
+}
+
+template <DerivedBaseOption T>
+void SequenceOption<T>::accept(OptionVisitor&)
+{
+    NES_WARNING("visiting sequence Option not implemented");
 }
 
 template <DerivedBaseOption T>

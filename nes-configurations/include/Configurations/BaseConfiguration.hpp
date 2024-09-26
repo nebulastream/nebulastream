@@ -47,7 +47,16 @@ public:
     /// clears all options and set the default values
     void clear() override;
 
+    void accept(OptionVisitor& visitor) override;
+
     std::string toString() override;
+
+    /// prints all config options of root configuration
+    void generateHelpOutput(
+        std::ostream& ostream,
+        OptionVisitor& visitor,
+        std::map<std::string, Configurations::BaseOption*> optionMap,
+        const std::string& indent = "");
 
 protected:
     void parseFromYAMLNode(const YAML::Node config) override;

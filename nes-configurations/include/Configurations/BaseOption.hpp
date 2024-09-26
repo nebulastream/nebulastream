@@ -21,6 +21,7 @@ namespace NES::Configurations
  * @brief This class is the basis of all option.
  * All option can define a name and a description.
  */
+class OptionVisitor;
 class BaseOption
 {
 public:
@@ -65,6 +66,8 @@ public:
     ///TODO #336: Overload operator
     /// We want something like friend std::ostream& operator<<(std::ostream& out, const BaseOption& baseOption);
     virtual std::string toString() = 0;
+
+    virtual void accept(OptionVisitor&) = 0;
 
 protected:
     friend class BaseConfiguration;
