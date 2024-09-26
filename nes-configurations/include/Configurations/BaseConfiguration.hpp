@@ -47,9 +47,14 @@ public:
     /// clears all options and set the default values
     void clear() override;
 
+    void accept(OptionVisitor& visitor) override;
+
     std::string toString() override;
 
 protected:
+    template <DerivedBaseOption T>
+    friend class SequenceOption;
+
     void parseFromYAMLNode(const YAML::Node config) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<BaseOption*> getOptions() = 0;
