@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/OptionVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
@@ -167,6 +168,17 @@ void BaseConfiguration::clear()
     for (auto* option : getOptions())
     {
         option->clear();
+    }
+};
+
+void BaseConfiguration::accept(OptionVisitor& visitor)
+{
+    visitor.visitConcrete(getName(), getDescription(), "");
+    for (auto& option : getOptions())
+    {
+        visitor.push();
+        option->accept(visitor);
+        visitor.pop();
     }
 };
 
