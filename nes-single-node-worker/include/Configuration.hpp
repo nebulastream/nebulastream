@@ -16,6 +16,7 @@
 #include <string>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES::Configuration
 {
@@ -71,5 +72,13 @@ auto loadConfiguration(const int argc, const char** argv)
     config.overwriteConfigWithCommandLineInput(commandLineParams);
 
     return config;
+}
+
+[[maybe_unused]] static std::string getHelp()
+{
+    SingleNodeWorkerConfiguration config{};
+    Configurations::PrintingVisitor visitor;
+    config.accept(visitor);
+    return visitor.toString();
 }
 } /// namespace NES::Configuration

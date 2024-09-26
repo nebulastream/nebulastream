@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
+#include <Configurations/OptionVisitor.hpp>
 
 namespace NES::Configurations
 {
@@ -168,6 +169,15 @@ void BaseConfiguration::clear()
     {
         option->clear();
     }
+}
+void BaseConfiguration::accept(OptionVisitor& visitor)
+{
+    visitor.enterBase(*this);
+    for (auto& option : getOptions())
+    {
+        option->accept(visitor);
+    }
+    visitor.exitBase(*this);
 };
 
 std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()

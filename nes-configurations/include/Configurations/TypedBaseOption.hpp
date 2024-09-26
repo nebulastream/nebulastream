@@ -17,7 +17,11 @@
 #include <vector>
 #include "Configurations/BaseOption.hpp"
 #include "Configurations/ConfigurationException.hpp"
+#include "Configurations/OptionVisitor.hpp"
 #include "Configurations/Validation/ConfigurationValidation.hpp"
+
+#include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Configurations
 {
@@ -103,6 +107,31 @@ protected:
     * @param pValue is the value to be tested for validity.
     */
     void isValid(std::string);
+
+public:
+    void accept(OptionVisitor& visitor) override
+    {
+        if constexpr (requires { std::to_string(defaultValue); })
+        {
+            visitor.visitConcrete(getName(), std::to_string(defaultValue));
+        }
+        else if constexpr (requires { defaultValue.toString(); })
+        {
+            visitor.visitConcrete(getName(), defaultValue.toString());
+        }
+        else if constexpr (std::same_as<std::string, T>)
+        {
+            visitor.visitConcrete(getName(), defaultValue);
+        }
+        else if constexpr (std::is_enum_v<T>)
+        {
+            visitor.visitConcrete(getName(), magic_enum::enum_name(defaultValue));
+        }
+        else
+        {
+            NES_NOT_IMPLEMENTED();
+        }
+    }
 };
 
 template <class T>

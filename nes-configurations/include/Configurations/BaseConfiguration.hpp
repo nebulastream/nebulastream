@@ -47,6 +47,8 @@ public:
     /// clears all options and set the default values
     void clear() override;
 
+    void accept(OptionVisitor& visitor) override;
+
     std::string toString() override;
 
 protected:

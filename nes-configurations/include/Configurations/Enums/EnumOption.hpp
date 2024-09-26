@@ -18,6 +18,8 @@
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
 
+#include <magic_enum.hpp>
+
 namespace NES::Configurations
 {
 
@@ -81,6 +83,9 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(value).value();
     };
+
+public:
+    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(this->getName(), magic_enum::enum_name(this->getDefaultValue())); }
 };
 
 } /// namespace NES::Configurations
