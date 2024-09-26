@@ -17,66 +17,42 @@
 namespace NES::Configurations
 {
 
+class OptionVisitor;
+
+/// This class is the basis of all options. All options can define a name and a description.
 class BaseOption
 {
 public:
     BaseOption() = default;
 
-    /**
-     * @brief Constructor to create a new option.
-     * @param name of the option.
-     * @param description of the option.
-     */
+    /// Constructor to create a new option.
     BaseOption(const std::string& name, const std::string& description);
     virtual ~BaseOption() = default;
 
-    /**
-     * @brief Clears the option and sets a default value if available.
-     */
+    /// Clears the option and sets a default value if available.
     virtual void clear() = 0;
 
-    /**
-     * @brief Checks if the option is equal to another option.
-     * @param other option.
-     * @return true if the option is equal.
-     */
+    /// Checks if the option is equal to another option.
     virtual bool operator==(const BaseOption& other);
 
-    /**
-     * @brief Getter for the name of the option.
-     * @return name
-     */
     std::string getName();
 
-    /**
-     * @brief Getter for the description of the option.
-     * @return description
-     */
     std::string getDescription();
 
-    /**
-     * @brief To string method for the option.
-     * @return string
-     */
-    ///TODO #336: Overload operator
+    ///TODO(#336): Overload operator
     /// We want something like friend std::ostream& operator<<(std::ostream& out, const BaseOption& baseOption);
     virtual std::string toString() = 0;
+
+    virtual void accept(OptionVisitor&) = 0;
 
 protected:
     friend class BaseConfiguration;
 
-    /**
-     * @brief ParseFromYamlNode fills the content of this option with the value of the YAML node.
-     * @param node
-     */
+    /// ParseFromYamlNode fills the content of this option with the value of the YAML node.
     virtual void parseFromYAMLNode(YAML::Node node) = 0;
 
-    /**
-     * @brief ParseFromString fills the content of this option with a specific string value.
-     * If this option is nested it uses the identifier to lookup the particular children option.
-     * @param identifier of the children option if the option is nested.
-     * @param value of the option as a string
-     */
+    /// ParseFromString fills the content of this option with a specific string value.
+    /// If this option is nested it uses the identifier to lookup the particular children option.
     virtual void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) = 0;
 
     std::string name;
