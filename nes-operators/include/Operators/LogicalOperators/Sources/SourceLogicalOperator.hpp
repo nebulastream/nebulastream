@@ -26,13 +26,13 @@ namespace NES
 class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id);
-    explicit SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+    explicit SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
-    std::unique_ptr<SourceDescriptor> getSourceDescriptor();
+    std::shared_ptr<SourceDescriptor> getSourceDescriptor();
     SourceDescriptor& getSourceDescriptorRef();
 
-    void setSourceDescriptor(std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+    void setSourceDescriptor(std::shared_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool inferSchema() override;
 
@@ -46,7 +46,7 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
 
 private:
-    std::unique_ptr<SourceDescriptor> sourceDescriptor;
+    std::shared_ptr<SourceDescriptor> sourceDescriptor;
     SchemaPtr projectSchema;
 };
 

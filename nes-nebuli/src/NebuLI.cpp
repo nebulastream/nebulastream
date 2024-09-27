@@ -154,10 +154,9 @@ PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalName, std::map
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
     }
 
-    auto modifiedSourceConfiguration = std::move(sourceConfiguration);
-    modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = std::move(logicalName);
+    sourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = std::move(logicalName);
 
-    return Configurations::PhysicalSourceTypeFactory::createFromString("", modifiedSourceConfiguration);
+    return Configurations::PhysicalSourceTypeFactory::createFromString("", sourceConfiguration);
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)

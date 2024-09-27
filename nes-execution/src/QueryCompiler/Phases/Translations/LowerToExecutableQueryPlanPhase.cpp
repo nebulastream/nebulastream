@@ -121,7 +121,6 @@ void LowerToExecutableQueryPlanPhase::processSource(
         !dynamic_cast<const LogicalSourceDescriptor*>(&sourceOperator->getSourceDescriptorRef()),
         "Logical source name lookup is not supported");
 
-    /// ReSharper disable once CppDFAUnreachableCode
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
     {
