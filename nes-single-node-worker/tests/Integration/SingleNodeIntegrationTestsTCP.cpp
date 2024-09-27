@@ -20,10 +20,8 @@
 #include <thread>
 #include <vector>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <detail/PortDispatcher.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
-#include <BorrowedPort.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -72,9 +70,11 @@ private:
     constexpr static int NUM_TUPLES_TO_PRODUCE = 200;
 
 public:
-    SyncedMockTcpServer(const short port) : acceptor(io_context, tcp::endpoint(tcp::v4(), port)) { }
+    SyncedMockTcpServer() : acceptor(io_context, tcp::endpoint(tcp::v4(), 0)) { }
 
-    static std::unique_ptr<SyncedMockTcpServer> create(uint16_t port) { return std::make_unique<SyncedMockTcpServer>(port); }
+    static std::unique_ptr<SyncedMockTcpServer> create() { return std::make_unique<SyncedMockTcpServer>(); }
+
+    uint16_t getPort() const { return acceptor.local_endpoint().port(); }
 
     void run()
     {
@@ -125,9 +125,10 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
     for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
     {
-        auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
-        mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
+        auto mockTCPServer = SyncedMockTcpServer::create();
+        auto mockTCPServerPort = mockTCPServer->getPort();
+        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
     /// Register the query and start it.
@@ -168,7 +169,7 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
-        QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
+        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
+        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
+        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
 } /// namespace NES::Testing

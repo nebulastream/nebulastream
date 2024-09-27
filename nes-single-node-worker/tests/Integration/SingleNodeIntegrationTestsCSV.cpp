@@ -121,7 +121,7 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneCSVSource", 32, 496 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qOneCSVSourceWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
-        QueryTestParam{"qTwoCSVSourcesWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
+        QueryTestParam{"qOneSourceCSV", 32, 496 /* SUM(0, 1, ..., 31) */},
+        QueryTestParam{"qOneSourceCSVWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
+        QueryTestParam{"qTwoSourcesCSVWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
 } /// namespace NES::Testing

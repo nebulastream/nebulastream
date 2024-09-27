@@ -21,10 +21,8 @@
 #include <vector>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <detail/PortDispatcher.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
-#include <BorrowedPort.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -72,9 +70,11 @@ class SyncedMockTcpServer
     using tcp = boost::asio::ip::tcp;
 
 public:
-    SyncedMockTcpServer(const short port) : acceptor(io_context, tcp::endpoint(tcp::v4(), port)) { }
+    SyncedMockTcpServer() : acceptor(io_context, tcp::endpoint(tcp::v4(), 0)) { }
 
-    static std::unique_ptr<SyncedMockTcpServer> create(uint16_t port) { return std::make_unique<SyncedMockTcpServer>(port); }
+    static std::unique_ptr<SyncedMockTcpServer> create() { return std::make_unique<SyncedMockTcpServer>(); }
+
+    uint16_t getPort() const { return acceptor.local_endpoint().port(); }
 
     void run()
     {
@@ -128,9 +128,10 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
     for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
     {
-        auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
-        mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
+        auto mockTCPServer = SyncedMockTcpServer::create();
+        auto mockTCPServerPort = mockTCPServer->getPort();
+        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
     /// Register the query and start it.
