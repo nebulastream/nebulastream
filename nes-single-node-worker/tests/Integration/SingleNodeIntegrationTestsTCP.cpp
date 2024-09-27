@@ -141,7 +141,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
         serverThread.join(); /// wait for serverThread to finish
     }
 
-    IntegrationTestUtil::waitForQueryStatus(queryId, Running, uut);
+    ASSERT_TRUE(IntegrationTestUtil::waitForQueryStatus(queryId, Stopped, uut));
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();

@@ -21,7 +21,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalSourceOperator::PhysicalSourceOperator(
-    OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+    OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::shared_ptr<SourceDescriptor>&& sourceDescriptor)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , sourceDescriptor(std::move(sourceDescriptor))
@@ -34,13 +34,13 @@ std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(
     OriginId originId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
-    std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+    std::shared_ptr<SourceDescriptor>&& sourceDescriptor)
 {
     return std::make_shared<PhysicalSourceOperator>(id, originId, inputSchema, outputSchema, std::move(sourceDescriptor));
 }
 
 std::shared_ptr<PhysicalSourceOperator>
-PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::shared_ptr<SourceDescriptor>&& sourceDescriptor)
 {
     return create(getNextOperatorId(), INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }
@@ -76,7 +76,10 @@ std::string PhysicalSourceOperator::toString() const
 }
 OperatorPtr PhysicalSourceOperator::copy()
 {
-    PRECONDITION(false, "PhysicalSourceOperator does not support copy, because holds a unique pointer to a SourceDescriptor.");
+    auto sourceDescriptorPtrCopy = sourceDescriptor;
+    auto result = create(id, getOriginId(), inputSchema, outputSchema, std::move(sourceDescriptorPtrCopy));
+    result->addAllProperties(properties);
+    return result;
 }
 
 } /// namespace NES::QueryCompilation::PhysicalOperators
