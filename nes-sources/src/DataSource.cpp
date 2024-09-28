@@ -215,7 +215,7 @@ void DataSource::runningRoutine()
             /// filling the TupleBuffer might block.
             /// passing schema by value to create a new TestTupleBuffer in the Parser, will be improved in Todo: #72.
             auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, schema);
-            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
+            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuples: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
             ///this checks we received a valid output buffer
             if (isReceivedData)
