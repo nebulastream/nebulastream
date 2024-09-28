@@ -19,7 +19,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
@@ -47,10 +46,6 @@ struct QueryTestParam
     }
 };
 
-/**
- * @brief Integration tests for the SingleNodeWorker. Tests entire code path from registration to running the query, stopping and
- * unregistration.
- */
 class SingleNodeIntegrationTest : public BaseIntegrationTest, public testing::WithParamInterface<QueryTestParam>
 {
 public:
@@ -97,7 +92,8 @@ private:
     tcp::acceptor acceptor;
 };
 
-TEST_P(SingleNodeIntegrationTest, TestQueriesWithMixedSources)
+
+TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
 {
     using ResultSchema = struct
     {
@@ -105,18 +101,20 @@ TEST_P(SingleNodeIntegrationTest, TestQueriesWithMixedSources)
     };
 
     const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum] = GetParam();
+    const auto testSpecificIdentifier = IntegrationTestUtil::getUniqueTestIdentifier();
+    const auto testSpecificResultFileName = fmt::format("{}.csv", testSpecificIdentifier);
+    const auto testSpecificDataFileName = fmt::format("{}_{}", testSpecificIdentifier, dataInputFile);
+
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
-    const std::string queryResultFile = fmt::format("{}.csv", queryName);
-    IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
+    IntegrationTestUtil::removeFile(testSpecificResultFileName); /// remove outputFile if exists
 
     SerializableDecomposedQueryPlan queryPlan;
-    const auto querySpecificDataFileName = fmt::format("{}_{}", queryName, dataInputFile);
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, testSpecificDataFileName))
     {
         GTEST_SKIP();
     }
-    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
+    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -149,7 +147,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueriesWithMixedSources)
 
     auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
+    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(testSpecificResultFileName, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values
@@ -165,8 +163,8 @@ TEST_P(SingleNodeIntegrationTest, TestQueriesWithMixedSources)
     EXPECT_EQ(numProcessedTuples, expectedNumTuples) << "Query did not produce the expected number of tuples";
     EXPECT_EQ(checkSum, expectedCheckSum) << "Query did not produce the expected expected checksum";
 
-    IntegrationTestUtil::removeFile(queryResultFile);
-    IntegrationTestUtil::removeFile(querySpecificDataFileName);
+    IntegrationTestUtil::removeFile(testSpecificResultFileName);
+    IntegrationTestUtil::removeFile(testSpecificDataFileName);
 }
 
 INSTANTIATE_TEST_CASE_P(

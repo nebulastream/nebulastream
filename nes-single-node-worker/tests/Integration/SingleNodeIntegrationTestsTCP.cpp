@@ -20,13 +20,12 @@
 #include <thread>
 #include <vector>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <boost/asio.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
-
-#include <boost/asio.hpp>
 
 namespace NES::Testing
 {
@@ -47,10 +46,6 @@ struct QueryTestParam
     }
 };
 
-/**
- * @brief Integration tests for the SingleNodeWorker. Tests entire code path from registration to running the query, stopping and
- * unregistration.
- */
 class SingleNodeIntegrationTest : public BaseIntegrationTest, public testing::WithParamInterface<QueryTestParam>
 {
 public:
@@ -104,24 +99,24 @@ private:
     size_t numInputTuplesToProduce;
 };
 
-TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
+
+TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
 {
     using ResultSchema = struct
     {
         uint64_t id;
     };
-
     const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum, numInputTuplesToProduceByTCPMockServer] = GetParam();
+    const auto testSpecificResultFileName = fmt::format("{}.csv", IntegrationTestUtil::getUniqueTestIdentifier());
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
-    const std::string queryResultFile = fmt::format("{}.csv", queryName);
-    IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
+    IntegrationTestUtil::removeFile(testSpecificResultFileName);
 
     SerializableDecomposedQueryPlan queryPlan;
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
-    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -154,7 +149,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
+    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(testSpecificResultFileName, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values
@@ -169,7 +164,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     EXPECT_EQ(numProcessedTuples, expectedNumTuples) << "Query did not produce the expected number of tuples";
     EXPECT_EQ(checkSum, expectedCheckSum) << "Query did not produce the expected expected checksum";
 
-    IntegrationTestUtil::removeFile(queryResultFile);
+    IntegrationTestUtil::removeFile(testSpecificResultFileName);
 }
 
 INSTANTIATE_TEST_CASE_P(
