@@ -121,32 +121,6 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    /// TODO(#74) We removed almost all sources this needs to be updated
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
-        }
-    }
-}
-
 PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalName, std::map<std::string, std::string> sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
@@ -202,32 +176,6 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     originIdInferencePhase->execute(query);
     queryRewritePhase->execute(query);
     typeInference->execute(query);
-
-    for (auto& sourceOperator : query->getSourceOperators())
-    {
-        auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
-        {
-            /// Fetch logical and physical source name in the descriptor
-            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
-            /// Iterate over all available physical sources
-            bool foundPhysicalSource = false;
-            for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
-            {
-                NES_DEBUG("Replacing LogicalSourceDescriptor {}", logicalSourceName);
-                if (auto physicalSourceType = entry->getPhysicalSource())
-                {
-                    auto physicalDescriptor
-                        = createSourceDescriptor(sourceDescriptor.getSchema(), physicalSourceType->getPhysicalSourceType());
-                    NES_DEBUG("Replacement with: {}", physicalDescriptor->toString());
-                    sourceOperator->setSourceDescriptor(std::move(physicalDescriptor));
-                    foundPhysicalSource = true;
-                    break;
-                }
-            }
-            NES_ASSERT(foundPhysicalSource, "Logical source descriptor could not be replaced with the physical source descriptor.");
-        }
-    }
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
