@@ -109,13 +109,13 @@ QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
     return reply.status();
 }
 
-testing::AssertionResult waitForQueryStatus(QueryId queryId, QueryStatus status, GRPCServer& uut)
+testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
 {
     /// We are waiting for 2 seconds (25ms * 40 = 1s)
     constexpr size_t maxNumberOfTimeoutChecks = 80;
     size_t numTimeouts = 0;
     auto currentQueryStatus = queryStatus(queryId, uut);
-    while (currentQueryStatus != status && currentQueryStatus != Failed)
+    while (currentQueryStatus != Stopped && currentQueryStatus != Failed && currentQueryStatus != Finished)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (++numTimeouts > maxNumberOfTimeoutChecks)

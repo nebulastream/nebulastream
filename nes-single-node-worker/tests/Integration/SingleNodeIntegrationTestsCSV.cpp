@@ -93,7 +93,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
     IntegrationTestUtil::startQuery(queryId, uut);
-    IntegrationTestUtil::waitForQueryStatus(queryId, Stopped, uut);
+    IntegrationTestUtil::waitForQueryToEnd(queryId, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();
