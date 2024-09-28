@@ -288,4 +288,16 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         }
     }
 }
+
+std::string getUniqueTestIdentifier()
+{
+    const auto timestamp
+        = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    const testing::TestInfo* const test_info = testing::UnitTest::GetInstance()->current_test_info();
+
+    auto uniqueTestIdentifier
+        = std::format("{}_{}_{}", std::string(test_info->test_suite_name()), std::string(test_info->name()), timestamp);
+    std::ranges::replace(uniqueTestIdentifier, '/', '_');
+    return uniqueTestIdentifier;
+}
 }
