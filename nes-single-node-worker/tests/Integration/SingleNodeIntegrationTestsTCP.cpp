@@ -35,9 +35,10 @@ using namespace ::testing;
 struct QueryTestParam
 {
     std::string queryFile;
-    int numSources;
+    int numSourcesTCP;
     int expectedNumTuples;
     int expectedCheckSum;
+    size_t numInputTuplesToProduceByTCPMockServer;
 
     /// Add this method to your QueryTestParam struct
     friend std::ostream& operator<<(std::ostream& os, const QueryTestParam& param)
@@ -67,12 +68,17 @@ class SyncedMockTcpServer
 {
 private:
     using tcp = boost::asio::ip::tcp;
-    constexpr static int NUM_TUPLES_TO_PRODUCE = 200;
 
 public:
-    SyncedMockTcpServer() : acceptor(io_context, tcp::endpoint(tcp::v4(), 0)) { }
+    SyncedMockTcpServer(size_t numInputTuplesToProduce)
+        : acceptor(io_context, tcp::endpoint(tcp::v4(), 0)), numInputTuplesToProduce(numInputTuplesToProduce)
+    {
+    }
 
-    static std::unique_ptr<SyncedMockTcpServer> create() { return std::make_unique<SyncedMockTcpServer>(); }
+    static std::unique_ptr<SyncedMockTcpServer> create(size_t numInputTuplesToProduce)
+    {
+        return std::make_unique<SyncedMockTcpServer>(numInputTuplesToProduce);
+    }
 
     uint16_t getPort() const { return acceptor.local_endpoint().port(); }
 
@@ -81,7 +87,7 @@ public:
         tcp::socket socket(io_context);
         acceptor.accept(socket);
 
-        for (uint32_t i = 0; i < NUM_TUPLES_TO_PRODUCE; ++i)
+        for (uint32_t i = 0; i < numInputTuplesToProduce; ++i)
         {
             std::string data = std::to_string(i) + "\n";
             boost::asio::write(socket, boost::asio::buffer(data));
@@ -95,6 +101,7 @@ public:
 private:
     boost::asio::io_context io_context;
     tcp::acceptor acceptor;
+    size_t numInputTuplesToProduce;
 };
 
 TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
@@ -104,7 +111,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
         uint64_t id;
     };
 
-    const auto& [queryName, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
+    const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum, numInputTuplesToProduceByTCPMockServer] = GetParam();
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
     const std::string queryResultFile = fmt::format("{}.csv", queryName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
@@ -123,9 +130,9 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSourcesTCP; ++tcpSourceNumber)
     {
-        auto mockTCPServer = SyncedMockTcpServer::create();
+        auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
         IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
@@ -169,7 +176,8 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
-        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
+        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
+        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */, 200},
+        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */, 200},
+        QueryTestParam{"qOneSourceTCP", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
 } /// namespace NES::Testing
