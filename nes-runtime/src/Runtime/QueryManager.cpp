@@ -162,7 +162,7 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
                 {
                     NES_DEBUG("DataSource {} : End of stream.", originId);
                     this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
-                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
+                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::Graceful);
                 },
                 [&](const Sources::SourceReturnType::Stopped&)
                 {

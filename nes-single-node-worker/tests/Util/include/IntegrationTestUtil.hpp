@@ -46,7 +46,8 @@ QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
 std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
 
-testing::AssertionResult waitForQueryStatus(QueryId queryId, QueryStatus status, GRPCServer& uut);
+/// Wating for the query to end, e.g. by finishing or failing. Returns assertion success if the query ended (also if it failed).
+testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut);
 
 /// copies the input file to the directory where the test is executed to allow specifying only the input file name in
 /// query instead of an absolute path or a relative path that is not the directory where the test is executed.

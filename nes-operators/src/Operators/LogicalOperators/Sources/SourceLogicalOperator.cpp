@@ -62,7 +62,7 @@ std::string SourceLogicalOperator::toString() const
 
 std::shared_ptr<SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
 {
-    return std::move(this->sourceDescriptor);
+    return this->sourceDescriptor;
 }
 SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
 {
