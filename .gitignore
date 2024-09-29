@@ -38,3 +38,5 @@ nes-asp/data/*.csv
 
 # Ignore log files
 *.log
+cmake-build-debug
+nes-sql-parser/build
