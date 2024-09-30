@@ -92,9 +92,7 @@ function(add_nes_test_nebuli)
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
 
-if (NES_ENABLES_TESTS)
-    add_subdirectory(tests)
-endif ()
+add_tests_if_enabled(tests)
 
 # install Nebuli and all its dependencies + the file_set with the headers
 install(TARGETS nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc

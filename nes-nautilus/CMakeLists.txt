@@ -32,13 +32,7 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-nautilus PUBLIC "-fPIC")
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
+add_tests_if_enabled(tests)
 
 # Add MLIR and LLVM dependencies
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
