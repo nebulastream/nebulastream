@@ -28,10 +28,4 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
+add_tests_if_enabled(tests)
