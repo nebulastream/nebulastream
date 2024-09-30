@@ -29,6 +29,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-if (NES_ENABLES_TESTS)
-    add_subdirectory(tests)
-endif ()
+add_tests_if_enabled(tests)

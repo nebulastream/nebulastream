@@ -32,10 +32,4 @@ target_link_libraries(nes-single-node-worker-lib
 add_executable(single-node src/SingleNodeWorkerStarter.cpp)
 target_link_libraries(single-node PRIVATE nes-single-node-worker-lib)
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled for single-node-worker")
-else ()
-    message(STATUS "Tests are disabled for single-node-worker")
-endif ()
+add_tests_if_enabled(tests)
