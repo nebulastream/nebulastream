@@ -243,7 +243,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
 
             /// Add to the current operator information about operator id of the removed downStreamOperator.
             /// We will use this information post expansion to re-add the connection later.
-            addBlockingDownStreamOperator(operatorNode, downStreamOperator->as_if<Operator>()->getId());
+            addBlockingDownStreamOperator(operatorNode, NES::Util::as_if<Operator>(downStreamOperator)->getId());
         }
     }
 }
@@ -251,18 +251,18 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
 void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
-    std::any value = operatorNode->as_if<Operator>()->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
+    std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
     if (value.has_value())
     { /// update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        NES::Util::as_if<Operator>(operatorNode)->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     }
     else
     { /// create a new entry if value doesn't exist
         std::vector<OperatorId> listOfConnectedBlockingParents;
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        NES::Util::as_if<Operator>(operatorNode)->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     }
 }
 

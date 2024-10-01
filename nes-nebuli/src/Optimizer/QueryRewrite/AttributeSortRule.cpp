@@ -56,8 +56,8 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
         auto updatedPredicate = sortAttributesInExpression(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
-        updatedFilter->as_if<LogicalOperator>()
-            ->setOutputSchema(filterOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        NES::Util::as_if<LogicalOperator>(updatedFilter)
+            ->setOutputSchema(NES::Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
         filterOperator->replace(updatedFilter);
     }
 
@@ -68,8 +68,8 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
         auto updatedMapExpression = NES::Util::as<FieldAssignmentExpressionNode>(sortAttributesInExpression(mapExpression));
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperator>()
-            ->setOutputSchema(mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        NES::Util::as_if<LogicalOperator>(updatedMap)
+            ->setOutputSchema(NES::Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;

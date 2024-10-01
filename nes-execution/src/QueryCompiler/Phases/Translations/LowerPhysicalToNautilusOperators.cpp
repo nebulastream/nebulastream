@@ -782,7 +782,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
         aggregations.cend(),
         std::back_inserter(aggregationResultFieldNames),
         [&](const Windowing::WindowAggregationDescriptorPtr& agg)
-        { return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName(); });
+        { return NES::Util::as_if<FieldAccessExpressionNode>(agg->as())->getFieldName(); });
 
     return std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindow>(
         predicate, aggregationResultFieldNames, minCount, aggregationFunctions, handlerIndex);
@@ -807,7 +807,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
 
             auto aggregationInputExpression = expressionProvider->lowerExpression(agg->on());
             std::string aggregationResultFieldIdentifier;
-            if (auto fieldAccessExpression = agg->as()->as_if<FieldAccessExpressionNode>())
+            if (auto fieldAccessExpression = NES::Util::as_if<FieldAccessExpressionNode>(agg->as()))
             {
                 aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
             }

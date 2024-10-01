@@ -221,7 +221,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
         << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkperator = OperatorSerializationUtil::deserializeOperator(rootOperator);
     auto descriptor
-        = NES::Util::as<SinkLogicalOperator>(deserializedSinkperator)->getSinkDescriptor()->as_if<FileSinkDescriptor>();
+        = NES::Util::as_if<FileSinkDescriptor>(NES::Util::as<SinkLogicalOperator>(deserializedSinkperator)->getSinkDescriptor());
     if (descriptor)
     {
         descriptor->setFileName(fileName);

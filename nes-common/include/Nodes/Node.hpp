@@ -181,17 +181,6 @@ public:
     bool isValid();
 
     /**
-     * @brief Dynamically casts the node to a NodeType or returns nullptr.
-     * @tparam NodeType
-     * @return returns a shared pointer of the NodeType or nullptr if the type can't be casted.
-     */
-    template <class NodeType>
-    std::shared_ptr<NodeType> as_if()
-    {
-        return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
-    }
-
-    /**
      * @brief Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
      * @tparam NodeType
      * @return vector of nodes

@@ -278,4 +278,11 @@ Out as(const In& obj)
     return *dynamic_cast<Out*>(&obj);
 }
 
+/// cast the given object to the specified type.
+template <typename Out, typename In>
+std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
+{
+    return std::dynamic_pointer_cast<Out>(obj);
+}
+
 } /// namespace NES::Util

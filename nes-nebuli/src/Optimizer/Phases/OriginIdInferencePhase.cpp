@@ -57,7 +57,7 @@ void OriginIdInferencePhase::performInference(
     /// propagate origin ids through the complete query plan
     for (auto rootOperator : rootOperators)
     {
-        if (auto logicalOperator = rootOperator->as_if<LogicalOperator>())
+        if (auto logicalOperator = NES::Util::as_if<LogicalOperator>(rootOperator))
         {
             logicalOperator->inferInputOrigins();
         }

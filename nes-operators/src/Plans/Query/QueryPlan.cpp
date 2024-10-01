@@ -357,7 +357,7 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
     for (const auto& downStreamOperator : downstreamOperators)
     {
         auto operatorsBetweenChildAndTargetUpstream
-            = findOperatorsBetweenSourceAndTargetOperators(downStreamOperator->as_if<Operator>(), upstreamOperators);
+            = findOperatorsBetweenSourceAndTargetOperators(NES::Util::as_if<Operator>(downStreamOperator), upstreamOperators);
         operatorsBetween.insert(operatorsBetweenChildAndTargetUpstream.begin(), operatorsBetweenChildAndTargetUpstream.end());
     }
 
@@ -450,7 +450,7 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourc
     {
         ///Fetch the operators between upstream and target operators
         auto operatorsBetweenUpstreamAndTargetUpstream
-            = findOperatorsBetweenSourceAndTargetOperators(nextUpstreamOperatorToCheck->as_if<Operator>(), targetOperators);
+            = findOperatorsBetweenSourceAndTargetOperators(NES::Util::as_if<Operator>(nextUpstreamOperatorToCheck), targetOperators);
 
         ///If there are operators between upstream and target operators then mark the input down stream operator for return
         if (!operatorsBetweenUpstreamAndTargetUpstream.empty())

@@ -36,16 +36,8 @@ public:
 
     SchemaPtr getSchema() const;
 
-    template <class SourceType>
-    std::shared_ptr<SourceType> as_if()
-    {
-        return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-    }
+    /// Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
 
-    /**
-     * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
-     * @return logicalSourceName
-     */
     std::string getLogicalSourceName() const;
 
     void setSchema(const SchemaPtr& schema);

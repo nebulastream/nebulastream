@@ -56,86 +56,86 @@ using namespace Runtime::Execution::Expressions;
 std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const ExpressionNodePtr& expressionNode)
 {
     NES_INFO("Lower Expression {}", expressionNode->toString())
-    if (auto andNode = expressionNode->as_if<AndExpressionNode>())
+    if (auto andNode = NES::Util::as_if<AndExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(andNode->getLeft());
         auto rightNautilusExpression = lowerExpression(andNode->getRight());
         return std::make_shared<AndExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto orNode = expressionNode->as_if<OrExpressionNode>())
+    else if (auto orNode = NES::Util::as_if<OrExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(orNode->getLeft());
         auto rightNautilusExpression = lowerExpression(orNode->getRight());
         return std::make_shared<OrExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto lessNode = expressionNode->as_if<LessExpressionNode>())
+    else if (auto lessNode = NES::Util::as_if<LessExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(lessNode->getLeft());
         auto rightNautilusExpression = lowerExpression(lessNode->getRight());
         return std::make_shared<LessThanExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto equalsNode = expressionNode->as_if<EqualsExpressionNode>())
+    else if (auto equalsNode = NES::Util::as_if<EqualsExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(equalsNode->getLeft());
         auto rightNautilusExpression = lowerExpression(equalsNode->getRight());
         return std::make_shared<EqualsExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto greaterNode = expressionNode->as_if<GreaterExpressionNode>())
+    else if (auto greaterNode = NES::Util::as_if<GreaterExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(greaterNode->getLeft());
         auto rightNautilusExpression = lowerExpression(greaterNode->getRight());
         return std::make_shared<GreaterThanExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto greaterEqualsNode = expressionNode->as_if<GreaterEqualsExpressionNode>())
+    else if (auto greaterEqualsNode = NES::Util::as_if<GreaterEqualsExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(greaterEqualsNode->getLeft());
         auto rightNautilusExpression = lowerExpression(greaterEqualsNode->getRight());
         return std::make_shared<GreaterEqualsExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto lessEqualsNode = expressionNode->as_if<LessEqualsExpressionNode>())
+    else if (auto lessEqualsNode = NES::Util::as_if<LessEqualsExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(lessEqualsNode->getLeft());
         auto rightNautilusExpression = lowerExpression(lessEqualsNode->getRight());
         return std::make_shared<LessEqualsExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto negateNode = expressionNode->as_if<NegateExpressionNode>())
+    else if (auto negateNode = NES::Util::as_if<NegateExpressionNode>(expressionNode))
     {
         auto child = lowerExpression(NES::Util::as<ExpressionNode>(negateNode->getChildren()[0]));
         return std::make_shared<NegateExpression>(child);
     }
-    else if (auto mulNode = expressionNode->as_if<MulExpressionNode>())
+    else if (auto mulNode = NES::Util::as_if<MulExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(mulNode->getLeft());
         auto rightNautilusExpression = lowerExpression(mulNode->getRight());
         return std::make_shared<MulExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto addNode = expressionNode->as_if<AddExpressionNode>())
+    else if (auto addNode = NES::Util::as_if<AddExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(addNode->getLeft());
         auto rightNautilusExpression = lowerExpression(addNode->getRight());
         return std::make_shared<AddExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto subNode = expressionNode->as_if<SubExpressionNode>())
+    else if (auto subNode = NES::Util::as_if<SubExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(subNode->getLeft());
         auto rightNautilusExpression = lowerExpression(subNode->getRight());
         return std::make_shared<SubExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto divNode = expressionNode->as_if<DivExpressionNode>())
+    else if (auto divNode = NES::Util::as_if<DivExpressionNode>(expressionNode))
     {
         auto leftNautilusExpression = lowerExpression(divNode->getLeft());
         auto rightNautilusExpression = lowerExpression(divNode->getRight());
         return std::make_shared<DivExpression>(leftNautilusExpression, rightNautilusExpression);
     }
-    else if (auto functionExpression = expressionNode->as_if<FunctionExpression>())
+    else if (auto functionExpression = NES::Util::as_if<FunctionExpression>(expressionNode))
     {
         return lowerFunctionExpression(functionExpression);
     }
-    else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>())
+    else if (auto constantValue = NES::Util::as_if<ConstantValueExpressionNode>(expressionNode))
     {
         return lowerConstantExpression(constantValue);
     }
-    else if (auto fieldAccess = expressionNode->as_if<FieldAccessExpressionNode>())
+    else if (auto fieldAccess = NES::Util::as_if<FieldAccessExpressionNode>(expressionNode))
     {
         return std::make_shared<ReadFieldExpression>(fieldAccess->getFieldName());
     }

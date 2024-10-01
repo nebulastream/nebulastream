@@ -52,12 +52,6 @@ public:
      */
     bool getAddTimestamp() const;
 
-    template <class SinkType>
-    std::shared_ptr<SinkType> as_if()
-    {
-        return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
-    }
-
     virtual std::string toString() const = 0;
     [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
 
