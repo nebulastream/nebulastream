@@ -204,7 +204,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
          [&](std::string& substitute)
          {
              static uint64_t queryNr = 0;
-             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/test/result/" + testname + std::to_string(queryNr++) + ".csv";
+             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + testname + std::to_string(queryNr++) + ".csv";
              substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
          }});
 
@@ -237,7 +237,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                 PhysicalSource{.logical = source.name, .config = {{"type", "CSV_SOURCE"}, {"filePath", source.csvFilePath}}});
         });
 
-    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/test/";
+    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/tests/";
     parser.registerOnSLTSourceCallback(
         [&](SLTParser::SLTParser::SLTSource&& source)
         {
@@ -305,7 +305,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 
 bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
 {
-    std::string resultFileName = PATH_TO_BINARY_DIR "/test/result/" + testName + std::to_string(queryNr) + ".csv";
+    std::string resultFileName = PATH_TO_BINARY_DIR "/tests/result/" + testName + std::to_string(queryNr) + ".csv";
     std::ifstream resultFile(resultFileName);
     if (!resultFile)
     {
