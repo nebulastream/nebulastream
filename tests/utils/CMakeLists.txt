@@ -18,7 +18,7 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         # Name of the test executable
         set(TEST_EXECUTABLE "ST_${SYSTEM_TEST_NAME}")
         # Source file to generate gtests programmatically
-        set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/test/utils/SQLLogicTest.cpp")
+        set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/tests/utils/SQLLogicTest.cpp")
         # Directory into which protobuf files are generated into
         set(CACHE_DIR "${CMAKE_BINARY_DIR}/cache/")
         # Nebuli generates cache files which are stored as "${CACHE_DIR}/${SYSTEM_TEST_NAME}_<test-number-in-file>.pb".
@@ -26,7 +26,7 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         # configuration time we do not know how many tests a .test files we use only the first one.
         set(CACHE_FILE "${CACHE_DIR}/${SYSTEM_TEST_NAME}_0.pb")
 
-        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/result)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/tests/result)
 
         add_custom_command(
                 OUTPUT ${CACHE_FILE}
@@ -59,11 +59,11 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
         # Name of the test executable
         set(TEST_EXECUTABLE "STGRP_${GROUP_NAME}")
         # Source file to generate gtests programmatically
-        set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/test/utils/SQLLogicTest.cpp")
+        set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/tests/utils/SQLLogicTest.cpp")
         # Directory into which protobuf files are generated into
         set(CACHE_DIR "${CMAKE_BINARY_DIR}/cache/")
 
-        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/result)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/tests/result)
 
         string(REGEX MATCHALL "[^ ]+" SYSTEM_TEST_FILE_PATHS_ "${SYSTEM_TEST_FILE_PATHS}")
         set(CACHE_FILES)
