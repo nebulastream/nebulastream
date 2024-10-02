@@ -25,7 +25,6 @@
 #include <Sources/TCPSource.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-
 #include <Util/Common.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -242,7 +241,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
     {
         google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDetails>())
+        if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
@@ -269,7 +268,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
     {
         google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
-        if (value.details().Is<SerializableOperator_SourceDetails>())
+        if (value.details().Is<SerializableOperator_OperatorLogicalSourceDescriptor>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
@@ -278,7 +277,9 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
-                    sourceDescriptor.setConfigType(Sources::ConfigParametersTCP::PORT, mockTcpServerPort);
+                    sourceDescriptor.setConfigType(Sources::ConfigParametersTCP::PORT, static_cast<uint32_t>(mockTcpServerPort));
+                    auto socketPortInt = sourceDescriptor.getFromConfig(Sources::ConfigParametersTCP::PORT);
+                    NES_DEBUG("socket port: {}", socketPortInt);
                     NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)
                         ->setSourceDescriptor(std::make_shared<Sources::SourceDescriptor>(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
