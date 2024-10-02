@@ -67,10 +67,10 @@ protected:
     /// Uses default parameters if the user did not specify a parameter.
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SourceSpecificConfiguration>
-    static std::unique_ptr<SourceDescriptor::Config>
-    validateAndFormatImpl(std::map<std::string, std::string>&& config, const std::string_view sourceName)
+    static std::unique_ptr<Sources::SourceDescriptor::Config>
+    validateAndFormatImpl(std::unordered_map<std::string, std::string>&& config, const std::string_view sourceName)
     {
-        auto validatedConfig = std::make_unique<SourceDescriptor::Config>();
+        auto validatedConfig = std::make_unique<Sources::SourceDescriptor::Config>();
 
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
