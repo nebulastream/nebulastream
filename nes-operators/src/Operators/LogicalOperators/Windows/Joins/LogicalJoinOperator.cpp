@@ -72,7 +72,6 @@ bool LogicalJoinOperator::inferSchema() {
             } else {
                 fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
             }
-
             if (fieldExistsInSchema) {
                 inputSchema->copyFields(*itr);
                 joinKey.inferStamp(inputSchema);
@@ -80,6 +79,10 @@ bool LogicalJoinOperator::inferSchema() {
                 return true;
             }
             ++itr;
+        }
+        if (distinctSchemas.empty()) {
+            joinKey.inferStamp(inputSchema);
+            return true;
         }
         return false;
     };
@@ -112,7 +115,6 @@ bool LogicalJoinOperator::inferSchema() {
                                                TypeInferenceException,
                                                "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName
                                                    + " in schemas.");
-
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedExpressions.insert(visitingOp);
                 }

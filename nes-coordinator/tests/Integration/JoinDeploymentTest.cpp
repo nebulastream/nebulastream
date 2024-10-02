@@ -107,6 +107,28 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
+/**
+* Test deploying join with same data and same schema
+* and more than one join condition
+* This test is very simple and checks only if multiple conditions are working.
+ * */
+
+TEST_P(JoinDeploymentTest, testJoinWithSameSchemaMultipleConditionsGeneralTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
+    const auto schema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    TestUtils::JoinParams joinParams({schema, schema});
+    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where((Attribute("id") == Attribute("id")) && (Attribute("id") == Attribute("id")))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
 
 /**
  * Test deploying join with same data but different names in the schema
@@ -124,6 +146,27 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     auto query = Query::from("test1")
                      .joinWith(Query::from("test2"))
                      .where(Attribute("id") == Attribute("id2"))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+
+/**
+ * Test deploying join with same data but different names in the schema and multiple join conditions
+ */
+TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesMultipleConditionsButSameInputTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
+    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where((Attribute("id") == Attribute("id2")) && (Attribute("value") == Attribute("value2")))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);

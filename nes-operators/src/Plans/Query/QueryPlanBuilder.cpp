@@ -133,7 +133,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
+        if ((*itr)->instanceOf<BinaryExpressionNode>()
+            && !(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
             if (visitedExpressions.contains(visitingOp)) {
                 // skip rest of the steps as the node found in already visited node list
@@ -142,9 +143,15 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
                 visitedExpressions.insert(visitingOp);
                 auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
                 auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
-                NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
-                auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
-                auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
+                // ensure that the child nodes are not binary
+                if (!onLeftKey->instanceOf<BinaryExpressionNode>() && !onRightKey->instanceOf<BinaryExpressionNode>()) {
+                    if (onLeftKey->instanceOf<ConstantValueExpressionNode>()
+                        || onRightKey->instanceOf<ConstantValueExpressionNode>()) {
+                        NES_THROW_RUNTIME_ERROR("use .filter() for your expression.");
+                    }
+                    auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
+                    auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
+                }
             }
         }
     }
