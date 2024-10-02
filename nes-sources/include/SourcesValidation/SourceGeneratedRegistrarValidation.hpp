@@ -27,15 +27,16 @@
 namespace NES::Sources::SourceGeneratedRegistrarValidation
 {
 
-std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&&);
-std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&&);
 
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<std::string, NES::Sources::SourceDescriptor::Config, std::unordered_map<std::string, std::string>&&>::registerAll(
+inline void
+Registrar<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrarValidation;

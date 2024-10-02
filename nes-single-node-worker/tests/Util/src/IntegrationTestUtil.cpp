@@ -200,12 +200,12 @@ bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view
     std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
     if (!f)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&f))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
         return false;
     }
     return true;
@@ -248,7 +248,7 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
             if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
-                Sources::SourceDescriptor::Config configUpdated = sourceDescriptor.config;
+                Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                 configUpdated.at(Sources::ConfigParametersCSV::FILEPATH) = newInputFileName;
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                     sourceDescriptor.schema,
@@ -287,7 +287,7 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
-                    Sources::SourceDescriptor::Config configUpdated = sourceDescriptor.config;
+                    Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
                     configUpdated.at(Sources::ConfigParametersTCP::PORT) = static_cast<uint32_t>(mockTcpServerPort);
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                         sourceDescriptor.schema,

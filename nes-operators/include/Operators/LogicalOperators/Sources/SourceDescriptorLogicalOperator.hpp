@@ -47,7 +47,7 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
 
 private:
-    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
 using SourceDescriptorLogicalOperatorPtr = std::shared_ptr<SourceDescriptorLogicalOperator>;

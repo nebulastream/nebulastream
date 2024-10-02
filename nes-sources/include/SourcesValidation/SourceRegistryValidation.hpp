@@ -22,8 +22,11 @@
 namespace NES::Sources
 {
 
-class SourceRegistryValidation final
-    : public BaseRegistry<SourceRegistryValidation, std::string, SourceDescriptor::Config, std::unordered_map<std::string, std::string>&&>
+class SourceRegistryValidation final : public BaseRegistry<
+                                           SourceRegistryValidation,
+                                           std::string,
+                                           NES::Configurations::DescriptorConfig::Config,
+                                           std::unordered_map<std::string, std::string>&&>
 {
 };
 

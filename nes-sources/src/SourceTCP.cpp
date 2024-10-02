@@ -348,7 +348,8 @@ bool SourceTCP::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
-std::unique_ptr<SourceDescriptor::Config> SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
 }
@@ -364,7 +365,7 @@ void SourceTCP::close()
     }
 }
 
-std::unique_ptr<SourceDescriptor::Config>
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 SourceGeneratedRegistrarValidation::RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
     return SourceTCP::validateAndFormat(std::move(sourceConfig));
