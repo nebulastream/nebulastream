@@ -42,6 +42,8 @@ public:
         return magic_enum::enum_cast<EnumType>(value);
     }
 
+    std::string_view getValue() const { return value; }
+
     friend bool operator==(const EnumWrapper& lhs, const EnumWrapper& rhs) { return lhs.value == rhs.value; }
 
     friend std::ostream& operator<<(std::ostream& out, const EnumWrapper& enumWrapper) { return out << enumWrapper.value; }

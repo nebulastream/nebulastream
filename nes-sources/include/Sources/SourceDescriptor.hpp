@@ -144,8 +144,8 @@ struct SourceDescriptor
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
-        std::string logicalSourceName,
         std::shared_ptr<Schema> schema,
+        std::string logicalSourceName,
         std::string sourceType,
         Configurations::InputFormat inputFormat,
         Config&& config);
@@ -155,15 +155,28 @@ struct SourceDescriptor
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
-    void setConfigType(const std::string& key, ConfigType value);
+    template <typename ConfigParameter>
+    void setConfigType(const ConfigParameter& configParameter, ConfigType value)
+    {
+        if (not std::holds_alternative<typename ConfigParameter::Type>(value))
+        {
+            throw InvalidConfigParameter(fmt::format(
+                "Tried to set: {}, but type was wrong. Expected: {}", configParameter.name, typeid(typename ConfigParameter::Type).name()));
+        }
+        if (!this->config.contains(configParameter))
+        {
+            return;
+        }
+        this->config.at(configParameter) = std::move(value);
+    }
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
     /// Uses the taggeg type to retrieve the correct type from the variant value in the configuration.
     template <typename ConfigParameter>
-    auto getFromConfig(const ConfigParameter& key) const
+    auto getFromConfig(const ConfigParameter& configParameter) const
     {
-        const auto& value = config.at(key);
+        const auto& value = config.at(configParameter);
         if constexpr (ConfigParameter::isEnumWrapper())
         {
             const EnumWrapper enumWrapper = std::get<EnumWrapper>(value);
@@ -214,8 +227,9 @@ struct SourceDescriptor
     std::string sourceType;
     Configurations::InputFormat inputFormat{};
 
-private:
     Config config;
+
+private:
     friend std::ostream& operator<<(std::ostream& out, const Config& config);
 
 

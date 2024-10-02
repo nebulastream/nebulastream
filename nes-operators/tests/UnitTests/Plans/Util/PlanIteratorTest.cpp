@@ -52,8 +52,8 @@ public:
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator(nullptr, OperatorId(0), OriginId(0));
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator(nullptr, OperatorId(0), OriginId(0));
+        sourceOp1 = LogicalOperatorFactory::createSourceOperator("test_source_1");
+        sourceOp2 = LogicalOperatorFactory::createSourceOperator("test_source_2");
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);

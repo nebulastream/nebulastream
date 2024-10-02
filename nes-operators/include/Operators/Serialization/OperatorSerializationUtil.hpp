@@ -34,7 +34,6 @@ namespace NES
 {
 
 class SerializableOperator;
-class SerializableOperator_SourceDetails;
 class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
@@ -63,7 +62,7 @@ public:
 
     static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
+    static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
     static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
 
@@ -97,16 +96,15 @@ public:
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
 
     static void serializeSourceDescriptor(
-        const Sources::SourceDescriptor& sourceDescriptor,
-        SerializableOperator_SourceDetails& sourceDetails,
-        bool isClientOriginated = false);
+        const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
     /**
      * @brief Deserializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
      * @param sourceDetails The serialized source operator details.
      * @return SourceDescriptorPtr
      */
-    static std::unique_ptr<Sources::SourceDescriptor> deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails);
+    static std::unique_ptr<Sources::SourceDescriptor>
+    deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
 
     /**
      * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.
