@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.183](https://github.com/nebulastream/nebulastream/tree/v0.6.183) (2024-10-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.182...v0.6.183)
+
+**Implemented enhancements:**
+
+- \[TASK\] Check if WITHIN is expected in PSL [\#5082](https://github.com/nebulastream/nebulastream/issues/5082)
+
 ## [v0.6.182](https://github.com/nebulastream/nebulastream/tree/v0.6.182) (2024-10-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.181...v0.6.182)
