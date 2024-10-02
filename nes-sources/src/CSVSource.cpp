@@ -143,7 +143,7 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-std::unique_ptr<Sources::SourceDescriptor::Config> CSVSource::validateAndFormat(std::map<std::string, std::string>&& config)
+std::unique_ptr<Sources::SourceDescriptor::Config> CSVSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Source::validateAndFormatImpl<ConfigParametersCSV>(std::move(config), NAME);
 }
@@ -163,7 +163,7 @@ std::ostream& CSVSource::toString(std::ostream& str) const
 }
 
 std::unique_ptr<SourceDescriptor::Config>
-SourceGeneratedRegistrarValidation::RegisterSourceValidationCSV(std::map<std::string, std::string>&& sourceConfig)
+SourceGeneratedRegistrarValidation::RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
     return CSVSource::validateAndFormat(std::move(sourceConfig));
 }

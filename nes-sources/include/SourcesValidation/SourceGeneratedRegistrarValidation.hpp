@@ -18,24 +18,24 @@
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources::SourceGeneratedRegistrarValidation
 {
 
-std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationCSV(std::map<std::string, std::string>&&);
-std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationTCP(std::map<std::string, std::string>&&);
+std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<SourceDescriptor::Config> RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&&);
 
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<std::string, NES::Sources::SourceDescriptor::Config, std::map<std::string, std::string>&&>::registerAll(
+inline void Registrar<std::string, NES::Sources::SourceDescriptor::Config, std::unordered_map<std::string, std::string>&&>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrarValidation;
