@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -23,7 +23,7 @@ namespace NES::Sources
 {
 
 class SourceRegistryValidation final
-    : public BaseRegistry<SourceRegistryValidation, std::string, SourceDescriptor::Config, std::map<std::string, std::string>&&>
+    : public BaseRegistry<SourceRegistryValidation, std::string, SourceDescriptor::Config, std::unordered_map<std::string, std::string>&&>
 {
 };
 

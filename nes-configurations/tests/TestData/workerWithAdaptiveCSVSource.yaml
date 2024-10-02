@@ -19,7 +19,7 @@ physicalSources:
     # Set physical source name
     physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
-    type: CSV_SOURCE
+    type: CSV
     # DefaultSource and its needed configuration params
     configuration:
       ###### Define only the following configurations for CSVSource source
