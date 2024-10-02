@@ -226,6 +226,11 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
         for (auto operatorNode = pattern.getOperatorList().begin(); operatorNode != pattern.getOperatorList().end();
              ++operatorNode) {
             auto operatorName = operatorNode->second.getOperatorName();
+            if (this->pattern.getWindow().first.empty() && this->pattern.getWindow().second == 0 && operatorName != "OR") {
+                // window must be specified for an operator, throw exception
+                NES_THROW_RUNTIME_ERROR(
+                    "NesCEPQueryPlanCreator: WITHIN keyword for time interval missing but must be specified for operators.");
+            }
             // add binary operators
             if (operatorName == "OR" || operatorName == "SEQ" || operatorName == "AND") {
                 queryPlan = addBinaryOperatorToQueryPlan(operatorName, operatorNode, queryPlan);

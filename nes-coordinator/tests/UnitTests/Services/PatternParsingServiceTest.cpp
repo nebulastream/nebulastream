@@ -409,3 +409,18 @@ TEST_F(PatternParsingServiceTest, FloatConstantValue) {
     //Comparison of the expected and the actual generated query plan
     EXPECT_EQ(queryPlanToString(queryPlanA), queryPlanToString(patternPlan));
 }
+
+TEST_F(PatternParsingServiceTest, failPatternWithinExpected) {
+    //pattern string as received from the NES UI and create query plan from parsing service
+    std::string patternString = "PATTERN test := (A AND B) FROM default_logical AS A, default_logical_b INTO Print :: outStream";
+    std::string patternString2 = "PATTERN test := (A SEQ B) FROM default_logical AS A, default_logical_b INTO Print :: outStream";
+    std::string patternString3 = "PATTERN test := (A[3:10]) FROM default_logical AS A, default_logical_b INTO Print :: outStream";
+    std::shared_ptr<QueryParsingService> patternParsingService;
+    // expected result
+    EXPECT_THROW(QueryPlanPtr queryPlan = patternParsingService->createPatternFromCodeString(patternString),
+                 Exceptions::RuntimeException);
+    EXPECT_THROW(QueryPlanPtr queryPlan = patternParsingService->createPatternFromCodeString(patternString2),
+                 Exceptions::RuntimeException);
+    EXPECT_THROW(QueryPlanPtr queryPlan = patternParsingService->createPatternFromCodeString(patternString3),
+                 Exceptions::RuntimeException);
+}
