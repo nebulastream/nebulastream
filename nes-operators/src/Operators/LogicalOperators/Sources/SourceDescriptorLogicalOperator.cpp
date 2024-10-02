@@ -69,11 +69,6 @@ bool SourceDescriptorLogicalOperator::inferSchema()
     return true;
 }
 
-void SourceDescriptorLogicalOperator::setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
-{
-    this->sourceDescriptor = std::move(sourceDescriptor);
-}
-
 OperatorPtr SourceDescriptorLogicalOperator::copy()
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;

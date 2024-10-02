@@ -23,6 +23,7 @@
 #include <API/Schema.hpp>
 #include <Sources/Parsers/ParserCSV.hpp>
 #include <Sources/SourceCSV.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -62,7 +63,7 @@ void SourceCSV::open()
     const auto path = std::unique_ptr<const char, Deleter>(realCSVPath);
     if (realCSVPath == nullptr)
     {
-        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str() << " - " << std::strerror(errno));
+        throw InvalidConfigParameter(fmt::format("Could not determine absolute pathname: {} - {}", filePath.c_str(), std::strerror(errno)));
     }
 
     input.open(path.get());

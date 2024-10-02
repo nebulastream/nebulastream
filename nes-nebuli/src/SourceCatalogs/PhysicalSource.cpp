@@ -44,8 +44,10 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::getSourceDescriptor()
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(std::shared_ptr<Schema> schema)
 {
-    return std::make_unique<Sources::SourceDescriptor>(sourceDescriptor);
+    auto copyOfConfig = sourceDescriptor.config;
+    return std::make_unique<Sources::SourceDescriptor>(
+        schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.inputFormat, std::move(copyOfConfig));
 }
 } /// namespace NES
