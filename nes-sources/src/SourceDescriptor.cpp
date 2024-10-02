@@ -30,7 +30,7 @@ SourceDescriptor::SourceDescriptor(std::string sourceType, Configurations::Input
 }
 
 SourceDescriptor::SourceDescriptor(
-    std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config)
+    std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config config)
     : schema(std::move(schema)), sourceType(std::move(sourceType)), inputFormat(std::move(inputFormat)), config(std::move(config))
 {
 }
