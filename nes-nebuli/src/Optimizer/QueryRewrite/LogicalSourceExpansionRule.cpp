@@ -178,8 +178,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
                     visitedOperators.insert(operatorNode->getId());
                 }
             }
-            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->getSourceDescriptor();
-            sourceDescriptor->schema = duplicateSourceOperator->getSchema();
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->createSourceDescriptor(duplicateSourceOperator->getSchema());
             auto operatorSourceLogicalDescriptor
                 = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
             duplicateSourceOperator->replace(operatorSourceLogicalDescriptor, duplicateSourceOperator);
