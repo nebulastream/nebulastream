@@ -22,7 +22,8 @@ namespace NES
 std::string BasicValue::toString() const noexcept
 {
     std::stringstream ss;
-    ss << "BasicValue(" << value << ")";
+    ss << "BasicValue(" << value << ", ";
+    ss << dataType->toString() << ")";
     return ss.str();
 }
 

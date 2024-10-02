@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+<<<<<<<< HEAD:nes-configurations/src/Configurations/Enums/EnumOption.cpp
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
@@ -19,6 +20,12 @@
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations
+========
+#include <Execution/Operators/Map.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util.hpp>
+namespace NES::Runtime::Execution::Operators
+>>>>>>>> 85b02b6dc3 (WIP):nes-execution/src/Execution/Operators/Map.cpp
 {
 
 template class EnumOption<NES::QueryCompilation::CompilationStrategy>;

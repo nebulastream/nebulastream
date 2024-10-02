@@ -22,6 +22,7 @@
 #include <Nautilus/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <Nautilus/Util.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

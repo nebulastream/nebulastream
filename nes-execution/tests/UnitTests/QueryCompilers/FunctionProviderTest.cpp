@@ -32,6 +32,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

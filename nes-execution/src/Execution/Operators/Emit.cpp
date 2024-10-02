@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
+#include <Nautilus/Util.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
