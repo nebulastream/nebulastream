@@ -30,21 +30,21 @@ namespace NES::Sources
 
 struct ConfigParametersCSV
 {
-    static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(FILEPATH, config);
+            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
         }};
-    static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<bool> SKIP_HEADER{
         "skipHeader", false, [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(SKIP_HEADER, config);
+            return Configurations::DescriptorConfig::tryGet(SKIP_HEADER, config);
         }};
-    static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> DELIMITER{
         "delimiter", ",", [](const std::unordered_map<std::string, std::string>& config) {
-            return SourceDescriptor::tryGet(DELIMITER, config);
+            return Configurations::DescriptorConfig::tryGet(DELIMITER, config);
         }};
 
-    static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
-        = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
+    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
 };
 
 class SourceCSV final : public Source
@@ -64,7 +64,8 @@ public:
     void close() override;
 
     /// validates and formats a string to string configuration
-    static std::unique_ptr<Sources::SourceDescriptor::Config> validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

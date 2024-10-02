@@ -23,7 +23,7 @@ namespace NES::Sources
 {
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
-/// The sourceThread spawns an independent thread for data ingestion and it manages the pipeline and task logic.
+/// The SourceThread spawns an independent thread for data ingestion and it manages the pipeline and task logic.
 /// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
@@ -35,9 +35,9 @@ public:
     static std::shared_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    static SourceHandlePtr lower(
+    static std::shared_ptr<SourceHandle> lower(
         OriginId originId,
-        const SourceDescriptor& sourceDescriptor,
+        const SourceDescriptor& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&& emitFunction);
 

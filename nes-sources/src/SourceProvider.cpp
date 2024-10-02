@@ -32,7 +32,7 @@ std::shared_ptr<SourceProvider> SourceProvider::create()
     return std::make_shared<SourceProvider>();
 }
 
-SourceHandlePtr SourceProvider::lower(
+std::shared_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
