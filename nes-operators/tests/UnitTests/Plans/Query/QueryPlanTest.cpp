@@ -37,8 +37,8 @@ public:
 
 TEST_F(QueryPlanTest, testHasOperator)
 {
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(nullptr, OperatorId(0), OriginId(0));
+    const QueryPlanPtr queryPlan = QueryPlan::create();
+    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
 
@@ -49,9 +49,9 @@ TEST_F(QueryPlanTest, testHasOperator)
 
 TEST_F(QueryPlanTest, testLeafOperators)
 {
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(nullptr, OperatorId(0), OriginId(0));
-    QueryPlanPtr queryPlan = QueryPlan::create(op1);
-    LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
+    const QueryPlanPtr queryPlan = QueryPlan::create(op1);
+    const LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<OperatorPtr> leafOptrs = queryPlan->getLeafOperators();

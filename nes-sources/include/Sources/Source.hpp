@@ -105,3 +105,13 @@ protected:
 };
 
 }
+
+/// Specializing the fmt ostream_formatter to accept Source objects.
+/// Allows to call fmt::format("Source: {}", sourceObject); and therefore also works with our logging.
+namespace fmt
+{
+template <>
+struct formatter<NES::Sources::Source> : ostream_formatter
+{
+};
+}

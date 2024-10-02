@@ -131,7 +131,7 @@ createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map
 
     if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
     {
-        return Sources::SourceDescriptor(std::move(logicalSourceName), schema, sourceType, inputFormat, std::move(*validConfig));
+        return Sources::SourceDescriptor(schema, std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig));
     }
     auto exception = UnknownSourceType("We don't support the source type: " + sourceType);
     throw exception;

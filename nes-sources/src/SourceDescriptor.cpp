@@ -35,8 +35,8 @@ SourceDescriptor::SourceDescriptor(
 {
 }
 SourceDescriptor::SourceDescriptor(
-    std::string logicalSourceName,
     std::shared_ptr<Schema> schema,
+    std::string logicalSourceName,
     std::string sourceType,
     Configurations::InputFormat inputFormat,
     Config&& config)
@@ -47,11 +47,6 @@ SourceDescriptor::SourceDescriptor(
     , config(std::move(config))
 {
 }
-void SourceDescriptor::setConfigType(const std::string& key, ConfigType value)
-{
-    this->config.emplace(std::make_pair(key, value));
-}
-
 
 /// Define a ConfigPrinter to generate print functions for all options of the std::variant 'ConfigType'.
 template <typename T>
