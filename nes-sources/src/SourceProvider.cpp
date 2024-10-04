@@ -13,38 +13,31 @@
 */
 
 #include <memory>
-#include <stdexcept>
-#include <utility>
-#include <vector>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
-#include <Sources/SourceTCP.hpp>
 
 namespace NES::Sources
 {
 
-std::shared_ptr<SourceProvider> SourceProvider::create()
+std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
 {
-    return std::make_shared<SourceProvider>();
+    return std::make_unique<SourceProvider>();
 }
 
-std::shared_ptr<SourceHandle> SourceProvider::lower(
+std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor.schema;
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, schema, sourceDescriptor))
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor.schema, sourceDescriptor))
     {
-        return std::make_shared<SourceHandle>(
+        return std::make_unique<SourceHandle>(
             std::move(originId),
-            std::move(schema),
+            std::move(sourceDescriptor.schema),
             std::move(bufferPool),
             std::move(emitFunction),
             NUM_SOURCE_LOCAL_BUFFERS,

@@ -152,11 +152,11 @@ SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& conf
 
 std::ostream& SourceCSV::toString(std::ostream& str) const
 {
-    str << "SourceTCP(";
-    str << "Filesize:" << this->fileSize;
-    str << "Tuplesize:" << this->tupleSize;
-    str << "Generated tuples: " << this->generatedTuples;
-    str << "Generated buffers: " << this->generatedBuffers;
+    str << "\nSourceCSV(";
+    str << "\n  Filesize:" << this->fileSize;
+    str << "\n  Tuplesize:" << this->tupleSize;
+    str << "\n  Generated tuples: " << this->generatedTuples;
+    str << "\n  Generated buffers: " << this->generatedBuffers;
     str << ")\n";
     return str;
 }
