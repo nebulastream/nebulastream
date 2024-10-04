@@ -129,7 +129,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     {
         auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTCPServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
@@ -175,4 +175,4 @@ INSTANTIATE_TEST_CASE_P(
         QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */, 200},
         QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */, 200},
         QueryTestParam{"qOneSourceTCP", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
-} /// namespace NES::Testing
+}

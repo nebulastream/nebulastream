@@ -114,7 +114,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -127,7 +127,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     {
         auto mockTCPServer = SyncedMockTcpServer::create();
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTCPServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
@@ -151,7 +151,6 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values
-    NES_DEBUG("Received {} result buffers.", buffers.size());
     for (const auto& buffer : buffers)
     {
         numProcessedTuples += buffer.getNumberOfTuples();

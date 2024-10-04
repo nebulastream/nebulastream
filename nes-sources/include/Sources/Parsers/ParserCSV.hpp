@@ -19,10 +19,10 @@
 namespace NES::Sources
 {
 
-class CSVParser : public Parser
+class ParserCSV : public Parser
 {
 public:
-    CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
+    ParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
 
     /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
     bool writeInputTupleToTupleBuffer(

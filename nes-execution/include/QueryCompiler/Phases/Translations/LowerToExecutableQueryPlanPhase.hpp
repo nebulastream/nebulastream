@@ -32,16 +32,16 @@ namespace QueryCompilation
 class LowerToExecutableQueryPlanPhase
 {
 public:
-    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider);
+    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, std::shared_ptr<Sources::SourceProvider> sourceProvider);
     static std::shared_ptr<LowerToExecutableQueryPlanPhase>
-    create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider);
+    create(const DataSinkProviderPtr& sinkProvider, const std::shared_ptr<Sources::SourceProvider>& sourceProvider);
 
     Runtime::Execution::ExecutableQueryPlanPtr
     apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
 
 private:
     DataSinkProviderPtr sinkProvider;
-    Sources::DataSourceProviderPtr sourceProvider;
+    std::shared_ptr<Sources::SourceProvider> sourceProvider;
     void processSource(
         const OperatorPipelinePtr& pipeline,
         std::vector<Sources::SourceHandlePtr>& sources,

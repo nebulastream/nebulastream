@@ -37,11 +37,11 @@
 namespace NES::QueryCompilation
 {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(
-    DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider)
+    DataSinkProviderPtr sinkProvider, std::shared_ptr<Sources::SourceProvider> sourceProvider)
     : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)) {};
 
 std::shared_ptr<LowerToExecutableQueryPlanPhase>
-LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider)
+LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const std::shared_ptr<Sources::SourceProvider>& sourceProvider)
 {
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
 }

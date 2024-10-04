@@ -27,17 +27,17 @@
 namespace NES::Sources
 {
 
-/// The DataSource starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
+/// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class DataSource
+class SourceThread
 {
     static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
     static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
 
 public:
-    explicit DataSource(
+    explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SchemaPtr schema,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
@@ -45,9 +45,9 @@ public:
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
 
-    DataSource() = delete;
+    SourceThread() = delete;
 
-    ~DataSource() = default;
+    ~SourceThread() = default;
 
     /// clean up thread-local state for the source.
     void close();
@@ -61,7 +61,7 @@ public:
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
 
-    friend std::ostream& operator<<(std::ostream& out, const DataSource& dataSource);
+    friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 
 protected:
     OriginId originId;
@@ -84,7 +84,7 @@ protected:
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine();
     void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
-    friend std::ostream& operator<<(std::ostream& out, const DataSource& dataSource);
+    friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 };
 
 }

@@ -11,6 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        Parser.cpp
-        ParserCSV.cpp
+        MMapCircularBuffer.cpp
 )
