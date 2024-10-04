@@ -132,7 +132,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
             logicalSourceOperator->getOriginId(),
             logicalSourceOperator->getInputSchema(),
             logicalSourceOperator->getOutputSchema(),
-            logicalSourceOperator->getSourceDescriptor());
+            std::make_shared<Sources::SourceDescriptor>(logicalSourceOperator->getSourceDescriptorRef()));
         physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
         operatorNode->replace(physicalSourceOperator);
     }

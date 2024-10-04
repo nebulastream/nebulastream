@@ -20,12 +20,11 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/Operator.hpp>
-
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
@@ -111,7 +110,9 @@ public:
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createSourceOperator(
-        std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
+        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor,
+        OperatorId id = getNextOperatorId(),
+        OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.

@@ -18,14 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -38,6 +31,8 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
@@ -70,7 +65,7 @@ struct QueryConfig
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };
-} /// namespace NES::CLI
+}
 
 namespace YAML
 {
@@ -121,16 +116,25 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-PhysicalSourceTypePtr createPhysicalSourceType(std::string logicalName, std::map<std::string, std::string> sourceConfiguration)
+Sources::SourceDescriptor
+createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
     }
+    auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
+    NES_DEBUG("Source type is: {}", sourceType);
 
-    sourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = std::move(logicalName);
+    /// We currently only support CSV
+    auto inputFormat = Configurations::InputFormat::CSV;
 
-    return Configurations::PhysicalSourceTypeFactory::createFromString("", sourceConfiguration);
+    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
+    {
+        return Sources::SourceDescriptor(std::move(logicalSourceName), schema, sourceType, inputFormat, std::move(*validConfig));
+    }
+    auto exception = UnknownSourceType("We don't support the source type: " + sourceType);
+    throw exception;
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -138,10 +142,12 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
+    auto schema = Schema::create();
+
+    /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
     for (const auto& [logicalName, schemaFields] : config.logical)
     {
         NES_INFO("Adding logical source: {}", logicalName);
-        auto schema = Schema::create();
         for (const auto& [name, type] : schemaFields)
         {
             schema = schema->addField(name, type);
@@ -149,13 +155,14 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
         sourceCatalog->addLogicalSource(logicalName, std::move(schema));
     }
 
-    for (size_t i = 0; const auto& [logicalName, config] : config.physical)
+    /// Add physical sources to corresponding logical sources.
+    for (auto [logicalName, config] : config.physical)
     {
-        auto sourceType = createPhysicalSourceType(logicalName, config);
+        auto sourceDescriptor = createSourceDescriptor(schema, logicalName, std::move(config));
         sourceCatalog->addPhysicalSource(
             logicalName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceType)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
+                NES::PhysicalSource::create(std::move(sourceDescriptor)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -170,9 +177,11 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     auto query = syntacticQueryValidation->validate(config.query);
     semanticQueryValidation->validate(query);
+    typeInference->execute(query);
 
     logicalSourceExpansionRule->apply(query);
     typeInference->execute(query);
+
     originIdInferencePhase->execute(query);
     queryRewritePhase->execute(query);
     typeInference->execute(query);

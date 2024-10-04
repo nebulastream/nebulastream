@@ -17,12 +17,12 @@
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include "Sources/Parsers/Parser.hpp"
 
 namespace NES::Sources
 {

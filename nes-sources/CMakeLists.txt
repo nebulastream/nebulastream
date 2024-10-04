@@ -18,7 +18,7 @@ get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sources
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-data-types nes-operators nes-memory)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-data-types nes-memory)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -42,7 +42,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp, false);
+        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
         serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
     }
 

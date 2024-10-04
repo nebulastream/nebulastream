@@ -14,25 +14,21 @@
 
 #pragma once
 
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <map>
+#include <string>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/PluginRegistry.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
-/// Representation of SourceDescriptor in query plan.
-class LogicalSourceDescriptor : public SourceDescriptor
+class SourceRegistryValidation final
+    : public BaseRegistry<SourceRegistryValidation, std::string, SourceDescriptor::Config, std::map<std::string, std::string>&&>
 {
-public:
-    static std::unique_ptr<SourceDescriptor> create(std::string logicalSourceName);
-
-    [[nodiscard]] bool equal(SourceDescriptor& other) const override;
-
-    std::string toString() const override;
-
-private:
-    explicit LogicalSourceDescriptor(std::string logicalSourceName);
 };
 
-using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
+}
 
-} /// namespace NES
+#define INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
+#include <SourcesValidation/SourceGeneratedRegistrarValidation.hpp>
+#undef INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION

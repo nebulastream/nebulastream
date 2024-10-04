@@ -24,12 +24,13 @@
 namespace NES
 {
 
-SourceLogicalOperator::SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id)
+SourceLogicalOperator::SourceLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
-SourceLogicalOperator::SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+SourceLogicalOperator::SourceLogicalOperator(
+    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -44,7 +45,7 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<SourceLogicalOperator>(rhs))
     {
         auto sourceOperator = NES::Util::as<SourceLogicalOperator>(rhs);
-        return sourceOperator->getSourceDescriptor()->equal(*sourceDescriptor);
+        return sourceOperator->getSourceDescriptorRef() == *sourceDescriptor;
     }
     return false;
 }
@@ -55,37 +56,28 @@ std::string SourceLogicalOperator::toString() const
     ss << "SOURCE(opId: " << id << ": originid: " << originId;
     if (sourceDescriptor)
     {
-        ss << ", " << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString();
+        ss << ", " << sourceDescriptor->logicalSourceName << "," << *sourceDescriptor;
     }
     ss << ")";
 
     return ss.str();
 }
 
-std::shared_ptr<SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
-{
-    return this->sourceDescriptor;
-}
-SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef()
+const Sources::SourceDescriptor& SourceLogicalOperator::getSourceDescriptorRef() const
 {
     return *sourceDescriptor;
 }
 
 bool SourceLogicalOperator::inferSchema()
 {
-    inputSchema = sourceDescriptor->getSchema();
-    outputSchema = sourceDescriptor->getSchema();
+    inputSchema = sourceDescriptor->schema;
+    outputSchema = sourceDescriptor->schema;
     return true;
 }
 
-void SourceLogicalOperator::setSourceDescriptor(std::shared_ptr<SourceDescriptor>&& sourceDescriptor)
+void SourceLogicalOperator::setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
 {
     this->sourceDescriptor = std::move(sourceDescriptor);
-}
-
-void SourceLogicalOperator::setProjectSchema(SchemaPtr schema)
-{
-    projectSchema = std::move(schema);
 }
 
 OperatorPtr SourceLogicalOperator::copy()
@@ -108,8 +100,7 @@ OperatorPtr SourceLogicalOperator::copy()
 void SourceLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
-    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
+    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceLogicalOperator.");
 }
 
 void SourceLogicalOperator::inferInputOrigins()
@@ -122,4 +113,4 @@ std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-} /// namespace NES
+}

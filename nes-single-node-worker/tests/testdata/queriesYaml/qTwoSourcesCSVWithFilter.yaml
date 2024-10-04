@@ -12,12 +12,12 @@ logical:
 physical:
   - logical: default_source
     config:
-      type: CSV_SOURCE
+      type: CSV
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","
       numberOfBuffersToProduce: 1
   - logical: default_source
     config:
-      type: CSV_SOURCE
+      type: CSV
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","

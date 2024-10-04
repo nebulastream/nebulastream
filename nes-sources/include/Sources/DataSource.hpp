@@ -19,10 +19,8 @@
 #include <mutex>
 #include <string>
 #include <API/Schema.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 

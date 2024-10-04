@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -37,12 +36,12 @@
 namespace NES
 {
 
-QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName)
+QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string logicalSourceName)
 {
-    NES_DEBUG("QueryPlanBuilder: create query plan for input source  {}", sourceName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName));
+    NES_DEBUG("QueryPlanBuilder: create query plan for input source  {}", logicalSourceName);
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::make_shared<Sources::SourceDescriptor>(logicalSourceName));
     auto queryPlanPtr = QueryPlan::create(sourceOperator);
-    queryPlanPtr->setSourceConsumed(sourceName);
+    queryPlanPtr->setSourceConsumed(logicalSourceName);
     return queryPlanPtr;
 }
 

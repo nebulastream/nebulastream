@@ -25,7 +25,7 @@ public:
     LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) override;
     PipeliningPhasePtr createPipeliningPhase() override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) override;
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() override;
+    std::shared_ptr<LowerToExecutableQueryPlanPhase> createLowerToExecutableQueryPlanPhase() override;
 };
 
 }

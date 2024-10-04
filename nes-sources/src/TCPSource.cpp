@@ -13,6 +13,7 @@
 */
 
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <sstream>
@@ -25,32 +26,36 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
+#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <sys/socket.h> /// For socket functions
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
 
 TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
-    : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
+    : tupleSize(schema.getSchemaSizeInBytes())
+    , circularBuffer(getpagesize() * 2)
+    , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
+    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
+    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
+    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
+    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
+    , decideMessageSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
+    , tupleSeparator(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
+    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
+    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
+    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
 {
-    auto tcpSourceType = dynamic_cast<const TCPSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
-    this->inputFormat = tcpSourceType->getInputFormat()->getValue();
-    this->socketHost = tcpSourceType->getSocketHost()->getValue();
-    this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
-    this->socketType = static_cast<int>(tcpSourceType->getSocketType()->getValue());
-    this->socketDomain = static_cast<int>(tcpSourceType->getSocketDomain()->getValue());
-    this->decideMessageSize = tcpSourceType->getDecideMessageSize()->getValue();
-    this->tupleSeparator = tcpSourceType->getTupleSeparator()->getValue();
-    this->socketBufferSize = static_cast<size_t>(tcpSourceType->getSocketBufferSize()->getValue());
-    this->bytesUsedForSocketBufferSizeTransfer = static_cast<size_t>(tcpSourceType->getBytesUsedForSocketBufferSizeTransfer()->getValue());
-    this->flushIntervalInMs = tcpSourceType->getFlushIntervalMS()->getValue();
-
     /// init physical types
     std::vector<std::string> schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
@@ -198,13 +203,8 @@ size_t binaryBufferSize(std::span<const char> data)
     return result;
 }
 
-size_t TCPSource::parseBufferSize(std::span<const char> data) const
+size_t TCPSource::parseBufferSize(const std::span<const char> data) const
 {
-    if (inputFormat == Configurations::InputFormat::NES_BINARY)
-    {
-        return binaryBufferSize(data);
-    }
-
     return asciiBufferSize(data);
 }
 
@@ -348,6 +348,11 @@ bool TCPSource::fillBuffer(
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
+std::unique_ptr<SourceDescriptor::Config> TCPSource::validateAndFormat(std::map<std::string, std::string>&& config)
+{
+    return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
+}
+
 void TCPSource::close()
 {
     NES_TRACE("TCPSource::close: trying to close connection.");
@@ -359,12 +364,13 @@ void TCPSource::close()
     }
 }
 
-SourceType TCPSource::getType() const
+std::unique_ptr<SourceDescriptor::Config>
+SourceGeneratedRegistrarValidation::RegisterSourceValidationTCP(std::map<std::string, std::string>&& sourceConfig)
 {
-    return SourceType::TCP_SOURCE;
+    return TCPSource::validateAndFormat(std::move(sourceConfig));
 }
 
-std::unique_ptr<Source> GeneratedSourceRegistrar::RegisterSourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
 {
     return std::make_unique<TCPSource>(schema, sourceDescriptor);
 }
