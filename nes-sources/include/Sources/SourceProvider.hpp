@@ -18,6 +18,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES::Sources
 {
@@ -32,12 +33,12 @@ class SourceProvider
 
 public:
     SourceProvider() = default;
-    static std::shared_ptr<SourceProvider> create();
+    static std::unique_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    static std::shared_ptr<SourceHandle> lower(
+    static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
-        const SourceDescriptor& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
+        const SourceDescriptor& sourceDescriptor,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&& emitFunction);
 

@@ -15,6 +15,7 @@
 #pragma once
 #include <atomic>
 #include <future>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -38,7 +39,7 @@ class ExecutableQueryPlan : public Reconfigurable
 public:
     explicit ExecutableQueryPlan(
         QueryId queryId,
-        std::vector<Sources::SourceHandlePtr>&& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
@@ -46,7 +47,7 @@ public:
 
     static ExecutableQueryPlanPtr create(
         QueryId queryId,
-        std::vector<Sources::SourceHandlePtr> sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
         std::vector<DataSinkPtr> sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
         QueryManagerPtr queryManager,
@@ -79,7 +80,7 @@ public:
     bool fail();
 
     [[nodiscard]] QueryStatus getStatus() const;
-    [[nodiscard]] const std::vector<Sources::SourceHandlePtr>& getSources() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<Sources::SourceHandle>>& getSources() const;
     [[nodiscard]] const std::vector<DataSinkPtr>& getSinks() const;
     [[nodiscard]] const std::vector<ExecutablePipelinePtr>& getPipelines() const;
     [[nodiscard]] QueryManagerPtr getQueryManager() const;
@@ -106,7 +107,7 @@ private:
 
 private:
     const QueryId queryId;
-    std::vector<Sources::SourceHandlePtr> sources;
+    std::vector<std::unique_ptr<Sources::SourceHandle>> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;

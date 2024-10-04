@@ -86,23 +86,23 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
 
 std::ostream& SourceTCP::toString(std::ostream& str) const
 {
-    str << "SOURCETCP(";
-    str << "Tuplesize:" << this->tupleSize;
-    str << "Generated tuples: " << this->generatedTuples;
-    str << "Generated buffers: " << this->generatedBuffers;
-    str << "Connection: " << this->connection;
-    str << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
-    str << "InputFormat: " << magic_enum::enum_name(inputFormat);
-    str << "SocketHost: " << socketHost;
-    str << "SocketPort: " << socketPort;
-    str << "SocketType: " << socketType;
-    str << "SocketDomain: " << socketDomain;
-    str << "DecideMessageSize: " << magic_enum::enum_name(decideMessageSize);
-    str << "TupleSeparator: " << tupleSeparator;
-    str << "SocketBufferSize: " << socketBufferSize;
-    str << "BytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
-    str << "FlushIntervalInMs" << flushIntervalInMs;
-    str << ")";
+    str << "\nSourceTcp(";
+    str << "\n  tuplesize:" << this->tupleSize;
+    str << "\n  generated tuples: " << this->generatedTuples;
+    str << "\n  generated buffers: " << this->generatedBuffers;
+    str << "\n  connection: " << this->connection;
+    str << "\n  timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
+    str << "\n  inputFormat: " << magic_enum::enum_name(inputFormat);
+    str << "\n  socketHost: " << socketHost;
+    str << "\n  socketPort: " << socketPort;
+    str << "\n  socketType: " << socketType;
+    str << "\n  socketDomain: " << socketDomain;
+    str << "\n  decideMessageSize: " << magic_enum::enum_name(decideMessageSize);
+    str << "\n  tupleSeparator: " << tupleSeparator;
+    str << "\n  socketBufferSize: " << socketBufferSize;
+    str << "\n  bytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
+    str << "\n  flushIntervalInMs" << flushIntervalInMs;
+    str << ")\n";
     return str;
 }
 
