@@ -48,7 +48,6 @@ void Parser::writeBasicTypeToTupleBuffer(
             case NES::BasicPhysicalType::NativeType::INT_16: {
                 auto value = static_cast<int16_t>(std::stol(inputString));
                 testTupleBufferDynamicField.write<int16_t>(value);
-
                 break;
             }
             case NES::BasicPhysicalType::NativeType::INT_32: {

@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>

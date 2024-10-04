@@ -16,25 +16,23 @@
 
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 
-/**
- * @brief Node representing logical source operator
- */
+/// Is constructed during parsing and represents a logical source as an operator node in the query plan.
 class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id);
-    explicit SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
+    explicit SourceLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit SourceLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
-    std::shared_ptr<SourceDescriptor> getSourceDescriptor();
-    SourceDescriptor& getSourceDescriptorRef();
+    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
 
-    void setSourceDescriptor(std::shared_ptr<SourceDescriptor>&& sourceDescriptor);
+    void setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
+    /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -42,14 +40,11 @@ public:
     [[nodiscard]] std::string toString() const override;
     void inferStringSignature() override;
     OperatorPtr copy() override;
-    void setProjectSchema(SchemaPtr schema);
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
 private:
-    std::shared_ptr<SourceDescriptor> sourceDescriptor;
-    SchemaPtr projectSchema;
+    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
-} /// namespace NES
+}

@@ -18,11 +18,10 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/SourceRegistry.hpp>
 
 namespace NES::Sources
 {
@@ -38,9 +37,9 @@ SourceHandlePtr SourceProvider::lower(
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor.getSchema();
+    auto schema = sourceDescriptor.schema;
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), schema, sourceDescriptor))
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, schema, sourceDescriptor))
     {
         return std::make_shared<SourceHandle>(
             std::move(originId),
@@ -50,7 +49,7 @@ SourceHandlePtr SourceProvider::lower(
             NUM_SOURCE_LOCAL_BUFFERS,
             std::move(source));
     }
-    throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.getSourceType()));
+    throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.sourceType));
 }
 
 }

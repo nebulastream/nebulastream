@@ -20,25 +20,25 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Sources::GeneratedSourceRegistrar
+namespace NES::Sources::SourceGeneratedRegistrar
 {
 
-std::unique_ptr<Source> RegisterSourceTCP(const Schema&, const SourceDescriptor&);
 std::unique_ptr<Source> RegisterSourceCSV(const Schema&, const SourceDescriptor&);
+std::unique_ptr<Source> RegisterSourceTCP(const Schema&, const SourceDescriptor&);
 
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<std::string, NES::Sources::Source, const Schema&, const SourceDescriptor&>::registerAll(
+inline void Registrar<std::string, NES::Sources::Source, const Schema&, const Sources::SourceDescriptor&>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sources::GeneratedSourceRegistrar;
+    using namespace NES::Sources::SourceGeneratedRegistrar;
     registry.registerPlugin("CSV", RegisterSourceCSV);
     registry.registerPlugin("TCP", RegisterSourceTCP);
 }

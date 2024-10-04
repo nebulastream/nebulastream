@@ -155,14 +155,6 @@ public:
         {
             this->value = InputFormat::CSV;
         }
-        else if (inputFormat == "JSON")
-        {
-            this->value = InputFormat::JSON;
-        }
-        else if (inputFormat == "NES_BINARY")
-        {
-            this->value = InputFormat::NES_BINARY;
-        }
         else
         {
             NES_ERROR("InputFormatEnum: value unknown.");

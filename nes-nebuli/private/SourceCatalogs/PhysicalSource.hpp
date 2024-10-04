@@ -11,42 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <memory>
 #include <string>
-#include <Identifiers/Identifiers.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
-
-class PhysicalSourceType;
-using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
-
-class PhysicalSource;
-using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
-
 
 /// Container for storing all configurations for physical source
 class PhysicalSource
 {
 public:
-    static PhysicalSourcePtr create(PhysicalSourceTypePtr physicalSourceType);
-
-    static PhysicalSourcePtr create(std::string logicalSourceName);
+    static std::shared_ptr<PhysicalSource> create(Sources::SourceDescriptor&& sourceDescriptor);
 
     const std::string& getLogicalSourceName() const;
 
-    const PhysicalSourceTypePtr& getPhysicalSourceType() const;
+    std::unique_ptr<Sources::SourceDescriptor> getSourceDescriptor();
 
     std::string toString();
 
 private:
-    explicit PhysicalSource(std::string logicalSourceName, PhysicalSourceTypePtr physicalSourceType);
+    explicit PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor);
 
     std::string logicalSourceName;
-    PhysicalSourceTypePtr physicalSourceType;
+    Sources::SourceDescriptor sourceDescriptor;
 };
 
 } /// namespace NES

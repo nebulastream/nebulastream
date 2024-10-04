@@ -27,13 +27,9 @@ namespace NES
 class QueryPlanBuilder
 {
 public:
-    /**
-     * @brief: Creates a query plan from a particular source. The source is identified by its name.
-     * During query processing the underlying source descriptor is retrieved from the source catalog.
-     * @param sourceName name of the source to query. This name has to be registered in the query catalog.
-     * @return the updated queryPlan
-     */
-    static QueryPlanPtr createQueryPlan(std::string sourceName);
+    /// Creates a query plan from a particular source. The source is identified by its name.
+    /// During query processing the underlying source descriptor is retrieved from the source catalog.
+    static QueryPlanPtr createQueryPlan(std::string logicalSourceName);
 
     /**
       * @brief this call projects out the attributes in the parameter list

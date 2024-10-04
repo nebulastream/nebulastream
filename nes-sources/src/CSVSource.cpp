@@ -21,27 +21,27 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/SourceRegistry.hpp>
+#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
 {
 
-/// Todo #72: remove schema from CSVSource (only required by parser).
 CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
-    : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
+    : fileEnded(false)
+    , filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+    , tupleSize(schema.getSchemaSizeInBytes())
+    , delimiter(sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER))
+    , skipHeader(sourceDescriptor.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
 {
-    auto csvSourceType = dynamic_cast<const CSVSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
-    this->filePath = csvSourceType->getFilePath()->getValue();
-    this->delimiter = csvSourceType->getDelimiter()->getValue();
-    this->skipHeader = csvSourceType->getSkipHeader()->getValue();
-
+    /// Determine the physical types and create the inputParser (Todo: remove in #72).
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)
     {
@@ -100,8 +100,6 @@ bool CSVSource::fillTupleBuffer(
         return false;
     }
 
-    input.seekg(currentPositionInFile, std::ifstream::beg);
-
     /// Todo #72: remove TestTupleBuffer creation.
     /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
     /// TestTupleBuffer for the same TupleBuffer.
@@ -112,6 +110,7 @@ bool CSVSource::fillTupleBuffer(
     std::string line;
     uint64_t tupleCount = 0;
 
+    input.seekg(currentPositionInFile, std::ifstream::beg);
     if (skipHeader && currentPositionInFile == 0)
     {
         NES_TRACE("CSVSource: Skipping header");
@@ -144,26 +143,33 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-SourceType CSVSource::getType() const
+std::unique_ptr<Sources::SourceDescriptor::Config> CSVSource::validateAndFormat(std::map<std::string, std::string>&& config)
 {
-    return SourceType::CSV_SOURCE;
+    return Source::validateAndFormatImpl<ConfigParametersCSV>(std::move(config), NAME);
 }
 
 std::ostream& CSVSource::toString(std::ostream& str) const
 {
-    str << "CSVSOURCE(";
-    str << "Tuplesize:" << this->tupleSize;
-    str << "Generated tuples: " << this->generatedTuples;
-    str << "Generated buffers: " << this->generatedBuffers;
+    str << "CSVSource(";
     str << "Filepath: " << this->filePath;
     str << "Delimiter: " << this->delimiter;
     str << "Delimiter: " << this->skipHeader;
-    str << "FileEnded: " << this->fileEnded;
-    str << ")";
+    str << "Filesize:" << this->fileSize;
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << ")\n";
     return str;
 }
 
-std::unique_ptr<Source> GeneratedSourceRegistrar::RegisterSourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<SourceDescriptor::Config>
+SourceGeneratedRegistrarValidation::RegisterSourceValidationCSV(std::map<std::string, std::string>&& sourceConfig)
+{
+    return CSVSource::validateAndFormat(std::move(sourceConfig));
+}
+
+
+std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor)
 {
     return std::make_unique<CSVSource>(schema, sourceDescriptor);
 }

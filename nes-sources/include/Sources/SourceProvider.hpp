@@ -18,12 +18,6 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
-namespace NES
-{
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-};
-
 namespace NES::Sources
 {
 
