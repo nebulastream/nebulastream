@@ -42,7 +42,7 @@ public:
         if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
         {
             /// Call the creator function of the plugin.
-            return (*plugin).second(std::forward<Args>(args)...);
+            return plugin->second(std::forward<Args>(args)...);
         }
         return nullptr;
     }

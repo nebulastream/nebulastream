@@ -79,24 +79,21 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     PRECONDITION(pipeline->isSinkPipeline() || pipeline->isOperatorPipeline(), "expected a Sink or OperatorPipeline");
 
     /// check if the particular pipeline already exist in the pipeline map.
-    if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end())
+    if (const auto executable = pipelineToExecutableMap.find(pipeline->getPipelineId()); executable != pipelineToExecutableMap.end())
     {
-        return pipelineToExecutableMap.at(pipeline->getPipelineId());
+        return executable->second;
     }
-
     if (pipeline->isSinkPipeline())
     {
         auto executableSink = processSink(pipeline, sinks, nodeEngine, pipelineQueryPlan);
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
         return executableSink;
     }
-    else /// if it is an OperatorPipeline
-    {
-        auto executablePipeline = processOperatorPipeline(
-            pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
-        pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
-        return executablePipeline;
-    }
+    /// if it is an OperatorPipeline
+    auto executablePipeline
+        = processOperatorPipeline(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
+    pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
+    return executablePipeline;
 }
 
 void LowerToExecutableQueryPlanPhase::processSource(
@@ -111,10 +108,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline " + pipeline->getDecomposedQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
-    auto sourceDescriptor = sourceOperator->getSourceDescriptorRef();
-    INVARIANT(&sourceDescriptor, "Logical source name lookup is not supported");
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())

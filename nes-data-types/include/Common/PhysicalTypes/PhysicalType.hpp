@@ -27,13 +27,12 @@ using DataTypePtr = std::shared_ptr<DataType>;
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
-/**
- * @brief The physical data type represents the physical representation of a NES data type.
- */
+
+/// The physical data type represents the physical representation of a NES data type.
 class PhysicalType
 {
 public:
-    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 

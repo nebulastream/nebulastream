@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <map>
 #include <string>
+#include <type_traits>
+#include <unordered_map>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -23,6 +24,15 @@
 
 namespace NES::Sources
 {
+
+namespace SourceConfigurationConstraints
+{
+/// Make sure that SourceSpecificConfiguration::parameterMap exists.
+template <typename T>
+concept HasParameterMap = requires(T configuration) {
+    { configuration.parameterMap };
+};
+}
 
 /// Source is the interface for all sources that read data into TupleBuffers.
 /// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
@@ -53,20 +63,12 @@ protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 
-    /// Make sure that SourceSpecificConfiguration::parameterMap exists.
-    template <typename T, typename = void>
-    struct has_parameter_map : std::false_type
-    {
-    };
-    template <typename T>
-    struct has_parameter_map<T, std::void_t<decltype(std::declval<T>().parameterMap)>> : std::true_type
-    {
-    };
     /// Iterates over all parameters in a user provided config and checks if they are supported by a source-specific config.
     /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
     /// Uses default parameters if the user did not specify a parameter.
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SourceSpecificConfiguration>
+    requires NES::Sources::SourceConfigurationConstraints::HasParameterMap<SourceSpecificConfiguration>
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormatImpl(std::unordered_map<std::string, std::string>&& config, const std::string_view sourceName)
     {
@@ -75,12 +77,9 @@ protected:
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            static_assert(
-                has_parameter_map<SourceSpecificConfiguration>::value,
-                "A source configuration must have a parameterMap containing all configuration parameters.");
             if (key != "type" and not(SourceSpecificConfiguration::parameterMap.contains(key)))
             {
-                throw(InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key)));
+                throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
             }
         }
         /// Next, try to validate all config parameters.

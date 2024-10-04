@@ -16,7 +16,6 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>

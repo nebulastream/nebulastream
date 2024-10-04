@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <set>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -80,7 +79,7 @@ public:
     [[nodiscard]] std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
     {
         NES_DEBUG("Get all source operators by traversing all the root nodes.");
-        std::set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
+        std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
         for (const auto& rootOperator : rootOperators)
         {
             auto sourceOperators = rootOperator->getNodesByType<LogicalSourceType>();
@@ -112,7 +111,7 @@ public:
         /// Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         /// Maintain a list of visited nodes as there are multiple root nodes
-        std::set<OperatorId> visitedOpIds;
+        std::unordered_set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);

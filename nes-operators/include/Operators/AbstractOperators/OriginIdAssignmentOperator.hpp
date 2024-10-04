@@ -27,33 +27,17 @@ namespace NES
 class OriginIdAssignmentOperator : public virtual Operator
 {
 public:
-    /**
-     * @brief Constructor for the origin id operator
-     * @param operatorId OperatorId
-     * @param originId if not set INVALID_ORIGIN_ID is default
-     */
     OriginIdAssignmentOperator(OperatorId operatorId, OriginId originId = INVALID_ORIGIN_ID);
 
-    /**
-     * @brief Gets the output origin ids from this operator
-     * @return std::vector<OriginId>
-     */
+    /// wraps single originId member in vector.
     std::vector<OriginId> getOutputOriginIds() const override;
 
-    /**
-     * @brief Sets the origin id, which is used from this operator as an output
-     * @param originId
-     */
     virtual void setOriginId(OriginId originId);
 
-    /**
-     * @brief Get the origin id
-     * @return OriginId
-     */
     OriginId getOriginId() const;
 
 protected:
     OriginId originId;
 };
-} /// namespace NES
-/// namespace NES
+
+}

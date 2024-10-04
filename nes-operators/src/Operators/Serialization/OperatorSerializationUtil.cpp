@@ -57,6 +57,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
+#include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -365,8 +366,8 @@ OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_
 {
     const auto serializedSourceDescriptor = sourceDetails.sourcedescriptor();
     auto sourceDescriptor = deserializeSourceDescriptor(serializedSourceDescriptor);
-    return LogicalOperatorFactory::createSourceOperator(
-        std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceDetails.sourceoriginid()));
+    const auto sourceId = sourceDetails.sourceoriginid();
+    return LogicalOperatorFactory::createSourceOperator(std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceId));
 }
 
 void OperatorSerializationUtil::serializeFilterOperator(
@@ -943,9 +944,16 @@ protoToSourceDescriptorConfigType(const SerializableOperator_SourceDescriptorLog
         case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kStringValue:
             return proto_var.string_value();
         case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kEnumValue:
-            return Configurations::EnumWrapper::create(proto_var.enum_value().value());
+            return Configurations::EnumWrapper(proto_var.enum_value().value());
         default:
-            throw std::runtime_error("Unknown variant type");
+            std::string protoVarAsJson;
+            /// Log proto variable as json, in exception, if possible.
+            if (const auto conversionResult = google::protobuf::json::MessageToJsonString(proto_var, &protoVarAsJson);
+                conversionResult.ok())
+            {
+                throw CannotSerialize(fmt::format("Unknown variant type: {}", protoVarAsJson));
+            }
+            throw CannotSerialize("Unknown variant type.");
     }
 }
 std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializeSourceDescriptor(

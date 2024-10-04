@@ -14,15 +14,13 @@
 #pragma once
 #include <cstdint>
 #include <string>
-#include <Util/Logger/Logger.hpp>
 
 using namespace std::string_literals;
 
 namespace NES::Configurations
 {
-/**
- * @brief input format enum gives information whether a JSON or CSV was used to transfer data
- */
+
+/// input format enum gives information whether a JSON or CSV was used to transfer data
 enum class InputFormat : uint8_t
 {
     CSV

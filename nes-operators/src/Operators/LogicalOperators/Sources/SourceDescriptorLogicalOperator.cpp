@@ -21,15 +21,13 @@
 
 namespace NES
 {
-
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
+    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
-
 SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
-    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+    std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, const OperatorId id, const OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -72,7 +70,8 @@ bool SourceDescriptorLogicalOperator::inferSchema()
 OperatorPtr SourceDescriptorLogicalOperator::copy()
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
-    auto result = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy), id, getOriginId());
+    auto result = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy), id);
+    result->setOriginId(getOriginId());
     result->inferSchema();
     result->addAllProperties(properties);
     return result;
@@ -89,10 +88,9 @@ void SourceDescriptorLogicalOperator::inferInputOrigins()
     /// Data sources have no input origins.
     NES_INFO("Data sources have no input origins. Therefore, we do not infer any input origins!");
 }
-
 std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-} /// namespace NES
+}

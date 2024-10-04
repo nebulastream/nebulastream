@@ -23,17 +23,13 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
-    : Operator(id)
-    , LogicalUnaryOperator(id)
-    , OriginIdAssignmentOperator(id, originId)
-    , logicalSourceName(std::move(logicalSourceName))
-    , schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, SchemaPtr schema, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
 {
 }
 
@@ -56,7 +52,7 @@ bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
 std::string SourceNameLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "LogicalSource(opId: " << id << ": originid: " << originId << ")";
+    ss << "LogicalSource(opId: " << id << ")";
 
     return ss.str();
 }
@@ -70,7 +66,7 @@ bool SourceNameLogicalOperator::inferSchema()
 
 OperatorPtr SourceNameLogicalOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id, originId);
+    auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
@@ -86,18 +82,15 @@ OperatorPtr SourceNameLogicalOperator::copy()
 void SourceNameLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceNameLogicalOperator.");
+    throw FunctionNotImplemented("Not supporting infering signatures for SourceNameLogicalOperator.");
 }
 
 void SourceNameLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.
+    NES_INFO("Data sources have no input origins, so inferInputOrigins is a noop.");
 }
 
-std::vector<OriginId> SourceNameLogicalOperator::getOutputOriginIds() const
-{
-    return OriginIdAssignmentOperator::getOutputOriginIds();
-}
 std::string SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;

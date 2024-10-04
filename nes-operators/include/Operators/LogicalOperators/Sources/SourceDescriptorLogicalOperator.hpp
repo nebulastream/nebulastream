@@ -30,6 +30,7 @@ class SourceDescriptorLogicalOperator : public LogicalUnaryOperator, public Orig
 {
 public:
     explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+
     explicit SourceDescriptorLogicalOperator(
         std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
