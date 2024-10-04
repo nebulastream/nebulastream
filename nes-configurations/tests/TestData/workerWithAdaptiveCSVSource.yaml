@@ -22,7 +22,7 @@ physicalSources:
     type: CSV
     # DefaultSource and its needed configuration params
     configuration:
-      ###### Define only the following configurations for CSVSource source
+      ###### Define only the following configurations for SourceCSV source
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
       numberOfBuffersToProduce: 1
       # Set path

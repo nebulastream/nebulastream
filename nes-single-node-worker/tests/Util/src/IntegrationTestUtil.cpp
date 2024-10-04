@@ -21,8 +21,8 @@
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Sources/CSVSource.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/SourceCSV.hpp>
+#include <Sources/SourceTCP.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 #include <Util/Common.hpp>
@@ -183,12 +183,12 @@ bool loadFile(
     std::ifstream file(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
     if (!file)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&file))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, SERRIALIZED_QUERIES_DIRECTORY, queryFileName);
         return false;
     }
     copyInputFile(dataFileName, querySpecificDataFileName);
@@ -235,7 +235,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
@@ -245,7 +245,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::CSVSource::NAME)
+            if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
             {
                 /// Set socket port and serialize again.
                 sourceDescriptor.setConfigType(Sources::ConfigParametersCSV::FILEPATH, newInputFileName);
@@ -261,7 +261,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
     }
 }
 
-void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
 {
     int queryPlanSourceTcpCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
@@ -272,7 +272,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::TCPSource::NAME)
+            if (sourceDescriptor.sourceType == Sources::SourceTCP::NAME)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {

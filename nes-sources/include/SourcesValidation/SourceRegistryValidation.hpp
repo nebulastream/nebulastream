@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 

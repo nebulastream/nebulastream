@@ -47,13 +47,13 @@ struct ConfigParametersCSV
         = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
 };
 
-class CSVSource final : public Source
+class SourceCSV final : public Source
 {
 public:
     static inline const std::string NAME = "CSV";
 
-    explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
-    ~CSVSource() override = default;
+    explicit SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    ~SourceCSV() override = default;
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
@@ -84,6 +84,6 @@ private:
     uint64_t generatedBuffers{0};
 };
 
-using CSVSourcePtr = std::shared_ptr<CSVSource>;
+using SourceCSVPtr = std::shared_ptr<SourceCSV>;
 
 }

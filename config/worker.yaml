@@ -50,7 +50,7 @@
     #physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
     #type: CSV
-    # CSVSource and its needed configuration params
+    # SourceCSV and its needed configuration params
     #configuration:
       ###### Define only the following configurations for CSV stream
       # Set file path
