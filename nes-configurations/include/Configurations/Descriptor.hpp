@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -25,6 +24,7 @@
 #include <variant>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -172,13 +172,12 @@ private:
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
-            const auto enumWrapperValue = EnumWrapper::create(stringParameter);
-            if (enumWrapperValue.toEnum<EnumType>().has_value()
-                && magic_enum::enum_contains<EnumType>(enumWrapperValue.toEnum<EnumType>().value()))
+            if (const auto enumWrapperValue = EnumWrapper(stringParameter); enumWrapperValue.asEnum<EnumType>().has_value()
+                && magic_enum::enum_contains<EnumType>(enumWrapperValue.asEnum<EnumType>().value()))
             {
                 return enumWrapperValue;
             }
-            NES_ERROR("Failed to convert EnumWrapper with value: {}, to InputFormat enum.", enumWrapperValue);
+            NES_ERROR("Failed to convert EnumWrapper with value: {}, to InputFormat enum.", stringParameter);
             return std::nullopt;
         }
         else
@@ -231,7 +230,7 @@ struct Descriptor
     ~Descriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
-    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs);
+    friend bool operator==(const Descriptor& lhs, const Descriptor& rhs) = default;
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
     /// Uses the key to retrieve to lookup the config paramater.
@@ -243,7 +242,7 @@ struct Descriptor
         if constexpr (ConfigParameter::isEnumWrapper())
         {
             const EnumWrapper enumWrapper = std::get<EnumWrapper>(value);
-            return enumWrapper.toEnum<typename ConfigParameter::EnumType>().value();
+            return enumWrapper.asEnum<typename ConfigParameter::EnumType>().value();
         }
         else
         {
@@ -284,4 +283,5 @@ template <>
 struct formatter<NES::Configurations::Descriptor> : ostream_formatter
 {
 };
+
 }

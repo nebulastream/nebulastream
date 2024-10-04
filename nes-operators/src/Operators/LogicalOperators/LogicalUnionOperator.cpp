@@ -13,7 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -74,7 +73,7 @@ bool LogicalUnionOperator::inferSchema()
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
             leftInputSchema->toString(),
             rightInputSchema->toString());
-        throw TypeInferenceException(
+        throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString() + " and Right schema "
             + rightInputSchema->toString());
     }
@@ -82,7 +81,8 @@ bool LogicalUnionOperator::inferSchema()
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
     {
         NES_ERROR("Left and right should have same memory layout");
-        throw TypeInferenceException("Left and right should have same memory layout");
+        throw CannotInferSchema(fmt::format(
+            "Left and right should have same memory layout ({} vs {})", leftInputSchema->toString(), rightInputSchema->toString()));
     }
 
     ///Copy the schema of left input

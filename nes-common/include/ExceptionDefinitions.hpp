@@ -29,7 +29,6 @@ EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
 EXCEPTION(CannotSerialize, 2001, "cannot serialize")
 EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
 EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
-EXCEPTION(InvalidUseOfOperatorFunction, 2004, "invalid use of an operator function")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
@@ -57,6 +56,7 @@ EXCEPTION(QueryInvalid, 2202, "query is invalid")
 EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not found in the query description")
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
+EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
@@ -66,11 +66,11 @@ EXCEPTION(CannotStartQueryManager, 3005, "cannot start query manager")
 EXCEPTION(CannotStopQueryManager, 3006, "cannot stop query manager")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
-EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
-EXCEPTION(CannotFormatSourceData, 4001, "cannot format source data")
-EXCEPTION(MalformatedTuple, 4002, "malformed tuple")
-EXCEPTION(RunningRoutineFailure, 4003, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
+EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
+EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
+EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
 EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
+EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
@@ -78,7 +78,6 @@ EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
 
 /// 6XXX API error
 EXCEPTION(BadApiRequest, 6000, "bad api request")
-
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(PreconditionViolated, 9000, "precondition violated")

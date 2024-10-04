@@ -103,8 +103,10 @@ public:
         std::vector<ExpressionNodePtr> outputFields,
         OperatorId id = getNextOperatorId());
 
+    static LogicalUnaryOperatorPtr createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId());
+
     static LogicalUnaryOperatorPtr
-    createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
+    createSourceOperator(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id = getNextOperatorId());
 
     static LogicalUnaryOperatorPtr createSourceOperator(
         std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor,

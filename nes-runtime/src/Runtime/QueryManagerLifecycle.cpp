@@ -45,14 +45,9 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
         {
             /// source already exists, add qep to source set if not there
             NES_DEBUG("QueryManager: Source {}  not found. Creating new element with with qep ", source->getSourceId());
-            ///If source sharing is active and this is the first query for this source, init the map
-            if (sourceToQEPMapping.find(source->getSourceId()) == sourceToQEPMapping.end())
-            {
-                sourceToQEPMapping[source->getSourceId()] = std::vector<Execution::ExecutableQueryPlanPtr>();
-            }
 
             ///bookkeep which qep is now reading from this source
-            sourceToQEPMapping[source->getSourceId()].push_back(qep);
+            sourceToQEPMapping[source->getSourceId()].emplace_back(qep);
         }
         notifyQueryStatusChange(qep, Execution::QueryStatus::Registered);
     }

@@ -80,35 +80,36 @@ struct ConfigParametersTCP
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
-            const auto socketTypeString = config.at(TYPE);
-            if (strcasecmp(socketTypeString.c_str(), "SOCK_STREAM") == 0)
+            auto socketTypeString = config.at(TYPE);
+            for (auto& character : socketTypeString)
+            {
+                character = toupper(character);
+            }
+            if (socketTypeString == "SOCK_STREAM")
             {
                 return SOCK_STREAM;
             }
-            else if (strcasecmp(socketTypeString.c_str(), "SOCK_DGRAM") == 0)
+            if (socketTypeString == "SOCK_DGRAM")
             {
                 return SOCK_DGRAM;
             }
-            else if (strcasecmp(socketTypeString.c_str(), "SOCK_SEQPACKET") == 0)
+            if (socketTypeString == "SOCK_SEQPACKET")
             {
                 return SOCK_SEQPACKET;
             }
-            else if (strcasecmp(socketTypeString.c_str(), "SOCK_RAW") == 0)
+            if (socketTypeString == "SOCK_RAW")
             {
                 return SOCK_RAW;
             }
-            else if (strcasecmp(socketTypeString.c_str(), "SOCK_RDM") == 0)
+            if (socketTypeString == "SOCK_RDM")
             {
                 return SOCK_RDM;
             }
-            else
-            {
-                NES_ERROR(
-                    "SourceTCP: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
-                    "SOCK_RDM",
-                    socketTypeString)
-                return std::nullopt;
-            }
+            NES_ERROR(
+                "SourceTCP: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
+                "SOCK_RDM",
+                socketTypeString)
+            return std::nullopt;
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tupleSeparator", '\n', [](const std::unordered_map<std::string, std::string>& config) {
@@ -122,8 +123,7 @@ struct ConfigParametersTCP
         ConfigParameter<NES::Configurations::EnumWrapper, Configurations::TCPDecideMessageSize>
             DECIDED_MESSAGE_SIZE{
                 "decideMessageSize",
-                NES::Configurations::EnumWrapper::create<Configurations::TCPDecideMessageSize>(
-                    Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR),
+                NES::Configurations::EnumWrapper(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR),
                 [](const std::unordered_map<std::string, std::string>& config)
                 { return Configurations::DescriptorConfig::tryGet(DECIDED_MESSAGE_SIZE, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
@@ -202,5 +202,4 @@ private:
     uint64_t generatedBuffers{0};
 };
 
-using SourceTCPPtr = std::shared_ptr<SourceTCP>;
 }

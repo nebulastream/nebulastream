@@ -29,27 +29,25 @@ class EnumWrapper
 {
 public:
     template <typename EnumType>
-    static EnumWrapper create(EnumType enumValue)
+    explicit EnumWrapper(EnumType enumValue) : value(std::string(magic_enum::enum_name<EnumType>(enumValue)))
     {
-        return EnumWrapper(std::string(magic_enum::enum_name<EnumType>(enumValue)));
     }
 
-    static EnumWrapper create(std::string enumValueAsString) { return EnumWrapper(std::move(enumValueAsString)); }
+    explicit EnumWrapper(std::string enumValueAsString) : value(std::move(enumValueAsString)) { }
 
     template <typename EnumType>
-    std::optional<EnumType> toEnum() const
+    std::optional<EnumType> asEnum() const
     {
         return magic_enum::enum_cast<EnumType>(value);
     }
 
-    std::string_view getValue() const { return value; }
+    const std::string& getValue() const { return value; }
 
-    friend bool operator==(const EnumWrapper& lhs, const EnumWrapper& rhs) { return lhs.value == rhs.value; }
+    friend bool operator==(const EnumWrapper& lhs, const EnumWrapper& rhs) = default;
 
     friend std::ostream& operator<<(std::ostream& out, const EnumWrapper& enumWrapper) { return out << enumWrapper.value; }
 
 private:
-    EnumWrapper(std::string&& value) : value(std::move(value)) { }
     std::string value;
 };
 
