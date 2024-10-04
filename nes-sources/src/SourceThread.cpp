@@ -201,10 +201,7 @@ void SourceThread::runningRoutine()
         NES_ASSERT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
         std::string thName = fmt::format("DataSrc-{}", originId);
         setThreadName(thName.c_str());
-
-        std::stringstream ss;
-        ss << this;
-        NES_DEBUG("SourceThread: {}", ss.str());
+        NES_DEBUG("SourceThread: {}", fmt::streamed(*this));
 
         /// open
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
@@ -226,7 +223,7 @@ void SourceThread::runningRoutine()
                     "SourceThread produced buffer {}, Num filled tuples: {}, SourceThread: {}",
                     numberOfBuffersProduced,
                     tupleBuffer.getNumberOfTuples(),
-                    ss.str());
+                    fmt::streamed(*this));
 
                 emitWork(tupleBuffer);
                 ++numberOfBuffersProduced;

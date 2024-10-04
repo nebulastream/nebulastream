@@ -56,39 +56,29 @@ namespace Optimizer
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
-/**
- * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
- * If this is not possible it throws an Runtime exception.
- */
+/// The type inference phase receives and query plan and infers all input and output schemata for all operators.
+/// If this is not possible it throws an Runtime exception.
 class TypeInferencePhase
 {
 public:
-    /**
-     * @brief Factory method to create a type inference phase.
-     * @return TypeInferencePhasePtr
-     */
     static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
+    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
+    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const;
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.
     /// 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result stamp of this operators.
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    /// @throws TypeInferenceException if inferring the data types into the query failed
+    QueryPlanPtr performTypeInferenceQuery(QueryPlanPtr queryPlan);
 
 private:
-    bool isFirstExecuteCall;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
-
-    /// @throws TypeInferenceException if inferring the data types into the query failed
-    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators);
-
-    /// Must be called after 'performTypeInferenceSources' in the execute call.
-    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    void performTypeInferenceSinks(QueryId planId, const std::vector<SinkLogicalOperatorPtr>& sinkOperators);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 };
-} /// namespace Optimizer
-} /// namespace NES
+}
+}

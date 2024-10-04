@@ -117,7 +117,7 @@ namespace NES::CLI
 {
 
 Sources::SourceDescriptor
-createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::unordered_map<std::string, std::string>&& sourceConfiguration)
+createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -131,10 +131,9 @@ createSourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::uno
 
     if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
     {
-        return Sources::SourceDescriptor(schema, std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig));
+        return Sources::SourceDescriptor(std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig));
     }
-    auto exception = UnknownSourceType("We don't support the source type: " + sourceType);
-    throw exception;
+    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -142,27 +141,30 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
-    auto schema = Schema::create();
 
     /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (const auto& [logicalName, schemaFields] : config.logical)
+    for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        NES_INFO("Adding logical source: {}", logicalName);
+        auto schema = Schema::create();
+        NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
             schema = schema->addField(name, type);
         }
-        sourceCatalog->addLogicalSource(logicalName, std::move(schema));
+        sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalName, config] : config.physical)
+    for (auto [logicalSourceName, config] : config.physical)
     {
-        auto sourceDescriptor = createSourceDescriptor(schema, logicalName, std::move(config));
+        auto sourceDescriptor
+            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
         sourceCatalog->addPhysicalSource(
-            logicalName,
+            logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
+                NES::PhysicalSource::create(std::move(sourceDescriptor)),
+                sourceCatalog->getLogicalSource(logicalSourceName),
+                INITIAL<WorkerId>));
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -177,14 +179,15 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     auto query = syntacticQueryValidation->validate(config.query);
     semanticQueryValidation->validate(query);
-    typeInference->execute(query);
+    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
+    typeInference->performTypeInferenceQuery(query);
 
     logicalSourceExpansionRule->apply(query);
-    typeInference->execute(query);
+    typeInference->performTypeInferenceQuery(query);
 
     originIdInferencePhase->execute(query);
     queryRewritePhase->execute(query);
-    typeInference->execute(query);
+    typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());

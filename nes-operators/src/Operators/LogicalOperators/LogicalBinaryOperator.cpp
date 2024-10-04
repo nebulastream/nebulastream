@@ -13,11 +13,11 @@
 */
 #include <algorithm>
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
@@ -29,13 +29,8 @@ LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), Logi
 
 bool LogicalBinaryOperator::inferSchema()
 {
+    PRECONDITION(children.size() >= 2, "BinaryOperator: this node should have at least two child operators");
     distinctSchemas.clear();
-    ///Check the number of child operators
-    if (children.size() < 2)
-    {
-        NES_ERROR("BinaryOperator: this operator should have at least two child operators");
-        throw TypeInferenceException("BinaryOperator: this node should have at least two child operators");
-    }
 
     /// Infer schema of all child operators
     for (const auto& child : children)
@@ -62,11 +57,7 @@ bool LogicalBinaryOperator::inferSchema()
     }
 
     ///validate that only two different type of schema were present
-    if (distinctSchemas.size() > 2)
-    {
-        throw TypeInferenceException(
-            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 or less distinct schemas.", distinctSchemas.size()));
-    }
+    INVARIANT(distinctSchemas.size() > 2, "BinaryOperator: this node should have at least two child operators");
 
     return true;
 }

@@ -23,9 +23,9 @@
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceTCP.hpp>
+#include <Util/Common.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-#include <Util/Common.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -244,7 +244,8 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            const auto sourceDescriptor
+                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
@@ -281,7 +282,8 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            const auto sourceDescriptor = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            const auto sourceDescriptor
+                = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == Sources::SourceTCP::NAME)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)

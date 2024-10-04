@@ -119,7 +119,7 @@ struct SplitFunctionHelper
         auto result = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result_value);
         if (result.ec == std::errc::invalid_argument)
         {
-            throw FunctionNotImplemented("Could not convert");
+            throw FunctionNotImplemented("Could not parse: " + std::string(trimmed));
         }
         return result_value;
     };

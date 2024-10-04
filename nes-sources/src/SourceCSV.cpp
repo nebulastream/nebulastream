@@ -42,7 +42,8 @@ SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescrip
     , delimiter(sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER))
     , skipHeader(sourceDescriptor.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
 {
-    /// Determine the physical types and create the inputParser (Todo: remove in #72).
+    /// Determine the physical types and create the inputParser
+    /// Todo #72: remove
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)
     {
@@ -69,14 +70,14 @@ void SourceCSV::open()
     input.open(path.get());
     if (!(input.is_open() && input.good()))
     {
-        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
+        throw CannotOpenSource(fmt::format("Cannot open file: {}", std::string(path.get())));
     }
 
     NES_DEBUG("SourceCSV: Opening path {}", path.get());
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1)
     {
-        throw Exceptions::RuntimeException("SourceCSV::SourceCSV File " + filePath + " is corrupted");
+        throw CannotOpenSource(fmt::format("SourceCSV::SourceCSV File {} is corrupted", filePath));
     }
     else
     {

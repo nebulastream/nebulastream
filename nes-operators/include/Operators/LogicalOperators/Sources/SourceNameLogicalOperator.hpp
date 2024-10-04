@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES
@@ -24,11 +23,11 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+class SourceNameLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -39,7 +38,6 @@ public:
     void inferStringSignature() override;
     OperatorPtr copy() override;
     void inferInputOrigins() override;
-    std::vector<OriginId> getOutputOriginIds() const override;
 
     [[nodiscard]] std::string getLogicalSourceName() const;
     [[nodiscard]] std::shared_ptr<Schema> getSchema() const;

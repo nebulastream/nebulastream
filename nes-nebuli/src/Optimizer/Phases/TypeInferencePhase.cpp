@@ -13,7 +13,6 @@
 */
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -26,8 +25,7 @@
 namespace NES::Optimizer
 {
 
-TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog)
-    : isFirstExecuteCall(true), sourceCatalog(std::move(sourceCatalog))
+TypeInferencePhase::TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog) : sourceCatalog(std::move(sourceCatalog))
 {
 }
 
@@ -36,55 +34,31 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan)
+QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPlan)
 {
-    if (!sourceCatalog)
-    {
-        NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
-    }
-
-    /// We only need to infere the schema for sources once, before specifying the source.
-    if (isFirstExecuteCall)
-    {
-        auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
-        if (sourceOperators.empty())
-        {
-            throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
-        }
-        performTypeInferenceSources(sourceOperators);
-        isFirstExecuteCall = false;
-    };
-
-    /// Infer schema for sinks.
+    /// Infer schema recursively, starting with sinks for sinks.
     auto sinkOperators = queryPlan->getSinkOperators();
-    if (sinkOperators.empty())
-    {
-        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
-    }
-    performTypeInferenceSinks(queryPlan->getQueryId(), sinkOperators);
+    INVARIANT(not sinkOperators.empty(), fmt::format("Found no sink operators for query plan: {}", queryPlan->getQueryId()));
 
-    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
-    return queryPlan;
-}
-
-void TypeInferencePhase::performTypeInferenceSinks(QueryId queryId, const std::vector<SinkLogicalOperatorPtr>& sinkOperators)
-{
-    PRECONDITION(!isFirstExecuteCall, "Type inference for sinks must performed, before performing it for sources.")
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
     for (auto& sink : sinkOperators)
     {
         if (!sink->inferSchema())
         {
-            NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
-            throw TypeInferenceException(queryId, "TypeInferencePhase: Failed!");
+            throw TypeInferenceException(fmt::format("TypeInferencePhase failed for query with id: {}", queryPlan->getQueryId()));
         }
     }
+    return queryPlan;
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators)
+void TypeInferencePhase::performTypeInferenceSources(
+    const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const
 {
+    PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
+    PRECONDITION(not sourceOperators.empty(), fmt::format("Query plan with id {} did not contain sources during type inference.", queryId));
+
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)
     {
