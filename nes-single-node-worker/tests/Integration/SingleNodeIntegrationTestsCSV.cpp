@@ -81,7 +81,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -121,4 +121,4 @@ INSTANTIATE_TEST_CASE_P(
         QueryTestParam{"qOneSourceCSV", 32, 496 /* SUM(0, 1, ..., 31) */},
         QueryTestParam{"qOneSourceCSVWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
         QueryTestParam{"qTwoSourcesCSVWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
-} /// namespace NES::Testing
+}

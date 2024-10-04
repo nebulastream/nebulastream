@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Sources/DataSource.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceThread.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
@@ -51,8 +51,7 @@ public:
 
 private:
     /// Used to print the data source via the overloaded '<<' operator.
-    [[nodiscard]] const DataSource* getDataSource() const;
-    std::unique_ptr<DataSource> dataSource;
+    std::unique_ptr<SourceThread> sourceThread;
 };
 
 using SourceHandlePtr = std::shared_ptr<SourceHandle>;

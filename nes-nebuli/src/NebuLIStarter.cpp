@@ -27,7 +27,7 @@
 
 namespace NES
 {
-class TCPSourceType;
+class SourceTCPType;
 }
 using namespace std::literals;
 

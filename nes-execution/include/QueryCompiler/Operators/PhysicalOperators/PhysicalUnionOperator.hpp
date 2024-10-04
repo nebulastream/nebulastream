@@ -21,11 +21,11 @@ namespace NES::QueryCompilation::PhysicalOperators
  * Thus it has multiple child nodes and one parent nodes.
  * Example query plan:
  *
- * DataSource --- OperatorX ---
+ * SourceThread --- OperatorX ---
  *                             \
  *                              --- Multiplex --- OperatorZ --- DataSink
  *                              /
- * DataSource --- OperatorY ---
+ * SourceThread --- OperatorY ---
  *
  */
 class PhysicalUnionOperator : public PhysicalBinaryOperator

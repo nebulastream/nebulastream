@@ -25,8 +25,8 @@ namespace NES::Sources
 {
 
 /// Source is the interface for all sources that read data into TupleBuffers.
-/// 'DataSource' creates TupleBuffers and uses 'Source' to fill.
-/// When 'fillTupleBuffer()' returns successfully, 'DataSource' creates a new Task using the filled TupleBuffer.
+/// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
+/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
 class Source
 {
 public:

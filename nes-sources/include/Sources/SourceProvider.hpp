@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -22,8 +23,8 @@ namespace NES::Sources
 {
 
 /// Takes a SourceDescriptor and in exchange returns a SourceHandle.
-/// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
-/// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
+/// The sourceThread spawns an independent thread for data ingestion and it manages the pipeline and task logic.
+/// The Source is owned by the SourceThread. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
     /// Todo #237: reevaluate whether we still need num source local buffers, and potentially use new configuration approach.
@@ -37,11 +38,10 @@ public:
     static SourceHandlePtr lower(
         OriginId originId,
         const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;
 };
-using DataSourceProviderPtr = std::shared_ptr<SourceProvider>;
 
 }

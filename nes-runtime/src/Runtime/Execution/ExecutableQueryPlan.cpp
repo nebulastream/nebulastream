@@ -314,7 +314,7 @@ void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTermina
     /// However, it might happen that the marker is so fast that one possible execution is as follows:
     /// 1) Data Source emits EoS marker
     /// 2) Next pipeline/sink picks the marker and finishes by decreasing `numOfTerminationTokens`
-    /// 3) DataSource invokes `notifySourceCompletion`
+    /// 3) SourceThread invokes `notifySourceCompletion`
     /// as a result, the data source might be the last one to decrease the `numOfTerminationTokens` thus it has to
     /// trigger the QEP reconfiguration
     if (tokensLeft == 2)

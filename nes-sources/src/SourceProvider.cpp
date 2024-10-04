@@ -22,11 +22,12 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
+#include <Sources/SourceTCP.hpp>
 
 namespace NES::Sources
 {
 
-DataSourceProviderPtr SourceProvider::create()
+std::shared_ptr<SourceProvider> SourceProvider::create()
 {
     return std::make_shared<SourceProvider>();
 }

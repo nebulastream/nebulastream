@@ -161,18 +161,19 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
                 [&](const Sources::SourceReturnType::EoS&)
                 {
                     NES_DEBUG("DataSource {} : End of stream.", originId);
-                    this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
-                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::Graceful);
+                    this->addEndOfStream(originId, successors, QueryTerminationType::Graceful);
+                    this->notifySourceCompletion(originId, QueryTerminationType::Graceful);
                 },
                 [&](const Sources::SourceReturnType::Stopped&)
                 {
                     NES_DEBUG("DataSource {} : Stopping.", originId);
-                    this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::HardStop);
-                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
+                    this->addEndOfStream(originId, successors, QueryTerminationType::HardStop);
+                    this->notifySourceCompletion(originId, QueryTerminationType::HardStop);
                 },
                 [&](const Sources::SourceReturnType::Error& error)
                 {
-                    NES_DEBUG("DataSource {} : Failure.", originId);
+                    /// Todo #237: Improve error handling in sources
+                    NES_DEBUG("SourceThread {} : Failure.", originId);
                     this->notifySourceFailure(originId, error.ex);
                 }},
             returntype);

@@ -142,8 +142,8 @@ struct SourceDescriptor
     explicit SourceDescriptor(std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
     /// Constructor used after schema inference, when all required information are available.
     ///-Todo: used only in serialization -> can potentially remove, after refactoring serialization
-    explicit
-    SourceDescriptor(std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(
+        std::shared_ptr<Schema> schema, std::string sourceType, Configurations::InputFormat inputFormat, Config&& config);
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
