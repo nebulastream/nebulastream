@@ -16,29 +16,49 @@
 
 #include <fstream>
 #include <string>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
 {
 
-class CSVParser;
-using CSVParserPtr = std::shared_ptr<CSVParser>;
+struct ConfigParametersCSV
+{
+    static inline const SourceDescriptor::ConfigParameter<std::string> FILEPATH{
+        "filePath", std::nullopt, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(FILEPATH, config);
+        }};
+    static inline const SourceDescriptor::ConfigParameter<bool> SKIP_HEADER{
+        "skipHeader", false, [](const std::map<std::string, std::string>& config) {
+            return SourceDescriptor::tryGet(SKIP_HEADER, config);
+        }};
+    static inline const SourceDescriptor::ConfigParameter<std::string> DELIMITER{
+        "delimiter", ",", [](const std::map<std::string, std::string>& config) { return SourceDescriptor::tryGet(DELIMITER, config); }};
+
+    static inline std::unordered_map<std::string, SourceDescriptor::ConfigParameterContainer> parameterMap
+        = SourceDescriptor::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
+};
 
 class CSVSource : public Source
 {
 public:
-    CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    static inline const std::string NAME = "CSV";
+
+    explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    ~CSVSource() override = default;
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
-    SourceType getType() const override;
-
+    /// Open file socket.
     void open() override;
+    /// Close file socket.
     void close() override;
+
+    /// validates and formats a string to string configuration
+    static std::unique_ptr<Sources::SourceDescriptor::Config> validateAndFormat(std::map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -52,7 +72,7 @@ private:
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
-    CSVParserPtr inputParser;
+    std::shared_ptr<Parser> inputParser;
 
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

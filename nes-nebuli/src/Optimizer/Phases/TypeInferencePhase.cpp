@@ -14,9 +14,7 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -86,15 +84,15 @@ void TypeInferencePhase::performTypeInference(
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto& sourceDescriptor = source->getSourceDescriptorRef();
-        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor) && sourceDescriptor.getSchema()->empty())
+        ///-Todo: improve
+        if (!sourceDescriptor.schema)
         {
-            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
-            SchemaPtr schema = Schema::create();
+            auto logicalSourceName = sourceDescriptor.logicalSourceName;
+            std::shared_ptr<Schema> schema = Schema::create();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName))
             {
                 NES_ERROR("Source name: {} not registered.", logicalSourceName);
-                auto ex = LogicalSourceNotFoundInQueryDescription();
-                ex.what() += "Logical source not registered. Source Name: " + logicalSourceName;
+                auto ex = LogicalSourceNotFoundInQueryDescription("Logical source not registered. Source Name: " + logicalSourceName);
                 throw ex;
             }
             auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
@@ -109,7 +107,8 @@ void TypeInferencePhase::performTypeInference(
                     field->setName(qualifierName + field->getName());
                 }
             }
-            sourceDescriptor.setSchema(schema);
+            source->setInputSchema(schema);
+            source->setOutputSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
         }
     }

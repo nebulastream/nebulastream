@@ -17,6 +17,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Sources/SourceReturnType.hpp>
 
 namespace NES::Sources
 {
@@ -24,7 +25,7 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SchemaPtr schema,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-    SourceReturnType::EmitFunction&& emitFunction,
+    Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
 {

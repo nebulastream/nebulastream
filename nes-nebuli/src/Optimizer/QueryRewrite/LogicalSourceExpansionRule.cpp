@@ -26,8 +26,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
-#include "Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp"
-#include "Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp"
 
 namespace NES::Optimizer
 {
@@ -43,37 +41,11 @@ LogicalSourceExpansionRule::create(const Catalogs::Source::SourceCatalogPtr& sou
     return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(sourceCatalog, expandSourceOnly));
 }
 
-std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    /// TODO #286: update this function to use the plugin registry (for validation).
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = NES::Util::as<CSVSourceType>(physicalSourceType);
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = NES::Util::as<TCPSourceType>(physicalSourceType);
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
-        }
-    }
-}
-
 QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
-    std::vector<SourceLogicalOperatorPtr> sourceOperators = queryPlan->getSourceOperators();
+    std::vector<std::shared_ptr<SourceLogicalOperator>> sourceOperators = queryPlan->getSourceOperators();
 
     /// Compute a map of all blocking operators in the query plan
     std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
@@ -108,12 +80,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
     /// Iterate over all source operators
     for (const auto& sourceOperator : sourceOperators)
     {
-        std::shared_ptr<SourceDescriptor> sourceDescriptorPtr = sourceOperator->getSourceDescriptor();
-        std::shared_ptr<SourceDescriptor> sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-
-        NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().getLogicalSourceName();
+        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().logicalSourceName;
 
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
@@ -155,9 +123,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
-            auto physicalDescriptor = createSourceDescriptor(
-                sourceOperator->getSourceDescriptorRef().getSchema(), sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceType());
-            duplicateSourceOperator->setSourceDescriptor(std::move(physicalDescriptor));
+            duplicateSourceOperator->getSourceDescriptorRef().schema->equals(sourceOperator->getSourceDescriptorRef().schema);
 
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
             const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
@@ -212,6 +178,11 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
                     visitedOperators.insert(operatorNode->getId());
                 }
             }
+            auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->getSourceDescriptor();
+            sourceDescriptor->schema = duplicateSourceOperator->getSourceDescriptorRef().schema;
+            auto operatorSourceLogicalDescriptor
+                = std::make_shared<SourceLogicalOperator>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
+            duplicateSourceOperator->replace(operatorSourceLogicalDescriptor, duplicateSourceOperator);
         }
     }
 

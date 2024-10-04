@@ -348,13 +348,9 @@ public:
      */
     Query& orWith(const Query& subQuery);
 
-    /**
-     * @brief: Creates a query from a particular source. The source is identified by its name.
-     * During query processing the underlying source descriptor is retrieved from the source catalog.
-     * @param sourceName name of the source to query. This name has to be registered in the query catalog.
-     * @return the query
-     */
-    static Query from(std::string const& sourceName);
+    /// Creates a query from a particular source. The source is identified by its name.
+    /// During query processing the underlying source descriptor is retrieved from the source catalog.
+    static Query from(std::string const& logicalSourceName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.

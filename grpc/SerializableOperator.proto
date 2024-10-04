@@ -37,15 +37,14 @@ message NodeLocation {
   uint32 port = 3;
 }
 
+enum InputFormat{
+  CSV = 0;
+};
+
 /**
 The serializable wrapper for the source config object
  */
 message SerializablePhysicalSourceType{
-  enum InputFormat{
-      JSON = 0;
-      CSV = 1;
-      NES_BINARY = 2;
-  };
 
   enum TCPDecideMessageSize{
       TUPLE_SEPARATOR = 0;
@@ -69,8 +68,8 @@ message SerializablePhysicalSourceType{
   message SerializableTCPSourceType{
     string socketHost = 1;
     uint32 socketPort = 2;
-    uint32 socketDomain = 3;
-    uint32 socketType = 4;
+    int32 socketDomain = 3;
+    int32 socketType = 4;
     float flushIntervalMS = 6;
     InputFormat inputFormat = 7;
     TCPDecideMessageSize tcpDecideMessageSize = 8;
@@ -103,6 +102,7 @@ message SerializableOperator{
       string logicalSourceName = 1;
       string sourceType = 2;
       optional SerializableSchema sourceSchema = 3;
+      optional InputFormat inputFormat = 4;
     }
 
     message SerializableTCPSourceDescriptor {

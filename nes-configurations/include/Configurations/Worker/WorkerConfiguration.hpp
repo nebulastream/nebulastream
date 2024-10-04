@@ -18,7 +18,6 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
-#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/WrapOption.hpp>
 
@@ -96,12 +95,6 @@ public:
     QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};
 
     /**
-     * @brief Indicates a sequence of physical sources.
-     */
-    SequenceOption<WrapOption<PhysicalSourceTypePtr, PhysicalSourceTypeFactory>> physicalSourceTypes
-        = {PHYSICAL_SOURCES, "Physical sources"};
-
-    /**
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
      */
@@ -127,7 +120,6 @@ private:
             &bufferSizeInBytes,
             &logLevel,
             &queryCompiler,
-            &physicalSourceTypes,
             &configPath,
         };
     }

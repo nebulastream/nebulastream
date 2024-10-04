@@ -12,6 +12,6 @@ logical:
 physical:
   - logical: csv_source
     config:
-      type: CSV_SOURCE
+      type: CSV
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","

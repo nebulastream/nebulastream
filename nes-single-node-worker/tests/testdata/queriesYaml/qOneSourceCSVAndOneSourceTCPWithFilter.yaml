@@ -21,6 +21,6 @@ physical:
       flushIntervalMS: 100
   - logical: tcp_and_csv_source
     config:
-      type: CSV_SOURCE
+      type: CSV
       filePath: oneToThirtyOneSingleColumn.csv
       delimiter: ","

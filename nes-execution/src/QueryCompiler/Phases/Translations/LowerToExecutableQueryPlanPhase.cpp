@@ -13,12 +13,7 @@
 */
 
 #include <variant>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -45,7 +40,7 @@ LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(
     DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider)
     : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)) {};
 
-LowerToExecutableQueryPlanPhasePtr
+std::shared_ptr<LowerToExecutableQueryPlanPhase>
 LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider)
 {
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
@@ -119,9 +114,6 @@ void LowerToExecutableQueryPlanPhase::processSource(
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = NES::Util::as<PhysicalOperators::PhysicalSourceOperator>(rootOperator);
-    PRECONDITION(
-        !dynamic_cast<const LogicalSourceDescriptor*>(&sourceOperator->getSourceDescriptorRef()),
-        "Logical source name lookup is not supported");
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
@@ -229,30 +221,4 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-std::unique_ptr<SourceDescriptor>
-LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = NES::Util::as<CSVSourceType>(physicalSourceType);
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = NES::Util::as<TCPSourceType>(physicalSourceType);
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
-        }
-        default: {
-            throw UnknownSourceType(physicalSourceType->getSourceTypeAsString());
-        }
-    }
 }
-
-} /// namespace NES::QueryCompilation

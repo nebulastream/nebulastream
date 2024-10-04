@@ -52,7 +52,7 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(std::share
     return AddScanAndEmitPhase::create();
 }
 
-LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
+std::shared_ptr<LowerToExecutableQueryPlanPhase> DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
 {
     NES_DEBUG("Create lower to executable query plan phase");
     Sources::DataSourceProviderPtr sourceProvider;

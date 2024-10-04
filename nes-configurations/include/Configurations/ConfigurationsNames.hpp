@@ -14,6 +14,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <Util/Logger/Logger.hpp>
 
 using namespace std::string_literals;
 
@@ -24,9 +25,7 @@ namespace NES::Configurations
  */
 enum class InputFormat : uint8_t
 {
-    JSON,
-    CSV,
-    NES_BINARY
+    CSV
 };
 
 /**

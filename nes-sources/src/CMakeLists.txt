@@ -13,6 +13,7 @@
 add_source_files(nes-sources
         CSVSource.cpp
         DataSource.cpp
+        SourceDescriptor.cpp
         MMapCircularBuffer.cpp
         Source.cpp
         SourceHandle.cpp
