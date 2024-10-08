@@ -19,6 +19,5 @@ add_source_files(nes-data-types
         Integer.cpp
         Float.cpp
         DataTypeFactory.cpp
-        FixedChar.cpp
         TextType.cpp
         )
