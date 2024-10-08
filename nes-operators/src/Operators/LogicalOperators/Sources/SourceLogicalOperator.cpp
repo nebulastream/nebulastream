@@ -17,6 +17,7 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -35,14 +36,14 @@ SourceLogicalOperator::SourceLogicalOperator(std::shared_ptr<SourceDescriptor>&&
 
 bool SourceLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<SourceLogicalOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<SourceLogicalOperator>(rhs)->getId() == id;
 }
 
 bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<SourceLogicalOperator>())
+    if (NES::Util::instanceOf<SourceLogicalOperator>(rhs))
     {
-        auto sourceOperator = rhs->as<SourceLogicalOperator>();
+        auto sourceOperator = NES::Util::as<SourceLogicalOperator>(rhs);
         return sourceOperator->getSourceDescriptor()->equal(*sourceDescriptor);
     }
     return false;

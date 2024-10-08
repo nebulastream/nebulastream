@@ -17,7 +17,9 @@
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -39,14 +41,14 @@ void LogicalFilterOperator::setPredicate(ExpressionNodePtr newPredicate)
 
 bool LogicalFilterOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalFilterOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalFilterOperator>(rhs)->getId() == id;
 }
 
 bool LogicalFilterOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalFilterOperator>())
+    if (NES::Util::instanceOf<LogicalFilterOperator>(rhs))
     {
-        auto filterOperator = rhs->as<LogicalFilterOperator>();
+        auto filterOperator = NES::Util::as<LogicalFilterOperator>(rhs);
         return predicate->equal(filterOperator->predicate);
     }
     return false;
@@ -91,19 +93,19 @@ OperatorPtr LogicalFilterOperator::copy()
 
 void LogicalFilterOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalFilterOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalFilterOperator: Filter should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "FILTER(" + predicate->toString() + ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
@@ -131,9 +133,9 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
         ///if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>())
+        if (NES::Util::instanceOf<FieldAccessExpressionNode>(*itr))
         {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            const FieldAccessExpressionNodePtr accessExpressionNode = NES::Util::as<FieldAccessExpressionNode>(*itr);
             fieldsInPredicate.push_back(accessExpressionNode->getFieldName());
         }
     }

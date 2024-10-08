@@ -31,12 +31,12 @@ OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create()
 bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator)
 {
     return (
-        physicalOperator->instanceOf<PhysicalOperators::PhysicalMapOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalFilterOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalProjectOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()
-        || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>());
+        NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalFilterOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(physicalOperator)
+        || NES::Util::instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator));
 }
 } /// namespace NES::QueryCompilation

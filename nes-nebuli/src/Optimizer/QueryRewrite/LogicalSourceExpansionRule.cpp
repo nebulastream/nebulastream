@@ -56,11 +56,11 @@ std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, Physi
     switch (sourceType)
     {
         case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
+            auto csvSourceType = NES::Util::as<CSVSourceType>(physicalSourceType);
             return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
+            auto tcpSourceType = NES::Util::as<TCPSourceType>(physicalSourceType);
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
         }
         default: {
@@ -84,7 +84,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         {
             for (auto& downStreamOp : sourceOperator->getParents())
             {
-                blockingOperators[downStreamOp->as<Operator>()->getId()] = downStreamOp->as<Operator>();
+                blockingOperators[NES::Util::as<Operator>(downStreamOp)->getId()] = NES::Util::as<Operator>(downStreamOp);
             }
         }
     }
@@ -96,7 +96,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
             {
                 NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
-                auto operatorToIterate = (*itr)->as<Operator>();
+                auto operatorToIterate = NES::Util::as<Operator>(*itr);
                 if (isBlockingOperator(operatorToIterate))
                 {
                     blockingOperators[operatorToIterate->getId()] = operatorToIterate;
@@ -141,7 +141,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
                 }
 
                 /// Add information about blocking operator to the source operator
-                addBlockingDownStreamOperator(sourceOperator, downStreamOperator->as<Operator>()->getId());
+                addBlockingDownStreamOperator(sourceOperator, NES::Util::as<Operator>(downStreamOperator)->getId());
             }
         }
         NES_TRACE(
@@ -151,7 +151,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperator>();
+            auto duplicateSourceOperator = NES::Util::as<SourceLogicalOperator>(sourceOperator->duplicate());
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
@@ -165,7 +165,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators)
             {
-                auto operatorNode = node->as<Operator>();
+                auto operatorNode = NES::Util::as<Operator>(node);
 
                 /// Check if the operator has the property containing list of connected blocking downstream operator ids.
                 /// If so, then connect the operator to the blocking downstream operator
@@ -243,7 +243,7 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
 
             /// Add to the current operator information about operator id of the removed downStreamOperator.
             /// We will use this information post expansion to re-add the connection later.
-            addBlockingDownStreamOperator(operatorNode, downStreamOperator->as_if<Operator>()->getId());
+            addBlockingDownStreamOperator(operatorNode, NES::Util::as_if<Operator>(downStreamOperator)->getId());
         }
     }
 }
@@ -251,27 +251,27 @@ void LogicalSourceExpansionRule::removeConnectedBlockingOperators(const NodePtr&
 void LogicalSourceExpansionRule::addBlockingDownStreamOperator(const NodePtr& operatorNode, OperatorId downStreamOperatorId)
 {
     /// extract the list of connected blocking parents and add the current parent to the list
-    std::any value = operatorNode->as_if<Operator>()->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
+    std::any value = NES::Util::as_if<Operator>(operatorNode)->getProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS);
     if (value.has_value())
     { /// update the existing list
         auto listOfConnectedBlockingParents = std::any_cast<std::vector<OperatorId>>(value);
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        NES::Util::as_if<Operator>(operatorNode)->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     }
     else
     { /// create a new entry if value doesn't exist
         std::vector<OperatorId> listOfConnectedBlockingParents;
         listOfConnectedBlockingParents.emplace_back(downStreamOperatorId);
-        operatorNode->as_if<Operator>()->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
+        NES::Util::as_if<Operator>(operatorNode)->addProperty(LIST_OF_BLOCKING_DOWNSTREAM_OPERATOR_IDS, listOfConnectedBlockingParents);
     }
 }
 
 bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
 {
     return (
-        operatorNode->instanceOf<SinkLogicalOperator>() || operatorNode->instanceOf<LogicalWindowOperator>()
-        || operatorNode->instanceOf<LogicalUnionOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
-        || operatorNode->instanceOf<Experimental::LogicalBatchJoinOperator>());
+        NES::Util::instanceOf<SinkLogicalOperator>(operatorNode) || NES::Util::instanceOf<LogicalWindowOperator>(operatorNode)
+        || NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode)
+        || NES::Util::instanceOf<Experimental::LogicalBatchJoinOperator>(operatorNode));
 }
 
 } /// namespace NES::Optimizer

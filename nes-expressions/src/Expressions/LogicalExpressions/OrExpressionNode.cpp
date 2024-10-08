@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 OrExpressionNode::OrExpressionNode() = default;
@@ -32,9 +34,9 @@ ExpressionNodePtr OrExpressionNode::create(ExpressionNodePtr const& left, Expres
 
 bool OrExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<OrExpressionNode>())
+    if (NES::Util::instanceOf<OrExpressionNode>(rhs))
     {
-        auto otherAndNode = rhs->as<OrExpressionNode>();
+        auto otherAndNode = NES::Util::as<OrExpressionNode>(rhs);
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
     }
     return false;
@@ -65,7 +67,7 @@ void OrExpressionNode::inferStamp(SchemaPtr schema)
 }
 ExpressionNodePtr OrExpressionNode::copy()
 {
-    return OrExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return OrExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

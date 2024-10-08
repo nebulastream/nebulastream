@@ -22,8 +22,10 @@
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Expressions/WhenExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -102,12 +104,12 @@ ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp
 ExpressionItem ExpressionItem::as(std::string newName)
 {
     ///rename expression node
-    if (!expression->instanceOf<FieldAccessExpressionNode>())
+    if (!NES::Util::instanceOf<FieldAccessExpressionNode>(expression))
     {
         NES_ERROR("Renaming is only allowed on Field Access Attributes");
         NES_NOT_IMPLEMENTED();
     }
-    auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
+    auto fieldAccessExpression = NES::Util::as<FieldAccessExpressionNode>(expression);
     return FieldRenameExpressionNode::create(fieldAccessExpression, std::move(newName));
 }
 
@@ -118,9 +120,9 @@ FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assign
 
 FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr assignExpression)
 {
-    if (expression->instanceOf<FieldAccessExpressionNode>())
+    if (NES::Util::instanceOf<FieldAccessExpressionNode>(expression))
     {
-        return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
+        return FieldAssignmentExpressionNode::create(NES::Util::as<FieldAccessExpressionNode>(expression), assignExpression);
     }
     NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
     throw Exceptions::RuntimeException("Expression API: we can only assign something to a field access expression");

@@ -14,11 +14,13 @@
 
 #include <cmath>
 #include <Expressions/ArithmeticalExpressions/SqrtExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+
 
 namespace NES
 {
@@ -58,9 +60,9 @@ void SqrtExpressionNode::inferStamp(SchemaPtr schema)
 
 bool SqrtExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<SqrtExpressionNode>())
+    if (NES::Util::instanceOf<SqrtExpressionNode>(rhs))
     {
-        auto otherSqrtNode = rhs->as<SqrtExpressionNode>();
+        auto otherSqrtNode = NES::Util::as<SqrtExpressionNode>(rhs);
         return child()->equal(otherSqrtNode->child());
     }
     return false;
@@ -75,7 +77,7 @@ std::string SqrtExpressionNode::toString() const
 
 ExpressionNodePtr SqrtExpressionNode::copy()
 {
-    return SqrtExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return SqrtExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

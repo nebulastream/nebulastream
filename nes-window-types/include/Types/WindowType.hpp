@@ -31,38 +31,6 @@ public:
 
     virtual ~WindowType() = default;
 
-    /**
-     * @brief Checks if the current window is of type WindowType
-     * @tparam WindowType
-     * @return bool true if window is of WindowType
-     */
-    template <class WindowType>
-
-    bool instanceOf()
-    {
-        if (dynamic_cast<WindowType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    /**
-     * @brief Dynamically casts the window to a WindowType or throws an error.
-     * @tparam WindowType
-     * @return returns a shared pointer of the WindowType or throws an error if the type can't be casted.
-     */
-    template <class WindowType>
-    std::shared_ptr<WindowType> as()
-    {
-        if (instanceOf<WindowType>())
-        {
-            return std::dynamic_pointer_cast<WindowType>(this->shared_from_this());
-        }
-        throw std::logic_error(
-            "WindowType:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(WindowType).name());
-    }
-
     virtual std::string toString() const = 0;
 
     /**

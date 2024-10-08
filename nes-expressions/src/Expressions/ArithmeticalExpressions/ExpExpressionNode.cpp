@@ -14,9 +14,11 @@
 
 #include <cmath>
 #include <Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -46,9 +48,9 @@ void ExpExpressionNode::inferStamp(SchemaPtr schema)
 
 bool ExpExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<ExpExpressionNode>())
+    if (NES::Util::instanceOf<ExpExpressionNode>(rhs))
     {
-        auto otherExpNode = rhs->as<ExpExpressionNode>();
+        auto otherExpNode = NES::Util::as<ExpExpressionNode>(rhs);
         return child()->equal(otherExpNode->child());
     }
     return false;
@@ -63,7 +65,7 @@ std::string ExpExpressionNode::toString() const
 
 ExpressionNodePtr ExpExpressionNode::copy()
 {
-    return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return ExpExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

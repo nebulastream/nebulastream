@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <chrono>
 #include <memory>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>

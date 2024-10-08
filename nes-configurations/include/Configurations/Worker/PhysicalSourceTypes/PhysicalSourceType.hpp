@@ -74,37 +74,6 @@ public:
      */
     virtual void reset() = 0;
 
-    /**
-     * @brief Checks if the current Source is of a specific Source Type
-     * @tparam PhysicalSourceType: the source type to check
-     * @return bool true if Source is of PhysicalSourceType
-     */
-    template <class SourceType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<SourceType*>(this))
-        {
-            return true;
-        };
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the PhysicalSourceType to a specific Source Type
-    * @tparam SourceType: source type to cast to
-    * @return returns a shared pointer of the PhysicalSourceType
-    */
-    template <class SourceType>
-    std::shared_ptr<SourceType> as()
-    {
-        if (instanceOf<SourceType>())
-        {
-            return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-        }
-        throw std::logic_error(
-            "PhysicalSourceType:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(SourceType).name());
-    }
-
 private:
     std::string logicalSourceName;
     SourceType sourceType;

@@ -14,8 +14,10 @@
 
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -53,9 +55,9 @@ void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema)
 
 bool ArithmeticalUnaryExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<ArithmeticalUnaryExpressionNode>())
+    if (NES::Util::instanceOf<ArithmeticalUnaryExpressionNode>(rhs))
     {
-        auto otherAddNode = rhs->as<ArithmeticalUnaryExpressionNode>();
+        auto otherAddNode = NES::Util::as<ArithmeticalUnaryExpressionNode>(rhs);
         return child()->equal(otherAddNode->child());
     }
     return false;

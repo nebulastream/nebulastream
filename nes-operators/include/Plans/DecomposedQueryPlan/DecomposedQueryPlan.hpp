@@ -21,7 +21,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/Common.hpp>
 #include <Util/QueryState.hpp>
+
 
 namespace NES
 {
@@ -104,16 +106,16 @@ public:
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
             {
-                auto visitingOp = (*itr)->as<Operator>();
+                auto visitingOp = NES::Util::as<Operator>(*itr);
                 if (visitedOpIds.contains(visitingOp->getId()))
                 {
                     /// skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
-                if (visitingOp->instanceOf<T>())
+                if (NES::Util::instanceOf<T>(visitingOp))
                 {
-                    operators.push_back(visitingOp->as<T>());
+                    operators.push_back(NES::Util::as<T>(visitingOp));
                 }
             }
         }

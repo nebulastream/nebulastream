@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -26,9 +28,9 @@ NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : Logica
 
 bool NegateExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<NegateExpressionNode>())
+    if (NES::Util::instanceOf<NegateExpressionNode>(rhs))
     {
-        auto other = rhs->as<NegateExpressionNode>();
+        auto other = NES::Util::as<NegateExpressionNode>(rhs);
         return this->getChildren()[0]->equal(other->getChildren()[0]);
     }
     return false;
@@ -60,7 +62,7 @@ void NegateExpressionNode::inferStamp(SchemaPtr schema)
 }
 ExpressionNodePtr NegateExpressionNode::copy()
 {
-    return NegateExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return NegateExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

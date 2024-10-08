@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -29,9 +31,9 @@ LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(LogicalBinaryExpression
 
 bool LogicalBinaryExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalBinaryExpressionNode>())
+    if (NES::Util::instanceOf<LogicalBinaryExpressionNode>(rhs))
     {
-        auto other = rhs->as<LogicalBinaryExpressionNode>();
+        auto other = NES::Util::as<LogicalBinaryExpressionNode>(rhs);
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;

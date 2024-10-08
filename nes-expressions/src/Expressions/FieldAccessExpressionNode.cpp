@@ -15,8 +15,10 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 namespace NES
 {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
@@ -37,9 +39,9 @@ ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName)
 
 bool FieldAccessExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<FieldAccessExpressionNode>())
+    if (NES::Util::instanceOf<FieldAccessExpressionNode>(rhs))
     {
-        auto otherFieldRead = rhs->as<FieldAccessExpressionNode>();
+        auto otherFieldRead = NES::Util::as<FieldAccessExpressionNode>(rhs);
         return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->equals(stamp);
     }
     return false;

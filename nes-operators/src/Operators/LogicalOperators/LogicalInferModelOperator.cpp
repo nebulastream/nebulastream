@@ -20,7 +20,9 @@
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES::InferModel
 {
@@ -59,9 +61,9 @@ OperatorPtr LogicalInferModelOperator::copy()
 }
 bool LogicalInferModelOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalInferModelOperator>())
+    if (NES::Util::instanceOf<LogicalInferModelOperator>(rhs))
     {
-        auto inferModelOperator = rhs->as<LogicalInferModelOperator>();
+        auto inferModelOperator = NES::Util::as<LogicalInferModelOperator>(rhs);
         return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
     }
     return false;
@@ -69,7 +71,7 @@ bool LogicalInferModelOperator::equal(NodePtr const& rhs) const
 
 bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalInferModelOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalInferModelOperator>(rhs)->getId() == id;
 }
 
 void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const
@@ -107,7 +109,7 @@ bool LogicalInferModelOperator::inferSchema()
 
     for (auto inputField : inputFields)
     {
-        auto inputExpression = inputField->as<FieldAccessExpressionNode>();
+        auto inputExpression = NES::Util::as<FieldAccessExpressionNode>(inputField);
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(inputSchema);
         auto fieldName = inputExpression->getFieldName();
@@ -116,7 +118,7 @@ bool LogicalInferModelOperator::inferSchema()
 
     for (auto outputField : outputFields)
     {
-        auto outputExpression = outputField->as<FieldAccessExpressionNode>();
+        auto outputExpression = NES::Util::as<FieldAccessExpressionNode>(outputField);
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
         if (outputSchema->getField(fieldName))
@@ -140,17 +142,17 @@ bool LogicalInferModelOperator::inferSchema()
 
 void LogicalInferModelOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature

@@ -33,6 +33,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
+
 namespace NES
 {
 
@@ -115,9 +116,9 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<BinaryExpressionNode>())
+        if (NES::Util::instanceOf<BinaryExpressionNode>(*itr))
         {
-            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            auto visitingOp = NES::Util::as<BinaryExpressionNode>(*itr);
             if (visitedExpressions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -126,8 +127,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
             else
             {
                 visitedExpressions.insert(visitingOp);
-                auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
-                auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
+                auto onLeftKey = NES::Util::as<BinaryExpressionNode>(*itr)->getLeft();
+                auto onRightKey = NES::Util::as<BinaryExpressionNode>(*itr)->getRight();
                 NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
                 auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
                 auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
@@ -194,7 +195,7 @@ QueryPlanBuilder::assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkSt
 QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType)
 {
     NES_DEBUG("QueryPlanBuilder: checkAndAddWatermarkAssignment for a (sub)query plan");
-    auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
+    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
 
     if (queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>().empty())
     {
@@ -228,11 +229,11 @@ QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, Que
 
 std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(ExpressionNodePtr expression, std::string side)
 {
-    if (!expression->instanceOf<FieldAccessExpressionNode>())
+    if (!NES::Util::instanceOf<FieldAccessExpressionNode>(expression))
     {
         NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessExpression but it was a  {}", side, expression->toString());
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessExpression");
     }
-    return expression->as<FieldAccessExpressionNode>();
+    return NES::Util::as<FieldAccessExpressionNode>(expression);
 }
 } /// namespace NES

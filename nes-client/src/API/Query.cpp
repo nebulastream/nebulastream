@@ -13,14 +13,12 @@
 */
 
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -30,7 +28,9 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -154,8 +154,10 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
 Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
 {
     NES_DEBUG("Sequence enters window function");
-    auto timestamp
-        = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName(); /// assume time-based windows
+    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)
+                         ->getTimeCharacteristic()
+                         ->getField()
+                         ->getName(); /// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     /// to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
@@ -210,7 +212,7 @@ Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrence
 
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const
 {
-    auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
+    auto timestamp = Util::as<Windowing::TimeBasedWindowType>(windowType)->getTimeCharacteristic()->getField()->getName();
     /// if no min and max occurrence is defined, apply count without filter
     if (!bounded)
     {
@@ -268,13 +270,6 @@ Query& Query::project(std::vector<ExpressionNodePtr> expressions)
     return *this;
 }
 
-Query& Query::as(const std::string& newSourceName)
-{
-    NES_DEBUG("Query: add rename operator to query");
-    this->queryPlan = QueryPlanBuilder::addRename(newSourceName, this->queryPlan);
-    return *this;
-}
-
 Query& Query::unionWith(const Query& subQuery)
 {
     NES_DEBUG("Query: unionWith the subQuery to current query");
@@ -292,10 +287,10 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpressio
 Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression)
 {
     NES_DEBUG("Query: add Batch Join Operator to Query");
-    if (joinExpression->as<EqualsExpressionNode>())
+    if (NES::Util::as<EqualsExpressionNode>(joinExpression))
     {
-        auto onProbeKey = joinExpression->as<BinaryExpressionNode>()->getLeft();
-        auto onBuildKey = joinExpression->as<BinaryExpressionNode>()->getRight();
+        auto onProbeKey = NES::Util::as<BinaryExpressionNode>(joinExpression)->getLeft();
+        auto onBuildKey = NES::Util::as<BinaryExpressionNode>(joinExpression)->getRight();
 
         this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
     }
@@ -401,9 +396,9 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr 
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<BinaryExpressionNode>())
+        if (NES::Util::instanceOf<BinaryExpressionNode>(*itr))
         {
-            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            auto visitingOp = NES::Util::as<BinaryExpressionNode>(*itr);
             if (visitedExpressions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -412,7 +407,7 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr 
             else
             {
                 visitedExpressions.insert(visitingOp);
-                if ((*itr)->instanceOf<EqualsExpressionNode>())
+                if (NES::Util::instanceOf<EqualsExpressionNode>(*itr))
                 {
                     NES_DEBUG("Query: identify Join Type: INNER JOIN");
                     joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;

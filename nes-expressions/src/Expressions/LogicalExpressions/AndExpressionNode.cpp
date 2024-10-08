@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -33,9 +35,9 @@ ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left, const
 
 bool AndExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<AndExpressionNode>())
+    if (NES::Util::instanceOf<AndExpressionNode>(rhs))
     {
-        auto otherAndNode = rhs->as<AndExpressionNode>();
+        auto otherAndNode = NES::Util::as<AndExpressionNode>(rhs);
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
     }
     return false;
@@ -67,7 +69,7 @@ void AndExpressionNode::inferStamp(SchemaPtr schema)
 }
 ExpressionNodePtr AndExpressionNode::copy()
 {
-    return AndExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return AndExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

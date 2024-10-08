@@ -15,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/yaml.h>
 
@@ -133,11 +134,11 @@ std::string CSVSourceType::toString()
 
 bool CSVSourceType::equal(const PhysicalSourceTypePtr& other)
 {
-    if (!other->instanceOf<CSVSourceType>())
+    if (!NES::Util::instanceOf<CSVSourceType>(other))
     {
         return false;
     }
-    auto otherSourceConfig = other->as<CSVSourceType>();
+    auto otherSourceConfig = NES::Util::as<CSVSourceType>(other);
     return filePath->getValue() == otherSourceConfig->filePath->getValue()
         && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
         && delimiter->getValue() == otherSourceConfig->delimiter->getValue()

@@ -56,7 +56,8 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
         auto updatedPredicate = sortAttributesInExpression(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
-        updatedFilter->as_if<LogicalOperator>()->setOutputSchema(filterOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        NES::Util::as_if<LogicalOperator>(updatedFilter)
+            ->setOutputSchema(NES::Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
         filterOperator->replace(updatedFilter);
     }
 
@@ -64,10 +65,11 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     for (auto const& mapOperator : mapOperators)
     {
         auto mapExpression = mapOperator->getMapExpression();
-        auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
+        auto updatedMapExpression = NES::Util::as<FieldAssignmentExpressionNode>(sortAttributesInExpression(mapExpression));
         auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperator>()->setOutputSchema(mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        NES::Util::as_if<LogicalOperator>(updatedMap)
+            ->setOutputSchema(NES::Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;
@@ -76,23 +78,25 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::ExpressionNodePtr expression)
 {
     NES_DEBUG("Sorting attributed for input expression {}", expression->toString());
-    if (expression->instanceOf<NES::LogicalExpressionNode>())
+    if (NES::Util::instanceOf<NES::LogicalExpressionNode>(expression))
     {
         return sortAttributesInLogicalExpressions(expression);
     }
-    if (expression->instanceOf<NES::ArithmeticalExpressionNode>())
+    if (NES::Util::instanceOf<NES::ArithmeticalExpressionNode>(expression))
     {
         return sortAttributesInArithmeticalExpressions(expression);
     }
-    else if (expression->instanceOf<NES::FieldAssignmentExpressionNode>())
+    else if (NES::Util::instanceOf<NES::FieldAssignmentExpressionNode>(expression))
     {
-        auto fieldAssignmentExpressionNode = expression->as<NES::FieldAssignmentExpressionNode>();
+        auto fieldAssignmentExpressionNode = NES::Util::as<NES::FieldAssignmentExpressionNode>(expression);
         auto assignment = fieldAssignmentExpressionNode->getAssignment();
         auto updatedAssignment = sortAttributesInExpression(assignment);
         auto field = fieldAssignmentExpressionNode->getField();
         return NES::FieldAssignmentExpressionNode::create(field, updatedAssignment);
     }
-    else if (expression->instanceOf<NES::ConstantValueExpressionNode>() || expression->instanceOf<NES::FieldAccessExpressionNode>())
+    else if (
+        NES::Util::instanceOf<NES::ConstantValueExpressionNode>(expression)
+        || NES::Util::instanceOf<NES::FieldAccessExpressionNode>(expression))
     {
         return expression;
     }
@@ -103,9 +107,9 @@ NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::Expres
 ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression)
 {
     NES_DEBUG("Create Z3 expression for arithmetical expression {}", expression->toString());
-    if (expression->instanceOf<NES::AddExpressionNode>())
+    if (NES::Util::instanceOf<NES::AddExpressionNode>(expression))
     {
-        auto addExpressionNode = expression->as<NES::AddExpressionNode>();
+        auto addExpressionNode = NES::Util::as<NES::AddExpressionNode>(expression);
 
         auto sortedLeft = sortAttributesInExpression(addExpressionNode->getLeft());
         auto sortedRight = sortAttributesInExpression(addExpressionNode->getRight());
@@ -132,26 +136,26 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NES::ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<NES::ConstantValueExpressionNode>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NES::ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<NES::ConstantValueExpressionNode>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = NES::Util::as<NES::FieldAccessExpressionNode>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = NES::Util::as<NES::FieldAccessExpressionNode>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -165,7 +169,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedLeft)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -178,7 +183,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedRight)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedRight)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -188,7 +194,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             }
         }
 
-        if (!sortedLeft->instanceOf<AddExpressionNode>() || !sortedRight->instanceOf<AddExpressionNode>())
+        if (!NES::Util::instanceOf<AddExpressionNode>(sortedLeft) || !NES::Util::instanceOf<AddExpressionNode>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -201,18 +207,18 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
 
         return AddExpressionNode::create(sortedLeft, sortedRight);
     }
-    if (expression->instanceOf<SubExpressionNode>())
+    if (NES::Util::instanceOf<SubExpressionNode>(expression))
     {
-        auto subExpressionNode = expression->as<SubExpressionNode>();
+        auto subExpressionNode = NES::Util::as<SubExpressionNode>(expression);
         auto left = subExpressionNode->getLeft();
         auto right = subExpressionNode->getRight();
         sortAttributesInExpression(left);
         sortAttributesInExpression(right);
         return expression;
     }
-    else if (expression->instanceOf<MulExpressionNode>())
+    else if (NES::Util::instanceOf<MulExpressionNode>(expression))
     {
-        auto mulExpressionNode = expression->as<MulExpressionNode>();
+        auto mulExpressionNode = NES::Util::as<MulExpressionNode>(expression);
         auto left = mulExpressionNode->getLeft();
         auto right = mulExpressionNode->getRight();
 
@@ -241,26 +247,26 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = NES::Util::as<FieldAccessExpressionNode>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = NES::Util::as<FieldAccessExpressionNode>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -274,7 +280,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedLeft)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -287,7 +294,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedRight)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedRight)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -297,7 +305,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             }
         }
 
-        if (!sortedLeft->instanceOf<MulExpressionNode>() || !sortedRight->instanceOf<MulExpressionNode>())
+        if (!NES::Util::instanceOf<MulExpressionNode>(sortedLeft) || !NES::Util::instanceOf<MulExpressionNode>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -310,9 +318,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
 
         return MulExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<DivExpressionNode>())
+    else if (NES::Util::instanceOf<DivExpressionNode>(expression))
     {
-        auto divExpressionNode = expression->as<DivExpressionNode>();
+        auto divExpressionNode = NES::Util::as<DivExpressionNode>(expression);
         auto left = divExpressionNode->getLeft();
         auto right = divExpressionNode->getRight();
         sortAttributesInExpression(left);
@@ -326,9 +334,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
 ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression)
 {
     NES_DEBUG("Create Z3 expression node for logical expression {}", expression->toString());
-    if (expression->instanceOf<AndExpressionNode>())
+    if (NES::Util::instanceOf<AndExpressionNode>(expression))
     {
-        auto andExpressionNode = expression->as<AndExpressionNode>();
+        auto andExpressionNode = NES::Util::as<AndExpressionNode>(expression);
         auto left = andExpressionNode->getLeft();
         auto right = andExpressionNode->getRight();
         auto sortedLeft = sortAttributesInExpression(left);
@@ -356,26 +364,26 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = NES::Util::as<FieldAccessExpressionNode>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = NES::Util::as<FieldAccessExpressionNode>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -389,7 +397,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedLeft)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -402,7 +411,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedRight)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedRight)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -412,7 +422,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             }
         }
 
-        if (!sortedLeft->instanceOf<AndExpressionNode>() || !sortedRight->instanceOf<AndExpressionNode>())
+        if (!NES::Util::instanceOf<AndExpressionNode>(sortedLeft) || !NES::Util::instanceOf<AndExpressionNode>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -424,9 +434,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return AndExpressionNode::create(sortedLeft, sortedRight);
     }
-    if (expression->instanceOf<OrExpressionNode>())
+    if (NES::Util::instanceOf<OrExpressionNode>(expression))
     {
-        auto orExpressionNode = expression->as<OrExpressionNode>();
+        auto orExpressionNode = NES::Util::as<OrExpressionNode>(expression);
         auto left = orExpressionNode->getLeft();
         auto right = orExpressionNode->getRight();
         auto sortedLeft = sortAttributesInExpression(left);
@@ -454,26 +464,26 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = NES::Util::as<FieldAccessExpressionNode>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (NES::Util::instanceOf<ConstantValueExpressionNode>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = NES::Util::as<ConstantValueExpressionNode>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = NES::Util::as<FieldAccessExpressionNode>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -487,7 +497,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedLeft)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedLeft)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
                 if (replaced)
@@ -500,7 +511,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(sortedRight)
+                       || NES::Util::instanceOf<ConstantValueExpressionNode>(sortedRight)))
             {
                 bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
                 if (replaced)
@@ -510,7 +522,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             }
         }
 
-        if (!sortedLeft->instanceOf<OrExpressionNode>() || !sortedRight->instanceOf<OrExpressionNode>())
+        if (!NES::Util::instanceOf<OrExpressionNode>(sortedLeft) || !NES::Util::instanceOf<OrExpressionNode>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
@@ -522,9 +534,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return OrExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<LessExpressionNode>())
+    else if (NES::Util::instanceOf<LessExpressionNode>(expression))
     {
-        auto lessExpressionNode = expression->as<LessExpressionNode>();
+        auto lessExpressionNode = NES::Util::as<LessExpressionNode>(expression);
         auto left = lessExpressionNode->getLeft();
         auto right = lessExpressionNode->getRight();
 
@@ -540,9 +552,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return LessExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<LessEqualsExpressionNode>())
+    else if (NES::Util::instanceOf<LessEqualsExpressionNode>(expression))
     {
-        auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
+        auto lessEqualsExpressionNode = NES::Util::as<LessEqualsExpressionNode>(expression);
         auto left = lessEqualsExpressionNode->getLeft();
         auto right = lessEqualsExpressionNode->getRight();
         auto sortedLeft = sortAttributesInExpression(left);
@@ -557,9 +569,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return LessEqualsExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<GreaterExpressionNode>())
+    else if (NES::Util::instanceOf<GreaterExpressionNode>(expression))
     {
-        auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
+        auto greaterExpressionNode = NES::Util::as<GreaterExpressionNode>(expression);
         auto left = greaterExpressionNode->getLeft();
         auto right = greaterExpressionNode->getRight();
 
@@ -575,9 +587,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return GreaterExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<GreaterEqualsExpressionNode>())
+    else if (NES::Util::instanceOf<GreaterEqualsExpressionNode>(expression))
     {
-        auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
+        auto greaterEqualsExpressionNode = NES::Util::as<GreaterEqualsExpressionNode>(expression);
         auto left = greaterEqualsExpressionNode->getLeft();
         auto right = greaterEqualsExpressionNode->getRight();
 
@@ -593,9 +605,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return GreaterEqualsExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<EqualsExpressionNode>())
+    else if (NES::Util::instanceOf<EqualsExpressionNode>(expression))
     {
-        auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
+        auto equalsExpressionNode = NES::Util::as<EqualsExpressionNode>(expression);
         auto left = equalsExpressionNode->getLeft();
         auto right = equalsExpressionNode->getRight();
         auto sortedLeft = sortAttributesInExpression(left);
@@ -610,9 +622,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
         }
         return EqualsExpressionNode::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<NegateExpressionNode>())
+    else if (NES::Util::instanceOf<NegateExpressionNode>(expression))
     {
-        auto negateExpressionNode = expression->as<NegateExpressionNode>();
+        auto negateExpressionNode = NES::Util::as<NegateExpressionNode>(expression);
         auto childExpression = negateExpressionNode->child();
         auto updatedChildExpression = sortAttributesInExpression(childExpression);
         return NegateExpressionNode::create(updatedChildExpression);
@@ -624,7 +636,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
 bool AttributeSortRule::replaceCommutativeExpressions(
     const ExpressionNodePtr& parentExpression, const ExpressionNodePtr& originalExpression, const ExpressionNodePtr& updatedExpression)
 {
-    auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
+    auto binaryExpression = NES::Util::as<BinaryExpressionNode>(parentExpression);
 
     const ExpressionNodePtr& leftChild = binaryExpression->getLeft();
     const ExpressionNodePtr& rightChild = binaryExpression->getRight();
@@ -645,9 +657,9 @@ bool AttributeSortRule::replaceCommutativeExpressions(
         auto children = parentExpression->getChildren();
         for (const auto& child : children)
         {
-            if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>()))
+            if (!(NES::Util::instanceOf<FieldAccessExpressionNode>(child) || NES::Util::instanceOf<ConstantValueExpressionNode>(child)))
             {
-                bool replaced = replaceCommutativeExpressions(child->as<ExpressionNode>(), originalExpression, updatedExpression);
+                bool replaced = replaceCommutativeExpressions(NES::Util::as<ExpressionNode>(child), originalExpression, updatedExpression);
                 if (replaced)
                 {
                     return true;
@@ -661,16 +673,17 @@ bool AttributeSortRule::replaceCommutativeExpressions(
 std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression)
 {
     ExpressionNodePtr startPoint = std::move(expression);
-    while (!(startPoint->instanceOf<FieldAccessExpressionNode>() || startPoint->instanceOf<ConstantValueExpressionNode>()))
+    while (
+        !(NES::Util::instanceOf<FieldAccessExpressionNode>(startPoint) || NES::Util::instanceOf<ConstantValueExpressionNode>(startPoint)))
     {
-        startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
+        startPoint = NES::Util::as<ExpressionNode>(startPoint->getChildren()[0]);
     }
 
-    if (startPoint->instanceOf<FieldAccessExpressionNode>())
+    if (NES::Util::instanceOf<FieldAccessExpressionNode>(startPoint))
     {
-        return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
+        return NES::Util::as<FieldAccessExpressionNode>(startPoint)->getFieldName();
     }
-    const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
+    const ValueTypePtr& constantValue = NES::Util::as<ConstantValueExpressionNode>(startPoint)->getConstantValue();
     if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
     {
         return basicValueType->value;

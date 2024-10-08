@@ -15,7 +15,9 @@
 #include <sstream>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <magic_enum.hpp>
+
 
 namespace NES::Windowing
 {
@@ -31,7 +33,7 @@ WindowAggregationDescriptor::WindowAggregationDescriptor(const ExpressionNodePtr
 
 WindowAggregationDescriptorPtr WindowAggregationDescriptor::as(const ExpressionNodePtr& asField)
 {
-    const auto& field = asField->as<FieldAccessExpressionNode>();
+    const auto& field = NES::Util::as<FieldAccessExpressionNode>(asField);
     this->asField = field;
     return this->copy();
 }

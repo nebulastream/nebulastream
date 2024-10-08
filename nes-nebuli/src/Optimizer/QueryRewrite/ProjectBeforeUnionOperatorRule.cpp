@@ -46,7 +46,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
             auto childrenToUnionOperator = unionOperator->getChildren();
             for (auto& child : childrenToUnionOperator)
             {
-                auto childOutputSchema = child->as<LogicalOperator>()->getOutputSchema();
+                auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
                 /// Find the child that matches the right schema and inset the project operator there
                 if (rightInputSchema->equals(childOutputSchema, false))
                 {
@@ -78,7 +78,8 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
         auto updatedFieldName = destinationFields[i]->getName();
         /// Compute field access and field rename expression
         auto originalField = FieldAccessExpressionNode::create(field->getDataType(), field->getName());
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
+        auto fieldRenameExpression
+            = FieldRenameExpressionNode::create(NES::Util::as<FieldAccessExpressionNode>(originalField), updatedFieldName);
         projectExpressions.push_back(fieldRenameExpression);
     }
     /// Create Projection operator

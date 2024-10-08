@@ -35,9 +35,9 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<BinaryExpressionNode>())
+        if (Util::instanceOf<BinaryExpressionNode>(*itr))
         {
-            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            auto visitingOp = NES::Util::as<BinaryExpressionNode>(*itr);
             if (visitedExpressions.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -47,13 +47,13 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
             {
                 visitedExpressions.insert(visitingOp);
                 ///Find the schema for left and right join key
-                if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()
-                    && (*itr)->instanceOf<EqualsExpressionNode>())
+                if (!Util::instanceOf<BinaryExpressionNode>(Util::as<BinaryExpressionNode>(*itr)->getLeft())
+                    && Util::instanceOf<EqualsExpressionNode>(*itr))
                 {
-                    const auto leftJoinKey = (*itr)->as<BinaryExpressionNode>()->getLeft()->as<FieldAccessExpressionNode>();
+                    const auto leftJoinKey = Util::as<FieldAccessExpressionNode>(Util::as<BinaryExpressionNode>(*itr)->getLeft());
                     leftJoinKeyNameEqui = leftJoinKey->getFieldName();
 
-                    const auto rightJoinKey = (*itr)->as<BinaryExpressionNode>()->getRight()->as<FieldAccessExpressionNode>();
+                    const auto rightJoinKey = Util::as<FieldAccessExpressionNode>(Util::as<BinaryExpressionNode>(*itr)->getRight());
                     rightJoinKeyNameEqui = rightJoinKey->getFieldName();
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");

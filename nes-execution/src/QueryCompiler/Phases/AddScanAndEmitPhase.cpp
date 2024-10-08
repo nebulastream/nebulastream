@@ -22,7 +22,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+
 
 namespace NES::QueryCompilation
 {
@@ -52,12 +54,12 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
 
     /// insert buffer scan operator to the pipeline root if necessary
     auto rootOperator = pipelineRootOperators[0];
-    if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>())
+    if (!NES::Util::instanceOf<PhysicalOperators::AbstractScanOperator>(rootOperator))
     {
         PRECONDITION(
-            rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>(),
+            NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
             "Pipeline root should be a unary operator but was:" + rootOperator->toString());
-        auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
+        auto binaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
         auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
@@ -66,8 +68,8 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
     for (const auto& leaf : pipelineLeafOperators)
     {
-        auto leafOperator = leaf->as<Operator>();
-        if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>())
+        auto leafOperator = NES::Util::as<Operator>(leaf);
+        if (!NES::Util::instanceOf<PhysicalOperators::AbstractEmitOperator>(leafOperator))
         {
             auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);

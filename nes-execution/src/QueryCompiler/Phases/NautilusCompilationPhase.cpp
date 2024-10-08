@@ -22,7 +22,9 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+
 
 namespace NES::QueryCompilation
 {
@@ -67,7 +69,7 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     PRECONDITION(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
 
     auto rootOperator = pipelineRoots[0];
-    auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
+    auto nautilusPipeline = NES::Util::as<NautilusPipelineOperator>(rootOperator);
     Nautilus::CompilationOptions options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",

@@ -15,7 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -34,9 +36,9 @@ ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr& left, const
 
 bool MulExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<MulExpressionNode>())
+    if (NES::Util::instanceOf<MulExpressionNode>(rhs))
     {
-        auto otherMulNode = rhs->as<MulExpressionNode>();
+        auto otherMulNode = NES::Util::as<MulExpressionNode>(rhs);
         return getLeft()->equal(otherMulNode->getLeft()) && getRight()->equal(otherMulNode->getRight());
     }
     return false;
@@ -51,7 +53,7 @@ std::string MulExpressionNode::toString() const
 
 ExpressionNodePtr MulExpressionNode::copy()
 {
-    return MulExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return MulExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

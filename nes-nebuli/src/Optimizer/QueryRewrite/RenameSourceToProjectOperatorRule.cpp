@@ -45,7 +45,7 @@ QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan)
 OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode)
 {
     /// Fetch the new source name and input schema for the as operator
-    auto renameSourceOperator = operatorNode->as<RenameSourceOperator>();
+    auto renameSourceOperator = NES::Util::as<RenameSourceOperator>(operatorNode);
     auto newSourceName = renameSourceOperator->getNewSourceName();
     auto inputSchema = renameSourceOperator->getInputSchema();
 
@@ -59,7 +59,8 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
         std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         /// Compute field access and field rename expression
         auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
-        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
+        auto fieldRenameExpression
+            = FieldRenameExpressionNode::create(NES::Util::as<FieldAccessExpressionNode>(originalField), updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
     }
     /// Construct a new project operator

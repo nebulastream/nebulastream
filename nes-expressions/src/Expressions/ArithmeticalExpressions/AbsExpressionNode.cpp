@@ -47,9 +47,9 @@ void AbsExpressionNode::inferStamp(SchemaPtr schema)
 
 bool AbsExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<AbsExpressionNode>())
+    if (NES::Util::instanceOf<AbsExpressionNode>(rhs))
     {
-        auto otherAbsNode = rhs->as<AbsExpressionNode>();
+        auto otherAbsNode = NES::Util::as<AbsExpressionNode>(rhs);
         return child()->equal(otherAbsNode->child());
     }
     return false;
@@ -64,7 +64,7 @@ std::string AbsExpressionNode::toString() const
 
 ExpressionNodePtr AbsExpressionNode::copy()
 {
-    return AbsExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return AbsExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES
