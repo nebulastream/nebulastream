@@ -24,7 +24,6 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/TextType.hpp>
@@ -123,11 +122,6 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
     return std::make_shared<ArrayType>(length, component);
 }
 
-DataTypePtr DataTypeFactory::createFixedChar(uint64_t length)
-{
-    return std::make_shared<FixedChar>(length);
-}
-
 DataTypePtr DataTypeFactory::createText()
 {
     return std::make_shared<TextType>();
@@ -168,11 +162,6 @@ ValueTypePtr DataTypeFactory::createArrayValueWithContainedType(const DataTypePt
 {
     auto const length = values.size();
     return std::make_shared<ArrayValue>(createArray(length, type), std::move(values));
-}
-
-ValueTypePtr DataTypeFactory::createFixedCharValue(const std::string& values) noexcept
-{
-    return createFixedCharValue(values.c_str());
 }
 
 ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string>&& values) noexcept
