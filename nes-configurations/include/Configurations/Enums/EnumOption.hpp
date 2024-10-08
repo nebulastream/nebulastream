@@ -14,27 +14,24 @@
 #pragma once
 #include <string>
 #include <type_traits>
+#include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
-#include <Configurations/OptionVisitor.hpp>
 
 namespace NES::Configurations
 {
 
 template <class T>
 concept IsEnum = std::is_enum<T>::value;
-/**
- * @brief This class defines an option, which has only the member of an enum as possible values.
- * @tparam T
- */
+/// This class defines an option, which has only the member of an enum as possible values.
 template <IsEnum T>
 class EnumOption : public TypedBaseOption<T>
 {
 public:
     /// Constructor to define a EnumOption with a specific default value.
     EnumOption(const std::string& name, T defaultValue, const std::string& description)
-        : TypedBaseOption<T>(name, defaultValue, description){};
+        : TypedBaseOption<T>(name, defaultValue, description) {};
 
     /// Operator to assign a new value as a value of this option.
     EnumOption<T>& operator=(const T& value)
@@ -84,10 +81,7 @@ protected:
     };
 
 public:
-    void accept(OptionVisitor& visitor) override
-    {
-        visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue()));
-    }
+    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue())); }
 };
 
 }

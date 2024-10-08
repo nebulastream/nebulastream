@@ -14,9 +14,9 @@
 
 #pragma once
 #include <string>
+#include <Configurations/PrintingVisitor.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES::Configuration
 {
@@ -24,9 +24,7 @@ namespace NES::Configuration
 class SingleNodeWorkerConfiguration final : public Configurations::BaseConfiguration
 {
 public:
-    /**
-     * @brief GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-     */
+    /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
     Configurations::StringOption grpcAddressUri
         = {"grpc",
            "[::]:8080",
@@ -69,6 +67,7 @@ auto loadConfiguration(const int argc, const char** argv)
         if (arg == "--help")
         {
             generateHelp<T>(std::cout);
+            std::exit(0);
         }
         commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
     }

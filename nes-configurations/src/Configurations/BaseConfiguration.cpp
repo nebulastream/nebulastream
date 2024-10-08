@@ -15,12 +15,12 @@
 #include <filesystem>
 #include <fstream>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/PrintingVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h>
-#include <Configurations/OptionVisitor.hpp>
-#include <Configurations/PrintingVisitor.hpp>
 
 namespace NES::Configurations
 {
@@ -182,8 +182,8 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
     visitor.exitBase(*this);
 };
 
-void BaseConfiguration::generateHelpOutput(std::ostream& ostream, OptionVisitor& visitor,
-                                           std::map<std::string, Configurations::BaseOption*> optionMap, const std::string& indent)
+void BaseConfiguration::generateHelpOutput(
+    std::ostream& ostream, OptionVisitor& visitor, std::map<std::string, Configurations::BaseOption*> optionMap, const std::string& indent)
 {
     for (const auto& pair : optionMap)
     {
@@ -198,7 +198,8 @@ void BaseConfiguration::generateHelpOutput(std::ostream& ostream, OptionVisitor&
         }
         else
         {
-            ostream << indent << "- " << pair.second->getName() << ": " << pair.second->getDescription() << printingVisitor.toString() << "\n";
+            ostream << indent << "- " << pair.second->getName() << ": " << pair.second->getDescription() << printingVisitor.toString()
+                    << "\n";
             printingVisitor.stringBuilder.str("");
         }
     }
