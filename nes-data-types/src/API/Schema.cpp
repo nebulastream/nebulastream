@@ -389,7 +389,8 @@ DataTypePtr Schema::stringToFieldType(const std::string& fieldNodeType, const st
         {
             NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Length properly.");
         }
-        return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+        ///return DataTypeFactory::createFixedChar(std::stoi(fieldNodeLength));
+        ///We should use something else here
     }
 
     if (fieldNodeType == "TEXT")
