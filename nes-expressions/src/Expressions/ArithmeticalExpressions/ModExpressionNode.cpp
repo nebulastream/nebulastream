@@ -14,10 +14,12 @@
 
 #include <sstream>
 #include <Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+
 namespace NES
 {
 
@@ -109,9 +111,9 @@ void ModExpressionNode::inferStamp(SchemaPtr schema)
 
 bool ModExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<ModExpressionNode>())
+    if (NES::Util::instanceOf<ModExpressionNode>(rhs))
     {
-        auto otherAddNode = rhs->as<ModExpressionNode>();
+        auto otherAddNode = NES::Util::as<ModExpressionNode>(rhs);
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
@@ -126,7 +128,7 @@ std::string ModExpressionNode::toString() const
 
 ExpressionNodePtr ModExpressionNode::copy()
 {
-    return ModExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return ModExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

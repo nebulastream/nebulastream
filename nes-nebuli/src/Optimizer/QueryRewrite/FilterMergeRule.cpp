@@ -99,10 +99,10 @@ std::vector<LogicalFilterOperatorPtr> FilterMergeRule::getConsecutiveFilters(con
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
-    while (node->instanceOf<LogicalFilterOperator>())
+    while (NES::Util::instanceOf<LogicalFilterOperator>(node))
     {
         NES_DEBUG("Found consecutive filter in the chain, adding it the list");
-        consecutiveFilters.push_back(node->as<LogicalFilterOperator>());
+        consecutiveFilters.push_back(NES::Util::as<LogicalFilterOperator>(node));
         ++nodeIterator;
         node = (*nodeIterator);
     }

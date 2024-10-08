@@ -13,8 +13,10 @@
 */
 
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -29,9 +31,9 @@ LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(LogicalUnaryExpressionNod
 
 bool LogicalUnaryExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalUnaryExpressionNode>())
+    if (NES::Util::instanceOf<LogicalUnaryExpressionNode>(rhs))
     {
-        auto other = rhs->as<LogicalUnaryExpressionNode>();
+        auto other = NES::Util::as<LogicalUnaryExpressionNode>(rhs);
         return this->getChildren()[0]->equal(other->getChildren()[0]);
     }
     return false;

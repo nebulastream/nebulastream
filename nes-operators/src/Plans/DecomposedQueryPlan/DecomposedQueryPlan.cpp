@@ -19,8 +19,10 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+
 
 namespace NES
 {
@@ -83,7 +85,7 @@ std::vector<OperatorPtr> DecomposedQueryPlan::getLeafOperators() const
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
         {
-            auto visitingOp = (*itr)->as<Operator>();
+            auto visitingOp = NES::Util::as<Operator>(*itr);
             if (visitedOpIds.contains(visitingOp->getId()))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -132,7 +134,7 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() cons
     std::vector<SinkLogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : rootOperators)
     {
-        auto sinkOperator = rootOperator->as<SinkLogicalOperator>();
+        auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
         sinkOperators.emplace_back(sinkOperator);
     }
     NES_DEBUG("Found {} sink operators.", sinkOperators.size());
@@ -175,7 +177,7 @@ OperatorPtr DecomposedQueryPlan::getOperatorWithOperatorId(OperatorId operatorId
         auto matchedOperator = rootOperator->getChildWithOperatorId(operatorId);
         if (matchedOperator)
         {
-            return matchedOperator->as<LogicalOperator>();
+            return NES::Util::as<LogicalOperator>(matchedOperator);
         }
     }
     NES_DEBUG("Unable to find operator with matching Id");
@@ -223,7 +225,7 @@ std::unordered_set<OperatorPtr> DecomposedQueryPlan::getAllOperators() const
         auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
         for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
         {
-            auto visitingOp = (*itr)->as<Operator>();
+            auto visitingOp = NES::Util::as<Operator>(*itr);
             if (visitedOperators.contains(visitingOp))
             {
                 /// skip rest of the steps as the node found in already visited node list
@@ -244,7 +246,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty())
     {
-        auto operatorNode = operatorsToProcess.front()->as<Operator>();
+        auto operatorNode = NES::Util::as<Operator>(operatorsToProcess.front());
         operatorsToProcess.pop_front();
         OperatorId operatorId = operatorNode->getId();
         /// 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
@@ -263,7 +265,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
         /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents())
         {
-            auto parentOperator = parentNode->as<Operator>();
+            auto parentOperator = NES::Util::as<Operator>(parentNode);
             OperatorId parentOperatorId = parentOperator->getId();
             if (operatorIdToOperatorMap.contains(parentOperatorId))
             {
@@ -287,7 +289,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
             bool processedAllParent = true;
             for (const auto& parentOperator : parentOperators)
             {
-                if (!operatorIdToOperatorMap.contains(parentOperator->as<Operator>()->getId()))
+                if (!operatorIdToOperatorMap.contains(NES::Util::as<Operator>(parentOperator)->getId()))
                 {
                     processedAllParent = false;
                     break;

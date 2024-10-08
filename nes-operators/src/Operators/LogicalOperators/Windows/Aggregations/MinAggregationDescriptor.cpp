@@ -17,7 +17,9 @@
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES::Windowing
 {
@@ -39,11 +41,11 @@ WindowAggregationDescriptorPtr MinAggregationDescriptor::create(FieldAccessExpre
 
 WindowAggregationDescriptorPtr MinAggregationDescriptor::on(const ExpressionNodePtr& keyExpression)
 {
-    if (!keyExpression->instanceOf<FieldAccessExpressionNode>())
+    if (!NES::Util::instanceOf<FieldAccessExpressionNode>(keyExpression))
     {
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a  {}", keyExpression->toString());
     }
-    auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
+    auto fieldAccess = NES::Util::as<FieldAccessExpressionNode>(keyExpression);
     return std::make_shared<MinAggregationDescriptor>(MinAggregationDescriptor(fieldAccess));
 }
 
@@ -70,19 +72,19 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
     }
 
     ///Set fully qualified name for the as Field
-    auto onFieldName = onField->as<FieldAccessExpressionNode>()->getFieldName();
-    auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
+    auto onFieldName = NES::Util::as<FieldAccessExpressionNode>(onField)->getFieldName();
+    auto asFieldName = NES::Util::as<FieldAccessExpressionNode>(asField)->getFieldName();
 
     auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
+        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + asFieldName);
     }
     else
     {
         auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
+        NES::Util::as<FieldAccessExpressionNode>(asField)->updateFieldName(attributeNameResolver + fieldName);
     }
     asField->setStamp(onField->getStamp());
 }

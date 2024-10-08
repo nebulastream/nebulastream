@@ -36,6 +36,8 @@ public:
 
     SchemaPtr getSchema() const;
 
+    /// Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
+
     std::string getLogicalSourceName() const;
 
     void setSchema(const SchemaPtr& schema);

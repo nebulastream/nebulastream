@@ -26,9 +26,11 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -137,7 +139,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
         for (auto const& [key, val] : *propertyIterator)
         {
             /// add the current property to the current operator
-            node->as<LogicalOperator>()->addProperty(key, val);
+            NES::Util::as<LogicalOperator>(node)->addProperty(key, val);
         }
         ++propertyIterator;
     }

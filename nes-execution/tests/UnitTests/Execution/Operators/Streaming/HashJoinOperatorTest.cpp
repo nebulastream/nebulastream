@@ -446,9 +446,11 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
 
     /* Checking if all windows have been deleted except for one.
      * We require always one window as we do not know here if we have to take care of more tuples*/
-    if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices() != 1)
+    if (NES::Util::as<Operators::StreamJoinOperatorHandler>(hashJoinOpHandler)->getNumberOfSlices() != 1)
     {
-        NES_ERROR("Not exactly one active window! {}", hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices());
+        NES_ERROR(
+            "Not exactly one active window! {}",
+            NES::Util::as<Operators::StreamJoinOperatorHandler>(hashJoinOpHandler)->getNumberOfSlices());
         ///TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
         ///        return false;
     }

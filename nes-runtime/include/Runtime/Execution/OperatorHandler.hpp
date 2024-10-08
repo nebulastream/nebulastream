@@ -66,37 +66,6 @@ public:
      * @brief Default deconstructor
      */
     virtual ~OperatorHandler() override = default;
-
-    /**
-     * @brief Checks if the current operator handler is of type OperatorHandlerType
-     * @tparam OperatorHandlerType
-     * @return bool true if node is of OperatorHandlerType
-     */
-    template <class OperatorHandlerType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<OperatorHandlerType*>(this))
-        {
-            return true;
-        };
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the node to a OperatorHandlerType
-    * @tparam OperatorHandlerType
-    * @return returns a shared pointer of the OperatorHandlerType
-    */
-    template <class OperatorHandlerType>
-    std::shared_ptr<OperatorHandlerType> as()
-    {
-        if (instanceOf<OperatorHandlerType>())
-        {
-            return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException(
-            "OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
-    }
 };
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 } /// namespace NES::Runtime::Execution

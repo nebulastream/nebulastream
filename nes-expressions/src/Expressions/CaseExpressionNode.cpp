@@ -14,8 +14,10 @@
 #include <utility>
 #include <Expressions/CaseExpressionNode.hpp>
 #include <Expressions/WhenExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp))
@@ -54,7 +56,7 @@ void CaseExpressionNode::inferStamp(SchemaPtr schema)
     {
         elem->inferStamp(schema);
         ///all elements in whenChildren must be WhenExpressionNodes
-        if (!elem->instanceOf<WhenExpressionNode>())
+        if (!NES::Util::instanceOf<WhenExpressionNode>(elem))
         {
             NES_THROW_RUNTIME_ERROR(
                 "Error during stamp inference. All expressions in when expression vector must be when expressions, but " + elem->toString()
@@ -91,7 +93,7 @@ std::vector<ExpressionNodePtr> CaseExpressionNode::getWhenChildren() const
     std::vector<ExpressionNodePtr> whenChildren;
     for (auto whenIter = children.begin(); whenIter != children.end() - 1; ++whenIter)
     {
-        whenChildren.push_back(whenIter->get()->as<ExpressionNode>());
+        whenChildren.push_back(Util::as<ExpressionNode>(*whenIter));
     }
     return whenChildren;
 }
@@ -102,14 +104,14 @@ ExpressionNodePtr CaseExpressionNode::getDefaultExp() const
     {
         NES_FATAL_ERROR("A case expression always should have at least two children, but it had: {}", children.size());
     }
-    return (*(children.end() - 1))->as<ExpressionNode>();
+    return Util::as<ExpressionNode>(*(children.end() - 1));
 }
 
 bool CaseExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<CaseExpressionNode>())
+    if (NES::Util::instanceOf<CaseExpressionNode>(rhs))
     {
-        auto otherCaseNode = rhs->as<CaseExpressionNode>();
+        auto otherCaseNode = NES::Util::as<CaseExpressionNode>(rhs);
         if (getChildren().size() != otherCaseNode->getChildren().size())
         {
             return false;
@@ -145,7 +147,7 @@ ExpressionNodePtr CaseExpressionNode::copy()
     std::vector<ExpressionNodePtr> copyOfWhenExpressions;
     for (auto whenExpression : getWhenChildren())
     {
-        copyOfWhenExpressions.push_back(whenExpression->as<ExpressionNode>()->copy());
+        copyOfWhenExpressions.push_back(NES::Util::as<ExpressionNode>(whenExpression)->copy());
     }
     return CaseExpressionNode::create(copyOfWhenExpressions, getDefaultExp()->copy());
 }

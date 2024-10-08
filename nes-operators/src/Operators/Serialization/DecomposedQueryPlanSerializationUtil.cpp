@@ -35,7 +35,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
     {
-        auto visitingOp = (*itr)->as<Operator>();
+        auto visitingOp = NES::Util::as<Operator>(*itr);
         if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized

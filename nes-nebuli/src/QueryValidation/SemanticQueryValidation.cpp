@@ -168,7 +168,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     /// Check if all root operators of type sink
     for (auto& root : rootOperators)
     {
-        if (!root->instanceOf<SinkLogicalOperator>())
+        if (!NES::Util::instanceOf<SinkLogicalOperator>(root))
         {
             throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
         }
@@ -185,7 +185,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         {
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
-                auto field = inputField->as<FieldAccessExpressionNode>();
+                auto field = NES::Util::as<FieldAccessExpressionNode>(inputField);
                 if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
                 {
                     throw QueryInvalid(

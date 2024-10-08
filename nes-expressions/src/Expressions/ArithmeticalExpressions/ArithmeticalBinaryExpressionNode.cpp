@@ -14,8 +14,10 @@
 
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -67,9 +69,9 @@ void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema)
 
 bool ArithmeticalBinaryExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<ArithmeticalBinaryExpressionNode>())
+    if (NES::Util::instanceOf<ArithmeticalBinaryExpressionNode>(rhs))
     {
-        auto otherAddNode = rhs->as<ArithmeticalBinaryExpressionNode>();
+        auto otherAddNode = NES::Util::as<ArithmeticalBinaryExpressionNode>(rhs);
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;

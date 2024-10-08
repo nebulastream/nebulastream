@@ -15,9 +15,11 @@
 #include <utility>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
 #include <Util/QuerySignatureContext.hpp>
+
 
 namespace NES
 {
@@ -37,13 +39,13 @@ void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& c
     {
         return;
     }
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring Z3 expressions for {}", operatorNode->toString());
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferZ3Signature(context);
     }
     z3Signature = context.createQuerySignatureForOperator(operatorNode);

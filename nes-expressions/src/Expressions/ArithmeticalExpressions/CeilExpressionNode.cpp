@@ -13,9 +13,11 @@
 */
 
 #include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
 namespace NES
 {
 
@@ -44,9 +46,9 @@ void CeilExpressionNode::inferStamp(SchemaPtr schema)
 
 bool CeilExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<CeilExpressionNode>())
+    if (NES::Util::instanceOf<CeilExpressionNode>(rhs))
     {
-        auto otherCeilNode = rhs->as<CeilExpressionNode>();
+        auto otherCeilNode = NES::Util::as<CeilExpressionNode>(rhs);
         return child()->equal(otherCeilNode->child());
     }
     return false;
@@ -61,7 +63,7 @@ std::string CeilExpressionNode::toString() const
 
 ExpressionNodePtr CeilExpressionNode::copy()
 {
-    return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return CeilExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

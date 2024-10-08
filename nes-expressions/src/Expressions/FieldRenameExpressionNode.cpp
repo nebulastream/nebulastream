@@ -17,8 +17,10 @@
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 
 namespace NES
 {
@@ -35,9 +37,9 @@ ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr
 
 bool FieldRenameExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<FieldRenameExpressionNode>())
+    if (NES::Util::instanceOf<FieldRenameExpressionNode>(rhs))
     {
-        auto otherFieldRead = rhs->as<FieldRenameExpressionNode>();
+        auto otherFieldRead = NES::Util::as<FieldRenameExpressionNode>(rhs);
         return otherFieldRead->getOriginalField()->equal(getOriginalField()) && this->newFieldName == otherFieldRead->getNewFieldName();
     }
     return false;
@@ -101,7 +103,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema)
 
 ExpressionNodePtr FieldRenameExpressionNode::copy()
 {
-    return FieldRenameExpressionNode::create(originalField->copy()->as<FieldAccessExpressionNode>(), newFieldName);
+    return FieldRenameExpressionNode::create(Util::as<FieldAccessExpressionNode>(originalField->copy()), newFieldName);
 }
 
 } /// namespace NES

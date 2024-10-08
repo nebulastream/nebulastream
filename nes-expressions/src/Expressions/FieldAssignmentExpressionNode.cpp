@@ -18,7 +18,9 @@
 #include <API/Schema.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 
 namespace NES
 {
@@ -36,9 +38,9 @@ FieldAssignmentExpressionNode::create(const FieldAccessExpressionNodePtr& fieldA
 
 bool FieldAssignmentExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<FieldAssignmentExpressionNode>())
+    if (NES::Util::instanceOf<FieldAssignmentExpressionNode>(rhs))
     {
-        auto otherFieldAssignment = rhs->as<FieldAssignmentExpressionNode>();
+        auto otherFieldAssignment = NES::Util::as<FieldAssignmentExpressionNode>(rhs);
         /// a field assignment expression has always two children.
         return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
     }
@@ -54,7 +56,7 @@ std::string FieldAssignmentExpressionNode::toString() const
 
 FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const
 {
-    return getLeft()->as<FieldAccessExpressionNode>();
+    return Util::as<FieldAccessExpressionNode>(getLeft());
 }
 
 ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const
@@ -105,7 +107,7 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema)
 }
 ExpressionNodePtr FieldAssignmentExpressionNode::copy()
 {
-    return FieldAssignmentExpressionNode::create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
+    return FieldAssignmentExpressionNode::create(Util::as<FieldAccessExpressionNode>(getField()->copy()), getAssignment()->copy());
 }
 
 } /// namespace NES

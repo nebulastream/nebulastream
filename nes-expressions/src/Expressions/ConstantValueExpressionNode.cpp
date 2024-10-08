@@ -13,7 +13,9 @@
 */
 
 #include <Expressions/ConstantValueExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/ValueTypes/ValueType.hpp>
+
 
 namespace NES
 {
@@ -27,9 +29,9 @@ ConstantValueExpressionNode::ConstantValueExpressionNode(const ConstantValueExpr
 
 bool ConstantValueExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<ConstantValueExpressionNode>())
+    if (NES::Util::instanceOf<ConstantValueExpressionNode>(rhs))
     {
-        auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
+        auto otherConstantValueNode = NES::Util::as<ConstantValueExpressionNode>(rhs);
         return otherConstantValueNode->constantValue->isEquals(constantValue);
     }
     return false;

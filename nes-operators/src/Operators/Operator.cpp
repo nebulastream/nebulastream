@@ -16,7 +16,9 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -66,7 +68,7 @@ OperatorPtr Operator::duplicate()
     NES_DEBUG("Operator: copy all parents");
     for (const auto& parent : getParents())
     {
-        if (!copyOperator->addParent(getDuplicateOfParent(parent->as<Operator>())))
+        if (!copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent))))
         {
             NES_THROW_RUNTIME_ERROR("Operator: Unable to add parent to copy");
         }
@@ -75,7 +77,7 @@ OperatorPtr Operator::duplicate()
     NES_DEBUG("Operator: copy all children");
     for (const auto& child : getChildren())
     {
-        if (!copyOperator->addChild(getDuplicateOfChild(child->as<Operator>()->duplicate())))
+        if (!copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate())))
         {
             NES_THROW_RUNTIME_ERROR("Operator: Unable to add child to copy");
         }
@@ -96,7 +98,7 @@ OperatorPtr Operator::getDuplicateOfParent(const OperatorPtr& operatorNode)
     NES_TRACE("Operator: For all parents get copy of the ancestor and add as parent to the copy of the input operator");
     for (const auto& parent : operatorNode->getParents())
     {
-        copyOfOperator->addParent(getDuplicateOfParent(parent->as<Operator>()));
+        copyOfOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
     }
     NES_TRACE("Operator: return copy of the input operator");
     return copyOfOperator;
@@ -115,7 +117,7 @@ OperatorPtr Operator::getDuplicateOfChild(const OperatorPtr& operatorNode)
     NES_TRACE("Operator: For all children get copy of their children and add as child to the copy of the input operator");
     for (const auto& child : operatorNode->getChildren())
     {
-        copyOfOperator->addChild(getDuplicateOfParent(child->as<Operator>()));
+        copyOfOperator->addChild(getDuplicateOfParent(NES::Util::as<Operator>(child)));
     }
     NES_TRACE("Operator: return copy of the input operator");
     return copyOfOperator;
@@ -129,7 +131,7 @@ bool Operator::addChild(NodePtr newNode)
         return false;
     }
 
-    if (newNode->as<Operator>()->getId() == id)
+    if (NES::Util::as<Operator>(newNode)->getId() == id)
     {
         NES_ERROR("Operator: can not add self as child to itself");
         return false;
@@ -139,7 +141,7 @@ bool Operator::addChild(NodePtr newNode)
     auto found = std::find_if(
         currentChildren.begin(),
         currentChildren.end(),
-        [&](const NodePtr& child) { return child->as<Operator>()->getId() == newNode->as<Operator>()->getId(); });
+        [&](const NodePtr& child) { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 
     if (found == currentChildren.end())
     {
@@ -160,7 +162,7 @@ bool Operator::addParent(NodePtr newNode)
         return false;
     }
 
-    if (newNode->as<Operator>()->getId() == id)
+    if (NES::Util::as<Operator>(newNode)->getId() == id)
     {
         NES_ERROR("Operator: can not add self as parent to itself");
         return false;
@@ -170,7 +172,7 @@ bool Operator::addParent(NodePtr newNode)
     auto found = std::find_if(
         currentParents.begin(),
         currentParents.end(),
-        [&](const NodePtr& child) { return child->as<Operator>()->getId() == newNode->as<Operator>()->getId(); });
+        [&](const NodePtr& child) { return NES::Util::as<Operator>(child)->getId() == NES::Util::as<Operator>(newNode)->getId(); });
 
     if (found == currentParents.end())
     {
@@ -188,13 +190,13 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const
     for (const auto& child : children)
     {
         /// If the child has a matching operator id then return it
-        if (child->as<Operator>()->getId() == operatorId)
+        if (NES::Util::as<Operator>(child)->getId() == operatorId)
         {
             return child;
         }
 
         /// Look in for a matching operator in the grand children list
-        auto found = child->as<Operator>()->getChildWithOperatorId(operatorId);
+        auto found = NES::Util::as<Operator>(child)->getChildWithOperatorId(operatorId);
         if (found)
         {
             return found;
@@ -225,7 +227,7 @@ void Operator::removeProperty(const std::string& key)
 
 bool Operator::containAsGrandChild(NodePtr operatorNode)
 {
-    auto operatorIdToCheck = operatorNode->as<Operator>()->getId();
+    auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (auto& child : children)
@@ -237,12 +239,12 @@ bool Operator::containAsGrandChild(NodePtr operatorNode)
     return std::any_of(
         ancestors.begin(),
         ancestors.end(),
-        [operatorIdToCheck](const NodePtr& ancestor) { return ancestor->as<Operator>()->getId() == operatorIdToCheck; });
+        [operatorIdToCheck](const NodePtr& ancestor) { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 
 bool Operator::containAsGrandParent(NES::NodePtr operatorNode)
 {
-    auto operatorIdToCheck = operatorNode->as<Operator>()->getId();
+    auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (const auto& parent : parents)
@@ -254,7 +256,7 @@ bool Operator::containAsGrandParent(NES::NodePtr operatorNode)
     return std::any_of(
         ancestors.begin(),
         ancestors.end(),
-        [operatorIdToCheck](const NodePtr& ancestor) { return ancestor->as<Operator>()->getId() == operatorIdToCheck; });
+        [operatorIdToCheck](const NodePtr& ancestor) { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 void Operator::addAllProperties(const OperatorProperties& properties)
 {

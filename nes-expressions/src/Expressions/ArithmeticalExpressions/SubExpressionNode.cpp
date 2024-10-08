@@ -15,7 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -34,9 +36,9 @@ ExpressionNodePtr SubExpressionNode::create(const ExpressionNodePtr& left, const
 
 bool SubExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<SubExpressionNode>())
+    if (NES::Util::instanceOf<SubExpressionNode>(rhs))
     {
-        auto otherSubNode = rhs->as<SubExpressionNode>();
+        auto otherSubNode = NES::Util::as<SubExpressionNode>(rhs);
         return getLeft()->equal(otherSubNode->getLeft()) && getRight()->equal(otherSubNode->getRight());
     }
     return false;
@@ -51,7 +53,7 @@ std::string SubExpressionNode::toString() const
 
 ExpressionNodePtr SubExpressionNode::copy()
 {
-    return SubExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return SubExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

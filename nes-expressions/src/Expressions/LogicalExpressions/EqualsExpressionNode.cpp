@@ -14,7 +14,9 @@
 
 #include <sstream>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -31,9 +33,9 @@ ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr& left, co
 
 bool EqualsExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<EqualsExpressionNode>())
+    if (NES::Util::instanceOf<EqualsExpressionNode>(rhs))
     {
-        auto other = rhs->as<EqualsExpressionNode>();
+        auto other = NES::Util::as<EqualsExpressionNode>(rhs);
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
     }
     return false;
@@ -48,7 +50,7 @@ std::string EqualsExpressionNode::toString() const
 
 ExpressionNodePtr EqualsExpressionNode::copy()
 {
-    return EqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
+    return EqualsExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy(), Util::as<ExpressionNode>(children[1])->copy());
 }
 
 } /// namespace NES

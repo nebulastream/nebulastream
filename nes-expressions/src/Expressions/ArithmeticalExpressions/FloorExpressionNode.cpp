@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -46,9 +47,9 @@ void FloorExpressionNode::inferStamp(SchemaPtr schema)
 
 bool FloorExpressionNode::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<FloorExpressionNode>())
+    if (NES::Util::instanceOf<FloorExpressionNode>(rhs))
     {
-        auto otherFloorNode = rhs->as<FloorExpressionNode>();
+        auto otherFloorNode = NES::Util::as<FloorExpressionNode>(rhs);
         return child()->equal(otherFloorNode->child());
     }
     return false;
@@ -63,7 +64,7 @@ std::string FloorExpressionNode::toString() const
 
 ExpressionNodePtr FloorExpressionNode::copy()
 {
-    return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+    return FloorExpressionNode::create(Util::as<ExpressionNode>(children[0])->copy());
 }
 
 } /// namespace NES

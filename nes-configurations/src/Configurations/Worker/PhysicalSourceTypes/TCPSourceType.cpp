@@ -15,7 +15,9 @@
 #include <cstring>
 #include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -274,11 +276,11 @@ std::string TCPSourceType::toString()
 
 bool TCPSourceType::equal(const PhysicalSourceTypePtr& other)
 {
-    if (!other->instanceOf<TCPSourceType>())
+    if (!NES::Util::instanceOf<TCPSourceType>(other))
     {
         return false;
     }
-    auto otherSourceConfig = other->as<TCPSourceType>();
+    auto otherSourceConfig = NES::Util::as<TCPSourceType>(other);
     return socketHost->getValue() == otherSourceConfig->socketHost->getValue()
         && socketPort->getValue() == otherSourceConfig->socketPort->getValue()
         && socketDomain->getValue() == otherSourceConfig->socketDomain->getValue()

@@ -14,7 +14,9 @@
 
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -39,14 +41,14 @@ std::string WatermarkAssignerLogicalOperator::toString() const
 
 bool WatermarkAssignerLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<WatermarkAssignerLogicalOperator>(rhs)->getId() == id;
 }
 
 bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<WatermarkAssignerLogicalOperator>())
+    if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(rhs))
     {
-        auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperator>();
+        auto watermarkAssignerOperator = NES::Util::as<WatermarkAssignerLogicalOperator>(rhs);
         return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());
     }
     return false;
@@ -80,19 +82,19 @@ bool WatermarkAssignerLogicalOperator::inferSchema()
 
 void WatermarkAssignerLogicalOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
     signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << *childSignature.begin()->second.begin();
 
     ///Update the signature

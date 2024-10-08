@@ -45,24 +45,4 @@ concept GetType = requires(T a) {
     { T::type } -> convertible_to<TypeCastable::Kind>;
 };
 
-template <class X, class Y>
-requires(std::is_base_of<Y, X>::value == false)
-inline constexpr bool instanceOf(const std::unique_ptr<Y>&)
-{
-    return false;
-}
-
-template <GetType X, class Y>
-requires(std::is_base_of<Y, X>::value == true)
-inline bool instanceOf(const std::unique_ptr<Y>& y)
-{
-    return X::type == y->getKind();
-}
-
-template <GetType X>
-inline bool instanceOf(const TypeCastable& y)
-{
-    return X::type == y.getKind();
-}
-
 } /// namespace NES
