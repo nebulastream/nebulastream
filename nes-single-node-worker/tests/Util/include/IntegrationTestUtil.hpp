@@ -14,15 +14,16 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <grpcpp/support/status.h>
+#include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
 
-namespace NES
-{
-namespace IntegrationTestUtil
+
+namespace NES::IntegrationTestUtil
 {
 static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
@@ -71,6 +72,9 @@ void unregisterQuery(QueryId queryId, GRPCServer& uut);
 /// Summary structure of the query containing current status, number of retries and the exceptions.
 QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
 
+/// Expect query summary to fail for queryId with the following sc.
+void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode);
+
 /// Current status of the query.
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
@@ -107,5 +111,4 @@ void replacePortInSourceTCPs(
 std::string getUniqueTestIdentifier();
 
 
-}
 }
