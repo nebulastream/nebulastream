@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 namespace NES::QueryCompilation
 {
 

@@ -52,5 +52,6 @@ public:
 private:
     std::vector<uint64_t> columnOffsets;
 };
+using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 
 }
