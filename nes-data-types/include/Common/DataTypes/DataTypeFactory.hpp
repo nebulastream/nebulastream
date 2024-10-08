@@ -152,13 +152,6 @@ public:
     static DataTypePtr createArray(uint64_t length, const DataTypePtr& component);
 
     /**
-    * @brief Creates a new Char data type.
-    * @param length length of the char
-    * @return DataTypePtr
-    */
-    static DataTypePtr createFixedChar(uint64_t length);
-
-    /**
     * @brief Creates a new text data type.
     * @return DataTypePtr
     */
@@ -239,7 +232,6 @@ public:
      * @return ValueTypePtr
      */
     static ValueTypePtr createFixedCharValue(char const* values) noexcept;
-    static ValueTypePtr createFixedCharValue(const std::string& values) noexcept;
 
     /**
      * @brief Create a data type from a BasicType, this many is used to support the old type system API.
