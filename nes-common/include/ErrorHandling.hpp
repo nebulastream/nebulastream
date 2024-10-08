@@ -102,6 +102,10 @@ private:
  */
 void tryLogCurrentException();
 
+/// Intended to be used to wrap an non nebulastream exception.
+/// The wrapped exception will have error code 9999.
+Exception wrapCurrentException();
+
 /**
  * @brief This function is used to get the current exception code.
  * @warning This function should be used only in a catch block.
