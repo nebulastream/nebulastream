@@ -24,10 +24,7 @@ namespace NES::Configurations
 
 template <class T>
 concept IsEnum = std::is_enum<T>::value;
-/**
- * @brief This class defines an option, which has only the member of an enum as possible values.
- * @tparam T
- */
+/// This class defines an option, which has only the member of an enum as possible values.
 template <IsEnum T>
 class EnumOption : public TypedBaseOption<T>
 {

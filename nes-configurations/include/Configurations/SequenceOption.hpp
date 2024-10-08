@@ -23,38 +23,21 @@
 namespace NES::Configurations
 {
 
-/**
- * @brief This class implements sequential options of a type that has to be a subtype of the BaseOption.
- * @note SequenceOptions can't have default values.
- * @tparam Type of the component.
- */
+/// This class implements sequential options of a type that has to be a subtype of the BaseOption.
 template <DerivedBaseOption T>
 class SequenceOption : public BaseOption
 {
 public:
-    /**
-     * @brief Constructor to create a new option that sets a name, and description.
-     * @param name of the option.
-     * @param description of the option.
-     */
+    /// Constructor to create a new option that sets a name, and description.
     SequenceOption(const std::string& name, const std::string& description);
 
-    /**
-     * @brief Clears the option and removes all values in the sequence.
-     */
+    /// Clears the option and removes all values in the sequence.
     void clear() override;
 
-    /**
-     * @brief Accesses an option at a specific index.
-     * @param index
-     * @return Option of type T.
-     */
+    /// Accesses an option at a specific index.
     T operator[](size_t index) const;
 
-    /**
-     * @brief Returns the number of options.
-     * @return size_t
-     */
+    /// returns the number of options
     [[nodiscard]] size_t size() const;
 
     [[nodiscard]] std::vector<T> getValues() const;
