@@ -125,6 +125,25 @@ void tryLogCurrentException()
         NES_ERROR("failed to process with unknown error\n")
     }
 }
+Exception wrapExternalException()
+{
+    try
+    {
+        throw;
+    }
+    catch (const Exception& e)
+    {
+        return e;
+    }
+    catch (const std::exception& e)
+    {
+        return UnknownException(e.what());
+    }
+    catch (...)
+    {
+        return UnknownException();
+    }
+}
 
 
 uint64_t getCurrentExceptionCode()

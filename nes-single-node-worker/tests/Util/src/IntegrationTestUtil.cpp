@@ -29,6 +29,7 @@
 #include <Sources/SourceTCP.hpp>
 #include <Util/Common.hpp>
 #include <fmt/core.h>
+#include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -321,6 +322,17 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut)
     request.set_queryid(queryId.getRawValue());
     EXPECT_TRUE(uut.RequestQuerySummary(&context, &request, &reply).ok());
     return reply;
+}
+
+void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    auto response = uut.RequestQuerySummary(&context, &request, &reply);
+    EXPECT_FALSE(response.ok()) << "Expected QuerySummary request to fail";
+    EXPECT_EQ(response.error_code(), statusCode);
 }
 
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)

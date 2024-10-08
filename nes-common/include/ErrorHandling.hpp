@@ -102,6 +102,9 @@ private:
  */
 void tryLogCurrentException();
 
+/// The wrapped exception gets the error code 9999.
+Exception wrapExternalException();
+
 /**
  * @brief This function is used to get the current exception code.
  * @warning This function should be used only in a catch block.

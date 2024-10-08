@@ -12,10 +12,31 @@
     limitations under the License.
 */
 
+#include <string>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <google/protobuf/empty.pb.h>
+#include <grpcpp/server_context.h>
+#include <grpcpp/support/status.h>
+#include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
 
-grpc::Status NES::GRPCServer::RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* response)
+namespace NES
+{
+grpc::Status handleError(const Exception& exception, grpc::ServerContext* context)
+{
+    context->AddTrailingMetadata("code", std::to_string(exception.code()));
+    context->AddTrailingMetadata("what", exception.what());
+    if (auto where = exception.where())
+    {
+        context->AddTrailingMetadata("where", where->to_string());
+    }
+    return grpc::Status(grpc::INTERNAL, exception.what());
+}
+
+grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
     auto fullySpecifiedQueryPlan = DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&request->decomposedqueryplan());
     try
@@ -26,10 +47,10 @@ grpc::Status NES::GRPCServer::RegisterQuery(grpc::ServerContext*, const Register
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
 }
-grpc::Status NES::GRPCServer::UnregisterQuery(grpc::ServerContext*, const UnregisterQueryRequest* request, google::protobuf::Empty*)
+grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
     try
@@ -39,10 +60,10 @@ grpc::Status NES::GRPCServer::UnregisterQuery(grpc::ServerContext*, const Unregi
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
 }
-grpc::Status NES::GRPCServer::StartQuery(grpc::ServerContext*, const StartQueryRequest* request, google::protobuf::Empty*)
+grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
     try
@@ -52,10 +73,10 @@ grpc::Status NES::GRPCServer::StartQuery(grpc::ServerContext*, const StartQueryR
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
 }
-grpc::Status NES::GRPCServer::StopQuery(grpc::ServerContext*, const StopQueryRequest* request, google::protobuf::Empty*)
+grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
     auto terminationType = static_cast<Runtime::QueryTerminationType>(request->terminationtype());
@@ -66,11 +87,11 @@ grpc::Status NES::GRPCServer::StopQuery(grpc::ServerContext*, const StopQueryReq
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
 }
 
-grpc::Status NES::GRPCServer::RequestQuerySummary(grpc::ServerContext*, const QuerySummaryRequest* request, QuerySummaryReply* reply)
+grpc::Status GRPCServer::RequestQuerySummary(grpc::ServerContext* context, const QuerySummaryRequest* request, QuerySummaryReply* reply)
 {
     try
     {
@@ -89,22 +110,17 @@ grpc::Status NES::GRPCServer::RequestQuerySummary(grpc::ServerContext*, const Qu
                 error.set_location(std::string(exception.where()->filename) + ":" + std::to_string(exception.where()->line.value_or(0)));
                 reply->add_error()->CopyFrom(error);
             }
+            return grpc::Status::OK;
         }
-        else
-        {
-            reply->set_status(QueryStatus::Invalid);
-            reply->set_numberofrestarts(0);
-            reply->clear_error();
-        }
-        return grpc::Status::OK;
+        return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
 }
 
-grpc::Status NES::GRPCServer::RequestQueryLog(grpc::ServerContext*, const QueryLogRequest* request, QueryLogReply* reply)
+grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
 {
     try
     {
@@ -131,15 +147,14 @@ grpc::Status NES::GRPCServer::RequestQueryLog(grpc::ServerContext*, const QueryL
                 }
                 reply->add_entries()->CopyFrom(logEntry);
             }
+            return grpc::Status::OK;
         }
-        else
-        {
-            reply->clear_entries();
-        }
-        return grpc::Status::OK;
+        return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
     }
     catch (...)
     {
-        return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+        return handleError(wrapExternalException(), context);
     }
+}
+
 }
