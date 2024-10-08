@@ -14,13 +14,13 @@
 
 #pragma once
 
-#include <algorithm>
+#include <cstdint>
 #include <filesystem>
-#include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -47,11 +47,11 @@ struct Query
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
-        , queryPlan(queryPlan)
+        , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
         , resultFileBaseDir(std::move(resultFileBaseDir)) {};
 
-    [[nodiscard]] inline std::filesystem::path resultFile() const
+    [[nodiscard]] std::filesystem::path resultFile() const
     {
         return resultFileBaseDir / std::filesystem::path(fmt::format("{}_{}.csv", name, queryIdInFile));
     }
@@ -67,7 +67,7 @@ struct Query
 struct RunningQuery
 {
     Query query;
-    QueryId queryId;
+    QueryId queryId = INVALID_QUERY_ID;
 };
 
 struct TestFile
@@ -79,9 +79,9 @@ struct TestFile
 
     [[nodiscard]] TestName name() const { return file.stem().string(); }
 
-    const std::filesystem::path file;
-    const std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber{};
-    const std::vector<TestGroup> groups;
+    std::filesystem::path file;
+    std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber;
+    std::vector<TestGroup> groups;
 
     std::vector<Query> queries;
 };

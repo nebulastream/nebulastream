@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <filesystem>
-#include <fstream>
 #include <fmt/core.h>
+#include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -118,10 +117,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 
     /// Test for invalid queryId
     auto invalidQueryId = QueryId{42};
-    summary = IntegrationTestUtil::querySummary(invalidQueryId, uut);
-    EXPECT_EQ(summary.status(), Invalid);
-    EXPECT_EQ(summary.numberofrestarts(), 0);
-    EXPECT_EQ(summary.error_size(), 0);
+    IntegrationTestUtil::querySummaryFailure(invalidQueryId, uut, grpc::NOT_FOUND);
 
     IntegrationTestUtil::removeFile(queryResultFile);
     IntegrationTestUtil::removeFile(querySpecificDataFileName);

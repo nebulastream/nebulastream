@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <ranges>
+#include <vector>
 #include <SystestState.hpp>
 
 namespace NES::Systest
