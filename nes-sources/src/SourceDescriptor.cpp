@@ -47,14 +47,9 @@ SourceDescriptor::SourceDescriptor(
     , config(std::move(config))
 {
 }
-
 void SourceDescriptor::setConfigType(const std::string& key, ConfigType value)
 {
-    if (!this->config.contains(key))
-    {
-        return;
-    }
-    this->config.at(key) = std::move(value);
+    this->config.emplace(std::make_pair(key, value));
 }
 
 

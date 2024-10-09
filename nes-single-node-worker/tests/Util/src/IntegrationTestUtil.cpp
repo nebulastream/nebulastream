@@ -17,7 +17,8 @@
 #include <fstream>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/CSVSource.hpp>
@@ -244,13 +245,13 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         if (value.details().Is<SerializableOperator_SourceDetails>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto sourceDescriptor = NES::Util::as<SourceLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            auto sourceDescriptor = NES::Util::as<OperatorLogicalSourceDescriptor>(deserializedSourceOperator)->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == Sources::CSVSource::NAME)
             {
                 /// Set socket port and serialize again.
                 sourceDescriptor.setConfigType(Sources::ConfigParametersCSV::FILEPATH, newInputFileName);
-                NES::Util::as<SourceLogicalOperator>(deserializedSourceOperator)->setSourceDescriptor(
-                    std::make_shared<Sources::SourceDescriptor>(sourceDescriptor));
+                NES::Util::as<OperatorLogicalSourceDescriptor>(deserializedSourceOperator)
+                    ->setSourceDescriptor(std::make_shared<Sources::SourceDescriptor>(sourceDescriptor));
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
@@ -271,15 +272,15 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         if (value.details().Is<SerializableOperator_SourceDetails>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto sourceDescriptor = NES::Util::as<SourceLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
+            auto sourceDescriptor = NES::Util::as<OperatorLogicalSourceDescriptor>(deserializedSourceOperator)->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == Sources::TCPSource::NAME)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
                     sourceDescriptor.setConfigType(Sources::ConfigParametersTCP::PORT, mockTcpServerPort);
-                    NES::Util::as<SourceLogicalOperator>(deserializedSourceOperator)->setSourceDescriptor(
-                        std::make_shared<Sources::SourceDescriptor>(sourceDescriptor));
+                    NES::Util::as<OperatorLogicalSourceDescriptor>(deserializedSourceOperator)
+                        ->setSourceDescriptor(std::make_shared<Sources::SourceDescriptor>(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.

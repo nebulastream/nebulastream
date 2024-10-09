@@ -17,7 +17,7 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -111,21 +111,6 @@ QueryId DecomposedQueryPlan::getQueryId() const
 void DecomposedQueryPlan::setQueryId(QueryId queryId)
 {
     this->queryId = queryId;
-}
-
-std::vector<SourceLogicalOperatorPtr> DecomposedQueryPlan::getSourceOperators() const
-{
-    NES_DEBUG("Get all source operators by traversing all the root nodes.");
-    std::set<SourceLogicalOperatorPtr> sourceOperatorsSet;
-    for (const auto& rootOperator : rootOperators)
-    {
-        auto sourceOperators = rootOperator->getNodesByType<SourceLogicalOperator>();
-        NES_DEBUG("Insert all source operators to the collection");
-        sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
-    }
-    NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
-    std::vector<SourceLogicalOperatorPtr> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
-    return sourceOperators;
 }
 
 std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() const

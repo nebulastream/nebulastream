@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
