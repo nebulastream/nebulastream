@@ -26,13 +26,14 @@ VarVal ExecutableFunctionDiv::execute(Record& record) const
     return leftValue / rightValue;
 }
 
-ExecutableFunctionDiv::ExecutableFunctionDiv(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+ExecutableFunctionDiv::ExecutableFunctionDiv(
+    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
 
-FunctionPtr RegisterExecutableFunctionDiv(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Div function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionDiv>(std::move(subFunctions[0]), std::move(subFunctions[1]));

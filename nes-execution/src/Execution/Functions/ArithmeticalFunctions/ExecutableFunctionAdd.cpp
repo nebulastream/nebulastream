@@ -25,12 +25,13 @@ VarVal ExecutableFunctionAdd::execute(Record& record) const
     return leftValue + rightValue;
 }
 
-ExecutableFunctionAdd::ExecutableFunctionAdd(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+ExecutableFunctionAdd::ExecutableFunctionAdd(
+    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-FunctionPtr RegisterExecutableFunctionAdd(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<std::unique_ptr<Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Add function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionAdd>(std::move(subFunctions[0]), std::move(subFunctions[1]));

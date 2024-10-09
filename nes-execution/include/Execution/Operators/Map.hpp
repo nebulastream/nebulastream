@@ -29,11 +29,11 @@ public:
      * @brief Creates a map operator with a map function.
      * @param mapFunction map function.
      */
-    Map(Functions::FunctionPtr mapFunction) : mapFunction(std::move(mapFunction)) {};
+    Map(std::unique_ptr<Functions::Function> mapFunction) : mapFunction(std::move(mapFunction)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const Runtime::Execution::Functions::FunctionPtr mapFunction;
+    const std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
 };
 
 } /// namespace NES::Runtime::Execution::Operators
