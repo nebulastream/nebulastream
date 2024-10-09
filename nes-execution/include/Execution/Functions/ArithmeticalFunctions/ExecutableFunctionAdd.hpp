@@ -23,12 +23,12 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionAdd : public Function
 {
 public:
-    ExecutableFunctionAdd(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub);
+    ExecutableFunctionAdd(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
     VarVal execute(Record& record) const override;
 
 private:
-    const FunctionPtr leftExecutableFunctionSub;
-    const FunctionPtr rightExecutableFunctionSub;
+    const std::unique_ptr<Function> leftExecutableFunctionSub;
+    const std::unique_ptr<Function> rightExecutableFunctionSub;
 };
 
 }

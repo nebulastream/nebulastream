@@ -22,7 +22,7 @@ class RegistryFunctionExecutable : public BaseRegistry<
                                        RegistryFunctionExecutable,
                                        std::string,
                                        Runtime::Execution::Functions::Function,
-                                       std::vector<Runtime::Execution::Functions::FunctionPtr>>
+                                       std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>
 {
 };
 }

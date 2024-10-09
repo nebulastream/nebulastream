@@ -72,14 +72,6 @@ std::string NodeFunctionPow::toString() const
 
 NodeFunctionPtr NodeFunctionPow::deepCopy()
 {
-bool NodeFunctionPow::validateBeforeLowering() const
-{
-    if (children.size() != 2)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
-        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
+    return NodeFunctionPow::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }
-
 }

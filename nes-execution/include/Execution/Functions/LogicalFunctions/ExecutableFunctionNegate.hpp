@@ -19,14 +19,14 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-/// Negates the result of the subFunction
+/// Negates the result of the childFunction
 class ExecutableFunctionNegate final : public Function
 {
 public:
-    explicit ExecutableFunctionNegate(FunctionPtr subFunction);
+    explicit ExecutableFunctionNegate(std::unique_ptr<Function> childFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const FunctionPtr subFunction;
+    const std::unique_ptr<Function> childFunction;
 };
 }

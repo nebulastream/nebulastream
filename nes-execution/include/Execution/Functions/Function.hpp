@@ -23,9 +23,6 @@ using RecordPtr = std::shared_ptr<Record>;
 namespace NES::Runtime::Execution::Functions
 {
 using namespace Nautilus;
-class Function;
-using FunctionPtr = std::unique_ptr<Function>;
-
 class Function
 {
 public:

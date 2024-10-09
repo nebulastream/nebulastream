@@ -28,11 +28,11 @@ public:
      * @brief Creates a selection operator with a function.
      * @param function boolean predicate function
      */
-    Selection(Runtime::Execution::Functions::FunctionPtr function) : function(std::move(function)) {};
+    Selection(std::unique_ptr<Runtime::Execution::Functions::Function> function) : function(std::move(function)) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    const Runtime::Execution::Functions::FunctionPtr function;
+    const std::unique_ptr<Runtime::Execution::Functions::Function> function;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

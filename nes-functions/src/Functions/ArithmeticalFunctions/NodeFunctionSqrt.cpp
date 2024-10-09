@@ -77,13 +77,7 @@ std::string NodeFunctionSqrt::toString() const
 
 NodeFunctionPtr NodeFunctionSqrt::deepCopy()
 {
-bool NodeFunctionSqrt::validateBeforeLowering() const
-{
-    if (children.size() != 1)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
+    return NodeFunctionSqrt::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }
 
 }
