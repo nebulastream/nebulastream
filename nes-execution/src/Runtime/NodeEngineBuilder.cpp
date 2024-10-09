@@ -48,7 +48,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         auto numThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
         auto workerToCoreMapping = NES::Util::splitWithStringDelimiter<uint64_t>("", ",");
         std::vector<Memory::BufferManagerPtr> bufferManagers = {bufferManager};
-        /// TODO(#34): For now, the worker id is always 0 and the numberOfBuffersPerEpoch always 100. We need to change this during the refactoring.
+        /// TODO #34: For now, the worker id is always 0 and the numberOfBuffersPerEpoch always 100. We need to change this during the refactoring.
         queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, 100, workerToCoreMapping);
         if (!queryManager)
         {

@@ -44,7 +44,7 @@ public:
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration = {"queryCompilerConfiguration", "QueryCompiler Configuration"};
 };
 
-///TODO(#130): Generalize and move into `nes-configuration`
+///TODO #130: Generalize and move into `nes-configuration`
 /// CLI > ConfigFile
 template <typename T>
 auto loadConfiguration(const int argc, const char** argv)
