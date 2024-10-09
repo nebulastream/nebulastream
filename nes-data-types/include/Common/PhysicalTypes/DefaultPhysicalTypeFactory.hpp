@@ -22,9 +22,6 @@ namespace NES
 class Integer;
 using IntegerPtr = std::shared_ptr<Integer>;
 
-class ArrayType;
-using ArrayPtr = std::shared_ptr<ArrayType>;
-
 class Float;
 using FloatPtr = std::shared_ptr<Float>;
 
@@ -64,13 +61,6 @@ private:
     * @return PhysicalTypePtr
     */
     static PhysicalTypePtr getPhysicalType(const FloatPtr& floatType);
-
-    /**
-    * @brief Translates a array data type into a corresponding physical type.
-    * @param arrayType
-    * @return PhysicalTypePtr
-    */
-    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
 };
 
 }

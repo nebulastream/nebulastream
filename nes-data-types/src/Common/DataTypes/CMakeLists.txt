@@ -12,7 +12,6 @@
 
 add_source_files(nes-data-types
         Char.cpp
-        ArrayType.cpp
         Boolean.cpp
         Undefined.cpp
         Numeric.cpp
