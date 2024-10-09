@@ -739,8 +739,7 @@ LogicalJoinOperatorPtr OperatorSerializationUtil::deserializeJoinOperator(const 
 
     LogicalOperatorPtr ptr;
     auto serializedJoinExpression = joinDetails.joinexpression();
-    auto joinExpression =
-        ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression)->as<BinaryExpressionNode>();
+    auto joinExpression = ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression);
 
     auto joinDefinition = Join::LogicalJoinDescriptor::create(joinExpression,
                                                               window,

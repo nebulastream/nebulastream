@@ -205,7 +205,7 @@ void QueryPlan::addRootOperator(const OperatorPtr& newRootOperator) {
     if (found == rootOperators.end()) {
         rootOperators.push_back(newRootOperator);
     } else {
-        NES_WARNING("Root operator with id {} already present int he plan", newRootOperator->getId());
+        NES_WARNING("Root operator with id {} already present in the plan", newRootOperator->getId());
     }
 }
 

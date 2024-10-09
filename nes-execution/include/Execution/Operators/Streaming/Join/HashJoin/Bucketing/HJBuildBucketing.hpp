@@ -52,6 +52,9 @@ class HJBuildBucketing : public StreamJoinBuildBucketing {
                                Value<UInt64>& curIndex,
                                ValueId<WorkerThreadId>& workerThreadId,
                                Record& record) const override;
+
+  private:
+    const std::string joinFieldName;
 };
 }// namespace NES::Runtime::Execution::Operators
 

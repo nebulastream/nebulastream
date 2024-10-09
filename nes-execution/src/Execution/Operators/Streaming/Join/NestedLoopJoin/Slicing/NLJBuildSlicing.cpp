@@ -120,14 +120,12 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
 
 NLJBuildSlicing::NLJBuildSlicing(const uint64_t operatorHandlerIndex,
                                  const SchemaPtr& schema,
-                                 const std::string& joinFieldName,
                                  const QueryCompilation::JoinBuildSideType joinBuildSide,
                                  const uint64_t entrySize,
                                  TimeFunctionPtr timeFunction,
                                  QueryCompilation::StreamJoinStrategy joinStrategy)
     : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING), StreamJoinBuild(operatorHandlerIndex,
                                                                                                       schema,
-                                                                                                      joinFieldName,
                                                                                                       joinBuildSide,
                                                                                                       entrySize,
                                                                                                       std::move(timeFunction),

@@ -233,6 +233,9 @@ QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr query
 QueryPlanPtr QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode,
                                                                 QueryPlanPtr leftQueryPlan,
                                                                 QueryPlanPtr rightQueryPlan) {
+    //we add the root of th right query plan as root of the left query plan
+    // thus, children of the binary join operator are
+    // [0] left and [1] right
     leftQueryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);
     leftQueryPlan->appendOperatorAsNewRoot(operatorNode);
     NES_DEBUG("QueryPlanBuilder: addBinaryOperatorAndUpdateSource: update the source names");

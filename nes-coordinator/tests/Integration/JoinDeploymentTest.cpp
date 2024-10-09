@@ -44,9 +44,9 @@ class JoinDeploymentTest : public Testing::BaseIntegrationTest,
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    void runJoinQueryTwoLogicalStreams(const Query& query,
-                                       const TestUtils::CsvFileParams& csvFileParams,
-                                       const TestUtils::JoinParams& joinParams) {
+    void runAndValidateJoinQueryTwoLogicalStreams(const Query& query,
+                                                  const TestUtils::CsvFileParams& csvFileParams,
+                                                  const TestUtils::JoinParams& joinParams) {
 
         const auto logicalSourceNameOne = "test1";
         const auto logicalSourceNameTwo = "test2";
@@ -105,7 +105,7 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
                      .where(Attribute("id") == Attribute("id"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 /**
 * Test deploying join with same data and same schema
@@ -127,7 +127,7 @@ TEST_P(JoinDeploymentTest, testJoinWithSameSchemaMultipleConditionsGeneralTumbli
                      .where((Attribute("id") == Attribute("id")) && (Attribute("id") == Attribute("id")))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -148,7 +148,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
                      .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -169,7 +169,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesMultipleConditionsBut
                      .where((Attribute("id") == Attribute("id2")) && (Attribute("value") == Attribute("value2")))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -190,7 +190,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {
                      .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -211,7 +211,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
                      .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -234,7 +234,7 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceSlidingWindow) {
             .where(Attribute("id") == Attribute("id"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -258,7 +258,7 @@ TEST_P(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
             .where(Attribute("id") == Attribute("id2"))
             .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(windowSize), Milliseconds(windowSlide)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 /**
@@ -290,7 +290,7 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
                      .where(Attribute("id1") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
@@ -308,7 +308,32 @@ TEST_P(JoinDeploymentTest, joinResultLargerThanSingleTupleBuffer) {
                      .where(Attribute("id") == Attribute("id2"))
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000000)));
 
-    runJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+
+/**
+ * Test deploying cross-join with different sources
+ */
+TEST_P(JoinDeploymentTest, testTumblingWindowCrossJoin) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL
+        || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED) {
+        GTEST_SKIP();
+    }
+
+    const auto windowSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto window2Schema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
+
+    TestUtils::JoinParams joinParams({windowSchema, window2Schema});
+    TestUtils::CsvFileParams csvFileParams({"window8.csv", "window8.csv"}, "cross_join_sink.csv");
+
+    const auto query = Query::from("test1")
+                           .crossJoinWith(Query::from("test2"))
+                           .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
 }
 
 INSTANTIATE_TEST_CASE_P(testJoinQueries,

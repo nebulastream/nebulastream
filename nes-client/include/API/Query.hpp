@@ -161,6 +161,33 @@ class Join {
 
 }//namespace Experimental::BatchJoinOperatorBuilder
 
+/**
+* @brief CrossJoinOperatorBuilder.
+* @note Initialize as Cartesian Product between originalQuery and subQueryRhs.
+* @note In contrast to the JoinOperatorBuilder no .where() needs to be applied to the query.
+* @note windowing is required.
+*/
+namespace CrossJoinOperatorBuilder {
+
+class CrossJoin {
+  public:
+    CrossJoin(const Query& subQueryRhs, Query& subQueryLhs);
+
+    /**
+     * @brief: calls internal the original joinWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original joinWith function is returned.
+     */
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
+
+  private:
+    Query& subQueryRhs;
+    Query& subQueryLhs;
+    ExpressionNodePtr joinExpressions;
+};
+
+}//namespace CrossJoinOperatorBuilder
+
 namespace CEPOperatorBuilder {
 
 class And {
@@ -278,6 +305,7 @@ class Query {
     //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
     friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
+    friend class CrossJoinOperatorBuilder::CrossJoin;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -299,6 +327,13 @@ class Query {
      * @return object where where() function is defined and can be called by user
      */
     NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be cross joined with and sets this query in the class CrossJoinOperatorBuilder::Join.
+     * @param subQueryRhs
+     * @return object of type CrossJoin on which the window can be can be called.
+     */
+    CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.

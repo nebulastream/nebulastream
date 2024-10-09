@@ -15,6 +15,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Exceptions/ErrorListener.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -100,8 +101,6 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
                          const SchemaPtr leftSchema,
                          const SchemaPtr rightSchema,
                          const SchemaPtr joinSchema,
-                         const std::string& joinFieldNameLeft,
-                         const std::string& joinFieldNameRight,
                          const std::string& timeStampFieldLeft,
                          const std::string& timeStampFieldRight,
                          const std::string& windowStartFieldName,
@@ -145,7 +144,6 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         auto nljBuildLeft = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             leftSchema,
-            joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftEntrySize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
@@ -155,7 +153,6 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             rightSchema,
-            joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightEntrySize,
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
@@ -313,8 +310,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline) {
                                 leftSchema,
                                 rightSchema,
                                 joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
                                 timeStampFieldLeft,
                                 timeStampFieldRight,
                                 windowStartFieldName,
@@ -361,8 +356,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput) {
                                 leftSchema,
                                 rightSchema,
                                 joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
                                 timeStampFieldLeft,
                                 timeStampFieldRight,
                                 windowStartFieldName,
@@ -416,8 +409,47 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
                                 leftSchema,
                                 rightSchema,
                                 joinSchema,
-                                joinFieldName1Left,
-                                joinFieldName2Right,
+                                timeStampFieldLeft,
+                                timeStampFieldRight,
+                                windowStartFieldName,
+                                windowEndFieldName,
+                                joinExpression));
+}
+
+TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineCrossJoinTest) {
+    const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                ->addField("left$id", BasicType::UINT64)
+                                ->addField("left$value", BasicType::UINT64)
+                                ->addField("left$timestamp", BasicType::UINT64);
+
+    const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
+                                 ->addField("right$id", BasicType::UINT64)
+                                 ->addField("right$value", BasicType::UINT64)
+                                 ->addField("right$timestamp", BasicType::UINT64);
+
+    auto joinExpression = std::make_shared<Expressions::ConstantBooleanValueExpression>(true);
+
+    const auto timeStampFieldRight = rightSchema->get(2)->getName();
+    const auto timeStampFieldLeft = leftSchema->get(2)->getName();
+
+    EXPECT_EQ(leftSchema->getLayoutType(), rightSchema->getLayoutType());
+    const auto joinSchema = Util::createJoinSchema(leftSchema, rightSchema);
+    const auto windowStartFieldName = joinSchema->get(0)->getName();
+    const auto windowEndFieldName = joinSchema->get(1)->getName();
+
+    // read values from csv file into one buffer for each join side and for one window
+    const auto windowSize = 1000UL;
+    const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
+    const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
+    const std::string fileNameBuffersSink(std::filesystem::path(TEST_DATA_DIRECTORY) / "window_cross_join_sink.csv");
+
+    ASSERT_TRUE(checkIfNLJWorks(fileNameBuffersLeft,
+                                fileNameBuffersRight,
+                                fileNameBuffersSink,
+                                windowSize,
+                                leftSchema,
+                                rightSchema,
+                                joinSchema,
                                 timeStampFieldLeft,
                                 timeStampFieldRight,
                                 windowStartFieldName,
@@ -471,8 +503,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
                                 leftSchema,
                                 rightSchema,
                                 joinSchema,
-                                joinFieldName1Left,
-                                joinFieldName2Right,
                                 timeStampFieldLeft,
                                 timeStampFieldRight,
                                 windowStartFieldName,
@@ -517,8 +547,6 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
                                 leftSchema,
                                 rightSchema,
                                 joinSchema,
-                                joinFieldNameLeft,
-                                joinFieldNameRight,
                                 timeStampFieldLeft,
                                 timeStampFieldRight,
                                 windowStartFieldName,

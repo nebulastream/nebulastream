@@ -557,7 +557,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
         operatorHandlerIndex,
         buildOperator->getInputSchema(),
-        buildOperator->getJoinFieldName(),
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),
@@ -572,7 +571,6 @@ Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOper
     return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(
         operatorHandlerIndex,
         buildOperator->getInputSchema(),
-        buildOperator->getJoinFieldName(),
         buildOperator->getBuildSide(),
         buildOperator->getInputSchema()->getSchemaSizeInBytes(),
         std::move(timeFunction),

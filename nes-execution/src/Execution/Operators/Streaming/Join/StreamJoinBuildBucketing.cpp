@@ -127,7 +127,6 @@ void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateB
 
 StreamJoinBuildBucketing::StreamJoinBuildBucketing(const uint64_t operatorHandlerIndex,
                                                    const SchemaPtr& schema,
-                                                   const std::string& joinFieldName,
                                                    const QueryCompilation::JoinBuildSideType joinBuildSide,
                                                    const uint64_t entrySize,
                                                    TimeFunctionPtr timeFunction,
@@ -137,7 +136,6 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(const uint64_t operatorHandle
                                                    uint64_t windowSlide)
     : StreamJoinBuild(operatorHandlerIndex,
                       schema,
-                      joinFieldName,
                       joinBuildSide,
                       entrySize,
                       std::move(timeFunction),

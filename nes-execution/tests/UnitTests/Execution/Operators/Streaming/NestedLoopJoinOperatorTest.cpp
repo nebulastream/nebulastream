@@ -19,6 +19,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
@@ -291,7 +292,6 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto nljBuildLeft = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             leftSchema,
-            joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
@@ -300,7 +300,6 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             rightSchema,
-            joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
@@ -692,6 +691,16 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpression
     auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>("test2$value");
     auto expression = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey, onRightKey);
     joinExpression = std::make_shared<Expressions::AndExpression>(joinExpression, expression);
+
+    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
+}
+
+TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleCrossJoin) {
+    const auto numberOfRecordsLeft = 25;
+    const auto numberOfRecordsRight = 50;
+
+    //create crossJoinExpression: true
+    joinExpression = std::make_shared<Expressions::ConstantValueExpression<bool>>(true);
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }

@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
@@ -56,36 +57,16 @@ bool LogicalJoinOperator::inferSchema() {
             fmt::format("LogicalJoinOperator: Found {} distinct schemas but expected 2 distinct schemas.",
                         distinctSchemas.size()));
     }
+    // first step: clear the schemas
+    leftInputSchema->clear();
+    rightInputSchema->clear();
+    //  join has two logical children each with it own schema, we ensure in LogicalBinaryOperator that left = distinctSchema[0]
+    leftInputSchema->copyFields(distinctSchemas[0]); //
+    rightInputSchema->copyFields(distinctSchemas[1]);// and right = [1]
 
     //reset left and right schema
     leftInputSchema->clear();
     rightInputSchema->clear();
-
-    // Finds the join schema that contains the joinKey and returns an iterator to the schema
-    auto findSchemaInDistinctSchemas = [&](FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
-        for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
-            bool fieldExistsInSchema;
-            const auto joinKeyName = joinKey.getFieldName();
-            // If field name contains qualifier
-            if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
-                fieldExistsInSchema = (*itr)->contains(joinKeyName);
-            } else {
-                fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
-            }
-            if (fieldExistsInSchema) {
-                inputSchema->copyFields(*itr);
-                joinKey.inferStamp(inputSchema);
-                distinctSchemas.erase(itr);
-                return true;
-            }
-            ++itr;
-        }
-        if (distinctSchemas.empty()) {
-            joinKey.inferStamp(inputSchema);
-            return true;
-        }
-        return false;
-    };
 
     NES_DEBUG("LogicalJoinOperator: Iterate over all ExpressionNode to if check join field is in schema.");
     // Maintain a list of visited nodes as there are multiple root nodes
@@ -237,6 +218,31 @@ void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowS
                                                         std::string_view windowEndFieldName) {
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;
+}
+
+bool LogicalJoinOperator::findSchemaInDistinctSchemas(FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
+    for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {
+        bool fieldExistsInSchema;
+        const auto joinKeyName = joinKey.getFieldName();
+        // If field name contains qualifier
+        if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+            fieldExistsInSchema = (*itr)->contains(joinKeyName);
+        } else {
+            fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
+        }
+        if (fieldExistsInSchema) {
+            inputSchema->copyFields(*itr);
+            joinKey.inferStamp(inputSchema);
+            distinctSchemas.erase(itr);
+            return true;
+        }
+        ++itr;
+    }
+    if (distinctSchemas.empty()) {
+        joinKey.inferStamp(inputSchema);
+        return true;
+    }
+    return false;
 }
 
 }// namespace NES

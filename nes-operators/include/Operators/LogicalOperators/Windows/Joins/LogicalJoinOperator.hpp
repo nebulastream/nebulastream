@@ -72,6 +72,13 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      */
     void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
+    /**
+     * @brief Sets the window start, end, and key field name during the serialization of the operator
+     * @param joinKey a FieldAccessExpressionNode to find in the schemas
+     * @param inputSchema the schema corresponding to the join side
+     */
+    bool findSchemaInDistinctSchemas(FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema);
+
   private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;
     std::string windowStartFieldName;

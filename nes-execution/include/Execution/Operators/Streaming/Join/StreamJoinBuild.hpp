@@ -39,7 +39,6 @@ class StreamJoinBuild : public virtual StreamJoinOperator, public virtual Execut
      * @brief Constructor for a StreamJoinBuild
      * @param operatorHandlerIndex
      * @param schema
-     * @param joinFieldName
      * @param joinBuildSide
      * @param entrySize
      * @param timeFunction
@@ -48,7 +47,6 @@ class StreamJoinBuild : public virtual StreamJoinOperator, public virtual Execut
      */
     StreamJoinBuild(const uint64_t operatorHandlerIndex,
                     const SchemaPtr& schema,
-                    const std::string& joinFieldName,
                     const QueryCompilation::JoinBuildSideType joinBuildSide,
                     const uint64_t entrySize,
                     TimeFunctionPtr timeFunction,
@@ -65,7 +63,6 @@ class StreamJoinBuild : public virtual StreamJoinOperator, public virtual Execut
   protected:
     const uint64_t operatorHandlerIndex;
     const SchemaPtr schema;
-    const std::string joinFieldName;
     const QueryCompilation::JoinBuildSideType joinBuildSide;
     const uint64_t entrySize;
     const TimeFunctionPtr timeFunction;

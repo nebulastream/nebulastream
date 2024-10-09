@@ -319,7 +319,6 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         auto nljBuildLeft = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             leftSchema,
-            joinFieldNameLeft,
             QueryCompilation::JoinBuildSideType::Left,
             leftSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
@@ -328,7 +327,6 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         auto nljBuildRight = std::make_shared<Operators::NLJBuildSlicing>(
             handlerIndex,
             rightSchema,
-            joinFieldNameRight,
             QueryCompilation::JoinBuildSideType::Right,
             rightSchema->getSchemaSizeInBytes(),
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,

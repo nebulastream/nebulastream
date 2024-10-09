@@ -647,7 +647,24 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
     }
+    // cross join test
+    {
+        auto joinExpression = ExpressionItem(true).getExpressionNode();
 
+        Join::LogicalJoinDescriptorPtr joinDef = Join::LogicalJoinDescriptor::create(
+            joinExpression,
+            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
+            1,
+            1,
+            NES::Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT);
+
+        auto join = LogicalOperatorFactory::createJoinOperator(joinDef)->as<LogicalJoinOperator>();
+        join->setOriginId(OriginId(42));
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
+        auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        join->setOriginId(OriginId(42));
+        EXPECT_TRUE(join->equal(joinOperator));
+    }
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
         auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();

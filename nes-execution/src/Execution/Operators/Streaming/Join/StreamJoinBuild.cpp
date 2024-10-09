@@ -69,13 +69,12 @@ void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
 
 StreamJoinBuild::StreamJoinBuild(const uint64_t operatorHandlerIndex,
                                  const SchemaPtr& schema,
-                                 const std::string& joinFieldName,
                                  const QueryCompilation::JoinBuildSideType joinBuildSide,
                                  const uint64_t entrySize,
                                  TimeFunctionPtr timeFunction,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy)
     : StreamJoinOperator(joinStrategy, windowingStrategy), operatorHandlerIndex(operatorHandlerIndex), schema(schema),
-      joinFieldName(joinFieldName), joinBuildSide(joinBuildSide), entrySize(entrySize), timeFunction(std::move(timeFunction)) {}
+      joinBuildSide(joinBuildSide), entrySize(entrySize), timeFunction(std::move(timeFunction)) {}
 
 }// namespace NES::Runtime::Execution::Operators

@@ -29,7 +29,6 @@ class NLJBuildBucketing : public StreamJoinBuildBucketing {
      * @brief Constructor for a NLJBuildBucketing
      * @param operatorHandlerIndex
      * @param schema
-     * @param joinFieldName
      * @param joinBuildSide
      * @param entrySize
      * @param timeFunction
@@ -39,7 +38,6 @@ class NLJBuildBucketing : public StreamJoinBuildBucketing {
      */
     NLJBuildBucketing(const uint64_t operatorHandlerIndex,
                       const SchemaPtr& schema,
-                      const std::string& joinFieldName,
                       const QueryCompilation::JoinBuildSideType joinBuildSide,
                       const uint64_t entrySize,
                       TimeFunctionPtr timeFunction,

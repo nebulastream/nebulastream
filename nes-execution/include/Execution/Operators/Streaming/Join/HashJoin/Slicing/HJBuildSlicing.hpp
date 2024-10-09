@@ -48,6 +48,9 @@ class HJBuildSlicing : public StreamJoinBuild {
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+
+  private:
+    const std::string joinFieldName;
 };
 
 }// namespace NES::Runtime::Execution::Operators

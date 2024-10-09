@@ -80,12 +80,12 @@ HJBuildSlicingVarSized::HJBuildSlicingVarSized(const uint64_t operatorHandlerInd
                                                QueryCompilation::StreamJoinStrategy joinStrategy)
     : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING), StreamJoinBuild(operatorHandlerIndex,
                                                                                                       schema,
-                                                                                                      joinFieldName,
                                                                                                       joinBuildSide,
                                                                                                       entrySize,
                                                                                                       std::move(timeFunction),
                                                                                                       joinStrategy,
-                                                                                                      windowingStrategy) {}
+                                                                                                      windowingStrategy),
+      joinFieldName(joinFieldName) {}
 
 void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalHashJoinState*>(ctx.getLocalState(this));

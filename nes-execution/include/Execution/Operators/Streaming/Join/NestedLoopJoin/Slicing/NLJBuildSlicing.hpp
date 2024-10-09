@@ -47,7 +47,6 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @brief Constructor for a NLJBuildSlicing
      * @param operatorHandlerIndex
      * @param schema
-     * @param joinFieldName
      * @param joinBuildSide
      * @param entrySize
      * @param timeFunction
@@ -55,7 +54,6 @@ class NLJBuildSlicing : public StreamJoinBuild {
      */
     NLJBuildSlicing(const uint64_t operatorHandlerIndex,
                     const SchemaPtr& schema,
-                    const std::string& joinFieldName,
                     const QueryCompilation::JoinBuildSideType joinBuildSide,
                     const uint64_t entrySize,
                     TimeFunctionPtr timeFunction,

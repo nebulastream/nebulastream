@@ -41,6 +41,10 @@ NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Que
     return NES::Experimental::BatchJoinOperatorBuilder::Join(subQueryRhs, *this);
 }
 
+CrossJoinOperatorBuilder::CrossJoin Query::crossJoinWith(const Query& subQueryRhs) {
+    return CrossJoinOperatorBuilder::CrossJoin(subQueryRhs, *this);
+}
+
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
 CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
@@ -77,6 +81,27 @@ Query& Join::where(const ExpressionNodePtr joinExpression) const {
 }
 
 }// namespace Experimental::BatchJoinOperatorBuilder
+
+namespace CrossJoinOperatorBuilder {
+
+CrossJoin::CrossJoin(const Query& subQueryRhs, Query& subQueryLhs)
+    : subQueryRhs(const_cast<Query&>(subQueryRhs)), subQueryLhs(subQueryLhs) {
+    NES_DEBUG("Query: add map operator to crossJoin to add virtual key to originalQuery");
+    //here, we add artificial key attributes to the sources in order to reuse the join-logic later
+    // That is a quick fix cause the depencies between Operator and Nodes currently prevent both, unary expressions as well as no join expression
+    auto leftKey = "leftKey";
+    auto rightKey = "rightKey";
+    //next: map the attributes with value 1 to the left and right source
+    this->subQueryLhs.map(Attribute(leftKey) = 1);
+    this->subQueryRhs.map(Attribute(rightKey) = 1);
+    joinExpressions =
+        ExpressionItem(Attribute(leftKey)).getExpressionNode() == ExpressionItem(Attribute(rightKey)).getExpressionNode();
+}
+
+Query& CrossJoin::window(const Windowing::WindowTypePtr& windowType) const {
+    return subQueryLhs.joinWith(subQueryRhs, joinExpressions, windowType);
+}
+}// namespace CrossJoinOperatorBuilder
 
 namespace CEPOperatorBuilder {
 

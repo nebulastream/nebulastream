@@ -88,12 +88,12 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
                                QueryCompilation::StreamJoinStrategy joinStrategy)
     : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING), StreamJoinBuild(operatorHandlerIndex,
                                                                                                       schema,
-                                                                                                      joinFieldName,
                                                                                                       joinBuildSide,
                                                                                                       entrySize,
                                                                                                       std::move(timeFunction),
                                                                                                       joinStrategy,
-                                                                                                      windowingStrategy) {}
+                                                                                                      windowingStrategy),
+      joinFieldName(joinFieldName) {}
 
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));

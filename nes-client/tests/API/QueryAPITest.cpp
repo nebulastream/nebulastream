@@ -214,6 +214,32 @@ TEST_F(QueryAPITest, testQueryJoin) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
+/**
+ * CrossJoin with two input sources: one with filter and one without filter.
+ */
+TEST_F(QueryAPITest, testQueryCrossJoin) {
+
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    auto filterSubQuery = Query::from("default_logical").filter(lessExpression);
+
+    auto crossJoinQuery = Query::from("default_logical")
+                              .crossJoinWith(filterSubQuery)
+                              .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                              .sink(printSinkDescriptor);
+    auto plan = crossJoinQuery.getQueryPlan();
+    auto sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 2U);
+    SourceLogicalOperatorPtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+    auto sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1U);
+    SinkLogicalOperatorPtr sinkOptr = sinkOperators[0];
+    EXPECT_EQ(sinkOperators.size(), 1U);
+}
+
 TEST_F(QueryAPITest, testQueryExpression) {
     auto andExpression = Attribute("f1") && 10;
     EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());

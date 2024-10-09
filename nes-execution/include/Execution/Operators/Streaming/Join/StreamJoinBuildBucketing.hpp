@@ -38,7 +38,6 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @brief Constructor for a StreamJoinBuildBucketing
      * @param operatorHandlerIndex
      * @param schema
-     * @param joinFieldName
      * @param joinBuildSide
      * @param entrySize
      * @param timeFunction
@@ -49,7 +48,6 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      */
     StreamJoinBuildBucketing(const uint64_t operatorHandlerIndex,
                              const SchemaPtr& schema,
-                             const std::string& joinFieldName,
                              const QueryCompilation::JoinBuildSideType joinBuildSide,
                              const uint64_t entrySize,
                              TimeFunctionPtr timeFunction,

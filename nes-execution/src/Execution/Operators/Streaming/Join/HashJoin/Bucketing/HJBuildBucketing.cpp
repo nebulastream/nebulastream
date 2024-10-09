@@ -73,13 +73,13 @@ HJBuildBucketing::HJBuildBucketing(const uint64_t operatorHandlerIndex,
     : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::BUCKETING),
       StreamJoinBuildBucketing(operatorHandlerIndex,
                                schema,
-                               joinFieldName,
                                joinBuildSide,
                                entrySize,
                                std::move(timeFunction),
                                joinStrategy,
                                windowingStrategy,
                                windowSize,
-                               windowSlide) {}
+                               windowSlide),
+      joinFieldName(joinFieldName) {}
 
 }// namespace NES::Runtime::Execution::Operators
