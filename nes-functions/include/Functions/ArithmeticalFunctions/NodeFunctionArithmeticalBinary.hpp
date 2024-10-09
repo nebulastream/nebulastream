@@ -33,6 +33,7 @@ public:
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
+    bool validateBeforeLowering() const override;
 
 protected:
     explicit NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name);

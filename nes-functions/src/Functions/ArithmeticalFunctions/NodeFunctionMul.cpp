@@ -54,13 +54,4 @@ NodeFunctionPtr NodeFunctionMul::deepCopy()
     return NodeFunctionMul::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }
 
-bool NodeFunctionMul::validateBeforeLowering() const
-{
-    if (children.size() != 2)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
-        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
-}
 }

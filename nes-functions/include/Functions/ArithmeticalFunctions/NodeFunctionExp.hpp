@@ -25,7 +25,6 @@ public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     void inferStamp(SchemaPtr schema) override;
-    bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 private:
