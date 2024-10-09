@@ -25,7 +25,6 @@ public:
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:

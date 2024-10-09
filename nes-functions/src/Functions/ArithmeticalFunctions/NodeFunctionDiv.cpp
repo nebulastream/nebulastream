@@ -55,14 +55,5 @@ NodeFunctionPtr NodeFunctionDiv::deepCopy()
     return NodeFunctionDiv::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }
 
-bool NodeFunctionDiv::validateBeforeLowering() const
-{
-    if (children.size() != 2)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
-        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
-}
 
 }
