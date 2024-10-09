@@ -59,7 +59,8 @@ void NodeFunctionNegate::inferStamp(SchemaPtr schema)
     /// check if children stamp is correct
     if (!child()->isPredicate())
     {
-        throw CannotInferSchema("Negate Function Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
+        throw CannotInferSchema(
+            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()->toString()));
     }
 }
 NodeFunctionPtr NodeFunctionNegate::deepCopy()
@@ -73,7 +74,7 @@ bool NodeFunctionNegate::validateBeforeLowering() const
     {
         return false;
     }
-    return children[0]->as<FunctionNode>()->getStamp()->isBoolean();
+    return Util::as<NodeFunction>(children[0])->getStamp()->isBoolean();
 }
 
 }

@@ -47,7 +47,8 @@ void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
     auto child_stamp = child->getStamp();
     if (!child_stamp->isNumeric())
     {
-        throw CannotInferSchema("Error during stamp inference. Types need to be Numerical but child was: " + child->getStamp()->toString());
+        throw CannotInferSchema(
+            fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()->toString()));
     }
 
     this->stamp = child_stamp;
@@ -67,6 +68,15 @@ bool NodeFunctionArithmeticalUnary::equal(NodePtr const& rhs) const
 std::string NodeFunctionArithmeticalUnary::toString() const
 {
     return "ArithmeticalFunction()";
+}
+
+bool NodeFunctionArithmeticalUnary::validateBeforeLowering() const
+{
+    if (children.size() != 1)
+    {
+        return false;
+    }
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isNumeric();
 }
 
 }

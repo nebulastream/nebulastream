@@ -14,8 +14,11 @@
 
 #include <sstream>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 
@@ -63,8 +66,8 @@ bool NodeFunctionEquals::validateBeforeLowering() const
         return false;
     }
 
-    const auto childLeft = children[0]->as<FunctionNode>();
-    const auto childRight = children[1]->as<FunctionNode>();
+    const auto childLeft = Util::as<NodeFunction>(children[0]);
+    const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
     if (childLeft->getStamp()->isText() != childRight->getStamp()->isText())
