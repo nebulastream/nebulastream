@@ -83,8 +83,8 @@ endif ()
 #    at this point because we want to use a custom toolchain file.
 # - Currently only linux is supported.
 # - Cross compilation is not possible, target and host triplets are always identical
-# - We choose the local toolchain when using a local installation of mlir to prevent linking against libc++,
-#   which would most-likely be incompatible with the local mlir installation
+# - We choose the local toolchain (using the default standard library), when using a local installation of mlir to
+#   prevent linking against libc++, which would most-likely be incompatible with the local mlir installation
 SET(VCPKG_VARIANT "nes")
 if (NES_ENABLE_THREAD_SANITIZER)
     SET(VCPKG_VARIANT "tsan")
@@ -92,7 +92,7 @@ elseif (NES_ENABLE_UB_SANITIZER)
     SET(VCPKG_VARIANT "ubsan")
 elseif (NES_ENABLE_ADDRESS_SANITIZER)
     SET(VCPKG_VARIANT "asan")
-elseif (USE_LOCAL_MLIR)
+elseif (USE_LOCAL_MLIR OR NOT USE_LIBCXX)
     SET(VCPKG_VARIANT "local")
 endif ()
 

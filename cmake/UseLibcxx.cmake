@@ -31,7 +31,7 @@ endif ()
 
 message(DEBUG "LIBCXX_CHECK_RESULT: ${LIBCXX_CHECK_RESULT}")
 message(DEBUG "USE_LIBCXX_IF_AVAILABLE: ${USE_LIBCXX_IF_AVAILABLE}")
-if (LIBCXX_CHECK_RESULT EQUAL 0 AND ${USE_LIBCXX_IF_AVAILABLE})
+if (LIBCXX_CHECK_RESULT EQUAL 0 AND USE_LIBCXX)
     message(STATUS "Using Libc++")
     add_compile_options(-stdlib=libc++)
     # Currently C++20 threading features are hidden behind the feature flag

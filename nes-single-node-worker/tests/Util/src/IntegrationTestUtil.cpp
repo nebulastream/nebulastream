@@ -298,7 +298,7 @@ std::string getUniqueTestIdentifier()
     const testing::TestInfo* const test_info = testing::UnitTest::GetInstance()->current_test_info();
 
     auto uniqueTestIdentifier
-        = std::format("{}_{}_{}", std::string(test_info->test_suite_name()), std::string(test_info->name()), timestamp);
+        = fmt::format("{}_{}_{}", std::string(test_info->test_suite_name()), std::string(test_info->name()), timestamp);
     std::ranges::replace(uniqueTestIdentifier, '/', '_');
     return uniqueTestIdentifier;
 }
