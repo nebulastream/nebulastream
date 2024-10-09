@@ -35,11 +35,10 @@ using namespace Nautilus;
 
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
-/**
- * @brief A time function, infers the timestamp of an record.
- * For ingestion time, this is determined by the creation ts in the buffer.
- * For event time, this is infered by a field in the record.
- */
+
+/// @brief A time function, infers the timestamp of an record.
+/// For ingestion time, this is determined by the creation ts in the buffer.
+/// For event time, this is infered by a field in the record.
 class TimeFunction
 {
 public:
@@ -54,13 +53,13 @@ public:
 class EventTimeFunction final : public TimeFunction
 {
 public:
-    explicit EventTimeFunction(Functions::FunctionPtr timestampFunction, Windowing::TimeUnit unit);
+    explicit EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
     nautilus::val<uint64_t> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
 private:
     Windowing::TimeUnit unit;
-    Functions::FunctionPtr timestampFunction;
+    std::unique_ptr<Functions::Function> timestampFunction;
 };
 
 /**
@@ -73,4 +72,4 @@ public:
     nautilus::val<uint64_t> getTs(ExecutionContext& ctx, Record& record) override;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

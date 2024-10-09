@@ -20,16 +20,16 @@ namespace NES::Runtime::Execution::Functions
 
 VarVal ExecutableFunctionNegate::execute(Record& record) const
 {
-    const auto value = subFunction->execute(record);
+    const auto value = childFunction->execute(record);
     return !value;
 }
 
-ExecutableFunctionNegate::ExecutableFunctionNegate(FunctionPtr subFunction) : subFunction(std::move(subFunction))
+ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> childFunction) : childFunction(std::move(childFunction))
 {
 }
 
 
-FunctionPtr RegisterExecutableFunctionNegate(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 1, "Negate function must have exactly one sub-function");
     return std::make_unique<ExecutableFunctionNegate>(std::move(subFunctions[0]));

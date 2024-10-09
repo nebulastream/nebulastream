@@ -67,13 +67,6 @@ std::string NodeFunctionRound::toString() const
 
 NodeFunctionPtr NodeFunctionRound::deepCopy()
 {
-bool NodeFunctionRound::validateBeforeLowering() const
-{
-    if (children.size() != 1)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
+    return NodeFunctionRound::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }
-
 }

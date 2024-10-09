@@ -63,13 +63,6 @@ std::string NodeFunctionCeil::toString() const
 
 NodeFunctionPtr NodeFunctionCeil::deepCopy()
 {
-bool NodeFunctionCeil::validateBeforeLowering() const
-{
-    if (children.size() != 1)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric();
+    return NodeFunctionCeil::create(Util::as<NodeFunction>(children[0])->deepCopy());
 }
-
 }

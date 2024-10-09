@@ -53,14 +53,7 @@ std::string NodeFunctionAdd::toString() const
 
 NodeFunctionPtr NodeFunctionAdd::deepCopy()
 {
-bool NodeFunctionAdd::validateBeforeLowering() const
-{
-    if (children.size() != 2)
-    {
-        return false;
-    }
-    return this->getChildren()[0]->as<FunctionNode>()->getStamp()->isNumeric()
-        && this->getChildren()[1]->as<FunctionNode>()->getStamp()->isNumeric();
+    return NodeFunctionAdd::create(Util::as<NodeFunction>(children[0])->deepCopy(), Util::as<NodeFunction>(children[1])->deepCopy());
 }
 
 }

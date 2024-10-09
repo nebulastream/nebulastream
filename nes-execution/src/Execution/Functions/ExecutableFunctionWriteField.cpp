@@ -17,8 +17,8 @@
 
 namespace NES::Runtime::Execution::Functions
 {
-ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction)
-    : field(std::move(field)), subFunction(std::move(subFunction))
+ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, std::unique_ptr<Function> childFunction)
+    : field(std::move(field)), childFunction(std::move(childFunction))
 {
 }
 

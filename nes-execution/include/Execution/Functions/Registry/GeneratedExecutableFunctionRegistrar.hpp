@@ -25,20 +25,20 @@ namespace NES
 namespace Runtime::Execution::Functions
 {
 /// Defining all arithmetic supported functions
-std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 
 /// Defining all logical supported functions
-std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<FunctionPtr> subFunctions);
-std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<FunctionPtr> subFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 }
 
 template <>
 inline void
-Registrar<std::string, Runtime::Execution::Functions::Function, std::vector<Runtime::Execution::Functions::FunctionPtr>>::registerAll(
-    Registry<Registrar>& registry)
+Registrar<std::string, Runtime::Execution::Functions::Function, std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>::
+    registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution::Functions;
 

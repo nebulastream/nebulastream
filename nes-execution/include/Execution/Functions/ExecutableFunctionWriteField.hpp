@@ -26,11 +26,11 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionWriteField : public Function
 {
 public:
-    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, FunctionPtr subFunction);
+    ExecutableFunctionWriteField(Record::RecordFieldIdentifier field, std::unique_ptr<Function> childFunction);
     VarVal execute(Record& record) const override;
 
 private:
     const Nautilus::Record::RecordFieldIdentifier field;
-    const FunctionPtr subFunction;
+    const std::unique_ptr<Function> childFunction;
 };
 } /// namespace NES::Runtime::Execution::Functions
