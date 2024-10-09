@@ -10,6 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-coordinator
-        SLTParser.cpp
-)
+add_nes_test_systest(slt-parser-test
+        "SLTParserTests.cpp"
+        "SLTParserInvalidTestFilesTests.cpp"
+        "SLTParserValidTestFilesTests.cpp")
+
+target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
+
+add_nes_test_nebuli(sql-parser-test "AntlrSQLQueryParserTest.cpp")
+target_link_libraries(sql-parser-test nes-sql-parser)

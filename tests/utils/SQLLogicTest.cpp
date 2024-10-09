@@ -18,8 +18,8 @@
 #include <string>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
-#include <NebuLI.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <SystestRunner.hpp>
 
 /// DEBUG option: set to true to log as well to stdout, otherwise only the log file is populated
 auto constexpr LOG_TO_STDOUT = false;
@@ -80,7 +80,7 @@ public:
         IntegrationTestUtil::waitForQueryToEnd(queryId, *uut);
         IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
-        ASSERT_TRUE(NES::CLI::checkResult(testFile, systemTestName, testId));
+        ASSERT_TRUE(NES::checkResult(testFile, systemTestName, testId));
     }
 
 private:
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     auto systemTestNames = tokenize(SYSTEM_TEST_NAME);
     auto systemTestFiles = tokenize(SYSTEM_TEST_FILE_PATH);
 
-    NES_ASSERT(systemTestNames.size() == systemTestFiles.size(), "The number of system test names and files must be equal.");
+    INVARIANT(systemTestNames.size() == systemTestFiles.size(), "The number of system test names and files must be equal.");
 
     for (size_t j = 0; j < systemTestNames.size(); ++j)
     {
