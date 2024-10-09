@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.184](https://github.com/nebulastream/nebulastream/tree/v0.6.184) (2024-10-09)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.183...v0.6.184)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add new data provider types [\#5026](https://github.com/nebulastream/nebulastream/issues/5026)
+
+#### Operators 
+
+- Create Cartesian Product Operator [\#2296](https://github.com/nebulastream/nebulastream/issues/2296)
+
 ## [v0.6.183](https://github.com/nebulastream/nebulastream/tree/v0.6.183) (2024-10-02)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.182...v0.6.183)
