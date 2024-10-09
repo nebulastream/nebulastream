@@ -19,12 +19,6 @@
 #include <mutex>
 #include <Identifiers/Identifiers.hpp>
 
-namespace NES
-{
-using WatermarkTs = uint64_t;
-using SequenceNumber = uint64_t;
-} /// namespace NES
-
 namespace NES::Windowing
 {
 
