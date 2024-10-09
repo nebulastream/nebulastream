@@ -27,12 +27,13 @@ VarVal ExecutableFunctionMul::execute(Record& record) const
     return leftValue * rightValue;
 }
 
-ExecutableFunctionMul::ExecutableFunctionMul(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+ExecutableFunctionMul::ExecutableFunctionMul(
+    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-FunctionPtr RegisterExecutableFunctionMul(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Mul function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionMul>(std::move(subFunctions[0]), std::move(subFunctions[1]));
