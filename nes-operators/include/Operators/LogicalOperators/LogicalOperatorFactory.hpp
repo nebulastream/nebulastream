@@ -103,14 +103,11 @@ public:
         std::vector<ExpressionNodePtr> outputFields,
         OperatorId id = getNextOperatorId());
 
-    /**
-     * @brief Create a new source operator with source descriptor.
-     * @param sourceDescriptor the SourceDescriptorPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorPtr
-     */
+    static LogicalUnaryOperatorPtr
+    createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
+
     static LogicalUnaryOperatorPtr createSourceOperator(
-        std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor,
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor,
         OperatorId id = getNextOperatorId(),
         OriginId originId = INVALID_ORIGIN_ID);
 

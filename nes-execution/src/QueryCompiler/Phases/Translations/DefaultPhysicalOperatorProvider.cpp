@@ -25,7 +25,8 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -42,7 +43,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -124,19 +124,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (NES::Util::instanceOf<SourceLogicalOperator>(operatorNode))
-    {
-        auto logicalSourceOperator = NES::Util::as<SourceLogicalOperator>(operatorNode);
-        auto physicalSourceOperator = PhysicalOperators::PhysicalSourceOperator::create(
-            getNextOperatorId(),
-            logicalSourceOperator->getOriginId(),
-            logicalSourceOperator->getInputSchema(),
-            logicalSourceOperator->getOutputSchema(),
-            std::make_shared<Sources::SourceDescriptor>(logicalSourceOperator->getSourceDescriptorRef()));
-        physicalSourceOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-        operatorNode->replace(physicalSourceOperator);
-    }
-    else if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
+    if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
     {
         auto logicalSinkOperator = NES::Util::as<SinkLogicalOperator>(operatorNode);
 

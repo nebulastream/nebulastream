@@ -14,11 +14,11 @@
 
 #include <variant>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -113,7 +113,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sourceOperator = NES::Util::as<PhysicalOperators::PhysicalSourceOperator>(rootOperator);
+    auto sourceOperator = NES::Util::as<OperatorLogicalSourceDescriptor>(rootOperator);
+    auto sourceDescriptor = sourceOperator->getSourceDescriptorRef();
+    INVARIANT(&sourceDescriptor, "Logical source name lookup is not supported");
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())

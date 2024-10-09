@@ -147,7 +147,6 @@ struct ConfigParametersTCP
 
 class TCPSource : public Source
 {
-    /// TODO #74: make timeout configurable via descriptor
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
 
 public:

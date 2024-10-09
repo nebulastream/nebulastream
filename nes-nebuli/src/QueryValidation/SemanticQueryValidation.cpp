@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
@@ -52,7 +52,6 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan)
     try
     {
         auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
-        typeInferencePhase->execute(queryPlan);
     }
     catch (std::exception& e)
     {
@@ -104,23 +103,14 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
     const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Getting the source operators from the query plan
-    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
 
     for (const auto& source : sourceOperators)
     {
-        auto& sourceDescriptor = source->getSourceDescriptorRef();
-
-        /// Filtering for logical sources
-        ///-Todo: improve
-        if (sourceDescriptor.sourceType == "Logical")
+        /// Making sure that all logical sources are present in the source catalog
+        if (!sourceCatalog->containsLogicalSource(source->getLogicalSourceName()))
         {
-            auto sourceName = sourceDescriptor.logicalSourceName;
-
-            /// Making sure that all logical sources are present in the source catalog
-            if (!sourceCatalog->containsLogicalSource(sourceName))
-            {
-                throw QueryInvalid("The logical source '" + sourceName + "' can not be found in the SourceCatalog\n");
-            }
+            throw QueryInvalid("The logical source '" + source->getLogicalSourceName() + "' can not be found in the SourceCatalog\n");
         }
     }
 }
@@ -129,15 +119,13 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     const QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        ;
-        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().logicalSourceName;
-        if (sourceCatalog->getPhysicalSources(logicalSourceName).empty())
+        if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
         {
-            invalidLogicalSourceNames.emplace_back(logicalSourceName);
+            invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
         }
     }
 
