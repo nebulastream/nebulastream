@@ -160,26 +160,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
 }
 
-TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
-{
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "workerWithPhysicalSources.yaml");
-
-    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-}
-
-TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
+TEST_F(ConfigTest, testWorkerConsoleInput)
 {
     /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();

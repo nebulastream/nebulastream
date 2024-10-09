@@ -22,6 +22,7 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
 
 
@@ -30,9 +31,6 @@ namespace NES
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
-
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -78,7 +76,21 @@ public:
     [[nodiscard]] std::vector<OperatorPtr> getRootOperators() const;
     [[nodiscard]] std::vector<OperatorPtr> getLeafOperators() const;
 
-    [[nodiscard]] std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
+    template <typename LogicalSourceType>
+    [[nodiscard]] std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
+    {
+        NES_DEBUG("Get all source operators by traversing all the root nodes.");
+        std::set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
+        for (const auto& rootOperator : rootOperators)
+        {
+            auto sourceOperators = rootOperator->getNodesByType<LogicalSourceType>();
+            NES_DEBUG("Insert all source operators to the collection");
+            sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
+        }
+        NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
+        std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
+        return sourceOperators;
+    }
     [[nodiscard]] std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     [[nodiscard]] std::unordered_set<OperatorPtr> getAllOperators() const;

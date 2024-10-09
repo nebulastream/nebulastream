@@ -11,5 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        SourceLogicalOperator.cpp
+        OperatorLogicalSourceName.cpp
+        OperatorLogicalSourceDescriptor.cpp
 )

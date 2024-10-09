@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
@@ -48,10 +49,7 @@ class SerializableOperator_FilterDetails;
 class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
 
-/**
- * @brief The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a
- * corresponding protobuffer object.
- */
+/// The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a corresponding protobuffer object.
 class OperatorSerializationUtil
 {
 public:
@@ -63,7 +61,7 @@ public:
     /// Note: This method will not deserialize its children
     static OperatorPtr deserializeOperator(SerializableOperator serializedOperator);
 
-    static void serializeSourceOperator(SourceLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
+    static void serializeSourceOperator(OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator);
 
     static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
 

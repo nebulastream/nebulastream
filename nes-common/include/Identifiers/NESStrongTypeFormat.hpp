@@ -14,7 +14,6 @@
 
 #pragma once
 #include <Identifiers/NESStrongType.hpp>
-#include <fmt/core.h>
 #include <fmt/std.h>
 
 /**

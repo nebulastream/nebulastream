@@ -16,21 +16,19 @@
 
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 
-/// Is constructed during parsing and represents a logical source as an operator node in the query plan.
-class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+/// Is constructed during parsing. Stores the name of one logical source as a member.
+/// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
+/// configured for the specific logical source name. We then expand 1 OperatorLogicalSourceName to N OperatorLogicalSourceDescriptors,
+/// one OperatorLogicalSourceDescriptor for each descriptor found in the source catalog with the logical source name as input.
+class OperatorLogicalSourceName : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit SourceLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
-    explicit SourceLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
-
-    const Sources::SourceDescriptor& getSourceDescriptorRef() const;
-
-    void setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
+    explicit OperatorLogicalSourceName(std::string logicalSourceName, OperatorId id, OriginId originId);
+    explicit OperatorLogicalSourceName(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
@@ -43,8 +41,13 @@ public:
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
+    [[nodiscard]] std::string getLogicalSourceName() const;
+    [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
+    void setSchema(std::shared_ptr<Schema> schema);
+
 private:
-    std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
+    std::string logicalSourceName;
+    std::shared_ptr<Schema> schema;
 };
 
 }

@@ -19,7 +19,8 @@
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -65,21 +66,6 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators) : 
 
 QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId)
 {
-}
-
-std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() const
-{
-    NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
-    std::set<SourceLogicalOperatorPtr> sourceOperatorsSet;
-    for (const auto& rootOperator : rootOperators)
-    {
-        auto sourceOptrs = rootOperator->getNodesByType<SourceLogicalOperator>();
-        NES_DEBUG("QueryPlan: insert all source operators to the collection");
-        sourceOperatorsSet.insert(sourceOptrs.begin(), sourceOptrs.end());
-    }
-    NES_DEBUG("QueryPlan: Found {} source operators.", sourceOperatorsSet.size());
-    std::vector<SourceLogicalOperatorPtr> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
-    return sourceOperators;
 }
 
 std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() const
