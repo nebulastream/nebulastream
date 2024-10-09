@@ -10,5 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-nautilus
+    Util.cpp
+)
+
 add_subdirectory(DataTypes)
 add_subdirectory(Interface)
