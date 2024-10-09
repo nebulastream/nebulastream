@@ -137,10 +137,10 @@ public:
         auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulFunction2, "sum_charge");
 
         ///   count(*)
-        auto countAggFunction5
-            = std::make_shared<Aggregation::CountAggregationFunction>(uintegerType, uintegerType, Functions::FunctionPtr(), "count_order");
+        auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(
+            uintegerType, uintegerType, std::unique_ptr<Functions::Function>(), "count_order");
 
-        std::vector<Functions::FunctionPtr> keyFields = {l_returnflagField, l_linestatusFiled};
+        std::vector<std::unique_ptr<Functions::Function>> keyFields = {l_returnflagField, l_linestatusFiled};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
             = {sumAggFunction1, sumAggFunction2, sumAggFunction3, sumAggFunction4, countAggFunction5};
 

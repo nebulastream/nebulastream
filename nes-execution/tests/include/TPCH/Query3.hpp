@@ -88,9 +88,9 @@ public:
         auto readC_key = std::make_shared<ExecutableFunctionReadField>("c_custkey");
         auto joinOp = std::make_shared<Operators::BatchJoinBuild>(
             0 /*handler index*/,
-            std::vector<Functions::FunctionPtr>{readC_key},
+            std::vector<std::unique_ptr<Functions::Function>>{readC_key},
             std::vector<PhysicalTypePtr>{integerType},
-            std::vector<Functions::FunctionPtr>(),
+            std::vector<std::unique_ptr<Functions::Function>>(),
             std::vector<PhysicalTypePtr>(),
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         selection->setChild(joinOp);
@@ -134,7 +134,7 @@ public:
         /// join probe with customers
         std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
         std::vector<IR::Types::StampPtr> valueStamps = {};
-        std::vector<FunctionPtr> ordersProbeKeys = {std::make_shared<ExecutableFunctionReadField>("o_custkey")};
+        std::vector<std::unique_ptr<Functions::Function>> ordersProbeKeys = {std::make_shared<ExecutableFunctionReadField>("o_custkey")};
 
         std::vector<Record::RecordFieldIdentifier> joinProbeResults = {"o_custkey", "o_orderkey", "o_orderdate", "o_shippriority"};
         auto customersJoinProbe = std::make_shared<BatchJoinProbe>(
@@ -147,8 +147,9 @@ public:
         orderDateSelection->setChild(customersJoinProbe);
 
         /// join build for order_customers
-        std::vector<FunctionPtr> order_customersJoinBuildKeys = {std::make_shared<ExecutableFunctionReadField>("o_orderkey")};
-        std::vector<FunctionPtr> order_customersJoinBuildValues = {
+        std::vector<std::unique_ptr<Functions::Function>> order_customersJoinBuildKeys
+            = {std::make_shared<ExecutableFunctionReadField>("o_orderkey")};
+        std::vector<std::unique_ptr<Functions::Function>> order_customersJoinBuildValues = {
             std::make_shared<ExecutableFunctionReadField>("o_orderdate"), std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
 
         auto order_customersJoinBuild = std::make_shared<Operators::BatchJoinBuild>(
@@ -202,7 +203,7 @@ public:
 
         ///  l_orderkey,
         auto l_orderkey = std::make_shared<ExecutableFunctionReadField>("l_orderkey");
-        std::vector<FunctionPtr> lineitemProbeKeys = {l_orderkey};
+        std::vector<std::unique_ptr<Functions::Function>> lineitemProbeKeys = {l_orderkey};
 
         std::vector<Record::RecordFieldIdentifier> orderProbeFieldNames = {"o_shippriority", "o_orderdate"};
 
@@ -223,9 +224,9 @@ public:
         auto revenueFunction = std::make_shared<ExecutableFunctionMul>(l_extendedpriceField, subFunction);
         auto sumRevenue = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, revenueFunction, "sum_revenue");
         auto readO_orderdate = std::make_shared<ExecutableFunctionReadField>("o_orderdate");
-        std::vector<Functions::FunctionPtr> keyFields
+        std::vector<std::unique_ptr<Functions::Function>> keyFields
             = {l_orderkey, readO_orderdate, std::make_shared<ExecutableFunctionReadField>("o_shippriority")};
-        std::vector<Functions::FunctionPtr> aggregationFunctions = {revenueFunction};
+        std::vector<std::unique_ptr<Functions::Function>> aggregationFunctions = {revenueFunction};
         std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {sumRevenue};
 
         PhysicalTypePtr smallType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt8());
