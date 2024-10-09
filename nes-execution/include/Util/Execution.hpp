@@ -16,25 +16,11 @@
 
 #include <cstdint>
 #include <tuple>
-#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation::Util
 {
-
-void logProxy(const char* message, const LogLevel logLevel);
-
-/// Allows to use our general logging calls from nautilus-land
-#define NES_LOG_EXEC(TEXT, LOG_LEVEL) \
-    { \
-        nautilus::stringstream ss; \
-        ss << TEXT; \
-        nautilus::val<LogLevel> logLevel = (LOG_LEVEL); \
-        nautilus::invoke(QueryCompilation::Util::logProxy, ss.str().c_str(), logLevel); \
-    }
-
 /**
  * @brief Get the windowing parameter (size, slide, and time function) for the given window type
  * @param windowType
