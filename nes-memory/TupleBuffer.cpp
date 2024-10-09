@@ -130,19 +130,19 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
-uint64_t TupleBuffer::getWatermark() const noexcept
+WatermarkTs TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(uint64_t value) noexcept
+void TupleBuffer::setWatermark(WatermarkTs value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-uint64_t TupleBuffer::getCreationTimestampInMS() const noexcept
+WatermarkTs TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
-void TupleBuffer::setSequenceNumber(uint64_t sequenceNumber) noexcept
+void TupleBuffer::setSequenceNumber(SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
@@ -156,11 +156,11 @@ SequenceData TupleBuffer::getSequenceData() const noexcept
 {
     return {getSequenceNumber(), getChunkNumber(), isLastChunk()};
 }
-uint64_t TupleBuffer::getSequenceNumber() const noexcept
+SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
 }
-void TupleBuffer::setChunkNumber(uint64_t chunkNumber) noexcept
+void TupleBuffer::setChunkNumber(ChunkNumber chunkNumber) noexcept
 {
     controlBlock->setChunkNumber(chunkNumber);
 }
@@ -172,7 +172,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(uint64_t value) noexcept
+void TupleBuffer::setCreationTimestampInMS(WatermarkTs value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
@@ -246,7 +246,7 @@ uint32_t TupleBuffer::getNumberOfChildrenBuffer() const noexcept
 {
     return controlBlock->getNumberOfChildrenBuffer();
 }
-uint64_t TupleBuffer::getChunkNumber() const noexcept
+ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
     return controlBlock->getChunkNumber();
 }

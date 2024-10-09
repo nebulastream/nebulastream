@@ -65,9 +65,9 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
     /// check if we already registered each expected origin in the local watermark processor map
     if (localWatermarkProcessor.size() != numberOfOrigins)
     {
-        return 0;
+        return WatermarkTs(0);
     }
-    WatermarkTs maxWatermarkTs = UINT64_MAX;
+    WatermarkTs maxWatermarkTs = WatermarkTs(UINT64_MAX);
     for (const auto& localWatermarkManager : localWatermarkProcessor)
     {
         maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager.second->getCurrentWatermark());
