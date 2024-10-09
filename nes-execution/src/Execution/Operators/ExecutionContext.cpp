@@ -241,4 +241,4 @@ void ExecutionContext::removeSequenceState() const
     nautilus::invoke(removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
-} /// namespace NES::Runtime::Execution
+}

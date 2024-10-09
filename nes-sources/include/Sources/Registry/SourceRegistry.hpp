@@ -27,4 +27,8 @@ class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, 
 {
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}
+
+#define INCLUDED_FROM_SOURCE_REGISTRY
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#undef INCLUDED_FROM_SOURCE_REGISTRY

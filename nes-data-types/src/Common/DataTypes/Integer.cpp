@@ -61,4 +61,4 @@ std::string Integer::toString()
     return fmt::format("INTEGER({} bits {})", bits, lowerBound == 0 ? "unsigned" : "signed");
 }
 
-} /// namespace NES
+}
