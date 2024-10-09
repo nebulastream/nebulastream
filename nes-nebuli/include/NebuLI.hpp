@@ -15,11 +15,37 @@
 #pragma once
 
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::CLI
 {
+
+struct SchemaField
+{
+    std::string name;
+    BasicType type;
+};
+
+struct LogicalSource
+{
+    std::string name;
+    std::vector<SchemaField> schema;
+};
+
+struct PhysicalSource
+{
+    std::string logical;
+    std::map<std::string, std::string> config;
+};
+
+struct QueryConfig
+{
+    std::string query;
+    std::vector<LogicalSource> logical;
+    std::vector<PhysicalSource> physical;
+};
+
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testName);
-bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr);
+DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config);
 }
