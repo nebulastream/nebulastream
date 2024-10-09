@@ -32,8 +32,8 @@ ExecutableFunctionSub::ExecutableFunctionSub(
 
 std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(subFunctions.size() == 2, "Sub function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionSub>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Sub function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionSub>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }

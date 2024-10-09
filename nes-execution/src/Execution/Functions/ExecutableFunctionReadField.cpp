@@ -25,4 +25,4 @@ VarVal ExecutableFunctionReadField::execute(Record& record) const
     return record.read(field);
 }
 
-} /// namespace NES::Runtime::Execution::Functions
+}

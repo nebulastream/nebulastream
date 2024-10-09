@@ -33,8 +33,8 @@ ExecutableFunctionAdd::ExecutableFunctionAdd(
 
 std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<std::unique_ptr<Function>> childFunctions)
 {
-    PRECONDITION(subFunctions.size() == 2, "Add function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionAdd>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Add function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionAdd>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }
