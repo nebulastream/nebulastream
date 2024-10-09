@@ -83,6 +83,4 @@ private:
     nautilus::val<int8_t*> tupleBufferRef;
 };
 
-using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
-
-} /// namespace NES::Runtime::Execution
+}

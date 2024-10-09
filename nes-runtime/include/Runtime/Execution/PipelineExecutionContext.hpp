@@ -135,4 +135,4 @@ private:
     size_t numberOfWorkerThreads;
 };
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
-} /// namespace NES::Runtime::Execution
+}

@@ -115,4 +115,4 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 {
     size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
 };
-} /// namespace std
+}

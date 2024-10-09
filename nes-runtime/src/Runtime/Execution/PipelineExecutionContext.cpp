@@ -101,4 +101,4 @@ bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOrig
     return chunkState.seenChunks == chunkState.lastChunkNumber;
 }
 
-} /// namespace NES::Runtime::Execution
+}

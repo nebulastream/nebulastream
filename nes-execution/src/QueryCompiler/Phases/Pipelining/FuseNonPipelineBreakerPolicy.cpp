@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
@@ -34,7 +33,6 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
         || NES::Util::instanceOf<PhysicalOperators::PhysicalFilterOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>(physicalOperator)
-        || NES::Util::instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>(physicalOperator)
         || NES::Util::instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>(physicalOperator));
 }
-} /// namespace NES::QueryCompilation
+}

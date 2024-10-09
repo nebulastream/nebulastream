@@ -181,6 +181,6 @@ std::shared_ptr<detail::Logger> getInstance()
     return detail::LoggerHolder::singleton;
 }
 
-} /// namespace Logger
+}
 
-} /// namespace NES
+}

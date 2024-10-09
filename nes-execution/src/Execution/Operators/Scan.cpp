@@ -53,4 +53,4 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     }
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}
