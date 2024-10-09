@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <string>
-#include <Parser/SLTParser.hpp>
+#include <SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>

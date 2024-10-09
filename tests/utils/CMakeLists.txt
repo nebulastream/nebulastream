@@ -11,9 +11,9 @@
 # limitations under the License.
 
 # In this function we create target for system tests. We make heavy use of cache files to speed up the tests when
-# running them multiple times. The cache files are created by the nes-nebuli tool. The cache files are created in the
+# running them multiple times. The cache files are created by the systest tool. The cache files are created in the
 # build directory in the cache folder. After the initial creation of the cache files they are only updated if the
-# system test file, nes-nebuli or the single-node-worker binary changes.
+# system test file, systest or the single-node-worker binary changes.
 function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         # Name of the test executable
         set(TEST_EXECUTABLE "ST_${SYSTEM_TEST_NAME}")
@@ -30,14 +30,15 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
 
         add_custom_command(
                 OUTPUT ${CACHE_FILE}
-                COMMAND nes-nebuli dump --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR}
-                DEPENDS nes-nebuli nes-single-node-worker ${SYSTEM_TEST_FILE_PATH}
+                COMMAND systest cache --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR}
+                DEPENDS systest nes-single-node-worker ${SYSTEM_TEST_FILE_PATH}
         )
 
         add_executable(${TEST_EXECUTABLE} ${SOURCE_FILE} ${CACHE_FILE})
         target_link_libraries(${TEST_EXECUTABLE}
                 PRIVATE
-                nes-nebuli-lib
+                nes-execution-test-util
+                nes-systest-lib
                 nes-single-node-worker-test-util
         )
 
@@ -81,7 +82,8 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
         add_executable(${TEST_EXECUTABLE} EXCLUDE_FROM_ALL ${SOURCE_FILE} ${CACHE_FILES})
         target_link_libraries(${TEST_EXECUTABLE}
                 PRIVATE
-                nes-nebuli-lib
+                nes-execution-test-util
+                nes-systest-lib
                 nes-single-node-worker-test-util
         )
 

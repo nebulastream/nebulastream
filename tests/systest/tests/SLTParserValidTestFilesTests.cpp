@@ -13,7 +13,7 @@
 */
 #include <string>
 #include <vector>
-#include <Parser/SLTParser.hpp>
+#include <SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>

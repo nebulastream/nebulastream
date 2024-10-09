@@ -24,9 +24,9 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <Parser/SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <SLTParser.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::SLTParser
