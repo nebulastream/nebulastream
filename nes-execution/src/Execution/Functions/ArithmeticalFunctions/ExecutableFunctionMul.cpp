@@ -35,8 +35,8 @@ ExecutableFunctionMul::ExecutableFunctionMul(
 
 std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(subFunctions.size() == 2, "Mul function must have exactly two sub-functions");
-    return std::make_unique<ExecutableFunctionMul>(std::move(subFunctions[0]), std::move(subFunctions[1]));
+    PRECONDITION(childFunctions.size() == 2, "Mul function must have exactly two sub-functions");
+    return std::make_unique<ExecutableFunctionMul>(std::move(childFunctions[0]), std::move(childFunctions[1]));
 }
 
 }

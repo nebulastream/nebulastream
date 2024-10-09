@@ -31,8 +31,8 @@ ExecutableFunctionNegate::ExecutableFunctionNegate(std::unique_ptr<Function> chi
 
 std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
-    PRECONDITION(subFunctions.size() == 1, "Negate function must have exactly one sub-function");
-    return std::make_unique<ExecutableFunctionNegate>(std::move(subFunctions[0]));
+    PRECONDITION(childFunctions.size() == 1, "Negate function must have exactly one sub-function");
+    return std::make_unique<ExecutableFunctionNegate>(std::move(childFunctions[0]));
 }
 
 }
