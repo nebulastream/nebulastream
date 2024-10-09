@@ -16,7 +16,7 @@
 
 #include <API/AttributeField.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Operators/Streaming/Watermark/TimeFunction.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
@@ -47,35 +47,6 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
     }
-}
-
-void logProxy(const char* message, const LogLevel logLevel)
-{
-    /// Calling the logger with the message and the log level
-    switch (logLevel)
-    {
-        case LogLevel::LOG_NONE:
-            break;
-        case LogLevel::LOG_FATAL_ERROR:
-            NES_FATAL_ERROR("{}", message);
-            break;
-        case LogLevel::LOG_ERROR:
-            NES_ERROR("{}", message);
-            break;
-        case LogLevel::LOG_WARNING:
-            NES_WARNING("{}", message);
-            break;
-        case LogLevel::LOG_INFO:
-            NES_INFO("{}", message);
-            break;
-        case LogLevel::LOG_DEBUG:
-            NES_DEBUG("{}", message);
-            break;
-        case LogLevel::LOG_TRACE:
-            NES_TRACE("{}", message);
-            break;
-    }
-
 }
 
 }
