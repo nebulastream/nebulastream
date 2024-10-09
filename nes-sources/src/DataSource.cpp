@@ -54,13 +54,13 @@ void DataSource::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
         /// set the origin id for this source
         buffer.setOriginId(originId);
         /// set the creation timestamp
-        buffer.setCreationTimestampInMS(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
+        buffer.setCreationTimestampInMS(WatermarkTs(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         /// Set the sequence number of this buffer.
         /// A data source generates a monotonic increasing sequence number
         maxSequenceNumber++;
-        buffer.setSequenceNumber(maxSequenceNumber);
-        buffer.setChunkNumber(1);
+        buffer.setSequenceNumber(SequenceNumber(maxSequenceNumber));
+        buffer.setChunkNumber(ChunkNumber(1));
         buffer.setLastChunk(true);
         NES_DEBUG(
             "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
