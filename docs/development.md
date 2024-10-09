@@ -152,3 +152,8 @@ cmake -B build \
 It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
 sanitizers
 also require llvm to be built with sanitization enabled which is not the case for the pre-built version.
+
+### Compiling with Libstdc++
+
+By default, NebulaStream attempts to build with libc++ if it is available on the host system (which is the case for all docker images).
+Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fallback to the default standard library on the system.
