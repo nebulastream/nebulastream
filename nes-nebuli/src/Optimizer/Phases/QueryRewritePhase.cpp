@@ -56,12 +56,13 @@ void QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
     queryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
     queryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
 
+    /// TODO #105 Once we have added And, Or, and other logical functions, we can call filterMergeRule. Otherwise, it might happen that we have a filter operator with an And function as a child.
     /// Apply rule for filter split up
     queryPlan = filterSplitUpRule->apply(queryPlan);
     /// Apply rule for filter push down optimization
     queryPlan = filterPushDownRule->apply(queryPlan);
     /// Apply rule for filter merge
-    queryPlan = filterMergeRule->apply(queryPlan);
+    /// queryPlan = filterMergeRule->apply(queryPlan);
     /// Apply rule for filter reordering optimization
     queryPlan = predicateReorderingRule->apply(queryPlan);
 }
