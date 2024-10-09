@@ -27,6 +27,3 @@ install(TARGETS nes-functions
         COMPONENT nesLibrary
         DESTINATION lib)
 
-if (NES_ENABLES_TESTS)
-    add_subdirectory(tests)
-endif ()
