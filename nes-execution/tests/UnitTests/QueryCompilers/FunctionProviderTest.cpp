@@ -30,6 +30,7 @@
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
@@ -67,7 +68,7 @@ TEST_F(FunctionProviderTest, testLoweringCurrentlyUnsupportedFunction)
 {
     const auto nodeFunctionCeil = NodeFunctionCeil::create(nodeFunctionReadLeft);
     nodeFunctionCeil->inferStamp(dummySchema);
-    EXPECT_ANY_THROW(const auto executableFunction = QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionCeil));
+    ASSERT_EXCEPTION_ERRORCODE(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionCeil), ErrorCode::UnknownFunctionType);
 }
 
 TEST_F(FunctionProviderTest, testLoweringAdd)
