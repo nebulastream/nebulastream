@@ -14,11 +14,11 @@
 
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Util/Execution.hpp>
-#include <ErrorHandling.hpp>
-#include <function.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_enum.hpp>
-#include <Util/Logger/LogLevel.hpp>
+#include <ErrorHandling.hpp>
+#include <function.hpp>
 
 
 namespace NES::Runtime::Execution::Functions
@@ -28,16 +28,16 @@ VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
     const auto leftValue = leftExecutableFunctionSub->execute(record);
     const auto rightValue = rightExecutableFunctionSub->execute(record);
-    NES_LOG_EXEC("left: " << leftValue << " right: " << rightValue, LogLevel::LOG_DEBUG);
     return leftValue == rightValue;
 }
 
-ExecutableFunctionEquals::ExecutableFunctionEquals(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+ExecutableFunctionEquals::ExecutableFunctionEquals(
+    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-FunctionPtr RegisterExecutableFunctionEquals(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Equals function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionEquals>(std::move(subFunctions[0]), std::move(subFunctions[1]));

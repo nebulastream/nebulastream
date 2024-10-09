@@ -56,4 +56,4 @@ public:
 
     std::unique_ptr<FunctionType> function;
 };
-} /// namespace NES::Runtime::Execution::Functions
+}

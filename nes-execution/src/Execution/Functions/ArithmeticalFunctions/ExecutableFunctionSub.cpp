@@ -24,12 +24,13 @@ VarVal ExecutableFunctionSub::execute(Record& record) const
     return leftValue - rightValue;
 }
 
-ExecutableFunctionSub::ExecutableFunctionSub(FunctionPtr leftExecutableFunctionSub, FunctionPtr rightExecutableFunctionSub)
+ExecutableFunctionSub::ExecutableFunctionSub(
+    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
     : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
 {
 }
 
-FunctionPtr RegisterExecutableFunctionSub(std::vector<FunctionPtr> subFunctions)
+std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<std::unique_ptr<Functions::Function>> childFunctions)
 {
     PRECONDITION(subFunctions.size() == 2, "Sub function must have exactly two sub-functions");
     return std::make_unique<ExecutableFunctionSub>(std::move(subFunctions[0]), std::move(subFunctions[1]));
