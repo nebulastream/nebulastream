@@ -6,7 +6,7 @@
 # RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
 # RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source window INT64 id INT64 value UINT64 timestamp
 1,1,1000
 2,1,1001
 3,11,1002
@@ -46,3 +46,17 @@ Query::from("window")
 ----
 9,1,1000
 18,1,1001
+
+# Nested Map functions and the second map depends on the first map
+Query::from("window")
+    .map(Attribute("id") = (Attribute("id") * 3 / Attribute("value")) + (Attribute("value") * 2))
+    .map(Attribute("value") = Attribute("value") * 25 - (Attribute("id") * 5) - 125)
+    .SINK;
+----
+5,-125,1000
+8,-140,1001
+22,40,1002
+824,6055,2000
+624,4555,2012
+44,205,2021
+
