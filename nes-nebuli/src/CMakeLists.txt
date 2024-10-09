@@ -12,7 +12,6 @@
 
 add_subdirectory(SourceCatalogs)
 add_subdirectory(Compiler)
-add_subdirectory(Parser)
 add_subdirectory(Optimizer)
 add_subdirectory(QueryValidation)
 add_subdirectory(Services)

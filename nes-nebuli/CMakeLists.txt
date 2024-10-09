@@ -95,16 +95,6 @@ add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/Log
 add_nebuli_header(nes-window-types Measures/ Measures)
 add_nebuli_header(nes-window-types Types/ Types)
 
-function(add_nes_test_nebuli)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-nebuli-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
-endfunction()
-
-add_tests_if_enabled(tests)
-
 # install Nebuli and all its dependencies + the file_set with the headers
 install(TARGETS nes-nebuli nes-operators nes-functions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
         FILE_SET nebuliPublicHeaders DESTINATION "${CMAKE_INSTALL_PREFIX}/include/nebulastream"
@@ -118,7 +108,7 @@ set(CPACK_PACKAGE_NAME "Nebuli")
 set(CPACK_PACKAGE_RELEASE 1)
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
-set(CPACK_PACKAGE_DESCRIPTION "The Nebuli client interacts with NebulaStream to submit and control Queries")
+set(CPACK_PACKAGE_DESCRIPTION "The Nebuli client interacts with NebulaStream to submit and control queries")
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})

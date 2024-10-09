@@ -12,179 +12,19 @@
     limitations under the License.
 */
 
-#include <algorithm>
-#include <fstream>
+#include <filesystem>
 #include <regex>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Optimizer/Phases/OriginIdInferencePhase.hpp>
-#include <Optimizer/Phases/QueryRewritePhase.hpp>
-#include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryValidation/SemanticQueryValidation.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
-#include <Services/QueryParsingService.hpp>
-#include <SourceCatalogs/PhysicalSource.hpp>
-#include <SourceCatalogs/SourceCatalog.hpp>
-#include <SourceCatalogs/SourceCatalogEntry.hpp>
-#include <Sources/SourceProvider.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <nlohmann/detail/input/binary_reader.hpp>
-#include <yaml-cpp/yaml.h>
-#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
+#include <SLTParser.hpp>
+#include <SystestRunner.hpp>
 
-namespace YAML
+namespace NES
 {
-using namespace NES::CLI;
-template <>
-struct convert<SchemaField>
-{
-    static bool decode(const Node& node, SchemaField& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = *magic_enum::enum_cast<NES::BasicType>(node["type"].as<std::string>());
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::LogicalSource>
-{
-    static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.schema = node["schema"].as<std::vector<SchemaField>>();
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::PhysicalSource>
-{
-    static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
-    {
-        rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::QueryConfig>
-{
-    static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
-    {
-        rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
-        rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
-        rhs.query = node["query"].as<std::string>();
-        return true;
-    }
-};
-}
-
-namespace NES::CLI
-{
-
-Sources::SourceDescriptor
-createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
-{
-    if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
-    {
-        NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
-    }
-    auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
-    NES_DEBUG("Source type is: {}", sourceType);
-
-    /// We currently only support CSV
-    auto inputFormat = Configurations::InputFormat::CSV;
-
-    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
-    {
-        return Sources::SourceDescriptor(
-            std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
-    }
-    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
-}
-
-DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
-{
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
-    auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-
-
-    /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
-    for (const auto& [logicalSourceName, schemaFields] : config.logical)
-    {
-        auto schema = Schema::create();
-        NES_INFO("Adding logical source: {}", logicalSourceName);
-        for (const auto& [name, type] : schemaFields)
-        {
-            schema = schema->addField(name, type);
-        }
-        sourceCatalog->addLogicalSource(logicalSourceName, schema);
-    }
-
-    /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, config] : config.physical)
-    {
-        auto sourceDescriptor
-            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
-        sourceCatalog->addPhysicalSource(
-            logicalSourceName,
-            Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceDescriptor)),
-                sourceCatalog->getLogicalSource(logicalSourceName),
-                INITIAL<WorkerId>));
-    }
-
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto parsingService = QueryParsingService::create(jitCompiler);
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(parsingService);
-    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
-    auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
-    auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
-    auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
-
-    auto query = syntacticQueryValidation->validate(config.query);
-    semanticQueryValidation->validate(query);
-    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
-    typeInference->performTypeInferenceQuery(query);
-
-    logicalSourceExpansionRule->apply(query);
-    typeInference->performTypeInferenceQuery(query);
-
-    originIdInferencePhase->execute(query);
-    queryRewritePhase->execute(query);
-    typeInference->performTypeInferenceQuery(query);
-
-    NES_INFO("QEP:\n {}", query->toString());
-    NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return DecomposedQueryPlan::create(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
-}
-
-DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
-{
-    std::ifstream file(filePath);
-    if (!file)
-    {
-        throw QueryDescriptionNotReadable(std::strerror(errno));
-    }
-
-    return loadFrom(file);
-}
-
 std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testname)
 {
     std::vector<DecomposedQueryPlanPtr> plans{};
-    QueryConfig config{};
+    CLI::QueryConfig config{};
     SLTParser::SLTParser parser{};
 
     parser.registerSubstitutionRule(
@@ -209,11 +49,11 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
     parser.registerOnCSVSourceCallback(
         [&](SLTParser::SLTParser::CSVSource&& source)
         {
-            config.logical.emplace_back(LogicalSource{
+            config.logical.emplace_back(CLI::LogicalSource{
                 .name = source.name,
                 .schema = [&source]()
                 {
-                    std::vector<SchemaField> schema;
+                    std::vector<CLI::SchemaField> schema;
                     for (const auto& field : source.fields)
                     {
                         schema.push_back({.name = field.name, .type = field.type});
@@ -222,7 +62,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                 }()});
 
             config.physical.emplace_back(
-                PhysicalSource{.logical = source.name, .config = {{"type", "CSV"}, {"filePath", source.csvFilePath}}});
+                CLI::PhysicalSource{.logical = source.name, .config = {{"type", "CSV_SOURCE"}, {"filePath", source.csvFilePath}}});
         });
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/tests/";
@@ -231,11 +71,11 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
         {
             static uint64_t sourceIndex = 0;
 
-            config.logical.emplace_back(LogicalSource{
+            config.logical.emplace_back(CLI::LogicalSource{
                 .name = source.name,
                 .schema = [&source]()
                 {
-                    std::vector<SchemaField> schema;
+                    std::vector<CLI::SchemaField> schema;
                     for (const auto& field : source.fields)
                     {
                         schema.push_back({.name = field.name, .type = field.type});
@@ -243,9 +83,9 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                     return schema;
                 }()});
 
-            config.physical.emplace_back(PhysicalSource{
+            config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
+                .config = {{"type", "CSV_SOURCE"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
 
 
             /// Write the tuples to a tmp file
@@ -270,13 +110,13 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
             config.query = query;
             try
             {
-                auto plan = createFullySpecifiedQueryPlan(config);
+                auto plan = CLI::createFullySpecifiedQueryPlan(config);
                 plans.emplace_back(plan);
             }
             catch (const std::exception& e)
             {
                 NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
-                exit(-1);
+                std::exit(-1);
             }
         });
     try
@@ -469,16 +309,4 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
     return same;
 }
 
-DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
-{
-    try
-    {
-        auto config = YAML::Load(inputStream).as<QueryConfig>();
-        return createFullySpecifiedQueryPlan(config);
-    }
-    catch (const YAML::ParserException& pex)
-    {
-        throw QueryDescriptionNotParsable("{}", pex.what());
-    }
-}
 }
