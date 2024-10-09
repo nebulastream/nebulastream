@@ -30,7 +30,8 @@ class SystemTestTemplate : public testing::Test
 public:
     static void SetUpTestSuite()
     {
-        Configuration::SingleNodeWorkerConfiguration const configuration{};
+        Configuration::SingleNodeWorkerConfiguration configuration{};
+        // configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
     }
     static std::unique_ptr<GRPCServer> uut;

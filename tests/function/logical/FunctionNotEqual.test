@@ -1,0 +1,331 @@
+# name: function/logical/FunctionNotEqual.test
+# description: Simple function NotEqual tests
+# groups: [Function, FunctionNotEqual]
+
+# LLVM LIT configuration
+# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
+# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
+
+Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,13,13
+
+# Check if the values are multiplied correctly with a constant
+Query::from("window")
+    .map(Attribute("val_i64") = Attribute("val_i64") != 42)
+    .map(Attribute("val_i32") = Attribute("val_i32") != 42)
+    .map(Attribute("val_i16") = Attribute("val_i16") != 42)
+    .map(Attribute("val_i8") = Attribute("val_i8") != 42)
+
+    .map(Attribute("val_u64") = Attribute("val_u64") != 42)
+    .map(Attribute("val_u32") = Attribute("val_u32") != 42)
+    .map(Attribute("val_u16") = Attribute("val_u16") != 42)
+    .map(Attribute("val_u8") = Attribute("val_u8") != 42)
+
+    .map(Attribute("val_f64") = Attribute("val_f64") != 42.0)
+    .map(Attribute("val_f32") = Attribute("val_f32") != 42.0f)
+
+    .SINK;
+----
+1 1 1 1 0 1 1 1 1 1
+
+
+# NotEqual i8 value with all other data types
+Query::from("window")
+    .map(Attribute("val_i8_i8") = Attribute("val_i8") != Attribute("val_i8"))
+    .map(Attribute("val_i8_i8_plus_1") = Attribute("val_i8") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_i8_i16") = Attribute("val_i8") != Attribute("val_i16"))
+    .map(Attribute("val_i8_i16_plus_1") = Attribute("val_i8") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_i8_i32") = Attribute("val_i8") != Attribute("val_i32"))
+    .map(Attribute("val_i8_i32_plus_1") = Attribute("val_i8") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_i8_i64") = Attribute("val_i8") != Attribute("val_i64"))
+    .map(Attribute("val_i8_i64_plus_1") = Attribute("val_i8") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_i8_u8") = Attribute("val_i8") != Attribute("val_u8"))
+    .map(Attribute("val_i8_u8_plus_1") = Attribute("val_i8") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_i8_u16") = Attribute("val_i8") != Attribute("val_u16"))
+    .map(Attribute("val_i8_u16_plus_1") = Attribute("val_i8") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_i8_u32") = Attribute("val_i8") != Attribute("val_u32"))
+    .map(Attribute("val_i8_u32_plus_1") = Attribute("val_i8") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_i8_u64") = Attribute("val_i8") != Attribute("val_u64"))
+    .map(Attribute("val_i8_u64_plus_1") = Attribute("val_i8") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_i8_f32") = Attribute("val_i8") != Attribute("val_f32"))
+    .map(Attribute("val_i8_f32_plus_1") = Attribute("val_i8") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_i8_f64") = Attribute("val_i8") != Attribute("val_f64"))
+    .map(Attribute("val_i8_f64_plus_1") = Attribute("val_i8") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_i8_i8"), Attribute("val_i8_i8_plus_1"), Attribute("val_i8_i16"), Attribute("val_i8_i16_plus_1"), Attribute("val_i8_i32"), Attribute("val_i8_i32_plus_1"), Attribute("val_i8_i64"), Attribute("val_i8_i64_plus_1"), Attribute("val_i8_u8"), Attribute("val_i8_u8_plus_1"), Attribute("val_i8_u16"), Attribute("val_i8_u16_plus_1"), Attribute("val_i8_u32"), Attribute("val_i8_u32_plus_1"), Attribute("val_i8_u64"), Attribute("val_i8_u64_plus_1"), Attribute("val_i8_f32"), Attribute("val_i8_f32_plus_1"), Attribute("val_i8_f64"), Attribute("val_i8_f64_plus_1"))
+    .SINK;
+----
+0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+
+# NotEqual i16 value with all other data types
+Query::from("window")
+    .map(Attribute("val_i16_i8") = Attribute("val_i16") != Attribute("val_i8"))
+    .map(Attribute("val_i16_i8_plus_1") = Attribute("val_i16") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_i16_i16") = Attribute("val_i16") != Attribute("val_i16"))
+    .map(Attribute("val_i16_i16_plus_1") = Attribute("val_i16") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_i16_i32") = Attribute("val_i16") != Attribute("val_i32"))
+    .map(Attribute("val_i16_i32_plus_1") = Attribute("val_i16") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_i16_i64") = Attribute("val_i16") != Attribute("val_i64"))
+    .map(Attribute("val_i16_i64_plus_1") = Attribute("val_i16") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_i16_u8") = Attribute("val_i16") != Attribute("val_u8"))
+    .map(Attribute("val_i16_u8_plus_1") = Attribute("val_i16") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_i16_u16") = Attribute("val_i16") != Attribute("val_u16"))
+    .map(Attribute("val_i16_u16_plus_1") = Attribute("val_i16") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_i16_u32") = Attribute("val_i16") != Attribute("val_u32"))
+    .map(Attribute("val_i16_u32_plus_1") = Attribute("val_i16") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_i16_u64") = Attribute("val_i16") != Attribute("val_u64"))
+    .map(Attribute("val_i16_u64_plus_1") = Attribute("val_i16") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_i16_f32") = Attribute("val_i16") != Attribute("val_f32"))
+    .map(Attribute("val_i16_f32_plus_1") = Attribute("val_i16") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_i16_f64") = Attribute("val_i16") != Attribute("val_f64"))
+    .map(Attribute("val_i16_f64_plus_1") = Attribute("val_i16") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_i16_i8"), Attribute("val_i16_i8_plus_1"), Attribute("val_i16_i16"), Attribute("val_i16_i16_plus_1"), Attribute("val_i16_i32"), Attribute("val_i16_i32_plus_1"), Attribute("val_i16_i64"), Attribute("val_i16_i64_plus_1"), Attribute("val_i16_u8"), Attribute("val_i16_u8_plus_1"), Attribute("val_i16_u16"), Attribute("val_i16_u16_plus_1"), Attribute("val_i16_u32"), Attribute("val_i16_u32_plus_1"), Attribute("val_i16_u64"), Attribute("val_i16_u64_plus_1"), Attribute("val_i16_f32"), Attribute("val_i16_f32_plus_1"), Attribute("val_i16_f64"), Attribute("val_i16_f64_plus_1"))
+    .SINK;
+----
+1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+
+# NotEqual i32 value with all other data types
+Query::from("window")
+    .map(Attribute("val_i32_i8") = Attribute("val_i32") != Attribute("val_i8"))
+    .map(Attribute("val_i32_i8_plus_1") = Attribute("val_i32") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_i32_i16") = Attribute("val_i32") != Attribute("val_i16"))
+    .map(Attribute("val_i32_i16_plus_1") = Attribute("val_i32") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_i32_i32") = Attribute("val_i32") != Attribute("val_i32"))
+    .map(Attribute("val_i32_i32_plus_1") = Attribute("val_i32") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_i32_i64") = Attribute("val_i32") != Attribute("val_i64"))
+    .map(Attribute("val_i32_i64_plus_1") = Attribute("val_i32") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_i32_u8") = Attribute("val_i32") != Attribute("val_u8"))
+    .map(Attribute("val_i32_u8_plus_1") = Attribute("val_i32") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_i32_u16") = Attribute("val_i32") != Attribute("val_u16"))
+    .map(Attribute("val_i32_u16_plus_1") = Attribute("val_i32") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_i32_u32") = Attribute("val_i32") != Attribute("val_u32"))
+    .map(Attribute("val_i32_u32_plus_1") = Attribute("val_i32") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_i32_u64") = Attribute("val_i32") != Attribute("val_u64"))
+    .map(Attribute("val_i32_u64_plus_1") = Attribute("val_i32") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_i32_f32") = Attribute("val_i32") != Attribute("val_f32"))
+    .map(Attribute("val_i32_f32_plus_1") = Attribute("val_i32") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_i32_f64") = Attribute("val_i32") != Attribute("val_f64"))
+    .map(Attribute("val_i32_f64_plus_1") = Attribute("val_i32") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_i32_i8"), Attribute("val_i32_i8_plus_1"), Attribute("val_i32_i16"), Attribute("val_i32_i16_plus_1"), Attribute("val_i32_i32"), Attribute("val_i32_i32_plus_1"), Attribute("val_i32_i64"), Attribute("val_i32_i64_plus_1"), Attribute("val_i32_u8"), Attribute("val_i32_u8_plus_1"), Attribute("val_i32_u16"), Attribute("val_i32_u16_plus_1"), Attribute("val_i32_u32"), Attribute("val_i32_u32_plus_1"), Attribute("val_i32_u64"), Attribute("val_i32_u64_plus_1"), Attribute("val_i32_f32"), Attribute("val_i32_f32_plus_1"), Attribute("val_i32_f64"), Attribute("val_i32_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+
+# NotEqual i64 value with all other data types
+Query::from("window")
+    .map(Attribute("val_i64_i8") = Attribute("val_i64") != Attribute("val_i8"))
+    .map(Attribute("val_i64_i8_plus_1") = Attribute("val_i64") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_i64_i16") = Attribute("val_i64") != Attribute("val_i16"))
+    .map(Attribute("val_i64_i16_plus_1") = Attribute("val_i64") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_i64_i32") = Attribute("val_i64") != Attribute("val_i32"))
+    .map(Attribute("val_i64_i32_plus_1") = Attribute("val_i64") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_i64_i64") = Attribute("val_i64") != Attribute("val_i64"))
+    .map(Attribute("val_i64_i64_plus_1") = Attribute("val_i64") != (Attribute("val_i64") + 1))
+    .map(Attribute("val_i64_u8") = Attribute("val_i64") != Attribute("val_u8"))
+    .map(Attribute("val_i64_u8_plus_1") = Attribute("val_i64") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_i64_u16") = Attribute("val_i64") != Attribute("val_u16"))
+    .map(Attribute("val_i64_u16_plus_1") = Attribute("val_i64") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_i64_u32") = Attribute("val_i64") != Attribute("val_u32"))
+    .map(Attribute("val_i64_u32_plus_1") = Attribute("val_i64") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_i64_u64") = Attribute("val_i64") != Attribute("val_u64"))
+    .map(Attribute("val_i64_u64_plus_1") = Attribute("val_i64") != (Attribute("val_u64") + 1))
+    .map(Attribute("val_i64_f32") = Attribute("val_i64") != Attribute("val_f32"))
+    .map(Attribute("val_i64_f32_plus_1") = Attribute("val_i64") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_i64_f64") = Attribute("val_i64") != Attribute("val_f64"))
+    .map(Attribute("val_i64_f64_plus_1") = Attribute("val_i64") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_i64_i8"), Attribute("val_i64_i8_plus_1"), Attribute("val_i64_i16"), Attribute("val_i64_i16_plus_1"), Attribute("val_i64_i32"), Attribute("val_i64_i32_plus_1"), Attribute("val_i64_i64"), Attribute("val_i64_i64_plus_1"), Attribute("val_i64_u8"), Attribute("val_i64_u8_plus_1"), Attribute("val_i64_u16"), Attribute("val_i64_u16_plus_1"), Attribute("val_i64_u32"), Attribute("val_i64_u32_plus_1"), Attribute("val_i64_u64"), Attribute("val_i64_u64_plus_1"), Attribute("val_i64_f32"), Attribute("val_i64_f32_plus_1"), Attribute("val_i64_f64"), Attribute("val_i64_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1
+
+# NotEqual u8 value with all other data types
+Query::from("window")
+    .map(Attribute("val_u8_i8") = Attribute("val_u8") != Attribute("val_i8"))
+    .map(Attribute("val_u8_i8_plus_1") = Attribute("val_u8") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_u8_i16") = Attribute("val_u8") != Attribute("val_i16"))
+    .map(Attribute("val_u8_i16_plus_1") = Attribute("val_u8") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_u8_i32") = Attribute("val_u8") != Attribute("val_i32"))
+    .map(Attribute("val_u8_i32_plus_1") = Attribute("val_u8") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_u8_i64") = Attribute("val_u8") != Attribute("val_i64"))
+    .map(Attribute("val_u8_i64_plus_1") = Attribute("val_u8") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_u8_u8") = Attribute("val_u8") != Attribute("val_u8"))
+    .map(Attribute("val_u8_u8_plus_1") = Attribute("val_u8") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_u8_u16") = Attribute("val_u8") != Attribute("val_u16"))
+    .map(Attribute("val_u8_u16_plus_1") = Attribute("val_u8") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_u8_u32") = Attribute("val_u8") != Attribute("val_u32"))
+    .map(Attribute("val_u8_u32_plus_1") = Attribute("val_u8") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_u8_u64") = Attribute("val_u8") != Attribute("val_u64"))
+    .map(Attribute("val_u8_u64_plus_1") = Attribute("val_u8") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_u8_f32") = Attribute("val_u8") != Attribute("val_f32"))
+    .map(Attribute("val_u8_f32_plus_1") = Attribute("val_u8") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_u8_f64") = Attribute("val_u8") != Attribute("val_f64"))
+    .map(Attribute("val_u8_f64_plus_1") = Attribute("val_u8") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_u8_i8"), Attribute("val_u8_i8_plus_1"), Attribute("val_u8_i16"), Attribute("val_u8_i16_plus_1"), Attribute("val_u8_i32"), Attribute("val_u8_i32_plus_1"), Attribute("val_u8_i64"), Attribute("val_u8_i64_plus_1"), Attribute("val_u8_u8"), Attribute("val_u8_u8_plus_1"), Attribute("val_u8_u16"), Attribute("val_u8_u16_plus_1"), Attribute("val_u8_u32"), Attribute("val_u8_u32_plus_1"), Attribute("val_u8_u64"), Attribute("val_u8_u64_plus_1"), Attribute("val_u8_f32"), Attribute("val_u8_f32_plus_1"), Attribute("val_u8_f64"), Attribute("val_u8_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1
+
+# NotEqual u16 value with all other data types
+Query::from("window")
+    .map(Attribute("val_u16_i8") = Attribute("val_u16") != Attribute("val_i8"))
+    .map(Attribute("val_u16_i8_plus_1") = Attribute("val_u16") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_u16_i16") = Attribute("val_u16") != Attribute("val_i16"))
+    .map(Attribute("val_u16_i16_plus_1") = Attribute("val_u16") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_u16_i32") = Attribute("val_u16") != Attribute("val_i32"))
+    .map(Attribute("val_u16_i32_plus_1") = Attribute("val_u16") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_u16_i64") = Attribute("val_u16") != Attribute("val_i64"))
+    .map(Attribute("val_u16_i64_plus_1") = Attribute("val_u16") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_u16_u8") = Attribute("val_u16") != Attribute("val_u8"))
+    .map(Attribute("val_u16_u8_plus_1") = Attribute("val_u16") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_u16_u16") = Attribute("val_u16") != Attribute("val_u16"))
+    .map(Attribute("val_u16_u16_plus_1") = Attribute("val_u16") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_u16_u32") = Attribute("val_u16") != Attribute("val_u32"))
+    .map(Attribute("val_u16_u32_plus_1") = Attribute("val_u16") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_u16_u64") = Attribute("val_u16") != Attribute("val_u64"))
+    .map(Attribute("val_u16_u64_plus_1") = Attribute("val_u16") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_u16_f32") = Attribute("val_u16") != Attribute("val_f32"))
+    .map(Attribute("val_u16_f32_plus_1") = Attribute("val_u16") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_u16_f64") = Attribute("val_u16") != Attribute("val_f64"))
+    .map(Attribute("val_u16_f64_plus_1") = Attribute("val_u16") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_u16_i8"), Attribute("val_u16_i8_plus_1"), Attribute("val_u16_i16"), Attribute("val_u16_i16_plus_1"), Attribute("val_u16_i32"), Attribute("val_u16_i32_plus_1"), Attribute("val_u16_i64"), Attribute("val_u16_i64_plus_1"), Attribute("val_u16_u8"), Attribute("val_u16_u8_plus_1"), Attribute("val_u16_u16"), Attribute("val_u16_u16_plus_1"), Attribute("val_u16_u32"), Attribute("val_u16_u32_plus_1"), Attribute("val_u16_u64"), Attribute("val_u16_u64_plus_1"), Attribute("val_u16_f32"), Attribute("val_u16_f32_plus_1"), Attribute("val_u16_f64"), Attribute("val_u16_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1
+
+# NotEqual u32 value with all other data types
+Query::from("window")
+    .map(Attribute("val_u32_i8") = Attribute("val_u32") != Attribute("val_i8"))
+    .map(Attribute("val_u32_i8_plus_1") = Attribute("val_u32") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_u32_i16") = Attribute("val_u32") != Attribute("val_i16"))
+    .map(Attribute("val_u32_i16_plus_1") = Attribute("val_u32") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_u32_i32") = Attribute("val_u32") != Attribute("val_i32"))
+    .map(Attribute("val_u32_i32_plus_1") = Attribute("val_u32") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_u32_i64") = Attribute("val_u32") != Attribute("val_i64"))
+    .map(Attribute("val_u32_i64_plus_1") = Attribute("val_u32") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_u32_u8") = Attribute("val_u32") != Attribute("val_u8"))
+    .map(Attribute("val_u32_u8_plus_1") = Attribute("val_u32") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_u32_u16") = Attribute("val_u32") != Attribute("val_u16"))
+    .map(Attribute("val_u32_u16_plus_1") = Attribute("val_u32") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_u32_u32") = Attribute("val_u32") != Attribute("val_u32"))
+    .map(Attribute("val_u32_u32_plus_1") = Attribute("val_u32") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_u32_u64") = Attribute("val_u32") != Attribute("val_u64"))
+    .map(Attribute("val_u32_u64_plus_1") = Attribute("val_u32") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_u32_f32") = Attribute("val_u32") != Attribute("val_f32"))
+    .map(Attribute("val_u32_f32_plus_1") = Attribute("val_u32") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_u32_f64") = Attribute("val_u32") != Attribute("val_f64"))
+    .map(Attribute("val_u32_f64_plus_1") = Attribute("val_u32") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_u32_i8"), Attribute("val_u32_i8_plus_1"), Attribute("val_u32_i16"), Attribute("val_u32_i16_plus_1"), Attribute("val_u32_i32"), Attribute("val_u32_i32_plus_1"), Attribute("val_u32_i64"), Attribute("val_u32_i64_plus_1"), Attribute("val_u32_u8"), Attribute("val_u32_u8_plus_1"), Attribute("val_u32_u16"), Attribute("val_u32_u16_plus_1"), Attribute("val_u32_u32"), Attribute("val_u32_u32_plus_1"), Attribute("val_u32_u64"), Attribute("val_u32_u64_plus_1"), Attribute("val_u32_f32"), Attribute("val_u32_f32_plus_1"), Attribute("val_u32_f64"), Attribute("val_u32_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1
+
+# NotEqual u64 value with all other data types
+Query::from("window")
+    .map(Attribute("val_u64_i8") = Attribute("val_u64") != Attribute("val_i8"))
+    .map(Attribute("val_u64_i8_plus_1") = Attribute("val_u64") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_u64_i16") = Attribute("val_u64") != Attribute("val_i16"))
+    .map(Attribute("val_u64_i16_plus_1") = Attribute("val_u64") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_u64_i32") = Attribute("val_u64") != Attribute("val_i32"))
+    .map(Attribute("val_u64_i32_plus_1") = Attribute("val_u64") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_u64_i64") = Attribute("val_u64") != Attribute("val_i64"))
+    .map(Attribute("val_u64_i64_plus_1") = Attribute("val_u64") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_u64_u8") = Attribute("val_u64") != Attribute("val_u8"))
+    .map(Attribute("val_u64_u8_plus_1") = Attribute("val_u64") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_u64_u16") = Attribute("val_u64") != Attribute("val_u16"))
+    .map(Attribute("val_u64_u16_plus_1") = Attribute("val_u64") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_u64_u32") = Attribute("val_u64") != Attribute("val_u32"))
+    .map(Attribute("val_u64_u32_plus_1") = Attribute("val_u64") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_u64_u64") = Attribute("val_u64") != Attribute("val_u64"))
+    .map(Attribute("val_u64_u64_plus_1") = Attribute("val_u64") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_u64_f32") = Attribute("val_u64") != Attribute("val_f32"))
+    .map(Attribute("val_u64_f32_plus_1") = Attribute("val_u64") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_u64_f64") = Attribute("val_u64") != Attribute("val_f64"))
+    .map(Attribute("val_u64_f64_plus_1") = Attribute("val_u64") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_u64_i8"), Attribute("val_u64_i8_plus_1"), Attribute("val_u64_i16"), Attribute("val_u64_i16_plus_1"), Attribute("val_u64_i32"), Attribute("val_u64_i32_plus_1"), Attribute("val_u64_i64"), Attribute("val_u64_i64_plus_1"), Attribute("val_u64_u8"), Attribute("val_u64_u8_plus_1"), Attribute("val_u64_u16"), Attribute("val_u64_u16_plus_1"), Attribute("val_u64_u32"), Attribute("val_u64_u32_plus_1"), Attribute("val_u64_u64"), Attribute("val_u64_u64_plus_1"), Attribute("val_u64_f32"), Attribute("val_u64_f32_plus_1"), Attribute("val_u64_f64"), Attribute("val_u64_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1
+
+# NotEqual f32 value with all other data types
+Query::from("window")
+    .map(Attribute("val_f32_i8") = Attribute("val_f32") != Attribute("val_i8"))
+    .map(Attribute("val_f32_i8_plus_1") = Attribute("val_f32") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_f32_i16") = Attribute("val_f32") != Attribute("val_i16"))
+    .map(Attribute("val_f32_i16_plus_1") = Attribute("val_f32") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_f32_i32") = Attribute("val_f32") != Attribute("val_i32"))
+    .map(Attribute("val_f32_i32_plus_1") = Attribute("val_f32") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_f32_i64") = Attribute("val_f32") != Attribute("val_i64"))
+    .map(Attribute("val_f32_i64_plus_1") = Attribute("val_f32") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_f32_u8") = Attribute("val_f32") != Attribute("val_u8"))
+    .map(Attribute("val_f32_u8_plus_1") = Attribute("val_f32") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_f32_u16") = Attribute("val_f32") != Attribute("val_u16"))
+    .map(Attribute("val_f32_u16_plus_1") = Attribute("val_f32") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_f32_u32") = Attribute("val_f32") != Attribute("val_u32"))
+    .map(Attribute("val_f32_u32_plus_1") = Attribute("val_f32") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_f32_u64") = Attribute("val_f32") != Attribute("val_u64"))
+    .map(Attribute("val_f32_u64_plus_1") = Attribute("val_f32") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_f32_f32") = Attribute("val_f32") != Attribute("val_f32"))
+    .map(Attribute("val_f32_f32_plus_1") = Attribute("val_f32") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_f32_f64") = Attribute("val_f32") != Attribute("val_f64"))
+    .map(Attribute("val_f32_f64_plus_1") = Attribute("val_f32") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_f32_i8"), Attribute("val_f32_i8_plus_1"), Attribute("val_f32_i16"), Attribute("val_f32_i16_plus_1"), Attribute("val_f32_i32"), Attribute("val_f32_i32_plus_1"), Attribute("val_f32_i64"), Attribute("val_f32_i64_plus_1"), Attribute("val_f32_u8"), Attribute("val_f32_u8_plus_1"), Attribute("val_f32_u16"), Attribute("val_f32_u16_plus_1"), Attribute("val_f32_u32"), Attribute("val_f32_u32_plus_1"), Attribute("val_f32_u64"), Attribute("val_f32_u64_plus_1"), Attribute("val_f32_f32"), Attribute("val_f32_f32_plus_1"), Attribute("val_f32_f64"), Attribute("val_f32_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1
+
+# NotEqual f64 value with all other data types
+Query::from("window")
+    .map(Attribute("val_f64_i8") = Attribute("val_f64") != Attribute("val_i8"))
+    .map(Attribute("val_f64_i8_plus_1") = Attribute("val_f64") != (Attribute("val_i8") + 1))
+    .map(Attribute("val_f64_i16") = Attribute("val_f64") != Attribute("val_i16"))
+    .map(Attribute("val_f64_i16_plus_1") = Attribute("val_f64") != (Attribute("val_i16") + 1))
+    .map(Attribute("val_f64_i32") = Attribute("val_f64") != Attribute("val_i32"))
+    .map(Attribute("val_f64_i32_plus_1") = Attribute("val_f64") != (Attribute("val_i32") + 1))
+    .map(Attribute("val_f64_i64") = Attribute("val_f64") != Attribute("val_i64"))
+    .map(Attribute("val_f64_i64_plus_1") = Attribute("val_f64") != (Attribute("val_i64") + 1))
+
+    .map(Attribute("val_f64_u8") = Attribute("val_f64") != Attribute("val_u8"))
+    .map(Attribute("val_f64_u8_plus_1") = Attribute("val_f64") != (Attribute("val_u8") + 1))
+    .map(Attribute("val_f64_u16") = Attribute("val_f64") != Attribute("val_u16"))
+    .map(Attribute("val_f64_u16_plus_1") = Attribute("val_f64") != (Attribute("val_u16") + 1))
+    .map(Attribute("val_f64_u32") = Attribute("val_f64") != Attribute("val_u32"))
+    .map(Attribute("val_f64_u32_plus_1") = Attribute("val_f64") != (Attribute("val_u32") + 1))
+    .map(Attribute("val_f64_u64") = Attribute("val_f64") != Attribute("val_u64"))
+    .map(Attribute("val_f64_u64_plus_1") = Attribute("val_f64") != (Attribute("val_u64") + 1))
+
+    .map(Attribute("val_f64_f32") = Attribute("val_f64") != Attribute("val_f32"))
+    .map(Attribute("val_f64_f32_plus_1") = Attribute("val_f64") != (Attribute("val_f32") + 1))
+    .map(Attribute("val_f64_f64") = Attribute("val_f64") != Attribute("val_f64"))
+    .map(Attribute("val_f64_f64_plus_1") = Attribute("val_f64") != (Attribute("val_f64") + 1))
+
+    .project(Attribute("val_f64_i8"), Attribute("val_f64_i8_plus_1"), Attribute("val_f64_i16"), Attribute("val_f64_i16_plus_1"), Attribute("val_f64_i32"), Attribute("val_f64_i32_plus_1"), Attribute("val_f64_i64"), Attribute("val_f64_i64_plus_1"), Attribute("val_f64_u8"), Attribute("val_f64_u8_plus_1"), Attribute("val_f64_u16"), Attribute("val_f64_u16_plus_1"), Attribute("val_f64_u32"), Attribute("val_f64_u32_plus_1"), Attribute("val_f64_u64"), Attribute("val_f64_u64_plus_1"), Attribute("val_f64_f32"), Attribute("val_f64_f32_plus_1"), Attribute("val_f64_f64"), Attribute("val_f64_f64_plus_1"))
+    .SINK;
+----
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1
