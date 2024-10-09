@@ -31,7 +31,6 @@ public:
      * @param schema
      */
     void inferStamp(SchemaPtr schema) override;
-    bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 private:

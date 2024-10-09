@@ -25,6 +25,7 @@ class NodeFunctionLogicalBinary : public NodeFunctionBinary, public LogicalNodeF
 {
 public:
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    bool validateBeforeLowering() const override;
 
 protected:
     NodeFunctionLogicalBinary(std::string name);

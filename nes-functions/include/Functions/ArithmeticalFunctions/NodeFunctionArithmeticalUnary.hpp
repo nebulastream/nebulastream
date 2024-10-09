@@ -28,7 +28,7 @@ public:
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
-
+    bool validateBeforeLowering() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 

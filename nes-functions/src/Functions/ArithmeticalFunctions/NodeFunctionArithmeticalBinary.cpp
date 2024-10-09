@@ -16,6 +16,7 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -39,32 +40,37 @@ NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(NodeFunctionArith
 void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
 {
     /// infer the stamps of the left and right child
-    auto left = getLeft();
-    auto right = getRight();
+    const auto left = getLeft();
+    const auto right = getRight();
     left->inferStamp(schema);
     right->inferStamp(schema);
 
     /// both sub functions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric())
     {
-        NES_THROW_RUNTIME_ERROR(
+        throw CannotInferSchema(fmt::format(
             "Error during stamp inference. Types need to be Numerical but Left was: {} Right was: {}",
             left->getStamp()->toString(),
-            right->getStamp()->toString());
+            right->getStamp()->toString()));
     }
 
     /// calculate the common stamp by joining the left and right stamp
-    auto commonStamp = left->getStamp()->join(right->getStamp());
+    const auto commonStamp = left->getStamp()->join(right->getStamp());
+    NES_DEBUG(
+        "NodeFunctionArithmeticalBinary: the common stamp is: {} with left {} and right {}",
+        commonStamp->toString(),
+        left->getStamp()->toString(),
+        right->getStamp()->toString());
 
     /// check if the common stamp is defined
     if (commonStamp->isUndefined())
     {
         /// the common stamp was not valid -> in this case the common stamp is undefined.
-        NES_THROW_RUNTIME_ERROR("{} is not supported by arithmetical functions", commonStamp->toString());
+        throw CannotInferSchema(fmt::format("{} is not supported by arithmetical functions", commonStamp->toString()));
     }
 
     stamp = commonStamp;
-    NES_TRACE("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
+    NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
 }
 
 bool NodeFunctionArithmeticalBinary::equal(NodePtr const& rhs) const
@@ -82,4 +88,15 @@ std::string NodeFunctionArithmeticalBinary::toString() const
     return "ArithmeticalBinaryFunction()";
 }
 
-} /// namespace NES
+bool NodeFunctionArithmeticalBinary::validateBeforeLowering() const
+{
+    if (children.size() != 2)
+    {
+        return false;
+    }
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isNumeric()
+        && Util::as<NodeFunction>(this->getChildren()[1])->getStamp()->isNumeric();
+}
+
+
+}
