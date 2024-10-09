@@ -32,4 +32,4 @@ std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider()
     return std::make_unique<CompilationPipelineProvider>();
 }
 
-} /// namespace NES::Runtime::Execution
+}

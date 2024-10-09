@@ -55,4 +55,4 @@ private:
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
-} /// namespace NES::Runtime::Execution
+}

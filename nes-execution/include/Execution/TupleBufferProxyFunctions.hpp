@@ -113,4 +113,4 @@ bool NES__Memory__TupleBuffer__isLastChunk(void* thisPtr)
     return thisPtr_->isLastChunk();
 };
 
-} /// namespace NES::Runtime::ProxyFunctions
+}

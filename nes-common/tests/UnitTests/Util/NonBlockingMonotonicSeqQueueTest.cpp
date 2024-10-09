@@ -388,4 +388,4 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
     ASSERT_EQ(watermarkProcessor.getCurrentValue(), noSeqNumbers);
 }
 
-} /// namespace NES
+}
