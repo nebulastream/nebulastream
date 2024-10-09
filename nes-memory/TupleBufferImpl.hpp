@@ -79,136 +79,41 @@ public:
 
     BufferControlBlock& operator=(const BufferControlBlock&);
 
-    /**
-     * @brief Returns the underlying owning segment
-     * @return the underlying owning segment
-     */
     MemorySegment* getOwner() const;
-
-    /**
-     * @brief Resets the recycler
-     * @param recycler the new recycler
-     */
     void resetBufferRecycler(BufferRecycler* recycler);
 
-    /**
-     * @brief Add recycle callback to be called upon reaching 0 as ref cnt
-     * @param func the callbac to call
-     */
+    /// Add recycle callback to be called upon reaching 0 as ref cnt
     void addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept;
 
-    /**
-     * @brief This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
-     * reference counter is zero. If that's not the case, an exception is thrown.
-     * @return true if the mem segment can be used to create a TupleBuffer.
-     */
+    /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
+    /// reference counter is zero. If that's not the case, an exception is thrown.
+    /// Returns true if the mem segment can be used to create a TupleBuffer.
     bool prepare();
 
-    /**
-     * @brief Increase the reference counter by one.
-     * @return this
-     */
+    /// Increase the reference counter by one.
     BufferControlBlock* retain();
 
-    /**
-     * @return get the reference counter
-     */
     [[nodiscard]] int32_t getReferenceCount() const noexcept;
 
-    /**
-     * @brief Decrease the reference counter by one.
-     * @return true if 0 is reached and the buffer is recycled
-     */
+    /// Decrease the reference counter by one
+    /// Returns true if 0 is reached and the buffer is recycled
     bool release();
-
-    /**
-    * @brief returns the number of tuples stored in the companion buffer
-    * Note that this is going to be deprecated in future NES versions
-    * @return the tuple size stored in the companion buffer
-    */
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
-
-    /**
-     * @brief set the tuple size stored in the companion buffer
-     */
     void setNumberOfTuples(uint64_t);
-
-    /**
-     * @brief method to get the watermark as a timestamp
-     * @return watermark
-     */
     [[nodiscard]] uint64_t getWatermark() const noexcept;
-
-    /**
-   * @brief method to set the watermark with a timestamp
-   * @param value timestamp
-   */
     void setWatermark(uint64_t watermark);
-
-    /**
-    * @brief method to get the sequence number
-    * @return sequence number
-    */
     [[nodiscard]] uint64_t getSequenceNumber() const noexcept;
-
-    /**
-     * @brief method to set the sequenceNumber
-     * @param value
-     */
     void setSequenceNumber(uint64_t sequenceNumber);
-
-    /**
-    * @brief method to get the chunk number
-    * @return chunk number
-    */
     [[nodiscard]] uint64_t getChunkNumber() const noexcept;
-
-    /**
-     * @brief method to set the chunk number
-     * @param value
-     */
     void setChunkNumber(uint64_t chunkNumber);
-
-    /**
-    * @brief method to check if this tuple buffer is the last chunk
-    * @return True or false, depending on the context
-    */
     [[nodiscard]] bool isLastChunk() const noexcept;
-
-    /**
-     * @brief method to set if this is the last chunk of a sequence number
-     * @param value
-     */
     void setLastChunk(bool lastChunk);
-
-    /**
-     * @brief get id where this buffer was created
-     * @return origin id
-     */
     [[nodiscard]] OriginId getOriginId() const noexcept;
-
-    /**
-     * @brief set originId
-     * @param originId
-     */
     void setOriginId(OriginId originId);
-
-    /**
-    * @brief method to set the watermark with a timestamp
-    * @param value timestamp
-    */
     void setCreationTimestamp(uint64_t ts);
-
-    /**
-     * @brief method to get the creation timestamp
-     * @return ts
-     */
     [[nodiscard]] uint64_t getCreationTimestamp() const noexcept;
-
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
-
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
-
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
