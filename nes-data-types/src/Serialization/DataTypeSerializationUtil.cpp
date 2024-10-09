@@ -17,7 +17,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableDataType.pb.h>
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -64,16 +63,6 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     else if (NES::Util::instanceOf<Char>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
-    }
-    else if (NES::Util::instanceOf<ArrayType>(dataType))
-    {
-        serializedDataType->set_type(SerializableDataType_Type_ARRAY);
-        /// store dimension and datatype into ArrayDetails by invoking this function recursively.
-        auto serializedArray = SerializableDataType_ArrayDetails();
-        auto const arrayType = DataType::as<ArrayType>(dataType);
-        serializedArray.set_dimensions(arrayType->length);
-        serializeDataType(arrayType->component, serializedArray.mutable_componenttype());
-        serializedDataType->mutable_details()->PackFrom(serializedArray);
     }
     else if (NES::Util::instanceOf<TextType>(dataType))
     {
@@ -136,10 +125,6 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     {
         return DataTypeFactory::createChar();
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_ARRAY)
-    {
-        return deserializeArrayType(serializedDataType);
-    }
     else if (serializedDataType.type() == SerializableDataType_Type_TEXT)
     {
         return std::make_shared<TextType>();
@@ -149,51 +134,21 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
                             "Deserialization is not possible");
 }
 
-std::shared_ptr<ArrayType> DataTypeSerializationUtil::deserializeArrayType(const SerializableDataType& serializedDataType)
-{
-    /// for arrays get additional information from the SerializableDataType_ArrayDetails
-    auto arrayDetails = SerializableDataType_ArrayDetails();
-    serializedDataType.details().UnpackTo(&arrayDetails);
-
-    /// get component data type
-    auto componentType = deserializeDataType(arrayDetails.componenttype());
-    return std::make_shared<ArrayType>(arrayDetails.dimensions(), componentType);
-}
-
 SerializableDataValue*
 DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue)
 {
     /// serialize data value
-    if (NES::Util::instanceOf<ArrayType>(valueType->dataType))
-    {
-        /// serialize all information for array value types
-        /// 1. cast to ArrayValueType
-        auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(valueType);
-        /// 2. create array value details
-        auto serializedArrayValue = SerializableDataValue_ArrayValue();
-        /// 3. copy array values
-        for (const auto& value : arrayValueType->values)
-        {
-            serializedArrayValue.add_values(value);
-        }
-        /// 4. serialize array type
-        serializeDataType(arrayValueType->dataType, serializedArrayValue.mutable_type());
-        serializedDataValue->mutable_value()->PackFrom(serializedArrayValue);
-    }
-    else
-    {
-        /// serialize all information for basic value types
-        /// 1. cast to BasicValueType
-        auto const basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
-        assert(basicValueType);
-        /// 2. create basic value details
-        auto serializedBasicValue = SerializableDataValue_BasicValue();
-        /// 3. copy value
-        serializedBasicValue.set_value(basicValueType->value);
-        serializeDataType(basicValueType->dataType, serializedBasicValue.mutable_type());
-        /// 4. serialize basic type
-        serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
-    }
+    /// serialize all information for basic value types
+    /// 1. cast to BasicValueType
+    auto const basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
+    assert(basicValueType);
+    /// 2. create basic value details
+    auto serializedBasicValue = SerializableDataValue_BasicValue();
+    /// 3. copy value
+    serializedBasicValue.set_value(basicValueType->value);
+    serializeDataType(basicValueType->dataType, serializedBasicValue.mutable_type());
+    /// 4. serialize basic type
+    serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
     NES_TRACE("DataTypeSerializationUtil:: serialized {} as {} ", valueType->toString(), serializedDataValue->DebugString());
     return serializedDataValue;
 }
@@ -210,21 +165,6 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableD
 
         auto const dataTypePtr = deserializeDataType(serializedBasicValue.type());
         return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
-    }
-    if (dataValue.Is<SerializableDataValue_ArrayValue>())
-    {
-        auto serializedArrayValue = SerializableDataValue_ArrayValue();
-        dataValue.UnpackTo(&serializedArrayValue);
-
-        auto dataTypePtr = deserializeArrayType(serializedArrayValue.type());
-
-        /// copy values from serializedArrayValue to array values
-        std::vector<std::string> values{};
-        for (const auto& value : serializedArrayValue.values())
-        {
-            values.emplace_back(value);
-        }
-        return DataTypeFactory::createArrayValueFromContainerType(std::move(dataTypePtr), std::move(values));
     }
     NES_THROW_RUNTIME_ERROR(
         "DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
