@@ -12,13 +12,18 @@
     limitations under the License.
 */
 
-#include <TestUtils/RecordCollectOperator.hpp>
-namespace NES::Runtime::Execution::Operators
-{
+#pragma once
 
-void CollectOperator::execute(ExecutionContext&, Record& record) const
+namespace NES
 {
-    records.emplace_back(record);
+/**
+ * @brief This class just indicates that a node is an arithmetical function.
+ */
+class NodeFunctionArithmetical
+{
+protected:
+    NodeFunctionArithmetical() = default;
+    virtual ~NodeFunctionArithmetical() noexcept = default;
+};
+
 }
-
-} /// namespace NES::Runtime::Execution::Operators

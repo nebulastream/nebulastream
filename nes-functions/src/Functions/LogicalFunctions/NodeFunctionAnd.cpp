@@ -80,7 +80,9 @@ bool NodeFunctionAnd::validateBeforeLowering() const
     {
         return false;
     }
-    return children[0]->as<FunctionNode>()->getStamp()->isBoolean() && children[1]->as<FunctionNode>()->getStamp()->isBoolean();
+    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isBoolean()
+        && Util::as<NodeFunction>(this->getChildren()[1])->getStamp()->isBoolean();
 }
+
 
 }
