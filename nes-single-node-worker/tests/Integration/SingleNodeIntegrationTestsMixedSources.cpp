@@ -19,11 +19,11 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 #include <boost/asio.hpp>
@@ -147,7 +147,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
 
     auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(testSpecificResultFileName, sinkSchema, *bufferManager, 0, "", true);
+    auto buffers = IntegrationTestUtil::createBuffersFromCSVFile(testSpecificResultFileName, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values
