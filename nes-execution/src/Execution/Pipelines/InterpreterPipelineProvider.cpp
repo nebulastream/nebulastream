@@ -31,4 +31,4 @@ InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pi
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
 }
 
-} /// namespace NES::Runtime::Execution
+}

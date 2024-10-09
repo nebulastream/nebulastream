@@ -72,4 +72,4 @@ public:
     int64_t const upperBound;
 };
 
-} /// namespace NES
+}

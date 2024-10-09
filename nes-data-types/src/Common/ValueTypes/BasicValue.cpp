@@ -31,4 +31,4 @@ bool BasicValue::isEquals(ValueTypePtr other) const noexcept
     return dataType->equals(other->dataType) && value == std::dynamic_pointer_cast<BasicValue>(other)->value;
 }
 
-} /// namespace NES
+}
