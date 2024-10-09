@@ -20,7 +20,6 @@
 #include <utility>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -117,11 +116,6 @@ DataTypePtr DataTypeFactory::createUInt32()
     return createInteger(32, 0, UINT32_MAX);
 };
 
-DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& component)
-{
-    return std::make_shared<ArrayType>(length, component);
-}
-
 DataTypePtr DataTypeFactory::createText()
 {
     return std::make_shared<TextType>();
@@ -150,37 +144,6 @@ ValueTypePtr DataTypeFactory::createBasicValue(int64_t value)
 ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value)
 {
     return createBasicValue(createType(type), std::move(value));
-}
-
-ValueTypePtr
-DataTypeFactory::createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type, std::vector<std::string>&& values) noexcept
-{
-    return std::make_shared<ArrayValue>(std::move(type), std::move(values));
-}
-
-ValueTypePtr DataTypeFactory::createArrayValueWithContainedType(const DataTypePtr& type, std::vector<std::string>&& values) noexcept
-{
-    auto const length = values.size();
-    return std::make_shared<ArrayValue>(createArray(length, type), std::move(values));
-}
-
-ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string>&& values) noexcept
-{
-    return createArrayValueWithContainedType(createChar(), std::move(values));
-}
-
-ValueTypePtr DataTypeFactory::createFixedCharValue(char const* values) noexcept
-{
-    std::vector<std::string> vec{};
-    auto const size = strlen(values) + 1;
-    vec.reserve(size);
-    /// Copy string including string termination character (which is legal this way :)).
-    for (std::size_t s = 0; s < size; ++s)
-    {
-        vec.push_back(std::string{values[s]});
-    }
-    assert(vec.size() == size);
-    return createFixedCharValue(std::move(vec));
 }
 
 DataTypePtr DataTypeFactory::createType(BasicType type)

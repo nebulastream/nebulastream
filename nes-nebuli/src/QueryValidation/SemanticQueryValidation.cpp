@@ -25,7 +25,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Numeric.hpp>

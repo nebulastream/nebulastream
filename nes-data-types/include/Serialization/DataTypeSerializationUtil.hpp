@@ -19,7 +19,6 @@
 namespace NES
 {
 
-class ArrayType;
 class TextType;
 
 class DataType;
@@ -52,9 +51,6 @@ public:
     * @return DataTypePtr
     */
     static DataTypePtr deserializeDataType(const SerializableDataType& serializedDataType);
-
-    /// @brief: Typed deserialization of what is known to be an array.
-    static std::shared_ptr<ArrayType> deserializeArrayType(const SerializableDataType& serializedDataType);
 
     /**
      * @brief Serializes a value type and all its children to a SerializableDataValue object.

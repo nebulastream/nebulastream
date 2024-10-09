@@ -14,7 +14,6 @@
 
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -44,10 +43,6 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     else if (NES::Util::instanceOf<Float>(dataType))
     {
         return getPhysicalType(DataType::as<Float>(dataType));
-    }
-    else if (NES::Util::instanceOf<ArrayType>(dataType))
-    {
-        return getPhysicalType(DataType::as<ArrayType>(dataType));
     }
     else if (NES::Util::instanceOf<Char>(dataType))
     {
@@ -130,10 +125,4 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayTypePtr& arrayType) const
-{
-    auto const componentType = getPhysicalType(arrayType->component);
-    return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
-}
-
-}
+} /// namespace NES
