@@ -24,7 +24,7 @@ ExecutableFunctionWriteField::ExecutableFunctionWriteField(Record::RecordFieldId
 
 VarVal ExecutableFunctionWriteField::execute(Record& record) const
 {
-    VarVal newValue = subFunction->execute(record);
+    VarVal newValue = childFunction->execute(record);
     record.write(field, newValue);
     return newValue;
 }
