@@ -62,7 +62,7 @@ public:
      * @brief To string method for the option.
      * @return string
      */
-    ///TODO(#336): Overload operator
+    ///TODO #336: Overload operator
     /// We want something like friend std::ostream& operator<<(std::ostream& out, const BaseOption& baseOption);
     virtual std::string toString() = 0;
 

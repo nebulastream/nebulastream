@@ -52,7 +52,7 @@ struct QueryCompilerOptions
 } __attribute__((aligned(64)));
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
-/// TODO(#122): Refactor QueryCompilerConfiguration
+/// TODO #122: Refactor QueryCompilerConfiguration
 [[maybe_unused]]
 static std::shared_ptr<QueryCompilerOptions>
 queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration)
