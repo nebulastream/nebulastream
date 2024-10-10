@@ -231,7 +231,7 @@ void writeFieldValueToTupleBuffer(
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         }
-        else if (physicalType->isTextType())
+        else if (physicalType->isVariableSizedDataType())
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"

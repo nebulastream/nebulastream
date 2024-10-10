@@ -29,7 +29,7 @@
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 
@@ -65,9 +65,9 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
             auto indexInBuffer = buffer + offset + i * schema->getSchemaSizeInBytes();
 
             /// handle variable-length field
-            if (NES::Util::instanceOf<TextType>(dataType))
+            if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
             {
-                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length VARIABLE_SIZED_DATA field: "
                           "from the tuple buffer");
 
                 /// read the child buffer index from the tuple buffer

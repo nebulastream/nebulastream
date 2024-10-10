@@ -28,8 +28,8 @@
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include <Common/DataTypes/TextType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 using namespace std::string_literals;
 
@@ -182,7 +182,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             {
                 auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
                 if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
-                    && !NES::Util::instanceOf<TextType>(field->getStamp()))
+                    && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
                 {
                     throw QueryInvalid(
                         "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "

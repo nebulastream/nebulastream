@@ -21,18 +21,18 @@ namespace NES
 {
 
 /**
- * @brief The text physical type, which represent TextType and FixedChar types in NES.
+ * @brief The VariableSizedDataType physical type, which represent VariableSizedDataType and FixedChar types in NES.
  */
-class TextPhysicalType final : public PhysicalType
+class VariableSizedDataPhysicalType final : public PhysicalType
 {
 public:
-    inline TextPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) { }
+    inline VariableSizedDataPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) { }
 
-    ~TextPhysicalType() override = default;
+    ~VariableSizedDataPhysicalType() override = default;
 
-    static inline PhysicalTypePtr create(const DataTypePtr& type) noexcept { return std::make_shared<TextPhysicalType>(type); }
+    static inline PhysicalTypePtr create(const DataTypePtr& type) noexcept { return std::make_shared<VariableSizedDataPhysicalType>(type); }
 
-    [[nodiscard]] bool isTextType() const noexcept override { return true; }
+    [[nodiscard]] bool isVariableSizedDataType() const noexcept override { return true; }
 
     [[nodiscard]] uint64_t size() const override;
 
@@ -41,6 +41,10 @@ public:
     std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
     [[nodiscard]] std::string toString() const noexcept override;
+
+private:
+    static constexpr size_t sizeVal = sizeof(uint32_t);
 };
+
 
 }

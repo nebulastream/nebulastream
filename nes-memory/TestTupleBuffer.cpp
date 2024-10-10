@@ -24,7 +24,7 @@
 #include <include/Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Memory::MemoryLayouts
@@ -118,7 +118,7 @@ std::string DynamicTuple::toString(const SchemaPtr& schema)
     {
         const auto dataType = schema->get(i)->getDataType();
         DynamicField currentField = this->operator[](i);
-        if (NES::Util::instanceOf<TextType>(dataType))
+        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
@@ -155,7 +155,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         auto thisDynamicField = (*this)[field->getName()];
         auto otherDynamicField = other[field->getName()];
 
-        if (NES::Util::instanceOf<TextType>(field->getDataType()))
+        if (NES::Util::instanceOf<VariableSizedDataType>(field->getDataType()))
         {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
             const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());

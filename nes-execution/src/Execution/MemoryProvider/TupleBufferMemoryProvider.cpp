@@ -44,7 +44,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     {
         return Nautilus::VarVal::readVarValFromMemory(fieldReference, type);
     }
-    else if (type->isTextType())
+    else if (type->isVariableSizedDataType())
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = nautilus::invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
@@ -70,7 +70,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
         value.writeToMemory(fieldReference);
         return value;
     }
-    else if (type->isTextType())
+    else if (type->isVariableSizedDataType())
     {
         const auto textValue = value.cast<Nautilus::VariableSizedData>();
         const auto childIndex = nautilus::invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
