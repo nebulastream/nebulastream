@@ -50,6 +50,9 @@ public:
         return os.str();
     };
 
+    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue())); }
+
+
 protected:
     void parseFromYAMLNode(YAML::Node node) override
     {
@@ -79,9 +82,6 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(value).value();
     };
-
-public:
-    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue())); }
 };
 
 }

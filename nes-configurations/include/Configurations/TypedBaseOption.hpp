@@ -20,7 +20,6 @@
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
-#include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -87,7 +86,7 @@ public:
         }
         else
         {
-            NES_NOT_IMPLEMENTED();
+            static_assert(false);
         }
     }
 };
