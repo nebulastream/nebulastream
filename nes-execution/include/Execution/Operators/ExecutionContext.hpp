@@ -30,24 +30,16 @@ namespace Operators
 {
 class Operator;
 class OperatorState;
-} /// namespace Operators
+}
 
-/**
- * The execution context manages state of operators within a pipeline and provides access to some global functionality.
- * We differentiate between local and global operator state.
- * Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
- * Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
- */
-class ExecutionContext final
+/// The execution context manages state of operators within a pipeline and provides access to some global functionality.
+/// We differentiate between local and global operator state.
+/// Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
+/// Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
+struct ExecutionContext final
 {
-public:
     ExecutionContext(const nautilus::val<int8_t*>& workerContext, const nautilus::val<int8_t*>& pipelineContext);
 
-    /**
-     * @brief Set local operator state that keeps state in a single pipeline invocation.
-     * @param op reference to the operator to identify the state.
-     * @param state operator state.
-     */
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
@@ -58,27 +50,6 @@ public:
     /// Emit a record buffer to the next pipeline or sink
     void emitBuffer(const RecordBuffer& rb);
 
-    const nautilus::val<int8_t*>& getPipelineContext() const;
-    const nautilus::val<int8_t*>& getWorkerContext() const;
-
-    /// Returns the current origin id. This is set in the scan.
-    const nautilus::val<uint64_t>& getOriginId() const;
-    void setOriginId(const nautilus::val<uint64_t>& origin);
-
-
-    /// Returns the current origin id. This is set in the scan.
-    const nautilus::val<uint64_t>& getWatermarkTs() const;
-    void setWatermarkTs(nautilus::val<uint64_t> uint64_t);
-
-    /// Returns the current sequence number id. This is set in the scan.
-    const nautilus::val<uint64_t>& getSequenceNumber() const;
-    void setSequenceNumber(const nautilus::val<uint64_t>& sequenceNumber);
-
-    /// Returns the current chunk number. This is set in the scan.
-    const nautilus::val<uint64_t>& getChunkNumber() const;
-    void setChunkNumber(const nautilus::val<uint64_t>& chunkNumber);
-    const nautilus::val<bool>& getLastChunk() const;
-
     /// Removes the sequence state for the current <OrigindId, uint64_t>
     void removeSequenceState() const;
 
@@ -87,22 +58,15 @@ public:
 
     /// Returns the next chunk number for the emitted sequence numbers
     nautilus::val<uint64_t> getNextChunkNr() const;
-    void setLastChunk(const nautilus::val<bool>& isLastChunk);
 
-
-    /// Returns the current time stamp ts. This is set by a time function
-    const nautilus::val<uint64_t>& getCurrentTs() const;
-    void setCurrentTs(const nautilus::val<uint64_t>& ts);
-
-private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    nautilus::val<int8_t*> workerContext;
-    nautilus::val<int8_t*> pipelineContext;
-    nautilus::val<uint64_t> origin;
-    nautilus::val<uint64_t> watermarkTs;
-    nautilus::val<uint64_t> currentTs;
-    nautilus::val<uint64_t> sequenceNumber;
-    nautilus::val<uint64_t> chunkNumber;
+    const nautilus::val<int8_t*> workerContext;
+    const nautilus::val<int8_t*> pipelineContext;
+    nautilus::val<uint64_t> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<uint64_t> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<uint64_t> currentTs; /// Stores the current time stamp. This is set by a time function
+    nautilus::val<uint64_t> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<uint64_t> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
 };
 

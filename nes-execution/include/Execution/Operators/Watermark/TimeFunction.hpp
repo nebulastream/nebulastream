@@ -15,19 +15,10 @@
 
 #include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-
-namespace NES::Nautilus
-{
-class Record;
-}
-
-namespace NES::Runtime::Execution
-{
-class RecordBuffer;
-class ExecutionContext;
-
-}
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

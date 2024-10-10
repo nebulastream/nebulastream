@@ -76,12 +76,12 @@ void Emit::emitRecordBuffer(
     ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk)
 {
     recordBuffer.setNumRecords(numRecords);
-    recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
-    recordBuffer.setOriginId(ctx.getOriginId());
-    recordBuffer.setSequenceNr(ctx.getSequenceNumber());
+    recordBuffer.setWatermarkTs(ctx.watermarkTs);
+    recordBuffer.setOriginId(ctx.originId);
+    recordBuffer.setSequenceNr(ctx.sequenceNumber);
     recordBuffer.setChunkNr(ctx.getNextChunkNr());
     recordBuffer.setLastChunk(lastChunk);
-    recordBuffer.setCreationTs(ctx.getCurrentTs());
+    recordBuffer.setCreationTs(ctx.currentTs);
     ctx.emitBuffer(recordBuffer);
 
     if (lastChunk == true)

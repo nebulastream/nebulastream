@@ -38,18 +38,18 @@ nautilus::val<WatermarkTs> EventTimeFunction::getTs(Execution::ExecutionContext&
     const auto ts = this->timestampFunction->execute(record);
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = (ts * timeMultiplier).cast<nautilus::val<uint64_t>>();
-    ctx.setCurrentTs(tsInMs);
+    ctx.currentTs = tsInMs;
     return tsInMs;
 }
 
 void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer)
 {
-    ctx.setCurrentTs(buffer.getCreatingTs());
+    ctx.currentTs = buffer.getCreatingTs();
 }
 
 nautilus::val<uint64_t> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
 {
-    return ctx.getCurrentTs();
+    return ctx.currentTs;
 }
 
 }
