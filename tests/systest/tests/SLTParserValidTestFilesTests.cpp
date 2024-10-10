@@ -13,10 +13,10 @@
 */
 #include <string>
 #include <vector>
-#include <SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <SLTParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::SLTParser
@@ -38,7 +38,7 @@ public:
 
 TEST_F(SLTParserValidTestFileTest, ValidTestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "valid.test";
+    const auto* const filename = TEST_DATA_DIR "valid.dummy";
 
     const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
@@ -73,7 +73,7 @@ TEST_F(SLTParserValidTestFileTest, ValidTestFile)
 
 TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "comments.test";
+    const auto* const filename = TEST_DATA_DIR "comments.dummy";
 
     SLTParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
@@ -132,7 +132,7 @@ TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
 
 TEST_F(SLTParserValidTestFileTest, FilterTestFile)
 {
-    const auto* const filename = TEST_DATA_DIR "filter.test";
+    const auto* const filename = TEST_DATA_DIR "filter.dummy";
 
     SLTParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
