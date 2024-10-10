@@ -19,17 +19,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ github.event.pull_request.head.ref }}
-
   check-format:
-    needs: [ get-dev-images ]
     runs-on: [ self-hosted, linux, Build ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      image: nebulastream/nes-development:latest
       options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
@@ -46,6 +39,12 @@ jobs:
           fetch-depth: 100
       - name: Check Format
         run: ./scripts/format.sh
+
+  get-dev-images:
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      ref: ${{ github.event.pull_request.head.ref }}
 
   build-linux:
     name: "Build ${{matrix.arch}}"
