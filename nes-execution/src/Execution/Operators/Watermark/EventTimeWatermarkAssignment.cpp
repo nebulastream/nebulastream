@@ -58,7 +58,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(this)),
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
-    executionCtx.setWatermarkTs(state->currentWatermark);
+    executionCtx.watermarkTs = state->currentWatermark;
     Operator::close(executionCtx, recordBuffer);
 }
 

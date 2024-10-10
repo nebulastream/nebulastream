@@ -19,7 +19,7 @@
 
 namespace NES::Runtime::Execution
 {
-class ExecutionContext;
+struct ExecutionContext;
 class RecordBuffer;
 }
 namespace NES::Runtime::Execution::Operators

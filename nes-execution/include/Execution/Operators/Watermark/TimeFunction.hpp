@@ -25,7 +25,7 @@ class Record;
 namespace NES::Runtime::Execution
 {
 class RecordBuffer;
-class ExecutionContext;
+struct ExecutionContext;
 
 }
 
