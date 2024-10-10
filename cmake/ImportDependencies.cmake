@@ -77,24 +77,27 @@ if (${NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR} AND NOT ${USE_LOCAL_MLIR})
 endif ()
 
 ### Determine the VCPKG Target and Host Triplet
-# - Depending on the Sanitizers we choose different toolchains variants to build vcpkg dependencies
+# - Depending on the Sanitizers and stdlib we choose different toolchains variants to build vcpkg dependencies
 # - The system architecture is normally set in CMAKE_HOST_SYSTEM_PROCESSOR,
 #    which is set by the PROJECT command. However, we cannot call PROJECT
 #    at this point because we want to use a custom toolchain file.
 # - Currently only linux is supported.
 # - Cross compilation is not possible, target and host triplets are always identical
-# - We choose the local toolchain (using the default standard library), when using a local installation of mlir to
-#   prevent linking against libc++, which would most-likely be incompatible with the local mlir installation
-SET(VCPKG_VARIANT "nes")
+SET(VCPKG_VARIANT_SANITIZER "none")
 if (NES_ENABLE_THREAD_SANITIZER)
-    SET(VCPKG_VARIANT "tsan")
+    SET(VCPKG_VARIANT_SANITIZER "tsan")
 elseif (NES_ENABLE_UB_SANITIZER)
-    SET(VCPKG_VARIANT "ubsan")
+    SET(VCPKG_VARIANT_SANITIZER "ubsan")
 elseif (NES_ENABLE_ADDRESS_SANITIZER)
-    SET(VCPKG_VARIANT "asan")
-elseif (USE_LOCAL_MLIR OR NOT USE_LIBCXX)
-    SET(VCPKG_VARIANT "local")
+    SET(VCPKG_VARIANT_SANITIZER "asan")
 endif ()
+
+SET(VCPKG_VARIANT_STDLIB "libc++")
+if (NOT USE_LIBCXX)
+    SET(VCPKG_VARIANT_STDLIB "local")
+endif ()
+
+SET(VCPKG_VARIANT "${VCPKG_VARIANT_SANITIZER}-${VCPKG_VARIANT_STDLIB}")
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE VCPKG_HOST_PROCESSOR)
 if (VCPKG_HOST_PROCESSOR MATCHES "x86_64")
