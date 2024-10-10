@@ -33,7 +33,7 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statu
 
 bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType)
 {
-    /// TODO(#34): part of redesign of single node worker
+    /// TODO #34: part of redesign of single node worker
     return true; /// nop
 }
 
