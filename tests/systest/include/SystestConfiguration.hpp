@@ -34,9 +34,11 @@ public:
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
+    Configurations::BoolOption randomQueryOrder
+    = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::StringOption grpcAddressUri
         = {"grpc",
-           "[::]:8080",
+           "",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
