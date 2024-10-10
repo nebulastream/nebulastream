@@ -15,7 +15,6 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution
 {

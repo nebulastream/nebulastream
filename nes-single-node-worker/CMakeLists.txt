@@ -33,4 +33,3 @@ add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib)
 
 add_tests_if_enabled(tests)
-

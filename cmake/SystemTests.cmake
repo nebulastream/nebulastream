@@ -2,12 +2,13 @@ option(NES_SYSTEM_TEST_VERBOSE "Print additional debug information for system te
 
 # Main entry point for setting up system-level tests
 function(project_enable_system_level_tests)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    if (NOT Python3_FOUND)
+        message(NOTICE "Disable System Tests. Could not find Python3.")
+        return()
+    endif()
+
     if (NES_ENABLE_LLVM_LIT)
-        find_package(Python3 REQUIRED COMPONENTS Interpreter)
-        if (NOT Python3_FOUND)
-            message(NOTICE "Disable System Tests. Could not find Python3.")
-            return()
-        endif()
         install_llvm_lit()
     endif()
 

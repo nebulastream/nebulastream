@@ -15,8 +15,7 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
-SET(LLVM_MAJOR_VERSION 18)
-set(CLANG_FORMAT_MAJOR_VERSION ${LLVM_MAJOR_VERSION})
+set(LLVM_MAJOR_VERSION 18)
 
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
@@ -34,16 +33,16 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execut
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-
-#toggle GPU runtime and test
-option(NES_USE_GPU "Build with GPU acceleration" OFF)
+option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
+option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
-
+if (NES_LOG_WITH_STACKTRACE)
+    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+endif()
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
 endif ()
@@ -337,16 +336,18 @@ add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
+add_tests_if_enabled(tests)
+
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
-set(GPU_TEST_SUFFIX "__GPU$$")
-set(ALL_SUFFIXES "${GPU_TEST_SUFFIX}") # use pipe (|) to add more suffixes, e.g., ${GPU_TEST_SUFFIX}|${DPU_TEST_SUFFIX}"
+# We always want to exclude the local system test targets
+set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
 
 # The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E "${ALL_SUFFIXES}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 
 #Other configurations
 project_enable_format()

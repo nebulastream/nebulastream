@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+# Dear reviewer, if you can read this message it means that I forgot to enable the test back again
 #add_subdirectory(Expressions)
 #add_subdirectory(Operators)
 #add_subdirectory(Aggregation)
