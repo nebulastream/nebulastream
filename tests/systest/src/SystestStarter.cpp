@@ -78,6 +78,96 @@ public:
 namespace NES
 {
 
+auto getTestGroups(const std::vector<std::filesystem::path> &testFiles)
+{
+    std::unordered_map<std::string, std::unordered_set<std::string>> groups;
+    for (const auto &testFile : testFiles)
+    {
+        std::ifstream file(testFile);
+        std::string line;
+
+        if (file.is_open())
+        {
+            while (std::getline(file, line))
+            {
+                if (line.starts_with("# groups:"))
+                {
+                    std::string groupsStr = line.substr(9); // Remove "# groups: "
+                    groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), '['), groupsStr.end());
+                    groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), ']'), groupsStr.end());
+                    std::istringstream iss(groupsStr);
+                    std::string group;
+                    while (std::getline(iss, group, ','))
+                    {
+                        if (groups.contains(group))
+                        {
+                            groups[group].insert(testFile);
+                        } else
+                        {
+                            groups.insert({group, {testFile}});
+                        }
+                    }
+                    break;
+                }
+            }
+            file.close();
+        }
+    }
+    return groups;
+}
+
+auto discoverTestFiles(const Configuration::SystestConfiguration& config)
+{
+    std::vector<std::filesystem::path> testFiles;
+    if (!config.directlySpecifiedTestsFiles.getValue().empty())
+    {
+        testFiles.emplace_back(config.directlySpecifiedTestsFiles.getValue());
+    }
+    else
+    {
+        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
+        auto testFileExtension = config.testFileExtension.getValue();
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == testFileExtension)
+            {
+                testFiles.push_back( canonical(entry.path()));
+            }
+        }
+    }
+    return testFiles;
+}
+
+void printTestList(const Configuration::SystestConfiguration& config)
+{
+    auto testFiles = discoverTestFiles(config);
+    if (testFiles.empty())
+    {
+        std::cout << "No matching test files found\n";
+    } else
+    {
+        std::cout << "Discovered Test Files:\n";
+        for (const auto &testFile : testFiles)
+        {
+            std::cout << "\t" << testFile.filename().string() << "\tfile://" << testFile.string() << "\n";
+        }
+
+        auto testGroups = getTestGroups(testFiles);
+        if (not testGroups.empty())
+        {
+            std::cout << "\nDiscovered Test Groups:\n";
+            for (const auto &testGroup : testGroups)
+            {
+                std::cout << "\t" << testGroup.first << "\n";
+                for (const auto &filename : testGroup.second)
+                {
+                    std::cout << "\t\tfile://" << filename << "\n";
+                }
+            }
+        }
+    }
+}
+
 enum class Command : uint8_t
 {
     run,
@@ -92,6 +182,8 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("-t", "--testLocation")
         .help("directly specified test file, e.g., fliter.test or a directory to discover test files in. Default: " TEST_DISCOVER_DIR);
 
+    program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
+
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
 
     program.add_argument("-c", "--cache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
@@ -102,7 +194,9 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     program.parse_args(argc, argv);
 
-    if (program.get<bool>("-d"))
+    auto config = Configuration::SystestConfiguration();
+
+    if (program.is_used("-d"))
     {
         Logger::setupLogging("systest.log", LogLevel::LOG_DEBUG);
     }
@@ -137,58 +231,60 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
                 std::exit(1);
             }
         }
+    if (program.is_used("--testLocation"))
+    {
+        auto testFileDefintion = program.get<std::string>("--testLocation");
+        if (std::filesystem::is_directory(testFileDefintion))
+        {
+            config.testsDiscoverDir = testFileDefintion;
+        }
+        else if (std::filesystem::is_regular_file(testFileDefintion))
+        {
+            config.directlySpecifiedTestsFiles = testFileDefintion;
+        }
+        else
+        {
+            NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
+            std::exit(1);
+        }
     }
     else
     {
         com = Command::run;
 
-        if (program.is_used("-s"))
-        {
-            config.grpcAddressUri = program.get<std::string>("-s");
-        }
+    if (program.is_used("-s"))
+    {
+        config.grpcAddressUri = program.get<std::string>("-s");
+    }
 
-        if (program.is_used("--testLocation"))
+    if (program.is_used("--cacheDir"))
+    {
+        config.cacheDir = program.get<std::string>("--cacheDir");
+        if (not std::filesystem::is_directory(config.cacheDir.getValue()))
         {
-            auto testFileDefintion = program.get<std::string>("--testLocation");
-            if (std::filesystem::is_directory(testFileDefintion))
-            {
-                config.testsDiscoverDir = testFileDefintion;
-            }
-            else if (std::filesystem::is_regular_file(testFileDefintion))
-            {
-                config.directlySpecifiedTestsFiles = testFileDefintion;
-            }
-            else
-            {
-                NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
-                std::exit(1);
-            }
+            NES_FATAL_ERROR("{} is not a directory.", config.cacheDir.getValue());
+            std::exit(1);
         }
     }
-    return {config, com};
-}
 
-std::vector<std::filesystem::path> discoverTestFiles(const Configuration::SystestConfiguration& config)
-{
-    std::vector<std::filesystem::path> testFiles;
-    if (!config.directlySpecifiedTestsFiles.getValue().empty())
+    Command com;
+    if (program.is_used("--list"))
     {
-        testFiles.emplace_back(config.directlySpecifiedTestsFiles.getValue());
+        printTestList(config);
+        std::exit(0);
+    } else if (program.is_used("--help"))
+    {
+        std::cout << program << std::endl;
+        std::exit(0);
+    } else if (program.is_used("--cacheDir"))
+    {
+        com = Command::cache;
     }
     else
     {
-        auto testsDiscoverDir = config.testsDiscoverDir;
-        auto testFileExtension = config.testFileExtension;
-
-        for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::path(testsDiscoverDir)))
-        {
-            if (entry.is_regular_file() && entry.path().extension() == testFileExtension)
-            {
-                testFiles.push_back(entry.path());
-            }
-        }
+        com = Command::run;
     }
-    return testFiles;
+    return {config, com};
 }
 }
 
@@ -263,7 +359,7 @@ int main(int argc, const char** argv)
                 auto testname = testFile.stem().string();
                 auto cacheDir = config.cacheDir.getValue();
 
-                NES_INFO("Creating cache for {}", testname)
+                std::cout << "Creating cache for " << testname << "\n";
 
                 /// A SqlLogicTest format file might have >=1 tests
                 auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
