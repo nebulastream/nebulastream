@@ -34,7 +34,7 @@ jobs:
           echo "Using Hash: $HASH"
 
           # Check if the Docker manifest exists for the computed hash
-          if docker manifest inspect nebulastream/nes-development:"$HASH" > /dev/null 2>&1; then
+          if docker manifest inspect nebulastream/nes-development:$HASH; then
             echo "build-dependency=false" >> "$GITHUB_OUTPUT"
           else
             echo "Require rebuilt of dependency"
