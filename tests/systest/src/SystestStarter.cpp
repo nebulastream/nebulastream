@@ -73,6 +73,49 @@ public:
                 status.error_details()));
         }
     }
+
+    QuerySummaryReply status(size_t queryId) const
+    {
+        grpc::ClientContext context;
+        QuerySummaryRequest request;
+        request.set_queryid(queryId);
+        QuerySummaryReply response;
+        auto status = stub->RequestQuerySummary(&context, request, &response);
+        if (status.ok())
+        {
+            NES_DEBUG("Stopping was successful.");
+        }
+        else
+        {
+            NES_THROW_RUNTIME_ERROR(fmt::format(
+                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+                magic_enum::enum_name(status.error_code()),
+                status.error_message(),
+                status.error_details()));
+        }
+        return response;
+    }
+
+    void unregister(size_t queryId) const
+    {
+        grpc::ClientContext context;
+        UnregisterQueryRequest request;
+        google::protobuf::Empty response;
+        request.set_queryid(queryId);
+        auto status = stub->UnregisterQuery(&context, request, &response);
+        if (status.ok())
+        {
+            NES_DEBUG("Unregister was successful.");
+        }
+        else
+        {
+            NES_THROW_RUNTIME_ERROR(fmt::format(
+                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+                magic_enum::enum_name(status.error_code()),
+                status.error_message(),
+                status.error_details()));
+        }
+    }
 };
 
 namespace NES
@@ -187,7 +230,9 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
 
     program.add_argument("-c", "--cache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
-    program.add_argument("--cacheDir").help("change the cache dir. Default: " CACHE_DIR);
+    program.add_argument("--cacheDir").help("change the cache directory. Default: " CACHE_DIR);
+
+    program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/tests/result/");
 
     program.add_argument("-s", "--server")
         .help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
@@ -240,6 +285,16 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         }
     }
 
+    if (program.is_used("--resultDir"))
+    {
+        config.resultDir = program.get<std::string>("--resultDir");
+        if (not std::filesystem::is_directory(config.resultDir.getValue()))
+        {
+            NES_FATAL_ERROR("{} is not a directory.", config.resultDir.getValue());
+            std::exit(1);
+        }
+    }
+
     Command com;
     if (program.is_used("--list"))
     {
@@ -249,7 +304,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     {
         std::cout << program << std::endl;
         std::exit(0);
-    } else if (program.is_used("--cacheDir"))
+    } else if (program.is_used("--cache"))
     {
         com = Command::cache;
     }
@@ -259,7 +314,35 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     }
     return {config, com};
 }
+
+void removeAllFilesInDirectory(const std::filesystem::path& dirPath)
+{
+    if (is_directory(dirPath))
+    {
+        for (const auto& entry : std::filesystem::directory_iterator(dirPath))
+        {
+            if (entry.is_regular_file())
+            {
+                std::filesystem::remove(entry.path());
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "The specified path is not a directory.\n";
+    }
 }
+}
+
+/// help structure to keep track of queries to test
+struct QueryToTest
+{
+    NES::DecomposedQueryPlanPtr queryPlan;
+    std::string queryName;
+    std::filesystem::path testFile;
+    uint64_t queryNrInFile;
+    uint64_t queryId;
+};
 
 int main(int argc, const char** argv)
 {
@@ -275,14 +358,21 @@ int main(int argc, const char** argv)
 
         if (com == Command::run)
         {
+            auto resultDir = std::filesystem::path(config.resultDir.getValue());
+            removeAllFilesInDirectory(resultDir);
+
             auto testFiles = discoverTestFiles(config);
 
-            std::vector<DecomposedQueryPlanPtr> queries{};
+            std::vector<QueryToTest> queries{};
             for (const auto& testFile : testFiles)
             {
-                auto testname = std::filesystem::path(testFile).filename().string();
-                auto loadedTests = loadFromSLTFile(testFile, testname);
-                queries.insert(queries.end(), loadedTests.begin(), loadedTests.end());
+                auto testname = std::filesystem::path(testFile).stem().string();
+                auto loadedPlans = loadFromSLTFile(testFile, resultDir, testname);
+                uint64_t queryNrInFile = 0;
+                for (const auto &plan : loadedPlans)
+                {
+                    queries.emplace_back(plan, testname, testFile, queryNrInFile++);
+                }
             }
 
             if (config.randomQueryOrder)
@@ -292,19 +382,35 @@ int main(int argc, const char** argv)
                 std::shuffle(queries.begin(), queries.end(), g);
             }
 
+            std::queue<QueryToTest> runningQueries{};
             if (not config.grpcAddressUri.getValue().empty()) /// case: send requests over grpc to different single-node-worker
             {
                 auto serverUri = config.grpcAddressUri.getValue();
                 GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
 
-                for (std::size_t testnr = 0; const auto& query : queries)
+                for (auto& query : queries)
                 {
                     SerializableDecomposedQueryPlan serialized;
-                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query, &serialized);
+                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
 
-                    auto queryId = client.registerQuery(query);
+                    auto queryId = client.registerQuery(query.queryPlan);
                     client.start(queryId);
-                    ++testnr;
+                    query.queryId = queryId;
+                    runningQueries.push(query);
+                }
+
+                while(not runningQueries.empty())
+                {
+                    QueryToTest query = runningQueries.front();
+
+                    while (client.status(query.queryId).status() != Stopped)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    }
+                    client.unregister(query.queryId);
+
+                    checkResult(query.testFile, query.queryName, query.queryNrInFile);
+                    runningQueries.pop();
                 }
             }
             else /// case: run locally without grpc
@@ -313,11 +419,26 @@ int main(int argc, const char** argv)
                 Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
                 SingleNodeWorker worker = SingleNodeWorker(conf);
 
-                for (std::size_t testnr = 0; const auto& query : queries)
+                for (auto& query : queries)
                 {
-                    auto queryId = worker.registerQuery(query);
+                    auto queryId = worker.registerQuery(query.queryPlan);
                     worker.startQuery(queryId);
-                    ++testnr;
+                    query.queryId = queryId.getRawValue();
+                    runningQueries.push(query);
+                }
+
+                while(not runningQueries.empty())
+                {
+                    QueryToTest query = runningQueries.front();
+
+                    while (worker.getQuerySummary(QueryId(query.queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped)
+                    {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    }
+                    worker.unregisterQuery(QueryId(query.queryId));
+
+                    checkResult(query.testFile, query.queryName, query.queryNrInFile);
+                    runningQueries.pop();
                 }
             }
         }
@@ -330,11 +451,10 @@ int main(int argc, const char** argv)
                 /// Get from input the filename without the extension
                 auto testname = testFile.stem().string();
                 auto cacheDir = config.cacheDir.getValue();
-
-                std::cout << "Creating cache for " << testname << "\n";
+                auto resultDir = std::filesystem::path(config.resultDir.getValue());
 
                 /// A SqlLogicTest format file might have >=1 tests
-                auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
+                auto decomposedQueryPlans = loadFromSLTFile(testFile, resultDir, testname);
                 for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
                 {
                     SerializableDecomposedQueryPlan serialized;
