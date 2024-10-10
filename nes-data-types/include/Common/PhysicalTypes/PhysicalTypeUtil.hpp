@@ -28,12 +28,8 @@ namespace NES::PhysicalTypes
  */
 bool isChar(PhysicalTypePtr physicalType);
 
-/**
- * @brief Function to check if the physical type is text
- * @param physicalType
- * @return true if the physical type is text
- */
-bool isText(PhysicalTypePtr physicalType);
+
+bool isVariableSizedData(PhysicalTypePtr physicalType);
 
 /**
  * @brief Function to check if the physical type is a bool
@@ -122,7 +118,7 @@ bool isDouble(PhysicalTypePtr physicalType);
 template <class Type>
 bool isSamePhysicalType(PhysicalTypePtr physicalType)
 {
-    if (isText(physicalType) && std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
+    if (isVariableSizedData(physicalType) && std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
         return true;
     }

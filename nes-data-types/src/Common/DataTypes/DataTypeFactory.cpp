@@ -25,8 +25,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/TextType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES
@@ -115,9 +115,9 @@ DataTypePtr DataTypeFactory::createUInt32()
     return createInteger(32, 0, UINT32_MAX);
 };
 
-DataTypePtr DataTypeFactory::createText()
+DataTypePtr DataTypeFactory::createVariableSizedData()
 {
-    return std::make_shared<TextType>();
+    return std::make_shared<VariableSizedDataType>();
 }
 
 DataTypePtr DataTypeFactory::createChar()

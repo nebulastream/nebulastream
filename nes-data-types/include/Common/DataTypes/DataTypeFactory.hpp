@@ -22,8 +22,8 @@ namespace NES
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-class TextType;
-using TextTypePtr = std::shared_ptr<TextType>;
+class VariableSizedDataType;
+using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;
@@ -141,10 +141,10 @@ public:
     static DataTypePtr createUInt64();
 
     /**
-    * @brief Creates a new text data type.
+    * @brief Creates a new VariableSizedDataType data type.
     * @return DataTypePtr
     */
-    static DataTypePtr createText();
+    static DataTypePtr createVariableSizedData();
 
     /**
     * @brief Creates a new Char data type.

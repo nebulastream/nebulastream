@@ -78,9 +78,9 @@ bool isDouble(PhysicalTypePtr physicalType)
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::DOUBLE;
 }
 
-bool isText(PhysicalTypePtr physicalType)
+bool isVariableSizedData(PhysicalTypePtr physicalType)
 {
-    return physicalType->isTextType();
+    return physicalType->isVariableSizedDataType();
 }
 
 }

@@ -18,7 +18,7 @@
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 
 namespace NES
@@ -53,7 +53,8 @@ bool NodeFunctionLogicalBinary::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (NES::Util::instanceOf<TextType>(childLeft->getStamp()) || NES::Util::instanceOf<TextType>(childRight->getStamp()))
+    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
+        || NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
     {
         return false;
     }

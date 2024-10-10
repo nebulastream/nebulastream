@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <Common/DataTypes/DataType.hpp>
@@ -19,15 +18,12 @@
 namespace NES
 {
 
-/**
- * @brief The Text type represents a variable-sized text field.
- */
-class TextType : public DataType
+class VariableSizedDataType : public DataType
 {
 public:
-    inline TextType() noexcept { }
+    inline VariableSizedDataType() noexcept { }
 
-    ~TextType() override = default;
+    ~VariableSizedDataType() override = default;
 
     bool equals(DataTypePtr otherDataType) override;
 

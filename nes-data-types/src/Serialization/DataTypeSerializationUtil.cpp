@@ -23,8 +23,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/TextType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 namespace NES
 {
@@ -63,9 +63,9 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     }
-    else if (NES::Util::instanceOf<TextType>(dataType))
+    else if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
     {
-        serializedDataType->set_type(SerializableDataType_Type_TEXT);
+        serializedDataType->set_type(SerializableDataType_Type_VARIABLE_SIZED_DATA);
     }
     else
     {
@@ -124,10 +124,9 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     {
         return DataTypeFactory::createChar();
     }
-    else if (serializedDataType.type() == SerializableDataType_Type_TEXT)
+    else if (serializedDataType.type() == SerializableDataType_Type_VARIABLE_SIZED_DATA)
     {
-        return std::make_shared<TextType>();
-        ;
+        return DataTypeFactory::createVariableSizedData();
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
                             "Deserialization is not possible");
