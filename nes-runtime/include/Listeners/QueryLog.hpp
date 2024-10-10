@@ -58,7 +58,7 @@ struct QueryLog : AbstractQueryStatusListener
     using Log = std::vector<QueryStatusChange>;
     using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStatusChange>>;
 
-    /// TODO(#214): we should use the new unique sourceId/hash once implemented here instead
+    /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
     bool logSourceTermination(QueryId queryId, OriginId sourceId, QueryTerminationType) override;
     bool logQueryFailure(QueryId queryId, Exception exception) override;
     bool logQueryStatusChange(QueryId queryId, Execution::QueryStatus Status) override;

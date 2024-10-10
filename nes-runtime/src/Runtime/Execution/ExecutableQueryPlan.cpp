@@ -298,16 +298,16 @@ void ExecutableQueryPlan::destroy()
 void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType)
 {
     NES_DEBUG("QEP {} Source {} is notifying completion: {}", queryId, 0, terminationType);
-    /// TODO(#306): assert is commented out. We need to fix the source termination logic
+    /// TODO #306: assert is commented out. We need to fix the source termination logic
     /// NES_ASSERT2_FMT(queryStatus.load() == QueryStatus::Running, "Cannot complete source on non running query plan id=" << queryId);
     auto it = std::find_if(
         sources.begin(),
         sources.end(),
         [sourceId](const Sources::SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
-    /// TODO(#306): assert is commented out. We need to fix the source termination logic
+    /// TODO #306: assert is commented out. We need to fix the source termination logic
     /// NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << sourceId << " in query plan " << queryId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
-    /// TODO(#306): assert is commented out. We need to fix the source termination logic
+    /// TODO #306: assert is commented out. We need to fix the source termination logic
     /// NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << queryId << " = " << terminationType);
     NES_DEBUG("QEP {} Source {} is terminated; tokens left = {}", queryId, 0, (tokensLeft - 1));
     /// the following check is necessary because a data sources first emits an EoS marker and then calls this method.
