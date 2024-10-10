@@ -31,10 +31,10 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    const auto currentWatermark = executionCtx.getWatermarkTs();
+    const auto currentWatermark = executionCtx.watermarkTs;
     if (tsField > currentWatermark)
     {
-        executionCtx.setWatermarkTs(tsField);
+        executionCtx.watermarkTs = tsField;
     }
 }
 
