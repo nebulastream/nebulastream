@@ -12,11 +12,11 @@
     limitations under the License.
 */
 #include <string>
-#include <SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SLTParser.hpp>
 
 namespace NES::SLTParser
 {
@@ -35,7 +35,7 @@ public:
 
 TEST_F(SLTParserInvalidTestFilesTest, InvalidTestFile)
 {
-    std::string const filename = TEST_DATA_DIR "invalid.test";
+    std::string const filename = TEST_DATA_DIR "invalid.dummy";
 
     SLTParser parser{};
     parser.registerOnCSVSourceCallback(

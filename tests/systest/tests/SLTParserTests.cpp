@@ -14,11 +14,11 @@
 
 #include <memory>
 #include <string>
-#include <SLTParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SLTParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::SLTParser
