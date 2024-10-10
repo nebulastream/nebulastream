@@ -18,5 +18,5 @@ add_source_files(nes-data-types
         Integer.cpp
         Float.cpp
         DataTypeFactory.cpp
-        TextType.cpp
+        VariableSizedDataType.cpp
         )

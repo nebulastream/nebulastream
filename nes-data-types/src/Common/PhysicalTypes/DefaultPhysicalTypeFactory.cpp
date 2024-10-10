@@ -20,10 +20,10 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/TextPhysicalType.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 namespace NES
 {
 
@@ -47,9 +47,9 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     {
         return BasicPhysicalType::create(DataType::as<Char>(dataType), BasicPhysicalType::NativeType::CHAR);
     }
-    else if (NES::Util::instanceOf<TextType>(dataType))
+    else if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
     {
-        return TextPhysicalType::create(DataType::as<TextType>(dataType));
+        return VariableSizedDataPhysicalType::create(DataType::as<VariableSizedDataType>(dataType));
     }
     else
     {

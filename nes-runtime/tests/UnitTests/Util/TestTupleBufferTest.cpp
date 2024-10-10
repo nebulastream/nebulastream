@@ -53,9 +53,9 @@ public:
 
         varSizedDataSchema = Schema::create(memoryLayout)
                                  ->addField("test$t1", BasicType::UINT16)
-                                 ->addField("test$t2", DataTypeFactory::createText())
+                                 ->addField("test$t2", DataTypeFactory::createVariableSizedData())
                                  ->addField("test$t3", BasicType::FLOAT64)
-                                 ->addField("test$t4", DataTypeFactory::createText());
+                                 ->addField("test$t4", DataTypeFactory::createVariableSizedData());
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();

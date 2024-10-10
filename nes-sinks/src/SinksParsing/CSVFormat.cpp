@@ -23,7 +23,7 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -109,7 +109,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
             auto indexInBuffer = buffer + offset + i * schema->getSchemaSizeInBytes();
 
             /// handle variable-length field
-            if (NES::Util::instanceOf<TextType>(dataType))
+            if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
             {
                 NES_DEBUG("trying to read the variable length TEXT field: {} from the tuple buffer", field->toString());
 

@@ -49,7 +49,7 @@ public:
 
     [[nodiscard]] virtual bool isBasicType() const noexcept { return false; }
 
-    [[nodiscard]] virtual bool isTextType() const noexcept { return false; }
+    [[nodiscard]] virtual bool isVariableSizedDataType() const noexcept { return false; }
 
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
 

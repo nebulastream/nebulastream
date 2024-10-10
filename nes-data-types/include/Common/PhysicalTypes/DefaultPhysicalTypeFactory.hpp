@@ -28,8 +28,8 @@ using FloatPtr = std::shared_ptr<Float>;
 class Char;
 using CharPtr = std::shared_ptr<Char>;
 
-class TextType;
-using TextPtr = std::shared_ptr<TextType>;
+class VariableSizedDataType;
+using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.

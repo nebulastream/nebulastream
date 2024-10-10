@@ -19,7 +19,7 @@
 namespace NES
 {
 
-class TextType;
+class VariableSizedDataType;
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;

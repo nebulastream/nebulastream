@@ -14,25 +14,25 @@
 
 #include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
 
-bool TextType::equals(DataTypePtr otherDataType)
+bool VariableSizedDataType::equals(DataTypePtr otherDataType)
 {
-    return NES::Util::instanceOf<TextType>(otherDataType);
+    return NES::Util::instanceOf<VariableSizedDataType>(otherDataType);
 }
 
-/// A text type cannot be joined with another type.
-DataTypePtr TextType::join(DataTypePtr)
+/// A VariableSizedData type cannot be joined with another type.
+DataTypePtr VariableSizedDataType::join(DataTypePtr)
 {
     return DataTypeFactory::createUndefined();
 }
 
-std::string TextType::toString()
+std::string VariableSizedDataType::toString()
 {
-    return "Text";
+    return "VariableSizedData";
 }
 
 }
