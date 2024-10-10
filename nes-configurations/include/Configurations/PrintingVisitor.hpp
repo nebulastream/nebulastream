@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #pragma once
-#include "BaseConfiguration.hpp"
-#include "OptionVisitor.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/OptionVisitor.hpp>
 
 namespace NES::Configurations
 {

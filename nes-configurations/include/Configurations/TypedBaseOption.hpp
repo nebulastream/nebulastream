@@ -15,10 +15,10 @@
 #include <memory>
 #include <typeinfo>
 #include <vector>
-#include "Configurations/BaseOption.hpp"
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/OptionVisitor.hpp"
-#include "Configurations/Validation/ConfigurationValidation.hpp"
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>

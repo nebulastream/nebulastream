@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include "BaseOption.hpp"
+#include <Configurations/BaseOption.hpp>
 
 namespace NES::Configurations
 {
