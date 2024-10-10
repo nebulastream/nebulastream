@@ -19,18 +19,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validateTrigger:
-    # This ensures we won't run the CI if it is in draft mode, or we called it via act.
-    if: ${{ !github.event.pull_request.draft && !github.event.act }}
-    runs-on: [ self-hosted, linux, Build ]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Contextual QA Checklists
-        uses: wyozi/contextual-qa-checklist-action@1.3.2
-        with:
-          gh-token: ${{ secrets.NES_CI_SECRET }}
-          comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
-
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
