@@ -1,10 +1,11 @@
 
-// Generated from ./NesCEP.g4 by ANTLR 4.9.2
+// Generated from CLionProjects/nebulastream/nes-coordinator/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
+#pragma once
 
-#include <antlr4-runtime.h>
+#include <antlr4-runtime/antlr4-runtime.h>
 
 namespace NES::Parsers {
 
@@ -25,7 +26,7 @@ class NesCEPLexer : public antlr4::Lexer {
         WHERE = 12,
         WITHIN = 13,
         CONSUMING = 14,
-        RETURN = 15,
+        SELECT = 15,
         INTO = 16,
         ALL = 17,
         ANY = 18,

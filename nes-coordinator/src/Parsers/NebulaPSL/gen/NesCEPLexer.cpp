@@ -1,5 +1,5 @@
 
-// Generated from ./NesCEP.g4 by ANTLR 4.9.2
+// Generated from CLionProjects/nebulastream/nes-coordinator/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
 #include <Parsers/NebulaPSL/gen/NesCEPLexer.h>
 
@@ -39,7 +39,7 @@ std::vector<uint16_t> NesCEPLexer::_serializedATN;
 
 std::vector<std::string> NesCEPLexer::_ruleNames = {
     "T__0",         "T__1",         "T__2",     "T__3",      "T__4",   "T__5", "T__6",      "T__7",       "WS",     "FROM",
-    "PATTERN",      "WHERE",        "WITHIN",   "CONSUMING", "RETURN", "INTO", "ALL",       "ANY",        "SEP",    "COMMA",
+    "PATTERN",      "WHERE",        "WITHIN",   "CONSUMING", "SELECT", "INTO", "ALL",       "ANY",        "SEP",    "COMMA",
     "LPARENTHESIS", "RPARENTHESIS", "NOT",      "NOT_OP",    "SEQ",    "NEXT", "AND",       "OR",         "STAR",   "PLUS",
     "D_POINTS",     "LBRACKET",     "RBRACKET", "XOR",       "IN",     "IS",   "NULLTOKEN", "BETWEEN",    "BINARY", "TRUE",
     "FALSE",        "UNKNOWN",      "QUARTER",  "MONTH",     "DAY",    "HOUR", "MINUTE",    "WEEK",       "SECOND", "MICROSECOND",
@@ -53,7 +53,7 @@ std::vector<std::string> NesCEPLexer::_modeNames = {"DEFAULT_MODE"};
 
 std::vector<std::string> NesCEPLexer::_literalNames = {
     "",        "'-'",    "'>'",       "'<'",       "'&'",          "'|'",           "'/'",       "'%'",       "'--'",
-    "",        "'FROM'", "'PATTERN'", "'WHERE'",   "'WITHIN'",     "'CONSUMING'",   "'RETURN'",  "'INTO'",    "'ALL'",
+    "",        "'FROM'", "'PATTERN'", "'WHERE'",   "'WITHIN'",     "'CONSUMING'",   "'SELECT'",  "'INTO'",    "'ALL'",
     "'ANY'",   "':='",   "','",       "'('",       "')'",          "'NOT'",         "'!'",       "'SEQ'",     "'NEXT'",
     "'AND'",   "'OR'",   "'*'",       "'+'",       "':'",          "'['",           "']'",       "'XOR'",     "'IN'",
     "'IS'",    "'NULL'", "'BETWEEN'", "'BINARY'",  "'TRUE'",       "'FALSE'",       "'UNKNOWN'", "'QUARTER'", "'MONTH'",
@@ -77,7 +77,7 @@ std::vector<std::string> NesCEPLexer::_symbolicNames = {"",
                                                         "WHERE",
                                                         "WITHIN",
                                                         "CONSUMING",
-                                                        "RETURN",
+                                                        "SELECT",
                                                         "INTO",
                                                         "ALL",
                                                         "ANY",
@@ -319,9 +319,9 @@ NesCEPLexer::Initializer::Initializer() {
         0x2,   0x2,    0xd2,   0xd3,   0x7,    0x51,   0x2,    0x2,    0xd3,   0xd4,  0x7,   0x50,  0x2,   0x2,   0xd4,  0xd5,
         0x7,   0x55,   0x2,    0x2,    0xd5,   0xd6,   0x7,    0x57,   0x2,    0x2,   0xd6,  0xd7,  0x7,   0x4f,  0x2,   0x2,
         0xd7,  0xd8,   0x7,    0x4b,   0x2,    0x2,    0xd8,   0xd9,   0x7,    0x50,  0x2,   0x2,   0xd9,  0xda,  0x7,   0x49,
-        0x2,   0x2,    0xda,   0x1e,   0x3,    0x2,    0x2,    0x2,    0xdb,   0xdc,  0x7,   0x54,  0x2,   0x2,   0xdc,  0xdd,
-        0x7,   0x47,   0x2,    0x2,    0xdd,   0xde,   0x7,    0x56,   0x2,    0x2,   0xde,  0xdf,  0x7,   0x57,  0x2,   0x2,
-        0xdf,  0xe0,   0x7,    0x54,   0x2,    0x2,    0xe0,   0xe1,   0x7,    0x50,  0x2,   0x2,   0xe1,  0x20,  0x3,   0x2,
+        0x2,   0x2,    0xda,   0x1e,   0x3,    0x2,    0x2,    0x2,    0xdb,   0xdc,  0x7,   0x55,  0x2,   0x2,   0xdc,  0xdd,
+        0x7,   0x47,   0x2,    0x2,    0xdd,   0xde,   0x7,    0x4e,   0x2,    0x2,   0xde,  0xdf,  0x7,   0x47,  0x2,   0x2,
+        0xdf,  0xe0,   0x7,    0x45,   0x2,    0x2,    0xe0,   0xe1,   0x7,    0x56,  0x2,   0x2,   0xe1,  0x20,  0x3,   0x2,
         0x2,   0x2,    0xe2,   0xe3,   0x7,    0x4b,   0x2,    0x2,    0xe3,   0xe4,  0x7,   0x50,  0x2,   0x2,   0xe4,  0xe5,
         0x7,   0x56,   0x2,    0x2,    0xe5,   0xe6,   0x7,    0x51,   0x2,    0x2,   0xe6,  0x22,  0x3,   0x2,   0x2,   0x2,
         0xe7,  0xe8,   0x7,    0x43,   0x2,    0x2,    0xe8,   0xe9,   0x7,    0x4e,  0x2,   0x2,   0xe9,  0xea,  0x7,   0x4e,

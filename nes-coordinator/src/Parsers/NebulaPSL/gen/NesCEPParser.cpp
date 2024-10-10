@@ -1,9 +1,8 @@
 
-// Generated from ./NesCEP.g4 by ANTLR 4.9.2
+// Generated from CLionProjects/nebulastream/nes-coordinator/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
 #include <Parsers/NebulaPSL/gen/NesCEPListener.h>
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
-#include <Util/Logger/Logger.hpp>
 
 using namespace antlrcpp;
 using namespace NES::Parsers;
@@ -129,7 +128,7 @@ tree::TerminalNode* NesCEPParser::CepPatternContext::CONSUMING() { return getTok
 
 NesCEPParser::OptionContext* NesCEPParser::CepPatternContext::option() { return getRuleContext<NesCEPParser::OptionContext>(0); }
 
-tree::TerminalNode* NesCEPParser::CepPatternContext::RETURN() { return getToken(NesCEPParser::RETURN, 0); }
+tree::TerminalNode* NesCEPParser::CepPatternContext::SELECT() { return getToken(NesCEPParser::SELECT, 0); }
 
 NesCEPParser::OutputExpressionContext* NesCEPParser::CepPatternContext::outputExpression() {
     return getRuleContext<NesCEPParser::OutputExpressionContext>(0);
@@ -209,9 +208,9 @@ NesCEPParser::CepPatternContext* NesCEPParser::cepPattern() {
         _errHandler->sync(this);
 
         _la = _input->LA(1);
-        if (_la == NesCEPParser::RETURN) {
+        if (_la == NesCEPParser::SELECT) {
             setState(113);
-            match(NesCEPParser::RETURN);
+            match(NesCEPParser::SELECT);
             setState(114);
             outputExpression();
         }
@@ -3822,8 +3821,7 @@ bool NesCEPParser::sempred(RuleContext* context, size_t ruleIndex, size_t predic
     return true;
 }
 
-bool NesCEPParser::expressionSempred(ExpressionContext* _localctx, size_t predicateIndex) {
-    NES_INFO("NesCEPParser : expressionSempred {}", _localctx->getText());
+bool NesCEPParser::expressionSempred(ExpressionContext*, size_t predicateIndex) {
     switch (predicateIndex) {
         case 0: return precpred(_ctx, 3);
 
@@ -3832,8 +3830,7 @@ bool NesCEPParser::expressionSempred(ExpressionContext* _localctx, size_t predic
     return true;
 }
 
-bool NesCEPParser::predicateSempred(PredicateContext* _localctx, size_t predicateIndex) {
-    NES_INFO("NesCEPParser : predicateSempred {}", _localctx->getText());
+bool NesCEPParser::predicateSempred(PredicateContext*, size_t predicateIndex) {
     switch (predicateIndex) {
         case 1: return precpred(_ctx, 2);
         case 2: return precpred(_ctx, 4);
@@ -3844,8 +3841,7 @@ bool NesCEPParser::predicateSempred(PredicateContext* _localctx, size_t predicat
     return true;
 }
 
-bool NesCEPParser::expressionAtomSempred(ExpressionAtomContext* _localctx, size_t predicateIndex) {
-    NES_INFO("NesCEPParser : expressionAtomSempred {}", _localctx->getText());
+bool NesCEPParser::expressionAtomSempred(ExpressionAtomContext*, size_t predicateIndex) {
     switch (predicateIndex) {
         case 4: return precpred(_ctx, 3);
         case 5: return precpred(_ctx, 2);
@@ -3910,7 +3906,7 @@ std::vector<std::string> NesCEPParser::_ruleNames = {"query",
 
 std::vector<std::string> NesCEPParser::_literalNames = {
     "",        "'-'",    "'>'",       "'<'",       "'&'",          "'|'",           "'/'",       "'%'",       "'--'",
-    "",        "'FROM'", "'PATTERN'", "'WHERE'",   "'WITHIN'",     "'CONSUMING'",   "'RETURN'",  "'INTO'",    "'ALL'",
+    "",        "'FROM'", "'PATTERN'", "'WHERE'",   "'WITHIN'",     "'CONSUMING'",   "'SELECT'",  "'INTO'",    "'ALL'",
     "'ANY'",   "':='",   "','",       "'('",       "')'",          "'NOT'",         "'!'",       "'SEQ'",     "'NEXT'",
     "'AND'",   "'OR'",   "'*'",       "'+'",       "':'",          "'['",           "']'",       "'XOR'",     "'IN'",
     "'IS'",    "'NULL'", "'BETWEEN'", "'BINARY'",  "'TRUE'",       "'FALSE'",       "'UNKNOWN'", "'QUARTER'", "'MONTH'",
@@ -3934,7 +3930,7 @@ std::vector<std::string> NesCEPParser::_symbolicNames = {"",
                                                          "WHERE",
                                                          "WITHIN",
                                                          "CONSUMING",
-                                                         "RETURN",
+                                                         "SELECT",
                                                          "INTO",
                                                          "ALL",
                                                          "ANY",

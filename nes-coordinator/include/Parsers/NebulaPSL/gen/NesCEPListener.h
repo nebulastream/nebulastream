@@ -1,8 +1,9 @@
 
-// Generated from ./NesCEP.g4 by ANTLR 4.9.2
+// Generated from CLionProjects/nebulastream/nes-coordinator/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_
+#pragma once
 
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 #include <antlr4-runtime.h>

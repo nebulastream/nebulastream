@@ -230,9 +230,9 @@ TEST_F(PatternParsingServiceTest, SequencePattern) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
+TEST_F(PatternParsingServiceTest, simplePatternWithSelect) {
     //pattern string as received from the NES UI
-    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [id=TU] INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A SELECT ce := [id=TU] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
     std::shared_ptr<QueryParsingService> patternParsingService;
     QueryPlanPtr patternPlan = patternParsingService->createPatternFromCodeString(patternString);
@@ -252,9 +252,9 @@ TEST_F(PatternParsingServiceTest, simplePatternWithReturn) {
     EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(patternPlan));
 }
 
-TEST_F(PatternParsingServiceTest, simplePatternWithMultipleReturnStatements) {
+TEST_F(PatternParsingServiceTest, simplePatternWithMultipleSelectStatements) {
     //pattern string as received from the NES UI
-    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A RETURN ce := [name=TU, type=random, "
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A SELECT ce := [name=TU, type=random, "
                                 "department=DIMA ] INTO Print :: testSink ";
     //TODO fix Lexer, remove filter condition from output, i.e., no TU #2933
     std::shared_ptr<QueryParsingService> patternParsingService;

@@ -12,7 +12,7 @@ cepPattern
 	(WHERE whereExp)?
 	(WITHIN timeConstraints)?
 	(CONSUMING option)?
-	(RETURN outputExpression)?
+	(SELECT outputExpression)?
 	INTO sinkList
 ;
 
@@ -243,8 +243,8 @@ FROM:                              'FROM';
 PATTERN:                           'PATTERN';
 WHERE:                             'WHERE';
 WITHIN:                            'WITHIN';
-CONSUMING:						             'CONSUMING';
-RETURN:							               'RETURN';
+CONSUMING:						   'CONSUMING';
+SELECT:							   'SELECT';
 INTO:							   'INTO';
 ALL:							   'ALL';
 ANY:							   'ANY';
@@ -298,11 +298,11 @@ SUM:                               'SUM';
 MIN:                               'MIN';
 MAX:                               'MAX';
 COUNT:                             'COUNT';
-IF:                             'IF';
-LOGOR:                          '||';
-LOGAND:                         '&&';
-LOGXOR:                         '^';
-NONE:                           'NONE';
+IF:                                'IF';
+LOGOR:                             '||';
+LOGAND:                            '&&';
+LOGXOR:                            '^';
+NONE:                              'NONE';
 
 
 

@@ -1,10 +1,11 @@
 
-// Generated from ./NesCEP.g4 by ANTLR 4.9.2
+// Generated from CLionProjects/nebulastream/nes-coordinator/src/Parsers/NebulaPSL/gen/NesCEP.g4 by ANTLR 4.9.2
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_
+#pragma once
 
-#include <antlr4-runtime.h>
+#include <antlr4-runtime/antlr4-runtime.h>
 
 namespace NES::Parsers {
 
@@ -25,7 +26,7 @@ class NesCEPParser : public antlr4::Parser {
         WHERE = 12,
         WITHIN = 13,
         CONSUMING = 14,
-        RETURN = 15,
+        SELECT = 15,
         INTO = 16,
         ALL = 17,
         ANY = 18,
@@ -225,7 +226,7 @@ class NesCEPParser : public antlr4::Parser {
         TimeConstraintsContext* timeConstraints();
         antlr4::tree::TerminalNode* CONSUMING();
         OptionContext* option();
-        antlr4::tree::TerminalNode* RETURN();
+        antlr4::tree::TerminalNode* SELECT();
         OutputExpressionContext* outputExpression();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
