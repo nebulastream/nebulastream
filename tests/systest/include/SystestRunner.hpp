@@ -18,6 +18,6 @@
 
 namespace NES
 {
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testName);
+std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname);
 bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr);
 }

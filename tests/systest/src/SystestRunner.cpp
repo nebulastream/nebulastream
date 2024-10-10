@@ -21,7 +21,7 @@
 
 namespace NES
 {
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testname)
+std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
 {
     std::vector<DecomposedQueryPlanPtr> plans{};
     CLI::QueryConfig config{};
@@ -32,16 +32,16 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
          [&](std::string& substitute)
          {
              static uint64_t queryNr = 0;
-             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + testname + std::to_string(queryNr++) + ".csv";
+             auto resultFile = resultDir.string() + "/" + testname + std::to_string(queryNr++) + ".csv";
              substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
          }});
 
     parser.registerSubstitutionRule(
         {"TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/test/testdata"; }});
 
-    if (!parser.loadFile(filePath))
+    if (!parser.loadFile(testFilePath))
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
         return {};
     }
 

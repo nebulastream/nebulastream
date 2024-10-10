@@ -34,6 +34,8 @@ public:
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
+    Configurations::StringOption resultDir
+    = {"resultDir", PATH_TO_BINARY_DIR "/tests/result/", "Directory for query results"};
     Configurations::BoolOption randomQueryOrder
     = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::StringOption grpcAddressUri
