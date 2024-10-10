@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <span>
 #include <Runtime/BufferManager.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 
