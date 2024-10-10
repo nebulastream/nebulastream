@@ -27,7 +27,7 @@ option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of sp
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
-option(NES_ENABLES_TESTS "Compute test coverage" ON)
+option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
@@ -351,6 +351,5 @@ add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST
 
 #Other configurations
 project_enable_format()
-instrument_codebase()
 include(cmake/SystemTests.cmake)
 project_enable_system_level_tests()

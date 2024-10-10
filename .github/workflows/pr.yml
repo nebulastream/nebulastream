@@ -91,6 +91,11 @@ jobs:
           path: /junit.xml
 
   run_code_coverage:
+    if: ${{ ! failure() && ! cancelled() }}
+    needs: [ get-dev-images ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
+    # Using the tag from the get-dev-images job
+    with:
+      tag: ${{ needs.get-dev-images.outputs.image-tag }}
     secrets: inherit

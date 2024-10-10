@@ -40,51 +40,6 @@ macro(add_code_coverage)
     add_link_options(-fprofile-instr-generate -fcoverage-mapping)
 endmacro(add_code_coverage)
 
-macro(get_header_nes HEADER_FILES)
-    file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
-endmacro()
-
-macro(register_public_header TARGET HEADER_FILE_DIR)
-    add_custom_command(TARGET ${TARGET} POST_BUILD
-            COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream)
-endmacro()
-
-macro(register_public_header_dir TARGET HEADER_FILE_DIR TARGET_DIR)
-    add_custom_command(TARGET ${TARGET} POST_BUILD
-            COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream/${TARGET_DIR})
-endmacro()
-
-macro(register_public_header_file TARGET HEADER_FILE_DIR TARGET_DIR)
-    add_custom_command(TARGET ${TARGET} POST_BUILD
-            COMMENT "COPY ${CMAKE_CURRENT_SOURCE_DIR}"
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${HEADER_FILE_DIR} ${CMAKE_BINARY_DIR}/include/nebulastream/${TARGET_DIR})
-endmacro()
-
-macro(get_header_nes_client HEADER_FILES)
-    file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
-endmacro()
-
-macro(get_nes_folders output_var)
-    file(GLOB NES_FOLDERS
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-*")
-    # Create a semicolon-separated list of folder names
-    set(NES_FOLDER_NAMES "")
-    foreach(FOLDER ${NES_FOLDERS})
-        get_filename_component(FOLDER_NAME ${FOLDER} NAME)
-        list(APPEND NES_FOLDER_NAMES ${CMAKE_CURRENT_SOURCE_DIR}/${FOLDER_NAME})
-    endforeach()
-    # Join the folder names with a comma
-    string(REPLACE ";" "," NES_FOLDER_NAMES_COMMA_SEPARATED "${NES_FOLDER_NAMES}")
-
-    # Set the output variable
-    set(${output_var} "${NES_FOLDER_NAMES_COMMA_SEPARATED}")
-endmacro(get_nes_folders)
-
 # Looks for the configured clang format version and enabled the format target if available.
 function(project_enable_format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
@@ -146,7 +101,7 @@ function(cached_fetch_and_extract url dest)
     #
     # This is so that copying only happens when `dest` does not exist, to speed up reconfiguration,
     # since copying the NES deps and clang has takes roughly 2.5s while reconfiguration takes ~15s.
-    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or form url ${url}")
+    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or from url ${url}")
     string(REGEX REPLACE "/" "_"  filename ${url})  # url to filename
     string(REPLACE ":" "_"  filename ${filename})  # filename to filename
     string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
