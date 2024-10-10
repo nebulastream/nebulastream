@@ -192,6 +192,8 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("-s", "--server")
         .help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
+    program.add_argument("--shuffle").flag().help("run queries in random order");
+
     program.parse_args(argc, argv);
 
     auto config = Configuration::SystestConfiguration();
@@ -201,36 +203,6 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         Logger::setupLogging("systest.log", LogLevel::LOG_DEBUG);
     }
 
-    auto config = Configuration::SystestConfiguration();
-    Command com;
-    if (program.is_used("--cacheDir"))
-    {
-        com = Command::cache;
-
-        config.cacheDir = program.get<std::string>("--cacheDir");
-        if (not std::filesystem::is_directory(config.cacheDir.getValue()))
-        {
-            NES_FATAL_ERROR("{} is not a directory.", config.cacheDir.getValue());
-            std::exit(1);
-        }
-
-        if (program.is_used("--testLocation"))
-        {
-            auto testFileDefintion = program.get<std::string>("--testLocation");
-            if (std::filesystem::is_directory(testFileDefintion))
-            {
-                config.testsDiscoverDir = testFileDefintion;
-            }
-            else if (std::filesystem::is_regular_file(testFileDefintion))
-            {
-                config.directlySpecifiedTestsFiles = testFileDefintion;
-            }
-            else
-            {
-                NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
-                std::exit(1);
-            }
-        }
     if (program.is_used("--testLocation"))
     {
         auto testFileDefintion = program.get<std::string>("--testLocation");
@@ -248,9 +220,10 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
             std::exit(1);
         }
     }
-    else
+    if (program.is_used("--shuffle"))
     {
-        com = Command::run;
+        config.randomQueryOrder = true;
+    }
 
     if (program.is_used("-s"))
     {
@@ -302,28 +275,36 @@ int main(int argc, const char** argv)
 
         if (com == Command::run)
         {
+            auto testFiles = discoverTestFiles(config);
+
+            std::vector<DecomposedQueryPlanPtr> queries{};
+            for (const auto& testFile : testFiles)
+            {
+                auto testname = std::filesystem::path(testFile).filename().string();
+                auto loadedTests = loadFromSLTFile(testFile, testname);
+                queries.insert(queries.end(), loadedTests.begin(), loadedTests.end());
+            }
+
+            if (config.randomQueryOrder)
+            {
+                std::random_device rd;
+                std::mt19937 g(rd());
+                std::shuffle(queries.begin(), queries.end(), g);
+            }
+
             if (not config.grpcAddressUri.getValue().empty()) /// case: send requests over grpc to different single-node-worker
             {
-                auto serverUri = config.grpcAddressUri;
+                auto serverUri = config.grpcAddressUri.getValue();
                 GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
 
-                auto testFiles = discoverTestFiles(config);
-
-                for (const auto& testFile : testFiles)
+                for (std::size_t testnr = 0; const auto& query : queries)
                 {
-                    /// Get from input the filename without the extension
-                    auto testname = std::filesystem::path(testFile).filename().string();
+                    SerializableDecomposedQueryPlan serialized;
+                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query, &serialized);
 
-                    auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
-                    for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
-                    {
-                        SerializableDecomposedQueryPlan serialized;
-                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, &serialized);
-
-                        auto queryId = client.registerQuery(plan);
-                        client.start(queryId);
-                        ++testnr;
-                    }
+                    auto queryId = client.registerQuery(query);
+                    client.start(queryId);
+                    ++testnr;
                 }
             }
             else /// case: run locally without grpc
@@ -332,20 +313,11 @@ int main(int argc, const char** argv)
                 Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
                 SingleNodeWorker worker = SingleNodeWorker(conf);
 
-                auto testFiles = discoverTestFiles(config);
-
-                for (const auto& testFile : testFiles)
+                for (std::size_t testnr = 0; const auto& query : queries)
                 {
-                    /// Get from input the filename without the extension
-                    auto testname = std::filesystem::path(testFile).filename().string();
-
-                    auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
-                    for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
-                    {
-                        auto queryId = worker.registerQuery(plan);
-                        worker.startQuery(queryId);
-                        ++testnr;
-                    }
+                    auto queryId = worker.registerQuery(query);
+                    worker.startQuery(queryId);
+                    ++testnr;
                 }
             }
         }
