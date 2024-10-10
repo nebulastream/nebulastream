@@ -351,6 +351,5 @@ add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST
 
 #Other configurations
 project_enable_format()
-instrument_codebase()
 include(cmake/SystemTests.cmake)
 project_enable_system_level_tests()
