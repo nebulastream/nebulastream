@@ -17,9 +17,10 @@
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
 #include <grpc++/create_channel.h>
-#include <Configuration.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+#include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
 
 using namespace std::literals;
@@ -88,18 +89,16 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     using namespace argparse;
     ArgumentParser program("systest");
 
+    program.add_argument("-t", "--testLocation")
+        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in. Default: " TEST_DISCOVER_DIR);
+
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
 
-    ArgumentParser run("run");
-    run.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080").required();
-    run.add_argument("-t", "--test").help("directly specified test file e.g., fliter.test or directory to lookup test files in.");
+    program.add_argument("-c", "--cache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
+    program.add_argument("--cacheDir").help("change the cache dir. Default: " CACHE_DIR);
 
-    ArgumentParser cache("cache");
-    cache.add_argument("-i", "--input").help("e.g., fliter.test");
-    cache.add_argument("-o", "--output").help("output folder for protobuf file");
-
-    program.add_subparser(run);
-    program.add_subparser(cache);
+    program.add_argument("-s", "--server")
+        .help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
     program.parse_args(argc, argv);
 
@@ -110,62 +109,62 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     auto config = Configuration::SystestConfiguration();
     Command com;
-    if (program.is_subcommand_used("run"))
-    {
-        com = Command::run;
-
-        auto& parser = program.at<ArgumentParser>("run");
-        config.grpcAddressUri = parser.get<std::string>("-s");
-
-        auto testFileDefintion = parser.get<std::string>("-t");
-        if (std::filesystem::is_directory(testFileDefintion))
-        {
-            config.testsDiscoverDir = testFileDefintion;
-        }
-        else if (std::filesystem::is_regular_file(testFileDefintion))
-        {
-            config.directlySpecifiedTestsFiles = testFileDefintion;
-        }
-        else
-        {
-            NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
-            std::exit(1);
-        }
-    }
-    else if (program.is_subcommand_used("cache"))
+    if (program.is_used("--cacheDir"))
     {
         com = Command::cache;
 
-        auto& parser = program.at<ArgumentParser>("cache");
-
-        config.cacheDir = parser.get<std::string>("-o");
+        config.cacheDir = program.get<std::string>("--cacheDir");
         if (not std::filesystem::is_directory(config.cacheDir.getValue()))
         {
             NES_FATAL_ERROR("{} is not a directory.", config.cacheDir.getValue());
             std::exit(1);
         }
 
-        auto testFileDefintion = parser.get<std::string>("-i");
-        if (std::filesystem::is_directory(testFileDefintion))
+        if (program.is_used("--testLocation"))
         {
-            config.testsDiscoverDir = testFileDefintion;
-        }
-        else if (std::filesystem::is_regular_file(testFileDefintion))
-        {
-            config.directlySpecifiedTestsFiles = testFileDefintion;
-        }
-        else
-        {
-            NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
-            std::exit(1);
+            auto testFileDefintion = program.get<std::string>("--testLocation");
+            if (std::filesystem::is_directory(testFileDefintion))
+            {
+                config.testsDiscoverDir = testFileDefintion;
+            }
+            else if (std::filesystem::is_regular_file(testFileDefintion))
+            {
+                config.directlySpecifiedTestsFiles = testFileDefintion;
+            }
+            else
+            {
+                NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
+                std::exit(1);
+            }
         }
     }
     else
     {
-        NES_ERROR("No command specified. Exiting.");
-        std::exit(0);
-    }
+        com = Command::run;
 
+        if (program.is_used("-s"))
+        {
+            config.grpcAddressUri = program.get<std::string>("-s");
+        }
+
+        if (program.is_used("--testLocation"))
+        {
+            auto testFileDefintion = program.get<std::string>("--testLocation");
+            if (std::filesystem::is_directory(testFileDefintion))
+            {
+                config.testsDiscoverDir = testFileDefintion;
+            }
+            else if (std::filesystem::is_regular_file(testFileDefintion))
+            {
+                config.directlySpecifiedTestsFiles = testFileDefintion;
+            }
+            else
+            {
+                NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
+                std::exit(1);
+            }
+        }
+    }
     return {config, com};
 }
 
@@ -207,26 +206,50 @@ int main(int argc, const char** argv)
 
         if (com == Command::run)
         {
-            auto serverUri = config.grpcAddressUri;
-            GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-
-            auto testFiles = discoverTestFiles(config);
-
-            for (const auto& testFile : testFiles)
+            if (not config.grpcAddressUri.getValue().empty()) /// case: send requests over grpc to different single-node-worker
             {
-                /// Get from input the filename without the extension
-                auto testname = std::filesystem::path(testFile).filename().string();
+                auto serverUri = config.grpcAddressUri;
+                GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
 
-                auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
-                for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
+                auto testFiles = discoverTestFiles(config);
+
+                for (const auto& testFile : testFiles)
                 {
-                    SerializableDecomposedQueryPlan serialized;
-                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, &serialized);
+                    /// Get from input the filename without the extension
+                    auto testname = std::filesystem::path(testFile).filename().string();
 
-                    GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
-                    auto queryId = client.registerQuery(plan);
-                    client.start(queryId);
-                    ++testnr;
+                    auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
+                    for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
+                    {
+                        SerializableDecomposedQueryPlan serialized;
+                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, &serialized);
+
+                        auto queryId = client.registerQuery(plan);
+                        client.start(queryId);
+                        ++testnr;
+                    }
+                }
+            }
+            else /// case: run locally without grpc
+            {
+                /// Use default configuration
+                Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
+                SingleNodeWorker worker = SingleNodeWorker(conf);
+
+                auto testFiles = discoverTestFiles(config);
+
+                for (const auto& testFile : testFiles)
+                {
+                    /// Get from input the filename without the extension
+                    auto testname = std::filesystem::path(testFile).filename().string();
+
+                    auto decomposedQueryPlans = loadFromSLTFile(testFile, testname);
+                    for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
+                    {
+                        auto queryId = worker.registerQuery(plan);
+                        worker.startQuery(queryId);
+                        ++testnr;
+                    }
                 }
             }
         }

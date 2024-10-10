@@ -23,7 +23,7 @@ find_package(argparse CONFIG REQUIRED)
 
 add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
+target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-single-node-worker-lib)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 # Compile time definitions used in systest configuration
 target_compile_definitions(systest PRIVATE CACHE_DIR="${CMAKE_BINARY_DIR}/cache/")
