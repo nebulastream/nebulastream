@@ -14,7 +14,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>

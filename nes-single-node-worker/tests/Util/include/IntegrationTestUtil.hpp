@@ -15,6 +15,9 @@
 #pragma once
 
 #include <memory>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <GrpcService.hpp>
 
 namespace NES
@@ -23,6 +26,33 @@ namespace IntegrationTestUtil
 {
 static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
+
+/// Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
+[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
+    const std::string& csvFile,
+    const SchemaPtr& schema,
+    Memory::AbstractBufferProvider& bufferProvider,
+    uint64_t originId = 0,
+    const std::string& timestampFieldname = "ts",
+    bool skipFirstLine = false);
+
+/**
+* @brief casts a value in string format to the correct type and writes it to the TupleBuffer
+* @param value: string value that is cast to the PhysicalType and written to the TupleBuffer
+* @param schemaFieldIndex: field/attribute that is currently processed
+* @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
+* @param json: denotes whether input comes from JSON for correct parsing
+* @param schema: the schema the data are supposed to have
+* @param tupleCount: current tuple count, i.e. how many tuples have already been produced
+* @param bufferProvider: the buffer manager
+*/
+void writeFieldValueToTupleBuffer(
+    std::string inputString,
+    uint64_t schemaFieldIndex,
+    Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const SchemaPtr& schema,
+    uint64_t tupleCount,
+    Memory::AbstractBufferProvider& bufferProvider);
 
 /// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
 /// have a single root operator, which is the SinkOperator
@@ -75,5 +105,7 @@ void replacePortInSourceTCPs(
     SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
 
 std::string getUniqueTestIdentifier();
+
+
 }
 }

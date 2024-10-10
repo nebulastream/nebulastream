@@ -21,6 +21,8 @@ target_include_directories(nes-single-node-worker-test-util PUBLIC
 target_compile_definitions(nes-single-node-worker-test-util PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata")
 target_link_libraries(nes-single-node-worker-test-util PUBLIC
         nes-runtime
+        nes-memory
         nes-grpc
         nes-single-node-worker-lib
+        ${GTEST_LIBRARIES}
 )
