@@ -30,7 +30,7 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
 
         add_custom_command(
                 OUTPUT ${CACHE_FILE}
-                COMMAND systest cache --input ${SYSTEM_TEST_FILE_PATH} --output ${CACHE_DIR}
+                COMMAND systest -c -t ${SYSTEM_TEST_FILE_PATH} --cacheDir ${CACHE_DIR}
                 DEPENDS systest nes-single-node-worker ${SYSTEM_TEST_FILE_PATH}
         )
 

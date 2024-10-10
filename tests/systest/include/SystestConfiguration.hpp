@@ -16,7 +16,7 @@
 
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ScalarOption.hpp>
 
 namespace NES::Configuration
 {
