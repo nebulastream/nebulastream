@@ -16,7 +16,7 @@ RUN 7z x nes-clang && rm nes-clang
 FROM nebulastream/nes-development-base:${TAG}
 ADD vcpkg /vcpkg_input
 # Which vcpkg variant, e.g. with enabled sanitizers or the default `nes` variant.
-ARG VARIANT=nes
+ARG VARIANT=none-libcxx
 ENV VCPKG_FORCE_SYSTEM_BINARIES=1
 # Which architecture to build the dependencies for. Either x64 or arm64, matches the names in our vcpkg toolchains
 ARG ARCH
