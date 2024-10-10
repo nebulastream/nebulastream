@@ -109,7 +109,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1
 
 # Enabling test coverage
 if (NES_COMPUTE_COVERAGE)
-    add_code_coverage()
+    add_compiler_flags_for_code_coverage()
 endif ()
 
 # setup rpath for linker

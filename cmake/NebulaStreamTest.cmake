@@ -29,7 +29,6 @@ if (NES_COMPUTE_COVERAGE)
         get_filename_component(NES_FOLDER_NAME ${TARGET} NAME)
         list(APPEND code_covered_targets $<TARGET_FILE:${NES_FOLDER_NAME}>)
     endforeach ()
-    list(APPEND code_covered_targets $<TARGET_FILE:nebuli> $<TARGET_FILE:single-node>)
     message(STATUS "Code covered targets: ${code_covered_targets}")
 
 
