@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.185](https://github.com/nebulastream/nebulastream/tree/v0.6.185) (2024-10-10)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.184...v0.6.185)
+
+**Implemented enhancements:**
+
+- \[TASK\] rename RETURN to SELECT in psl parser [\#5080](https://github.com/nebulastream/nebulastream/issues/5080)
+
 ## [v0.6.184](https://github.com/nebulastream/nebulastream/tree/v0.6.184) (2024-10-09)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.183...v0.6.184)
