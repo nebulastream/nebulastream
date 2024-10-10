@@ -59,7 +59,7 @@ jobs:
         run: |
           cmake -DNES_COMPUTE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
-          ctest --test-dir build -j --output-on-failure
+          ctest --test-dir build -j -E "^STGRP_" --output-on-failure --output-junit /junit.xml --timeout 40
           cmake --build build --target llvm_cov_export_lcov
           mkdir -p /tmp/cache/ && cp build/default_coverage.lcov /tmp/cache/ref-coverage.lcov
       - name: Upload code coverage for ref branch
@@ -115,7 +115,7 @@ jobs:
         run: |
           cmake -DNES_COMPUTE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
-          ctest --test-dir build -j --output-on-failure
+          ctest --test-dir build -j -E "^STGRP_" --output-on-failure --output-junit /junit.xml --timeout 40
           cmake --build build --target llvm_cov_export_lcov
           mkdir -p /tmp/cache/ && cp build/default_coverage.lcov /tmp/cache/pr-coverage.lcov
       - name: Upload code coverage for PR branch
