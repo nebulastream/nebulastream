@@ -13,7 +13,6 @@
           "default-features": false,
           "features": [
             "mlir",
-            "clang-tools-extra",
             "target-x86",
             "target-aarch64"
           ]

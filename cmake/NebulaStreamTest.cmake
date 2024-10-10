@@ -13,7 +13,7 @@ if (NES_COMPUTE_COVERAGE)
     )
     add_custom_target(
             merge_nondefault_profraw
-            COMMAND llvm-profdata-${LLVM_VERSION_MAJOR} merge -f ${CMAKE_BINARY_DIR}/profraw_files.csv --output combined_nondefault.profdata
+            COMMAND llvm-profdata-${LLVM_MAJOR_VERSION} merge -f ${CMAKE_BINARY_DIR}/profraw_files.csv --output combined_nondefault.profdata
             BYPRODUCTS combined_nondefault.profdata
             DEPENDS list_nondefault_profraw
     )
@@ -37,19 +37,19 @@ if (NES_COMPUTE_COVERAGE)
     message(STATUS "Code coverage targets: ${code_covered_binary_args}")
 
     add_custom_target(llvm_cov_show_html
-            COMMAND llvm-cov-${LLVM_VERSION_MAJOR} show --format="html" --instr-profile combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.html
+            COMMAND llvm-cov-${LLVM_MAJOR_VERSION} show --format="html" --instr-profile combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.html
             COMMAND_EXPAND_LISTS
             BYPRODUCTS ${CMAKE_BINARY_DIR}/default_coverage.html
             DEPENDS merge_nondefault_profraw
     )
     add_custom_target(llvm_cov_report
-            COMMAND llvm-cov-${LLVM_VERSION_MAJOR} report --instr-profile ${CMAKE_BINARY_DIR}/combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.report
+            COMMAND llvm-cov-${LLVM_MAJOR_VERSION} report --instr-profile ${CMAKE_BINARY_DIR}/combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.report
             COMMAND_EXPAND_LISTS
             BYPRODUCTS ${CMAKE_BINARY_DIR}/default_coverage.report
             DEPENDS merge_nondefault_profraw
     )
     add_custom_target(llvm_cov_export_lcov
-            COMMAND llvm-cov-${LLVM_VERSION_MAJOR} export --format="lcov" --instr-profile ${CMAKE_BINARY_DIR}/combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.lcov
+            COMMAND llvm-cov-${LLVM_MAJOR_VERSION} export --format="lcov" --instr-profile ${CMAKE_BINARY_DIR}/combined_nondefault.profdata --ignore-filename-regex="build/.*" "${code_covered_binary_args}" > ${CMAKE_BINARY_DIR}/default_coverage.lcov
             COMMAND_EXPAND_LISTS
             BYPRODUCTS ${CMAKE_BINARY_DIR}/default_coverage.lcov
             DEPENDS merge_nondefault_profraw
