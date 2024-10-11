@@ -207,7 +207,7 @@ public:
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
         }
         throw std::logic_error(
-            "Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
+            "Node:: we performed an invalid cast of operator {}  to type {}",this->toString() ,typeid(NodeType).name());
     }
 
     /**

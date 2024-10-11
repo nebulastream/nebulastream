@@ -55,8 +55,7 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
         substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
-        "substitution rule keywords must be unique. Tried to register for the second time: {}",
-        rule.keyword);
+        "substitution rule keywords must be unique. Tried to register for the second time: " << rule.keyword);
     substitutionRules.emplace_back(rule);
 }
 
@@ -164,7 +163,7 @@ void SLTParser::parse()
         }
         else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            throw SLTUnexpectedToken("unexpected occurence of result delimiter `{}`", ResultDelimiter);
+            throw SLTUnexpectedToken("unexpected occurence of result delimiter {} `", ResultDelimiter);
         }
         else if (token.value() == TokenType::INVALID)
         {
@@ -268,7 +267,7 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
     /// Read the source name and check if successful
     if (!(stream >> source.name))
     {
-        throw SLTUnexpectedToken("failed to read source name in {}", line);
+        throw SLTUnexpectedToken("failed to read source name in: {}", line);
     }
 
     std::vector<std::string> arguments;
@@ -280,7 +279,7 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
 
     if (arguments.size() % 2 != 0)
     {
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: {}", line);
     }
 
     for (size_t i = 0; i < arguments.size(); i += 2)
@@ -293,7 +292,7 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
+            throw SLTUnexpectedToken("Unknown basic type: {}", fieldtype);
         }
     }
 
@@ -315,14 +314,14 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
     std::string discard;
     if (!(stream >> discard))
     {
-        throw SLTUnexpectedToken("failed to read the first word in: " + line);
+        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
     INVARIANT(discard == CSVSourceToken, "Expected first word to be `" + CSVSourceToken + "` for csv source statement");
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
     {
-        throw SLTUnexpectedToken("failed to read source name in: " + line);
+        throw SLTUnexpectedToken("failed to read source name in: {}", line);
     }
 
     std::vector<std::string> arguments;
@@ -337,7 +336,7 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
 
     if (arguments.size() % 2 != 0)
     {
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: {}", line);
     }
 
     for (size_t i = 0; i < arguments.size(); i += 2)
@@ -350,7 +349,7 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
+            throw SLTUnexpectedToken("Unknown basic type: {}", fieldtype);
         }
     }
     return source;

@@ -490,7 +490,7 @@ DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
     }
     catch (const YAML::ParserException& pex)
     {
-        throw QueryDescriptionNotParsable("{}", pex.what());
+        throw QueryDescriptionNotParsable(": {}.", pex.what());
     }
 }
 }

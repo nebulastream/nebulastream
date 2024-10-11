@@ -79,7 +79,7 @@ void SemanticQueryValidation::createExceptionForPredicate(std::string& predicate
     findAndReplaceAll(predicateString, "&&", " && ");
     findAndReplaceAll(predicateString, "||", " || ");
 
-    throw QueryInvalid("Unsatisfiable Query due to filter condition:\n" + predicateString + "\n");
+    throw QueryInvalid("Unsatisfiable Query due to filter condition:\n{}\n", predicateString);
 }
 
 void SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase)
@@ -119,7 +119,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
             /// Making sure that all logical sources are present in the source catalog
             if (!sourceCatalog->containsLogicalSource(sourceName))
             {
-                throw QueryInvalid("The logical source '" + sourceName + "' can not be found in the SourceCatalog\n");
+                throw QueryInvalid("The logical source '{}' can not be found in the SourceCatalog\n", sourceName);
             }
         }
     }
@@ -152,7 +152,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
             std::ostream_iterator<std::string>(invalidSources, ","));
         invalidSources << invalidLogicalSourceNames.back();
         invalidSources << "]";
-        throw QueryInvalid("Logical source(s) " + invalidSources.str() + " are found to have no physical source(s) defined.");
+        throw QueryInvalid("Logical source(s) {} are found to have no physical source(s) defined.", invalidSources.str());
     }
 }
 
@@ -162,7 +162,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     /// Check if root operator exists ina query plan
     if (rootOperators.empty())
     {
-        throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain any root operator");
+        throw QueryInvalid("Query {}{} does not contain any root operator",s,queryPlan->toString());
     }
 
     /// Check if all root operators of type sink
@@ -170,7 +170,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     {
         if (!root->instanceOf<SinkLogicalOperator>())
         {
-            throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
+            throw QueryInvalid("Query {}{} does not contain a valid sink operator as root",s, queryPlan->toString());
         }
     }
 }
@@ -189,8 +189,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
                 if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
                 {
                     throw QueryInvalid(
-                        "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "
-                        + field->getStamp()->toString());
+                        "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: {}", field->getStamp()->toString());
                 }
                 if (!commonStamp)
                 {

@@ -43,7 +43,7 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
 
     if (languageCompiler == languageCompilers.end())
     {
-        throw CompilerException("No language compiler found for language: " + getLanguageAsString(language));
+        throw CompilerException("No language compiler found for language: {}" ,getLanguageAsString(language));
     }
 
     auto compiler = languageCompiler->second;

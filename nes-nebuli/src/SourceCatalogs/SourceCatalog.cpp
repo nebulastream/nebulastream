@@ -208,7 +208,7 @@ LogicalSourcePtr SourceCatalog::getLogicalSourceOrThrowException(const std::stri
         return LogicalSource::create(logicalSourceName, logicalSourceNameToSchemaMapping[logicalSourceName]);
     }
     NES_ERROR("SourceCatalog::getLogicalSourceOrThrowException: source does not exists {}", logicalSourceName);
-    throw Exceptions::RuntimeException("Required source does not exists " + logicalSourceName);
+    throw Exceptions::RuntimeException("Required source does not exists {}", logicalSourceName);
 }
 
 bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName)

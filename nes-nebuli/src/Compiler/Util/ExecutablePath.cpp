@@ -113,14 +113,14 @@ RuntimePathConfig loadRuntimePathConfig()
     /// verify is runtime path config is valid
     if (!std::filesystem::exists(runtimePathConfig.clangBinaryPath))
     {
-        throw CompilerException("Selected clang binary path dose not exists. Path: " + runtimePathConfig.clangBinaryPath);
+        throw CompilerException("Selected clang binary path dose not exists. Path: {}",runtimePathConfig.clangBinaryPath);
     }
 
     for (auto includeDir : runtimePathConfig.includePaths)
     {
         if (!std::filesystem::exists(includeDir))
         {
-            throw CompilerException("Selected include path dose not exists. Path: " + includeDir);
+            throw CompilerException("Selected include path dose not exists. Path: {}", includeDir);
         }
     }
 
@@ -128,7 +128,7 @@ RuntimePathConfig loadRuntimePathConfig()
     {
         if (!std::filesystem::exists(libDir))
         {
-            throw CompilerException("Selected lib path dose not exists. Path: " + libDir);
+            throw CompilerException("Selected lib path dose not exists. Path: {}", libDir);
         }
     }
     std::stringstream runtimePath;
@@ -285,7 +285,7 @@ std::filesystem::path getLibPath(std::string libName)
         NES_DEBUG("Library {} found at: {}", libName, pathAsString.str());
         return libPath;
     }
-    throw CompilerException("Path to " + libName + " not found. Executable path is: " + executablePath.string());
+    throw CompilerException("Path to {} not found. Executable path is: {}",  libName, executablePath.string());
 }
 
 #endif
@@ -301,7 +301,7 @@ std::filesystem::path getPublicIncludes()
         NES_DEBUG("NebulaStream include path found at {}", path.str());
         return includePath;
     }
-    throw CompilerException("NebulaStream include path found not found. Executable path is: " + executablePath.string());
+    throw CompilerException("NebulaStream include path found not found. Executable path is: {}", executablePath.string());
 }
 std::filesystem::path getClangPath()
 {

@@ -43,12 +43,12 @@ SharedLibraryPtr SharedLibrary::load(const std::string& absoluteFilePath)
     if (error)
     {
         NES_ERROR("Could not load shared library: {} Error:{}", absoluteFilePath, error);
-        throw CompilerException("Could not load shared library: " + absoluteFilePath + " Error:" + error);
+        throw CompilerException("Could not load shared library: {} Error: {}", error, absoluteFilePath);
     }
     if (!shareLib)
     {
         NES_ERROR("Could not load shared library: {} Error unknown!", absoluteFilePath);
-        throw CompilerException("Could not load shared library: " + absoluteFilePath);
+        throw CompilerException("Could not load shared library: {}", absoluteFilePath);
     }
 
     return std::make_shared<SharedLibrary>(shareLib, absoluteFilePath);
@@ -61,7 +61,7 @@ void* SharedLibrary::getInvocableFunctionPtr(const std::string& mangeldSymbolNam
     if (error)
     {
         NES_ERROR("Could not load symbol: {} Error:{}", mangeldSymbolName, error);
-        throw CompilerException("Could not load symbol: " + mangeldSymbolName + " Error:" + error);
+        throw CompilerException("Could not load symbol: {} Error:", mangeldSymbolName, error);
     }
 
     return symbol;

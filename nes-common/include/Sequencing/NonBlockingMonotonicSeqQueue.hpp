@@ -148,8 +148,8 @@ public:
         {
             NES_FATAL_ERROR("Invalid sequence number {} as it is < {}", sequenceData.sequenceNumber, currentSeq);
             /// TODO add exception, currently tests fail
-            /// throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
-            ///                                   + " as it is <= " + std::to_string(currentSeq));
+            /// throw Exceptions::RuntimeException("Invalid sequence number {}  as it is <= {} ", std::to_string(sequenceNumber), std::to_string(currentSeq));
+
         }
         /// First emplace the value to the specific block of the sequenceNumber.
         /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
