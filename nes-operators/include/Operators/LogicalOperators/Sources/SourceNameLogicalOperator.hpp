@@ -22,13 +22,13 @@ namespace NES
 
 /// Is constructed during parsing. Stores the name of one logical source as a member.
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
-/// configured for the specific logical source name. We then expand 1 OperatorLogicalSourceName to N OperatorLogicalSourceDescriptors,
-/// one OperatorLogicalSourceDescriptor for each descriptor found in the source catalog with the logical source name as input.
-class OperatorLogicalSourceName : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+/// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
+/// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
+class SourceNameLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit OperatorLogicalSourceName(std::string logicalSourceName, OperatorId id, OriginId originId);
-    explicit OperatorLogicalSourceName(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId);
+    explicit SourceNameLogicalOperator(std::string logicalSourceName, std::shared_ptr<Schema> schema, OperatorId id, OriginId originId);
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;

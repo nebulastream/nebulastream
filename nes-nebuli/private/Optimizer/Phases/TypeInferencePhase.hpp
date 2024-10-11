@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 
 namespace NES
 {
@@ -82,7 +82,7 @@ private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
 
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    void performTypeInferenceSources(const std::vector<std::shared_ptr<OperatorLogicalSourceName>>& sourceOperators);
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators);
 
     /// Must be called after 'performTypeInferenceSources' in the execute call.
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed

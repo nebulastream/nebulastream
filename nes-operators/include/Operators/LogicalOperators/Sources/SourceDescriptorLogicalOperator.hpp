@@ -24,13 +24,13 @@ namespace NES
 /// Is constructed when we apply the LogicalSourceExpansionRule. Stores the Descriptor of a (physical) source as a member.
 /// During parsing, we register (physical) source descriptors in the source catalog. Each currently must name exactly one logical source.
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
-/// In the LogicalSourceExpansionRule, we take the keys from OperatorLogicalSourceName operators, get all corresponding (physical) source
-/// descriptors from the catalog, construct OperatorLogicalSourceDescriptors from the descriptors and attach them to the query plan.
-class OperatorLogicalSourceDescriptor : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+/// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
+/// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
+class SourceDescriptorLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:
-    explicit OperatorLogicalSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
-    explicit OperatorLogicalSourceDescriptor(
+    explicit SourceDescriptorLogicalOperator(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id);
+    explicit SourceDescriptorLogicalOperator(
         std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
@@ -52,5 +52,5 @@ private:
     std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;
 };
 
-using OperatorLogicalSourceDescriptorPtr = std::shared_ptr<OperatorLogicalSourceDescriptor>;
+using SourceDescriptorLogicalOperatorPtr = std::shared_ptr<SourceDescriptorLogicalOperator>;
 }

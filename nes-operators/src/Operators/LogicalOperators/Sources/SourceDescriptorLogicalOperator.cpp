@@ -15,41 +15,41 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
+SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
-OperatorLogicalSourceDescriptor::OperatorLogicalSourceDescriptor(
+SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
     std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
-bool OperatorLogicalSourceDescriptor::isIdentical(NodePtr const& rhs) const
+bool SourceDescriptorLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && Util::as<OperatorLogicalSourceDescriptor>(rhs)->getId() == id;
+    return equal(rhs) && Util::as<SourceDescriptorLogicalOperator>(rhs)->getId() == id;
 }
 
-bool OperatorLogicalSourceDescriptor::equal(NodePtr const& rhs) const
+bool SourceDescriptorLogicalOperator::equal(NodePtr const& rhs) const
 {
-    if (Util::instanceOf<OperatorLogicalSourceDescriptor>(rhs))
+    if (Util::instanceOf<SourceDescriptorLogicalOperator>(rhs))
     {
-        const auto sourceOperator = Util::as<OperatorLogicalSourceDescriptor>(rhs);
+        const auto sourceOperator = Util::as<SourceDescriptorLogicalOperator>(rhs);
         return sourceOperator->getSourceDescriptorRef() == *sourceDescriptor;
     }
     return false;
 }
 
-std::string OperatorLogicalSourceDescriptor::toString() const
+std::string SourceDescriptorLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
@@ -57,45 +57,45 @@ std::string OperatorLogicalSourceDescriptor::toString() const
     return ss.str();
 }
 
-const Sources::SourceDescriptor& OperatorLogicalSourceDescriptor::getSourceDescriptorRef() const
+const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const
 {
     return *sourceDescriptor;
 }
 
-bool OperatorLogicalSourceDescriptor::inferSchema()
+bool SourceDescriptorLogicalOperator::inferSchema()
 {
     inputSchema = sourceDescriptor->schema;
     outputSchema = sourceDescriptor->schema;
     return true;
 }
 
-void OperatorLogicalSourceDescriptor::setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
+void SourceDescriptorLogicalOperator::setSourceDescriptor(std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
 {
     this->sourceDescriptor = std::move(sourceDescriptor);
 }
 
-OperatorPtr OperatorLogicalSourceDescriptor::copy()
+OperatorPtr SourceDescriptorLogicalOperator::copy()
 {
     auto sourceDescriptorPtrCopy = sourceDescriptor;
-    auto result = std::make_shared<OperatorLogicalSourceDescriptor>(std::move(sourceDescriptorPtrCopy), id, getOriginId());
+    auto result = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptorPtrCopy), id, getOriginId());
     result->inferSchema();
     result->addAllProperties(properties);
     return result;
 }
 
-void OperatorLogicalSourceDescriptor::inferStringSignature()
+void SourceDescriptorLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for OperatorLogicalSourceDescriptor.");
+    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceDescriptorLogicalOperator.");
 }
 
-void OperatorLogicalSourceDescriptor::inferInputOrigins()
+void SourceDescriptorLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.
     NES_INFO("Data sources have no input origins. Therefore, we do not infer any input origins!");
 }
 
-std::vector<OriginId> OperatorLogicalSourceDescriptor::getOutputOriginIds() const
+std::vector<OriginId> SourceDescriptorLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }

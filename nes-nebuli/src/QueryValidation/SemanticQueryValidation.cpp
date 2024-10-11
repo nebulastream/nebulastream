@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
@@ -103,7 +103,7 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
     const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Getting the source operators from the query plan
-    auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
+    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
 
     for (const auto& source : sourceOperators)
     {
@@ -119,7 +119,7 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     const QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
+    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {

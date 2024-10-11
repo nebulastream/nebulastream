@@ -24,7 +24,7 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
@@ -61,7 +61,7 @@ public:
     /// Note: This method will not deserialize its children
     static OperatorPtr deserializeOperator(SerializableOperator serializedOperator);
 
-    static void serializeSourceOperator(OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator);
+    static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
     static LogicalUnaryOperatorPtr deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails);
 
