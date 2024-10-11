@@ -14,6 +14,7 @@
 
 #include <fstream>
 #include <future>
+#include <regex>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
 #include <folly/MPMCQueue.h>
@@ -233,6 +234,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     program.add_argument("-c", "--cache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
     program.add_argument("--cacheDir").help("change the cache directory. Default: " CACHE_DIR);
+    program.add_argument("--useCache").flag().help("use cached queries");
 
     program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/tests/result/");
 
@@ -241,7 +243,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     program.add_argument("--shuffle").flag().help("run queries in random order");
     program.add_argument("-n", "--numberConcurrentQueries").help("number of concurrent queries").default_value(6).scan<'i', int>();
-    program.add_argument("--sequential").help("force sequential query execution. Equivalent to `-n 1`");
+    program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
 
     program.parse_args(argc, argv);
 
@@ -297,6 +299,12 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
             NES_FATAL_ERROR("{} is not a directory.", config.cacheDir.getValue());
             std::exit(1);
         }
+    }
+
+    if (program.is_used("--useCache"))
+    {
+        config.useCachedQueries = true;
+        std::cout << "use cached queries provided in: " << config.cacheDir.getValue() << "\n";
     }
 
     if (program.is_used("--resultDir"))
@@ -358,6 +366,30 @@ struct QueryToTest
     uint64_t queryId;
 };
 
+void clearCacheDir(const std::filesystem::path& cacheDir)
+{
+    for (const auto& entry : std::filesystem::directory_iterator(cacheDir)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".pb") {
+            std::filesystem::remove(entry.path());
+        }
+    }
+}
+
+auto getMatchingTestFiles(const std::string& cacheDir, const std::string& testname) {
+    std::pair<std::vector<std::filesystem::path>, std::vector<uint64_t>> matchingFiles;
+    std::regex pattern(testname + R"_(_(\d+)\.pb)_");
+    for (const auto& entry : std::filesystem::directory_iterator(cacheDir)) {
+        std::smatch match;
+        std::string filename = entry.path().filename().string();
+        if (entry.is_regular_file() && std::regex_match(filename, match, pattern)) {
+            uint64_t digit = std::stoull(match[1].str());
+            matchingFiles.first.emplace_back(entry.path());
+            matchingFiles.second.emplace_back(digit);
+        }
+    }
+    return matchingFiles;
+}
+
 int main(int argc, const char** argv)
 {
     using namespace NES;
@@ -381,11 +413,26 @@ int main(int argc, const char** argv)
             for (const auto& testFile : testFiles)
             {
                 auto testname = std::filesystem::path(testFile).stem().string();
-                auto loadedPlans = loadFromSLTFile(testFile, resultDir, testname);
-                uint64_t queryNrInFile = 0;
-                for (const auto &plan : loadedPlans)
+
+                std::vector<DecomposedQueryPlanPtr> loadedPlans{};
+                auto cacheDir = config.cacheDir.getValue();
+                if(config.useCachedQueries.getValue())
                 {
-                    queries.emplace_back(plan, testname, testFile, queryNrInFile++);
+                    auto cacheFiles = getMatchingTestFiles(cacheDir, testname);
+                    auto serializedPlans = loadFromCacheFiles(cacheFiles.first);
+                    INVARIANT(cacheFiles.second.size() == serializedPlans.size(), "expect equal sizes")
+                    for(uint64_t i = 0; i < serializedPlans.size(); i++)
+                    {
+                        queries.emplace_back(DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&serializedPlans[i]), testname, testFile, cacheFiles.second[i]);
+                    }
+                } else
+                {
+                    loadedPlans = loadFromSLTFile(testFile, resultDir, testname);
+                    uint64_t queryNrInFile = 0;
+                    for (const auto &plan : loadedPlans)
+                    {
+                        queries.emplace_back(plan, testname, testFile, queryNrInFile++);
+                    }
                 }
             }
 
@@ -411,7 +458,7 @@ int main(int argc, const char** argv)
                 {
                     for (auto& query : queries)
                     {
-                        while (runningQueryCount.load(std::memory_order_acquire) >= capacity)
+                        while (runningQueryCount.load() >= capacity)
                         {
                             std::this_thread::sleep_for(std::chrono::milliseconds(25));
                         }
@@ -420,12 +467,11 @@ int main(int argc, const char** argv)
                         DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
 
                         auto queryId = client.registerQuery(query.queryPlan);
-                        std::cout << "start query " << queryId << "\n";
                         client.start(queryId);
                         query.queryId = queryId;
 
                         runningQueries.blockingWrite(std::move(query));
-                        runningQueryCount.fetch_add(1, std::memory_order_release);
+                        runningQueryCount.fetch_add(1);
                     }
                     finishedProducing = true;
                 });
@@ -440,7 +486,7 @@ int main(int argc, const char** argv)
                     }
                     client.unregister(query.queryId);
                     checkResult(query.testFile, query.queryName, query.queryNrInFile);
-                    runningQueryCount.fetch_sub(1, std::memory_order_release);
+                    runningQueryCount.fetch_sub(1);
                 }
                 producer.join();
             }
@@ -450,15 +496,14 @@ int main(int argc, const char** argv)
                 Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
                 SingleNodeWorker worker = SingleNodeWorker(conf);
 
-
-                std::atomic<size_t> runningQueryCount{0};
+                std::atomic<size_t> queriesToResultCheck{0};
                 std::atomic finishedProducing{false};
 
                 std::thread producer([&]()
                 {
                     for (auto& query : queries)
                     {
-                        while (runningQueryCount.load(std::memory_order_acquire) >= capacity)
+                        while (queriesToResultCheck.load() >= capacity)
                         {
                             std::this_thread::sleep_for(std::chrono::milliseconds(25));
                         }
@@ -471,12 +516,12 @@ int main(int argc, const char** argv)
                         query.queryId = queryId.getRawValue();
 
                         runningQueries.blockingWrite(std::move(query));
-                        runningQueryCount.fetch_add(1, std::memory_order_release);
+                        queriesToResultCheck.fetch_add(1);
                     }
                     finishedProducing = true;
                 });
 
-                while (not finishedProducing)
+                while (not finishedProducing or queriesToResultCheck.load() > 0)
                 {
                     QueryToTest query;
                     runningQueries.blockingRead(query);
@@ -485,14 +530,16 @@ int main(int argc, const char** argv)
                         std::this_thread::sleep_for(std::chrono::milliseconds(25));
                     }
                     worker.unregisterQuery(QueryId(query.queryId));
+
                     checkResult(query.testFile, query.queryName, query.queryNrInFile);
-                    runningQueryCount.fetch_sub(1, std::memory_order_release);
+                    queriesToResultCheck.fetch_sub(1, std::memory_order_release);
                 }
                 producer.join();
             }
         }
         else if (com == Command::cache)
         {
+            clearCacheDir(config.cacheDir.getValue());
             auto testFiles = discoverTestFiles(config);
 
             for (const auto& testFile : testFiles)
