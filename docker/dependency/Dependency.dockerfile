@@ -14,6 +14,8 @@ ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-li
 RUN 7z x nes-clang && rm nes-clang
 
 FROM nebulastream/nes-development-base:${TAG}
+COPY --from=llvm-download /clang /clang
+ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 ADD vcpkg /vcpkg_input
 # Which vcpkg variant, e.g. with enabled sanitizers or the default `nes` variant.
 ARG VARIANT=nes
@@ -29,8 +31,6 @@ RUN cd /vcpkg_input \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
 
-COPY --from=llvm-download /clang /clang
-ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
 
 # This hash is used to determine if a development/dependency image is compatible with the current checked out branch
 ARG VCPKG_DEPENDENCY_HASH

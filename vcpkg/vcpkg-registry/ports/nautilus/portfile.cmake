@@ -6,6 +6,13 @@ vcpkg_from_github(
 		PATCHES
 )
 
+set(ADDITIONAL_CMAKE_OPTIONS "")
+if (NOT "mlir" IN_LIST FEATURES)
+    if($ENV{MLIR_DIR})
+	    set(ADDITIONAL_CMAKE_OPTIONS "${ADDITIONAL_CMAKE_OPTIONS}-DMLIR_DIR=$ENV{MLIR_DIR} ")
+    endif ()
+endif ()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
 		OPTIONS
@@ -17,6 +24,7 @@ vcpkg_cmake_configure(
 		-DUSE_EXTERNAL_MLIR=ON
 		-DUSE_EXTERNAL_SPDLOG=ON
 		-DUSE_EXTERNAL_FMT=ON
+		${ADDITIONAL_CMAKE_OPTIONS}
 )
 
 vcpkg_cmake_install()
