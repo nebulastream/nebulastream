@@ -14,7 +14,6 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Common.hpp>
@@ -48,7 +47,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
     {
-        throw BufferAccessException("field name " + fieldName + " does not exist in layout");
+        throw BufferAccessException("field name {} does not exist in layout", fieldName);
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
@@ -223,8 +222,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 {
     if (tupleIndex >= getCapacity())
     {
-        throw BufferAccessException(
-            "index " + std::to_string(tupleIndex) + " is out of bound for capacity" + std::to_string(getCapacity()));
+        throw BufferAccessException("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
     }
     return {tupleIndex, memoryLayout, buffer};
 }
@@ -361,7 +359,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        throw NotImplemented("Schema MemoryLayoutType not supported");
+        throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 
