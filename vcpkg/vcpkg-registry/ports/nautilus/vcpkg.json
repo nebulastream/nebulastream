@@ -4,6 +4,22 @@
   "description": "nautilus",
   "homepage": "https://github.com/nebulastream/nautilus",
   "supports": "x64 | (arm64 & !windows)",
+  "features": {
+    "mlir": {
+      "dependencies": [
+        {
+          "name": "llvm",
+          "default-features": false,
+          "features": [
+            "mlir",
+            "target-x86",
+            "target-aarch64"
+          ]
+        }
+      ],
+      "description": "Build with mlir support"
+    }
+  },
   "dependencies": [
     {
       "name": "vcpkg-cmake",
@@ -13,15 +29,6 @@
       "name": "vcpkg-cmake-config",
       "host": true
     },
-    "spdlog",
-    {
-      "name": "llvm",
-      "default-features": false,
-      "features": [
-        "mlir",
-        "target-x86",
-        "target-aarch64"
-      ]
-    }
+    "spdlog"
   ]
 }

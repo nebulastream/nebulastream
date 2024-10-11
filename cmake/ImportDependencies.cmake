@@ -71,9 +71,23 @@ else ()
     SET(CMAKE_TOOLCHAIN_FILE ${CLONE_DIR}/scripts/buildsystems/vcpkg.cmake)
 endif ()
 
-if (${NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR} AND NOT ${USE_LOCAL_MLIR})
+# By default we build MLIR via VCPKG. However the USE_LOCAL_MLIR options allows to supply a locally installed version
+# of MLIR.
+if (NOT ${USE_LOCAL_MLIR})
     message(STATUS "Enabling MLIR feature for the VPCKG install")
     list(APPEND VCPKG_MANIFEST_FEATURES "mlir")
+else ()
+    message(STATUS "Using locally installed MLIR")
+    # This code is called before VCPKG and before project() has been called. This means many configuration have not
+    # been set by cmake. LLVM has a few shared libraries (which we do not use), that require the target machine to
+    # support dynamic linking (which is usually the case unless working with small embedded devices).
+    SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+    find_package(MLIR CONFIG REQUIRED)
+    # One way to propagate configurations to third-party libraries (in this case nautilus) is via environment variables.
+    # The nautilus vcpkg port script will pick up the MLIR_DIR environment variable during build, which allows the
+    # nautilus cmake configuration to find the locally installed version of MLIR.
+    SET(ENV{MLIR_DIR} "${MLIR_DIR}")
+    SET(VCPKG_ENV_PASSTHROUGH "MLIR_DIR")
 endif ()
 
 ### Determine the VCPKG Target and Host Triplet
