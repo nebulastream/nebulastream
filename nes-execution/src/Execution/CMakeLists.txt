@@ -17,4 +17,3 @@ add_source_files(nes-execution
 add_subdirectory(Functions)
 add_subdirectory(Operators)
 add_subdirectory(Pipelines)
-add_subdirectory(MemoryProvider)

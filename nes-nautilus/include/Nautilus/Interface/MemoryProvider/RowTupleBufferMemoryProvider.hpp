@@ -11,13 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 /// Implements MemoryProvider. Provides row-wise memory access.
@@ -43,4 +44,4 @@ private:
     std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr;
 };
 
-}
+} /// namespace NES::Nautilus::Interface::MemoryProvider

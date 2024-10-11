@@ -11,14 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 class TupleBufferMemoryProvider;
@@ -65,4 +65,4 @@ public:
     includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);
 };
 
-}
+} /// namespace NES::Nautilus::Interface::MemoryProvider

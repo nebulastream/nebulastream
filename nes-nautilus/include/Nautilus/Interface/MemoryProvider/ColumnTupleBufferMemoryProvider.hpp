@@ -11,11 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+#pragma once
+
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 /// Implements MemoryProvider. Provides columnar memory access.
@@ -38,7 +40,8 @@ public:
 private:
     nautilus::val<int8_t*>
     calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
+
     std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
 };
 
-}
+} /// namespace NES::Nautilus::Interface::MemoryProvider
