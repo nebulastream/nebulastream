@@ -66,26 +66,6 @@ CompiledExecutablePipelineStage::compilePipeline()
     return executable;
 }
 
-uint32_t CompiledExecutablePipelineStage::start(PipelineExecutionContext&)
-{
-    /// TODO #349: Refactor/Cleanup this call here
-    /// nop as we don't need this function in nautilus
-    return 0;
-}
-
-uint32_t CompiledExecutablePipelineStage::open(PipelineExecutionContext&, WorkerContext&)
-{
-    /// TODO #349: Refactor/Cleanup this call here
-    /// nop as we don't need this function in nautilus
-    return 0;
-}
-uint32_t CompiledExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&)
-{
-    /// TODO #349: Refactor/Cleanup this call here
-    /// nop as we don't need this function in nautilus
-    return 0;
-}
-
 uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
