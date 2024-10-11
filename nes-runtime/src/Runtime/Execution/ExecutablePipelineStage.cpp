@@ -27,9 +27,4 @@ uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext&)
     return 0;
 }
 
-std::string ExecutablePipelineStage::getCodeAsString()
-{
-    return "";
-};
-
 }
