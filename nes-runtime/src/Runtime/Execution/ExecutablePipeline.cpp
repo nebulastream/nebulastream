@@ -95,7 +95,6 @@ bool ExecutablePipeline::start()
             localStateVariableId++;
         }
         queryManager->addReconfigurationMessage(queryId, newReconf, true);
-        executablePipelineStage->start(*pipelineContext.get());
         return true;
     }
     return false;
