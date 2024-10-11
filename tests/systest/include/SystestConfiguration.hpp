@@ -38,6 +38,7 @@ public:
     = {"resultDir", PATH_TO_BINARY_DIR "/tests/result/", "Directory for query results"};
     Configurations::BoolOption randomQueryOrder
     = {"randomQueryOrder", "false", "run queries in random order"};
+    Configurations::BoolOption useCachedQueries = {"useCachedQueries", "false", "use cached queries"};
     Configurations::UIntOption numberComcurrentQueries
 = {"numberConcurrentQueries", "6", "nuber of maximal concurrently running queries"};
     Configurations::StringOption grpcAddressUri
