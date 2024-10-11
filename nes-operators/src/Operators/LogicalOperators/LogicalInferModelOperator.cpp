@@ -190,4 +190,4 @@ const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getOutputFields()
     return outputFields;
 }
 
-} /// namespace NES::InferModel
+}

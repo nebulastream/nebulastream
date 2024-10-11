@@ -21,4 +21,4 @@ namespace NES::Worker::Configuration
 const std::string TENSORFLOW_SUPPORT = "TENSOR_FLOW";
 const std::string MOBILITY_SUPPORT = "MOBILITY";
 const std::string SPATIAL_SUPPORT = "SPATIAL_TYPE";
-} /// namespace NES::Worker::Configuration
+}

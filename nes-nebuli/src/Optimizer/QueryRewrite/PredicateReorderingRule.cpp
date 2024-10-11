@@ -119,4 +119,4 @@ std::vector<LogicalFilterOperatorPtr> PredicateReorderingRule::getConsecutiveFil
     return consecutiveFilters;
 }
 
-} /// namespace NES::Optimizer
+}

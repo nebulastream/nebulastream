@@ -52,4 +52,4 @@ private:
     const NodeFunctionFieldAssignmentPtr mapFunction;
 };
 using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
-} /// namespace NES
+}

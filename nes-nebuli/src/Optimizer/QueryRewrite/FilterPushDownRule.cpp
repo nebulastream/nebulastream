@@ -418,4 +418,4 @@ void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
     }
     NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());
 }
-} /// namespace NES::Optimizer
+}

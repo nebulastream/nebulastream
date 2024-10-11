@@ -464,4 +464,4 @@ void QueryPlan::setQueryState(QueryState newState)
     currentState = newState;
 }
 
-} /// namespace NES
+}

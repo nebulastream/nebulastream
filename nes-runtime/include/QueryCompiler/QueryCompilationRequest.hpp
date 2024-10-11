@@ -81,4 +81,4 @@ private:
     bool dumpQueryPlans;
 };
 using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
-} /// namespace NES::QueryCompilation
+}

@@ -75,4 +75,4 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return maxWatermarkTs;
 }
 
-} /// namespace NES::Windowing
+}

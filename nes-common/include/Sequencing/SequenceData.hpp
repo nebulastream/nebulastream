@@ -66,4 +66,4 @@ public:
     bool lastChunk;
 };
 
-} /// namespace NES
+}

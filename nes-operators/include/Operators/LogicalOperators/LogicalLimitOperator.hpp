@@ -57,4 +57,4 @@ private:
     uint64_t limit;
 };
 
-} /// namespace NES
+}

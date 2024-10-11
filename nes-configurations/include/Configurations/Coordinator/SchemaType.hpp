@@ -45,4 +45,4 @@ private:
     explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
     std::vector<SchemaFieldDetail> schemaFieldDetails;
 };
-} /// namespace NES::Configurations
+}

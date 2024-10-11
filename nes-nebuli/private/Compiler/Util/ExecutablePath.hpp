@@ -60,4 +60,4 @@ std::filesystem::path getLibPath(std::string libName);
  */
 [[maybe_unused]] std::filesystem::path getClangPath();
 
-} /// namespace NES::Compiler::ExecutablePath
+}

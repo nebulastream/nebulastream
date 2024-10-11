@@ -52,4 +52,4 @@ public:
 protected:
     explicit NodeFunctionNegate(NodeFunctionNegate* other);
 };
-} /// namespace NES
+}

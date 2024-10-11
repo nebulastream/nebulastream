@@ -53,4 +53,4 @@ OperatorPtr PhysicalThresholdWindowOperator::copy()
     return create(inputSchema, outputSchema, windowDefinition);
 }
 
-} ///namespace NES::QueryCompilation::PhysicalOperators
+}

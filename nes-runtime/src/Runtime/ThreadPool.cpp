@@ -201,4 +201,4 @@ uint32_t ThreadPool::getNumberOfThreads() const
     return numThreads;
 }
 
-} /// namespace NES::Runtime
+}

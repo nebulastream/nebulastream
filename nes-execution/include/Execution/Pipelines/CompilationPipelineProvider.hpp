@@ -26,4 +26,4 @@ public:
     std::unique_ptr<ExecutablePipelineStage>
     create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) override;
 };
-} /// namespace NES::Runtime::Execution
+}

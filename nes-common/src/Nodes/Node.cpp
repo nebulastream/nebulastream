@@ -653,7 +653,7 @@ bool Node::equalWithAllChildren(const NodePtr& otherNode)
     }
 
     return equalWithAllChildrenHelper(shared_from_this(), otherNode);
-} /// namespace NES
+}
 
 bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
 {
@@ -832,4 +832,4 @@ std::ostream& operator<<(std::ostream& os, const NodePtr& node)
     return os << node->toString();
 }
 
-} /// namespace NES
+}

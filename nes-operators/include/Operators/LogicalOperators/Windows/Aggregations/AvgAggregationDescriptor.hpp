@@ -50,4 +50,4 @@ private:
     explicit AvgAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
     AvgAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
-} /// namespace NES::Windowing
+}

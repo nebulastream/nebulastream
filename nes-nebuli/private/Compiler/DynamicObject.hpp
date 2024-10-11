@@ -49,4 +49,4 @@ protected:
     [[nodiscard]] virtual void* getInvocableFunctionPtr(const std::string& member) = 0;
 };
 
-} /// namespace NES::Compiler
+}

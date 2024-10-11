@@ -53,4 +53,4 @@ private:
     std::recursive_mutex mutex;
 };
 
-} /// namespace NES::Compiler
+}

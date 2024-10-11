@@ -60,4 +60,4 @@ public:
 private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

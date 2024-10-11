@@ -110,4 +110,4 @@ private:
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
-} /// namespace NES::Runtime
+}

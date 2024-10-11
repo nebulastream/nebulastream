@@ -55,4 +55,4 @@ private:
     const TimeMeasure size;
 };
 
-} /// namespace NES::Windowing
+}

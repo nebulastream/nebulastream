@@ -65,4 +65,4 @@ size_t InMemoryLineageManager::getLineageSize() const
     std::unique_lock<std::mutex> lock(mutex);
     return this->bufferAncestorMapping.size();
 }
-} /// namespace NES::Runtime
+}

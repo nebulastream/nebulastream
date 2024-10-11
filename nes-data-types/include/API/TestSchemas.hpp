@@ -28,4 +28,4 @@ public:
 private:
     static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
 };
-} /// namespace NES
+}

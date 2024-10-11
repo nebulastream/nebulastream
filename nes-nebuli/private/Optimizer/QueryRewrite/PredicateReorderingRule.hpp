@@ -29,7 +29,7 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -83,4 +83,4 @@ private:
      */
     static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
 };
-} /// namespace NES::Optimizer
+}

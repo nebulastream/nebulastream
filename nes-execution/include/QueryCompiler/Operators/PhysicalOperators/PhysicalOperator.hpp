@@ -41,4 +41,4 @@ public:
     std::string toString() const;
 };
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

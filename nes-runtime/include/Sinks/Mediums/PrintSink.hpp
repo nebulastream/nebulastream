@@ -87,4 +87,4 @@ private:
     std::ostream& outputStream;
 };
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
-} /// namespace NES
+}

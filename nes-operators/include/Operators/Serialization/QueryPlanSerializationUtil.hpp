@@ -46,4 +46,4 @@ public:
      */
     static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
-} /// namespace NES
+}

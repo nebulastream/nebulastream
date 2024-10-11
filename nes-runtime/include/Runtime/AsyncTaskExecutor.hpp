@@ -258,4 +258,4 @@ private:
 };
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
-} /// namespace NES::Runtime
+}

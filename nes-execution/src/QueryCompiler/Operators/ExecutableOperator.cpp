@@ -57,4 +57,4 @@ OperatorPtr ExecutableOperator::copy()
     return create(executablePipelineStage, operatorHandlers);
 }
 
-} /// namespace NES::QueryCompilation
+}

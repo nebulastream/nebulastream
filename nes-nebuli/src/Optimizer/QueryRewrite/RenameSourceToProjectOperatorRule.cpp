@@ -72,4 +72,4 @@ RenameSourceToProjectOperatorRulePtr RenameSourceToProjectOperatorRule::create()
     return std::make_shared<RenameSourceToProjectOperatorRule>(RenameSourceToProjectOperatorRule());
 }
 
-} /// namespace NES::Optimizer
+}

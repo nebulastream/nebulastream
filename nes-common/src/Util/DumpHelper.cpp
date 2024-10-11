@@ -66,4 +66,4 @@ DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool d
     }
 }
 
-} /// namespace NES
+}

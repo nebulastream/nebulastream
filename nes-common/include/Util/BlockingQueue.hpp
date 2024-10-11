@@ -134,4 +134,4 @@ public:
         }
     }
 };
-} /// namespace NES
+}

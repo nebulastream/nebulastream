@@ -93,7 +93,7 @@ private:
     /// non-const/const representation of container
     std::conditional_t<isConst, const cbT, cbT>* container;
 }; /// class CircularBufferIterator
-} /// namespace detail
+}
 
 /**
  * @brief A templated class for a circular buffer. The implementation
@@ -279,4 +279,4 @@ private:
     void decrementHeadByGivenSize(size_t decrement) noexcept { head = (head + maxSize - decrement) % maxSize; }
 
 }; /// class CircularBuffer
-} /// namespace NES
+}

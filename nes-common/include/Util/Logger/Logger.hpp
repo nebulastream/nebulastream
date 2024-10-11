@@ -344,4 +344,4 @@ struct LogCaller<LogLevel::LOG_WARNING>
         } \
     } while (0)
 
-} /// namespace NES
+}

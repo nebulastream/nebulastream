@@ -92,5 +92,5 @@ private:
     LogicalSourcePtr logicalSource;
     WorkerId topologyNodeId;
 };
-} /// namespace Catalogs::Source
-} /// namespace NES
+}
+}

@@ -37,4 +37,4 @@ public:
     ~FixedChar() override = default;
 };
 
-} /// namespace NES
+}

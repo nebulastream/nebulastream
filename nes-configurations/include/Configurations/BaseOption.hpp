@@ -90,4 +90,4 @@ protected:
 template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
-} /// namespace NES::Configurations
+}

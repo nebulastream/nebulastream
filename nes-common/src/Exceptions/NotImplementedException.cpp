@@ -23,4 +23,4 @@ NotImplementedException::NotImplementedException(std::string msg, const std::sou
 {
 }
 
-} /// namespace NES::Exceptions
+}

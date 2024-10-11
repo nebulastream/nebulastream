@@ -155,4 +155,4 @@ public:
         const Join::Experimental::LogicalBatchJoinDescriptorPtr& batchJoinDefinition, OperatorId id = getNextOperatorId());
 };
 
-} /// namespace NES
+}

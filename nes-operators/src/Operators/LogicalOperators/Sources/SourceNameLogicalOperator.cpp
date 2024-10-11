@@ -104,4 +104,4 @@ void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
     this->schema = std::move(schema);
 }
 
-} /// namespace NES
+}

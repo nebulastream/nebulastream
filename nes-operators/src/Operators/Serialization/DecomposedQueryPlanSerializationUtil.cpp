@@ -198,4 +198,4 @@ SerializableQueryState DecomposedQueryPlanSerializationUtil::serializeQueryState
             return QUERY_STATE_MARKED_FOR_MIGRATION;
     }
 }
-} /// namespace NES
+}

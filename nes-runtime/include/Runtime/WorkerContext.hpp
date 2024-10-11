@@ -106,4 +106,4 @@ public:
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 using WorkerContextRef = WorkerContext&;
-} /// namespace NES::Runtime
+}

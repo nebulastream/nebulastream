@@ -37,4 +37,4 @@ const SchemaTypePtr& LogicalSourceType::getSchemaType() const
 {
     return schemaType;
 }
-} /// namespace NES::Configurations
+}

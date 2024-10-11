@@ -42,4 +42,4 @@ public:
 protected:
     explicit NodeFunctionEquals(NodeFunctionEquals* other);
 };
-} /// namespace NES
+}

@@ -157,4 +157,4 @@ private:
 };
 
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
-} /// namespace NES::Join
+}

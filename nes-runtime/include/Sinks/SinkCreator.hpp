@@ -89,4 +89,4 @@ DataSinkPtr createCSVPrintSink(
     std::ostream& out,
     uint64_t numberOfOrigins = 1);
 
-} /// namespace NES
+}

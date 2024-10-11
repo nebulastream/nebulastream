@@ -33,4 +33,4 @@ public:
          */
     bool isValid(const std::string& boolean) const override;
 };
-} /// namespace NES::Configurations
+}

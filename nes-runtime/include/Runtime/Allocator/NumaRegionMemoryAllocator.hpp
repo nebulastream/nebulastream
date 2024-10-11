@@ -24,7 +24,7 @@
 namespace std::pmr
 {
 using memory_resource = std::experimental::pmr::memory_resource;
-} /// namespace std::pmr
+}
 #    endif
 
 namespace NES::Runtime
@@ -54,5 +54,5 @@ private:
     const uint32_t numaNodeIndex;
 };
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
-} /// namespace NES::Runtime
+}
 #endif

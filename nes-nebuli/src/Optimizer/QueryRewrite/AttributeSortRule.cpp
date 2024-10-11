@@ -685,4 +685,4 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctio
     NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
 }
 
-} /// namespace NES::Optimizer
+}

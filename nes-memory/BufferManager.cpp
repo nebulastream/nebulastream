@@ -441,4 +441,4 @@ TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> 
     return *optBuffer;
 }
 
-} /// namespace NES::Runtime
+}

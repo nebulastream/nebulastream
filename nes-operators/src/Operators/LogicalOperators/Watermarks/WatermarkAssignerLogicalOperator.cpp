@@ -102,4 +102,4 @@ void WatermarkAssignerLogicalOperator::inferStringSignature()
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-} /// namespace NES
+}

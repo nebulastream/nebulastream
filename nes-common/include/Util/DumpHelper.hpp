@@ -43,4 +43,4 @@ private:
     bool dumpToFile;
     std::string outputPath;
 };
-} /// namespace NES
+}

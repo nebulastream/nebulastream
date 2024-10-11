@@ -35,4 +35,4 @@ private:
     const std::unique_ptr<Runtime::Execution::Functions::Function> function;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

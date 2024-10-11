@@ -115,4 +115,4 @@ std::string BinaryOperator::toString() const
         fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
 }
 
-} /// namespace NES
+}

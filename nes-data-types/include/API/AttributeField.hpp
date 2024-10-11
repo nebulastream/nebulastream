@@ -66,4 +66,4 @@ private:
     DataTypePtr dataType;
 };
 
-} /// namespace NES
+}

@@ -24,4 +24,4 @@ const std::string DATA_PORT = "DATA_PORT";
 const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
 const std::string MAINTENANCE = "MAINTENANCE";
-} /// namespace NES::Worker::Properties
+}

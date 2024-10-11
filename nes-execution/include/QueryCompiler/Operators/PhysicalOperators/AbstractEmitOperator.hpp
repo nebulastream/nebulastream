@@ -22,4 +22,4 @@ namespace NES::QueryCompilation::PhysicalOperators
 class AbstractEmitOperator
 {
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

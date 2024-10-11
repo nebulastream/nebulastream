@@ -111,4 +111,4 @@ private:
     folly::Synchronized<std::map<PipelineId, std::map<WorkerThreadId, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };
 
-} /// namespace NES::Runtime
+}

@@ -60,4 +60,4 @@ protected:
     bool addTimestamp;
 };
 
-} /// namespace NES
+}

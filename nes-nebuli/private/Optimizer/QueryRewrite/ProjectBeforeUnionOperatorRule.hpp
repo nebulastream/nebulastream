@@ -27,7 +27,7 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -58,4 +58,4 @@ private:
     static LogicalOperatorPtr constructProjectOperator(const SchemaPtr& sourceSchema, const SchemaPtr& destinationSchema);
 };
 
-} /// namespace NES::Optimizer
+}

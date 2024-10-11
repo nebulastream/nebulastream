@@ -50,4 +50,4 @@ private:
     Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock> timer;
 };
 
-} /// namespace NES::Compiler
+}

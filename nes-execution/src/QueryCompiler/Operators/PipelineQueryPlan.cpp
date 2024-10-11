@@ -83,4 +83,4 @@ std::string PipelineQueryPlan::toString() const
 
     return oss.str();
 }
-} /// namespace NES::QueryCompilation
+}

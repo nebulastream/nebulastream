@@ -44,4 +44,4 @@ public:
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);
 };
-} /// namespace NES
+}

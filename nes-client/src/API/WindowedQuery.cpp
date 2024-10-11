@@ -50,7 +50,7 @@ KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTy
 {
 }
 
-} ///namespace WindowOperatorBuilder
+}
 
 Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations)
 {
@@ -188,4 +188,4 @@ Query& Query::windowByKey(
     return *this;
 }
 
-} /// namespace NES
+}

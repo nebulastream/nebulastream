@@ -52,4 +52,4 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
     }
 };
 
-} /// namespace NES::detail
+}

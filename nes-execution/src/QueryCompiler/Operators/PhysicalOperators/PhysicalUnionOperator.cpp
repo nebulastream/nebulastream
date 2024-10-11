@@ -50,4 +50,4 @@ OperatorPtr PhysicalUnionOperator::copy()
     return create(id, leftInputSchema, rightInputSchema, outputSchema);
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

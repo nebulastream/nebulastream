@@ -382,4 +382,4 @@ private:
      */
     std::string stackTrace;
 };
-} /// namespace NES
+}

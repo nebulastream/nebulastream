@@ -238,4 +238,4 @@ uint64_t QueryManager::getNumberOfWorkerThreads() const
     return numThreads;
 }
 
-} /// namespace NES::Runtime
+}

@@ -38,4 +38,4 @@ private:
     std::unique_ptr<TimeFunction> timeFunction;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

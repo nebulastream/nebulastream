@@ -18,4 +18,4 @@ namespace NES::Windowing
 {
 
 WatermarkStrategyDescriptor::WatermarkStrategyDescriptor() = default;
-} ///namespace NES::Windowing
+}

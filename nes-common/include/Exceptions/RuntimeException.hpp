@@ -61,4 +61,4 @@ public:
     [[nodiscard]] const char* what() const noexcept override;
 };
 
-} /// namespace NES::Exceptions
+}

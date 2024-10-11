@@ -33,4 +33,4 @@ public:
 private:
     PhysicalOperatorProviderPtr provider;
 };
-} /// namespace NES::QueryCompilation
+}

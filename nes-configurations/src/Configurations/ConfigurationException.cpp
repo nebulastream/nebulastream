@@ -20,4 +20,4 @@ ConfigurationException::ConfigurationException(const std::string& message, std::
     : RuntimeException(message, std::move(stacktrace), location)
 {
 }
-} /// namespace NES::Configurations
+}

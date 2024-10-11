@@ -42,4 +42,4 @@ public:
 private:
     SingleNodeWorker delegate;
 };
-} /// namespace NES
+}

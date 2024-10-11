@@ -48,15 +48,15 @@ namespace Source
 {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-} /// namespace Source
+}
 
 namespace Query
 {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-} /// namespace Query
+}
 
-} /// namespace Catalogs
+}
 
 namespace Util
 {
@@ -106,5 +106,5 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(Sch
  */
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
-} /// namespace Util
-} /// namespace NES
+}
+}

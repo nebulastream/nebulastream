@@ -135,4 +135,4 @@ TEST_F(MMapCircularBufferTest, TestWrapAround)
     EXPECT_FALSE(buffer.empty());
     EXPECT_FALSE(buffer.full());
 }
-} /// namespace NES
+}

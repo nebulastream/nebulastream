@@ -112,7 +112,7 @@ bool waitForFuture(std::future<bool>&& future, const std::chrono::seconds deadli
     auto terminationStatus = future.wait_for(deadline);
     return (terminationStatus == std::future_status::ready) ? future.get() : false;
 }
-} /// namespace detail
+}
 
 
 bool SourceThread::stop()

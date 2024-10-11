@@ -303,4 +303,4 @@ private:
     /// Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
-} /// namespace NES
+}

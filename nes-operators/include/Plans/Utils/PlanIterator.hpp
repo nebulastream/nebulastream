@@ -105,4 +105,4 @@ private:
     std::vector<OperatorPtr> rootOperators;
 };
 
-} /// namespace NES
+}

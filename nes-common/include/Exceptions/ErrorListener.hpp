@@ -40,4 +40,4 @@ public:
     virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
 };
 
-} /// namespace NES::Exceptions
+}

@@ -56,7 +56,7 @@ class LogicalFunctionRegistry : public BaseRegistry<LogicalFunctionRegistry, std
 {
 };
 
-} /// namespace NES
+}
 
 #define INCLUDED_FROM_LOGICAL_FUNCTION_REGISTRY
 #include <Functions/Functions/GeneratedLogicalFunctionRegistrar.hpp>

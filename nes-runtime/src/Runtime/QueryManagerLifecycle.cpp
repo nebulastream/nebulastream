@@ -421,4 +421,4 @@ bool QueryManager::addEndOfStream(
     return success;
 }
 
-} /// namespace NES::Runtime
+}

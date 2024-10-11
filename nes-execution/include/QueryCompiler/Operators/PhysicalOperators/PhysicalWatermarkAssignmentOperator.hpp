@@ -48,4 +48,4 @@ public:
 private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

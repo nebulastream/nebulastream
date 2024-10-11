@@ -25,4 +25,4 @@ public:
     explicit CompilerException(const std::string& message, const std::source_location location = std::source_location::current());
 };
 
-} /// namespace NES::Compiler
+}

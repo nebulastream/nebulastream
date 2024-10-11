@@ -76,4 +76,4 @@ uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark()
     return minimalWatermark;
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

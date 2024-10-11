@@ -110,4 +110,4 @@ void LogicalBinaryOperator::inferInputOrigins()
     this->rightInputOriginIds = rightInputOriginIds;
 }
 
-} /// namespace NES
+}

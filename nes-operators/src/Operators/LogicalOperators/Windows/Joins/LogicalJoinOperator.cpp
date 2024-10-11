@@ -278,4 +278,4 @@ void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowS
     this->windowEndFieldName = windowEndFieldName;
 }
 
-} /// namespace NES
+}

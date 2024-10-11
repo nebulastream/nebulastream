@@ -39,4 +39,4 @@ public:
     virtual ~ExternalAPI() = default;
 };
 
-} /// namespace NES::Compiler
+}

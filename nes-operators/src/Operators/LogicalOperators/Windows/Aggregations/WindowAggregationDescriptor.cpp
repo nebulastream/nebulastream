@@ -79,4 +79,4 @@ bool WindowAggregationDescriptor::equal(WindowAggregationDescriptorPtr otherWind
         && this->asField->equal(otherWindowAggregationDescriptor->asField);
 }
 
-} /// namespace NES::Windowing
+}

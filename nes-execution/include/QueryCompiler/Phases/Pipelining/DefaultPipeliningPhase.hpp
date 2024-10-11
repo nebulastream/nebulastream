@@ -78,4 +78,4 @@ protected:
 private:
     OperatorFusionPolicyPtr operatorFusionPolicy;
 };
-} /// namespace NES::QueryCompilation
+}

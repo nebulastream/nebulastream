@@ -127,4 +127,4 @@ private:
     std::vector<std::string> fieldNames;
 };
 
-} /// namespace NES
+}

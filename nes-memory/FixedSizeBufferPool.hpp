@@ -105,4 +105,4 @@ private:
     std::atomic<bool> isDestroyed;
 };
 
-} /// namespace NES::Runtime
+}

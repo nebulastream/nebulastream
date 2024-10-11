@@ -48,4 +48,4 @@ private:
     explicit NodeFunctionWhen(NodeFunctionWhen* other);
 };
 
-} /// namespace NES
+}

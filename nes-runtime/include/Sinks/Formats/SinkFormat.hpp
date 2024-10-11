@@ -90,4 +90,4 @@ protected:
 
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;
 
-} /// namespace NES
+}

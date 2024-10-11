@@ -58,4 +58,4 @@ private:
     std::unordered_set<std::string_view> uniqueness;
 };
 
-} /// namespace NES::Compiler
+}

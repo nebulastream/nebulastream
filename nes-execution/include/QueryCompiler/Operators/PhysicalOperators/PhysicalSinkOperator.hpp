@@ -39,4 +39,4 @@ public:
 private:
     SinkDescriptorPtr sinkDescriptor;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

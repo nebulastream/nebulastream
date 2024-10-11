@@ -38,4 +38,4 @@ private:
     const std::string message;
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
-} /// namespace NES
+}

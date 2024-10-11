@@ -77,4 +77,4 @@ protected:
     std::string fieldName;
 };
 
-} /// namespace NES
+}

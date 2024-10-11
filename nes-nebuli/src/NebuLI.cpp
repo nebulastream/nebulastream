@@ -111,7 +111,7 @@ struct convert<NES::CLI::QueryConfig>
         return true;
     }
 };
-} /// namespace YAML
+}
 
 namespace NES::CLI
 {

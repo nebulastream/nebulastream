@@ -72,4 +72,4 @@ auto loadConfiguration(const int argc, const char** argv)
 
     return config;
 }
-} /// namespace NES::Configuration
+}

@@ -110,4 +110,4 @@ std::vector<LogicalFilterOperatorPtr> FilterMergeRule::getConsecutiveFilters(con
     return consecutiveFilters;
 }
 
-} /// namespace NES::Optimizer
+}

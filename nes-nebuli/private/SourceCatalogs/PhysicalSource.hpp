@@ -39,4 +39,4 @@ private:
     Sources::SourceDescriptor sourceDescriptor;
 };
 
-} /// namespace NES
+}

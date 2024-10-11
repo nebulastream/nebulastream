@@ -50,4 +50,4 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
     return std::make_unique<Sources::SourceDescriptor>(
         schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.inputFormat, std::move(copyOfConfig));
 }
-} /// namespace NES
+}

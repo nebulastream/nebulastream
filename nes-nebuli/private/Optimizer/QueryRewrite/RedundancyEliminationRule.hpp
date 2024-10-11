@@ -26,7 +26,7 @@ using NodePtr = std::shared_ptr<Node>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -101,4 +101,4 @@ private:
     static NES::NodeFunctionPtr conjunctionDisjunctionSimplification(const NodeFunctionPtr& predicate);
 };
 
-} /// namespace NES::Optimizer
+}

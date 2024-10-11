@@ -48,4 +48,4 @@ public:
      */
     virtual size_t getLineageSize() const = 0;
 };
-} /// namespace NES::Runtime
+}

@@ -101,4 +101,4 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
 }
 
-} /// namespace NES::Windowing
+}

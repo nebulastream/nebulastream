@@ -117,4 +117,4 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, VarVal& 
             })
         .cast<HashValue>();
 }
-} /// namespace NES::Nautilus::Interface
+}

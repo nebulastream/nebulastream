@@ -52,4 +52,4 @@ private:
     bool useCompilationCache = false;
 };
 
-} /// namespace NES::Compiler
+}

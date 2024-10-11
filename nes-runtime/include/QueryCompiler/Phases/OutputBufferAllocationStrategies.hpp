@@ -42,4 +42,4 @@ enum class OutputBufferAllocationStrategy : uint8_t
     NO_OPTIMIZATION
 };
 
-} /// namespace NES::QueryCompilation
+}

@@ -69,4 +69,4 @@ void SyntacticQueryValidation::handleException(const std::exception& ex)
     }
     throw QueryInvalid(fmt::format(": SyntacticQueryValidation:\n{}", clean_error_message));
 }
-} /// namespace NES::Optimizer
+}

@@ -39,4 +39,4 @@ std::string LogicalSource::getLogicalSourceName()
     return logicalSourceName;
 }
 
-} /// namespace NES
+}

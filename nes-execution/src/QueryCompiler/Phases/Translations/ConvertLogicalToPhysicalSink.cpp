@@ -73,4 +73,4 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
         throw UnknownSinkType();
     }
 }
-} /// namespace NES
+}

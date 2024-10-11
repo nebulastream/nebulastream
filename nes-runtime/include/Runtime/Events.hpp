@@ -98,4 +98,4 @@ public:
     uint8_t* data() override { return nullptr; }
 };
 
-} /// namespace NES::Runtime
+}

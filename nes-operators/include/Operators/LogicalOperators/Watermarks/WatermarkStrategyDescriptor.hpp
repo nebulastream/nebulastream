@@ -21,7 +21,7 @@ namespace NES
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-} /// namespace NES
+}
 
 namespace NES::Windowing
 {
@@ -40,4 +40,4 @@ public:
 
     virtual bool inferStamp(SchemaPtr schema) = 0;
 };
-} /// namespace NES::Windowing
+}

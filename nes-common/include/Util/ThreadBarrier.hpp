@@ -77,4 +77,4 @@ private:
     std::condition_variable cvar;
 };
 using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
-} /// namespace NES
+}

@@ -211,4 +211,4 @@ void ValueScopingPhase::ValueScopingPhaseContext::replaceArguments()
     } while (!toVisitBlocks.empty());
 }
 
-} ///namespace NES::Nautilus::IR
+}

@@ -96,4 +96,4 @@ protected:
     bool isOpen{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
-} /// namespace NES
+}

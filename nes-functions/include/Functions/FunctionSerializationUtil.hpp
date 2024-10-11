@@ -59,4 +59,4 @@ private:
     static NodeFunctionPtr deserializeLogicalFunctions(const SerializableFunction& serializedFunction);
     static NodeFunctionPtr deserializeArithmeticalFunctions(const SerializableFunction& serializedFunction);
 };
-} /// namespace NES
+}

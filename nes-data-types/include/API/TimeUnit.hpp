@@ -80,4 +80,4 @@ private:
     uint64_t multiplier;
 };
 
-} /// namespace NES::Windowing
+}

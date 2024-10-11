@@ -45,4 +45,4 @@ public:
 protected:
     explicit NodeFunctionUnary(NodeFunctionUnary* other);
 };
-} /// namespace NES
+}

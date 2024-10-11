@@ -55,4 +55,4 @@ std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::ge
     return operatorHandlers;
 }
 
-} /// namespace NES::QueryCompilation
+}

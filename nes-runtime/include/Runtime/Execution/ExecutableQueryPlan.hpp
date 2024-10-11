@@ -121,4 +121,4 @@ private:
     std::future<Result> qepTerminationStatusFuture;
 };
 
-} /// namespace NES::Runtime::Execution
+}

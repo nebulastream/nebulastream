@@ -51,4 +51,4 @@ private:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

@@ -30,4 +30,4 @@ HashFunction::HashValue HashFunction::calculate(std::vector<VarVal>& values)
     }
     return hash;
 }
-} /// namespace NES::Nautilus::Interface
+}

@@ -146,4 +146,4 @@ protected:
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
-} /// namespace NES
+}

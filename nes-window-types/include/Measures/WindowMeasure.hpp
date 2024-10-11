@@ -31,4 +31,4 @@ public:
     virtual ~WindowMeasure() = default;
 };
 
-} /// namespace NES::Windowing
+}

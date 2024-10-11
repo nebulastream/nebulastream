@@ -82,4 +82,4 @@ DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp()
     return DataTypeFactory::createUInt64();
 }
 
-} /// namespace NES::Windowing
+}

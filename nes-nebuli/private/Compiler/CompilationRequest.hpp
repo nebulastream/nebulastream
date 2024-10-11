@@ -122,4 +122,4 @@ private:
     const std::vector<std::shared_ptr<ExternalAPI>> externalApis;
 };
 
-} /// namespace NES::Compiler
+}

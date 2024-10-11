@@ -106,4 +106,4 @@ private:
 };
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 using SuccessorExecutablePipeline = std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>;
-} /// namespace NES::Runtime::Execution
+}

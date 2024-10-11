@@ -142,4 +142,4 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
 
     return fieldsInPredicate;
 }
-} /// namespace NES
+}

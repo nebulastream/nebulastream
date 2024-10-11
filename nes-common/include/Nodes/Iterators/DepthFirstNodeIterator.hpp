@@ -74,4 +74,4 @@ public:
 private:
     NodePtr start;
 };
-} /// namespace NES
+}

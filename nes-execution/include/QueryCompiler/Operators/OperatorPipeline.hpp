@@ -177,4 +177,4 @@ private:
     Type pipelineType;
 };
 using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
-} /// namespace NES::QueryCompilation
+}

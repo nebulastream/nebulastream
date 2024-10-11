@@ -49,4 +49,4 @@ private:
     explicit MinAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
     MinAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
-} /// namespace NES::Windowing
+}

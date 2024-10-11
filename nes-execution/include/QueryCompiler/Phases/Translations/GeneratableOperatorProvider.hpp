@@ -29,4 +29,4 @@ public:
      */
     virtual void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) = 0;
 };
-} /// namespace NES::QueryCompilation
+}

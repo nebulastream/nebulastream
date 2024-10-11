@@ -108,7 +108,7 @@ private:
     PipelineStageArity arity;
 };
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
-} /// namespace NES::Runtime::Execution
+}
 
 namespace fmt
 {
@@ -120,4 +120,4 @@ struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<s
         return fmt::format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
-} ///namespace fmt
+}

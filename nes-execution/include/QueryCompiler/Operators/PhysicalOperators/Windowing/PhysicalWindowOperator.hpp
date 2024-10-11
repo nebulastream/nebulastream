@@ -39,4 +39,4 @@ public:
 protected:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

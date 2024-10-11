@@ -51,4 +51,4 @@ private:
     const std::string newSourceName;
 };
 
-} /// namespace NES
+}
