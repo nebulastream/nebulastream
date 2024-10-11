@@ -64,7 +64,7 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
-        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam()).value();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -72,9 +72,7 @@ public:
     static void TearDownTestCase() { NES_INFO("Tear down KeyedThresholdWindowPipelineTest test class."); }
 };
 
-/**
-* @brief Test running a pipeline containing a threshold window with a Sum aggregation
-*/
+/// Test running a pipeline containing a threshold window with a Sum aggregation
 TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
 {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);

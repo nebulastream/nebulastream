@@ -87,13 +87,16 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     options.proxyInlining = compilerOptions->compilationStrategy == CompilationStrategy::PROXY_INLINING;
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
-    auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName);
-    auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);
-    /// we replace the current pipeline operators with an executable operator.
-    /// this allows us to keep the pipeline structure.
-    auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
-    pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
-    return pipeline;
+    if (auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName))
+    {
+        auto pipelineStage = provider.value()->create(nautilusPipeline->getNautilusPipeline(), options);
+        /// we replace the current pipeline operators with an executable operator.
+        /// this allows us to keep the pipeline structure.
+        auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
+        pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
+        return pipeline;
+    }
+    throw UnknownExecutablePipelineProviderType(fmt::format("ExecutablePipelineProvider plugin of type: {} not registered.", providerName));
 }
 
 }

@@ -67,4 +67,4 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8)1)););
 }
 
-} /// namespace NES::Runtime::Execution::Expressions
+}

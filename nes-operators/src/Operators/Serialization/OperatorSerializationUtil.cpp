@@ -295,7 +295,8 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
+        throw CannotDeserialize(
+            fmt::format("OperatorSerializationUtil: could not de-serialize this serialized operator: {}", details.DebugString()));
     }
 
     /// de-serialize operator output schema

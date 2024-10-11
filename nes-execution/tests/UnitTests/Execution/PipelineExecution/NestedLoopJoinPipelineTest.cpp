@@ -89,7 +89,7 @@ public:
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam()).value();
         bufferManager = Memory::BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
