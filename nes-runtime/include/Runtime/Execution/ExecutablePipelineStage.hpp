@@ -74,12 +74,6 @@ public:
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 
-    /**
-     * @brief return the code of the pipeline
-     * @return string
-     */
-    virtual std::string getCodeAsString();
-
 private:
     PipelineStageArity arity;
 };
