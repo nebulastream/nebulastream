@@ -22,21 +22,6 @@ uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext&)
     return 0;
 }
 
-uint32_t ExecutablePipelineStage::start(PipelineExecutionContext&)
-{
-    return 0;
-}
-
-uint32_t ExecutablePipelineStage::open(PipelineExecutionContext&, WorkerContext&)
-{
-    return 0;
-}
-
-uint32_t ExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&)
-{
-    return 0;
-}
-
 uint32_t ExecutablePipelineStage::stop(PipelineExecutionContext&)
 {
     return 0;
