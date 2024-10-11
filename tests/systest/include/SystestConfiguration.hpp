@@ -34,13 +34,11 @@ public:
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
-    Configurations::StringOption resultDir
-    = {"resultDir", PATH_TO_BINARY_DIR "/tests/result/", "Directory for query results"};
-    Configurations::BoolOption randomQueryOrder
-    = {"randomQueryOrder", "false", "run queries in random order"};
+    Configurations::StringOption resultDir = {"resultDir", PATH_TO_BINARY_DIR "/tests/result/", "Directory for query results"};
+    Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::BoolOption useCachedQueries = {"useCachedQueries", "false", "use cached queries"};
-    Configurations::UIntOption numberComcurrentQueries
-= {"numberConcurrentQueries", "6", "nuber of maximal concurrently running queries"};
+    Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
+    Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
     Configurations::StringOption grpcAddressUri
         = {"grpc",
            "",
@@ -53,7 +51,17 @@ connections.  Valid values include dns:///localhost:1234,
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&cacheDir, &testsDiscoverDir, &directlySpecifiedTestsFiles, &testFileExtension, &grpcAddressUri};
+        return {
+            &cacheDir,
+            &testsDiscoverDir,
+            &directlySpecifiedTestsFiles,
+            &testFileExtension,
+            &resultDir,
+            &randomQueryOrder,
+            &useCachedQueries,
+            &numberConcurrentQueries,
+            &testGroup,
+            &grpcAddressUri};
     }
 
 public:
