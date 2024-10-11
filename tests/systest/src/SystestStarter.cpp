@@ -13,8 +13,10 @@
 */
 
 #include <fstream>
+#include <future>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <argparse/argparse.hpp>
+#include <folly/MPMCQueue.h>
 #include <google/protobuf/text_format.h>
 #include <grpc++/create_channel.h>
 #include <ErrorHandling.hpp>
@@ -238,6 +240,8 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         .help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
     program.add_argument("--shuffle").flag().help("run queries in random order");
+    program.add_argument("-n", "--numberConcurrentQueries").help("number of concurrent queries").default_value(6).scan<'i', int>();
+    program.add_argument("--sequential").help("force sequential query execution. Equivalent to `-n 1`");
 
     program.parse_args(argc, argv);
 
@@ -273,6 +277,16 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     if (program.is_used("-s"))
     {
         config.grpcAddressUri = program.get<std::string>("-s");
+    }
+
+    if (program.is_used("-n"))
+    {
+        config.numberComcurrentQueries = program.get<int>("-n");
+    }
+
+    if (program.is_used("--sequential"))
+    {
+        config.numberComcurrentQueries = 1;
     }
 
     if (program.is_used("--cacheDir"))
@@ -382,36 +396,53 @@ int main(int argc, const char** argv)
                 std::shuffle(queries.begin(), queries.end(), g);
             }
 
-            std::queue<QueryToTest> runningQueries{};
+            auto capacity = config.numberComcurrentQueries.getValue();
+            folly::MPMCQueue<QueryToTest> runningQueries(capacity);
+
             if (not config.grpcAddressUri.getValue().empty()) /// case: send requests over grpc to different single-node-worker
             {
                 auto serverUri = config.grpcAddressUri.getValue();
                 GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
 
-                for (auto& query : queries)
+                std::atomic<size_t> runningQueryCount{0};
+                std::atomic finishedProducing{false};
+
+                std::thread producer([&]()
                 {
-                    SerializableDecomposedQueryPlan serialized;
-                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
+                    for (auto& query : queries)
+                    {
+                        while (runningQueryCount.load(std::memory_order_acquire) >= capacity)
+                        {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                        }
 
-                    auto queryId = client.registerQuery(query.queryPlan);
-                    client.start(queryId);
-                    query.queryId = queryId;
-                    runningQueries.push(query);
-                }
+                        SerializableDecomposedQueryPlan serialized;
+                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
 
-                while(not runningQueries.empty())
+                        auto queryId = client.registerQuery(query.queryPlan);
+                        std::cout << "start query " << queryId << "\n";
+                        client.start(queryId);
+                        query.queryId = queryId;
+
+                        runningQueries.blockingWrite(std::move(query));
+                        runningQueryCount.fetch_add(1, std::memory_order_release);
+                    }
+                    finishedProducing = true;
+                });
+
+                while (not finishedProducing)
                 {
-                    QueryToTest query = runningQueries.front();
-
+                    QueryToTest query;
+                    runningQueries.blockingRead(query);
                     while (client.status(query.queryId).status() != Stopped)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds(25));
                     }
                     client.unregister(query.queryId);
-
                     checkResult(query.testFile, query.queryName, query.queryNrInFile);
-                    runningQueries.pop();
+                    runningQueryCount.fetch_sub(1, std::memory_order_release);
                 }
+                producer.join();
             }
             else /// case: run locally without grpc
             {
@@ -419,27 +450,45 @@ int main(int argc, const char** argv)
                 Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
                 SingleNodeWorker worker = SingleNodeWorker(conf);
 
-                for (auto& query : queries)
-                {
-                    auto queryId = worker.registerQuery(query.queryPlan);
-                    worker.startQuery(queryId);
-                    query.queryId = queryId.getRawValue();
-                    runningQueries.push(query);
-                }
 
-                while(not runningQueries.empty())
-                {
-                    QueryToTest query = runningQueries.front();
+                std::atomic<size_t> runningQueryCount{0};
+                std::atomic finishedProducing{false};
 
+                std::thread producer([&]()
+                {
+                    for (auto& query : queries)
+                    {
+                        while (runningQueryCount.load(std::memory_order_acquire) >= capacity)
+                        {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                        }
+
+                        SerializableDecomposedQueryPlan serialized;
+                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
+
+                        auto queryId = worker.registerQuery(query.queryPlan);
+                        worker.startQuery(queryId);
+                        query.queryId = queryId.getRawValue();
+
+                        runningQueries.blockingWrite(std::move(query));
+                        runningQueryCount.fetch_add(1, std::memory_order_release);
+                    }
+                    finishedProducing = true;
+                });
+
+                while (not finishedProducing)
+                {
+                    QueryToTest query;
+                    runningQueries.blockingRead(query);
                     while (worker.getQuerySummary(QueryId(query.queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds(25));
                     }
                     worker.unregisterQuery(QueryId(query.queryId));
-
                     checkResult(query.testFile, query.queryName, query.queryNrInFile);
-                    runningQueries.pop();
+                    runningQueryCount.fetch_sub(1, std::memory_order_release);
                 }
+                producer.join();
             }
         }
         else if (com == Command::cache)
