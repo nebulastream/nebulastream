@@ -20,8 +20,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -38,8 +38,8 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class OperatorLogicalSourceName;
-using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
+class SourceNameLogicalOperator;
+using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;

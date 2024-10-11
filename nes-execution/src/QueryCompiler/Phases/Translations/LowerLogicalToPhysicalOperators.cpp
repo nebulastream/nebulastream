@@ -39,7 +39,7 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
     std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
     for (const auto& node : nodes)
     {
-        if (NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<OperatorLogicalSourceDescriptor>(node))
+        if (NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node))
         {
             NES_DEBUG("Skipped node: {} as it is already a physical or a LogicalSourceDescriptor operator.", node->toString());
             continue;

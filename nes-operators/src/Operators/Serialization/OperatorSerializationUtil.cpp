@@ -30,7 +30,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -66,10 +66,10 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
 {
     NES_TRACE("OperatorSerializationUtil:: serialize operator {}", operatorNode->toString());
     auto serializedOperator = SerializableOperator();
-    if (NES::Util::instanceOf<OperatorLogicalSourceDescriptor>(operatorNode))
+    if (NES::Util::instanceOf<SourceDescriptorLogicalOperator>(operatorNode))
     {
         /// serialize source operator
-        serializeSourceOperator(*NES::Util::as<OperatorLogicalSourceDescriptor>(operatorNode), serializedOperator);
+        serializeSourceOperator(*NES::Util::as<SourceDescriptorLogicalOperator>(operatorNode), serializedOperator);
     }
     else if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
     {
@@ -190,7 +190,7 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
     if (details.Is<SerializableOperator_SourceDetails>())
     {
         /// de-serialize source operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to OperatorLogicalSourceName");
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to SourceNameLogicalOperator");
         auto serializedSourceDescriptor = SerializableOperator_SourceDetails();
         details.UnpackTo(&serializedSourceDescriptor);
         operatorNode = deserializeSourceOperator(serializedSourceDescriptor);
@@ -348,9 +348,9 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
 }
 
 void OperatorSerializationUtil::serializeSourceOperator(
-    OperatorLogicalSourceDescriptor& sourceOperator, SerializableOperator& serializedOperator)
+    SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to OperatorLogicalSourceName");
+    NES_TRACE("OperatorSerializationUtil:: serialize to SourceNameLogicalOperator");
 
     auto sourceDetails = SerializableOperator_SourceDetails();
     const auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
