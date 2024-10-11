@@ -63,7 +63,7 @@ public:
         }
         options.dumpToConsole = true;
         options.dumpToFile = true;
-        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam()).value();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

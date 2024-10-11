@@ -15,6 +15,7 @@
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Util/Common.hpp>
+#include <fmt/format.h>
 
 
 namespace NES
@@ -28,13 +29,19 @@ FunctionExpression::FunctionExpression(DataTypePtr stamp, std::string functionNa
 ExpressionNodePtr
 FunctionExpression::create(const DataTypePtr& stamp, const std::string& functionName, const std::vector<ExpressionNodePtr>& arguments)
 {
-    auto function = LogicalFunctionRegistry::instance().create(functionName);
-    auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function));
-    for (const auto& arg : arguments)
+    if (auto function = LogicalFunctionRegistry::instance().create(functionName))
     {
-        expression->addChild(arg);
+        throw UnknownExpressionType(fmt::format("Exception of type: {} not registered.", functionName));
     }
-    return expression;
+    else
+    {
+        auto expression = std::make_shared<FunctionExpression>(stamp, functionName, std::move(function.value()));
+        for (const auto& arg : arguments)
+        {
+            expression->addChild(arg);
+        }
+        return expression;
+    }
 }
 
 void FunctionExpression::inferStamp(SchemaPtr schema)

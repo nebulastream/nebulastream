@@ -48,6 +48,9 @@ EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
+EXCEPTION(UnknownInvocationType, 2117, "unknown invocation type")
+EXCEPTION(UnknownExecutablePipelineProviderType, 2118, "unknown executable pipeline provider type")
+EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")

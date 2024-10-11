@@ -15,6 +15,7 @@
 #include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Nautilus
 {
@@ -26,8 +27,9 @@ std::unique_ptr<Nautilus::Backends::Executable> AbstractCompilationBackendTest::
     auto ir = irCreationPhase.apply(executionTrace);
     NES_DEBUG("{}", ir->toString());
     auto param = this->GetParam();
-    auto compiler = Backends::CompilationBackendRegistry::instance().create(param);
-    return compiler->compile(ir, options, dumpHelper);
+    if (auto compiler = Backends::CompilationBackendRegistry::instance().create(param))
+        return compiler.value()->compile(ir, options, dumpHelper);
+    throw UnknownCompilationBackendType(fmt::format("CompilationBackend plugin of type: {} not registered.", param));
 }
 
-} /// namespace NES::Nautilus
+}

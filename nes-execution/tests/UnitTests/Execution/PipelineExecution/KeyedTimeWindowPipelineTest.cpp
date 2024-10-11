@@ -62,7 +62,7 @@ public:
     void SetUp() override
     {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
-        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam());
+        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam()).value();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

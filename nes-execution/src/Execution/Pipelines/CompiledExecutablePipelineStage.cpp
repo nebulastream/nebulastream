@@ -24,6 +24,7 @@
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -92,14 +93,17 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
     auto dumpHelper = DumpHelper(options.identifier, options.dumpToConsole, options.dumpToFile, options.dumpOutputPath);
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.identifier);
     timer.start();
-    auto compiler = Nautilus::Backends::CompilationBackendRegistry::instance().create(compilationBackend);
-    auto ir = createIR(dumpHelper, timer);
-    auto executable = compiler->compile(ir, options, dumpHelper);
-    timer.snapshot("Compilation");
-    std::stringstream timerAsString;
-    timerAsString << timer;
-    NES_INFO("{}", timerAsString.str());
-    return executable;
+    if (auto compiler = Nautilus::Backends::CompilationBackendRegistry::instance().create(compilationBackend))
+    {
+        auto ir = createIR(dumpHelper, timer);
+        auto executable = compiler.value()->compile(ir, options, dumpHelper);
+        timer.snapshot("Compilation");
+        std::stringstream timerAsString;
+        timerAsString << timer;
+        NES_INFO("{}", timerAsString.str());
+        return executable;
+    }
+    throw UnknownCompilationBackendType(fmt::format("CompilationBackend plugin of type: {} not registered.", compilationBackend));
 }
 
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext)

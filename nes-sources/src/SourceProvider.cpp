@@ -41,7 +41,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             std::move(bufferPool),
             std::move(emitFunction),
             NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(source));
+            std::move(source.value()));
     }
     throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.sourceType));
 }
