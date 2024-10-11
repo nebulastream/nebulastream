@@ -68,4 +68,4 @@ private:
     std::string newFieldName;
 };
 
-} /// namespace NES
+}

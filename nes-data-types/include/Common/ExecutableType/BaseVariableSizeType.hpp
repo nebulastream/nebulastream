@@ -28,4 +28,4 @@ template <class Type>
 concept IsVariableSizeType
     = std::is_base_of_v<BaseVariableSizeType, Type> || std::is_base_of_v<BaseVariableSizeType, std::remove_pointer_t<Type>>;
 
-} /// namespace NES
+}

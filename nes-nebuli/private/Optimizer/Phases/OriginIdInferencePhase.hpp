@@ -71,5 +71,5 @@ private:
 
     void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorPtr> rootOperators);
 };
-} /// namespace Optimizer
-} /// namespace NES
+}
+}

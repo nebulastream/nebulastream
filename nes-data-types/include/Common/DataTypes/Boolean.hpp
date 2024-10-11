@@ -48,4 +48,4 @@ public:
     std::string toString() override;
 };
 
-} /// namespace NES
+}

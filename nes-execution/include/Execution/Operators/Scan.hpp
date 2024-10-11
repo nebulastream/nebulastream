@@ -43,4 +43,4 @@ private:
     const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

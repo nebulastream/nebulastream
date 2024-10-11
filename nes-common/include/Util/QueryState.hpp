@@ -58,4 +58,4 @@ enum class QueryState : uint8_t
     EXPLAINED,
 };
 
-} /// namespace NES
+}

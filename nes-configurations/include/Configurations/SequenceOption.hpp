@@ -142,4 +142,4 @@ std::string SequenceOption<T>::toString()
     return os.str();
 }
 
-} /// namespace NES::Configurations
+}

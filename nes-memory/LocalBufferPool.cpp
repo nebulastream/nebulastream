@@ -167,4 +167,4 @@ std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)
 {
     return bufferManager->getUnpooledBuffer(size);
 }
-} /// namespace NES::Runtime
+}

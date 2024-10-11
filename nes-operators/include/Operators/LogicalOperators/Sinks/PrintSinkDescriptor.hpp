@@ -40,4 +40,4 @@ private:
 
 using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;
 
-} /// namespace NES
+}

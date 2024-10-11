@@ -63,4 +63,4 @@ private:
     SerializableSchemaPtr serializedSchema;
 };
 
-} /// namespace NES
+}

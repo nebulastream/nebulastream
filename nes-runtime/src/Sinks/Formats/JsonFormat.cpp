@@ -51,4 +51,4 @@ FormatIterator JsonFormat::getTupleIterator(Memory::TupleBuffer& inputBuffer)
     return FormatIterator(schema, inputBuffer, FormatTypes::JSON_FORMAT);
 }
 
-} /// namespace NES
+}

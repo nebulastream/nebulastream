@@ -23,7 +23,7 @@ namespace NES
 {
 class NodeFunctionFieldAccess;
 using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -217,4 +217,4 @@ private:
         const LogicalFilterOperatorPtr& filterOperator, const LogicalMapOperatorPtr& mapOperator, const std::string& fieldName);
 };
 
-} /// namespace NES::Optimizer
+}

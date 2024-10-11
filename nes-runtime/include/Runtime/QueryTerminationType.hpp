@@ -45,7 +45,7 @@ static O& operator<<(O& os, const QueryTerminationType& type)
     }
 }
 
-} /// namespace NES::Runtime
+}
 
 namespace fmt
 {
@@ -67,4 +67,4 @@ struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string>
         }
     }
 };
-} ///namespace fmt
+}

@@ -45,4 +45,4 @@ void ReconfigurationMessage::destroy()
     postSyncBarrier.reset();
 }
 
-} /// namespace NES::Runtime
+}

@@ -37,4 +37,4 @@ public:
 private:
     QueryId queryId;
 };
-} /// namespace NES::Exceptions
+}

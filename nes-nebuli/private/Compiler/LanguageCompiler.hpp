@@ -44,4 +44,4 @@ public:
     virtual ~LanguageCompiler() = default;
 };
 
-} /// namespace NES::Compiler
+}

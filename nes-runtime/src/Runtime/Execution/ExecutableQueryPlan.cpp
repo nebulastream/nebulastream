@@ -370,4 +370,4 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     }
 }
 
-} /// namespace NES::Runtime::Execution
+}

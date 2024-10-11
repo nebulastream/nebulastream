@@ -50,4 +50,4 @@ public:
     */
     static SchemaPtr deserializeSchema(const SerializableSchema& serializedSchema);
 };
-} /// namespace NES
+}

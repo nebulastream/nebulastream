@@ -37,4 +37,4 @@ public:
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 };
-} /// namespace NES
+}

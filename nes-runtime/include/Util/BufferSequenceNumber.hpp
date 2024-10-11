@@ -79,7 +79,7 @@ private:
 };
 
 using BufferSequenceNumberPtr = std::shared_ptr<BufferSequenceNumber>;
-} /// namespace NES
+}
 
 namespace std
 {
@@ -88,4 +88,4 @@ struct hash<NES::BufferSequenceNumber>
 {
     uint64_t operator()(const NES::BufferSequenceNumber& sn) const { return sn.getSequenceNumber() ^ sn.getOriginId(); }
 };
-} /// namespace std
+}

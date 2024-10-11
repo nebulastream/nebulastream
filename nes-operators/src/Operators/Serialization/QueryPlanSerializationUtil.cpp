@@ -102,4 +102,4 @@ QueryPlanPtr QueryPlanSerializationUtil::deserializeQueryPlan(const Serializable
 
     return QueryPlan::create(queryId, rootOperators);
 }
-} /// namespace NES
+}

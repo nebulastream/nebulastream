@@ -22,4 +22,4 @@ FixedChar::FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFacto
 {
 }
 
-} /// namespace NES
+}

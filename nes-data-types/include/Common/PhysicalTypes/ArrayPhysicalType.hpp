@@ -92,4 +92,4 @@ public:
     PhysicalTypePtr const physicalComponentType;
 };
 
-} /// namespace NES
+}

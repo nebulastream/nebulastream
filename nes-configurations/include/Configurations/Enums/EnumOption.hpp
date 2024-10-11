@@ -83,4 +83,4 @@ protected:
     };
 };
 
-} /// namespace NES::Configurations
+}

@@ -58,4 +58,4 @@ bool SequenceData::operator!=(const SequenceData& other) const
     return !(*this == other);
 }
 
-} /// namespace NES
+}

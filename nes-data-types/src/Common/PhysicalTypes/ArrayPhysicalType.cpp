@@ -103,4 +103,4 @@ std::string ArrayPhysicalType::toString() const noexcept
     sstream << physicalComponentType->toString() << '[' << length << ']';
     return sstream.str();
 }
-} /// namespace NES
+}

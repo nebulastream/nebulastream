@@ -95,4 +95,4 @@ protected:
     OperatorProperties properties;
 };
 
-} /// namespace NES
+}

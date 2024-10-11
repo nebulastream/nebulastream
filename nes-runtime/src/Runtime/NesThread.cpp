@@ -26,4 +26,4 @@ std::atomic<bool> NesThread::id_used[MaxNumThreads] = {};
 /// Give the new thread an ID.
 thread_local NesThread::ThreadId NesThread::id{};
 
-} /// namespace NES::Runtime
+}

@@ -267,4 +267,4 @@ protected:
 #endif
 };
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
-} /// namespace NES::Runtime
+}

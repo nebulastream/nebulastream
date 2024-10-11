@@ -319,4 +319,4 @@ WorkerId DecomposedQueryPlan::getWorkerId() const
     return workerId;
 }
 
-} /// namespace NES
+}

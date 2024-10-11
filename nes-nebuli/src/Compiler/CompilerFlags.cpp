@@ -68,4 +68,4 @@ CompilerFlags& CompilerFlags::operator=(const CompilerFlags& other)
 CompilerFlags::CompilerFlags(CompilerFlags&& other) noexcept = default;
 CompilerFlags& CompilerFlags::operator=(CompilerFlags&& other) noexcept = default;
 
-} /// namespace NES::Compiler
+}

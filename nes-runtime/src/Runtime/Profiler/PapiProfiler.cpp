@@ -126,7 +126,7 @@ public:
     ~PapiInitializer() { PAPI_shutdown(); }
 };
 static PapiInitializer papi;
-} /// namespace detail
+}
 
 PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint32_t threadId, uint32_t coreId)
     : csvWriter(std::move(csvWriter))
@@ -495,4 +495,4 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords)
     return currentTsc;
 }
 #endif
-} /// namespace NES::Runtime::Profiler
+}

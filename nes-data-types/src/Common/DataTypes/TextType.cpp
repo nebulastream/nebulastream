@@ -35,4 +35,4 @@ std::string TextType::toString()
     return "Text";
 }
 
-} /// namespace NES
+}

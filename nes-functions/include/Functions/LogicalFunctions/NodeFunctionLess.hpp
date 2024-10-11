@@ -37,4 +37,4 @@ public:
 protected:
     explicit NodeFunctionLess(NodeFunctionLess* other);
 };
-} /// namespace NES
+}

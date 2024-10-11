@@ -41,4 +41,4 @@ private:
     explicit IngestionTimeWatermarkStrategyDescriptor();
 };
 
-} /// namespace NES::Windowing
+}

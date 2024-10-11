@@ -55,4 +55,4 @@ public:
      */
     FormatTypes getSinkFormat() override;
 };
-} /// namespace NES
+}

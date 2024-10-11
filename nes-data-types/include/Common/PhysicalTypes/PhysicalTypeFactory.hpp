@@ -43,4 +43,4 @@ public:
     virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
 };
 
-} /// namespace NES
+}

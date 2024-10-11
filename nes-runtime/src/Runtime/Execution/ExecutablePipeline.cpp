@@ -336,4 +336,4 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     }
 }
 
-} /// namespace NES::Runtime::Execution
+}

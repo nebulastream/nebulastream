@@ -49,4 +49,4 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
     return decomposedQueryPlan;
 }
 
-} /// namespace NES::QueryCompilation
+}

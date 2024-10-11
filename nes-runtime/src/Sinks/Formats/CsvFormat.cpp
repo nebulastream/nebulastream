@@ -81,4 +81,4 @@ FormatIterator CsvFormat::getTupleIterator(Memory::TupleBuffer& inputBuffer)
     return FormatIterator(schema, inputBuffer, FormatTypes::CSV_FORMAT);
 }
 
-} /// namespace NES
+}

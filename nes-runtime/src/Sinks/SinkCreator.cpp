@@ -99,4 +99,4 @@ DataSinkPtr createCSVPrintSink(
     return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, queryId, out, numberOfOrigins);
 }
 
-} /// namespace NES
+}

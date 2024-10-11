@@ -278,4 +278,4 @@ TEST_F(JsonFormatTest, useJsonIteratorWithMixedDataTypes)
     ASSERT_TRUE(validateJsonIterator(schema, testTupleBuffer.get(), expectedKVPairs));
 }
 
-} /// namespace NES::Runtime
+}

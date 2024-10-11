@@ -138,4 +138,4 @@ NodeFunctionPtr RecordCreationTs()
     return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getNodeFunction();
 }
 
-} /// namespace NES::API
+}

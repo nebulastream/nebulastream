@@ -85,7 +85,7 @@ private:
     const Language language;
 };
 
-} /// namespace NES::Compiler
+}
 
 namespace std
 {
@@ -107,4 +107,4 @@ struct hash<const NES::Compiler::SourceCode>
     }
 };
 
-} /// namespace std
+}

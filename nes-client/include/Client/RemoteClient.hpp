@@ -145,4 +145,4 @@ private:
     std::string getHostName();
 };
 using RemoteClientPtr = std::shared_ptr<RemoteClient>;
-} /// namespace NES::Client
+}

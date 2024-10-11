@@ -318,4 +318,4 @@ bool SourceCatalog::updateLogicalSource(const std::string& logicalSourceName, Sc
     return true;
 }
 
-} /// namespace NES::Catalogs::Source
+}

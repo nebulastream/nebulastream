@@ -185,4 +185,4 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     }
 }
 
-} /// namespace NES::Configurations
+}

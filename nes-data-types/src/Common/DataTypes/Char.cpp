@@ -38,4 +38,4 @@ std::string Char::toString()
     return "Char";
 }
 
-} /// namespace NES
+}

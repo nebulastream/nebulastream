@@ -35,4 +35,4 @@ public:
     std::string value;
 };
 
-} /// namespace NES
+}

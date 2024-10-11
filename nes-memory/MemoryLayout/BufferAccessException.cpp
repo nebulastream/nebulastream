@@ -21,4 +21,4 @@ BufferAccessException::BufferAccessException(const std::string& message) : Excep
 {
     NES_ERROR("{}", message);
 }
-} /// namespace NES
+}

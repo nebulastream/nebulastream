@@ -96,4 +96,4 @@ protected:
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
 };
-} /// namespace NES
+}

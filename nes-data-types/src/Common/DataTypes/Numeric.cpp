@@ -26,4 +26,4 @@ int8_t Numeric::getBits() const
     return bits;
 }
 
-} /// namespace NES
+}

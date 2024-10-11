@@ -35,4 +35,4 @@ public:
         std::source_location location = std::source_location::current());
 };
 
-} /// namespace NES::Configurations
+}

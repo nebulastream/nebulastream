@@ -93,4 +93,4 @@ bool isText(PhysicalTypePtr physicalType)
     return physicalType->isTextType();
 }
 
-} /// namespace NES::PhysicalTypes
+}

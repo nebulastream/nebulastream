@@ -33,4 +33,4 @@ std::string Undefined::toString()
     return "Undefined";
 }
 
-} /// namespace NES
+}

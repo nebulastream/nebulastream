@@ -29,7 +29,7 @@ using PatternPtr = std::shared_ptr<Pattern>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -60,4 +60,4 @@ private:
     static void handleException(const std::exception& ex);
 };
 
-} /// namespace NES::Optimizer
+}

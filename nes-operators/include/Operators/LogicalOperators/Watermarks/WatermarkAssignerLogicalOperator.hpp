@@ -50,4 +50,4 @@ private:
 
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
-} /// namespace NES
+}

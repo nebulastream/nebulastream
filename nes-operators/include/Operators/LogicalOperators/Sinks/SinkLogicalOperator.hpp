@@ -42,4 +42,4 @@ public:
 private:
     SinkDescriptorPtr sinkDescriptor;
 };
-} /// namespace NES
+}

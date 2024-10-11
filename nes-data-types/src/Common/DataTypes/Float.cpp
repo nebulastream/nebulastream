@@ -59,4 +59,4 @@ std::string Float::toString()
     return fmt::format("Float({} bits)", bits);
 }
 
-} /// namespace NES
+}

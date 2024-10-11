@@ -72,4 +72,4 @@ private:
     float selectivity = 1.0f;
 };
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-} /// namespace NES
+}

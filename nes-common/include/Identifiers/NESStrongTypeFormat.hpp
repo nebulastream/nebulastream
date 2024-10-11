@@ -30,4 +30,4 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
 };
-} /// namespace fmt
+}

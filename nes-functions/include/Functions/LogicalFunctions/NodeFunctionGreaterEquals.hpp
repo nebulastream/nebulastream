@@ -36,4 +36,4 @@ public:
 protected:
     explicit NodeFunctionGreaterEquals(NodeFunctionGreaterEquals* other);
 };
-} /// namespace NES
+}

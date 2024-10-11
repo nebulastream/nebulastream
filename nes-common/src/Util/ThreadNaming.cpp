@@ -56,4 +56,4 @@ void setThreadName(const char* threadNameFmt, ...)
 #endif
     va_end(args);
 }
-} /// namespace NES
+}

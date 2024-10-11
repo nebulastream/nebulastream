@@ -310,4 +310,4 @@ TEST_F(SchemaTest, updateSourceNameTest)
     /// TODO once #4355 is done, we can test updateSourceName(source1) here
 }
 
-} /// namespace NES
+}

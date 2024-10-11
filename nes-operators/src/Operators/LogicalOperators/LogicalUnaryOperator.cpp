@@ -77,4 +77,4 @@ void LogicalUnaryOperator::inferInputOrigins()
     this->inputOriginIds = inputOriginIds;
 }
 
-} /// namespace NES
+}

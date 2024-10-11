@@ -41,4 +41,4 @@ bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr)
     return true;
 }
 
-} /// namespace NES::Windowing
+}

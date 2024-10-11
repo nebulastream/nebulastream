@@ -68,4 +68,4 @@ protected:
     DataTypePtr stamp;
     const std::string type;
 };
-} /// namespace NES
+}

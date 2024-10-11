@@ -57,4 +57,4 @@ std::string TextPhysicalType::toString() const noexcept
     return "TEXT";
 }
 
-} /// namespace NES
+}

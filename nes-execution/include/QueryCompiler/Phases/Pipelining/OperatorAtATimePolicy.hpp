@@ -27,4 +27,4 @@ public:
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-} /// namespace NES::QueryCompilation
+}

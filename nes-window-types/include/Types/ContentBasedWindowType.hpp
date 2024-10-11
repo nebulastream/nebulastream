@@ -49,4 +49,4 @@ public:
        */
     static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
-} /// namespace NES::Windowing
+}

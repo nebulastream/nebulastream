@@ -34,7 +34,7 @@ namespace Operators
 {
 class Operator;
 class OperatorState;
-} /// namespace Operators
+}
 
 /**
  * The execution context manages state of operators within a pipeline and provides access to some global functionality.

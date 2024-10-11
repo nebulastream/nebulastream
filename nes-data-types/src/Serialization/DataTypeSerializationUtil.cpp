@@ -230,4 +230,4 @@ ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableD
         "DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
 }
 
-} /// namespace NES
+}

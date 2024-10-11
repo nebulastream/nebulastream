@@ -66,4 +66,4 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 template <class Type>
 concept IsArray = std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_base_of_v<NESType, Type>;
 
-} /// namespace NES
+}

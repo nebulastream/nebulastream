@@ -138,4 +138,4 @@ bool FileSink::writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContex
     return true;
 }
 
-} /// namespace NES
+}

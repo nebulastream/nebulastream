@@ -71,4 +71,4 @@ void CPPCompilerFlags::enableProfilingFlags()
     addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
 }
 
-} /// namespace NES::Compiler
+}

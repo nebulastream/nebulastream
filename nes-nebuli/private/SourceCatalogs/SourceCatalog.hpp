@@ -175,5 +175,5 @@ private:
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-} /// namespace Catalogs::Source
-} /// namespace NES
+}
+}

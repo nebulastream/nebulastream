@@ -103,4 +103,4 @@ private:
     std::vector<NodeFunctionPtr> outputFields;
 };
 
-} /// namespace NES::InferModel
+}

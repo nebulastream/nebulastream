@@ -29,7 +29,7 @@ namespace detail
 */
 [[maybe_unused]] std::string concatenateFunctionHelper(uint64_t value);
 [[maybe_unused]] std::string concatenateFunctionHelper(const NES::SchemaPtr& schema);
-} /// namespace detail
+}
 
 /**
  * @brief concatenates each element of the vector with a comma as the delimiter

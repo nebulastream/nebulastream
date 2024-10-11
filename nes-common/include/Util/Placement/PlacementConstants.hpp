@@ -31,4 +31,4 @@ const std::string UPSTREAM_LOGICAL_OPERATOR_ID
     = "UPSTREAM_LOGICAL_OPERATOR_ID"; /// Property containing the id of the next upstream non system operator of a system generated operator
 const std::string DOWNSTREAM_LOGICAL_OPERATOR_ID
     = "DOWNSTREAM_LOGICAL_OPERATOR_ID"; /// Property containing the id of the next downstream non system operator of a system generated operator
-} /// namespace NES::Optimizer
+}

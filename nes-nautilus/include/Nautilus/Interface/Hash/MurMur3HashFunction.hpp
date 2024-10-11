@@ -49,4 +49,4 @@ public:
      */
     HashValue calculate(VarVal& value);
 };
-} /// namespace NES::Nautilus::Interface
+}

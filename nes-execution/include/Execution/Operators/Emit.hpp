@@ -38,4 +38,4 @@ private:
     std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

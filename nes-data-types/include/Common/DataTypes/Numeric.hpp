@@ -36,4 +36,4 @@ protected:
     const int8_t bits;
 };
 
-} /// namespace NES
+}

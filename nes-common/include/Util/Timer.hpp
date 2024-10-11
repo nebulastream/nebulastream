@@ -292,4 +292,4 @@ private:
      */
     bool running{false};
 };
-} /// namespace NES
+}

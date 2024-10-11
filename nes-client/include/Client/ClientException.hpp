@@ -24,4 +24,4 @@ public:
     explicit ClientException(const std::string& message);
 };
 
-} /// namespace NES::Client
+}

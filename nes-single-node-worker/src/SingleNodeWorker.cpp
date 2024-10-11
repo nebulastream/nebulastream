@@ -81,4 +81,4 @@ std::optional<Runtime::QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId quer
     return nodeEngine->getQueryLog()->getLogForQuery(queryId);
 }
 
-} /// namespace NES
+}

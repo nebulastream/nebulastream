@@ -110,4 +110,4 @@ bool CompilationRequest::operator!=(const CompilationRequest& rhs) const
     return !(rhs == *this);
 }
 
-} /// namespace NES::Compiler
+}

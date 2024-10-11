@@ -67,4 +67,4 @@ private:
      */
     MedianAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
-} /// namespace NES::Windowing
+}

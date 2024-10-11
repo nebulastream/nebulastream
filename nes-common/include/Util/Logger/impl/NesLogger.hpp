@@ -23,7 +23,7 @@ namespace spdlog::details
 {
 class thread_pool;
 class periodic_worker;
-} /// namespace spdlog::details
+}
 
 namespace NES
 {
@@ -32,7 +32,7 @@ namespace detail
 {
 /// Creates an empty logger that writes to /dev/null
 std::shared_ptr<spdlog::logger> createEmptyLogger();
-} /// namespace detail
+}
 
 namespace detail
 {
@@ -107,13 +107,13 @@ private:
     std::shared_ptr<spdlog::details::thread_pool> loggerThreadPool{nullptr};
     std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };
-} /// namespace detail
+}
 
 namespace Logger
 {
 void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout = true);
 
 std::shared_ptr<detail::Logger> getInstance();
-} /// namespace Logger
+}
 
-} /// namespace NES
+}

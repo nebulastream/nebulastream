@@ -33,4 +33,4 @@ public:
      */
     bool isValid(const std::string& ip) const override;
 };
-} /// namespace NES::Configurations
+}

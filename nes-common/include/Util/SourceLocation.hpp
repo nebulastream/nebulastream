@@ -56,5 +56,5 @@ private:
     uint_least32_t _M_line;
     uint_least32_t _M_col;
 };
-} /// namespace std
+}
 #endif

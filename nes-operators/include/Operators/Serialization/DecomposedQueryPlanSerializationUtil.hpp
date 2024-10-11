@@ -49,4 +49,4 @@ public:
 
     static SerializableQueryState serializeQueryState(QueryState queryState);
 };
-} /// namespace NES
+}

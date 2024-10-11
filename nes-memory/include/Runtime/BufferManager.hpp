@@ -216,4 +216,4 @@ private:
 
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
-} /// namespace NES::Runtime
+}

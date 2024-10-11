@@ -59,4 +59,4 @@ private:
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
-} /// namespace NES::QueryCompilation
+}

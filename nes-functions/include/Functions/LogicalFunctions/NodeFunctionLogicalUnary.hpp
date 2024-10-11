@@ -37,4 +37,4 @@ public:
 protected:
     explicit NodeFunctionLogicalUnary(NodeFunctionLogicalUnary* other);
 };
-} /// namespace NES
+}

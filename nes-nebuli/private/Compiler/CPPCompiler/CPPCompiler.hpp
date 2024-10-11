@@ -55,4 +55,4 @@ private:
     ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
 
-} /// namespace NES::Compiler
+}

@@ -49,4 +49,4 @@ private:
     ConvertLogicalToPhysicalSink() = default;
 };
 
-} /// namespace NES
+}

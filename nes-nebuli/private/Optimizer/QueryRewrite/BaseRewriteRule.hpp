@@ -21,7 +21,7 @@ namespace NES
 {
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -66,4 +66,4 @@ public:
         throw Exceptions::RuntimeException("We performed an invalid cast");
     }
 };
-} /// namespace NES::Optimizer
+}

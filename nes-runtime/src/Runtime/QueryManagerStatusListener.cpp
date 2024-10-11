@@ -153,4 +153,4 @@ void QueryManager::notifySinkCompletion(QueryId queryId, DataSinkPtr sink, Query
     NES_ASSERT2_FMT(qep, "invalid query id " << queryId << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
 }
-} /// namespace NES::Runtime
+}

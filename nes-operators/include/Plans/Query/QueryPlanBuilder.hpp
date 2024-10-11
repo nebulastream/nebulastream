@@ -151,4 +151,4 @@ private:
     */
     static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
-} /// end namespace NES
+}

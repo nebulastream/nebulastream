@@ -74,4 +74,4 @@ void PrintSink::shutdown()
     /// currently not required
 }
 
-} /// namespace NES
+}

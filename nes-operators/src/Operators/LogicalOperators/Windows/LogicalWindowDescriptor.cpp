@@ -165,4 +165,4 @@ void LogicalWindowDescriptor::setInputOriginIds(const std::vector<OriginId>& inp
     LogicalWindowDescriptor::inputOriginIds = inputOriginIds;
 }
 
-} /// namespace NES::Windowing
+}

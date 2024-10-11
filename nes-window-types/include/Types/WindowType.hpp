@@ -60,4 +60,4 @@ public:
     virtual uint64_t hash() const = 0;
 };
 
-} /// namespace NES::Windowing
+}

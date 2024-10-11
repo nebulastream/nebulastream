@@ -100,4 +100,4 @@ PlanIterator::iterator& PlanIterator::iterator::operator++()
     return *this;
 }
 
-} /// namespace NES
+}

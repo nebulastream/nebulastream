@@ -59,4 +59,4 @@ private:
     std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors = {};
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

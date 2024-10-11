@@ -68,4 +68,4 @@ public:
     virtual ~OperatorHandler() override = default;
 };
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
-} /// namespace NES::Runtime::Execution
+}

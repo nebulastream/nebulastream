@@ -417,4 +417,4 @@ DataTypePtr DataTypeFactory::createFloatFromInteger(DataTypePtr stamp)
     return stamp;
 }
 
-} /// namespace NES
+}

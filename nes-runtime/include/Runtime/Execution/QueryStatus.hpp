@@ -40,4 +40,4 @@ inline bool isRegisteredButNotRunning(QueryStatus status)
     return status == QueryStatus::Registered || status == QueryStatus::Stopped || status == QueryStatus::Failed;
 }
 }
-} /// namespace NES::Runtime::Execution
+}

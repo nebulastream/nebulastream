@@ -127,4 +127,4 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
     EXPECT_TRUE(tokens == test);
 }
 
-} /// namespace NES
+}

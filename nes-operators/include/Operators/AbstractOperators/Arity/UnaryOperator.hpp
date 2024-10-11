@@ -85,4 +85,4 @@ protected:
     std::vector<OriginId> inputOriginIds;
 };
 
-} /// namespace NES
+}

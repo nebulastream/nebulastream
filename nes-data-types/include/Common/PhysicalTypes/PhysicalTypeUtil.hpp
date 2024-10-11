@@ -197,4 +197,4 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType)
     }
     return false;
 }
-} /// namespace NES::PhysicalTypes
+}

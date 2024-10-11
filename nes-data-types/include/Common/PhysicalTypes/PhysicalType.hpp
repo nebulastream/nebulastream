@@ -59,4 +59,4 @@ public:
     DataTypePtr const type;
 };
 
-} /// namespace NES
+}

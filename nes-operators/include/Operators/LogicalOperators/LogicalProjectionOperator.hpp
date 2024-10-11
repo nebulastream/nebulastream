@@ -56,4 +56,4 @@ private:
     std::vector<NodeFunctionPtr> functions;
 };
 
-} /// namespace NES
+}

@@ -66,4 +66,4 @@ protected:
     explicit NodeFunctionCase(NodeFunctionCase* other);
 };
 
-} /// namespace NES
+}

@@ -253,4 +253,4 @@ ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 }
 
 
-} /// namespace NES::Runtime
+}

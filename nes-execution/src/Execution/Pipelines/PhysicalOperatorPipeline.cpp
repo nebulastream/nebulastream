@@ -26,4 +26,4 @@ void PhysicalOperatorPipeline::setRootOperator(Operators::OperatorPtr rootOperat
     this->rootOperator = rootOperator;
 }
 
-} /// namespace NES::Runtime::Execution
+}

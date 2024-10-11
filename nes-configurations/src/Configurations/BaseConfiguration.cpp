@@ -243,4 +243,4 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
     return true;
 }
 
-} /// namespace NES::Configurations
+}

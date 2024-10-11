@@ -50,4 +50,4 @@ private:
     explicit CountAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
     CountAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
-} /// namespace NES::Windowing
+}

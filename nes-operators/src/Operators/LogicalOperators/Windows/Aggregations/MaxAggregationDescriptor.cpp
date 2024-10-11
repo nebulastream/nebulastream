@@ -97,4 +97,4 @@ DataTypePtr MaxAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }
-} /// namespace NES::Windowing
+}

@@ -85,4 +85,4 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
     return LogicalOperatorFactory::createProjectionOperator(projectFunctions);
 }
 
-} /// namespace NES::Optimizer
+}

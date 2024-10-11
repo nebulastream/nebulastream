@@ -70,4 +70,4 @@ public:
     void enableProfilingFlags();
 };
 
-} /// namespace NES::Compiler
+}

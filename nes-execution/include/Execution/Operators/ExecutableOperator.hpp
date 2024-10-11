@@ -34,4 +34,4 @@ public:
     virtual ~ExecutableOperator() = default;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

@@ -61,4 +61,4 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
     return id.getRawValue() % containerSize;
 }
 
-} /// namespace NES
+}

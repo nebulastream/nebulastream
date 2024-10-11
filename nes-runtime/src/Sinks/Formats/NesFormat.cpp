@@ -57,4 +57,4 @@ std::string NesFormat::getFormattedSchema()
     return protoBuff->SerializeAsString();
 }
 
-} /// namespace NES
+}
