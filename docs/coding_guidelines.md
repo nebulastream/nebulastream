@@ -1,14 +1,11 @@
 # General Coding Style and Clang Format
 We use the [Clickhouse style](https:///clickhouse.com/docs/en/development/style) for the coding style, and we enforce the style by clang-format. 
-Regarding comments, we use `///` for inline comments and `/* */` for multiline comments.
-`//` are there for temporarily commenting out code.
 The `.clang-format` file is located in the root directory of the project.
 The style can be imported into Clion by following the steps below:
 1. Go to the settings window: `File --> Settings`
 2. Jump to C/C++ code style: `Editor --> Code Style --> C/C++`
 3. Import the code style from `.clang-format`
 4. Click `Apply` and `OK`
-
 
 # Naming Conventions and Position of Operators
 - Classes and structs start with uppercase and use camelcase: `MyClass`

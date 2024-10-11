@@ -4,6 +4,10 @@ set -eo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
+# We have to set the pager to cat, because otherwise the output is paged and the script hangs for git grep commands.
+# It looks like git grep pipes the output to less, which is not closed properly.
+export GIT_PAGER=cat
+
 
 if [ -x "$(command -v clang-format-18)" ]
 then
@@ -74,6 +78,17 @@ if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "nes-*"
 then
     echo
     echo Found forbidden comments. Please use /// for doc comments, remove all else.
+    FAIL=1
+fi
+
+# no comment after closing bracket for namespace
+#
+# No comment after closing brackets, as voted in https://github.com/nebulastream/nebulastream-public/discussions/379
+# This is done to ensure that no one uses a comment after a closing bracket for a namespace.
+if git grep -n -E -e "}[ \t]*//.*namespace.*" -- "nes-*"
+then
+    echo
+    echo Found comment after closing bracket for namespace. Please remove.
     FAIL=1
 fi
 
