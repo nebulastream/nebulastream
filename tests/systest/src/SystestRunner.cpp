@@ -17,11 +17,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <NebuLI.hpp>
 #include <SLTParser.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestRunner.hpp>
 
 namespace NES
 {
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
+std::vector<DecomposedQueryPlanPtr>  loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
 {
     std::vector<DecomposedQueryPlanPtr> plans{};
     CLI::QueryConfig config{};
@@ -33,7 +34,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
          {
              static uint64_t queryNr = 0;
              auto resultFile = resultDir.string() + "/" + testname + std::to_string(queryNr++) + ".csv";
-             substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
+             substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"OVERWRITE\"));";
          }});
 
     parser.registerSubstitutionRule(
@@ -127,6 +128,25 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
     {
         tryLogCurrentException();
         return {};
+    }
+    return plans;
+}
+
+std::vector<SerializableDecomposedQueryPlan>  loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles)
+{
+    std::vector<SerializableDecomposedQueryPlan> plans{};
+    for (const auto &cacheFile : cacheFiles)
+    {
+        SerializableDecomposedQueryPlan queryPlan;
+        std::ifstream file(cacheFile);
+        if (!file || !queryPlan.ParseFromIstream(&file))
+        {
+            NES_ERROR("Could not load protobuffer file: {}", cacheFile);
+        } else
+        {
+            std::cout << "loaded cached file:" << cacheFile << "\n";
+            plans.emplace_back(queryPlan);
+        }
     }
     return plans;
 }
