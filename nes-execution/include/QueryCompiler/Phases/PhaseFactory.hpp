@@ -30,4 +30,4 @@ public:
     virtual std::shared_ptr<LowerToExecutableQueryPlanPhase> createLowerToExecutableQueryPlanPhase() = 0;
 };
 using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
-} /// namespace NES::QueryCompilation::Phases
+}

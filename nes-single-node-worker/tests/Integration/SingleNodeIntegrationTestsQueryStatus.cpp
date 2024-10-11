@@ -125,4 +125,4 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::removeFile(queryResultFile);
     IntegrationTestUtil::removeFile(querySpecificDataFileName);
 }
-} /// namespace NES::Testing
+}

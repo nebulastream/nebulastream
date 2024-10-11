@@ -32,4 +32,4 @@ protected:
     ~NodeFunctionLogicalBinary() override = default;
     explicit NodeFunctionLogicalBinary(NodeFunctionLogicalBinary* other);
 };
-} /// namespace NES
+}

@@ -152,4 +152,4 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
 }
-} /// namespace NES::Runtime
+}

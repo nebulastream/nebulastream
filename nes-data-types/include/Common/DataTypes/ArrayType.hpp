@@ -61,4 +61,4 @@ public:
     DataTypePtr const component;
 };
 
-} /// namespace NES
+}

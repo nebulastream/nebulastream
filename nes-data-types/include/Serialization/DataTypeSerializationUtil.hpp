@@ -71,4 +71,4 @@ public:
     */
     static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
-} /// namespace NES
+}

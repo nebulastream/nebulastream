@@ -171,4 +171,4 @@ __attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t 
     return __real_read(fd, data, size);
 }
 #endif
-} /// namespace NES
+}

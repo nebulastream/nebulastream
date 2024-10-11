@@ -212,4 +212,4 @@ std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
     return groupByKeyNames;
 }
 
-} /// namespace NES
+}

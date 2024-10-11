@@ -134,4 +134,4 @@ OperatorState LogicalOperator::getOperatorState() const
     return operatorState;
 }
 
-} /// namespace NES
+}

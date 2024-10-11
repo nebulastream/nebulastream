@@ -142,4 +142,4 @@ QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& q
     }
 }
 
-} /// namespace NES
+}

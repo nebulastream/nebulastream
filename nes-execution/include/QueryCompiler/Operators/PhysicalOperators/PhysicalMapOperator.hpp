@@ -41,4 +41,4 @@ public:
 protected:
     const NodeFunctionFieldAssignmentPtr mapFunction;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

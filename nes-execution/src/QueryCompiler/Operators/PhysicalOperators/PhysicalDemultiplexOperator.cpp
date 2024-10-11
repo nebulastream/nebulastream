@@ -45,4 +45,4 @@ OperatorPtr PhysicalDemultiplexOperator::copy()
     return create(id, inputSchema);
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

@@ -247,4 +247,4 @@ bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
         || NES::Util::instanceOf<Experimental::LogicalBatchJoinOperator>(operatorNode));
 }
 
-} /// namespace NES::Optimizer
+}

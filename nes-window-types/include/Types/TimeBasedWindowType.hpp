@@ -59,4 +59,4 @@ protected:
     TimeCharacteristicPtr timeCharacteristic;
 };
 
-} /// namespace NES::Windowing
+}

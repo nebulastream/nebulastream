@@ -43,4 +43,4 @@ struct alignas(hardware_constructive_interference_size) AtomicCounter
 };
 static_assert(sizeof(AtomicCounter<uint64_t>) == 64);
 
-} /// namespace NES
+}

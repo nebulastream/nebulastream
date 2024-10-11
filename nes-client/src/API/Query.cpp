@@ -98,7 +98,7 @@ Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
     return originalQuery.joinWith(subQueryRhs, joinFunctions, windowType); ///call original joinWith() function
 }
 
-} /// namespace JoinOperatorBuilder
+}
 
 namespace Experimental::BatchJoinOperatorBuilder
 {
@@ -112,7 +112,7 @@ Query& Join::where(const NodeFunctionPtr joinFunction) const
     return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
 
-} /// namespace Experimental::BatchJoinOperatorBuilder
+}
 
 namespace CEPOperatorBuilder
 {
@@ -247,7 +247,7 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const
     return originalQuery;
 }
 
-} /// namespace CEPOperatorBuilder
+}
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
 {
@@ -416,4 +416,4 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(NodeFunctionPtr jo
     return joinType;
 }
 
-} /// namespace NES
+}

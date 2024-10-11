@@ -54,4 +54,4 @@ protected:
     const Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-} /// namespace NES
+}

@@ -156,4 +156,4 @@ void LogicalUnionOperator::inferInputOrigins()
     this->leftInputOriginIds = combinedInputOriginIds;
 }
 
-} /// namespace NES
+}

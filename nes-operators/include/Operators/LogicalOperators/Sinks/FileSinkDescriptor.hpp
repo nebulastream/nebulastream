@@ -96,4 +96,4 @@ private:
 };
 
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;
-} /// namespace NES
+}

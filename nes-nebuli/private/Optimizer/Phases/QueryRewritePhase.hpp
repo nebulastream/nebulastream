@@ -28,9 +28,9 @@ namespace Configurations
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-} /// namespace Configurations
+}
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {

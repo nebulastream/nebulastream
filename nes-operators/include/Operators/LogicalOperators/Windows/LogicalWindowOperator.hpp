@@ -38,4 +38,4 @@ public:
     std::vector<std::string> getGroupByKeyNames() const;
 };
 
-} /// namespace NES
+}

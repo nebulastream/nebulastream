@@ -36,4 +36,4 @@ protected:
     AddScanAndEmitPhasePtr addScanAndEmitPhase;
 };
 
-} /// namespace NES::QueryCompilation
+}

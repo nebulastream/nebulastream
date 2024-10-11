@@ -27,4 +27,4 @@ namespace NES
  * @param ... variadic arguments
  */
 void setThreadName(const char* threadNameFmt, ...);
-} /// namespace NES
+}

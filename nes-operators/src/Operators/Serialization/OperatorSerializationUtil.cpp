@@ -1255,4 +1255,4 @@ OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOpera
     return LogicalOperatorFactory::createInferModelOperator(inferModelDetails.mlfilename(), inputFields, outputFields, getNextOperatorId());
 }
 
-} /// namespace NES
+}

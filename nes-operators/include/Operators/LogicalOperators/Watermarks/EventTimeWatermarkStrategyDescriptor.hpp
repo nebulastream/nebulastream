@@ -53,4 +53,4 @@ private:
     explicit EventTimeWatermarkStrategyDescriptor(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
-} /// namespace NES::Windowing
+}

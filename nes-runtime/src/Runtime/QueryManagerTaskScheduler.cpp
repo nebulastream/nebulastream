@@ -87,7 +87,7 @@ public:
         return ExecutionResult::Ok;
     }
 };
-} /// namespace detail
+}
 
 ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& workerContext)
 {
@@ -341,7 +341,7 @@ public:
         return ExecutionResult::AllFinished;
     }
 };
-} /// namespace detail
+}
 
 void QueryManager::poisonWorkers()
 {
@@ -367,4 +367,4 @@ void QueryManager::poisonWorkers()
     }
 }
 
-} /// namespace NES::Runtime
+}

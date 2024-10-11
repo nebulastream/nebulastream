@@ -59,4 +59,4 @@ std::mutex& File::getFileMutex()
     return fileMutex;
 }
 
-} /// namespace NES::Compiler
+}

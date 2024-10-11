@@ -126,5 +126,5 @@ public:
 };
 static ErrorHandlerLoader loader;
 
-} /// namespace detail
-} /// namespace NES::Runtime
+}
+}

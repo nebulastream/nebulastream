@@ -22,7 +22,7 @@ namespace NES
 class BinaryOperator;
 using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -57,4 +57,4 @@ private:
 
     BinaryOperatorSortRule();
 };
-} /// namespace NES::Optimizer
+}

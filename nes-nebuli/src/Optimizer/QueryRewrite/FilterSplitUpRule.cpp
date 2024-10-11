@@ -129,4 +129,4 @@ void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
     }
 }
 
-} /// end namespace NES::Optimizer
+}

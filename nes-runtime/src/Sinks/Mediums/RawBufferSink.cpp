@@ -116,4 +116,4 @@ bool RawBufferSink::writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerC
     return true;
 }
 
-} /// namespace NES
+}

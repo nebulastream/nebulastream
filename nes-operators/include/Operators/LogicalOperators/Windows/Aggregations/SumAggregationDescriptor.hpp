@@ -51,4 +51,4 @@ private:
     explicit SumAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
     SumAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
-} /// namespace NES::Windowing
+}

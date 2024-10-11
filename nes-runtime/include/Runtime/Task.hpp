@@ -100,4 +100,4 @@ private:
     uint64_t inputTupleCount = 0;
 };
 static_assert(sizeof(Task) == 64);
-} /// namespace NES::Runtime
+}

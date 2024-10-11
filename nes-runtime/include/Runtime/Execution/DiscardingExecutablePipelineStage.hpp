@@ -30,4 +30,4 @@ public:
     ExecutionResult execute(
         Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
 };
-} /// namespace NES::Runtime::Execution
+}

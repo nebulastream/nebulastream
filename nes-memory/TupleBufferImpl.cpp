@@ -366,5 +366,5 @@ bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& co
 
     return true;
 }
-} /// namespace detail
-} /// namespace NES::Runtime
+}
+}

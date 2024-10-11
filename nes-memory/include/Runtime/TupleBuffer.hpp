@@ -37,7 +37,7 @@ namespace detail
 {
 class BufferControlBlock;
 class MemorySegment;
-} /// namespace detail
+}
 
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
@@ -269,4 +269,4 @@ T* allocateWithin(TupleBuffer& buffer)
     return ptr;
 };
 
-} /// namespace NES::Runtime
+}

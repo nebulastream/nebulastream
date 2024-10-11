@@ -109,4 +109,4 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(YAML::Node& yamlCo
     return LogicalSourceType::create(logicalSourceName, schemaType);
 }
 
-} /// namespace NES::Configurations
+}

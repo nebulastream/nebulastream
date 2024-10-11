@@ -45,4 +45,4 @@ OperatorPtr PhysicalSlicePreAggregationOperator::copy()
     return create(id, inputSchema, outputSchema, windowDefinition);
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

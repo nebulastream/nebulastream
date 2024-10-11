@@ -74,7 +74,8 @@ bool endsWith(const std::string& fullString, const std::string& ending)
     {
         /// get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    } /// if full string is smaller than the ending automatically return false
+    }
+    /// if full string is smaller than the ending automatically return false
     return false;
 }
 
@@ -185,4 +186,4 @@ std::string_view trimChar(std::string_view in, char trimFor)
     return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
 
-} /// namespace NES::Util
+}

@@ -28,7 +28,7 @@ namespace NES
 {
 static constexpr auto H3_SEED = 42;
 static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
-} /// namespace NES
+}
 
 namespace NES::QueryCompilation
 {
@@ -52,7 +52,7 @@ constexpr Out to_underlying(E e) noexcept
     return static_cast<Out>(e);
 }
 
-} /// namespace NES::QueryCompilation
+}
 
 namespace NES::Runtime::Execution
 {
@@ -80,7 +80,7 @@ public:
     const SequenceData seqNumber;
     const OriginId originId;
 };
-} /// namespace NES::Runtime::Execution
+}
 
 namespace NES::Util
 {
@@ -134,7 +134,7 @@ struct SplitFunctionHelper<std::string>
     static constexpr auto FUNCTION = [](std::string_view x) { return std::string(x); };
 };
 
-} /// namespace detail
+}
 
 /// Checks if a string ends with a given string.
 bool endsWith(const std::string& fullString, const std::string& ending);

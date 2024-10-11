@@ -214,4 +214,4 @@ std::string OperatorPipeline::toString() const
         predecessorsStr,
         decomposedQueryPlan->toString());
 }
-} /// namespace NES::QueryCompilation
+}

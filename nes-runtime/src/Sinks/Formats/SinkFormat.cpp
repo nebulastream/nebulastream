@@ -56,4 +56,4 @@ void SinkFormat::setAddTimestamp(bool addTimestamp)
 {
     this->addTimestamp = addTimestamp;
 }
-} /// namespace NES
+}

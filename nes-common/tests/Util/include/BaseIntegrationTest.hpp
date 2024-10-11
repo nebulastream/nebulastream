@@ -65,4 +65,4 @@ private:
     std::atomic<bool> setUpCalled{false};
     std::atomic<bool> tearDownCalled{false};
 };
-} /// namespace NES::Testing
+}

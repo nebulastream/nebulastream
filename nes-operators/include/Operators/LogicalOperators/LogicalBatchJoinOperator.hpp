@@ -48,4 +48,4 @@ private:
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-} /// namespace NES::Experimental
+}

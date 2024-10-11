@@ -39,4 +39,4 @@ bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other)
     return NES::Util::instanceOf<PrintSinkDescriptor>(other);
 }
 
-} /// namespace NES
+}

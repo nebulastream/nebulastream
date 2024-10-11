@@ -27,4 +27,4 @@ class LanguageCompiler;
 class JITCompiler;
 class ExternalAPI;
 
-} /// namespace NES::Compiler
+}

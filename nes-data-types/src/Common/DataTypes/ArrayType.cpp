@@ -39,4 +39,4 @@ std::string ArrayType::toString()
     return "ArrayType";
 }
 
-} /// namespace NES
+}

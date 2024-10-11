@@ -24,4 +24,4 @@ NautilusOperatorLoweringPlugin::lower(const PhysicalOperators::PhysicalOperatorP
     return {};
 }
 
-} /// namespace NES::QueryCompilation
+}

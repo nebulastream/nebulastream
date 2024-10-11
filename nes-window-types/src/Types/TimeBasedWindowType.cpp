@@ -62,4 +62,4 @@ TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const
     return timeCharacteristic;
 }
 
-} /// namespace NES::Windowing
+}

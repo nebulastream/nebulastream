@@ -61,4 +61,4 @@ OperatorPtr PhysicalSinkOperator::copy()
     return result;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

@@ -58,4 +58,4 @@ private:
     std::string soAbsolutePath;
 };
 
-} /// namespace NES::Compiler
+}

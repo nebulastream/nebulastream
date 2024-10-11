@@ -65,4 +65,4 @@ public:
 protected:
     explicit NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other);
 };
-} /// namespace NES
+}

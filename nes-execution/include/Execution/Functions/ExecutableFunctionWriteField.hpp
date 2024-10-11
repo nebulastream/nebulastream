@@ -33,4 +33,4 @@ private:
     const Nautilus::Record::RecordFieldIdentifier field;
     const std::unique_ptr<Function> childFunction;
 };
-} /// namespace NES::Runtime::Execution::Functions
+}

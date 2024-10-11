@@ -47,4 +47,4 @@ public:
      */
     virtual size_t getStorageSize() const = 0;
 };
-} /// namespace NES::Runtime
+}

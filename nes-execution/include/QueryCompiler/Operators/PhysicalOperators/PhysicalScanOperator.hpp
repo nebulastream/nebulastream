@@ -47,4 +47,4 @@ public:
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

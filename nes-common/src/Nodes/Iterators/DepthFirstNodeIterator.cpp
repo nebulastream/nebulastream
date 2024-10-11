@@ -71,4 +71,4 @@ DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++()
     }
     return *this;
 }
-} /// namespace NES
+}

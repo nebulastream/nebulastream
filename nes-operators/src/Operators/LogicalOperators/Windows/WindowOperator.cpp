@@ -38,4 +38,4 @@ void WindowOperator::setOriginId(OriginId originId)
     windowDefinition->setOriginId(originId);
 }
 
-} /// namespace NES
+}

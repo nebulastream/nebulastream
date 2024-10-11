@@ -67,4 +67,4 @@ void* SharedLibrary::getInvocableFunctionPtr(const std::string& mangeldSymbolNam
     return symbol;
 }
 
-} /// namespace NES::Compiler
+}

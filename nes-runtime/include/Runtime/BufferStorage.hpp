@@ -53,4 +53,4 @@ private:
 
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
-} /// namespace NES::Runtime
+}

@@ -52,4 +52,4 @@ public:
     virtual ~DataSinkProvider() = default;
 };
 using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
-} /// namespace NES::QueryCompilation
+}

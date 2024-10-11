@@ -37,4 +37,4 @@ public:
     std::vector<std::string> const values;
 };
 
-} /// namespace NES
+}

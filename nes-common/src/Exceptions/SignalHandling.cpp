@@ -120,4 +120,4 @@ void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener)
         }
     }
 }
-} /// namespace NES::Exceptions
+}

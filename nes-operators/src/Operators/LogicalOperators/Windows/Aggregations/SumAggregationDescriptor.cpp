@@ -93,4 +93,4 @@ DataTypePtr SumAggregationDescriptor::getFinalAggregateStamp()
     return onField->getStamp();
 }
 
-} /// namespace NES::Windowing
+}

@@ -47,4 +47,4 @@ public:
 
     virtual ~StreamSliceInterface() = default;
 };
-} /// namespace NES::Runtime::Execution
+}

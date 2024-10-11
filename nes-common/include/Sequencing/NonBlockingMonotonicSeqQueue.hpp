@@ -311,4 +311,4 @@ private:
     std::atomic<SequenceNumber> currentSeq;
 };
 
-} /// namespace NES::Sequencing
+}

@@ -38,4 +38,4 @@ private:
     Operators::OperatorPtr rootOperator;
 };
 
-} /// namespace NES::Runtime::Execution
+}

@@ -51,4 +51,4 @@ private:
     std::string logicalSourceName;
     SchemaPtr schema;
 };
-} /// namespace NES
+}

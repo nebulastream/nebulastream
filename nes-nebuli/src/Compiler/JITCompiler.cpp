@@ -86,4 +86,4 @@ JITCompiler::~JITCompiler()
     NES_DEBUG("~JITCompiler");
 }
 
-} /// namespace NES::Compiler
+}

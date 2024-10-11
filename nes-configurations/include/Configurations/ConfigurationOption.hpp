@@ -217,4 +217,4 @@ using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
-} /// namespace NES::Configurations
+}

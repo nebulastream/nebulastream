@@ -254,4 +254,4 @@ NES::NodeFunctionPtr RedundancyEliminationRule::conjunctionDisjunctionSimplifica
     return predicate;
 }
 
-} /// namespace NES::Optimizer
+}

@@ -20,4 +20,4 @@ namespace NES
 {
 std::string collectAndPrintStacktrace();
 std::string collectStacktrace();
-} /// namespace NES
+}

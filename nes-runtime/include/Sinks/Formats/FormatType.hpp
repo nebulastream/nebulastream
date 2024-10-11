@@ -26,4 +26,4 @@ enum class FormatTypes : uint8_t
     JSON_FORMAT,
     NES_FORMAT
 };
-} /// namespace NES
+}

@@ -37,4 +37,4 @@ private:
     const std::string message;
 };
 
-} /// namespace NES
+}

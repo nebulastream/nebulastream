@@ -114,4 +114,4 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createWatermarkAssignerOperator(
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, id);
 }
 
-} /// namespace NES
+}

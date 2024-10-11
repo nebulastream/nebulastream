@@ -67,7 +67,7 @@ public:
 private:
     uint64_t srcCnt;
 };
-} /// namespace detail
+}
 
 class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper
 {
@@ -89,4 +89,4 @@ private:
     std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
-} /// namespace NES::Testing
+}

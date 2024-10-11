@@ -55,4 +55,4 @@ private:
     CompilationCachePtr compilationCache;
 };
 
-} /// namespace NES::Compiler
+}

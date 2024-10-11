@@ -95,4 +95,4 @@ public:
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
-} /// namespace NES
+}

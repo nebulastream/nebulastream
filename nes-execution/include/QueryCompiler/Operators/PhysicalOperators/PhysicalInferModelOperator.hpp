@@ -59,4 +59,4 @@ protected:
     const std::vector<NodeFunctionPtr> inputFields;
     const std::vector<NodeFunctionPtr> outputFields;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

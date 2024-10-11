@@ -70,4 +70,4 @@ private:
     const uint64_t windowSlide;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

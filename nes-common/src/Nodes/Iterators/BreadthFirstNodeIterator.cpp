@@ -70,4 +70,4 @@ BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator
     }
     return *this;
 }
-} /// namespace NES
+}

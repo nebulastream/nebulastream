@@ -27,4 +27,4 @@ bool NonZeroValidation::isValid(const std::string& parameter) const
     }
     return true;
 }
-} /// namespace NES::Configurations
+}

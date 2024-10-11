@@ -65,4 +65,4 @@ public:
     double const upperBound;
 };
 
-} /// namespace NES
+}

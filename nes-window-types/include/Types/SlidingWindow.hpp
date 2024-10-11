@@ -49,4 +49,4 @@ private:
     const TimeMeasure slide;
 };
 
-} /// namespace NES::Windowing
+}

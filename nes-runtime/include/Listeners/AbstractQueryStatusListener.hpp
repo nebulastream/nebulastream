@@ -30,4 +30,4 @@ struct AbstractQueryStatusListener
 
     virtual bool logQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus Status) = 0;
 };
-} /// namespace NES
+}

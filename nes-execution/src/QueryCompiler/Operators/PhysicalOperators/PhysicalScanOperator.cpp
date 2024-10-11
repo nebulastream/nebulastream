@@ -48,4 +48,4 @@ OperatorPtr PhysicalScanOperator::copy()
     return result;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

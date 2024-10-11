@@ -47,4 +47,4 @@ std::string ExecutablePipelineStage::getCodeAsString()
     return "";
 };
 
-} /// namespace NES::Runtime::Execution
+}

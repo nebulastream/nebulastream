@@ -88,4 +88,4 @@ std::string FileSinkDescriptor::getSinkFormatAsString() const
     return sinkFormat;
 }
 
-} /// namespace NES
+}

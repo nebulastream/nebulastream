@@ -22,4 +22,4 @@ namespace NES::QueryCompilation::PhysicalOperators
 class AbstractScanOperator
 {
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

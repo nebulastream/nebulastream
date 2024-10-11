@@ -32,4 +32,4 @@ protected:
     std::shared_ptr<QueryCompilerOptions> options;
 };
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
-} /// namespace NES::QueryCompilation
+}

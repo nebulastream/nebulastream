@@ -290,4 +290,4 @@ std::string Operator::toString() const
     return out.str();
 }
 
-} /// namespace NES
+}

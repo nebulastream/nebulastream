@@ -484,4 +484,4 @@ SchemaPtr Schema::updateSourceName(const std::string& srcName) const
     return copy();
 }
 
-} /// namespace NES
+}

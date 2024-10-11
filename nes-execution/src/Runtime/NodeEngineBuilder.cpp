@@ -59,4 +59,4 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryManager), std::move(queryLog));
 }
 
-} ///namespace NES::Runtime
+}

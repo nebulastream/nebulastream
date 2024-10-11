@@ -66,4 +66,4 @@ Runtime::Execution::ExecutablePipelineStagePtr PhysicalExternalOperator::getExec
     return executablePipelineStage;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

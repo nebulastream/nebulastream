@@ -38,4 +38,4 @@ public:
     std::string toString() const override;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

@@ -70,4 +70,4 @@ private:
     const uint64_t milliSeconds;
 };
 
-} /// namespace NES::Windowing
+}

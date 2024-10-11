@@ -92,4 +92,4 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
     }
     return std::nullopt;
 }
-} /// namespace NES::Runtime
+}

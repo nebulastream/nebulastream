@@ -254,5 +254,5 @@ private:
     TaggedPointer<BufferControlBlock> controlBlock{nullptr};
 };
 
-} /// namespace detail
-} /// namespace NES::Memory
+}
+}

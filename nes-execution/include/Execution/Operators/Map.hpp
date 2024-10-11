@@ -36,4 +36,4 @@ private:
     const std::unique_ptr<Runtime::Execution::Functions::Function> mapFunction;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

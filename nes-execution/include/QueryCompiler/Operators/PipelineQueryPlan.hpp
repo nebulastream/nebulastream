@@ -46,4 +46,4 @@ private:
     std::vector<OperatorPipelinePtr> pipelines;
 };
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
-} /// namespace NES::QueryCompilation
+}

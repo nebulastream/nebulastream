@@ -41,4 +41,4 @@ bool SourceCode::operator!=(const SourceCode& rhs) const
     return !(rhs == *this);
 }
 
-} /// namespace NES::Compiler
+}

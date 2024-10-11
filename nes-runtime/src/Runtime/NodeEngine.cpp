@@ -63,4 +63,4 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType type)
     }
 }
 
-} /// namespace NES::Runtime
+}

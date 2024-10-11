@@ -40,15 +40,15 @@ namespace Source
 {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-} /// namespace Source
+}
 
 namespace UDF
 {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-} /// namespace UDF
+}
 
-} /// namespace Catalogs
+}
 
 namespace Optimizer
 {

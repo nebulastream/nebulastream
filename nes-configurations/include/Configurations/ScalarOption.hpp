@@ -222,4 +222,4 @@ using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
 
-} /// namespace NES::Configurations
+}

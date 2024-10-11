@@ -28,4 +28,4 @@ bool ArrayValue::isEquals(ValueTypePtr other) const noexcept
     return dataType->equals(other->dataType) && values == std::dynamic_pointer_cast<ArrayValue>(other)->values;
 }
 
-} /// namespace NES
+}

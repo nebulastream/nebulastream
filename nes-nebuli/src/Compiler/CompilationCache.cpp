@@ -44,4 +44,4 @@ CompilationResult CompilationCache::get(const SourceCode& code)
     std::lock_guard<std::recursive_mutex> lk(mutex);
     return compilationReuseMap.find(code)->second;
 }
-} /// namespace NES::Compiler
+}

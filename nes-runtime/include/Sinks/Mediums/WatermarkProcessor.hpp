@@ -74,4 +74,4 @@ private:
         transactionLog;
 };
 
-} /// namespace NES::Windowing
+}

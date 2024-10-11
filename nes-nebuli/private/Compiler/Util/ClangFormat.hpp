@@ -40,4 +40,4 @@ private:
     std::mutex clangFormatMutex;
 };
 
-} /// namespace NES::Compiler
+}

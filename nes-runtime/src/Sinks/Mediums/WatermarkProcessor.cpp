@@ -53,4 +53,4 @@ bool WatermarkProcessor::isWatermarkSynchronized() const
     return transactionLog.empty();
 }
 
-} /// namespace NES::Windowing
+}

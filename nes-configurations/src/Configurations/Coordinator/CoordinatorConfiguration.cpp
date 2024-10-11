@@ -66,4 +66,4 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
     return config;
 }
 
-} /// namespace NES::Configurations
+}

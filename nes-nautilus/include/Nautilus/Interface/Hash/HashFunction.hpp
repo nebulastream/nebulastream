@@ -56,4 +56,4 @@ protected:
      */
     virtual HashValue calculate(HashValue& hash, VarVal& value) = 0;
 };
-} /// namespace NES::Nautilus::Interface
+}

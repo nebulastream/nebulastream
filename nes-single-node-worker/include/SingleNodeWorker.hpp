@@ -89,4 +89,4 @@ public:
     /// Summary sturcture for query.
     [[nodiscard]] std::optional<Runtime::QuerySummary> getQuerySummary(QueryId queryId) const;
 };
-} /// namespace NES
+}

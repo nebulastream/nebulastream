@@ -49,4 +49,4 @@ void ClangFormat::formatFile(std::shared_ptr<File> file)
     pclose(res);
 }
 
-} /// namespace NES::Compiler
+}

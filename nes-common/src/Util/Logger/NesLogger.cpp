@@ -164,7 +164,7 @@ struct LoggerHolder
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 
-} /// namespace detail
+}
 
 namespace Logger
 {

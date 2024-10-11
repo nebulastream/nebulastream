@@ -23,7 +23,7 @@ using QueryPtr = std::shared_ptr<Query>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-} /// namespace NES
+}
 
 namespace NES::Compiler
 {
@@ -58,4 +58,4 @@ private:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
 };
 
-} /// namespace NES
+}

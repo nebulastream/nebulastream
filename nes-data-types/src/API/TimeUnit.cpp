@@ -60,4 +60,4 @@ TimeUnit TimeUnit::Days()
     return TimeUnit(1000 * 60 * 60 * 24);
 }
 
-} /// namespace NES::Windowing
+}

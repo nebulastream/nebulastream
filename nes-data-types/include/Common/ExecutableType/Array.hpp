@@ -428,7 +428,7 @@ Array(std::array<J, size>&&) -> Array<J, size>;
 /// c-style array
 template <typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
-} /// namespace NES::ExecutableTypes
+}
 
 /**
  * Specialize the std::hash for NES Array data type
@@ -461,4 +461,4 @@ struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::strin
         return fmt::format_to(ctx.out(), "{}", executable_type_array);
     }
 };
-} ///namespace fmt
+}

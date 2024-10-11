@@ -50,7 +50,7 @@ namespace API
 {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-} /// namespace API
+}
 
 namespace WindowOperatorBuilder
 {
@@ -58,7 +58,7 @@ namespace WindowOperatorBuilder
 class WindowedQuery;
 class KeyedWindowedQuery;
 
-} /// namespace WindowOperatorBuilder
+}
 namespace Windowing
 {
 class WindowType;
@@ -69,7 +69,7 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-} /// namespace Windowing
+}
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
@@ -125,7 +125,7 @@ private:
     NodeFunctionPtr joinFunctions;
 };
 
-} ///namespace JoinOperatorBuilder
+}
 
 /**
 * @brief BatchJoinOperatorBuilder.
@@ -160,7 +160,7 @@ private:
     Query& originalQuery;
 };
 
-} ///namespace Experimental::BatchJoinOperatorBuilder
+}
 
 namespace CEPOperatorBuilder
 {
@@ -268,7 +268,7 @@ private:
      */
 std::string keyAssignment(std::string keyName);
 
-} ///namespace CEPOperatorBuilder
+}
 
 /**
  * User interface to create stream processing queryIdAndCatalogEntryMapping.
@@ -516,4 +516,4 @@ private:
 
 using QueryPtr = std::shared_ptr<Query>;
 
-} /// namespace NES
+}

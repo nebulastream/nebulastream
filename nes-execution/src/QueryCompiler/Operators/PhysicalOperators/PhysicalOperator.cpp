@@ -29,4 +29,4 @@ std::string PhysicalOperator::toString() const
     return out.str();
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

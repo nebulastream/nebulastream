@@ -170,4 +170,4 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(QueryTestParam{"qOneSourceCSVAndOneSourceTCPWithFilter", 1, 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
-} /// namespace NES::Testing
+}

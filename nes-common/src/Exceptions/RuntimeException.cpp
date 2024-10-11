@@ -73,4 +73,4 @@ const char* RuntimeException::what() const noexcept
     return errorMessage.c_str();
 }
 
-} /// namespace NES::Exceptions
+}

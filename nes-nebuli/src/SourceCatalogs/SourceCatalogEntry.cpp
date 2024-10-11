@@ -49,4 +49,4 @@ std::string SourceCatalogEntry::toString()
     ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
     return ss.str();
 }
-} /// namespace NES::Catalogs::Source
+}

@@ -193,4 +193,4 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     return CompilationResult(sharedLibrary, std::move(timer));
 }
 
-} /// namespace NES::Compiler
+}

@@ -73,4 +73,4 @@ private:
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
 };
 
-} /// namespace NES
+}

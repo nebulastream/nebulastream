@@ -51,4 +51,4 @@ public:
 
     OperatorPtr copy() override;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

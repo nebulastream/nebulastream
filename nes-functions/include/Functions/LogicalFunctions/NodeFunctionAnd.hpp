@@ -44,4 +44,4 @@ public:
 private:
     explicit NodeFunctionAnd(NodeFunctionAnd* other);
 };
-} /// namespace NES
+}

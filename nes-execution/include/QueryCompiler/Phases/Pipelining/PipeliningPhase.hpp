@@ -27,4 +27,4 @@ public:
     virtual ~PipeliningPhase() = default;
 };
 using PipeliningPhasePtr = std::shared_ptr<PipeliningPhase>;
-} /// namespace NES::QueryCompilation
+}

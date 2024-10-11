@@ -35,4 +35,4 @@ public:
 private:
     std::string message;
 };
-} /// namespace NES::Exceptions
+}

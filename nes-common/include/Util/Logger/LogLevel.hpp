@@ -58,4 +58,4 @@ constexpr uint64_t getLogLevel(const LogLevel value)
     return static_cast<std::underlying_type_t<LogLevel>>(value);
 }
 
-} /// namespace NES
+}

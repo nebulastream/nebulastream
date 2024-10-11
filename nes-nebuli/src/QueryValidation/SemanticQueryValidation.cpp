@@ -204,4 +204,4 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         }
     }
 }
-} /// namespace NES::Optimizer
+}

@@ -44,4 +44,4 @@ private:
     Memory::TupleBuffer buffer;
     FormatTypes sinkFormatType;
 };
-} /// namespace NES
+}

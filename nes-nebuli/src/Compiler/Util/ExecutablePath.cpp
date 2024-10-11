@@ -171,7 +171,7 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
     }
     return currentPath;
 }
-} /// namespace detail
+}
 
 #if __APPLE__
 #    include <mach-o/dyld.h>
@@ -326,4 +326,4 @@ std::filesystem::path getClangPath()
     throw CompilerException("Path to clang executable not found");
 }
 
-} /// namespace NES::Compiler::ExecutablePath
+}

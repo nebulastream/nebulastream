@@ -84,4 +84,4 @@ std::string Configurations::WrapOption<Type, Factory>::toString()
     return "";
 }
 
-} /// namespace NES::Configurations
+}

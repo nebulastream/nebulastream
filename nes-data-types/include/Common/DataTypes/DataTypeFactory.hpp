@@ -304,4 +304,4 @@ public:
     static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
-} /// namespace NES
+}

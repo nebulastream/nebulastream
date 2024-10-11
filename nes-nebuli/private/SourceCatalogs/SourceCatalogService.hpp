@@ -37,7 +37,7 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
-} /// namespace Catalogs::Source
+}
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical sources.
@@ -136,4 +136,4 @@ private:
     std::mutex sourceCatalogMutex;
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-} /// namespace NES
+}

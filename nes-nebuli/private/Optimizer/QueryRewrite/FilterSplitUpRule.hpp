@@ -24,7 +24,7 @@ using NodePtr = std::shared_ptr<Node>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -60,4 +60,4 @@ private:
     void splitUpFilters(LogicalFilterOperatorPtr filterOperator);
 };
 
-} /// namespace NES::Optimizer
+}

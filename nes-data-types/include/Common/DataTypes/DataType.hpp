@@ -60,4 +60,4 @@ public:
     virtual std::string toString() = 0;
 };
 
-} /// namespace NES
+}

@@ -144,4 +144,4 @@ public:
 
     static LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
 };
-} /// namespace NES
+}

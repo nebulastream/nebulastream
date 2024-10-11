@@ -167,4 +167,4 @@ FunctionItem::operator NodeFunctionPtr()
     return function;
 }
 
-} /// namespace NES
+}

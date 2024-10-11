@@ -98,4 +98,4 @@ std::string Iterator::serializeTupleAsJson()
     return jsonObject.dump();
 }
 
-} /// namespace NES
+}

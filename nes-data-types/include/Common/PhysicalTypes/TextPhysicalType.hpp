@@ -43,4 +43,4 @@ public:
     [[nodiscard]] std::string toString() const noexcept override;
 };
 
-} /// namespace NES
+}

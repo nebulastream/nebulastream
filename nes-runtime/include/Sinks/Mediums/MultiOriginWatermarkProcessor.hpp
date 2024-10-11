@@ -81,4 +81,4 @@ private:
     std::map<OriginId, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
 using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
-} /// namespace NES::Windowing
+}

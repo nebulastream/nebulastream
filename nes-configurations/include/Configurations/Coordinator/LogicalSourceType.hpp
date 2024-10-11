@@ -45,4 +45,4 @@ private:
     SchemaTypePtr schemaType;
 };
 
-} /// namespace NES::Configurations
+}
