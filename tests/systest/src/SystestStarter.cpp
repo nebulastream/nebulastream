@@ -124,10 +124,10 @@ public:
 namespace NES
 {
 
-auto getTestGroups(const std::vector<std::filesystem::path> &testFiles)
+auto getTestGroups(const std::vector<std::filesystem::path>& testFiles)
 {
     std::unordered_map<std::string, std::unordered_set<std::string>> groups;
-    for (const auto &testFile : testFiles)
+    for (const auto& testFile : testFiles)
     {
         std::ifstream file(testFile);
         std::string line;
@@ -138,17 +138,19 @@ auto getTestGroups(const std::vector<std::filesystem::path> &testFiles)
             {
                 if (line.starts_with("# groups:"))
                 {
-                    std::string groupsStr = line.substr(9); // Remove "# groups: "
+                    std::string groupsStr = line.substr(9);
                     groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), '['), groupsStr.end());
                     groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), ']'), groupsStr.end());
                     std::istringstream iss(groupsStr);
                     std::string group;
                     while (std::getline(iss, group, ','))
                     {
+                        group.erase(std::remove_if(group.begin(), group.end(), ::isspace), group.end());
                         if (groups.contains(group))
                         {
                             groups[group].insert(testFile);
-                        } else
+                        }
+                        else
                         {
                             groups.insert({group, {testFile}});
                         }
@@ -162,12 +164,57 @@ auto getTestGroups(const std::vector<std::filesystem::path> &testFiles)
     return groups;
 }
 
+bool isInGroup(const std::filesystem::path& testFile, const std::string& expectedGroup)
+{
+    std::ifstream file(testFile);
+    std::string line;
+
+    if (file.is_open())
+    {
+        while (std::getline(file, line))
+        {
+            if (line.starts_with("# groups:"))
+            {
+                std::string groupsStr = line.substr(9);
+                groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), '['), groupsStr.end());
+                groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), ']'), groupsStr.end());
+                std::istringstream iss(groupsStr);
+                std::string group;
+                while (std::getline(iss, group, ','))
+                {
+                    group.erase(std::remove_if(group.begin(), group.end(), ::isspace), group.end());
+                    if (expectedGroup == group)
+                    {
+                        return true;
+                    }
+                }
+                break;
+            }
+        }
+        file.close();
+    }
+    return false;
+}
+
 auto discoverTestFiles(const Configuration::SystestConfiguration& config)
 {
     std::vector<std::filesystem::path> testFiles;
-    if (!config.directlySpecifiedTestsFiles.getValue().empty())
+    if (not config.directlySpecifiedTestsFiles.getValue().empty())
     {
         testFiles.emplace_back(config.directlySpecifiedTestsFiles.getValue());
+    }
+    else if (not config.testGroup.getValue().empty())
+    {
+        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
+        auto testFileExtension = config.testFileExtension.getValue();
+        auto groupname = config.testGroup.getValue();
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == testFileExtension && isInGroup(entry, groupname))
+            {
+                testFiles.push_back(canonical(entry.path()));
+            }
+        }
     }
     else
     {
@@ -177,7 +224,7 @@ auto discoverTestFiles(const Configuration::SystestConfiguration& config)
         {
             if (entry.is_regular_file() && entry.path().extension() == testFileExtension)
             {
-                testFiles.push_back( canonical(entry.path()));
+                testFiles.push_back(canonical(entry.path()));
             }
         }
     }
@@ -190,10 +237,11 @@ void printTestList(const Configuration::SystestConfiguration& config)
     if (testFiles.empty())
     {
         std::cout << "No matching test files found\n";
-    } else
+    }
+    else
     {
         std::cout << "Discovered Test Files:\n";
-        for (const auto &testFile : testFiles)
+        for (const auto& testFile : testFiles)
         {
             std::cout << "\t" << testFile.filename().string() << "\tfile://" << testFile.string() << "\n";
         }
@@ -202,10 +250,10 @@ void printTestList(const Configuration::SystestConfiguration& config)
         if (not testGroups.empty())
         {
             std::cout << "\nDiscovered Test Groups:\n";
-            for (const auto &testGroup : testGroups)
+            for (const auto& testGroup : testGroups)
             {
                 std::cout << "\t" << testGroup.first << "\n";
-                for (const auto &filename : testGroup.second)
+                for (const auto& filename : testGroup.second)
                 {
                     std::cout << "\t\tfile://" << filename << "\n";
                 }
@@ -227,6 +275,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     program.add_argument("-t", "--testLocation")
         .help("directly specified test file, e.g., fliter.test or a directory to discover test files in. Default: " TEST_DISCOVER_DIR);
+    program.add_argument("-g", "--group").help("run a specific test group");
 
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
 
@@ -238,8 +287,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/tests/result/");
 
-    program.add_argument("-s", "--server")
-        .help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
+    program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
     program.add_argument("--shuffle").flag().help("run queries in random order");
     program.add_argument("-n", "--numberConcurrentQueries").help("number of concurrent queries").default_value(6).scan<'i', int>();
@@ -271,6 +319,21 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
             std::exit(1);
         }
     }
+
+    if (program.is_used("-g"))
+    {
+        auto testFiles = discoverTestFiles(config);
+        auto testGroups = getTestGroups(testFiles);
+        auto group = program.get<std::string>("-g");
+        group.erase(std::remove_if(group.begin(), group.end(), ::isspace), group.end());
+        if (testGroups.find(group) == testGroups.end())
+        {
+            NES_FATAL_ERROR("Could not find tests in group {}.", group);
+            std::exit(1);
+        }
+        config.testGroup = group;
+    }
+
     if (program.is_used("--shuffle"))
     {
         config.randomQueryOrder = true;
@@ -283,12 +346,12 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     if (program.is_used("-n"))
     {
-        config.numberComcurrentQueries = program.get<int>("-n");
+        config.numberConcurrentQueries = program.get<int>("-n");
     }
 
     if (program.is_used("--sequential"))
     {
-        config.numberComcurrentQueries = 1;
+        config.numberConcurrentQueries = 1;
     }
 
     if (program.is_used("--cacheDir"))
@@ -322,11 +385,13 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     {
         printTestList(config);
         std::exit(0);
-    } else if (program.is_used("--help"))
+    }
+    else if (program.is_used("--help"))
     {
         std::cout << program << std::endl;
         std::exit(0);
-    } else if (program.is_used("--cache"))
+    }
+    else if (program.is_used("--cache"))
     {
         com = Command::cache;
     }
@@ -368,20 +433,25 @@ struct QueryToTest
 
 void clearCacheDir(const std::filesystem::path& cacheDir)
 {
-    for (const auto& entry : std::filesystem::directory_iterator(cacheDir)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".pb") {
+    for (const auto& entry : std::filesystem::directory_iterator(cacheDir))
+    {
+        if (entry.is_regular_file() && entry.path().extension() == ".pb")
+        {
             std::filesystem::remove(entry.path());
         }
     }
 }
 
-auto getMatchingTestFiles(const std::string& cacheDir, const std::string& testname) {
+auto getMatchingTestFiles(const std::string& cacheDir, const std::string& testname)
+{
     std::pair<std::vector<std::filesystem::path>, std::vector<uint64_t>> matchingFiles;
     std::regex pattern(testname + R"_(_(\d+)\.pb)_");
-    for (const auto& entry : std::filesystem::directory_iterator(cacheDir)) {
+    for (const auto& entry : std::filesystem::directory_iterator(cacheDir))
+    {
         std::smatch match;
         std::string filename = entry.path().filename().string();
-        if (entry.is_regular_file() && std::regex_match(filename, match, pattern)) {
+        if (entry.is_regular_file() && std::regex_match(filename, match, pattern))
+        {
             uint64_t digit = std::stoull(match[1].str());
             matchingFiles.first.emplace_back(entry.path());
             matchingFiles.second.emplace_back(digit);
@@ -416,20 +486,25 @@ int main(int argc, const char** argv)
 
                 std::vector<DecomposedQueryPlanPtr> loadedPlans{};
                 auto cacheDir = config.cacheDir.getValue();
-                if(config.useCachedQueries.getValue())
+                if (config.useCachedQueries.getValue())
                 {
                     auto cacheFiles = getMatchingTestFiles(cacheDir, testname);
                     auto serializedPlans = loadFromCacheFiles(cacheFiles.first);
                     INVARIANT(cacheFiles.second.size() == serializedPlans.size(), "expect equal sizes")
-                    for(uint64_t i = 0; i < serializedPlans.size(); i++)
+                    for (uint64_t i = 0; i < serializedPlans.size(); i++)
                     {
-                        queries.emplace_back(DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&serializedPlans[i]), testname, testFile, cacheFiles.second[i]);
+                        queries.emplace_back(
+                            DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&serializedPlans[i]),
+                            testname,
+                            testFile,
+                            cacheFiles.second[i]);
                     }
-                } else
+                }
+                else
                 {
                     loadedPlans = loadFromSLTFile(testFile, resultDir, testname);
                     uint64_t queryNrInFile = 0;
-                    for (const auto &plan : loadedPlans)
+                    for (const auto& plan : loadedPlans)
                     {
                         queries.emplace_back(plan, testname, testFile, queryNrInFile++);
                     }
@@ -443,7 +518,7 @@ int main(int argc, const char** argv)
                 std::shuffle(queries.begin(), queries.end(), g);
             }
 
-            auto capacity = config.numberComcurrentQueries.getValue();
+            auto capacity = config.numberConcurrentQueries.getValue();
             folly::MPMCQueue<QueryToTest> runningQueries(capacity);
 
             if (not config.grpcAddressUri.getValue().empty()) /// case: send requests over grpc to different single-node-worker
@@ -454,27 +529,28 @@ int main(int argc, const char** argv)
                 std::atomic<size_t> runningQueryCount{0};
                 std::atomic finishedProducing{false};
 
-                std::thread producer([&]()
-                {
-                    for (auto& query : queries)
+                std::thread producer(
+                    [&]()
                     {
-                        while (runningQueryCount.load() >= capacity)
+                        for (auto& query : queries)
                         {
-                            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                            while (runningQueryCount.load() >= capacity)
+                            {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                            }
+
+                            SerializableDecomposedQueryPlan serialized;
+                            DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
+
+                            auto queryId = client.registerQuery(query.queryPlan);
+                            client.start(queryId);
+                            query.queryId = queryId;
+
+                            runningQueries.blockingWrite(std::move(query));
+                            runningQueryCount.fetch_add(1);
                         }
-
-                        SerializableDecomposedQueryPlan serialized;
-                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
-
-                        auto queryId = client.registerQuery(query.queryPlan);
-                        client.start(queryId);
-                        query.queryId = queryId;
-
-                        runningQueries.blockingWrite(std::move(query));
-                        runningQueryCount.fetch_add(1);
-                    }
-                    finishedProducing = true;
-                });
+                        finishedProducing = true;
+                    });
 
                 while (not finishedProducing)
                 {
@@ -499,27 +575,28 @@ int main(int argc, const char** argv)
                 std::atomic<size_t> queriesToResultCheck{0};
                 std::atomic finishedProducing{false};
 
-                std::thread producer([&]()
-                {
-                    for (auto& query : queries)
+                std::thread producer(
+                    [&]()
                     {
-                        while (queriesToResultCheck.load() >= capacity)
+                        for (auto& query : queries)
                         {
-                            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                            while (queriesToResultCheck.load() >= capacity)
+                            {
+                                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                            }
+
+                            SerializableDecomposedQueryPlan serialized;
+                            DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
+
+                            auto queryId = worker.registerQuery(query.queryPlan);
+                            worker.startQuery(queryId);
+                            query.queryId = queryId.getRawValue();
+
+                            runningQueries.blockingWrite(std::move(query));
+                            queriesToResultCheck.fetch_add(1);
                         }
-
-                        SerializableDecomposedQueryPlan serialized;
-                        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(query.queryPlan, &serialized);
-
-                        auto queryId = worker.registerQuery(query.queryPlan);
-                        worker.startQuery(queryId);
-                        query.queryId = queryId.getRawValue();
-
-                        runningQueries.blockingWrite(std::move(query));
-                        queriesToResultCheck.fetch_add(1);
-                    }
-                    finishedProducing = true;
-                });
+                        finishedProducing = true;
+                    });
 
                 while (not finishedProducing or queriesToResultCheck.load() > 0)
                 {

@@ -22,7 +22,8 @@
 
 namespace NES
 {
-std::vector<DecomposedQueryPlanPtr>  loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
+std::vector<DecomposedQueryPlanPtr>
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
 {
     std::vector<DecomposedQueryPlanPtr> plans{};
     CLI::QueryConfig config{};
@@ -132,17 +133,18 @@ std::vector<DecomposedQueryPlanPtr>  loadFromSLTFile(const std::filesystem::path
     return plans;
 }
 
-std::vector<SerializableDecomposedQueryPlan>  loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles)
+std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles)
 {
     std::vector<SerializableDecomposedQueryPlan> plans{};
-    for (const auto &cacheFile : cacheFiles)
+    for (const auto& cacheFile : cacheFiles)
     {
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cacheFile);
         if (!file || !queryPlan.ParseFromIstream(&file))
         {
             NES_ERROR("Could not load protobuffer file: {}", cacheFile);
-        } else
+        }
+        else
         {
             std::cout << "loaded cached file:" << cacheFile << "\n";
             plans.emplace_back(queryPlan);
