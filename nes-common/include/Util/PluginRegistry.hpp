@@ -37,14 +37,14 @@ public:
     [[nodiscard]] bool contains(const typename Registrar::Key& key) const { return registryImpl.contains(key); }
 
     template <typename... Args>
-    [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args&&... args) const
+    [[nodiscard]] std::optional<typename Registrar::Type> create(const typename Registrar::Key& key, Args&&... args) const
     {
         if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
         {
             /// Call the creator function of the plugin.
             return plugin->second(std::forward<Args>(args)...);
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const

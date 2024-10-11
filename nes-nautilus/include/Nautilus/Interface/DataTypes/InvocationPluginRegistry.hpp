@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/DataTypes/InvocationPluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/PluginRegistry.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Nautilus
 {
 
@@ -29,7 +30,10 @@ public:
         {
             for (const auto& registeredName : getRegisteredNames())
             {
-                plugins.emplace_back(create(registeredName));
+                if (auto invocationPlugin = create(registeredName))
+                    plugins.emplace_back(std::move(invocationPlugin.value()));
+                else
+                    throw UnknownInvocationType(fmt::format("Invocation plugin of type: {} not registered.", registeredName));
             }
         }
         return plugins;
@@ -40,7 +44,7 @@ private:
     std::vector<std::unique_ptr<InvocationPlugin>> plugins;
 };
 
-} /// namespace NES::Nautilus
+}
 
 #define INCLUDED_FROM_INVOCATION_PLUGIN_REGISTRY
 #include <Nautilus/Interface/DataTypes/GeneratedInvocationPluginRegistrar.hpp>

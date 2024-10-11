@@ -216,7 +216,8 @@ std::shared_ptr<Expression> ExpressionProvider::lowerFunctionExpression(const st
     {
         arguments.emplace_back(lowerExpression(arg));
     }
-    auto functionProvider = ExecutableFunctionRegistry::instance().create(expressionNode->getFunctionName(), arguments);
-    return functionProvider;
+    if (auto functionProvider = ExecutableFunctionRegistry::instance().create(expressionNode->getFunctionName(), arguments))
+        return std::move(functionProvider.value());
+    throw UnknownExpressionType(fmt::format("Expression plugin of type: {} not registered.", expressionNode->getFunctionName()));
 }
-} /// namespace NES::QueryCompilation
+}

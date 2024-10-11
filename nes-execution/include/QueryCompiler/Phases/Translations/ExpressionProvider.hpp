@@ -36,8 +36,9 @@ public:
     Runtime::Execution::Expressions::ExpressionPtr lowerExpression(const ExpressionNodePtr& expressionNode);
 
 private:
-    Runtime::Execution::Expressions::ExpressionPtr lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode);
-    Runtime::Execution::Expressions::ExpressionPtr
+    std::shared_ptr<Runtime::Execution::Expressions::Expression>
+    lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode);
+    std::shared_ptr<Runtime::Execution::Expressions::Expression>
     lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& expressionNode);
 };
 

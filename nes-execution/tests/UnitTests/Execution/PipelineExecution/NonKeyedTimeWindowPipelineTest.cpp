@@ -65,7 +65,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam());
+        provider = ExecutablePipelineProviderRegistry::instance().create(GetParam()).value();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 };
