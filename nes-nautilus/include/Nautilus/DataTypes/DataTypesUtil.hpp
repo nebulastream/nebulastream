@@ -13,13 +13,29 @@
 */
 
 #pragma once
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
-#include <nautilus/val.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/val_ptr.hpp>
 
 namespace NES::Nautilus::Util
 {
+
+#define getMember(objectReference, classType, member, dataType) (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>(__builtin_offsetof(classType, member)))))
+
+/* TODO fix template
+template <typename T, typename ClassType>
+nautilus::val<T> getMember(const nautilus::val<int8_t*>& objectReference, T ClassType::*member)
+{
+    return static_cast<nautilus::val<T>>(
+        *static_cast<nautilus::val<T*>>(objectReference + nautilus::val<uint64_t>(__builtin_offsetof(ClassType, member))));
+}
+*/
+
+template <typename T>
+void writeValueToMemRef(nautilus::val<int8_t*> memRef, nautilus::val<T> value)
+{
+    *static_cast<nautilus::val<T*>>(memRef) = value;
+}
 
 template <typename T>
 nautilus::val<T> readValueFromMemRef(nautilus::val<int8_t*> memRef)
