@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -46,7 +46,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan)
     /// We only need to infere the schema for sources once, before specifying the source.
     if (isFirstExecuteCall)
     {
-        auto sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
+        auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
         if (sourceOperators.empty())
         {
             throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
@@ -83,7 +83,7 @@ void TypeInferencePhase::performTypeInferenceSinks(QueryId queryId, const std::v
 }
 
 
-void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<OperatorLogicalSourceName>>& sourceOperators)
+void TypeInferencePhase::performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators)
 {
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)

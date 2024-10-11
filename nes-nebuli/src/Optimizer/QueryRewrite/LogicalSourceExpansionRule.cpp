@@ -16,7 +16,7 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -45,7 +45,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("LogicalSourceExpansionRule: Plan before\n{}", queryPlan->toString());
 
-    std::vector<std::shared_ptr<OperatorLogicalSourceName>> sourceOperators = queryPlan->getSourceOperators<OperatorLogicalSourceName>();
+    std::vector<std::shared_ptr<SourceNameLogicalOperator>> sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
 
     /// Compute a map of all blocking operators in the query plan
     std::unordered_map<OperatorId, OperatorPtr> blockingOperators;
@@ -119,7 +119,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
             NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            auto duplicateSourceOperator = NES::Util::as<OperatorLogicalSourceName>(sourceOperator->duplicate());
+            auto duplicateSourceOperator = NES::Util::as<SourceNameLogicalOperator>(sourceOperator->duplicate());
             /// Add to the source operator the id of the physical node where we have to pin the operator
             /// NOTE: This is required at the time of placement to know where the source operator is pinned
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
@@ -181,7 +181,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             auto sourceDescriptor = sourceCatalogEntry->getPhysicalSource()->getSourceDescriptor();
             sourceDescriptor->schema = duplicateSourceOperator->getSchema();
             auto operatorSourceLogicalDescriptor
-                = std::make_shared<OperatorLogicalSourceDescriptor>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
+                = std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), duplicateSourceOperator->getId());
             duplicateSourceOperator->replace(operatorSourceLogicalDescriptor, duplicateSourceOperator);
         }
     }

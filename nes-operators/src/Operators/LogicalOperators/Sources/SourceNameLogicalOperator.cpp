@@ -16,19 +16,19 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceName.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-OperatorLogicalSourceName::OperatorLogicalSourceName(std::string logicalSourceName, OperatorId id, OriginId originId)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, OperatorId id, OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-OperatorLogicalSourceName::OperatorLogicalSourceName(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
+SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, SchemaPtr schema, OperatorId id, OriginId originId)
     : Operator(id)
     , LogicalUnaryOperator(id)
     , OriginIdAssignmentOperator(id, originId)
@@ -37,23 +37,23 @@ OperatorLogicalSourceName::OperatorLogicalSourceName(std::string logicalSourceNa
 {
 }
 
-bool OperatorLogicalSourceName::isIdentical(NodePtr const& rhs) const
+bool SourceNameLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && NES::Util::as<OperatorLogicalSourceName>(rhs)->getId() == id;
+    return equal(rhs) && NES::Util::as<SourceNameLogicalOperator>(rhs)->getId() == id;
 }
 
-bool OperatorLogicalSourceName::equal(NodePtr const& rhs) const
+bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
 {
-    if (Util::instanceOf<OperatorLogicalSourceName>(rhs))
+    if (Util::instanceOf<SourceNameLogicalOperator>(rhs))
     {
-        auto rhsAsOperatorLogicalSourceName = Util::as<OperatorLogicalSourceName>(rhs);
-        return this->getSchema() == rhsAsOperatorLogicalSourceName->getSchema()
-            && this->getLogicalSourceName() == rhsAsOperatorLogicalSourceName->getLogicalSourceName();
+        auto rhsAsSourceNameLogicalOperator = Util::as<SourceNameLogicalOperator>(rhs);
+        return this->getSchema() == rhsAsSourceNameLogicalOperator->getSchema()
+            && this->getLogicalSourceName() == rhsAsSourceNameLogicalOperator->getLogicalSourceName();
     }
     return false;
 }
 
-std::string OperatorLogicalSourceName::toString() const
+std::string SourceNameLogicalOperator::toString() const
 {
     std::stringstream ss;
     ss << "LogicalSource(opId: " << id << ": originid: " << originId << ")";
@@ -61,14 +61,14 @@ std::string OperatorLogicalSourceName::toString() const
     return ss.str();
 }
 
-bool OperatorLogicalSourceName::inferSchema()
+bool SourceNameLogicalOperator::inferSchema()
 {
     inputSchema = schema;
     outputSchema = schema;
     return true;
 }
 
-OperatorPtr OperatorLogicalSourceName::copy()
+OperatorPtr SourceNameLogicalOperator::copy()
 {
     auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id, originId);
     copy->setInputSchema(inputSchema);
@@ -83,30 +83,30 @@ OperatorPtr OperatorLogicalSourceName::copy()
     return copy;
 }
 
-void OperatorLogicalSourceName::inferStringSignature()
+void SourceNameLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for OperatorLogicalSourceName.");
+    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceNameLogicalOperator.");
 }
 
-void OperatorLogicalSourceName::inferInputOrigins()
+void SourceNameLogicalOperator::inferInputOrigins()
 {
     /// Data sources have no input origins.
 }
 
-std::vector<OriginId> OperatorLogicalSourceName::getOutputOriginIds() const
+std::vector<OriginId> SourceNameLogicalOperator::getOutputOriginIds() const
 {
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
-std::string OperatorLogicalSourceName::getLogicalSourceName() const
+std::string SourceNameLogicalOperator::getLogicalSourceName() const
 {
     return logicalSourceName;
 }
-std::shared_ptr<Schema> OperatorLogicalSourceName::getSchema() const
+std::shared_ptr<Schema> SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
-void OperatorLogicalSourceName::setSchema(std::shared_ptr<Schema> schema)
+void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
 {
     this->schema = std::move(schema);
 }

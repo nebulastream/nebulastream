@@ -14,7 +14,7 @@
 
 #include <utility>
 
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -159,7 +159,7 @@ void DefaultPipeliningPhase::processSource(
     const PipelineQueryPlanPtr& pipelinePlan,
     std::map<OperatorPtr, OperatorPipelinePtr>&,
     OperatorPipelinePtr currentPipeline,
-    const std::shared_ptr<OperatorLogicalSourceDescriptor>& sourceOperator)
+    const std::shared_ptr<SourceDescriptorLogicalOperator>& sourceOperator)
 {
     /// Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators())
@@ -181,13 +181,13 @@ void DefaultPipeliningPhase::process(
 {
     PRECONDITION(
         Util::instanceOf<PhysicalOperators::PhysicalOperator>(currentOperator)
-            or Util::instanceOf<OperatorLogicalSourceDescriptor>(currentOperator),
+            or Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator),
         "expected a PhysicalOperator, but got " + currentOperator->toString());
 
     /// Depending on the operator we apply different pipelining strategies
-    if (Util::instanceOf<OperatorLogicalSourceDescriptor>(currentOperator))
+    if (Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator))
     {
-        processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, Util::as<OperatorLogicalSourceDescriptor>(currentOperator));
+        processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, Util::as<SourceDescriptorLogicalOperator>(currentOperator));
     }
     else if (Util::instanceOf<PhysicalOperators::PhysicalSinkOperator>(currentOperator))
     {

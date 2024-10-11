@@ -14,7 +14,7 @@
 
 #include <variant>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -113,7 +113,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
     /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sourceOperator = NES::Util::as<OperatorLogicalSourceDescriptor>(rootOperator);
+    auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
     auto sourceDescriptor = sourceOperator->getSourceDescriptorRef();
     INVARIANT(&sourceDescriptor, "Logical source name lookup is not supported");
 

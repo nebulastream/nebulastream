@@ -34,8 +34,8 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-class OperatorLogicalSourceName;
-using OperatorLogicalSourceNamePtr = std::shared_ptr<OperatorLogicalSourceName>;
+class SourceNameLogicalOperator;
+using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;

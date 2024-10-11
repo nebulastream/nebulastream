@@ -14,7 +14,7 @@
 #pragma once
 
 #include <map>
-#include <Operators/LogicalOperators/Sources/OperatorLogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 
@@ -53,7 +53,7 @@ protected:
         const PipelineQueryPlanPtr& pipelinePlan,
         std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
         OperatorPipelinePtr currentPipeline,
-        const std::shared_ptr<OperatorLogicalSourceDescriptor>& sourceOperator);
+        const std::shared_ptr<SourceDescriptorLogicalOperator>& sourceOperator);
     void processMultiplex(
         const PipelineQueryPlanPtr& pipelinePlan,
         std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
