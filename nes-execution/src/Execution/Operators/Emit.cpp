@@ -28,10 +28,10 @@ namespace NES::Runtime::Execution::Operators
 class EmitState : public OperatorState
 {
 public:
-    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) { }
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getBuffer()) { }
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
-    nautilus::val<int8_t*> bufferReference;
+    nautilus::val<int8_t*> bufferMemoryArea;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
@@ -53,7 +53,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
-        emitState->bufferReference = emitState->resultBuffer.getBuffer();
+        emitState->bufferMemoryArea = emitState->resultBuffer.getBuffer();
         emitState->outputIndex = 0_u64;
     }
 
@@ -61,7 +61,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
      * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
      * to the brim, i.e., have no more space left.
      */
-    memoryProvider->writeRecord(emitState->outputIndex, emitState->bufferReference, record);
+    memoryProvider->writeRecord(emitState->outputIndex, emitState->resultBuffer, record);
     emitState->outputIndex = emitState->outputIndex + 1;
 }
 

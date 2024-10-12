@@ -36,19 +36,21 @@ ExecutionResult CompiledExecutablePipelineStage::execute(
     Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
-    pipelineFunctionCompiled(
-        reinterpret_cast<int8_t*>(&workerContext),
-        reinterpret_cast<int8_t*>(&pipelineExecutionContext),
-        reinterpret_cast<int8_t*>(std::addressof(inputTupleBuffer)));
+    pipelineFunctionCompiled(&workerContext, &pipelineExecutionContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
-nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> CompiledExecutablePipelineStage::compilePipeline()
+nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
+CompiledExecutablePipelineStage::compilePipeline()
 {
     Timer timer("compiler");
     timer.start();
-    const std::function compiledFunction
-        = [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef)
+
+    /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
+    /// Additionally, we can NOT use const or const references for the parameters of the lambda function
+    const std::function compiledFunction = [&](nautilus::val<WorkerContext*> workerContext,
+                                               nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                                               nautilus::val<Memory::TupleBuffer*> recordBufferRef)
     {
         auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);

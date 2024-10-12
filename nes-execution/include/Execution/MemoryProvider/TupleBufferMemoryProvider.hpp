@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -36,37 +37,32 @@ public:
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
-    /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
+    /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be read
-    virtual Nautilus::Record readRecord(
-        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-        nautilus::val<int8_t*>& bufferAddress,
+    virtual Record readRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const
         = 0;
 
     /// Writes a record from the given bufferAddress and recordIndex.
-    /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
+    /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
-    virtual void writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const
-        = 0;
+    virtual void writeRecord(nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const = 0;
 
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
-    /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
+    /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static Nautilus::VarVal
-    loadValue(const PhysicalTypePtr& type, const nautilus::val<int8_t*>& bufferReference, nautilus::val<int8_t*>& fieldReference);
+    static VarVal loadValue(const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference);
 
     /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
-    /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
+    /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static Nautilus::VarVal storeValue(
-        const NES::PhysicalTypePtr& type,
-        const nautilus::val<int8_t*>& bufferReference,
-        nautilus::val<int8_t*>& fieldReference,
-        Nautilus::VarVal value);
+    static VarVal
+    storeValue(const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value);
 
-    [[nodiscard]] static bool includesField(
-        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex);
+    [[nodiscard]] static bool
+    includesField(const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex);
 };
 
-} /// namespace NES::Runtime::Execution::MemoryProvider
+}

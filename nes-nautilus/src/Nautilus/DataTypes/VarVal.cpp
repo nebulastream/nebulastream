@@ -44,7 +44,7 @@ VarVal& VarVal::operator=(VarVal&& other)
     return *this;
 }
 
-void VarVal::writeToMemory(nautilus::val<int8_t*>& memRef) const
+void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
 {
     std::visit(
         [&]<typename ValType>(const ValType& val)

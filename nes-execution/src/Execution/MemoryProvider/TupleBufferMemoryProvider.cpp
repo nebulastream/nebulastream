@@ -31,15 +31,14 @@
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex)
+const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
-    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto childBuffer = tb.loadChildBuffer(childIndex);
+    auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
     return childBuffer.getBuffer<uint8_t>();
 }
 
 Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
-    const PhysicalTypePtr& type, const nautilus::val<int8_t*>& bufferReference, nautilus::val<int8_t*>& fieldReference)
+    const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     if (type->isBasicType())
     {
@@ -48,7 +47,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     else if (type->isTextType())
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
+        const auto textPtr = nautilus::invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
         return Nautilus::VariableSizedData(textPtr);
     }
     else
@@ -58,17 +57,16 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     }
 }
 
-uint32_t storeAssociatedTextValueProxy(void* tupleBuffer, const int8_t* textValue)
+uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, const int8_t* textValue)
 {
-    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
-    return tb.storeChildBuffer(textBuffer);
+    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
+    return tupleBuffer->storeChildBuffer(textBuffer);
 }
 
 Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
     const NES::PhysicalTypePtr& type,
-    const nautilus::val<int8_t*>& bufferReference,
-    nautilus::val<int8_t*>& fieldReference,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<int8_t*>& fieldReference,
     Nautilus::VarVal value)
 {
     if (type->isBasicType())
@@ -79,7 +77,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
     else if (type->isTextType())
     {
         const auto textValue = value.cast<Nautilus::VariableSizedData>();
-        const auto childIndex = nautilus::invoke(storeAssociatedTextValueProxy, bufferReference, textValue.getReference());
+        const auto childIndex = nautilus::invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;
