@@ -114,9 +114,10 @@ void TupleBuffer::release() noexcept
     ptr = nullptr;
     size = 0;
 }
-uint8_t* TupleBuffer::getBuffer() noexcept
+
+int8_t* TupleBuffer::getBuffer() noexcept
 {
-    return getBuffer<uint8_t>();
+    return getBuffer<int8_t>();
 }
 uint32_t TupleBuffer::getReferenceCounter() const noexcept
 {

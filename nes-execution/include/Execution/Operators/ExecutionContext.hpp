@@ -13,6 +13,10 @@
 */
 
 #pragma once
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/WorkerContext.hpp>
+
+
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -41,7 +45,7 @@ class OperatorState;
 class ExecutionContext final
 {
 public:
-    ExecutionContext(const nautilus::val<int8_t*>& workerContext, const nautilus::val<int8_t*>& pipelineContext);
+    ExecutionContext(const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext);
 
     /**
      * @brief Set local operator state that keeps state in a single pipeline invocation.
@@ -51,15 +55,15 @@ public:
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    nautilus::val<int8_t*> getGlobalOperatorHandler(uint64_t handlerIndex);
+    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex);
     nautilus::val<WorkerThreadId> getWorkerThreadId();
-    nautilus::val<int8_t*> allocateBuffer();
+    nautilus::val<Memory::TupleBuffer*> allocateBuffer();
 
     /// Emit a record buffer to the next pipeline or sink
-    void emitBuffer(const RecordBuffer& rb);
+    void emitBuffer(const RecordBuffer& buffer);
 
-    const nautilus::val<int8_t*>& getPipelineContext() const;
-    const nautilus::val<int8_t*>& getWorkerContext() const;
+    const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
+    const nautilus::val<WorkerContext*>& getWorkerContext() const;
 
     /// Returns the current origin id. This is set in the scan.
     const nautilus::val<uint64_t>& getOriginId() const;
@@ -68,7 +72,7 @@ public:
 
     /// Returns the current origin id. This is set in the scan.
     const nautilus::val<uint64_t>& getWatermarkTs() const;
-    void setWatermarkTs(nautilus::val<uint64_t> uint64_t);
+    void setWatermarkTs(const nautilus::val<uint64_t>& uint64_t);
 
     /// Returns the current sequence number id. This is set in the scan.
     const nautilus::val<uint64_t>& getSequenceNumber() const;
@@ -96,8 +100,8 @@ public:
 
 private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    nautilus::val<int8_t*> workerContext;
-    nautilus::val<int8_t*> pipelineContext;
+    nautilus::val<WorkerContext*> workerContext;
+    nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<uint64_t> origin;
     nautilus::val<uint64_t> watermarkTs;
     nautilus::val<uint64_t> currentTs;

@@ -49,9 +49,9 @@ public:
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
-    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> compilePipeline();
+    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> compilePipeline();
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> pipelineFunctionCompiled;
+    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> pipelineFunctionCompiled;
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
