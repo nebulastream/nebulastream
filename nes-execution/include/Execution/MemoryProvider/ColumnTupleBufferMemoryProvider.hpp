@@ -28,17 +28,16 @@ public:
 
     Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record readRecord(
-        const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-        nautilus::val<int8_t*>& bufferAddress,
+    Record readRecord(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
-    void
-    writeRecord(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void writeRecord(nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const override;
 
 private:
     nautilus::val<int8_t*>
-    calculateFieldAddress(nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
+    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
     std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
 };
 

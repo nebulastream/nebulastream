@@ -188,7 +188,7 @@ public:
 
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.
-    void writeToMemory(nautilus::val<int8_t*>& memRef) const;
+    void writeToMemory(const nautilus::val<int8_t*>& memRef) const;
 
 protected:
     /// ReSharper disable once CppNonExplicitConvertingConstructor

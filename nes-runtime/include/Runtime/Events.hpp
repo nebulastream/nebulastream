@@ -71,7 +71,7 @@ public:
      */
     explicit CustomEventWrapper(Memory::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) { }
 
-    uint8_t* data() override { return buffer.getBuffer(); }
+    uint8_t* data() override { return buffer.getBuffer<uint8_t>(); }
 
     template <typename T>
     T* data()

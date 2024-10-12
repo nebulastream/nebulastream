@@ -45,10 +45,9 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     child->open(ctx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
-    auto bufferAddress = recordBuffer.getBuffer();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = memoryProvider->readRecord(projections, bufferAddress, i);
+        auto record = memoryProvider->readRecord(projections, recordBuffer, i);
         child->execute(ctx, record);
     }
 }
