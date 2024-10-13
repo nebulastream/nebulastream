@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.186](https://github.com/nebulastream/nebulastream/tree/v0.6.186) (2024-10-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.185...v0.6.186)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add support for Ubuntu 24.04 LTS [\#4972](https://github.com/nebulastream/nebulastream/issues/4972)
+
 ## [v0.6.185](https://github.com/nebulastream/nebulastream/tree/v0.6.185) (2024-10-10)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.184...v0.6.185)
