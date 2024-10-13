@@ -64,13 +64,6 @@ public:
     static SchemaPtr create(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
-     * @brief Factory method to create a new SchemaPtr from schema type.
-     * @return SchemaPtr
-     */
-    static SchemaPtr
-    createFromSchemaType(const Configurations::SchemaTypePtr& schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
-
-    /**
      * @brief Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR
      * in every field name of the schema.
      * @param srcName
@@ -260,16 +253,6 @@ public:
     std::vector<AttributeFieldPtr> fields;
 
 private:
-    /**
-     * Return the appropriate NES type from yaml string configuration. Ignores
-     * fieldLength if it doesn't make sense, errors length is missing and type
-     * is string.
-     * @param fieldType the type of the schema field from yaml
-     * @param fieldLength the length of the field from yaml
-     * @return the appropriate DataTypePtr
-     */
-    static DataTypePtr stringToFieldType(const std::string& fieldType, const std::string& fieldLength);
-
     MemoryLayoutType layoutType;
 };
 
