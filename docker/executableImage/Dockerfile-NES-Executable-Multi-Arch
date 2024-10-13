@@ -1,4 +1,5 @@
-FROM ubuntu:22.04 AS execimg
+ARG TAG=22.04
+FROM ubuntu:${TAG} AS execimg
 ARG TARGETARCH
 COPY ./nes-$TARGETARCH.deb nes.deb
 
@@ -13,7 +14,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     libnuma-dev  \
     libdwarf-dev  \
     libdwarf1 \
-    libomp-12-dev \
+    libomp-dev \
     binutils-dev \
     libunwind-dev  \
     libdw-dev iproute2  \

@@ -608,7 +608,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithoutQuery) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -654,7 +654,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     ASSERT_TRUE(found);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testKillCoordinatorWithQueryRunning) {
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(

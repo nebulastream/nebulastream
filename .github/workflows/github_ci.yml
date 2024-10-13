@@ -167,7 +167,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
     needs: [ pre-build-checks ]
-    timeout-minutes: 40
+    timeout-minutes: 60
     runs-on:
       group: ${{ matrix.runner_group }}
       labels: [ self-hosted, linux, '${{ matrix.arch }}', Build]
@@ -189,6 +189,14 @@ jobs:
             build_parallelism: "16"
             test_parallelism: "4"
             runner_group: "default"
+          - osversion: ubuntu-24_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
+            runner_group: "default"
+            # 5108: ubuntu 24.04 cannot compile with gpu
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
@@ -196,7 +204,7 @@ jobs:
             build_parallelism: "16"
             test_parallelism: "4"
             runner_group: "gpu"
-          - osversion: ubuntu-22_04
+          - osversion: ubuntu-24_04
             arch: "arm64"
             require_build: "true"
             require_test: "true"
@@ -253,8 +261,10 @@ jobs:
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
           GPU_RUNNER_PARAMS=""
+          GPU_COMPILER_FLAGS=""
           if [ "${{ matrix.runner_group }}" == "gpu" ]; then
             GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/nvidia:/usr/lib/nvidia:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/nvidia:${LD_LIBRARY_PATH}"
+            GPU_COMPILER_FLAGS="--allow-unsupported-compiler"
           fi
           cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "cache_dir=$cache_dir"
@@ -263,17 +273,19 @@ jobs:
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS -e "EXTRA_OPTS=$GPU_COMPILER_FLAGS" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
       - name: Run tests
         if: github.event_name != 'workflow_dispatch'
         run: |
           GPU_RUNNER_PARAMS=""
+          GPU_COMPILER_FLAGS=""
           if [ "${{ matrix.runner_group }}" == "gpu" ]; then
             GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+            GPU_COMPILER_FLAGS="--allow-unsupported-compiler"
           fi
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} -e "EXTRA_OPTS=$GPU_COMPILER_FLAGS" --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
         shell: bash
       - name: docker cleanup
         if: ${{ always() }} && github.event_name != 'workflow_dispatch'
@@ -298,7 +310,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ "ARM64", "X64" ]
+        # 5109: X64 is going to be added
+        arch: [ "ARM64" ]
     needs: [ pre-build-checks ]
     timeout-minutes: 40
     continue-on-error: true

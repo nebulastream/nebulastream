@@ -24,6 +24,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "
     set(CMAKE_CUDA_STANDARD 17)
     set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
     set(LIBRARIES ${LIBRARIES} ${LIBRARIES_CUDA})
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -allow-unsupported-compiler")
     message("CUDA dependencies OK")
 else ()
     message(FATAL_ERROR "CUDA plugin is not supported on this platform")
