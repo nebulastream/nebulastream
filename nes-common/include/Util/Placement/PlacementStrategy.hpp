@@ -25,8 +25,5 @@ enum class PlacementStrategy : uint8_t
     IFCOP = 2,
     ILP = 3,
     MlHeuristic = 4,
-    ELEGANT_PERFORMANCE = 5,
-    ELEGANT_ENERGY = 6,
-    ELEGANT_BALANCED = 7
 };
 } /// namespace NES::Optimizer

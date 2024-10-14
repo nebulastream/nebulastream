@@ -18,13 +18,15 @@
 namespace NES::Runtime::Execution
 {
 
+std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider()
+{
+    return std::make_unique<InterpreterPipelineProvider>();
+}
+
 std::unique_ptr<ExecutablePipelineStage>
 InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&)
 {
     return std::make_unique<NautilusExecutablePipelineStage>(physicalOperatorPipeline);
 }
-
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<InterpreterPipelineProvider>
-    interpretationPipelineProvider("PipelineInterpreter");
 
 } /// namespace NES::Runtime::Execution

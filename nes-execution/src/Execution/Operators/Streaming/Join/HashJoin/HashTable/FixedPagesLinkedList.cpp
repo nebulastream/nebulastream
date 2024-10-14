@@ -112,7 +112,7 @@ const std::vector<Nautilus::Interface::FixedPagePtr>& FixedPagesLinkedList::getP
 }
 
 FixedPagesLinkedList::FixedPagesLinkedList(
-    FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt)
+    Memory::FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt)
     : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize), insertInProgress(false)
 {
     NES_ASSERT2_FMT(preAllocPageSizeCnt >= 1, "We need at least one page preallocated");

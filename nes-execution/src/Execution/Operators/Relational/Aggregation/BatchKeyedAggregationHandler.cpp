@@ -14,6 +14,7 @@
 
 #include <utility>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -38,7 +39,7 @@ void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionCo
     auto numberOfKeys = 1000;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++)
     {
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
         threadLocalSliceStores.emplace_back(std::move(hashMap));
     }

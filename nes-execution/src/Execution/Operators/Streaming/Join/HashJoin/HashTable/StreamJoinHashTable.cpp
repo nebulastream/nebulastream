@@ -20,7 +20,11 @@
 namespace NES::Runtime::Execution::Operators
 {
 StreamJoinHashTable::StreamJoinHashTable(
-    size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt)
+    size_t sizeOfRecord,
+    size_t numPartitions,
+    Memory::FixedPagesAllocator& fixedPagesAllocator,
+    size_t pageSize,
+    size_t preAllocPageSizeCnt)
     : mask(numPartitions - 1), numPartitions(numPartitions)
 {
     for (auto i = 0UL; i < numPartitions; ++i)

@@ -930,12 +930,12 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(tcpSourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.instanceOf<const CsvSourceDescriptor>())
+    else if (sourceDescriptor.instanceOf<const CSVSourceDescriptor>())
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
-        auto csvSourceDescriptor = sourceDescriptor.as<const CsvSourceDescriptor>();
+        auto csvSourceDescriptor = sourceDescriptor.as<const CSVSourceDescriptor>();
         /// init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();
         serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
@@ -945,7 +945,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        csvSerializedSourceConfig.set_sourcegatheringinterval(csvSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1027,10 +1026,9 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         sourceConfig->setFilePath(csvSourceConfig->filepath());
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
         sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
-        auto ret = CsvSourceDescriptor::create(schema, sourceConfig);
+        auto ret = CSVSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>())

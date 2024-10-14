@@ -19,13 +19,11 @@ namespace NES
 class DumpHelper;
 namespace Nautilus
 {
-class CompilationOptions;
+struct CompilationOptions;
 }
-} /// namespace NES
+}
 
-#include <vector>
 #include <llvm/IR/Module.h>
-#include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
 
 namespace NES::Nautilus::Backends::MLIR
@@ -44,4 +42,4 @@ public:
     static std::function<llvm::Error(llvm::Module*)>
     getLLVMOptimizerPipeline(const CompilationOptions& options, const DumpHelper& dumpHelper);
 };
-} /// namespace NES::Nautilus::Backends::MLIR
+}

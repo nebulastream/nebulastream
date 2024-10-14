@@ -89,7 +89,7 @@ void RawBufferSink::shutdown()
     outputFile.close();
 }
 
-bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
+bool RawBufferSink::writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
     /// Stop execution if the file could not be opened during setup.
     /// This results in ExecutionResult::Error for the task.

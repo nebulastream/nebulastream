@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <Runtime/BufferManager.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
@@ -92,11 +93,12 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
     IntegrationTestUtil::startQuery(queryId, uut);
+    IntegrationTestUtil::waitForQueryStatus(queryId, Running, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
-    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, bufferManager, 0, "", true);
+    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values

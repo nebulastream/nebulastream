@@ -13,15 +13,15 @@
 */
 
 #include <API/Schema.hpp>
-#include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 #include "Common/DataTypes/DataTypeFactory.hpp"
 #include <Common/ExecutableType/Array.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 #define VAR_SIZED_DATA_TYPES uint16_t, std::string, double, std::string
@@ -33,7 +33,7 @@ using FixedSizedDataTuple = std::tuple<FIXED_SIZED_DATA_TYPES>;
 class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
@@ -46,7 +46,7 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         const auto memoryLayout = GetParam();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
         schema = Schema::create(memoryLayout)
                      ->addField("test$t1", BasicType::UINT16)
                      ->addField("test$t2", BasicType::BOOLEAN)
@@ -69,7 +69,7 @@ public:
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 2);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 2);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     try
@@ -90,7 +90,7 @@ TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmptyAfterSequenceOfPulls)
 {
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 3);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 3);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     auto tupleBuffer3 = bufferManager->getBufferBlocking();
@@ -156,8 +156,8 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestVarSizeData)
     {
         (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
         (*testBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
-        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), bufferManager.get());
-        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), bufferManager.get());
+        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), *bufferManager);
 
         ASSERT_EQ((*testBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
         ASSERT_EQ((*testBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
@@ -202,8 +202,8 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBufferVarSizeData)
     {
         (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
         (*testBufferVarSize)[i]["test$t3"].write<double_t>(i * 42.0);
-        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), bufferManager.get());
-        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), bufferManager.get());
+        (*testBufferVarSize)[i].writeVarSized("test$t2", "" + std::to_string(i) + std::to_string(i), *bufferManager);
+        (*testBufferVarSize)[i].writeVarSized("test$t4", std::to_string(i), *bufferManager);
 
         ASSERT_EQ((*testBufferVarSize)[i]["test$t1"].read<uint16_t>(), i);
         ASSERT_EQ((*testBufferVarSize)[i]["test$t3"].read<double_t>(), i * 42.0);
@@ -337,4 +337,4 @@ INSTANTIATE_TEST_CASE_P(
     TestTupleBufferTest,
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<TestTupleBufferTest::ParamType>& info) { return std::string(magic_enum::enum_name(info.param)); });
-} /// namespace NES::Runtime::MemoryLayouts
+}

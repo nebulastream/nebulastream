@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -25,6 +26,7 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus
@@ -197,7 +199,10 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterCustomTypeInvocationPlugin()
+{
+    return std::make_unique<CustomTypeInvocationPlugin>();
+}
 
 Value<> customValueType()
 {
@@ -224,8 +229,8 @@ Value<> listLengthTest(Value<List>& list)
 
 /*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto list = RawList(10);
     auto listRef = TypedRef<RawList>(list);
@@ -261,8 +266,8 @@ Value<> textTestFunction(Value<Text>& text)
 
 TEST_P(TypeCompilationTest, compileTextFunctionTest)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto textA = Value<Text>("test");
     auto listRef = textA.value->getReference();
@@ -477,8 +482,7 @@ TEST_P(TypeCompilationTest, castFloat)
 INSTANTIATE_TEST_CASE_P(
     testTypeCompilation,
     TypeCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<TypeCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

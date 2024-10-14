@@ -141,14 +141,12 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
         serverThread.join(); /// wait for serverThread to finish
     }
 
-    /// Todo (#166) : stop query might be called to early, leading to no received data.
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
+    IntegrationTestUtil::waitForQueryStatus(queryId, Running, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
-    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, bufferManager, 0, "", true);
+    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values

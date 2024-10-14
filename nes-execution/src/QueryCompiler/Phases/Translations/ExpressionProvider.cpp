@@ -34,6 +34,7 @@
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -43,9 +44,11 @@
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+
 namespace NES::QueryCompilation
 {
 using namespace Runtime::Execution::Expressions;
@@ -136,7 +139,10 @@ std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const Expression
     {
         return std::make_shared<ReadFieldExpression>(fieldAccess->getFieldName());
     }
-    NES_NOT_IMPLEMENTED();
+    else
+    {
+        throw UnknownExpressionType();
+    }
 }
 
 ExpressionPtr ExpressionProvider::lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& constantExpression)
@@ -196,11 +202,11 @@ ExpressionPtr ExpressionProvider::lowerConstantExpression(const std::shared_ptr<
                 return std::make_shared<ConstantBooleanValueExpression>(boolValue);
             };
             default: {
-                NES_NOT_IMPLEMENTED();
+                throw UnknownPhysicalType("the basic type is not supported");
             }
         }
     }
-    NES_NOT_IMPLEMENTED();
+    throw UnknownPhysicalType("type must be a basic types");
 }
 
 std::shared_ptr<Expression> ExpressionProvider::lowerFunctionExpression(const std::shared_ptr<FunctionExpression>& expressionNode)
@@ -210,7 +216,7 @@ std::shared_ptr<Expression> ExpressionProvider::lowerFunctionExpression(const st
     {
         arguments.emplace_back(lowerExpression(arg));
     }
-    auto functionProvider = ExecutableFunctionRegistry::createPlugin(expressionNode->getFunctionName());
-    return functionProvider->create(arguments);
+    auto functionProvider = ExecutableFunctionRegistry::instance().create(expressionNode->getFunctionName(), arguments);
+    return functionProvider;
 }
 } /// namespace NES::QueryCompilation

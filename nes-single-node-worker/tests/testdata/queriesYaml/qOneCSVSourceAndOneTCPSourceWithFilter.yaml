@@ -25,4 +25,3 @@ physical:
       filePath: oneToThirtyOneSingleColumn.csv
       delimiter: ","
       numberOfBuffersToProduce: 1
-      gatheringInterval: 1

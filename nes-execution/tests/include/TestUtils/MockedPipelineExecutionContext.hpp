@@ -27,11 +27,8 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 {
 public:
     explicit MockedPipelineExecutionContext(
-        std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, BufferManagerPtr bufferManager = nullptr);
-    explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
-    explicit MockedPipelineExecutionContext(bool logSeenSeqChunk);
-    explicit MockedPipelineExecutionContext();
-    std::vector<TupleBuffer> buffers;
+        std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
+    std::vector<Memory::TupleBuffer> buffers;
     std::set<SequenceData> seenSeqChunkLastChunk;
 };
 } /// namespace NES::Runtime::Execution

@@ -26,16 +26,15 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 
@@ -46,7 +45,7 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
 {
 public:
     HashJoinMockedPipelineExecutionContext(
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         uint64_t noWorkerThreads,
         OperatorHandlerPtr hashJoinOpHandler,
         PipelineId pipelineId)
@@ -55,18 +54,18 @@ public:
               QueryId(1), /// mock query id
               bufferManager,
               noWorkerThreads,
-              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-              [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
               {hashJoinOpHandler}) {};
 
-    std::vector<Runtime::TupleBuffer> emittedBuffers;
+    std::vector<Memory::TupleBuffer> emittedBuffers;
 };
 
 class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -81,12 +80,11 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bufferManager = std::make_shared<Runtime::BufferManager>();
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -120,19 +118,19 @@ public:
 
         /// Creating the input left and right buffers and the expected output buffer
         auto originId = 0UL;
-        auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
+        auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, *bufferManager, originId++, timeStampFieldLeft);
         auto rightBuffers
-            = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, bufferManager, originId++, timeStampFieldRight);
-        auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, bufferManager, originId++);
+            = Util::createBuffersFromCSVFile(fileNameBuffersRight, rightSchema, *bufferManager, originId++, timeStampFieldRight);
+        auto expectedSinkBuffers = Util::createBuffersFromCSVFile(fileNameBuffersSink, joinSchema, *bufferManager, originId++);
         NES_DEBUG("read file={}", fileNameBuffersSink);
 
         NES_DEBUG("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
         NES_DEBUG("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         /// Creating the scan (for build) and emit operator (for sink)
-        auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
-        auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
-        auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
+        auto memoryLayoutLeft = Memory::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
+        auto memoryLayoutRight = Memory::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
+        auto memoryLayoutJoined = Memory::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
         auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
         auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
@@ -247,7 +245,7 @@ public:
         hashJoinWorks = hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         /// Executing sink buffers
-        std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
+        std::vector buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
         buildEmittedBuffers.insert(
             buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
         for (auto buf : buildEmittedBuffers)
@@ -256,7 +254,7 @@ public:
         }
         hashJoinWorks = hashJoinWorks && (executablePipelineSink->stop(pipelineExecCtxSink) == 0);
 
-        auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, bufferManager);
+        auto resultBuffer = Util::mergeBuffers(pipelineExecCtxSink.emittedBuffers, joinSchema, *bufferManager);
         NES_DEBUG("resultBuffer: \n{}", Util::printTupleBufferAsCSV(resultBuffer, joinSchema));
         NES_DEBUG("expectedSinkBuffer: \n{}", Util::printTupleBufferAsCSV(expectedSinkBuffers[0], joinSchema));
 

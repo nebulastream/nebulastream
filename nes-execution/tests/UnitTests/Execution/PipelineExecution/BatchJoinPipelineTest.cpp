@@ -20,11 +20,12 @@
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -41,8 +42,8 @@ class BatchJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipel
 {
 public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -57,13 +58,12 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup BatchJoinPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -74,11 +74,11 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("k1", BasicType::INT64)->addField("v1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("f1", BasicType::INT64);
-    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+    auto resultMemoryLayout = Memory::MemoryLayouts::RowLayout::create(resultSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -99,8 +99,8 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["k1"].write(+1_s64);
@@ -118,7 +118,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 
     auto joinBuildExecutablePipeline = provider->create(pipeline, options);
     auto joinHandler = std::make_shared<Operators::BatchJoinHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler}, false, bufferManager);
     joinBuildExecutablePipeline->setup(pipeline1Context);
     joinBuildExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     joinBuildExecutablePipeline->stop(pipeline1Context);
@@ -129,8 +129,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     BatchJoinPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

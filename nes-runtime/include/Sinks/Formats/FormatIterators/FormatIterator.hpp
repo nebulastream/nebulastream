@@ -25,7 +25,7 @@ namespace NES
 class FormatIterator
 {
 public:
-    explicit FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes sinkFormatType);
+    explicit FormatIterator(SchemaPtr schema, Memory::TupleBuffer buffer, FormatTypes sinkFormatType);
 
     /**
      * @brief Starts a new iterator with a bufferIndex of 0
@@ -41,7 +41,7 @@ public:
 
 private:
     SchemaPtr schema;
-    Runtime::TupleBuffer buffer;
+    Memory::TupleBuffer buffer;
     FormatTypes sinkFormatType;
 };
 } /// namespace NES

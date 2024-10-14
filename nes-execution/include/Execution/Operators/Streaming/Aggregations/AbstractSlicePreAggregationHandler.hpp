@@ -17,13 +17,9 @@
 #include <tuple>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
-
-namespace NES::Runtime
-{
-class AbstractBufferProvider;
-}
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -82,7 +78,7 @@ protected:
 private:
     void dispatchSliceMergingTasks(
         PipelineExecutionContext& ctx,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        Memory::AbstractBufferProvider& bufferProvider,
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
 };
 } /// namespace NES::Runtime::Execution::Operators

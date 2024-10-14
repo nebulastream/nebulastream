@@ -16,7 +16,6 @@
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/DumpHelper.hpp>
-#include <Util/PluginRegistry.hpp>
 
 namespace NES::Nautilus::Backends
 {
@@ -36,7 +35,5 @@ public:
     compile(std::shared_ptr<IR::IRGraph>, const CompilationOptions& options, const DumpHelper& dumpHelper) = 0;
     virtual ~CompilationBackend() = default;
 };
-
-using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>;
 
 } /// namespace NES::Nautilus::Backends

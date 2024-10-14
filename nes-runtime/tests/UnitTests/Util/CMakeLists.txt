@@ -12,5 +12,3 @@
 
 ### TestTupleBuffer Tests ###
 add_nes_runtime_test(test-tuple-buffer-tests "TestTupleBufferTest.cpp")
-### MMapCircularBuffer Tests ###
-add_nes_runtime_test(mmap-circular-buffer-tests "MMapCircularBufferTest.cpp")

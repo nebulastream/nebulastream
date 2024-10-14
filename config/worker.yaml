@@ -4,24 +4,11 @@
 # Set worker IP or host
 #localWorkerHost: 127.0.0.1
 
-# Set IP address of NES Coordinator to which the NES Worker should connect
-#coordinatorHost: 127.0.0.1
-
-# Set RPC Server port of NES Coordinator to which the NES Worker should connect
-# Needs to be the same as rpcPort in Coordinator
-#coordinatorPort: 4000
-
 # Set RPC server port of NES Worker
 #rpcPort: 3000
 
-# Set the data port of the NES Worker
-#dataPort: 3001
-
-# Set number of computing slots in NES Worker
-#numberOfSlots: 65535
-
 # Set the number of worker threads
-#numWorkerThreads: 1
+#numberOfWorkerThreads: 1
 
 # Number buffers in global buffer pool
 #numberOfBuffersInGlobalBufferManager: 1024
@@ -35,23 +22,8 @@
 # Size of buffer to pass data through the system
 #bufferSizeInBytes: 4096
 
-# Set parentId of NES Worker node
-#parentId: -1
-
 # The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 #logLevel: LOG_DEBUG
-
-# Comma separated list of where to map the sources
-#sourcePinList:
-
-# Comma separated list of where to map the worker
-#workerPinList:
-
-# Enable Numa-Aware execution
-#numaAwareness: false
-
-# Set the number of buffers per epoch
-#numberOfBuffersPerEpoch: 100
 
 # Set the network channel's max number of in-flight buffers before blocking
 #networkSenderHighWatermark: 8
@@ -66,10 +38,6 @@
   # Indicates the OutputBufferAllocationStrategy [ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,
   # |REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]
   #queryCompilerOutputBufferOptimizationLevel: ALL
-
-# set the location of a node if it is a field node (format: "<lat>, <lng>")
-# standard location settings will result in an invalid location and create a node without a location
-#fieldNodeLocationCoordinates: 12.0, 53.0
 
 # ~~~ Physical Stream Configurations ~~~
 
@@ -96,9 +64,6 @@
       # Set number of tuples to produce per buffer
       #numberOfTuplesToProducePerBuffer: 1
       # Set sampling interval of source
-      #sourceGatheringInterval: 1
-      # Set gathering mode between [interval|ingestion|adaptive]
-      #sourceGatheringMode: interval
       # Set input data format
       #inputFormat: JSON
 

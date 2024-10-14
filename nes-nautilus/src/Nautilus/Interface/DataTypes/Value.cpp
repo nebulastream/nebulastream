@@ -12,12 +12,11 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/DataTypes/Any.hpp>
-#include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+#include <Nautilus/Interface/DataTypes/InvocationPluginRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Util/PluginRegistry.hpp>
 
 namespace NES::Nautilus
 {
@@ -33,7 +32,7 @@ Nautilus::Tracing::ValueRef createNextValueReference(Nautilus::IR::Types::StampP
 
 std::optional<Value<>> CastToOp(const Value<>& left, const TypeIdentifier* toType)
 {
-    auto& plugins = InvocationPluginRegistry::getPlugins();
+    auto& plugins = InvocationPluginRegistry::instance().getPlugins();
     for (auto& plugin : plugins)
     {
         if (plugin->IsCastable(left, toType))
@@ -62,10 +61,10 @@ const TraceableType& TraceableType::asTraceableType(const Any& val)
 Value<> evalBinary(
     const Value<>& left,
     const Value<>& right,
-    const std::function<std::optional<Value<>>(std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)>&
+    const std::function<std::optional<Value<>>(const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)>&
         function)
 {
-    auto& plugins = InvocationPluginRegistry::getPlugins();
+    auto& plugins = InvocationPluginRegistry::instance().getPlugins();
     for (auto& plugin : plugins)
     {
         auto result = function(plugin, left, right);
@@ -81,7 +80,7 @@ Value<> evalBinary(
 Value<> evalWithCast(
     const Value<>& left,
     const Value<>& right,
-    const std::function<std::optional<Value<>>(std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)>&
+    const std::function<std::optional<Value<>>(const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)>&
         function)
 {
     if (left.getValue().getTypeIdentifier() != right.value->getTypeIdentifier())
@@ -111,7 +110,7 @@ Value<> AddOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Add(left, right);
             if (result.has_value())
@@ -127,7 +126,7 @@ Value<> SubOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Sub(left, right);
             if (result.has_value())
@@ -143,7 +142,7 @@ Value<> MulOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Mul(left, right);
             if (result.has_value())
@@ -159,7 +158,7 @@ Value<> DivOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Div(left, right);
             if (result.has_value())
@@ -175,7 +174,7 @@ Value<> ModOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Mod(left, right);
             if (result.has_value())
@@ -191,7 +190,7 @@ Value<> BitWiseAndOp(const Value<>& leftExp, const Value<>& rightExp)
     return evalWithCast(
         leftExp,
         rightExp,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->BitWiseAnd(left, right);
             if (result.has_value())
@@ -207,7 +206,7 @@ Value<> BitWiseOrOp(const Value<>& leftExp, const Value<>& rightExp)
     return evalWithCast(
         leftExp,
         rightExp,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->BitWiseOr(left, right);
             if (result.has_value())
@@ -223,7 +222,7 @@ Value<> BitWiseXorOp(const Value<>& leftExp, const Value<>& rightExp)
     return evalWithCast(
         leftExp,
         rightExp,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->BitWiseXor(left, right);
             if (result.has_value())
@@ -239,7 +238,7 @@ Value<> BitWiseLeftShiftOp(const Value<>& leftExp, const Value<>& rightExp)
     return evalWithCast(
         leftExp,
         rightExp,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->BitWiseLeftShift(left, right);
             if (result.has_value())
@@ -256,7 +255,7 @@ Value<> BitWiseRightShiftOp(const Value<>& leftExp, const Value<>& rightExp)
     return evalWithCast(
         leftExp,
         rightExp,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->BitWiseRightShift(left, right);
             if (result.has_value())
@@ -273,7 +272,7 @@ Value<> EqualsOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Equals(left, right);
             if (result.has_value() && left.isTracableType() && right.isTracableType())
@@ -289,7 +288,7 @@ Value<> LessThanOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->LessThan(left, right);
             if (result.has_value())
@@ -305,7 +304,7 @@ Value<> GreaterThanOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->GreaterThan(left, right);
             if (result.has_value())
@@ -321,7 +320,7 @@ Value<> OrOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->Or(left, right);
             if (result.has_value())
@@ -337,7 +336,7 @@ Value<> AndOp(const Value<>& left, const Value<>& right)
     return evalWithCast(
         left,
         right,
-        [](std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
+        [](const std::unique_ptr<InvocationPlugin>& plugin, const Value<>& left, const Value<>& right)
         {
             auto result = plugin->And(left, right);
             if (result.has_value())
@@ -350,7 +349,7 @@ Value<> AndOp(const Value<>& left, const Value<>& right)
 
 Value<> NegateOp(const Value<>& input)
 {
-    auto& plugins = InvocationPluginRegistry::getPlugins();
+    auto& plugins = InvocationPluginRegistry::instance().getPlugins();
     for (auto& plugin : plugins)
     {
         auto result = plugin->Negate(input);
@@ -365,7 +364,7 @@ Value<> NegateOp(const Value<>& input)
 
 Value<> ReadArrayIndexOp(const Value<>& input, Value<UInt32>& index)
 {
-    auto& plugins = InvocationPluginRegistry::getPlugins();
+    auto& plugins = InvocationPluginRegistry::instance().getPlugins();
     for (auto& plugin : plugins)
     {
         auto result = plugin->ReadArrayIndex(input, index);
@@ -379,7 +378,7 @@ Value<> ReadArrayIndexOp(const Value<>& input, Value<UInt32>& index)
 
 void WriteArrayIndexOp(const Value<>& input, Value<UInt32>& index, const Value<>& value)
 {
-    auto& plugins = InvocationPluginRegistry::getPlugins();
+    auto& plugins = InvocationPluginRegistry::instance().getPlugins();
     for (auto& plugin : plugins)
     {
         auto result = plugin->WriteArrayIndex(input, index, value);

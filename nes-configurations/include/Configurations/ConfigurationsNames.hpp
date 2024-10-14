@@ -62,11 +62,10 @@ const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
 const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "numOfRequestExecutorThread";
 const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
-const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
-const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
+const std::string NUMBER_OF_WORKER_THREADS_CONFIG = "numberOfWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string WORKER_CONFIG = "worker";
 const std::string WORKER_CONFIG_PATH = "workerConfigPath";
@@ -96,44 +95,24 @@ const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainme
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
-///Elegant Configurations
-const auto ELEGANT = "elegant"s; /// elegant configurations are initialize with this constant
-const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s; /// accelerate java udfs supplied in Map UDF operator
-const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; /// URL for ELEGANT planner
-const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; /// URL for acceleration service
-const auto TRANSFER_RATE = "transferRate"s; /// Fake transfer rate between two workers
-
 ///Worker Configuration Names
-const std::string WORKER_ID = "workerId";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
-const std::string PARENT_ID_CONFIG = "parentId";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_DUMP_MODE = "queryCompilerDumpMode";
+const std::string QUERY_COMPILER_DUMP_PATH = "queryCompilerDumpPath";
 const std::string QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG = "queryCompilerNautilusBackendConfig";
 const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrategy";
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";
 const std::string QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG = "windowingStrategy";
-const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
-const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
-const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
-const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
-const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
-const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
-/// CUDA config names
-const std::string CUDA_SDK_PATH = "cudaSdkPath";
-
-const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
 ///worker mobility config names
-const std::string MOBILITY_CONFIG_CONFIG = "mobility";
-const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";
 const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
 const std::string LOCATION_BUFFER_SIZE_CONFIG = "locationBufferSize";
 const std::string LOCATION_BUFFER_SAVE_RATE_CONFIG = "locationBufferSaveRate";
@@ -168,14 +147,11 @@ const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
-const std::string SOURCE_GATHERING_INTERVAL_CONFIG = "sourceGatheringInterval";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
-const std::string UDFS_CONFIG = "udfs";
 const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
 const std::string DELIMITER_CONFIG = "delimiter";
-const std::string SOURCE_GATHERING_MODE_CONFIG = "sourceGatheringMode";
 
 const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";
@@ -210,12 +186,6 @@ const std::string DECIDE_MESSAGE_SIZE_CONFIG = "decideMessageSize";
 const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
-
-///Runtime configuration
-const std::string NUMBER_OF_QUEUES = "numberOfQueues";
-const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
-const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
-const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 /// Logical source configurations
 const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";

@@ -15,5 +15,4 @@ add_source_files(nes-operators
         InvalidOperatorStateException.cpp
         SignatureComputationException.cpp
         TypeInferenceException.cpp
-        UDFException.cpp
 )

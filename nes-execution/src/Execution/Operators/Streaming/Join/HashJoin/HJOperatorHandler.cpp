@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer>)
+StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Memory::TupleBuffer>)
 {
     NES_WARNING("Deserialize Slice function is not implemented for HJOperatorHandler.")
     NES_NOT_IMPLEMENTED();
@@ -32,7 +32,7 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
     {
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
             return std::make_shared<HJSliceVarSized>(
-                numberOfWorkerThreads, sliceStart, sliceEnd, leftSchema, rightSchema, bufferManager, pageSize, numPartitions);
+                numberOfWorkerThreads, sliceStart, sliceEnd, leftSchema, rightSchema, bufferProvider, pageSize, numPartitions);
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL:
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:

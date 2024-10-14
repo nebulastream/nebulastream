@@ -22,10 +22,11 @@
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -40,8 +41,8 @@ namespace NES::Runtime::Execution
 class SelectionPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
-    ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    std::unique_ptr<ExecutablePipelineProvider> provider;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -56,13 +57,12 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup SelectionPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -77,7 +77,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -95,8 +95,8 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (int64_t i = 0; i < 100; i++)
     {
         testBuffer[i]["f1"].write(i % 10_s64);
@@ -106,7 +106,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -115,7 +115,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
@@ -126,15 +126,15 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, SchemaPtr schema)
+std::vector<Memory::TupleBuffer> createDataAllSeqNumbersEmitted(Memory::AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
-    std::vector<TupleBuffer> retBuffers;
+    std::vector<Memory::TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        auto buffer = bufferProvider.getBufferBlocking();
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
             testBuffer[i]["f1"].write(i % 10_s64);
@@ -166,7 +166,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -185,9 +185,9 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bufferManager);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(bm, schema))
+    for (auto& buf : createDataAllSeqNumbersEmitted(*bufferManager, schema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -197,7 +197,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     for (const auto& buf : pipelineContext.buffers)
     {
-        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
+        auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
         for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++)
         {
             ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
@@ -218,8 +218,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     SelectionPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

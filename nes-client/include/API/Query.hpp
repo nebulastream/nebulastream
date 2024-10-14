@@ -52,12 +52,6 @@ class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 } /// namespace API
 
-namespace Catalogs::UDF
-{
-class UDFDescriptor;
-using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-} /// namespace Catalogs::UDF
-
 namespace WindowOperatorBuilder
 {
 
@@ -415,20 +409,6 @@ public:
      * @return query.
      */
     Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
-
-    /**
-     * @brief: Create map java udf operator.
-     * @param descriptor java udf descriptor
-     * @return query
-     */
-    Query& mapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor);
-
-    /**
-     * @brief: Create flat map java udf operator.
-     * @param descriptor java udf descriptor
-     * @return query
-     */
-    Query& flatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor);
 
     /**
      * @brief: Map records according to a map expression. An

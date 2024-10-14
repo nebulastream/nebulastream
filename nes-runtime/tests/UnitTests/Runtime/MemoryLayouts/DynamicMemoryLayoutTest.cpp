@@ -13,20 +13,20 @@
 */
 
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayoutField.hpp>
+#include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/ExecutableType/Array.hpp>
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
@@ -39,13 +39,13 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
 
         schema
             = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
-            RowLayoutPtr layout;
+            std::shared_ptr<RowLayout> layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
@@ -54,7 +54,7 @@ public:
         }
         else
         {
-            ColumnLayoutPtr layout;
+            std::shared_ptr<ColumnLayout> layout;
             ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
@@ -120,4 +120,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info)
     { return std::string(magic_enum::enum_name(info.param)); });
-} /// namespace NES::Runtime::MemoryLayouts
+}

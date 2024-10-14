@@ -16,7 +16,6 @@
 #include <variant>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
@@ -54,7 +53,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
     }
 
     /**
@@ -110,7 +109,7 @@ public:
      */
     bool validateJsonIterator(
         SchemaPtr schema,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
         const std::vector<std::vector<JsonKVPair>>& expectedKVPairs)
     {
         /// Get the test tuple buffer and use it to create a json iterator.

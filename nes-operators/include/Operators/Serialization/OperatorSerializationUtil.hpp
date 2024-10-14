@@ -16,10 +16,7 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
 
@@ -36,9 +33,6 @@ class SerializableOperator_WatermarkStrategyDetails;
 class SerializableOperator_LimitDetails;
 class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
-class SerializableOperator_MapJavaUdfDetails;
-class SerializableOperator_FlatMapJavaUdfDetails;
-class SerializableOperator_JavaUdfWindowDetails;
 class SerializableOperator_CEPIterationDetails;
 class SerializableOperator_ProjectionDetails;
 class SerializableOperator_FilterDetails;
@@ -298,44 +292,5 @@ public:
      * @return LogicalUnaryOperator of type InferModel::LogicalInferModelOperator
      */
     static LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
-
-    /**
-     * @brief Serializes a Map or FlatMap Java UDF operator
-     * @param mapJavaUdfOperator
-     * @param serializedOperator serialized instance of the operator
-     * @tparam T The LogicalOperator (either MapJavaUDFLogicalOperator or FlatMapJavaUDFLogicalOperator)
-     * @tparam D The GRPC SerializeOperator details message (either SerializableOperator_MapJavaUdfDetails or SerializableOperator_FlatMapJavaUdfDetails)
-     */
-    template <typename T, typename D>
-    static void serializeJavaUDFOperator(const T& mapJavaUDFOperator, SerializableOperator& serializedOperator);
-
-    /**
-     * @brief deserializes a Map Java UDF operator
-     * @param mapJavaUdfDetails
-     * @return MapJavaUdfLogicalOperatorPtr
-     */
-    static LogicalUnaryOperatorPtr deserializeMapJavaUDFOperator(const SerializableOperator_MapJavaUdfDetails& mapJavaUDFDetails);
-
-    /**
-     * @brief deserializes a FlatMap Java UDF operator
-     * @param flatMapJavaUDFDetails
-     * @return MapJavaUdfLogicalOperatorPtr
-     */
-    static LogicalUnaryOperatorPtr
-    deserializeFlatMapJavaUDFOperator(const SerializableOperator_FlatMapJavaUdfDetails& flatMapJavaUDFDetails);
-
-    /**
-     * @brief deserialize open cl operator
-     * @param openCLLogicalOperator
-     * @param serializedOperator
-     */
-    static void serializeOpenCLOperator(const NES::LogicalOpenCLOperator& openCLLogicalOperator, SerializableOperator& serializedOperator);
-
-    /**
-     * @brief serialize open cl operator
-     * @param openCLDetails
-     * @return LogicalOpenCLOperatorPtr
-     */
-    static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
 };
 } /// namespace NES

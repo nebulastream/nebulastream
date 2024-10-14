@@ -17,6 +17,7 @@
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -54,5 +55,9 @@ Value<> AsinExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AsinExpression>> asinFunction("asin");
+std::unique_ptr<Expression> RegisterAsinExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 1, "The unary asin function should receive one argument");
+    return std::make_unique<AsinExpression>(args[0]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
@@ -178,13 +178,13 @@ public:
            {TPCHTable::Nation, nationSchema},
            {TPCHTable::Region, regionSchema}};
 
-    std::unordered_map<TPCHTable, NES::Runtime::MemoryLayouts::MemoryLayoutPtr> layouts;
-    TPCHTableGenerator(const Runtime::BufferManagerPtr& bufferManager, TPCH_Scale_Factor scale_factor)
-        : bufferManager(bufferManager), scaleFactor(scale_factor)
+    std::unordered_map<TPCHTable, NES::Memory::MemoryLayouts::MemoryLayoutPtr> layouts;
+    TPCHTableGenerator(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, TPCH_Scale_Factor scale_factor)
+        : bufferProvider(bufferProvider), scaleFactor(scale_factor)
     {
         for (auto& [table, schema] : tableSchemas)
         {
-            layouts[table] = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+            layouts[table] = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferProvider->getBufferSize());
         }
     }
 
@@ -208,7 +208,8 @@ public:
             _scale_factor < 1.0f || std::round(_scale_factor) == _scale_factor,
             "Due to tpch_dbgen limitations, only scale factors less than one can have a fractional part.");
 
-        const auto cache_directory = fmt::format("tpch_cached_tables/sf-{}-c-{}", _scale_factor, bufferManager->getBufferSize()); /// NOLINT
+        const auto cache_directory
+            = fmt::format("tpch_cached_tables/sf-{}-c-{}", _scale_factor, bufferProvider->getBufferSize()); /// NOLINT
         if (std::filesystem::is_directory(cache_directory))
         {
             return loadTablesFromPath(cache_directory);
@@ -233,14 +234,14 @@ public:
 
         NES_DEBUG("Generate lineitem with size {}", order_count * 4);
 
-        Runtime::TableBuilder customerBuilder(bufferManager, layouts[TPCHTable::Customer]);
-        Runtime::TableBuilder lineitemBuilder(bufferManager, layouts[TPCHTable::LineItem]);
-        Runtime::TableBuilder ordersBuilder(bufferManager, layouts[TPCHTable::Orders]);
-        Runtime::TableBuilder partBuilder(bufferManager, layouts[TPCHTable::Part]);
-        Runtime::TableBuilder partsuppBuilder(bufferManager, layouts[TPCHTable::PartSupp]);
-        Runtime::TableBuilder supplierBuilder(bufferManager, layouts[TPCHTable::Supplier]);
-        Runtime::TableBuilder nationBuilder(bufferManager, layouts[TPCHTable::Nation]);
-        Runtime::TableBuilder regionBuilder(bufferManager, layouts[TPCHTable::Region]);
+        Runtime::TableBuilder customerBuilder(bufferProvider, layouts[TPCHTable::Customer]);
+        Runtime::TableBuilder lineitemBuilder(bufferProvider, layouts[TPCHTable::LineItem]);
+        Runtime::TableBuilder ordersBuilder(bufferProvider, layouts[TPCHTable::Orders]);
+        Runtime::TableBuilder partBuilder(bufferProvider, layouts[TPCHTable::Part]);
+        Runtime::TableBuilder partsuppBuilder(bufferProvider, layouts[TPCHTable::PartSupp]);
+        Runtime::TableBuilder supplierBuilder(bufferProvider, layouts[TPCHTable::Supplier]);
+        Runtime::TableBuilder nationBuilder(bufferProvider, layouts[TPCHTable::Nation]);
+        Runtime::TableBuilder regionBuilder(bufferProvider, layouts[TPCHTable::Region]);
 
         /**
         * CUSTOMER
@@ -461,13 +462,13 @@ public:
         {
             auto tableName = std::string(magic_enum::enum_name(table));
             auto tableDir = cacheDirectory + "/" + tableName;
-            tables[table] = Runtime::Table::load(tableDir, bufferManager, layouts[table]);
+            tables[table] = Runtime::Table::load(tableDir, bufferProvider, layouts[table]);
         }
         return tables;
     }
 
 private:
-    Runtime::BufferManagerPtr bufferManager;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     TPCH_Scale_Factor scaleFactor;
 };
 

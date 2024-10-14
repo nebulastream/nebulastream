@@ -4,12 +4,8 @@
 # Set worker IP
 localWorkerHost: localhost
 
-# Set RPC Server port of NES Coordinator to which the NES Worker should connect
-# Needs to be the same as rpcPort in Coordinator
-coordinatorPort: 5000
-
 # Set the number of worker threads
-numWorkerThreads: 5
+numberOfWorkerThreads: 5
 
 # Number buffers in global buffer pool
 numberOfBuffersInGlobalBufferManager: 2048
@@ -29,7 +25,5 @@ physicalSources:
       ###### Define only the following configurations for CSVSource source
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
       numberOfBuffersToProduce: 1
-      # Set gathering mode type
-      sourceGatheringMode: ADAPTIVE_MODE
       # Set path
       filePath: fileLoc

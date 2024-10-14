@@ -14,6 +14,15 @@ The recent (based on the main branch) development image can be pulled from
 docker pull nebulastream/nes-development:latest
 ```
 
+However, it is recommended to build a local development image, because it also installs the current user into the
+docker container, which prevents permission issues. Building a local image will fall back to a pre-built development
+image which matches the current set of dependencies (based on a hash). If you are using docker in rootless mode the
+user inside the container will be root.
+
+```shell
+./scripts/install-local-docker-environment.sh
+```
+
 **Note**: All commands need to be run from the **root of the git repository**!
 
 The image contains an LLVM-based toolchain (with libc++), a recent CMake version, the mold linker and a pre-built
@@ -26,33 +35,20 @@ the container. Additional cmake flags can be appended to the command.
 
 ```shell
 docker run \
-  --workdir /home/ubuntu/nes \
-  -v $(pwd):/home/ubuntu/nes \
-  nebulastream/nes-development:latest \
-  cmake -B build-docker
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    nebulastream/nes-development:local \
+    cmake -B build-docker
 ```
 
 The command to execute the build also requires, the current directory to be mounted into the container.
 
 ```shell
 docker run \
-    --workdir /home/ubuntu/nes \
-    -v $(pwd):/home/ubuntu/nes \
-    nebulastream/nes-development:latest \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    nebulastream/nes-development:local \
     cmake --build build-docker -j
-```
-
-Internally the docker container is running as user `ubuntu`, if you run into issues related to permissions of the
-`build-docker` folder you may have to adjust the user used in the docker container, e.g., by using the flag
-`-u $(id -u):$(id -g)`
-
-```shell
-docker run 
-    -u $(id -u):$(id -g) \
-    --workdir /home/ubuntu/nes \
-    -v $(pwd):/home/ubuntu/nes \
-     nebulastream/nes-development:latest \
-     cmake -B build-docker 
 ```
 
 To run all tests you have to run ctest inside the docker container. The '-j' flag will run all tests in parallel. We
@@ -60,15 +56,16 @@ refer to the [ctest guide](https://cmake.org/cmake/help/latest/manual/ctest.1.ht
 
 ```shell
 docker run 
-    --workdir /home/ubuntu/nes \
-    -v $(pwd):/home/ubuntu/nes \
-     nebulastream/nes-development:latest \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+     nebulastream/nes-development:local \
      ctest --test-dir build-docker -j
 ```
 
 ### Dependencies via VCPKG
 
-The development container has an environment variable `NES_PREBUILT_VCPKG_ROOT`, which, once detected by the CMake build system, will
+The development container has an environment variable `NES_PREBUILT_VCPKG_ROOT`, which, once detected by the CMake build
+system, will
 configure the correct toolchain to use.
 
 Since the development environment only provides a pre-built set of dependencies, changing the dependencies in the
@@ -81,10 +78,11 @@ containers CCache directory.
 
 ```shell
 docker run \
-    --workdir /home/ubuntu/nes \
-    -v $HOME/.cache/ccache:/home/ubuntu/.cache/ccache \
-    -v $(pwd):/home/ubuntu/nes \
-    nebulastream/nes-development:latest \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    -v $(ccache -k cache_dir):$(ccache -k cache_dir) \
+    -e CCACHE_DIR=$(ccache -k cache_dir) \
+    nebulastream/nes-development:local \
     cmake -B build-docker
 ```
 
@@ -106,7 +104,8 @@ Lastly, you need to create a new CMake profile which uses the newly created dock
 
 The relevant CI Jobs will be executed in the development container. This means in order to reproduce CI results, it is
 essential to replicate the development environment built into the base docker image. Note that NebulaStream uses llvm
-for its query compilation, which will take a while to build locally.
+for its query compilation, which will take a while to build locally. You can follow the instructions of the instructions
+of the [base.dockerfile](../docker/dependency/Base.dockerfile) to replicate on Ubuntu or Debian systems.
 
 The compiler toolchain is based on `llvm-18` and libc++-18, and we use the mold linker for its better performance.
 Follow the [llvm documentation](https://apt.llvm.org/) to install a recent toolchain via your package manager.
@@ -124,10 +123,32 @@ The first time building NebulaStream, VCPKG will build all dependencies specifie
 subsequent builds can rely on the VCPKGs internal caching mechanisms even if you delete the build folder.
 
 To set the CMake configuration via CLion you have to add them to your CMake profile which can be found in the CMake
-settings. ![CMakeSettings](resources/SetupVCPKGToolchainClion.png)
+settings.
 
 ### Local VCPKG without DCMAKE_TOOLCHAIN_FILE
 
 If you omit the toolchain file, the CMake system will create a local vcpkg-repository inside the project directory
 and pursue building the dependencies in there. If you later wish to migrate the vcpkg-repository you can move it
 elsewhere on your system and specify the `-DCMAKE_TOOLCHAIN_FILE` flag.
+
+### Using a local installation of MLIR
+
+Building LLVM and `MLIR` locally can be both time and disk-space consuming. The cmake option `-DUSE_LOCAL_MLIR=ON` will
+remove the vcpkg feature responsible for building `MLIR`. Unless the `MLIR` backend is also disabled via
+`-DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=OFF`,
+CMake expects to be able to locate `MLIR` somewhere on the system.
+
+The current recommendation is to use the
+legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/v18_11)
+and pass the `-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang`
+
+```bash
+cmake -B build \
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DUSE_LOCAL_MLIR=ON \
+  -DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang
+```
+
+It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
+sanitizers
+also require llvm to be built with sanitization enabled which is not the case for the pre-built version.

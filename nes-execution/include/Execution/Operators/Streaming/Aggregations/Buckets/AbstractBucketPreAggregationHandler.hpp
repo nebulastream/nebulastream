@@ -27,7 +27,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES::Runtime::Execution::Operators
@@ -58,7 +57,7 @@ public:
     void trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
     void dispatchSliceMergingTasks(
         PipelineExecutionContext& ctx,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        Memory::AbstractBufferProvider& bufferProvider,
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
     ~AbstractBucketPreAggregationHandler();
 

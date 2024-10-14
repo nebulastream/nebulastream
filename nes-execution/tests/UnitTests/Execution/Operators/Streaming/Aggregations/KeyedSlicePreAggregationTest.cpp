@@ -43,7 +43,7 @@ namespace NES::Runtime::Execution::Operators
 class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -54,7 +54,6 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -99,7 +98,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>((int8_t*)&pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
@@ -135,8 +134,8 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
     auto smt = reinterpret_cast<SliceMergeTask<KeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(smt->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(smt->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(smt->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(smt->lastChunk, true);
 }
 

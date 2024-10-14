@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <optional>
+#include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Util/PluginRegistry.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -46,6 +46,4 @@ public:
 
     virtual ~NautilusOperatorLoweringPlugin() = default;
 };
-
-using NautilusOperatorLoweringPluginRegistry = Util::PluginRegistry<NautilusOperatorLoweringPlugin>;
 } /// namespace NES::QueryCompilation

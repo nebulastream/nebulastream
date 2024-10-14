@@ -281,4 +281,4 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
     return executionTrace;
 }
 
-} /// namespace NES::Nautilus::Tracing
+}

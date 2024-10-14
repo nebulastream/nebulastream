@@ -14,12 +14,14 @@
 
 #include <memory>
 #include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
 #include <BaseIntegrationTest.hpp>
 namespace NES::Nautilus
 {
@@ -338,8 +340,7 @@ TEST_P(IfCompilationTest, nestedBooleanFunction)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     IfCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<IfCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

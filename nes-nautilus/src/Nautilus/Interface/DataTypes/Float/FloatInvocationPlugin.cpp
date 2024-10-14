@@ -274,5 +274,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<FloatInvocationPlugin> floatPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterFloatInvocationPlugin()
+{
+    return std::make_unique<FloatInvocationPlugin>();
+}
 } /// namespace NES::Nautilus

@@ -17,32 +17,16 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "Util/yaml/Yaml.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace NES::Configurations
 {
-
-class LogicalSourceType;
-using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
-
-class SchemaType;
-using SchemaTypePtr = std::shared_ptr<SchemaType>;
+using LogicalSourceTypePtr = std::shared_ptr<class LogicalSourceType>;
 
 class LogicalSourceTypeFactory
 {
 public:
-    /**
-     * Create logical source config from string parameters (yaml/cli)
-     * @param identifier
-     * @param inputParams
-     */
     static LogicalSourceTypePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
-
-    /**
-     * @brief create logical stream config with yaml file
-     * @param logicalStreamConfig yaml elements from yaml file
-     * @return physical stream config object
-     */
-    static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
+    static LogicalSourceTypePtr createFromYaml(YAML::Node& yamlConfig);
 };
-} /// namespace NES::Configurations
+}

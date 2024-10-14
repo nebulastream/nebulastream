@@ -16,6 +16,7 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/ModExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <ErrorHandling.hpp>
 namespace NES::Runtime::Execution::Expressions
 {
 
@@ -82,5 +83,9 @@ Value<> ModExpression::execute(NES::Nautilus::Record& record) const
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<ModExpression>> modFunction("mod");
+std::unique_ptr<Expression> RegisterModExpression(const std::vector<ExpressionPtr>& args)
+{
+    PRECONDITION(args.size() == 2, "The binary mod function should receive two arguments");
+    return std::make_unique<ModExpression>(args[0], args[1]);
+}
 } /// namespace NES::Runtime::Execution::Expressions

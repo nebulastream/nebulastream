@@ -15,14 +15,15 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-RowMemoryProvider::RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr) : rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
+RowMemoryProvider::RowMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr)
+    : rowMemoryLayoutPtr(std::move(rowMemoryLayoutPtr)) {};
 
-MemoryLayouts::MemoryLayoutPtr RowMemoryProvider::getMemoryLayoutPtr()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> RowMemoryProvider::getMemoryLayoutPtr()
 {
     return rowMemoryLayoutPtr;
 }
@@ -40,7 +41,7 @@ Nautilus::Record RowMemoryProvider::read(
     Nautilus::Value<Nautilus::UInt64>& recordIndex) const
 {
     /// read all fields
-    auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(rowMemoryLayoutPtr);
+    auto rowLayout = std::dynamic_pointer_cast<Memory::MemoryLayouts::RowLayout>(rowMemoryLayoutPtr);
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     std::vector<Nautilus::Value<Nautilus::Any>> fieldValues;
     fieldValues.reserve(rowMemoryLayoutPtr->getFieldSizes().size());

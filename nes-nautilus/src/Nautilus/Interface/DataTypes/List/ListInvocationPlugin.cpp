@@ -57,5 +57,8 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<ListInvocationPlugin> ListInvocationPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterListInvocationPlugin()
+{
+    return std::make_unique<ListInvocationPlugin>();
+}
 } /// namespace NES::Nautilus

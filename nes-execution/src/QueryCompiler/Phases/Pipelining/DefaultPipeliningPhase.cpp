@@ -14,7 +14,6 @@
 
 #include <utility>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -24,6 +23,7 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -179,12 +179,9 @@ void DefaultPipeliningPhase::process(
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperators)
 {
-    /// Pipelining only works on physical operators.
-    if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>())
-    {
-        throw QueryCompilationException(
-            "Pipelining can only be applied to physical operator. But current operator was: " + currentOperators->toString());
-    }
+    PRECONDITION(
+        currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>(),
+        "expected a PhysicalOperator, but got " + currentOperators->toString());
 
     /// Depending on the operator we apply different pipelining strategies
     if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>())

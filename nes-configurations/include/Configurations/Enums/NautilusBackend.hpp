@@ -26,8 +26,6 @@ enum class NautilusBackend : uint8_t
     MLIR_COMPILER_BACKEND,
     /// Uses the byte code interpretation based nautilus backend.
     BC_INTERPRETER_BACKEND,
-    /// Uses the flounder based nautilus backend.
-    FLOUNDER_COMPILER_BACKEND,
     /// Uses the cpp based nautilus backend.
     CPP_COMPILER_BACKEND
 };

@@ -16,11 +16,11 @@
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
@@ -29,7 +29,7 @@ namespace NES::Runtime::Execution::MemoryProvider
 
 Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex)
 {
-    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
     return Nautilus::TextValue::load(childBuffer);
 }
@@ -103,8 +103,8 @@ Nautilus::Value<> MemoryProvider::load(
 
 uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue)
 {
-    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
+    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
     return tb.storeChildBuffer(textBuffer);
 }
 
@@ -141,26 +141,21 @@ bool MemoryProvider::includesField(
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 
-MemoryProvider::~MemoryProvider()
-{
-}
-
 MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema)
 {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    switch (schema->getLayoutType())
     {
-        auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
-    }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
-    }
-    else
-    {
-        NES_NOT_IMPLEMENTED();
+        case Schema::MemoryLayoutType::ROW_LAYOUT: {
+            auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
+            return std::make_unique<RowMemoryProvider>(rowMemoryLayout);
+        }
+        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT: {
+            auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+            return std::make_unique<ColumnMemoryProvider>(columnMemoryLayout);
+        }
+        default:
+            NES_NOT_IMPLEMENTED();
     }
 }
 
-} /// namespace NES::Runtime::Execution::MemoryProvider
+}

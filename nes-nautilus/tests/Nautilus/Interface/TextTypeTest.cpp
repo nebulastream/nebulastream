@@ -39,14 +39,13 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
@@ -254,7 +253,7 @@ TEST_F(TextTypeTest, extractStringValueFromTupleBuffer)
 {
     /// Create a tupleBuffer with a string that is 10 chars long
     const char* buf = "1234567890";
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     *tupleBuffer.getBuffer<uint32_t>() = std::strlen(buf) + 1;
     std::strncpy(tupleBuffer.getBuffer<char>() + sizeof(uint32_t), buf, std::strlen(buf) + 1);
     /// Create a text value from this string that's only 5 chars long

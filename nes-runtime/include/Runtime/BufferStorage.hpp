@@ -23,9 +23,9 @@
 namespace NES::Runtime
 {
 
-struct BufferSorter : public std::greater<TupleBuffer>
+struct BufferSorter : public std::greater<Memory::TupleBuffer>
 {
-    bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+    bool operator()(const Memory::TupleBuffer& lhs, const Memory::TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
 };
 
 /**
@@ -36,19 +36,19 @@ class BufferStorage : public AbstractBufferStorage
 public:
     BufferStorage() = default;
 
-    void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) override;
+    void insertBuffer(Memory::TupleBuffer bufferPtr) override;
 
     /// Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
     void trimBuffer(uint64_t timestamp) override;
 
     [[nodiscard]] size_t getStorageSize() const override;
 
-    [[nodiscard]] std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
+    [[nodiscard]] std::optional<Memory::TupleBuffer> getTopElementFromQueue() const;
 
     void removeTopElementFromQueue();
 
 private:
-    std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferSorter> storage;
+    std::priority_queue<Memory::TupleBuffer, std::vector<Memory::TupleBuffer>, BufferSorter> storage;
 };
 
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;

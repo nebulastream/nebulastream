@@ -15,7 +15,6 @@
 #include <iostream>
 #include <string>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -68,7 +67,7 @@ uint32_t ListValue<T>::length() const
 }
 
 template <typename T>
-ListValue<T>* ListValue<T>::load(Runtime::TupleBuffer& buffer)
+ListValue<T>* ListValue<T>::load(Memory::TupleBuffer& buffer)
 {
     buffer.retain();
     return reinterpret_cast<ListValue*>(buffer.getBuffer());
@@ -90,7 +89,7 @@ ListValue<T>::~ListValue()
 {
     /// A list value always is backed by the data region of a tuple buffer.
     /// In the following, we recycle the tuple buffer and return it to the buffer pool.
-    Runtime::recycleTupleBuffer(this);
+    Memory::recycleTupleBuffer(this);
 }
 
 template <class T>

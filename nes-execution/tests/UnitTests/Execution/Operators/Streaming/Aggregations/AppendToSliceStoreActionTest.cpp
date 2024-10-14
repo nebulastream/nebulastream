@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -40,7 +41,7 @@ namespace NES::Runtime::Execution::Operators
 class AppendToSliceStoreActionTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -51,7 +52,6 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
     std::shared_ptr<NonKeyedSlice> createNonKeyedSlice(size_t start, size_t end, int64_t value)
@@ -70,7 +70,7 @@ public:
         auto integer = DataTypeFactory::createInt64();
         PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         auto map = std::make_unique<Interface::ChainedHashMap>(8, 8, 1000, std::move(allocator));
         Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())), {integerType}, integerType->size(), 8);
 
@@ -90,7 +90,7 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
 
     auto handler = std::make_shared<AppendToSliceStoreHandler<NonKeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto context = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
@@ -124,8 +124,8 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
         auto buffer = pipelineContext.buffers[0];
         auto task = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(buffer.getBuffer());
 
-        ASSERT_EQ(task->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-        ASSERT_EQ(task->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+        ASSERT_EQ(task->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+        ASSERT_EQ(task->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
         ASSERT_EQ(task->lastChunk, true);
         ASSERT_EQ(task->slices.size(), 3);
     }
@@ -134,8 +134,8 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
         ASSERT_THAT(pipelineContext.buffers.size(), 2);
         auto buffer = pipelineContext.buffers[1];
         auto task = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(buffer.getBuffer());
-        ASSERT_EQ(task->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER + 1);
-        ASSERT_EQ(task->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+        ASSERT_EQ(task->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER + 1);
+        ASSERT_EQ(task->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
         ASSERT_EQ(task->lastChunk, true);
         ASSERT_EQ(task->slices.size(), 3);
     }
@@ -147,7 +147,7 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice)
     using namespace std::literals;
     auto handler = std::make_shared<AppendToSliceStoreHandler<KeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 

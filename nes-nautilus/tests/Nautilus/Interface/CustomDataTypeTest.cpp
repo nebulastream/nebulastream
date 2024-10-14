@@ -40,14 +40,13 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 1024);
         NES_DEBUG("Setup TextTypeTest test case.")
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
@@ -84,7 +83,10 @@ public:
     }
 };
 
-[[maybe_unused]] static InvocationPluginRegistry::Add<CustomTypeInvocationPlugin> cPlugin;
+[[maybe_unused]] std::unique_ptr<InvocationPlugin> RegisterCustomTypeInvocationPlugin()
+{
+    return std::make_unique<CustomTypeInvocationPlugin>();
+}
 
 TEST_F(CustomDataTypeTest, customCustomDataTypeTest)
 {

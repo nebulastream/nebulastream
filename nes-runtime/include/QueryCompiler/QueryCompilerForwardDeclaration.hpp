@@ -102,9 +102,6 @@ using PipelineContextPtr = std::shared_ptr<PipelineContext>;
 class CodeGenerator;
 using CodeGeneratorPtr = std::shared_ptr<CodeGenerator>;
 
-class QueryCompilationError;
-using QueryCompilationErrorPtr = std::shared_ptr<QueryCompilationError>;
-
 class QueryCompilationRequest;
 using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 
@@ -114,8 +111,7 @@ using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 
-class QueryCompilerOptions;
-using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
+struct QueryCompilerOptions;
 
 class OperatorPipeline;
 using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
@@ -155,9 +151,6 @@ using OperatorFusionPolicyPtr = std::shared_ptr<OperatorFusionPolicy>;
 
 class DataSinkProvider;
 using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
-
-class DefaultDataSourceProvider;
-using DataSourceProviderPtr = std::shared_ptr<DefaultDataSourceProvider>;
 namespace Phases
 {
 

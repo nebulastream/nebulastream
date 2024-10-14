@@ -134,14 +134,14 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
 
@@ -150,7 +150,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest)
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     sortScanOperator.setup(ctx);
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto record = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
@@ -178,15 +178,15 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 2;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(
         std::vector<PhysicalTypePtr>({pType, pType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {1}, /* descending */ false);
 
@@ -195,7 +195,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest)
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     sortScanOperator.setup(ctx);
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto record = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
@@ -222,14 +222,14 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ true);
 
@@ -238,7 +238,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest)
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     sortScanOperator.setup(ctx);
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto record = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
@@ -265,15 +265,15 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 2;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
     auto handler = std::make_shared<BatchSortOperatorHandler>(
         std::vector<PhysicalTypePtr>({pType, pType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2", "f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {1, 0}, /* descending */ false, 0, 5);
 
@@ -282,7 +282,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     sortScanOperator.setup(ctx);
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto record = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
@@ -318,14 +318,14 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
         = Interface::PagedVector::PAGE_SIZE / sizeof(NativeType) * 2 + sizeof(NativeType); /// 2 full pages + 1 record -> 3 Pages
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
-    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
+    std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
 
@@ -334,7 +334,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
     sortScanOperator.setChild(collector);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     sortScanOperator.setup(ctx);
-    auto tupleBuffer = bm->getBufferBlocking();
+    auto tupleBuffer = bufferManager->getBufferBlocking();
     auto record = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 

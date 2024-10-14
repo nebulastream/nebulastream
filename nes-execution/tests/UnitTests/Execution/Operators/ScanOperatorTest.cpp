@@ -19,9 +19,9 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -50,19 +50,19 @@ public:
  */
 TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
-    auto buffer = bm->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (auto i = 0_u64; i < testBuffer.getCapacity(); i++)
     {
         testBuffer[i]["f1"].write((int64_t)i % 2_s64);
@@ -88,11 +88,11 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
  */
 TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+    auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr
         = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
@@ -100,8 +100,8 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
-    auto buffer = bm->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < testBuffer.getCapacity(); i++)
     {
         testBuffer[i]["f1"].write((int64_t)i % 2);

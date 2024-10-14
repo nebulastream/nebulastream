@@ -14,7 +14,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <Exceptions/Exception.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -25,6 +24,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution
@@ -52,7 +52,7 @@ ExecutablePipeline::ExecutablePipeline(
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0, "Wrong pipeline stage argument");
 }
 
-ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext)
+ExecutionResult ExecutablePipeline::execute(Memory::TupleBuffer& inputBuffer, WorkerContextRef workerContext)
 {
     NES_TRACE("Execute Pipeline Stage with id={} originId={} stage={}", queryId, inputBuffer.getOriginId(), pipelineId);
 
@@ -76,7 +76,7 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
     }
 }
 
-bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&)
+bool ExecutablePipeline::setup(const QueryManagerPtr&, const Memory::BufferManagerPtr&)
 {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
@@ -88,7 +88,7 @@ bool ExecutablePipeline::start()
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning))
     {
         auto newReconf = ReconfigurationMessage(
-            queryId, ReconfigurationType::Initialize, inherited0::shared_from_this(), std::make_any<uint32_t>(activeProducers.load()));
+            queryId, ReconfigurationType::Initialize, shared_from_this(), std::make_any<uint32_t>(activeProducers.load()));
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers())
         {
             operatorHandler->start(pipelineContext, localStateVariableId);
@@ -129,55 +129,6 @@ bool ExecutablePipeline::isRunning() const
 const std::vector<SuccessorExecutablePipeline>& ExecutablePipeline::getSuccessors() const
 {
     return successorPipelines;
-}
-
-void ExecutablePipeline::onEvent(Runtime::BaseEvent& event)
-{
-    NES_DEBUG("ExecutablePipeline::onEvent(event) called. pipelineId:  {}", this->pipelineId);
-    if (event.getEventType() == EventType::kStartSourceEvent)
-    {
-        NES_DEBUG("ExecutablePipeline: Propagate startSourceEvent further upstream to predecessors, without workerContext.");
-
-        for (auto predecessor : this->pipelineContext->getPredecessors())
-        {
-            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Source in predecessor. Start it with startSourceEvent, without workerContext.");
-                sourcePredecessor->lock()->onEvent(event);
-            }
-            else if (
-                const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Pipeline in Predecessors. Propagate startSourceEvent to it, without "
-                          "workerContext.");
-                pipelinePredecessor->lock()->onEvent(event);
-            }
-        }
-    }
-}
-
-void ExecutablePipeline::onEvent(Runtime::BaseEvent& event, WorkerContextRef workerContext)
-{
-    NES_DEBUG("ExecutablePipeline::onEvent(event, wrkContext) called. pipelineId:  {}", this->pipelineId);
-    if (event.getEventType() == EventType::kStartSourceEvent)
-    {
-        NES_DEBUG("ExecutablePipeline: Propagate startSourceEvent further upstream to predecessors, with workerContext.");
-
-        for (auto predecessor : this->pipelineContext->getPredecessors())
-        {
-            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Source in predecessor. Start it with startSourceEvent, with workerContext.");
-                sourcePredecessor->lock()->onEvent(event, workerContext);
-            }
-            else if (
-                const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Pipeline in Predecessors. Propagate startSourceEvent to it, with workerContext.");
-                pipelinePredecessor->lock()->onEvent(event, workerContext);
-            }
-        }
-    }
 }
 
 PipelineId ExecutablePipeline::getPipelineId() const
@@ -282,7 +233,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 }
                 /// tell the query manager about it
                 queryManager->notifyPipelineCompletion(
-                    queryId, inherited0::shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
+                    queryId, shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines)
                 {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline))
@@ -341,7 +292,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                         pipelineId);
                 }
                 /// finally, notify query manager
-                queryManager->notifyPipelineCompletion(queryId, inherited0::shared_from_this<ExecutablePipeline>(), terminationType);
+                queryManager->notifyPipelineCompletion(queryId, shared_from_this<ExecutablePipeline>(), terminationType);
 
                 for (const auto& successorPipeline : successorPipelines)
                 {

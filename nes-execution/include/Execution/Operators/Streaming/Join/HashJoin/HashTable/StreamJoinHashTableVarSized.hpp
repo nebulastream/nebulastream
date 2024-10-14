@@ -29,11 +29,12 @@ public:
     /**
       * @brief Constructor for a StreamJoinHashTableVarSized
       * @param numPartitions
-      * @param bufferManager
+      * @param bufferProvider
       * @param pageSize
       * @param schema
       */
-    explicit StreamJoinHashTableVarSized(size_t numPartitions, BufferManagerPtr& bufferManager, size_t pageSize, SchemaPtr& schema);
+    explicit StreamJoinHashTableVarSized(
+        size_t numPartitions, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, size_t pageSize, SchemaPtr& schema);
 
     StreamJoinHashTableVarSized(const StreamJoinHashTableVarSized&) = delete;
 

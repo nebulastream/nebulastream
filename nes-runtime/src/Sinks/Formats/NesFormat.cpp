@@ -24,12 +24,13 @@
 namespace NES
 {
 
-NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager))
+NesFormat::NesFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
+    : SinkFormat(std::move(schema), std::move(bufferProvider))
 {
     serializedSchema = std::make_shared<SerializableSchema>();
 }
 
-std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer)
+std::string NesFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
 {
     std::string out((char*)inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * getSchemaPtr()->getSchemaSizeInBytes());
     return out;
@@ -45,7 +46,7 @@ FormatTypes NesFormat::getSinkFormat()
     return FormatTypes::NES_FORMAT;
 }
 
-FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&)
+FormatIterator NesFormat::getTupleIterator(Memory::TupleBuffer&)
 {
     NES_NOT_IMPLEMENTED();
 }

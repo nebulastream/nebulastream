@@ -54,7 +54,7 @@ public:
      * @brief Loads a ListValue from a TupleBuffer.
      * @return ListValue*
      */
-    static ListValue* load(Runtime::TupleBuffer& tupleBuffer);
+    static ListValue* load(Memory::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Returns the length in the number of characters of the text value

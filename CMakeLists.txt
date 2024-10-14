@@ -15,49 +15,37 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
-set(CLANG_FORMAT_MAJOR_VERSION 18)
-# Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
-# The regex must match all comments that are not allowed in the codebase per line.
-set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
+set(LLVM_MAJOR_VERSION 18)
 
 # Enable native mtune/march for optimizations
-option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
+option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
 
 #toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
-option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
-option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
-option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
-option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
+option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
-option(NES_ENABLE_PRECOMPILED_HEADERS "Enable Precompiled Headers" OFF)
+option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
-option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
-option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-
-#toggle GPU runtime and test
-option(NES_USE_GPU "Build with GPU acceleration" OFF)
+option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
+option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
-
+if (NES_LOG_WITH_STACKTRACE)
+    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+endif()
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
-endif ()
-
-if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
@@ -105,47 +93,8 @@ endif ()
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 #endif
 
-#if the flag is set we create one queue per query
-if (NES_USE_ONE_QUEUE_PER_QUERY)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
-    if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        message(STATUS "use NES_USE_ONE_QUEUE_PER_QUERY and unset CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-    endif ()
-endif ()
-
-if (NES_USE_ONE_QUEUE_PER_QUERY)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
-    if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        message(STATUS "use NES_USE_ONE_QUEUE_PER_QUERY and unset CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-    endif ()
-endif ()
-
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
-        message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
-    endif ()
-endif ()
-
-if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-    message(STATUS "ENABLE CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE")
-    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_NUMA_NODE=1")
-    endif ()
-
-    # Numa awareness
-    find_package(NUMA)
-    if (NUMA_FOUND)
-        set(LIBRARIES ${LIBRARIES} -lnuma)
-        message(STATUS "Using Numa")
-    endif ()
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} folly::folly folly::folly_deps)
-    include_directories(${FOLLY_INCLUDE_DIR})
-endif ()
-
 # enables tracing of stack traces if operator / expression nodes are created
-if (CMAKE_NES_TRACE_NODE_CREATION)
+if (NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
@@ -188,27 +137,6 @@ if (ENABLE_IWYU)
     else ()
         message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
     endif ()
-endif ()
-
-if (NES_BUILD_BENCHMARKS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_BENCHMARKS_FLAG_MODE=1")
-    message("Build with all flags on, only use for benchmarking")
-    if (NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
-        message("use latency measurement")
-    endif ()
-    #-fno-omit-frame-pointer
-endif ()
-
-# Add Python UDF support using Nautilus
-option(NAUTILUS_PYTHON_UDF "Build supporting Nautilus Python UDF" OFF)
-message(STATUS "Python UDF support: ${NAUTILUS_PYTHON_UDF}")
-if (NAUTILUS_PYTHON_UDF)
-    add_compile_definitions(NAUTILUS_PYTHON_UDF_ENABLED)
-    find_package(PythonLibs 3 REQUIRED)
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
-    set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
 endif ()
 
 # Native/Generic march support
@@ -254,10 +182,6 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
-
-# spdlog
-find_package(spdlog REQUIRED)
-set(LIBRARIES_SDP spdlog::spdlog)
 
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
@@ -317,18 +241,6 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
-if (NES_USE_GPU)
-    find_package(CUDAToolkit REQUIRED)
-    enable_language(CUDA)
-    if (NOT ${CUDAToolkit_FOUND})
-        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
-    endif ()
-    set(CMAKE_CUDA_STANDARD 17)
-    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
-    set(LIBRARIES ${LIBRARIES} ${LIBRARIES_CUDA})
-    message("CUDA dependencies OK")
-endif (NES_USE_GPU)
-
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
     if (NOT ${GTest_FOUND})
@@ -338,7 +250,7 @@ if (NES_ENABLES_TESTS)
 endif ()
 
 # PAPI
-if (CMAKE_USE_PAPI_PROFILER)
+if (NES_USE_PAPI_PROFILER)
     find_path(PAPI_PREFIX
             NAMES include/papi.h
     )
@@ -372,19 +284,6 @@ if (CMAKE_USE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    find_package(JNI)
-    if (JNI_FOUND)
-        message(STATUS "JNI found")
-        message(STATUS "JNI_INCLUDE_DIRS=${JNI_INCLUDE_DIRS}")
-        message(STATUS "JNI_LIBRARIES=${JNI_LIBRARIES}")
-        include_directories(${JNI_INCLUDE_DIRS})
-        add_compile_definitions(ENABLE_JNI)
-    else ()
-        message(FATAL_ERROR "JNI not found")
-    endif ()
-endif ()
-
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
@@ -398,37 +297,6 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 
-# Set definition values.
-set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
-set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
-message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
-
-# Print definition values.
-message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
-message(STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}")
-message(STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}")
-
-# Add definitions as compile flag.
-add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
-add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
-add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
-add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_BINARY_DIR=\"${PATH_TO_BINARY_DIR}\"')
-if (APPLE)
-    add_definitions(-D 'NES_OSX_SYSROOT=\"${CMAKE_OSX_SYSROOT}\"')
-endif ()
-
-add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
-add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
-
-# fix compile error with llvm (https://stackoverflow.com/a/18966387)
-add_definitions(-D '__STDC_CONSTANT_MACROS')
-add_definitions(-D '__STDC_LIMIT_MACROS')
-
-
 # $ORIGIN is to read the shared object from the installation directory
 if (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
@@ -436,17 +304,6 @@ endif ()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-
-###########################################################################################
-
-# Cross compilation
-if (CMAKE_CROSSCOMPILING)
-    set(QEMU_EMULATOR_PATH /usr/bin/qemu-aarch64)
-    message(STATUS "Current Qemu Executable: ${QEMU_EMULATOR_PATH}")
-    add_definitions(-D 'QEMU_EMULATOR_PATH=\"${QEMU_EMULATOR_PATH}\"')
-endif ()
-
-###########################################################################################
 
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
@@ -470,108 +327,39 @@ add_custom_target(build_all_plugins)
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
-# Add target for all data types
 add_subdirectory(nes-data-types)
-# Add target for the runtime
 add_subdirectory(nes-runtime)
-# Add target for configurations
+add_subdirectory(nes-sources)
 add_subdirectory(nes-configurations)
-# Add target for operators
 add_subdirectory(nes-operators)
-# Add target for client
 add_subdirectory(nes-client)
-# Add targets for execution
 add_subdirectory(nes-execution)
-# Add targets for nautilus
 add_subdirectory(nes-nautilus)
-# Add targets nes-expressions
 add_subdirectory(nes-expressions)
-# Add targets nes-window-types
 add_subdirectory(nes-window-types)
 
-add_subdirectory(nes-single-node-worker)
+add_subdirectory(nes-memory)
 
-# Documentation
-add_subdirectory(cmake/docs)
+add_subdirectory(nes-single-node-worker)
+add_subdirectory(nes-nebuli)
+
+if (NES_ENABLES_TESTS)
+  add_subdirectory(test)
+endif ()
 
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
-set(GPU_TEST_SUFFIX "__GPU$$")
-set(ALL_SUFFIXES "${GPU_TEST_SUFFIX}") # use pipe (|) to add more suffixes, e.g., ${GPU_TEST_SUFFIX}|${DPU_TEST_SUFFIX}"
+# We always want to exclude the local system test targets
+set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
 
 # The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E "${ALL_SUFFIXES}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
-
-# The test_gpu target runs tests with ${GPU_TEST_SUFFIX}
-if (NES_USE_GPU)
-    message(STATUS "Adding test_gpu target with parallelism=${NES_TEST_PARALLELISM}")
-    set(NES_TEST_REPEAT_UNTIL_FAIL 3)
-    set(NES_TEST_TIMEOUT 300)
-    add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
-endif ()
-
-install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
-
-include(CMakePackageConfigHelpers)
-# Create the Config.cmake files, which enables find_package(NebulaStream) from external CMAKE projects.
-configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        INSTALL_DESTINATION NebulaStream/cmake)
-
-# Create Targets.cmake file, which exposes NebulaStream targets to external CMAKE projects
-export(EXPORT NebulaStreamTargets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
-        NAMESPACE NebulaStream::)
-
-# Create version_file to enable specific version imports
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}"
-        COMPATIBILITY AnyNewerVersion)
-
-# Install NebulaStreamConfig, NebulaStreamConfigVersion, and NebulaStreamTargets to exported package
-set(ConfigPackageLocation lib/NebulaStream/cmake)
-install(EXPORT NebulaStreamTargets
-        FILE
-        NebulaStreamTargets.cmake
-        NAMESPACE
-        NebulaStream::
-        EXPORT_LINK_INTERFACE_LIBRARIES
-        DESTINATION
-        ${ConfigPackageLocation}
-)
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${ConfigPackageLocation})
-
-# Configure CPackage
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_PACKAGE_NAME "NebulaStream")
-set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
-set(CPACK_PACKAGE_DESCRIPTION "NebulaStream is a general purpose, end-to-end data management system for the IoT. It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.")
-set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
-set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, liblz4-dev")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
-
-##This allows call to ldconfig to load the configuration after installation
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
-INCLUDE(CPack)
+add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 
 #Other configurations
-project_enable_clang_format()
-project_enable_check_comment_format()
-project_enable_check_preamble()
-if (CMAKE_CROSSCOMPILING)
-    project_enable_emulated_tests()
-endif ()
+project_enable_format()
 instrument_codebase()
+include(cmake/SystemTests.cmake)
+project_enable_system_level_tests()

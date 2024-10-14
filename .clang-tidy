@@ -5,9 +5,9 @@
 # - Implicit conversions sometimes make the code more readable
 # - readability-named-parameter does not improve readability
 
-Checks:  '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix'
+Checks:  '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix,-altera-unroll-loops'
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
+HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes-directories
 
 
 # We choose the following naming conventions that are quite similar to the ClickHouse naming conventions
@@ -36,3 +36,4 @@ CheckOptions:
   # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
+  readability-function-cognitive-complexity.IgnoreMacros: 'true'

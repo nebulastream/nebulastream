@@ -15,15 +15,15 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
+ColumnMemoryProvider::ColumnMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
     : columnMemoryLayoutPtr(columnMemoryLayoutPtr) {};
 
-MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr()
+std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> ColumnMemoryProvider::getMemoryLayoutPtr()
 {
     return columnMemoryLayoutPtr;
 }

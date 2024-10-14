@@ -44,14 +44,18 @@ void PagedVectorVarSized::setEntrySizeAndCapacityPerPage()
     capacityPerPage = pageSize / entrySize;
 }
 
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize)
-    : PagedVectorVarSized(bufferManager, schema, {}, pageSize)
+PagedVectorVarSized::PagedVectorVarSized(
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, SchemaPtr schema, uint64_t pageSize)
+    : PagedVectorVarSized(std::move(bufferProvider), std::move(schema), {}, pageSize)
 {
 }
 
 PagedVectorVarSized::PagedVectorVarSized(
-    Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, std::span<const Runtime::TupleBuffer> buffers, uint64_t pageSize)
-    : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+    SchemaPtr schema,
+    std::span<const Memory::TupleBuffer> buffers,
+    uint64_t pageSize)
+    : bufferProvider(std::move(bufferProvider)), schema(std::move(schema)), pageSize(pageSize)
 {
     appendVarSizedDataPage();
     varSizedDataEntryMapCounter = 0;
@@ -81,7 +85,7 @@ PagedVectorVarSized::PagedVectorVarSized(
 
 void PagedVectorVarSized::appendPage()
 {
-    auto page = bufferManager->getUnpooledBuffer(pageSize);
+    auto page = bufferProvider->getUnpooledBuffer(pageSize);
     if (page.has_value())
     {
         if (!pages.empty())
@@ -99,7 +103,7 @@ void PagedVectorVarSized::appendPage()
 
 void PagedVectorVarSized::appendVarSizedDataPage()
 {
-    auto page = bufferManager->getUnpooledBuffer(pageSize);
+    auto page = bufferProvider->getUnpooledBuffer(pageSize);
     if (page.has_value())
     {
         varSizedDataPages.emplace_back(page.value());
@@ -149,7 +153,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey)
 
     /// buffer size should be multiple of pageSize for efficiency reasons
     auto bufferSize = ((textLength + pageSize - 1) / pageSize) * pageSize;
-    auto buffer = bufferManager->getUnpooledBuffer(bufferSize);
+    auto buffer = bufferProvider->getUnpooledBuffer(bufferSize);
 
     if (buffer.has_value())
     {
@@ -231,7 +235,7 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other)
     other.varSizedDataEntryMapCounter = 0;
 }
 
-std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages()
+std::vector<Memory::TupleBuffer>& PagedVectorVarSized::getPages()
 {
     return pages;
 }

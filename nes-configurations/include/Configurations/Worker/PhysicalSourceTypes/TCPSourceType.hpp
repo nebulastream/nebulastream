@@ -16,8 +16,8 @@
 
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <sys/socket.h>
+#include <yaml-cpp/yaml.h>
 
 namespace NES
 {
@@ -41,7 +41,7 @@ public:
      * @param yamlConfig inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief create a TCPSourceTypePtr object with default values
@@ -221,7 +221,7 @@ private:
      * @brief constructor to create a new TCP source type object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with default values

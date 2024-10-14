@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
@@ -22,6 +22,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -47,24 +48,18 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
 {
     auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
     auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
-    if (pipelineRootOperators.size() != 1)
-    {
-        throw QueryCompilationException("A pipeline should only have one root operator");
-    }
-    auto rootOperator = pipelineRootOperators[0];
+    PRECONDITION(!pipelineRootOperators.empty(), "A pipeline should have at least one root operator");
+
     /// insert buffer scan operator to the pipeline root if necessary
+    auto rootOperator = pipelineRootOperators[0];
     if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>())
     {
-        if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>())
-        {
-            auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
-            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
-            pipeline->prependOperator(newScan);
-        }
-        else
-        {
-            throw QueryCompilationException("Pipeline root should be a unary operator but was:" + rootOperator->toString());
-        }
+        PRECONDITION(
+            rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>(),
+            "Pipeline root should be a unary operator but was:" + rootOperator->toString());
+        auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
+        auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
+        pipeline->prependOperator(newScan);
     }
 
     /// insert emit buffer operator if necessary

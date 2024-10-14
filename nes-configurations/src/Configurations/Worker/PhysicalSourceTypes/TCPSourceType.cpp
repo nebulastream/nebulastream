@@ -20,7 +20,7 @@
 namespace NES
 {
 
-TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig)
 {
     return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
 }
@@ -171,53 +171,46 @@ TCPSourceType::TCPSourceType(
     }
 }
 
-TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig)
     : TCPSourceType(logicalSourceName, physicalSourceName)
 {
     NES_INFO("TCPSourceType: Init default TCP source config object with values from YAML file.");
 
-    if (!yamlConfig[Configurations::SOCKET_HOST_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOCKET_HOST_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::SOCKET_HOST_CONFIG])
     {
-        socketHost->setValue(yamlConfig[Configurations::SOCKET_HOST_CONFIG].As<std::string>());
+        socketHost->setValue(yamlConfig[Configurations::SOCKET_HOST_CONFIG].as<std::string>());
     }
     else
     {
         NES_THROW_RUNTIME_ERROR("TCPSourceType:: no socket host defined! Please define a host.");
     }
-    if (!yamlConfig[Configurations::SOCKET_PORT_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOCKET_PORT_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::SOCKET_PORT_CONFIG])
     {
-        socketPort->setValue(yamlConfig[Configurations::SOCKET_PORT_CONFIG].As<uint32_t>());
+        socketPort->setValue(yamlConfig[Configurations::SOCKET_PORT_CONFIG].as<uint32_t>());
     }
     else
     {
         NES_THROW_RUNTIME_ERROR("TCPSourceType:: no socket host defined! Please define a host.");
     }
-    if (!yamlConfig[Configurations::SOCKET_DOMAIN_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOCKET_DOMAIN_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::SOCKET_DOMAIN_CONFIG])
     {
-        setSocketDomainViaString(yamlConfig[Configurations::SOCKET_DOMAIN_CONFIG].As<std::string>());
+        setSocketDomainViaString(yamlConfig[Configurations::SOCKET_DOMAIN_CONFIG].as<std::string>());
     }
-    if (!yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::SOCKET_TYPE_CONFIG])
     {
-        setSocketTypeViaString(yamlConfig[Configurations::SOCKET_TYPE_CONFIG].As<std::string>());
+        setSocketTypeViaString(yamlConfig[Configurations::SOCKET_TYPE_CONFIG].as<std::string>());
     }
-    if (!yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG])
     {
-        flushIntervalMS->setValue(std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].As<std::string>()));
+        flushIntervalMS->setValue(std::stof(yamlConfig[Configurations::FLUSH_INTERVAL_MS_CONFIG].as<std::string>()));
     }
-    if (!yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::INPUT_FORMAT_CONFIG])
     {
-        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].As<std::string>());
+        inputFormat->setInputFormatEnum(yamlConfig[Configurations::INPUT_FORMAT_CONFIG].as<std::string>());
     }
-    if (!yamlConfig[Configurations::DECIDE_MESSAGE_SIZE_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::DECIDE_MESSAGE_SIZE_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::DECIDE_MESSAGE_SIZE_CONFIG])
     {
-        decideMessageSize->setTCPDecideMessageSizeEnum(yamlConfig[Configurations::DECIDE_MESSAGE_SIZE_CONFIG].As<std::string>());
+        decideMessageSize->setTCPDecideMessageSizeEnum(yamlConfig[Configurations::DECIDE_MESSAGE_SIZE_CONFIG].as<std::string>());
     }
     else
     {
@@ -227,10 +220,9 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
     switch (decideMessageSize->getValue())
     {
         case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR:
-            if (!yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>().empty()
-                && yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>() != "\n")
+            if (yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG])
             {
-                tupleSeparator->setValue(yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].As<std::string>()[0]);
+                tupleSeparator->setValue(yamlConfig[Configurations::TUPLE_SEPARATOR_CONFIG].as<std::string>()[0]);
             }
             else
             {
@@ -238,10 +230,9 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
             }
             break;
         case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE:
-            if (!yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>().empty()
-                && yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<std::string>() != "\n")
+            if (yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG])
             {
-                socketBufferSize->setValue(yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].As<uint32_t>());
+                socketBufferSize->setValue(yamlConfig[Configurations::SOCKET_BUFFER_SIZE_CONFIG].as<uint32_t>());
             }
             else
             {
@@ -250,11 +241,10 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
             }
             break;
         case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET:
-            if (!yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].As<std::string>().empty()
-                && yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].As<std::string>() != "\n")
+            if (yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG])
             {
                 bytesUsedForSocketBufferSizeTransfer->setValue(
-                    yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].As<uint32_t>());
+                    yamlConfig[Configurations::BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG].as<uint32_t>());
             }
             else
             {

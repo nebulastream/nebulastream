@@ -34,7 +34,7 @@ public:
      * @param pageSize
      */
     explicit FixedPagesLinkedList(
-        FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt);
+        Memory::FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt);
 
     /**
      * @brief Appends an item to this list by returning a pointer to a free memory space. This call is NOT thread safe
@@ -68,7 +68,7 @@ public:
 
 private:
     std::atomic<uint64_t> pos;
-    FixedPagesAllocator& fixedPagesAllocator;
+    Memory::FixedPagesAllocator& fixedPagesAllocator;
     std::vector<Nautilus::Interface::FixedPagePtr> pages;
     const size_t sizeOfRecord;
     const size_t pageSize;

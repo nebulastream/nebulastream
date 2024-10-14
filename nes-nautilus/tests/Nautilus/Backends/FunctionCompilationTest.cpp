@@ -13,7 +13,9 @@
 */
 
 #include <memory>
+
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -159,8 +161,7 @@ TEST_P(FunctionCompilationTest, identifierTypesInProxyFunction)
 INSTANTIATE_TEST_CASE_P(
     testFunctionCalls,
     FunctionCompilationTest,
-    ::testing::ValuesIn(
-        Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(Backends::CompilationBackendRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<FunctionCompilationTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Nautilus

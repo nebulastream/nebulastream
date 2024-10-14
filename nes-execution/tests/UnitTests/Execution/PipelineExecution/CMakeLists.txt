@@ -20,12 +20,6 @@ add_nes_execution_test(execution-keyed-window-pipeline-test "KeyedTimeWindowPipe
 add_nes_execution_test(execution-text-pipeline-test "TextPipelineTest.cpp")
 add_nes_execution_test(execution-stream-hash-join-pipeline-test "StreamHashJoinPipelineTest.cpp")
 add_nes_execution_test(execution-stream-nested-loop-join-pipeline-test "NestedLoopJoinPipelineTest.cpp")
-add_nes_execution_test(execution-map-pythonudf-pipeline-test "MapPythonUDFPipelineTest.cpp")
 add_nes_execution_test(execution-batch-aggregation-pipeline-test "BatchAggregationPipelineTest.cpp")
 add_nes_execution_test(execution-batch-join-pipeline-test "BatchJoinPipelineTest.cpp")
 add_nes_execution_test(execution-limit-pipeline-test "LimitPipelineTest.cpp")
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_nes_execution_test(execution-javamapudf-pipeline-test "MapJavaUDFPipelineTest.cpp")
-    add_nes_execution_test(execution-javaflatmapudf-pipeline-test "FlatMapJavaUDFPipelineTest.cpp")
-endif ()

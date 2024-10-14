@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/CompilationBackendRegistry.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {
@@ -24,7 +26,7 @@ std::unique_ptr<Nautilus::Backends::Executable> AbstractCompilationBackendTest::
     auto ir = irCreationPhase.apply(executionTrace);
     NES_DEBUG("{}", ir->toString());
     auto param = this->GetParam();
-    auto& compiler = Backends::CompilationBackendRegistry::getPlugin(param);
+    auto compiler = Backends::CompilationBackendRegistry::instance().create(param);
     return compiler->compile(ir, options, dumpHelper);
 }
 

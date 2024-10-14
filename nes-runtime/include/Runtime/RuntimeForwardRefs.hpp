@@ -15,12 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <variant>
 
 namespace NES
 {
-class AbstractQueryStatusListener;
+struct AbstractQueryStatusListener;
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 
 namespace Configurations
@@ -48,22 +47,9 @@ class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 class DataSource;
-using DataSourcePtr = std::shared_ptr<DataSource>;
-
-class DataEmitter;
-using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
 namespace Runtime
 {
-
-enum class NumaAwarenessFlag : int8_t
-{
-    ENABLED,
-    DISABLED
-};
-
-class RuntimeEventListener;
-using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<BufferStorage>;
@@ -77,19 +63,8 @@ class ArrayPhysicalField;
 class PhysicalSchema;
 using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
-class TupleBuffer;
-
 class OpenCLManager;
 using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
-
-class BufferManager;
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
-
-class LocalBufferPool;
-using LocalBufferPoolPtr = std::shared_ptr<LocalBufferPool>;
-
-class FixedSizeBufferPool;
-using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
@@ -157,8 +132,7 @@ namespace QueryCompilation
 {
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
-class QueryCompilerOptions;
-using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
+struct QueryCompilerOptions;
 } /// namespace QueryCompilation
 
 } /// namespace NES

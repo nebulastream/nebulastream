@@ -17,8 +17,8 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 namespace NES::Runtime
 {
@@ -34,7 +34,7 @@ class Table
 public:
     Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)) {};
 
-    std::vector<TupleBuffer>& getChunks() { return chunks; }
+    std::vector<Memory::TupleBuffer>& getChunks() { return chunks; }
     MemoryLayouts::MemoryLayoutPtr& getLayout() { return layout; }
 
     static void store(std::unique_ptr<Table>& table, std::string tableDir)
@@ -53,8 +53,10 @@ public:
         }
     }
 
-    static std::unique_ptr<Table>
-    load(const std::string& tableDir, const Runtime::BufferManagerPtr& bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    static std::unique_ptr<Table> load(
+        const std::string& tableDir,
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bm,
+        const MemoryLayouts::MemoryLayoutPtr& layout)
     {
         auto table = std::make_unique<Table>(layout);
         for (const auto& chunkFile : std::filesystem::directory_iterator(tableDir))
@@ -64,7 +66,7 @@ public:
                 continue;
             }
 
-            auto buffer = bm->getBufferNoBlocking();
+            auto buffer = bm.getBufferNoBlocking();
             if (!buffer.has_value())
             {
                 NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
@@ -84,9 +86,9 @@ public:
 
 private:
     friend TableBuilder;
-    TupleBuffer& addChunk(TupleBuffer& buffer) { return chunks.emplace_back(buffer); }
+    TupleBuffer& addChunk(Memory::TupleBuffer& buffer) { return chunks.emplace_back(buffer); }
     MemoryLayouts::MemoryLayoutPtr layout;
-    std::vector<TupleBuffer> chunks;
+    std::vector<Memory::TupleBuffer> chunks;
 };
 
 /**
@@ -95,7 +97,7 @@ private:
 class TableBuilder
 {
 public:
-    TableBuilder(Runtime::BufferManagerPtr bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    TableBuilder(std::shared_ptr<Memory::AbstractBufferProvider> bm, const MemoryLayouts::MemoryLayoutPtr& layout)
         : bm(std::move(bm)), table(std::make_unique<Table>(layout))
     {
         appendBuffer();
@@ -121,7 +123,7 @@ public:
 private:
     void appendBuffer()
     {
-        auto buffer = bm->getBufferNoBlocking();
+        auto buffer = bm.getBufferNoBlocking();
         if (!buffer.has_value())
         {
             NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
@@ -131,7 +133,7 @@ private:
     }
 
 private:
-    Runtime::BufferManagerPtr bm;
+    std::shared_ptr<Memory::AbstractBufferProvider> bm;
     std::unique_ptr<Table> table;
     std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };

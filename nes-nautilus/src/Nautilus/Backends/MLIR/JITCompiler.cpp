@@ -39,7 +39,7 @@ void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOpt
 
     /// Optionally run an optimization pipeline over the llvm module.
     auto optPipeline = mlir::makeOptimizingTransformer(
-        /*optLevel=*/compilerOptions.isOptimize() ? 3 : 0,
+        /*optLevel=*/compilerOptions.optimize ? 3 : 0,
         /*sizeLevel=*/0,
         /*targetMachine=*/nullptr);
     if (auto err = optPipeline(llvmModule.get()))
@@ -67,7 +67,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     /// Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
 
-    if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile())
+    if (compilerOptions.dumpToConsole || compilerOptions.dumpToFile)
     {
         dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
     }
@@ -82,16 +82,16 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     /// TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
     /// right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
     const std::unordered_set<std::string> ProxyInliningFunctions{
-        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-        "NES__Runtime__TupleBuffer__setNumberOfTuples",
-        "NES__Runtime__TupleBuffer__getBuffer",
-        "NES__Runtime__TupleBuffer__getBufferSize",
-        "NES__Runtime__TupleBuffer__getWatermark",
-        "NES__Runtime__TupleBuffer__setWatermark",
-        "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-        "NES__Runtime__TupleBuffer__setSequenceNumber",
-        "NES__Runtime__TupleBuffer__getSequenceNumber",
-        "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
+        "NES__Memory__TupleBuffer__getNumberOfTuples",
+        "NES__Memory__TupleBuffer__setNumberOfTuples",
+        "NES__Memory__TupleBuffer__getBuffer",
+        "NES__Memory__TupleBuffer__getBufferSize",
+        "NES__Memory__TupleBuffer__getWatermark",
+        "NES__Memory__TupleBuffer__setWatermark",
+        "NES__Memory__TupleBuffer__getCreationTimestampInMS",
+        "NES__Memory__TupleBuffer__setSequenceNumber",
+        "NES__Memory__TupleBuffer__getSequenceNumber",
+        "NES__Memory__TupleBuffer__setCreationTimestampInMS"};
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner)
     {
         auto symbolMap = llvm::orc::SymbolMap();

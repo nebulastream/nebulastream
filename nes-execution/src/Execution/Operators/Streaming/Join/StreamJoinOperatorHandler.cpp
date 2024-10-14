@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <magic_enum.hpp>
@@ -34,7 +35,7 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
-std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS)
+std::vector<Memory::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS)
 {
     auto slicesLocked = slices.rlock();
 
@@ -52,10 +53,10 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
             return (sliceStartTS >= startTS && sliceStartTS < stopTS) || (sliceEndTS > startTS && sliceEndTS < stopTS);
         });
 
-    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+    auto buffersToTransfer = std::vector<Memory::TupleBuffer>();
 
     /// metadata buffer
-    auto mainMetadata = bufferManager->getBufferBlocking();
+    auto mainMetadata = bufferProvider->getBufferBlocking();
     buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
@@ -79,14 +80,14 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
      * @param dataToWrite - value to write to the buffer
     */
     auto writeToMetadata
-        = [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite)
+        = [&mainMetadata, &metadataPtr, &metadataIdx, &metadataBuffersCount, &buffersToTransfer, this](uint64_t dataToWrite)
     {
         /// check that current metadata buffer has enough space, by sending used space and space needed
         if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
             /// if current buffer does not contain enough space then
             /// get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
+            auto newBuffer = bufferProvider->getBufferBlocking();
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
             /// update pointer and index
             metadataPtr = newBuffer.getBuffer<uint64_t>();
@@ -102,7 +103,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     for (const auto& slice : filteredSlices)
     {
         /// get buffers with records and store
-        auto sliceBuffers = slice->serialize(bufferManager);
+        auto sliceBuffers = slice->serialize(*bufferProvider);
         buffersToTransfer.insert(buffersToTransfer.end(), sliceBuffers.begin(), sliceBuffers.end());
 
         /// 2. Insert number of buffers in i-th slice to metadata buffer
@@ -115,7 +116,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     return buffersToTransfer;
 }
 
-void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers)
+void StreamJoinOperatorHandler::restoreState(std::vector<Memory::TupleBuffer>& buffers)
 {
     /// get main metadata buffer
     auto metadataBuffersIdx = 0;
@@ -157,7 +158,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
-        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        auto recreatedSlice = deserializeSlice(std::span<const Memory::TupleBuffer>(spanStart, numberOfBuffers));
 
         /// insert recreated slice
         auto indexToInsert = std::find_if(
@@ -369,9 +370,9 @@ uint64_t StreamJoinOperatorHandler::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManagerPtr& bufManager)
+void StreamJoinOperatorHandler::setBufferManager(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
 {
-    this->bufferManager = bufManager;
+    this->bufferProvider = std::move(bufferProvider);
 }
 
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(

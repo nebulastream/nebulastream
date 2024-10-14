@@ -20,8 +20,8 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
@@ -32,6 +32,8 @@
 
 #include <memory>
 
+#include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>
+
 namespace NES::Runtime::Execution
 {
 
@@ -39,8 +41,8 @@ class LimitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineE
 {
 public:
     Nautilus::CompilationOptions options;
-    ExecutablePipelineProvider* provider{};
-    std::shared_ptr<Runtime::BufferManager> bm;
+    std::unique_ptr<ExecutablePipelineProvider> provider{};
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -55,15 +57,14 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup LimitPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        if (!ExecutablePipelineProviderRegistry::instance().contains(GetParam()))
         {
             GTEST_SKIP();
         }
-        options.setDumpToConsole(true);
-        options.setDumpToFile(true);
-        provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        options.dumpToConsole = true;
+        options.dumpToFile = true;
+        provider = ExecutablePipelineProviderRegistry::instance().create(this->GetParam());
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -79,7 +80,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     constexpr uint64_t TUPLES = 20;
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -91,8 +92,8 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto buffer = bufferManager->getBufferBlocking();
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < TUPLES; ++i)
     {
         testBuffer[i]["f1"].write((uint64_t)i);
@@ -102,7 +103,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto executablePipeline = provider->create(pipeline, options);
 
     auto handler = std::make_shared<Operators::LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -111,7 +112,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), LIMIT);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < LIMIT; ++i)
     {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<uint64_t>(), (uint64_t)i);
@@ -121,8 +122,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
 INSTANTIATE_TEST_CASE_P(
     LimitPipelineTest,
     LimitPipelineTest,
-    ::testing::ValuesIn(
-        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
+    ::testing::ValuesIn(ExecutablePipelineProviderRegistry::instance().getRegisteredNames()),
     [](const testing::TestParamInfo<LimitPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

@@ -15,6 +15,8 @@ SET(VCPKG_OVERLAY_TRIPLETS "${CMAKE_SOURCE_DIR}/vcpkg/custom-triplets")
 SET(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/vcpkg/vcpkg-registry/ports")
 SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
+option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
+
 # Default Settings:
 # CMAKE_TOOLCHAIN_FILE    -> Local VCPKG Repository. Will build dependencies locally
 # NES_PREBUILT_VCPKG_ROOT -> Docker Environment with pre-built sdk.
@@ -28,15 +30,30 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
 elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     # If we detect the NES_PREBUILT_VCPKG_ROOT environment we assume we are running in an environment
     # where an exported vcpkg sdk was prepared. This means we will not run in manifest mode,
-    # i.e. we will neither check if the current vcpkg.json manifest matches the pre-built dependencies nor built dependencies.
+    # We check if the VCPKG_DEPENDENCY_HASH environment matches the current hash
     message(STATUS "NES_PREBUILT_VCPKG_ROOT Environment is set: Assuming Docker Development Environment with pre-built dependencies at $ENV{NES_PREBUILT_VCPKG_ROOT}")
+    execute_process(COMMAND ${CMAKE_SOURCE_DIR}/docker/dependency/hash_dependencies.sh
+                    OUTPUT_VARIABLE VCPKG_HASH
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if ((NOT DEFINED $ENV{VCPKG_DEPENDENCY_HASH}) OR (NOT $ENV{VCPKG_DEPENDENCY_HASH} STREQUAL "${VCPKG_HASH}"))
+        message(WARNING
+                "VCPKG Hash does not match, this is most likely due to an outdated development image."
+                "Make sure to update the current development image."
+                "The build will continue, but you may encounter errors during the build"
+                "Expected Hash:"
+                " ${VCPKG_HASH}"
+                "vs. Development Image Hash:"
+                " $ENV{VCPKG_DEPENDENCY_HASH}"
+        )
+    endif ()
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 elseif (DEFINED ENV{VCPKG_ROOT})
     message(STATUS "VCPKG_ROOT Environment is set: Assuming user-managed vcpkg install at $ENV{VCPKG_ROOT}")
     SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 else ()
-    message(WARNING "Neither VCPKG_ROOT Environment nor CMAKE_TOOLCHAIN_FILE was supplied: Creating new internal vcpkg-repository and building dependencies. This might take a while. If possible, use the development container, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
+    message(WARNING "Neither VCPKG_ROOT/NES_PREBUILT_VCPKG_ROOT Environment nor CMAKE_TOOLCHAIN_FILE was supplied: Creating new internal vcpkg-repository and building dependencies. This might take a while. If possible, use the development container, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
     SET(CLONE_DIR ${CMAKE_SOURCE_DIR}/vcpkg-repository)
     SET(REPO_URL https://github.com/microsoft/vcpkg.git)
     if (NOT EXISTS ${CLONE_DIR})
@@ -54,7 +71,7 @@ else ()
     SET(CMAKE_TOOLCHAIN_FILE ${CLONE_DIR}/scripts/buildsystems/vcpkg.cmake)
 endif ()
 
-if (${NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR})
+if (${NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR} AND NOT ${USE_LOCAL_MLIR})
     message(STATUS "Enabling MLIR feature for the VPCKG install")
     list(APPEND VCPKG_MANIFEST_FEATURES "mlir")
 endif ()
@@ -66,6 +83,8 @@ endif ()
 #    at this point because we want to use a custom toolchain file.
 # - Currently only linux is supported.
 # - Cross compilation is not possible, target and host triplets are always identical
+# - We choose the local toolchain when using a local installation of mlir to prevent linking against libc++,
+#   which would most-likely be incompatible with the local mlir installation
 SET(VCPKG_VARIANT "nes")
 if (NES_ENABLE_THREAD_SANITIZER)
     SET(VCPKG_VARIANT "tsan")
@@ -73,6 +92,8 @@ elseif (NES_ENABLE_UB_SANITIZER)
     SET(VCPKG_VARIANT "ubsan")
 elseif (NES_ENABLE_ADDRESS_SANITIZER)
     SET(VCPKG_VARIANT "asan")
+elseif (USE_LOCAL_MLIR)
+    SET(VCPKG_VARIANT "local")
 endif ()
 
 execute_process(COMMAND uname -m OUTPUT_VARIABLE VCPKG_HOST_PROCESSOR)

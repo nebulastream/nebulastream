@@ -84,7 +84,7 @@ public:
     uint64_t getTotalSizeForDataStructures() const;
 
 private:
-    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer>) override;
+    StreamSlicePtr deserializeSlice(std::span<const Memory::TupleBuffer>) override;
 
 protected:
     QueryCompilation::StreamJoinStrategy joinStrategy;

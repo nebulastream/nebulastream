@@ -12,35 +12,46 @@
     limitations under the License.
 */
 
-#include <utility>
+#include <span>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 namespace NES::Runtime::Execution
 {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
-    : MockedPipelineExecutionContext(std::move(handler), true)
+Memory::TupleBuffer copyBuffer(Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider)
 {
-}
+    auto copiedBuffer = provider.getBufferBlocking();
+    NES_ASSERT(copiedBuffer.getBufferSize() >= buffer.getBufferSize(), "Attempt to copy buffer into smaller buffer");
+    auto bufferData = std::span(buffer.getBuffer(), buffer.getBufferSize());
+    std::ranges::copy(bufferData, copiedBuffer.getBuffer());
+    copiedBuffer.setWatermark(buffer.getWatermark());
+    copiedBuffer.setChunkNumber(buffer.getChunkNumber());
+    copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
+    copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    copiedBuffer.setLastChunk(buffer.isLastChunk());
+    copiedBuffer.setOriginId(buffer.getOriginId());
+    copiedBuffer.setSequenceData(buffer.getSequenceData());
+    copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext() : MockedPipelineExecutionContext(true)
-{
-}
+    for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildrenBuffer(); ++childIdx)
+    {
+        auto childBuffer = buffer.loadChildBuffer(childIdx);
+        auto copiedChildBuffer = copyBuffer(childBuffer, provider);
+        NES_ASSERT(copiedBuffer.storeChildBuffer(copiedChildBuffer) == childIdx, "Child buffer index does not match");
+    }
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqChunk)
-    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk, nullptr)
-{
+    return copiedBuffer;
 }
 
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,
-    BufferManagerPtr bufferManager)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
     : PipelineExecutionContext(
           INVALID_PIPELINE_ID, /// mock pipeline id
           INVALID_QUERY_ID, /// mock query id
-          bufferManager,
+          std::move(bufferProvider),
           1,
-          [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
+          [this, logSeenSeqChunk](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef)
           {
               if (logSeenSeqChunk)
               {
@@ -52,9 +63,10 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
                   }
                   seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              buffers.emplace_back(std::move(buffer));
+
+              buffers.emplace_back(copyBuffer(buffer, *this->getBufferManager()));
           },
-          [this, logSeenSeqChunk](TupleBuffer& buffer)
+          [this, logSeenSeqChunk](Memory::TupleBuffer& buffer)
           {
               if (logSeenSeqChunk)
               {
@@ -66,7 +78,8 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
                   }
                   seenSeqChunkLastChunk.insert(seqChunkLastChunk);
               }
-              buffers.emplace_back(std::move(buffer));
+
+              buffers.emplace_back(copyBuffer(buffer, *this->getBufferManager()));
           },
           std::move(handler)) {
         /// nop

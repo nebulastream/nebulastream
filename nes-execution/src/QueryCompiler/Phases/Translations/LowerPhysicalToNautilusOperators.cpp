@@ -26,9 +26,6 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
@@ -65,9 +62,9 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -79,11 +76,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -94,7 +89,6 @@
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Types/ContentBasedWindowType.hpp>
@@ -104,6 +98,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Util/Core.hpp>
 #include <Util/Execution.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -111,14 +106,8 @@
 namespace NES::QueryCompilation
 {
 
-std::shared_ptr<LowerPhysicalToNautilusOperators>
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators::create(const QueryCompilation::QueryCompilerOptionsPtr& options)
-{
-    return std::make_shared<LowerPhysicalToNautilusOperators>(options);
-}
-
-LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(const QueryCompilation::QueryCompilerOptionsPtr& options)
-    : options(options), expressionProvider(std::make_unique<ExpressionProvider>())
+LowerPhysicalToNautilusOperators::LowerPhysicalToNautilusOperators(std::shared_ptr<QueryCompilerOptions> options)
+    : options(std::move(options)), expressionProvider(std::make_unique<ExpressionProvider>())
 {
 }
 
@@ -194,120 +183,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>())
-    {
-        /// for creating the handler that the nautilus udf operator needs to execute the udf
-        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalMapUDFOperator>();
-        const auto udfDescriptor = udfOperator->getUDFDescriptor();
-        const auto methodName = udfDescriptor->getMethodName();
-        const auto udfInputSchema = udfDescriptor->getInputSchema();
-        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
-
-        /// for converting the Physical UDF Operator to the Nautilus Operator
-        const auto operatorInputSchema = udfOperator->getInputSchema();
-        const auto operatorOutputSchema = udfOperator->getOutputSchema();
-
-        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>())
-        {
-#ifdef ENABLE_JNI
-            /// creating the java udf handler
-            const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
-            const auto className = javaUDFDescriptor->getClassName();
-            const auto byteCodeList = javaUDFDescriptor->getByteCodeList();
-            const auto inputClassName = javaUDFDescriptor->getInputClassName();
-            const auto outputClassName = javaUDFDescriptor->getOutputClassName();
-            const auto serializedInstance = javaUDFDescriptor->getSerializedInstance();
-            const auto returnType = javaUDFDescriptor->getReturnType();
-
-            const auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(
-                className,
-                methodName,
-                inputClassName,
-                outputClassName,
-                byteCodeList,
-                serializedInstance,
-                udfInputSchema,
-                udfOutputSchema,
-                std::nullopt);
-
-            operatorHandlers.push_back(handler);
-            const auto indexForThisHandler = operatorHandlers.size() - 1;
-
-            auto mapJavaUDF = std::make_shared<Runtime::Execution::Operators::MapJavaUDF>(
-                indexForThisHandler, operatorInputSchema, operatorOutputSchema);
-            parentOperator->setChild(mapJavaUDF);
-            return mapJavaUDF;
-#endif /// ENABLE_JNI
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-        }
-        else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>())
-        {
-            /// creating the python udf handler
-            const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
-            const auto functionString = pythonUDFDescriptor->getFunctionString();
-
-            const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(
-                functionString, methodName, udfInputSchema, udfOutputSchema);
-            operatorHandlers.push_back(handler);
-            const auto indexForThisHandler = operatorHandlers.size() - 1;
-
-            /// auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
-            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(
-                indexForThisHandler, operatorInputSchema, operatorOutputSchema);
-            parentOperator->setChild(mapPythonUDF);
-            return mapPythonUDF;
-#endif /// NAUTILUS_PYTHON_UDF_ENABLED
-        }
-        else
-        {
-            NES_NOT_IMPLEMENTED();
-        }
-#ifdef ENABLE_JNI
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapUDFOperator>())
-    {
-        /// for creating the handler that the nautilus udf operator needs to execute the udf
-        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapUDFOperator>();
-        const auto udfDescriptor = udfOperator->getUDFDescriptor();
-        const auto methodName = udfDescriptor->getMethodName();
-        const auto udfInputSchema = udfDescriptor->getInputSchema();
-        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
-
-        /// for converting the Physical UDF Operator to the Nautilus Operator
-        const auto operatorInputSchema = udfOperator->getInputSchema();
-        const auto operatorOutputSchema = udfOperator->getOutputSchema();
-
-        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>())
-        {
-            /// creating the java udf handler
-            const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
-            const auto className = javaUDFDescriptor->getClassName();
-            const auto byteCodeList = javaUDFDescriptor->getByteCodeList();
-            const auto inputClassName = javaUDFDescriptor->getInputClassName();
-            const auto outputClassName = javaUDFDescriptor->getOutputClassName();
-            const auto serializedInstance = javaUDFDescriptor->getSerializedInstance();
-            const auto returnType = javaUDFDescriptor->getReturnType();
-
-            const auto handler = std::make_shared<Runtime::Execution::Operators::JavaUDFOperatorHandler>(
-                className,
-                methodName,
-                inputClassName,
-                outputClassName,
-                byteCodeList,
-                serializedInstance,
-                udfInputSchema,
-                udfOutputSchema,
-                std::nullopt);
-
-            operatorHandlers.push_back(handler);
-            const auto indexForThisHandler = operatorHandlers.size() - 1;
-            auto flatMapJavaUDF = std::make_shared<Runtime::Execution::Operators::FlatMapJavaUDF>(
-                indexForThisHandler, operatorInputSchema, operatorOutputSchema);
-            parentOperator->setChild(flatMapJavaUDF);
-            return flatMapJavaUDF;
-        }
-#endif /// ENABLE_JNI
     }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>())
     {
@@ -431,8 +306,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::BUCKETING:
-                        NES_NOT_IMPLEMENTED();
+                        throw FunctionNotImplemented();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -444,7 +320,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
-                        NES_NOT_IMPLEMENTED();
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -458,7 +334,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
-                        NES_NOT_IMPLEMENTED();
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -475,18 +351,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         return joinBuildNautilus;
     }
 
-    /// Check if a plugin is registered that handles this physical operator
-    for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins())
-    {
-        auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
-        if (resultOperator.has_value())
-        {
-            parentOperator->setChild(*resultOperator);
-            return *resultOperator;
-        }
-    }
-
-    NES_NOT_IMPLEMENTED();
+    throw UnknownPhysicalOperator();
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
@@ -703,7 +568,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions, startTs, endTs, physicalGSMO->getWindowDefinition()->getOriginId());
@@ -763,7 +628,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
             aggregationFunctions,
@@ -809,7 +674,7 @@ LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWi
         return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
             timeStampField, timeWindow->getTimeCharacteristic()->getTimeUnit());
     }
-    NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
+    throw UnknownTimeFunctionType(timeWindow->toString());
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerPreAggregationOperator(
@@ -840,7 +705,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
 
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
@@ -850,7 +715,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
         return slicePreAggregation;
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
 
@@ -861,7 +726,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
         return bucketPreAggregation;
     }
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented();
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
@@ -877,7 +742,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
-    NES_ASSERT(!keys.empty(), "A keyed window should have keys");
+    PRECONDITION(!keys.empty(), "expected at least one key field for keyed pre-aggregation operator");
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
     auto df = DefaultPhysicalTypeFactory();
     std::vector<PhysicalTypePtr> keyDataTypes;
@@ -887,7 +752,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
@@ -902,7 +767,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         return sliceMergingOperator;
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         auto handler = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
             timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
@@ -919,7 +784,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw FunctionNotImplemented();
     }
 }
 
@@ -947,7 +812,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw UnknownWatermarkStrategy();
     }
 }
 
@@ -957,7 +822,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
@@ -969,7 +834,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
@@ -1055,7 +920,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
             }
             else
             {
-                NES_THROW_RUNTIME_ERROR("Currently complex expression in as fields are not supported");
+                throw UnknownAggregationType("complex expressions as fields are not supported");
             }
             switch (agg->getType())
             {
@@ -1079,7 +944,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                         physicalInputType, physicalFinalType, aggregationInputExpression, aggregationResultFieldIdentifier);
                 }
             };
-            NES_NOT_IMPLEMENTED();
+            throw UnknownAggregationType("complex expressions as fields are not supported");
         });
     return aggregationFunctions;
 }
@@ -1117,7 +982,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation avg");
             }
         case Windowing::WindowAggregationDescriptor::Type::Count:
             switch (basicType->nativeType)
@@ -1143,7 +1008,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation count");
             }
         case Windowing::WindowAggregationDescriptor::Type::Max:
             switch (basicType->nativeType)
@@ -1169,7 +1034,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation max");
             }
         case Windowing::WindowAggregationDescriptor::Type::Min:
             switch (basicType->nativeType)
@@ -1195,7 +1060,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation min");
             }
         case Windowing::WindowAggregationDescriptor::Type::Sum:
             switch (basicType->nativeType)
@@ -1221,10 +1086,10 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation sum");
             }
         default:
-            NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
+            throw UnknownAggregationType("Unknown window aggregation type");
     }
 }
 

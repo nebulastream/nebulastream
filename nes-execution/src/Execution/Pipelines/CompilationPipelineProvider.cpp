@@ -26,7 +26,9 @@ CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pi
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR", options);
 }
 
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
-    compilationPipelineProvider("PipelineCompiler");
+std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider()
+{
+    return std::make_unique<CompilationPipelineProvider>();
+}
 
 } /// namespace NES::Runtime::Execution

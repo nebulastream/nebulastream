@@ -32,8 +32,8 @@ namespace NES::Runtime::Execution
 class HashJoinOperatorVarSizedTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bm;
-    std::vector<TupleBuffer> emittedBuffers;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::vector<Memory::TupleBuffer> emittedBuffers;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -47,7 +47,7 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorVarSizedTest test case.");
-        bm = std::make_shared<BufferManager>();
+        bufferManager = Memory::BufferManager::create();
     }
 
     /* Will be called after a test is executed. */
@@ -73,7 +73,7 @@ struct HashJoinBuildHelper
     size_t windowSize;
     Operators::HJBuildSlicingVarSizedPtr hashJoinBuild;
     std::string joinFieldName;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::string timeStampField;
     HashJoinOperatorVarSizedTest* hashJoinOperatorTest;
@@ -82,7 +82,7 @@ struct HashJoinBuildHelper
     HashJoinBuildHelper(
         Operators::HJBuildSlicingVarSizedPtr hashJoinBuild,
         const std::string& joinFieldName,
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         SchemaPtr schema,
         const std::string& timeStampField,
         HashJoinOperatorVarSizedTest* hashJoinOperatorTest,
@@ -97,7 +97,7 @@ struct HashJoinBuildHelper
         , windowSize(1000)
         , hashJoinBuild(hashJoinBuild)
         , joinFieldName(joinFieldName)
-        , bufferManager(bufferManager)
+        , bufferManager(std::move(bufferManager))
         , schema(schema)
         , timeStampField(timeStampField)
         , hashJoinOperatorTest(hashJoinOperatorTest)
@@ -130,9 +130,9 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
         INVALID_QUERY_ID, /// mock query id
         buildHelper.bufferManager,
         buildHelper.noWorkerThreads,
-        [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer, WorkerContextRef)
         { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
-        [&hashJoinOperatorTest](TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
         {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(
@@ -151,7 +151,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
         if (i == 0)
         {
-            auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, *buildHelper.bufferManager);
             RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(tupleBuffer))));
             buildHelper.hashJoinBuild->open(executionContext, recordBuffer);
         }
@@ -179,7 +179,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
         if (!correctlyInserted)
         {
-            auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, *buildHelper.bufferManager);
             NES_ERROR("Could not find record {} in bucket!", Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema));
             return false;
         }
@@ -199,7 +199,7 @@ struct HashJoinProbeHelper
     size_t preAllocPageCnt;
     uint64_t windowSize;
     std::string joinFieldNameLeft, joinFieldNameRight;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr leftSchema, rightSchema;
     std::string timeStampFieldLeft;
     std::string timeStampFieldRight;
@@ -208,7 +208,7 @@ struct HashJoinProbeHelper
     HashJoinProbeHelper(
         const std::string& joinFieldNameLeft,
         const std::string& joinFieldNameRight,
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         SchemaPtr leftSchema,
         SchemaPtr rightSchema,
         const std::string& timeStampFieldLeft,
@@ -224,7 +224,7 @@ struct HashJoinProbeHelper
         , windowSize(1000)
         , joinFieldNameLeft(joinFieldNameLeft)
         , joinFieldNameRight(joinFieldNameRight)
-        , bufferManager(bufferManager)
+        , bufferManager(std::move(bufferManager))
         , leftSchema(leftSchema)
         , rightSchema(rightSchema)
         , timeStampFieldLeft(timeStampFieldLeft)
@@ -272,9 +272,9 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         QueryId(1), /// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
-        [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer, WorkerContextRef)
         { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
-        [&hashJoinOperatorTest](TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
         {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(
@@ -582,7 +582,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest)
         std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED);
 
-    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bufferManager, leftSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
@@ -610,7 +610,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestRight)
         std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED);
 
-    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bufferManager, rightSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
     /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
@@ -638,7 +638,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultiplePagesPerBucket)
         std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED);
 
-    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bufferManager, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2;
     buildHelper.numPartitions = 1;
 
@@ -669,7 +669,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultipleWindows)
         std::make_unique<Operators::EventTimeFunction>(readTsField, Windowing::TimeUnit::Milliseconds()),
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED);
 
-    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
+    HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bufferManager, leftSchema, timeStampField, this, isLeftSide);
     buildHelper.pageSize = leftSchema->getSchemaSizeInBytes() * 2, buildHelper.numPartitions = 1;
     buildHelper.windowSize = 5;
 
@@ -693,7 +693,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTest)
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper hashJoinProbeHelper(
-        "left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        "left$f2_left", "right$f2_right", bufferManager, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
 
     hashJoinProbeHelper.pageSize = 2 * leftSchema->getSchemaSizeInBytes();
     hashJoinProbeHelper.numPartitions = 2;
@@ -717,7 +717,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleBuckets)
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper hashJoinProbeHelper(
-        "left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        "left$f2_left", "right$f2_right", bufferManager, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.windowSize = 10;
 
     ASSERT_TRUE(hashJoinProbeAndCheck(hashJoinProbeHelper));
@@ -738,7 +738,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleWindows)
     ASSERT_EQ(leftSchema->getSchemaSizeInBytes(), rightSchema->getSchemaSizeInBytes());
 
     HashJoinProbeHelper hashJoinProbeHelper(
-        "left$f2_left", "right$f2_right", bm, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
+        "left$f2_left", "right$f2_right", bufferManager, leftSchema, rightSchema, "left$timestamp", "right$timestamp", this);
     hashJoinProbeHelper.numPartitions = 1;
     hashJoinProbeHelper.windowSize = 10;
 

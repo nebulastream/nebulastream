@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <yaml-cpp/yaml.h>
 
 namespace NES
 {
@@ -43,7 +44,7 @@ public:
      * @param physicalSourceConfig yaml elements from yaml file
      * @return physical source config object
      */
-    static PhysicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
+    static PhysicalSourceTypePtr createFromYaml(YAML::Node& yamlConfig);
 
 private:
     /**
@@ -69,7 +70,7 @@ private:
      * @return PhysicalSourceType shared pointer
      */
     static PhysicalSourceTypePtr
-    createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig);
+    createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, YAML::Node& yamlConfig);
 };
 } /// namespace Configurations
 } /// namespace NES

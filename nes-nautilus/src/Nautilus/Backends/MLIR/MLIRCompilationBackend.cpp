@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
@@ -27,12 +28,9 @@
 #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 
+
 namespace NES::Nautilus::Backends::MLIR
 {
-
-///Singleton
-[[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");
-
 std::unique_ptr<Executable>
 MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper)
 {
@@ -50,7 +48,7 @@ MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilati
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
 
     /// 2.a dump MLIR to console or a file
-    if (options.isDumpToConsole() || options.isDumpToFile())
+    if (options.dumpToConsole || options.dumpToFile)
     {
         mlir::OpPrintingFlags flags;
         std::string result;
@@ -82,3 +80,11 @@ MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilati
 }
 
 } /// namespace NES::Nautilus::Backends::MLIR
+
+namespace NES::Nautilus::Backends
+{
+std::unique_ptr<CompilationBackend> RegisterMlirBackend()
+{
+    return std::make_unique<MLIR::MLIRCompilationBackend>();
+}
+}

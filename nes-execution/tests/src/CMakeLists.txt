@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-execution-test-util SHARED
+add_library(nes-execution-test-util
         "TestUtils/AbstractCompilationBackendTest.cpp"
         "TestUtils/MockedPipelineExecutionContext.cpp"
         "TestUtils/CollectOperator.cpp"

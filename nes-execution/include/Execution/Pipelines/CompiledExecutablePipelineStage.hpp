@@ -45,8 +45,8 @@ public:
         const std::string& compilationBackend,
         const Nautilus::CompilationOptions& options);
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
-    ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    ExecutionResult execute(
+        Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
 
 private:

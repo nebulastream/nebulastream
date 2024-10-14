@@ -16,11 +16,7 @@ syntax = "proto3";
 import "google/protobuf/any.proto";
 import "SerializableExpression.proto";
 import "SerializableSchema.proto";
-import "JavaUdfDescriptorMessage.proto";
 package NES;
-
-option java_package = "stream.nebula.protobuf";
-option java_multiple_files = true;
 
 /**
 The serializable wrapper for the nes partition object
@@ -67,7 +63,6 @@ message SerializablePhysicalSourceType{
     string delimiter = 3;
     uint32 numberOfBuffersToProduce = 4;
     uint32 numberOfTuplesToProducePerBuffer = 5;
-    uint32 sourceGatheringInterval = 6;
   }
 
   /**
@@ -338,43 +333,6 @@ message SerializableOperator{
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
   }
-
-  /**
-    Information to serialize a Map operator with a Java UDF.
-   */
-  message MapJavaUdfDetails {
-      JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-  }
-
-    /**
-      Information to serialize a Open CL operator with a Java UDF.
-     */
-    message OpenCLOperatorDetails {
-        JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-        uint64 deviceId = 2;
-        string openCLCode = 3;
-    }
-
-  /**
-    Information to serialize a FlatMap operator with a Java UDF.
-   */
-  message FlatMapJavaUdfDetails {
-    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-  }
-
-  /**
-    Properties of a java window udf
-  */
-  message JavaUdfWindowDetails {
-    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-
-    google.protobuf.Any windowType = 2;
-    DistributionCharacteristic distrChar = 3;
-    repeated SerializableExpression keys = 4;
-    uint64 allowedLateness = 5;
-    uint64 origin = 6;
-  }
-
 
   google.protobuf.Any details = 1;
   repeated uint64 childrenIds = 2;

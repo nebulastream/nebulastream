@@ -20,11 +20,11 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+
 
 namespace NES::Runtime
 {
@@ -40,12 +40,13 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
         /// test if elements already exist
         NES_DEBUG("QueryManager: resolving sources for query  {}  with sources= {}", qep->getQueryId(), qep->getSources().size());
 
+        /// Todo #241: Use the new unique source identifier to identify sources.
         for (const auto& source : qep->getSources())
         {
             /// source already exists, add qep to source set if not there
-            OperatorId sourceOperatorId = source->getOperatorId();
+            OriginId sourceOperatorId = source->getSourceId();
 
-            NES_DEBUG("QueryManager: Source  {}  not found. Creating new element with with qep ", sourceOperatorId);
+            NES_DEBUG("QueryManager: Source {}  not found. Creating new element with with qep ", sourceOperatorId);
             ///If source sharing is active and this is the first query for this source, init the map
             if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end())
             {
@@ -55,6 +56,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
             ///bookkeep which qep is now reading from this source
             sourceToQEPMapping[sourceOperatorId].push_back(qep);
         }
+        notifyQueryStatusChange(qep, Execution::QueryStatus::Registered);
     }
 
     NES_DEBUG("queryToStatisticsMap add for= {}", qep->getQueryId());
@@ -65,8 +67,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_ASSERT2_FMT(
         queryManagerStatus.load() == QueryManagerStatus::Running,
         "QueryManager::startQuery: cannot accept new query id " << qep->getQueryId());
-    NES_ASSERT(
-        qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created, "Invalid status for starting the QEP " << qep->getQueryId());
+    NES_ASSERT(qep->getStatus() == Execution::QueryStatus::Registered, "Invalid status for starting the QEP " << qep->getQueryId());
 
     /// 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start())
@@ -103,23 +104,18 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_ASSERT2_FMT(
         queryManagerStatus.load() == QueryManagerStatus::Running,
         "QueryManager::startQuery: cannot accept new query id " << qep->getQueryId());
-    ///    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
-    ///               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        NES_DEBUG("QueryManager: start source  {}  str= {}", sourceString, source->toString());
+        NES_DEBUG("QueryManager: start source: {}", *source);
         if (!source->start())
         {
-            NES_WARNING("QueryManager: source {} could not started as it is already running", sourceString);
+            NES_WARNING("QueryManager: source {} could not started as it is already running", *source);
         }
         else
         {
-            NES_DEBUG("QueryManager: source  {}  started successfully", sourceString);
+            NES_DEBUG("QueryManager: source  {}  started successfully", *source);
         }
     }
 
@@ -143,46 +139,25 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
-
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Running);
     return true;
 }
 
-bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
+bool QueryManager::unregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
 {
-    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query {}", qep->getQueryId());
+    NES_DEBUG("QueryManager::unregisterAndUndeployQuery: query {}", qep->getQueryId());
     std::unique_lock lock(queryMutex);
     auto qepStatus = qep->getStatus();
     NES_ASSERT2_FMT(
-        qepStatus == Execution::ExecutableQueryPlanStatus::Finished || qepStatus == Execution::ExecutableQueryPlanStatus::ErrorState
-            || qepStatus == Execution::ExecutableQueryPlanStatus::Stopped,
-        "Cannot deregisterQuery query " << qep->getQueryId() << " as it is not stopped/failed");
+        qepStatus == Execution::QueryStatus::Finished || qepStatus == Execution::QueryStatus::Failed
+            || qepStatus == Execution::QueryStatus::Stopped,
+        "Cannot unregister query " << qep->getQueryId() << " as it is not stopped/failed");
     for (auto const& source : qep->getSources())
     {
-        sourceToQEPMapping.erase(source->getOperatorId());
+        sourceToQEPMapping.erase(source->getSourceId());
     }
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Unregistered);
     return true;
-}
-
-bool QueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType)
-{
-    std::unique_lock lock(queryMutex);
-    NES_ASSERT2_FMT(
-        sourceToQEPMapping.contains(source->getOperatorId()),
-        "source=" << source->getOperatorId() << " wants to terminate but is not part of the mapping process");
-
-    bool overallResult = true;
-    ///we have to check for each query on this source if we can terminate and return a common answer
-    for (auto qep : sourceToQEPMapping[source->getOperatorId()])
-    {
-        bool ret = queryStatusListener->canTriggerEndOfStream(qep->getQueryId(), source->getOperatorId(), terminationType);
-        if (!ret)
-        {
-            NES_ERROR("Query cannot trigger EOS for query manager for query ={}", qep->getQueryId());
-            NES_THROW_RUNTIME_ERROR("cannot trigger EOS in canTriggerEndOfStream()");
-        }
-        overallResult &= ret;
-    }
-    return overallResult;
 }
 
 bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
@@ -191,14 +166,13 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_DEBUG("QueryManager::failQuery: query= {}", qep->getQueryId());
     switch (qep->getStatus())
     {
-        case Execution::ExecutableQueryPlanStatus::ErrorState:
-        case Execution::ExecutableQueryPlanStatus::Finished:
-        case Execution::ExecutableQueryPlanStatus::Stopped: {
+        case Execution::QueryStatus::Failed:
+        case Execution::QueryStatus::Finished:
+        case Execution::QueryStatus::Stopped: {
             return true;
         }
-        case Execution::ExecutableQueryPlanStatus::Invalid: {
+        case Execution::QueryStatus::Invalid: {
             NES_ASSERT2_FMT(false, "not supported yet " << qep->getQueryId());
-            break;
         }
         default: {
             break;
@@ -206,8 +180,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     }
     for (const auto& source : qep->getSources())
     {
-        NES_ASSERT2_FMT(
-            source->fail(), "Cannot fail source " << source->getOperatorId() << " belonging to query plan=" << qep->getQueryId());
+        NES_ASSERT2_FMT(source->stop(), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();
@@ -215,7 +188,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::FAILED)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be failed", qep->getQueryId());
                 ret = false;
@@ -237,6 +210,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
             true);
     }
     NES_DEBUG("QueryManager::failQuery: query {} was {}", qep->getQueryId(), (ret ? "successful" : " not successful"));
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Failed);
     return true;
 }
 
@@ -247,13 +221,13 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     bool ret = true;
     switch (qep->getStatus())
     {
-        case Execution::ExecutableQueryPlanStatus::ErrorState:
-        case Execution::ExecutableQueryPlanStatus::Finished:
-        case Execution::ExecutableQueryPlanStatus::Stopped: {
+        case Execution::QueryStatus::Failed:
+        case Execution::QueryStatus::Finished:
+        case Execution::QueryStatus::Stopped: {
             NES_DEBUG("QueryManager::stopQuery: query sub-plan id  {}  is already stopped", qep->getQueryId());
             return true;
         }
-        case Execution::ExecutableQueryPlanStatus::Invalid: {
+        case Execution::QueryStatus::Invalid: {
             NES_ASSERT2_FMT(false, "not supported yet " << qep->getQueryId());
             break;
         }
@@ -266,11 +240,11 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     {
         if (type == QueryTerminationType::Graceful)
         {
-            NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful), "Cannot terminate source " << source->getOperatorId());
+            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
         }
         else if (type == QueryTerminationType::HardStop)
         {
-            NES_ASSERT2_FMT(source->stop(QueryTerminationType::HardStop), "Cannot terminate source " << source->getOperatorId());
+            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
         }
     }
 
@@ -290,7 +264,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::OK)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be stopped", qep->getQueryId());
                 ret = false;
@@ -301,7 +275,6 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
         case std::future_status::deferred: {
             /// TODO we need to fail the query now as it could not be stopped?
             NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQueryId());
-            break;
         }
     }
     if (ret)
@@ -312,14 +285,12 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
             true);
     }
     NES_DEBUG("QueryManager::stopQuery: query {} was {}", qep->getQueryId(), (ret ? "successful" : " not successful"));
+    notifyQueryStatusChange(qep, Execution::QueryStatus::Stopped);
     return ret;
 }
 
-bool QueryManager::addSoftEndOfStream(DataSourcePtr source)
+bool QueryManager::addSoftEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors)
 {
-    auto sourceId = source->getOperatorId();
-    auto pipelineSuccessors = source->getExecutableSuccessors();
-
     for (auto successor : pipelineSuccessors)
     {
         /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
@@ -352,11 +323,8 @@ bool QueryManager::addSoftEndOfStream(DataSourcePtr source)
     return true;
 }
 
-bool QueryManager::addHardEndOfStream(DataSourcePtr source)
+bool QueryManager::addHardEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors)
 {
-    auto sourceId = source->getOperatorId();
-    auto pipelineSuccessors = source->getExecutableSuccessors();
-
     for (auto successor : pipelineSuccessors)
     {
         /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
@@ -391,11 +359,8 @@ bool QueryManager::addHardEndOfStream(DataSourcePtr source)
     return true;
 }
 
-bool QueryManager::addFailureEndOfStream(DataSourcePtr source)
+bool QueryManager::addFailureEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors)
 {
-    auto sourceId = source->getOperatorId();
-    auto pipelineSuccessors = source->getExecutableSuccessors();
-
     for (auto successor : pipelineSuccessors)
     {
         /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
@@ -431,27 +396,29 @@ bool QueryManager::addFailureEndOfStream(DataSourcePtr source)
     return true;
 }
 
-bool QueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType terminationType)
+bool QueryManager::addEndOfStream(
+    OriginId sourceId,
+    const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors,
+    Runtime::QueryTerminationType terminationType)
 {
     std::unique_lock queryLock(queryMutex);
-    NES_DEBUG(
-        "QueryManager: QueryManager::addEndOfStream for source operator {} terminationType={}", source->getOperatorId(), terminationType);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator {} terminationType={}", sourceId, terminationType);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
-    NES_ASSERT2_FMT(sourceToQEPMapping.contains(source->getOperatorId()), "invalid source " << source->getOperatorId());
+    NES_ASSERT2_FMT(sourceToQEPMapping.contains(sourceId), "invalid source " << sourceId);
 
     bool success = false;
     switch (terminationType)
     {
         case Runtime::QueryTerminationType::Graceful: {
-            success = addSoftEndOfStream(source);
+            success = addSoftEndOfStream(sourceId, pipelineSuccessors);
             break;
         }
         case Runtime::QueryTerminationType::HardStop: {
-            success = addHardEndOfStream(source);
+            success = addHardEndOfStream(sourceId, pipelineSuccessors);
             break;
         }
         case Runtime::QueryTerminationType::Failure: {
-            success = addFailureEndOfStream(source);
+            success = addFailureEndOfStream(sourceId, pipelineSuccessors);
             break;
         }
         default: {

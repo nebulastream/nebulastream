@@ -50,26 +50,20 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 $<BUILD_INTERFACE:${MLIR_INCLUDE_DIRS}>
                 $<INSTALL_INTERFACE:include/nebulastream/>)
         add_compile_definitions(MLIR_COMPILER)
-        get_property(mlir_libs GLOBAL PROPERTY MLIR_ALL_LIBS)
-        get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-        get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
-        message(STATUS "Using MLIRConfig.cmake in: ${MLIR_DIR}")
-        message(DEBUG "mlir_libs: ${mlir_libs}")
-        message(DEBUG "dialect_libs: ${dialect_libs}")
-        message(DEBUG "conversion_libs: ${MLIR_INCLUDE_DIRS}")
-        target_link_libraries(nes-nautilus PRIVATE ${mlir_libs} ${dialect_libs}
-                ${conversion_libs}
-                MLIRReconcileUnrealizedCasts
-                MLIRMemRefToLLVM
-                MLIRExecutionEngine)
+        target_link_libraries(nes-nautilus PRIVATE
+                MLIRExecutionEngine
+                MLIRFuncAllExtensions
 
-        # Include necessary mlir library in the deb package and install it in the lib folder
-        install(IMPORTED_RUNTIME_ARTIFACTS mlir_float16_utils mlir_runner_utils mlir_c_runner_utils mlir_async_runtime DESTINATION lib)
+                # Dialects
+                MLIRSCFDialect
+                MLIRFuncToLLVM
+                MLIRSCFToControlFlow
+        )
 
     else ()
         message(FATAL_ERROR "Cannot find mlir")
     endif (MLIR_FOUND)
-    target_compile_definitions(nes-nautilus PRIVATE USE_MLIR)
+    target_compile_definitions(nes-nautilus PUBLIC USE_MLIR)
 
     # If we want to support inlining we have to compile the llvm ir for the provided headers.
     # This is currently only supported on Ubuntu 22.04
@@ -178,9 +172,3 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-execution PRIVATE nes-compiler)
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-nautilus
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

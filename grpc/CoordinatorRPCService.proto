@@ -72,7 +72,6 @@ message RegisterWorkerRequest {
   uint32 bandwidthInMbps = 5;
   uint32 latencyInMs = 6;
   bool tfSupported = 9;
-  bool javaUDFSupported = 10;
   uint64 workerId = 11;
 }
 

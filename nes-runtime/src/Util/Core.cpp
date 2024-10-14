@@ -18,12 +18,12 @@
 #include <iostream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
@@ -33,7 +33,7 @@
 namespace NES
 {
 
-std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer)
+std::string Util::printTupleBufferAsText(Memory::TupleBuffer& buffer)
 {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++)
@@ -43,7 +43,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer)
     return ss.str();
 }
 
-std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -69,7 +69,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
 
                 /// read the child buffer index from the tuple buffer
                 auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
-                str = Runtime::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+                str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
             }
             else
             {
@@ -100,14 +100,14 @@ std::string Util::toCSVString(const SchemaPtr& schema)
     return ss.str();
 }
 
-Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
 {
     switch (schema->getLayoutType())
     {
         case Schema::MemoryLayoutType::ROW_LAYOUT:
-            return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+            return Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
-            return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+            return Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
     }
 }
 
@@ -143,61 +143,6 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
     }
 
     return true;
-}
-
-std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
-    const std::string& csvFile,
-    const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
-    const std::string& timeStampFieldName,
-    uint64_t lastTimeStamp)
-{
-    std::vector<Runtime::TupleBuffer> recordBuffers;
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
-
-    /// Creating everything for the csv parser
-    std::ifstream file(csvFile);
-    std::istream_iterator<std::string> beginIt(file);
-    std::istream_iterator<std::string> endIt;
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
-    /// Do-while loop for checking, if we have another line to parse from the inputFile
-    const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
-    auto it = beginIt;
-    auto tupleCount = 0UL;
-    auto buffer = bufferManager->getBufferBlocking();
-    do
-    {
-        std::string line = *it;
-        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
-        ++tupleCount;
-
-        /// If we have read enough tuples from the csv file, then stop iterating over it
-        auto curTimeStamp = testTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
-        if (curTimeStamp >= lastTimeStamp)
-        {
-            break;
-        }
-
-        if (tupleCount >= maxTuplesPerBuffer)
-        {
-            buffer.setNumberOfTuples(tupleCount);
-            recordBuffers.emplace_back(buffer);
-            buffer = bufferManager->getBufferBlocking();
-            tupleCount = 0UL;
-        }
-        ++it;
-    } while (it != endIt);
-
-    if (tupleCount > 0)
-    {
-        buffer.setNumberOfTuples(tupleCount);
-        recordBuffers.emplace_back(buffer);
-    }
-
-    return recordBuffers;
 }
 
 std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)

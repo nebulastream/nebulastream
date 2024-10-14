@@ -40,7 +40,7 @@ namespace NES::Runtime::Execution::Operators
 class NonKeyedSlicePreAggregationTest : public testing::Test
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -53,7 +53,6 @@ public:
     void SetUp() override
     {
         std::cout << "Setup NonKeyedSlicePreAggregationTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -100,7 +99,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto context = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
@@ -131,8 +130,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
     ASSERT_EQ(sliceMergeTask->endSlice, 20);
-    ASSERT_EQ(sliceMergeTask->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(sliceMergeTask->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(sliceMergeTask->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(sliceMergeTask->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(sliceMergeTask->lastChunk, true);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
@@ -154,7 +153,7 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto context = ExecutionContext(Value<MemRef>((int8_t*)workerContext.get()), Value<MemRef>((int8_t*)&pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
@@ -190,8 +189,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
     ASSERT_EQ(sliceMergeTask->endSlice, 20);
-    ASSERT_EQ(sliceMergeTask->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(sliceMergeTask->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(sliceMergeTask->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(sliceMergeTask->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(sliceMergeTask->lastChunk, true);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }

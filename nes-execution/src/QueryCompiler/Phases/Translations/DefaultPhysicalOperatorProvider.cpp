@@ -20,8 +20,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -31,8 +29,6 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -40,16 +36,13 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -63,22 +56,18 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
 
-DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options)
-    : PhysicalOperatorProvider(std::move(options)) {};
-
-PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create(const QueryCompilerOptionsPtr& options)
+DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options)
+    : PhysicalOperatorProvider(std::move(options))
 {
-    return std::make_shared<DefaultPhysicalOperatorProvider>(options);
 }
 
 bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& operatorNode)
@@ -128,15 +117,12 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
     const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode)
 {
+    PRECONDITION(operatorNode->getParents().size() <= 1, "A unary operator should have at most one parent.");
+
     /// If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1)
     {
         insertMultiplexOperatorsAfter(operatorNode);
-    }
-
-    if (operatorNode->getParents().size() > 1)
-    {
-        throw QueryCompilationException("A unary operator should only have at most one parent.");
     }
 
     if (operatorNode->instanceOf<SourceLogicalOperator>())
@@ -189,14 +175,6 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
     {
         lowerProjectOperator(operatorNode);
     }
-    else if (operatorNode->instanceOf<MapUDFLogicalOperator>())
-    {
-        lowerUDFMapOperator(operatorNode);
-    }
-    else if (operatorNode->instanceOf<FlatMapUDFLogicalOperator>())
-    {
-        lowerUDFFlatMapOperator(operatorNode);
-    }
     else if (operatorNode->instanceOf<LogicalLimitOperator>())
     {
         auto limitOperator = operatorNode->as<LogicalLimitOperator>();
@@ -206,12 +184,15 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
     }
     else
     {
-        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
+        throw UnknownLogicalOperator();
     }
 }
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorPtr& operatorNode)
 {
+    PRECONDITION(
+        operatorNode->instanceOf<LogicalUnionOperator>() || operatorNode->instanceOf<LogicalJoinOperator>(),
+        operatorNode->toString() + " is no binaryOperator")
     if (operatorNode->instanceOf<LogicalUnionOperator>())
     {
         lowerUnionOperator(operatorNode);
@@ -220,22 +201,16 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
     {
         lowerJoinOperator(operatorNode);
     }
-    else
-    {
-        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
-    }
 }
 
 void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPtr& operatorNode)
 {
     auto unionOperator = operatorNode->as<LogicalUnionOperator>();
     /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
-    if (!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()))
-    {
-        throw QueryCompilationException(
-            "The children of a union operator should have the same schema. Left:" + unionOperator->getLeftInputSchema()->toString()
-            + " but right " + unionOperator->getRightInputSchema()->toString());
-    }
+    PRECONDITION(
+        unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()),
+        "The input schemas of a union operators children should be equal");
+
     auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
     operatorNode->replace(physicalUnionOperator);
 }
@@ -271,31 +246,10 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
     operatorNode->replace(physicalMapOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode)
-{
-    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperator>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(
-        mapUDFOperator->getInputSchema(), mapUDFOperator->getOutputSchema(), mapUDFOperator->getUDFDescriptor());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-    operatorNode->replace(physicalMapOperator);
-}
-
-void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode)
-{
-    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperator>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(
-        flatMapUDFOperator->getInputSchema(), flatMapUDFOperator->getOutputSchema(), flatMapUDFOperator->getUDFDescriptor());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-    operatorNode->replace(physicalMapOperator);
-}
-
 OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<OperatorPtr> children)
 {
-    if (children.empty())
-    {
-        throw QueryCompilationException("There should be at least one child for the join operator " + joinOperator->toString());
-    }
+    PRECONDITION(!children.empty(), "There should be at least one child for the join operator " + joinOperator->toString());
 
     if (children.size() > 1)
     {
@@ -330,16 +284,17 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     const auto& windowSize = windowType->getSize().getTime();
     const auto& windowSlide = windowType->getSlide().getTime();
-    NES_ASSERT(
-        windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-        "Only a tumbling or sliding window is currently supported for StreamJoin");
+    if (!(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>()))
+    {
+        throw UnknownWindowType();
+    }
 
     const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator, windowType);
     const auto leftInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     const auto rightInputOperator
         = getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
-    const auto joinStrategy = options->getStreamJoinStrategy();
+    const auto joinStrategy = options->joinStrategy;
 
     const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
     const StreamJoinConfigs streamJoinConfig(
@@ -371,8 +326,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             buildSideType,
             timeStampField,
             joinFieldName,
-            options->getStreamJoinStrategy(),
-            options->getWindowingStrategy());
+            options->joinStrategy,
+            options->windowingStrategy);
     };
 
     const auto leftJoinBuildOperator = createBuildOperator(
@@ -393,8 +348,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
         joinOperator->getWindowStartFieldName(),
         joinOperator->getWindowEndFieldName(),
         joinOperatorHandler,
-        options->getStreamJoinStrategy(),
-        options->getWindowingStrategy());
+        options->joinStrategy,
+        options->windowingStrategy);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -408,7 +363,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
     const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
 
     Operators::NLJOperatorHandlerPtr joinOperatorHandler;
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         return Operators::NLJOperatorHandlerSlicing::create(
             joinOperator->getAllInputOriginIds(),
@@ -420,7 +375,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         return Operators::NLJOperatorHandlerBucketing::create(
             joinOperator->getAllInputOriginIds(),
@@ -434,7 +389,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw UnknownWindowingStrategy();
     }
 }
 
@@ -444,7 +399,7 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
     using namespace Runtime::Execution;
     const auto joinOperator = streamJoinOperators.operatorNode->as<LogicalJoinOperator>();
     Operators::HJOperatorHandlerPtr joinOperatorHandler;
-    if (options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (options->windowingStrategy == WindowingStrategy::SLICING)
     {
         return Operators::HJOperatorHandlerSlicing::create(
             joinOperator->getAllInputOriginIds(),
@@ -454,12 +409,12 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             joinOperator->getLeftInputSchema(),
             joinOperator->getRightInputSchema(),
             streamJoinConfig.joinStrategy,
-            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-            options->getHashJoinOptions()->getPreAllocPageCnt(),
-            options->getHashJoinOptions()->getPageSize(),
-            options->getHashJoinOptions()->getNumberOfPartitions());
+            options->hashJoinOptions.totalSizeForDataStructures,
+            options->hashJoinOptions.preAllocPageCnt,
+            options->hashJoinOptions.pageSize,
+            options->hashJoinOptions.numberOfPartitions);
     }
-    else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING)
+    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
     {
         return Operators::HJOperatorHandlerBucketing::create(
             joinOperator->getAllInputOriginIds(),
@@ -469,14 +424,14 @@ Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr DefaultPhysicalOpera
             joinOperator->getLeftInputSchema(),
             joinOperator->getRightInputSchema(),
             streamJoinConfig.joinStrategy,
-            options->getHashJoinOptions()->getTotalSizeForDataStructures(),
-            options->getHashJoinOptions()->getPreAllocPageCnt(),
-            options->getHashJoinOptions()->getPageSize(),
-            options->getHashJoinOptions()->getNumberOfPartitions());
+            options->hashJoinOptions.totalSizeForDataStructures,
+            options->hashJoinOptions.preAllocPageCnt,
+            options->hashJoinOptions.pageSize,
+            options->hashJoinOptions.numberOfPartitions);
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw UnknownWindowingStrategy();
     }
 }
 
@@ -537,17 +492,14 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
 {
     NES_DEBUG("Create Thread local window aggregation");
     auto windowOperator = operatorNode->as<WindowOperator>();
+    PRECONDITION(!windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
     auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
-
-    if (windowOperator->getInputOriginIds().empty())
-    {
-        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
-    }
 
     /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
@@ -558,7 +510,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
     /// if we have a sliding window and use slicing we have to create another slice merge operator
-    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>() && options->getWindowingStrategy() == WindowingStrategy::SLICING)
+    if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>() && options->windowingStrategy == WindowingStrategy::SLICING)
     {
         auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
             getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
@@ -572,50 +524,41 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorPtr& operatorNode)
 {
     auto windowOperator = operatorNode->as<WindowOperator>();
+    PRECONDITION(windowOperator->getInputOriginIds().empty(), "The number of input origin IDs for an window operator should not be zero.");
+    PRECONDITION(operatorNode->instanceOf<LogicalWindowOperator>(), "The operator should be a window operator.");
+
     auto windowInputSchema = windowOperator->getInputSchema();
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
-    if (windowOperator->getInputOriginIds().empty())
-    {
-        throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
-    }
     /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
-    /// create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
-    if (operatorNode->instanceOf<LogicalWindowOperator>())
+    /// handle if threshold window
+    ///TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
+    auto windowType = operatorNode->as<WindowOperator>()->getWindowDefinition()->getWindowType();
+    if (windowType->instanceOf<Windowing::ContentBasedWindowType>())
     {
-        /// handle if threshold window
-        ///TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
-        auto windowType = operatorNode->as<WindowOperator>()->getWindowDefinition()->getWindowType();
-        if (windowType->instanceOf<Windowing::ContentBasedWindowType>())
+        auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
+        /// check different content-based window types
+        if (contentBasedWindowType->getContentBasedSubWindowType()
+            == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
         {
-            auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
-            /// check different content-based window types
-            if (contentBasedWindowType->getContentBasedSubWindowType()
-                == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
-            {
-                NES_INFO("Lower ThresholdWindow");
-                auto thresholdWindowPhysicalOperator
-                    = PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, windowDefinition);
-                thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+            NES_INFO("Lower ThresholdWindow");
+            auto thresholdWindowPhysicalOperator
+                = PhysicalOperators::PhysicalThresholdWindowOperator::create(windowInputSchema, windowOutputSchema, windowDefinition);
+            thresholdWindowPhysicalOperator->addProperty("LogicalOperatorId", operatorNode->getId());
 
-                operatorNode->replace(thresholdWindowPhysicalOperator);
-                return;
-            }
-            else
-            {
-                throw QueryCompilationException("No support for this window type." + windowDefinition->getWindowType()->toString());
-            }
+            operatorNode->replace(thresholdWindowPhysicalOperator);
+            return;
         }
-        else if (windowType->instanceOf<Windowing::TimeBasedWindowType>())
+        else
         {
-            lowerTimeBasedWindowOperator(operatorNode);
+            throw UnknownWindowType(windowDefinition->getWindowType()->toString());
         }
     }
-    else
+    else if (windowType->instanceOf<Windowing::TimeBasedWindowType>())
     {
-        throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
+        lowerTimeBasedWindowOperator(operatorNode);
     }
 }
 

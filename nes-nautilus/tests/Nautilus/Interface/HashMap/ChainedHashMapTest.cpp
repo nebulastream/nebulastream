@@ -53,7 +53,7 @@ public:
 
 TEST_F(ChainedHashMapTest, insertEntryTableTest)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -81,7 +81,7 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest)
 
 TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -108,7 +108,7 @@ TEST_F(ChainedHashMapTest, insertSmallNumberOfUniqueKey)
 
 TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -135,7 +135,7 @@ TEST_F(ChainedHashMapTest, insertLargeNumberOfUniqueKey)
 
 TEST_F(ChainedHashMapTest, updateValues)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -172,7 +172,7 @@ TEST_F(ChainedHashMapTest, updateValues)
 
 TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator));
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -206,7 +206,7 @@ TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation)
 
 TEST_F(ChainedHashMapTest, entryIterator)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator), 64);
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -240,7 +240,7 @@ TEST_F(ChainedHashMapTest, entryIterator)
 
 TEST_F(ChainedHashMapTest, insertChain)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator), 64);
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};
@@ -280,7 +280,7 @@ TEST_F(ChainedHashMapTest, insertChain)
 
 TEST_F(ChainedHashMapTest, KeyEntryIterator)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = ChainedHashMap(8, 8, 1000, std::move(allocator), 64);
     PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     auto keyDataTypes = {integerType};

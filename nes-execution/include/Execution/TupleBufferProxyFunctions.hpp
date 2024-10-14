@@ -17,99 +17,99 @@
 #include <Runtime/TupleBuffer.hpp>
 namespace NES::Runtime::ProxyFunctions
 {
-void* NES__Runtime__TupleBuffer__getBuffer(void* thisPtr)
+void* NES__Memory__TupleBuffer__getBuffer(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getBuffer();
 };
 
-uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getBufferSize(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getBufferSize();
 };
 
-uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getNumberOfTuples(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getNumberOfTuples();
 };
 
-extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples)
+extern "C" __attribute__((always_inline)) void NES__Memory__TupleBuffer__setNumberOfTuples(void* thisPtr, uint64_t numberOfTuples)
 {
-    NES::Runtime::TupleBuffer* tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+    Memory::TupleBuffer* tupleBuffer = static_cast<Memory::TupleBuffer*>(thisPtr);
     tupleBuffer->setNumberOfTuples(numberOfTuples);
 }
 
-uint64_t NES__Runtime__TupleBuffer__getOriginId(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getOriginId(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getOriginId().getRawValue();
 };
 
-void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value)
+void NES__Memory__TupleBuffer__setOriginId(void* thisPtr, uint64_t value)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     thisPtr_->setOriginId(OriginId(value));
 };
 
-uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getWatermark(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getWatermark();
 };
 
-void NES__Runtime__TupleBuffer__setWatermark(void* thisPtr, uint64_t value)
+void NES__Memory__TupleBuffer__setWatermark(void* thisPtr, uint64_t value)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     thisPtr_->setWatermark(value);
 };
 
-uint64_t NES__Runtime__TupleBuffer__getCreationTimestampInMS(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getCreationTimestampInMS(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getCreationTimestampInMS();
 };
 
-void NES__Runtime__TupleBuffer__setSequenceNumber(void* thisPtr, uint64_t sequenceNumber)
+void NES__Memory__TupleBuffer__setSequenceNumber(void* thisPtr, uint64_t sequenceNumber)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->setSequenceNumber(sequenceNumber);
 };
 
-uint64_t NES__Runtime__TupleBuffer__getSequenceNumber(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getSequenceNumber(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getSequenceNumber();
 }
 
-void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value)
+void NES__Memory__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t value)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->setCreationTimestampInMS(value);
 }
 
-void NES__Runtime__TupleBuffer__setChunkNumber(void* thisPtr, uint64_t chunkNumber)
+void NES__Memory__TupleBuffer__setChunkNumber(void* thisPtr, uint64_t chunkNumber)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->setChunkNumber(chunkNumber);
 };
 
-void NES__Runtime__TupleBuffer__setLastChunk(void* thisPtr, bool isLastChunk)
+void NES__Memory__TupleBuffer__setLastChunk(void* thisPtr, bool isLastChunk)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->setLastChunk(isLastChunk);
 };
 
-uint64_t NES__Runtime__TupleBuffer__getChunkNumber(void* thisPtr)
+uint64_t NES__Memory__TupleBuffer__getChunkNumber(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->getChunkNumber();
 };
 
-bool NES__Runtime__TupleBuffer__isLastChunk(void* thisPtr)
+bool NES__Memory__TupleBuffer__isLastChunk(void* thisPtr)
 {
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
+    auto* thisPtr_ = static_cast<Memory::TupleBuffer*>(thisPtr);
     return thisPtr_->isLastChunk();
 };
 

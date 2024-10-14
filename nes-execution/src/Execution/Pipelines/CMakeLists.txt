@@ -16,4 +16,4 @@ add_source_files(nes-execution
         InterpreterPipelineProvider.cpp
         CompilationPipelineProvider.cpp
         CompiledExecutablePipelineStage.cpp
-        )
+)
