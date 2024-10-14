@@ -53,8 +53,6 @@ public:
     FunctionItem(float value); ///NOLINT(google-explicit-constructor)
     FunctionItem(double value); ///NOLINT(google-explicit-constructor)
     FunctionItem(bool value); ///NOLINT(google-explicit-constructor)
-    FunctionItem(const char* value); ///NOLINT(google-explicit-constructor)
-    FunctionItem(std::string const& value); ///NOLINT(google-explicit-constructor)
     FunctionItem(ValueTypePtr value); ///NOLINT(google-explicit-constructor)
     FunctionItem(NodeFunctionPtr exp);
 
