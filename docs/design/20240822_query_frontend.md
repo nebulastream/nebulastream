@@ -20,18 +20,30 @@ We will implement the parser using a state-of-the-art parser generator (G2), suc
 We do not implement a parser for the existing functional query sytax, shown in the query above (for time reasons. We may later add one).
 
 # (Optional) Solution Background
-- describe relevant prior work, e.g., issues, PRs, other projects
+A parser is part of every database system with a language interface.
+Most systems use parser generators over handwritten parsers.
+Parser generators generate the the parser code based on the grammar.
+One then must only transform the geric data stuctures of pared tokens into custom datastructed, for example representing SQL statements with a select, from, and where clasue.
+
+Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custim data structures.
 
 # Our Proposed Solution
-- start with a high-level overview of the solution
-- explain the interface and interaction with other system components
-- explain a potential implementation
-- explain how the goals G1, G2, ... are addressed
-- use diagrams if reasonable
+We want to base our implementation on the DuckDB parser (https://github.com/duckdb/duckdb/tree/main/third_party/libpg_query), which in turn is based on the PostgreSQL parser (https://github.com/pganalyze/libpg_query).
+PostgreSQL's SQL dialect and implementation have a rich set of features and are widely used.
+The DuckDB version is "stripped down and generally cleaned up to make it easier to modify and extend".
+
+The DuckDB parser is integrated into DuckDB, i.e., it is no off-the-shelf library.
+This is why we have to extract it.
+In this process, we want to make it a standalone library.
+Given a SQL query string, it will then output an object of type `SQLStatement`.
+Each `SQLStatement` has a type `TYPE`, e.g., `SELECT_STATEMENT`, `INSERT_STATEMENT`.
+Using the type information, we can cast it into derived classes, e.g., `SQLStatement`.
+Derived classes are, in turn, tagged datastructures depending on the components of the query, e.g., whether it contains set operations or has subqueries.
+
+To integrate this system-agnostic parser library into NES, we have to traverse the `SQLStatement`, extract the information, and generate a NES-specific query representation, i.e., `NES::Query` for a start.
 
 # Proof of Concept
-- demonstrate that the solution should work
-- can be done after the first draft
+We started to extract a parsing library out of DuckDB.
 
 # Alternatives
 - discuss alternative approaches A1, A2, ..., including their advantages and disadvantages
