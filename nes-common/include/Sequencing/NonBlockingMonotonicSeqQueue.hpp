@@ -80,7 +80,7 @@ private:
             {
                 this->lastChunkNumber = chunkNumber;
             }
-            ++seenChunks;
+            seenChunks = seenChunks + 1;
             mergeValues(this->value, value);
         }
 
@@ -103,7 +103,7 @@ private:
     private:
         SequenceNumber seqNumber;
         ChunkNumber lastChunkNumber;
-        std::atomic<uint64_t> seenChunks;
+        std::atomic<ChunkNumber> seenChunks;
         std::atomic<T> value;
         std::function<void(std::atomic<T>&, const T&)> mergeValues;
     };

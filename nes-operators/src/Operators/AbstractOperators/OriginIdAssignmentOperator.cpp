@@ -40,4 +40,4 @@ OriginId OriginIdAssignmentOperator::getOriginId() const
     return originId;
 }
 
-} /// namespace NES
+}

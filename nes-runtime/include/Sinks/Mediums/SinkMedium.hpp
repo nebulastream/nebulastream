@@ -13,8 +13,8 @@
 */
 
 #pragma once
-
 #include <mutex>
+#include <Runtime/NodeEngine.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 
@@ -67,7 +67,7 @@ public:
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
+    virtual bool writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**
      * @brief get the id of query

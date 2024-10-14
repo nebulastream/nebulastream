@@ -13,11 +13,8 @@
 */
 
 syntax = "proto3";
-import "SerializableExpression.proto";
+import "SerializableFunction.proto";
 package NES;
-
-option java_package = "stream.nebula.protobuf";
-option java_multiple_files = true;
 
 /**
 The serializable wrapper for a schema object

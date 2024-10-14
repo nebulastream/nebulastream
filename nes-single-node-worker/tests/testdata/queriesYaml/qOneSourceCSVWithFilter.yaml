@@ -1,0 +1,17 @@
+query: |
+  Query::from("csv_source")
+    .filter(Attribute("id") < 16)
+    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
+logical:
+  - name: csv_source
+    schema:
+      - name: id
+        type: UINT64
+      - name: id2
+        type: UINT64
+physical:
+  - logical: csv_source
+    config:
+      type: CSV
+      filePath: oneToThirtyOneDoubleColumn.csv
+      delimiter: ","

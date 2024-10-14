@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-
 #include <string>
 #include <utility>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -25,21 +24,22 @@
 namespace NES::Runtime
 {
 
-NodeEngine::NodeEngine(std::vector<BufferManagerPtr>&& bufferManagers, QueryManagerPtr&& queryManager)
-    : bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager))
+NodeEngine::NodeEngine(
+    const std::shared_ptr<Memory::BufferManager>& bufferManager,
+    const std::shared_ptr<QueryManager>& queryManager,
+    const std::shared_ptr<QueryLog>& queryLog)
+    : bufferManager(bufferManager), queryManager(queryManager), queryLog(queryLog)
 {
     this->queryManager->startThreadPool(100);
 }
 
 QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan)
 {
-    /// TODO(#123): Query Instantiation
-    static std::atomic counter = INITIAL<QueryId>.getRawValue();
+    auto queryId = queryExecutionPlan->getQueryId();
     queryManager->registerQuery(queryExecutionPlan);
 
-    const auto nextQueryId = QueryId(counter++);
-    registeredQueries[nextQueryId] = queryExecutionPlan;
-    return nextQueryId;
+    registeredQueries[queryId] = queryExecutionPlan;
+    return queryId;
 }
 
 void NodeEngine::startQuery(QueryId queryId)

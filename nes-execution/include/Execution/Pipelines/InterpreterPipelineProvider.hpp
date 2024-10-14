@@ -24,6 +24,6 @@ class InterpreterPipelineProvider : public ExecutablePipelineProvider
 {
 public:
     std::unique_ptr<ExecutablePipelineStage>
-    create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&) override;
+    create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) override;
 };
 } /// namespace NES::Runtime::Execution

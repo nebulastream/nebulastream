@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -36,14 +35,14 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
     {
-        auto visitingOp = (*itr)->as<Operator>();
+        auto visitingOp = NES::Util::as<Operator>(*itr);
         if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp, false);
+        SerializableOperator serializeOperator = OperatorSerializationUtil::serializeOperator(visitingOp);
         serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
     }
 

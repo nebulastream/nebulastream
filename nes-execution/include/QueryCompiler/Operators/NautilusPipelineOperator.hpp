@@ -14,7 +14,6 @@
 #pragma once
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation

@@ -14,6 +14,8 @@
 
 #include <string>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <Util/Common.hpp>
+
 
 namespace NES::Windowing
 {
@@ -26,7 +28,7 @@ WatermarkStrategyDescriptorPtr IngestionTimeWatermarkStrategyDescriptor::create(
 }
 bool IngestionTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other)
 {
-    return other->instanceOf<IngestionTimeWatermarkStrategyDescriptor>();
+    return NES::Util::instanceOf<IngestionTimeWatermarkStrategyDescriptor>(other);
 }
 
 std::string IngestionTimeWatermarkStrategyDescriptor::toString()

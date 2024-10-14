@@ -94,7 +94,7 @@ void FileSink::shutdown()
     outputFile.close();
 }
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
+bool FileSink::writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
     /// Stop execution if the file could not be opened during setup.
     /// This results in ExecutionResult::Error for the task.

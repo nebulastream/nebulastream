@@ -16,6 +16,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -80,7 +81,7 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
         for (int64_t i = children.size() - 1; i >= 0; i--)
         {
             auto child = children[i];
-            NES_ASSERT(!child->getPredecessors().empty(), "A child node should have a parent");
+            INVARIANT(!child->getPredecessors().empty(), "A child node should have a parent");
 
             /// check if current node is last parent of child.
             if (child->getSuccessors().back() == current)

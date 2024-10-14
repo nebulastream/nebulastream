@@ -13,11 +13,9 @@
 */
 #pragma once
 #include <future>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Util/Timer.hpp>
+#include <nautilus/Engine.hpp>
 namespace NES
 {
 class DumpHelper;
@@ -35,26 +33,26 @@ namespace NES::Runtime::Execution
 class PhysicalOperatorPipeline;
 
 /**
- * @brief A compiled executable pipeline stage uses nautilus to compile a pipeline to a code snippet.
+ * @brief A compiled executable pipeline stage uses nautilus-lib to compile a pipeline to a code snippet.
  */
-class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage
+class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
     CompiledExecutablePipelineStage(
-        const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
-        const std::string& compilationBackend,
-        const Nautilus::CompilationOptions& options);
+        const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline, nautilus::engine::Options options);
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
-    ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
+    uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    ExecutionResult execute(
+        Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 private:
-    std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
-    std::string compilationBackend;
-    const Nautilus::CompilationOptions options;
-    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
-    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
+    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> compilePipeline();
+    const nautilus::engine::Options options;
+    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> pipelineFunctionCompiled;
+    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
-} /// namespace NES::Runtime::Execution
+}

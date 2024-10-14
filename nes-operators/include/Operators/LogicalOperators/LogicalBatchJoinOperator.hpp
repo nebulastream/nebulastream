@@ -22,7 +22,7 @@ namespace NES::Experimental
 {
 
 /**
- * @brief Batch Join operator, which contains an expression as a predicate.
+ * @brief Batch Join operator, which contains an function as a predicate.
  */
 class LogicalBatchJoinOperator : public LogicalBinaryOperator
 {
@@ -47,4 +47,5 @@ public:
 private:
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
+using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
 } /// namespace NES::Experimental

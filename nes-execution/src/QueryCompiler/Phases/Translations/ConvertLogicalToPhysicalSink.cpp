@@ -20,7 +20,10 @@
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkCreator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+
 
 namespace NES
 {
@@ -33,19 +36,20 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
     const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
     size_t numOfProducers)
 {
+    PRECONDITION(nodeEngine, "Invalid node engine");
+    PRECONDITION(pipelineQueryPlan, "Invalid query sub-plan");
+
     NES_DEBUG("Convert sink  {}", operatorId);
-    NES_ASSERT(nodeEngine, "Invalid node engine");
-    NES_ASSERT(pipelineQueryPlan, "Invalid query sub-plan");
-    if (sinkDescriptor->instanceOf<PrintSinkDescriptor>())
+    if (NES::Util::instanceOf<PrintSinkDescriptor>(sinkDescriptor))
     {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
-        const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
+        const PrintSinkDescriptorPtr printSinkDescriptor = NES::Util::as<PrintSinkDescriptor>(sinkDescriptor);
         return createCsvPrintSink(
             schema, pipelineQueryPlan->getQueryId(), nodeEngine, numOfProducers, std::cout, printSinkDescriptor->getNumberOfOrigins());
     }
-    if (sinkDescriptor->instanceOf<FileSinkDescriptor>())
+    if (NES::Util::instanceOf<FileSinkDescriptor>(sinkDescriptor))
     {
-        auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
+        auto fileSinkDescriptor = NES::Util::as<FileSinkDescriptor>(sinkDescriptor);
         NES_INFO("ConvertLogicalToPhysicalSink: Creating file sink for format={}", fileSinkDescriptor->getSinkFormatAsString());
         if (fileSinkDescriptor->getSinkFormatAsString() == "CSV_FORMAT")
         {
@@ -61,11 +65,12 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
         }
         else
         {
-            NES_ERROR("createDataSink: unsupported format");
-            throw std::invalid_argument("Unknown File format");
+            throw UnknownSinkType();
         }
     }
-    NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
-    throw std::invalid_argument("Unknown Sink Descriptor Type");
+    else
+    {
+        throw UnknownSinkType();
+    }
 }
 } /// namespace NES

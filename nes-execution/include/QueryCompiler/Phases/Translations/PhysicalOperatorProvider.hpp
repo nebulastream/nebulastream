@@ -12,26 +12,26 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <utility>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 namespace NES::QueryCompilation
 {
-/**
- * @brief This is a general interface, which provides the functionality to replace a logical
- * operator with corresponding physical operators.
- */
+
+/// This is a general interface, which provides the functionality to replace a logical operator with corresponding
+/// physical operators.
 class PhysicalOperatorProvider
 {
 public:
-    PhysicalOperatorProvider(QueryCompilerOptionsPtr options);
-    /**
-     * @brief Replaces this node with physical operators that express the same semantics.
-     * @param decomposedQueryPlan the current decomposed query plan.
-     * @param operatorNode the operator that should be replaced.
-     */
+    explicit PhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options) : options(std::move(options)) {};
+    virtual ~PhysicalOperatorProvider() = default;
+
+    /// This method is called to replace the logical operator with corresponding physical operators.
     virtual void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) = 0;
 
 protected:
-    QueryCompilerOptionsPtr options;
+    std::shared_ptr<QueryCompilerOptions> options;
 };
-} /// namespace NES::QueryCompilation
+using PhysicalOperatorProviderPtr = std::shared_ptr<PhysicalOperatorProvider>;
+}

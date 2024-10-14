@@ -13,54 +13,26 @@
 */
 #pragma once
 
-#include <optional>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Util/Timer.hpp>
 
 namespace NES::QueryCompilation
 {
-
-/**
- * @brief Provides the query compilation results.
- * Query compilation can succeed, in this case the result contains a ExecutableQueryPlan pointer.
- * If query compilation fails, the result contains the error and hasError() return true.
- */
+/// Provides the query compilation results.
+/// Query compilation can succeed, in this case the result contains a ExecutableQueryPlan pointer.
+/// If query compilation fails, the result contains the error and hasError() return true.
 class QueryCompilationResult
 {
 public:
-    static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
-    static QueryCompilationResultPtr create(std::exception_ptr exception);
-    /**
-     * @brief Returns the query execution plan if hasError() == false.
-     * @throws QueryCompilationException if hasError() == true.
-     * @return NewExecutableQueryPlanPtr
-     */
+    static std::shared_ptr<QueryCompilationResult> create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
+
     Runtime::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
-
-    /**
-    * @brief Returns the compilation time
-    * @return compilation time
-    */
-    [[nodiscard]] uint64_t getCompilationTime() const;
-
-    /**
-     * @brief Indicates if the query compilation succeeded.
-     * @return true if the request has an error
-     */
-    bool hasError();
-
-    /**
-     * @brief Returns the exception
-     * @return std::exception_ptr
-     */
-    std::exception_ptr getError();
+    [[nodiscard]] uint64_t getCompilationTimeMilli() const;
 
 private:
     explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan, Timer<> timer);
-    explicit QueryCompilationResult(std::exception_ptr exception);
-    std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
-    std::optional<std::exception_ptr> exception;
-    std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
+    Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan;
+    Timer<> timer;
 };
+using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
 } /// namespace NES::QueryCompilation

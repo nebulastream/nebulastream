@@ -32,7 +32,7 @@ NES::Runtime::Execution::Operators::TimeFunctionPtr NES::QueryCompilation::Times
     {
         case EVENT_TIME:
             return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(fieldName), unit);
+                std::make_unique<Runtime::Execution::Functions::ExecutableFunctionReadField>(fieldName), unit);
         case INGESTION_TIME:
             return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
     }

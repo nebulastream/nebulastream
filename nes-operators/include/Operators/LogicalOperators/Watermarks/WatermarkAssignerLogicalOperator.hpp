@@ -15,8 +15,8 @@
 #pragma once
 
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES
 {

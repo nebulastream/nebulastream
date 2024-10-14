@@ -77,7 +77,9 @@ during daily development (e.g., clang-format, clang-tidy, gdb, ...).
 The CI is aware of NebulaStreams dependency management. The PR CI Job detects changes to folders relevant to dependency
 management within the set of changes in the pull request. Currently, these folders are `docker/dependency` and `vcpkg`.
 If no changes to these folders are detected, the CI can skip the jobs building the docker images and use the most recent
-development image (`latest`) to run the rest of the CI jobs relevant to PRs.
+development image (`latest`) to run the rest of the CI jobs relevant to PRs. The change detection is done by calculating
+hashes of all relevant files. If we find a docker image with a matching hash in the docker registry the CI does not need
+to built a new dependency image.
 
 If the CI detects changes, we have a Job Matrix that creates jobs for all desired triplet+platform combinations. These
 Jobs will build the `branch-specific` base, dependency, and development images. A `branch-specific` will be tagged with

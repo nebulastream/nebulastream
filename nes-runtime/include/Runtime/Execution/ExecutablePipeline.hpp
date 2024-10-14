@@ -18,27 +18,24 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeEventListener.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-/**
- * @brief An ExecutablePipeline represents a fragment of an overall query.
- * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
- * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
- */
-class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener
+/// An ExecutablePipeline represents a fragment of an overall query.
+/// It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
+/// Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
+class ExecutablePipeline : public Reconfigurable
 {
-    /// virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    using inherited0 = Reconfigurable;
-    using inherited1 = Runtime::RuntimeEventListener;
-
     friend class QueryManager;
 
     enum class PipelineStatus : uint8_t
@@ -57,23 +54,23 @@ public:
         PipelineExecutionContextPtr pipelineExecutionContext,
         ExecutablePipelineStagePtr executablePipelineStage,
         uint32_t numOfProducingPipelines,
-        std::vector<SuccessorExecutablePipeline> successorPipelines,
+        std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>> successorPipelines,
         bool reconfiguration = false);
 
-    static ExecutablePipelinePtr create(
+    static std::shared_ptr<ExecutablePipeline> create(
         PipelineId pipelineId,
         QueryId queryId,
         const QueryManagerPtr& queryManager,
         const PipelineExecutionContextPtr& pipelineExecutionContext,
         const ExecutablePipelineStagePtr& executablePipelineStage,
         uint32_t numOfProducingPipelines,
-        const std::vector<SuccessorExecutablePipeline>& successorPipelines,
+        const std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>>& successorPipelines,
         bool reconfiguration = false);
 
     /// Execute a pipeline stage
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    ExecutionResult execute(Memory::TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
-    [[nodiscard]] bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+    [[nodiscard]] bool setup(const QueryManagerPtr& queryManager, const Memory::BufferManagerPtr& bufferManager);
     [[nodiscard]] bool start();
     [[nodiscard]] bool stop(QueryTerminationType terminationType);
     [[nodiscard]] bool fail();
@@ -92,10 +89,7 @@ public:
     /// final reconfigure callback called upon a reconfiguration
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
-
-    void onEvent(Runtime::BaseEvent& event) override;
-    void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
+    const std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>>& getSuccessors() const;
 
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
@@ -108,7 +102,8 @@ private:
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
-    std::vector<SuccessorExecutablePipeline> successorPipelines;
+    std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>> successorPipelines;
 };
-
+using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
+using SuccessorExecutablePipeline = std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>;
 } /// namespace NES::Runtime::Execution

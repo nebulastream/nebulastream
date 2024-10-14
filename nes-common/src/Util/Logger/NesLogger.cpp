@@ -75,25 +75,27 @@ auto createEmptyLogger() -> std::shared_ptr<spdlog::logger>
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-Logger::Logger(const std::string& logFileName, LogLevel level)
+Logger::Logger(const std::string& logFileName, LogLevel level, bool useStdout)
 {
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
     loggerThreadPool = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
-
-    auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
-
     auto spdlogLevel = toSpdlogLevel(level);
 
-    consoleSink->set_level(spdlogLevel);
-    consoleSink->set_color_mode(spdlog::color_mode::always);
+    std::vector<spdlog::sink_ptr> sinks;
+    if (useStdout)
+    {
+        auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        consoleSink->set_level(spdlogLevel);
+        consoleSink->set_color_mode(spdlog::color_mode::always);
+        consoleSink->set_pattern(SPDLOG_PATTERN);
+        sinks.push_back(consoleSink);
+    }
+
+    auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
     fileSink->set_level(spdlogLevel);
-
-    consoleSink->set_pattern(SPDLOG_PATTERN);
     fileSink->set_pattern(SPDLOG_PATTERN);
-
-    std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
+    sinks.push_back(fileSink);
 
     impl = std::make_shared<spdlog::async_logger>(
         SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end(), loggerThreadPool, spdlog::async_overflow_policy::block);
@@ -154,7 +156,10 @@ struct LoggerHolder
     ~LoggerHolder()
     {
         singleton.reset();
-        spdlog::shutdown();
+        /// Not sure why, but we have to disable the call to spdlog::shutdown() here. Otherwise, the system tests will not shutdown properly.
+        /// The actual error happens in std::__hash_table::__deallocate_node() line 1109.
+        /// TODO #348: Investigate why the call to spdlog::shutdown() causes the system tests to fail.
+        /// spdlog::shutdown();
     }
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
@@ -166,9 +171,9 @@ namespace Logger
 
 static detail::LoggerHolder helper;
 
-void setupLogging(const std::string& logFileName, LogLevel level)
+void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout)
 {
-    auto newLogger = std::make_shared<detail::Logger>(logFileName, level);
+    auto newLogger = std::make_shared<detail::Logger>(logFileName, level, useStdout);
     std::swap(detail::LoggerHolder::singleton, newLogger);
 }
 
@@ -177,6 +182,6 @@ std::shared_ptr<detail::Logger> getInstance()
     return detail::LoggerHolder::singleton;
 }
 
-} /// namespace Logger
+}
 
-} /// namespace NES
+}

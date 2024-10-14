@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <exception>
 #include <utility>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Util/Timer.hpp>
@@ -27,37 +26,15 @@ QueryCompilationResult::QueryCompilationResult(Runtime::Execution::ExecutableQue
     : executableQueryPlan(executableQueryPlan), timer(timer)
 {
 }
-QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception) : exception(exception)
-{
-}
-
-QueryCompilationResultPtr QueryCompilationResult::create(std::exception_ptr exception)
-{
-    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(std::move(exception)));
-}
 
 Runtime::Execution::ExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan()
 {
-    if (hasError())
-    {
-        std::rethrow_exception(exception.value());
-    }
-    return executableQueryPlan.value();
+    return executableQueryPlan;
 }
 
-uint64_t QueryCompilationResult::getCompilationTime() const
+uint64_t QueryCompilationResult::getCompilationTimeMilli() const
 {
-    return timer->getRuntime();
-}
-
-bool QueryCompilationResult::hasError()
-{
-    return exception.has_value();
-}
-
-std::exception_ptr QueryCompilationResult::getError()
-{
-    return exception.value();
+    return timer.getRuntime();
 }
 
 } /// namespace NES::QueryCompilation

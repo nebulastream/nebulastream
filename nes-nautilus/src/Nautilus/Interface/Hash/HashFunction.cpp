@@ -15,13 +15,13 @@
 
 namespace NES::Nautilus::Interface
 {
-HashFunction::HashValue HashFunction::calculate(Value<> value)
+HashFunction::HashValue HashFunction::calculate(VarVal value)
 {
     auto hash = init();
     return calculate(hash, value);
 };
 
-HashFunction::HashValue HashFunction::calculate(std::vector<Value<>>& values)
+HashFunction::HashValue HashFunction::calculate(std::vector<VarVal>& values)
 {
     auto hash = init();
     for (auto& value : values)
@@ -29,11 +29,5 @@ HashFunction::HashValue HashFunction::calculate(std::vector<Value<>>& values)
         hash = calculate(hash, value);
     }
     return hash;
-}
-
-HashFunction::HashValue HashFunction::calculateWithState(Value<> value, Value<MemRef> state)
-{
-    auto hash = init();
-    return calculateWithState(hash, value, state);
 }
 } /// namespace NES::Nautilus::Interface

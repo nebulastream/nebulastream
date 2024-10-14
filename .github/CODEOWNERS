@@ -1,0 +1,30 @@
+# Protecting the code owner file from any changes
+/.github/CODEOWNERS @keyseven123 @adrianmichalke @alepping @ls-1801
+
+# The maintainers are the default owners for everything in the repo. Unless a later match takes precedence, one of
+# the maintainers will be request review when someone opens a pull request.
+* @keyseven123 @adrianmichalke @alepping @ls-1801
+
+## We will set here owners for each folder that usually encapsulates one or more components.
+## We aim for having at least two persons per folder to have a little bit of a redundancy.
+/docker/ @keyseven123 @ls-1801
+/scripts/ @keyseven123 @ls-1801
+/vcpkg/ @keyseven123 @ls-1801 @adrianmichalke
+/grpc/ @ls-1801 @adrianmichalke
+/nes-client/ @alepping @adrianmichalke @ls-1801
+/nes-common/ @keyseven123 @adrianmichalke
+/nes-configurations/ @alepping @adrianmichalke
+/nes-data-types/ @alepping @adrianmichalke @ls-1801
+/nes-execution/ @keyseven123 @adrianmichalke
+/nes-functions/ @alepping @adrianmichalke
+/nes-memory/ @ls-1801 @alepping @keyseven123
+/nes-nautilus/ @alepping @keyseven123 @ls-1801
+/nes-nebuli/ @ls-1801 @adrianmichalke @alepping
+/nes-operators/ @adrianmichalke @alepping @keyseven123
+/nes-runtime/ @keyseven123 @ls-1801 @adrianmichalke
+/nes-single-node-worker/ @alepping @adrianmichalke @ls-1801
+/nes-sources/ @alepping @keyseven123 @ls-1801
+/nes-window-types/ @alepping @adrianmichalke @keyseven123 @ls-1801
+
+
+# We will set here the ownership specific files or folders. This will be populated in the future

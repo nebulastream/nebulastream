@@ -14,17 +14,11 @@
 
 #pragma once
 
-#include <algorithm>
 #include <any>
-#include <functional>
 #include <map>
-#include <set>
 #include <string>
 #include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 /**
  * @brief a collection of shared utility functions
@@ -72,7 +66,7 @@ namespace Util
 * @param buffer the tuple buffer
 * @return string of tuple buffer
 */
-std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
+std::string printTupleBufferAsText(Memory::TupleBuffer& buffer);
 
 /**
  * @brief create CSV lines from the tuples
@@ -80,7 +74,7 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
 * @brief Returns the physical types of all fields of the schema
@@ -102,7 +96,7 @@ std::string toCSVString(const SchemaPtr& schema);
  * @param bufferSize
  * @return MemoryLayoutPtr
  */
-Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
+std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
 
 /**
  *
@@ -112,20 +106,5 @@ Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uin
  */
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
-/**
- * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
- * @param csvFile
- * @param schema
- * @param timeStampFieldName
- * @param lastTimeStamp
- * @param bufferManager
- * @return Vector of TupleBuffers
- */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
-    const std::string& csvFile,
-    const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
-    const std::string& timeStampFieldName,
-    uint64_t lastTimeStamp);
 } /// namespace Util
 } /// namespace NES

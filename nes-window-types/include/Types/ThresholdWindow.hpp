@@ -14,11 +14,16 @@
 
 #pragma once
 
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 
-namespace NES::Windowing
+namespace NES
+{
+
+using ExpressionNodePtr = std::shared_ptr<class ExpressionNode>;
+
+namespace Windowing
 {
 /*
  * Threshold window creates a window whenever an event attribute exceeds a threshold (predicate), and close the window if it is below the threshold (or the other way around)
@@ -32,7 +37,7 @@ public:
     * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
     * @return WindowTypePtr
     */
-    static WindowTypePtr of(ExpressionNodePtr predicate);
+    static WindowTypePtr of(NodeFunctionPtr predicate);
 
     /**
     * @brief Constructor for ThresholdWindow
@@ -40,7 +45,7 @@ public:
     * @param minimumCount specifies the minimum amount of tuples to occur within the window
     * @return WindowTypePtr
     */
-    static WindowTypePtr of(ExpressionNodePtr predicate, uint64_t minimumCount);
+    static WindowTypePtr of(NodeFunctionPtr predicate, uint64_t minimumCount);
 
     std::string toString() const override;
 
@@ -52,7 +57,7 @@ public:
      */
     ContentBasedSubWindowType getContentBasedSubWindowType() override;
 
-    [[nodiscard]] const ExpressionNodePtr& getPredicate() const;
+    [[nodiscard]] const NodeFunctionPtr& getPredicate() const;
 
     uint64_t getMinimumCount() const;
 
@@ -61,11 +66,12 @@ public:
     uint64_t hash() const override;
 
 private:
-    explicit ThresholdWindow(ExpressionNodePtr predicate);
-    ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
+    explicit ThresholdWindow(NodeFunctionPtr predicate);
+    ThresholdWindow(NodeFunctionPtr predicate, uint64_t minCount);
 
-    ExpressionNodePtr predicate;
+    NodeFunctionPtr predicate;
     uint64_t minimumCount = 0;
 };
 
-} /// namespace NES::Windowing
+}
+}

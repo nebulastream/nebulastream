@@ -12,53 +12,22 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 namespace NES::QueryCompilation::Phases
 {
 
-/**
- * @brief An abstract factory, which allows the query compiler to create instances of particular phases,
- * without knowledge about the concrete implementations. This ensures extendability.
- */
+/// An abstract factory, which allows the query compiler to create instances of particular phases,
+/// without knowledge about the concrete implementations. This ensures extendability.
 class PhaseFactory
 {
 public:
-    /**
-     * @brief Creates a lower logical operator to physical operator phase
-     * @param QueryCompilerOptionsPtr options
-     * @return LowerLogicalToPhysicalOperatorsPtr
-     */
-    virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
-
-    /**
-     * @brief Creates pipelining phase
-     * @param QueryCompilerOptionsPtr options
-     * @return PipeliningPhasePtr
-     */
-    virtual PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) = 0;
-
-    /**
-    * @brief Creates add scan and emit phase
-    * @param QueryCompilerOptionsPtr options
-    * @return AddScanAndEmitPhasePtr
-    */
-    virtual AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) = 0;
-
-    /**
-    * @brief Creates lower operator plan to executable query plan phase
-    * @param QueryCompilerOptionsPtr options
-    * @return LowerToExecutableQueryPlanPhasePtr
-    */
-    virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing)
-        = 0;
-
-    /**
-    * @brief Creates buffer optimization phase
-    * @param QueryCompilerOptionsPtr options
-    * @return BufferOptimizationPhasePtr
-    */
-    virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
+    virtual PipeliningPhasePtr createPipeliningPhase() = 0;
+    virtual AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
+    virtual std::shared_ptr<LowerToExecutableQueryPlanPhase> createLowerToExecutableQueryPlanPhase() = 0;
 };
-
+using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 } /// namespace NES::QueryCompilation::Phases

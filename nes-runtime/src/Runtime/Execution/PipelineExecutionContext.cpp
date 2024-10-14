@@ -13,9 +13,8 @@
 */
 
 #include <utility>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
@@ -25,10 +24,10 @@ namespace NES::Runtime::Execution
 PipelineExecutionContext::PipelineExecutionContext(
     PipelineId pipelineId,
     QueryId queryId,
-    Runtime::BufferManagerPtr bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     size_t numberOfWorkerThreads,
-    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
-    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+    std::function<void(Memory::TupleBuffer&, WorkerContextRef)>&& emitFunction,
+    std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
     std::vector<OperatorHandlerPtr> operatorHandlers)
     : pipelineId(pipelineId)
     , queryId(queryId)
@@ -40,13 +39,13 @@ PipelineExecutionContext::PipelineExecutionContext(
 {
 }
 
-void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext)
+void PipelineExecutionContext::emitBuffer(Memory::TupleBuffer& buffer, WorkerContextRef workerContext)
 {
     /// call the function handler
     emitFunctionHandler(buffer, workerContext);
 }
 
-void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer)
+void PipelineExecutionContext::dispatchBuffer(Memory::TupleBuffer buffer)
 {
     /// call the function handler
     emitToQueryManagerFunctionHandler(buffer);
@@ -65,7 +64,7 @@ uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const
 {
     return numberOfWorkerThreads;
 }
-Runtime::BufferManagerPtr PipelineExecutionContext::getBufferManager() const
+std::shared_ptr<Memory::AbstractBufferProvider> PipelineExecutionContext::getBufferManager() const
 {
     return bufferProvider;
 }
@@ -102,4 +101,4 @@ bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOrig
     return chunkState.seenChunks == chunkState.lastChunkNumber;
 }
 
-} /// namespace NES::Runtime::Execution
+}

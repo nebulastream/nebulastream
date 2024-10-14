@@ -14,41 +14,29 @@
 
 #pragma once
 #include <Identifiers/NESStrongType.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include <yaml-cpp/yaml.h>
 
 /**
  * Adds NESStrongType overloads for the yaml library.
  * This allows assignements of Yaml values with identifiers. This also directly enables Identifiers to be used within the
  * Configuration classes, e.g. `ScalarOption<WorkerId>`
  */
-namespace Yaml
+namespace YAML
 {
-namespace impl
+/// Not possible to implement via `YAML::convert<T>()` since that is called by `as_if` which default-constructs T.
+/// Thus, we implement a specialized `as_if`.
+template <typename T, typename Tag, T invalid, T initial>
+struct as_if<NES::NESStrongType<T, Tag, invalid, initial>, void>
 {
-template <NES::NESIdentifier T>
-struct StringConverter<T>
-{
-    static T Get(const std::string& data)
+    explicit as_if(const Node& node_) : node(node_) { }
+    const Node& node;
+
+    NES::NESStrongType<T, Tag, invalid, initial> operator()() const
     {
-        typename T::Underlying type;
-        std::stringstream ss(data);
-        ss >> type;
-        return T(type);
-    }
+        if (!node.m_pNode)
+            throw TypedBadConversion<T>(node.Mark());
 
-    static T Get(const std::string& data, const T& defaultValue)
-    {
-        typename T::Underlying type;
-        std::stringstream ss(data);
-        ss >> type;
-
-        if (ss.fail())
-        {
-            return defaultValue;
-        }
-
-        return T(type);
+        return NES::NESStrongType<T, Tag, invalid, initial>{node.as<T>()};
     }
 };
-} /// namespace impl
-} /// namespace Yaml
+}

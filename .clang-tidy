@@ -1,12 +1,269 @@
-# Which checks are disabled and why?
-# - Disable project-specific checks (abseil, fuchsia, google, zircon, llvm)
-# - Also disable modernization to trailing return types because this would cause a lot of unnecessary
-#   refactoring
-# - Implicit conversions sometimes make the code more readable
-# - readability-named-parameter does not improve readability
+# This configuration aims to keep up quality over time and foster improvements
+# i.e. clang-tidy should generally only become stricter (at least with errors)
+#
+# The mantra is: All checks should be errors, except those that fail on main.
+#
+# Put differently: If a check is fixed on main so that no violation is found
+# anymore, it shall be removed from the exceptions to WarningsArErrors, so that
+# check may never be violated again, i.e. 'WarningsAsErrors' is an
+# ever-increasing list of guarantees of the codebase.
+# This follows the ratchet approach, described in https://qntm.org/ratchet
+#
+# Non-Error checks give hints to the programmer. Some hints might be
+# "situational", e.g. sometimes or even often useless, as long as they can be
+# valuable from time to time. If Checks are generally annoying and useless 
+# (or aliases), we disable them.
+#
+#
+# to see how often a check is violated run clang-tidy e.g. like:
+#
+#     cmake -B build
+#     ln -s build/compile_commands.json .
+#     # this will take a while
+#     run-clang-tidy-18 > ct.log 2> /dev/null
+#
+#     # list the violations
+#     cat ct.log | grep "^\/.*\[[^ ]*\]$" | sed "s|\([^ ]*\):.*\[\([^ ]*\)\]$|\1 \2|" | awk '{ split($2, arr, ","); for (a in arr) { print $1, arr[a] } }' > location_violation.txt
+#
+#     # show a summary of violations
+#     cat location_violation.txt | cut -d " " -f 2 | sort | uniq -c | sort -n
 
-Checks:  '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix'
-WarningsAsErrors: '*'
+
+# Disabled checks are one of
+# - generally irrelevant (e.g. llvmlibc, altera)
+# - very annoying and providing very little or no value
+# - aliases of other checks
+Checks: [
+  "*",
+  # irrelevant
+  "-llvmlibc-*", # project-specific
+  "-android-*", # project-specific
+  "-zircon-*", # project-specific
+
+  "-abseil-*", # we currently don't use abseil
+  "-altera-*", # we don't do OpenCL
+
+  # annyoing and useless
+  "-bugprone-easily-swappable-parameters", # annoying-ish
+  "-modernize-use-trailing-return-type", # purely cosmetic
+  "-fuchsia-default-arguments-calls", # we do not forbid default args
+
+  # The following are aliases to other checks, thus we disable them
+  "-bugprone-narrowing-conversions",
+  "-cert-dcl51-cpp",
+  "-cert-err09-cpp",
+  "-cert-err61-cpp",
+  "-cert-msc30-c",
+  "-cert-msc32-c",
+  "-cert-oop11-cpp",
+  "-cert-oop54-cpp",
+  "-cppcoreguidelines-avoid-c-arrays",
+  "-cppcoreguidelines-avoid-magic-numbers",
+  "-cppcoreguidelines-c-copy-assignment-signature",
+  "-cppcoreguidelines-explicit-virtual-functions",
+  "-cppcoreguidelines-macro-to-enum",
+  "-cppcoreguidelines-noexcept-move-operations",
+  "-cppcoreguidelines-noexcept-swap",
+  "-cppcoreguidelines-non-private-member-variables-in-classes",
+  "-cppcoreguidelines-use-default-member-init",
+  "-google-readability-namespace-comments",
+  "-hicpp-avoid-c-arrays",
+  "-hicpp-avoid-goto",
+  "-hicpp-braces-around-statements",
+  "-hicpp-deprecated-headers",
+  "-hicpp-explicit-conversions",
+  "-hicpp-invalid-access-moved",
+  "-hicpp-member-init",
+  "-hicpp-move-const-arg",
+  "-hicpp-named-parameter",
+  "-hicpp-no-array-decay",
+  "-hicpp-noexcept-move",
+  "-hicpp-no-malloc",
+  "-hicpp-special-member-functions",
+  "-hicpp-uppercase-literal-suffix",
+  "-hicpp-use-auto",
+  "-hicpp-use-emplace",
+  "-hicpp-use-equals-default",
+  "-hicpp-use-nullptr",
+  "-hicpp-use-override",
+  "-hicpp-vararg",
+  "-llvm-else-after-return",
+  "-llvm-qualified-auto",
+]
+
+# We try to be as strict as possible.
+# This list shall shrink by fixing violations in the code
+# This list should only grow if clang-tidy learns new checks.
+# It should be roughly ordered by how common the warning/error is, from rare (top) to common (bottom).
+WarningsAsErrors: '
+  *,
+  -bugprone-empty-catch,
+  -bugprone-switch-missing-default-case,
+  -bugprone-too-small-loop-variable,
+  -cert-dcl50-cpp,
+  -clang-analyzer-cplusplus.StringChecker,
+  -google-runtime-operator,
+  -hicpp-exception-baseclass,
+  -misc-header-include-cycle,
+  -modernize-raw-string-literal,
+  -modernize-use-std-numbers,
+  -modernize-use-transparent-functors,
+  -readability-non-const-parameter,
+  -readability-string-compare,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -bugprone-suspicious-string-compare,
+  -cert-dcl58-cpp,
+  -cert-err34-c,
+  -clang-analyzer-core.CallAndMessage,
+  -clang-analyzer-security.insecureAPI.strcpy,
+  -modernize-macro-to-enum,
+  -modernize-use-starts-ends-with,
+  -performance-move-constructor-init,
+  -performance-unnecessary-copy-initialization,
+  -readability-redundant-declaration,
+  -bugprone-forward-declaration-namespace,
+  -bugprone-move-forwarding-reference,
+  -cert-env33-c,
+  -clang-analyzer-optin.cplusplus.VirtualCall,
+  -modernize-deprecated-headers,
+  -modernize-use-nullptr,
+  -readability-redundant-string-init,
+  -bugprone-exception-escape,
+  -bugprone-unhandled-self-assignment,
+  -bugprone-unused-return-value,
+  -google-global-names-in-headers,
+  -performance-no-int-to-ptr,
+  -clang-analyzer-cplusplus.NewDeleteLeaks,
+  -performance-faster-string-find,
+  -performance-inefficient-string-concatenation,
+  -readability-avoid-nested-conditional-operator,
+  -readability-avoid-return-with-void-value,
+  -readability-use-anyofallof,
+  -cert-msc51-cpp,
+  -cppcoreguidelines-avoid-goto,
+  -bugprone-integer-division,
+  -bugprone-macro-parentheses,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-interfaces-global-init,
+  -cppcoreguidelines-pro-type-const-cast,
+  -misc-throw-by-value-catch-by-reference,
+  -cppcoreguidelines-no-malloc,
+  -readability-suspicious-call-argument,
+  -bugprone-throw-keyword-missing,
+  -modernize-use-bool-literals,
+  -readability-isolate-declaration,
+  -bugprone-unused-local-non-trivial-variable,
+  -cert-err33-c,
+  -cppcoreguidelines-pro-type-vararg,
+  -misc-unconventional-assign-operator,
+  -modernize-use-auto,
+  -modernize-use-emplace,
+  -readability-duplicate-include,
+  -cert-dcl21-cpp,
+  -fuchsia-trailing-return,
+  -readability-container-size-empty,
+  -clang-analyzer-deadcode.DeadStores,
+  -readability-container-data-pointer,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -modernize-loop-convert,
+  -performance-noexcept-move-constructor,
+  -bugprone-branch-clone,
+  -cppcoreguidelines-virtual-class-destructor,
+  -readability-redundant-smartptr-get,
+  -performance-inefficient-vector-operation,
+  -readability-static-accessed-through-instance,
+  -cppcoreguidelines-rvalue-reference-param-not-moved,
+  -bugprone-unchecked-optional-access,
+  -google-readability-braces-around-statements,
+  -modernize-use-using,
+  -readability-make-member-function-const,
+  -cppcoreguidelines-macro-usage,
+  -google-readability-avoid-underscore-in-googletest-name,
+  -bugprone-use-after-move,
+  -fuchsia-virtual-inheritance,
+  -readability-simplify-boolean-expr,
+  -google-build-using-namespace,
+  -google-runtime-int,
+  -bugprone-sizeof-expression,
+  -modernize-use-constraints,
+  -modernize-use-equals-default,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-prefer-member-initializer,
+  -misc-definitions-in-headers,
+  -performance-for-range-copy,
+  -cppcoreguidelines-init-variables,
+  -modernize-concat-nested-namespaces,
+  -cppcoreguidelines-missing-std-forward,
+  -readability-const-return-type,
+  -cert-msc50-cpp,
+  -modernize-use-override,
+  -modernize-use-default-member-init,
+  -readability-redundant-member-init,
+  -concurrency-mt-unsafe,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -misc-no-recursion,
+  -readability-convert-member-functions-to-static,
+  -misc-use-anonymous-namespace,
+  -modernize-type-traits,
+  -performance-avoid-endl,
+  -performance-move-const-arg,
+  -cppcoreguidelines-narrowing-conversions,
+  -modernize-avoid-c-arrays,
+  -performance-noexcept-swap,
+  -google-default-arguments,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -google-explicit-constructor,
+  -readability-redundant-access-specifiers,
+  -readability-inconsistent-declaration-parameter-name,
+  -readability-avoid-const-params-in-decls,
+  -modernize-pass-by-value,
+  -performance-enum-size,
+  -modernize-return-braced-init-list,
+  -readability-function-cognitive-complexity,
+  -google-upgrade-googletest-case,
+  -fuchsia-multiple-inheritance,
+  -cppcoreguidelines-pro-type-member-init,
+  -fuchsia-statically-constructed-objects,
+  -cppcoreguidelines-pro-type-static-cast-downcast,
+  -misc-unused-parameters,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -fuchsia-default-arguments-declarations,
+  -bugprone-reserved-identifier,
+  -cert-dcl37-c,
+  -readability-redundant-casting,
+  -hicpp-signed-bitwise,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -readability-else-after-return,
+  -fuchsia-overloaded-operator,
+  -modernize-use-nodiscard,
+  -cert-err58-cpp,
+  -google-readability-casting,
+  -cppcoreguidelines-special-member-functions,
+  -readability-braces-around-statements,
+  -readability-implicit-bool-conversion,
+  -readability-qualified-auto,
+  -performance-unnecessary-value-param,
+  -llvm-header-guard,
+  -readability-named-parameter,
+  -llvm-include-order,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -misc-non-private-member-variables-in-classes,
+  -readability-redundant-inline-specifier,
+  -misc-const-correctness,
+  -llvm-namespace-comment,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -readability-uppercase-literal-suffix,
+  -fuchsia-default-arguments-calls,
+  -cppcoreguidelines-pro-type-union-access,
+  -readability-identifier-naming,
+  -misc-include-cleaner,
+  -modernize-use-trailing-return-type,
+  -clang-diagnostic-*,
+'
+
 HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
 
 
@@ -36,3 +293,4 @@ CheckOptions:
   # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
+  readability-function-cognitive-complexity.IgnoreMacros: 'true'

@@ -45,7 +45,6 @@ public:
     {
         return lh.v <=> rh.v;
     }
-
     [[nodiscard]] friend constexpr bool operator==(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v == rh.v; }
 
     [[nodiscard]] friend constexpr bool operator!=(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v != rh.v; }
@@ -84,7 +83,7 @@ static constexpr Ident INVALID = Ident(Ident::INVALID);
 template <NESIdentifier Ident>
 static constexpr Ident INITIAL = Ident(Ident::INITIAL);
 
-} /// namespace NES
+}
 
 namespace std
 {
@@ -93,4 +92,4 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 {
     size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
 };
-} /// namespace std
+}

@@ -68,7 +68,7 @@ public:
     std::string toString() override;
 
 protected:
-    void parseFromYAMLNode(Yaml::Node node) override;
+    void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
 private:
@@ -85,22 +85,20 @@ void SequenceOption<T>::clear()
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node)
+void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
 {
     if (node.IsSequence())
     {
-        for (auto child = node.Begin(); child != node.End(); child++)
+        for (auto child : node)
         {
-            auto identifier = (*child).first;
-            auto value = (*child).second;
             auto option = T();
-            option.parseFromYAMLNode(value);
+            option.parseFromYAMLNode(child);
             options.push_back(option);
         }
     }
     else
     {
-        throw ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
+        throw ConfigurationException("YAML node should be a sequence but it was a " + node.as<std::string>());
     }
 }
 template <DerivedBaseOption T>

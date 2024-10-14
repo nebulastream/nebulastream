@@ -13,21 +13,10 @@
 include(ExternalProject)
 include(GoogleTest)
 
-# Copy Test Data
-file(COPY testData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
-message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
-
 function(add_nes_execution_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-execution-test-util)
+    target_link_libraries(${TARGET_NAME} nes-execution nes-common nes-data-types nes-operators nes-grpc nes-runtime nes-test-util nes-configurations nes-nautilus nes-window-types)
 endfunction()
 
 add_subdirectory(UnitTests)
-add_subdirectory(src)
-
-message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
-target_include_directories(nes-execution-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(nes-execution-test-util PUBLIC nes-execution nes-common nes-data-types nes-operators nes-grpc nes-runtime nes-test-util nes-configurations nes-nautilus nes-window-types)
-target_compile_definitions(nes-execution-test-util INTERFACE JAVA_UDF_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testData/JavaUDFTestData")

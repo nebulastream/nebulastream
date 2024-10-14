@@ -18,10 +18,5 @@ add_source_files(nes-common
         Common.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
-        TimeMeasurement.cpp
-        QueryStateHistory.cpp
-        TopologyLinkInformation.cpp
 )
 add_subdirectory(Logger)
-add_subdirectory(Subprocess)
-add_subdirectory(yaml)

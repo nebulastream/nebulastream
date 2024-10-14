@@ -13,7 +13,7 @@
 */
 #pragma once
 
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -30,33 +30,33 @@ public:
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<NodeFunctionPtr> inputFields,
+        std::vector<NodeFunctionPtr> outputFields);
 
     static PhysicalOperatorPtr create(
         OperatorId id,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<NodeFunctionPtr> inputFields,
+        std::vector<NodeFunctionPtr> outputFields);
 
     static PhysicalOperatorPtr create(
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields);
+        std::vector<NodeFunctionPtr> inputFields,
+        std::vector<NodeFunctionPtr> outputFields);
 
     std::string toString() const override;
     OperatorPtr copy() override;
     const std::string& getModel() const;
-    const std::vector<ExpressionNodePtr>& getInputFields() const;
-    const std::vector<ExpressionNodePtr>& getOutputFields() const;
+    const std::vector<NodeFunctionPtr>& getInputFields() const;
+    const std::vector<NodeFunctionPtr>& getOutputFields() const;
 
 protected:
     const std::string model;
-    const std::vector<ExpressionNodePtr> inputFields;
-    const std::vector<ExpressionNodePtr> outputFields;
+    const std::vector<NodeFunctionPtr> inputFields;
+    const std::vector<NodeFunctionPtr> outputFields;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

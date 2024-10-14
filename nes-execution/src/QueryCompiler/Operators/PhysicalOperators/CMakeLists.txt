@@ -15,14 +15,11 @@ add_source_files(nes-execution
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp
-        PhysicalSourceOperator.cpp
         PhysicalSinkOperator.cpp
         PhysicalFilterOperator.cpp
         PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
-        PhysicalMapUDFOperator.cpp
-        PhysicalFlatMapUDFOperator.cpp
         PhysicalUnionOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp
@@ -32,5 +29,4 @@ add_source_files(nes-execution
 )
 
 add_subdirectory(Windowing)
-add_subdirectory(Joining)
 

@@ -12,8 +12,7 @@
 
 add_source_files(nes-execution
         PhysicalOperatorPipeline.cpp
-        NautilusExecutablePipelineStage.cpp
         InterpreterPipelineProvider.cpp
         CompilationPipelineProvider.cpp
         CompiledExecutablePipelineStage.cpp
-        )
+)

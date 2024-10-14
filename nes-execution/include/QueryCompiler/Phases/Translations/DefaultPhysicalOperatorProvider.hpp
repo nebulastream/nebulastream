@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <vector>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -22,9 +22,6 @@
 namespace NES::QueryCompilation
 {
 
-/**
- * @brief Stores a window operator and window definition, as well as in- and output schema
- */
 struct WindowOperatorProperties
 {
     WindowOperatorProperties(
@@ -43,9 +40,7 @@ struct WindowOperatorProperties
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-/**
- * @brief Stores all operator nodes for lowering the stream joins
- */
+/// All operator nodes for lowering the stream joins
 struct StreamJoinOperators
 {
     StreamJoinOperators(const LogicalOperatorPtr& operatorNode, const OperatorPtr& leftInputOperator, const OperatorPtr& rightInputOperator)
@@ -57,9 +52,6 @@ struct StreamJoinOperators
     const OperatorPtr& rightInputOperator;
 };
 
-/**
- * @brief Stores all join configuration, e.g., window size, timestamp field name, join strategy, ...
- */
 struct StreamJoinConfigs
 {
     StreamJoinConfigs(
@@ -69,7 +61,7 @@ struct StreamJoinConfigs
         const uint64_t windowSlide,
         const TimestampField& timeStampFieldLeft,
         const TimestampField& timeStampFieldRight,
-        const QueryCompilation::StreamJoinStrategy& joinStrategy)
+        const StreamJoinStrategy& joinStrategy)
         : joinFieldNameLeft(joinFieldNameLeft)
         , joinFieldNameRight(joinFieldNameRight)
         , windowSize(windowSize)
@@ -86,163 +78,55 @@ struct StreamJoinConfigs
     const uint64_t windowSlide;
     const TimestampField& timeStampFieldLeft;
     const TimestampField& timeStampFieldRight;
-    const QueryCompilation::StreamJoinStrategy& joinStrategy;
+    const StreamJoinStrategy& joinStrategy;
 };
 
-/**
- * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
- */
+/// Provides a set of default lowerings for logical operators to corresponding physical operators.
 class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider
 {
 public:
-    DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options);
-    static PhysicalOperatorProviderPtr create(const QueryCompilerOptionsPtr& options);
+    explicit DefaultPhysicalOperatorProvider(std::shared_ptr<QueryCompilerOptions> options);
+    ~DefaultPhysicalOperatorProvider() noexcept override = default;
+
     void lower(DecomposedQueryPlanPtr decomposedQueryPlan, LogicalOperatorPtr operatorNode) override;
-    virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
 protected:
-    /**
-     * @brief Insets demultiplex operator before the current operator.
-     * @param operatorNode
-     */
     void insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode);
-    /**
-     * @brief Insert multiplex operator after the current operator.
-     * @param operatorNode
-     */
     void insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode);
-    /**
-     * @brief Checks if the current operator is a demultiplexer, if it has multiple parents.
-     * @param operatorNode
-     * @return
-     */
+
+    /// Checks if the current operator is a demultiplexer, if it has multiple parents.
     bool isDemultiplex(const LogicalOperatorPtr& operatorNode);
 
-    /**
-     * @brief Lowers a binary operator
-     * @param operatorNode current operator
-     */
     void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
-
-    /**
-    * @brief Lowers a unary operator
-    * @param decomposedQueryPlan current plan
-    * @param operatorNode current operator
-    */
     void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
-    *        using a Multiplex operation that connects two sources with one sink. The two sources then form one stream 
-    *        that continuously sends TupleBuffers to the sink. This means a query that only contains an Union operator 
-    *        does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
-    * @param operatorNode current operator
-    */
+    /// Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
+    /// using a Multiplex operation that connects two sources with one sink. The two sources then form one stream
+    /// that continuously sends TupleBuffers to the sink. This means a query that only contains an Union operator
+    /// does not lead to code that is compiled and is entirely executed on the source/sink/TupleBuffer level.
     void lowerUnionOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a project operator
-    * @param operatorNode current operator
-    */
     void lowerProjectOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers an infer model operator
-    * @param operatorNode current operator
-    */
     void lowerInferModelOperator(LogicalOperatorPtr operatorNode);
 
-    /**
-    * @brief Lowers a map operator
-    * @param operatorNode current operator
-    */
     void lowerMapOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a udf map operator
-    * @param operatorNode current operator
-    */
-    void lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode);
-
-    /**
-    * @brief Lowers a udf flat map operator
-    * @param operatorNode current operator
-    */
-    void lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode);
-
-    /**
-    * @brief Lowers a window operator
-    * @param operatorNode current operator
-    */
     void lowerWindowOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a thread local window operator
-    * @param operatorNode current operator
-    */
     void lowerTimeBasedWindowOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a watermark assignment operator
-    * @param operatorNode current operator
-    */
     void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-    * @brief Lowers a join operator
-    * @param operatorNode current operator
-    */
-    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
-    /**
-     * @brief Get a join build input generator
-     * @param joinOperator join operator
-     * @param schema the operator schema
-     * @param children the upstream operators
-     */
     OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
 private:
-    /**
-     * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
-     * @param windowOperatorProperties
-     * @param operatorNode
-     */
-    std::shared_ptr<Node>
+    /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
+    [[nodiscard]] std::shared_ptr<Node>
     replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties, const LogicalOperatorPtr& operatorNode);
 
-    /**
-     * @brief Lowers a join operator for the nautilus query compiler
-     * @param operatorNode
-     */
-    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
-
-    /**
-     * @brief Returns the left and right timestamp
-     * @param joinOperator
-     * @param windowType
-     * @return {
-     */
     [[nodiscard]] std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
         const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType) const;
-
-    /**
-     * @brief Lowers the stream hash join
-     * @param streamJoinOperators
-     * @param streamJoinConfig
-     * @return StreamJoinOperatorHandlerPtr
-     */
-    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
-
-    /**
-     * @brief Lowers the stream nested loop join
-     * @param streamJoinOperators
-     * @param streamJoinConfig
-     * @return StreamJoinOperatorHandlerPtr
-     */
-    Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
 };
-
-} /// namespace NES::QueryCompilation
+}

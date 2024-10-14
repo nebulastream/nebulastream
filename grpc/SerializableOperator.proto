@@ -14,13 +14,9 @@
 
 syntax = "proto3";
 import "google/protobuf/any.proto";
-import "SerializableExpression.proto";
+import "SerializableFunction.proto";
 import "SerializableSchema.proto";
-import "JavaUdfDescriptorMessage.proto";
 package NES;
-
-option java_package = "stream.nebula.protobuf";
-option java_multiple_files = true;
 
 /**
 The serializable wrapper for the nes partition object
@@ -41,85 +37,44 @@ message NodeLocation {
   uint32 port = 3;
 }
 
-/**
-The serializable wrapper for the source config object
- */
-message SerializablePhysicalSourceType{
-  enum InputFormat{
-      JSON = 0;
-      CSV = 1;
-      NES_BINARY = 2;
-  };
-
-  enum TCPDecideMessageSize{
-      TUPLE_SEPARATOR = 0;
-      USER_SPECIFIED_BUFFER_SIZE = 1;
-      BUFFER_SIZE_FROM_SOCKET = 2;
-  }
-
-  /**
-  The serializable wrapper for the csv source config object
-  */
-  message SerializableCSVSourceType{
-
-    string filePath = 1;
-    bool skipHeader = 2;
-    string delimiter = 3;
-    uint32 numberOfBuffersToProduce = 4;
-    uint32 numberOfTuplesToProducePerBuffer = 5;
-    uint32 sourceGatheringInterval = 6;
-  }
-
-  /**
-  The serializable wrapper for the tcp source config object
-  */
-  message SerializableTCPSourceType{
-    string socketHost = 1;
-    uint32 socketPort = 2;
-    uint32 socketDomain = 3;
-    uint32 socketType = 4;
-    float flushIntervalMS = 6;
-    InputFormat inputFormat = 7;
-    TCPDecideMessageSize tcpDecideMessageSize = 8;
-    string tupleSeparator = 9;
-    uint32 socketBufferSize = 10;
-    uint32 bytesUsedForSocketBufferSizeTransfer = 11;
-  }
-
-  string sourceType = 1;
-  string logicalSourceName = 2;
-  string physicalSourceName = 3;
-  google.protobuf.Any specificPhysicalSourceType = 4;
-}
+enum InputFormat{
+  CSV = 0;
+};
 
 /*
 The serializable wrapper definition for operator nodes
  */
 message SerializableOperator{
 
-  /**
-  Source Details contains properties for the source operator, such as the source descriptor
-   */
-  message SourceDetails {
-
-    message SerializableCsvSourceDescriptor {
-      SerializablePhysicalSourceType physicalSourceType = 1;
-      SerializableSchema sourceSchema = 2;
+  message SourceDescriptorLogicalOperator {
+    /* Source Descriptor Helper Messages */
+    message EnumWrapper {
+        string value = 1;
+    }
+    message VariantSourceDescriptor {
+      oneof value {
+        int32 int_value = 1;
+        uint32 uint_value = 2;
+        bool bool_value = 3;
+        fixed32 char_value = 4;  // Represents a single byte (0-255)
+        float float_value = 5;
+        double double_value = 6;
+        string string_value = 7;
+        EnumWrapper enum_value = 8;
+      }
     }
 
-    message SerializableLogicalSourceDescriptor {
-      string logicalSourceName = 1;
-      string physicalSourceName = 2;
-      optional SerializableSchema sourceSchema = 3;
+    /* Source Descriptor Definition */
+    message SourceDescriptor {
+        SerializableSchema sourceSchema = 1;
+        string logicalSourceName = 2;
+        string sourceType = 3;
+        InputFormat inputFormat = 4;
+        map<string, VariantSourceDescriptor> config = 5;
     }
 
-    message SerializableTCPSourceDescriptor {
-      SerializablePhysicalSourceType physicalSourceType = 1;
-      SerializableSchema sourceSchema = 2;
-    }
-
-    google.protobuf.Any sourceDescriptor = 1;
-    uint64 sourceOriginId = 2;
+    uint64 sourceOriginId = 1;
+    SourceDescriptor sourceDescriptor = 2;
   }
 
   /**
@@ -146,7 +101,7 @@ message SerializableOperator{
    */
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
-      SerializableExpression onField = 1;
+      SerializableFunction onField = 1;
       uint64 allowedLateness = 2;
       uint64 multiplier = 3;
     }
@@ -164,10 +119,10 @@ message SerializableOperator{
     }
 
   /**
-   Map Details contains properties for the map operator, such as the field assignment expression
+   Map Details contains properties for the map operator, such as the field assignment function
    */
   message MapDetails {
-    SerializableExpression expression = 1;
+    SerializableFunction function = 1;
   }
 
   /**
@@ -182,7 +137,7 @@ message SerializableOperator{
   Projection Details contains properties for the projection operator, i.e., the output schema
   */
   message ProjectionDetails {
-    repeated SerializableExpression expression = 1;
+    repeated SerializableFunction function = 1;
 
   }
   /**
@@ -196,10 +151,10 @@ message SerializableOperator{
   message BroadcastDetails{}
 
   /**
-   Filter Details contains properties for the filter operator, such as the filter predicate expression
+   Filter Details contains properties for the filter operator, such as the filter predicate function
    */
   message FilterDetails {
-    SerializableExpression predicate = 1;
+    SerializableFunction predicate = 1;
     float selectivity = 2;
   }
 
@@ -214,8 +169,8 @@ message SerializableOperator{
  InferModelDetails contains the model file for the inference
  */
   message InferModelDetails {
-    repeated SerializableExpression inputFields = 1;
-    repeated SerializableExpression outputFields = 2;
+    repeated SerializableFunction inputFields = 1;
+    repeated SerializableFunction outputFields = 2;
     string mlFileName = 3;
     bytes mlFileContent = 4;
   }
@@ -272,7 +227,7 @@ message SerializableOperator{
     Properties of a threshold window
   */
   message ThresholdWindow {
-    SerializableExpression predicate = 1;
+    SerializableFunction predicate = 1;
     uint32 minimumCount = 2;
   }
 
@@ -291,14 +246,14 @@ message SerializableOperator{
         MEDIAN = 5;
       }
       Type type = 1;
-      SerializableExpression onField = 2;
-      SerializableExpression asField = 3;
+      SerializableFunction onField = 2;
+      SerializableFunction asField = 3;
     }
 
     google.protobuf.Any windowType = 1;
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
-    repeated SerializableExpression keys = 4;
+    repeated SerializableFunction keys = 4;
     uint64 allowedLateness = 5;
     uint64 origin = 6;
   }
@@ -318,7 +273,7 @@ message SerializableOperator{
 
     google.protobuf.Any windowType = 1;
     DistributionCharacteristic distrChar = 2;
-    SerializableExpression joinExpression = 3;
+    SerializableFunction joinFunction = 3;
     uint64 numberOfInputEdgesLeft = 4;
     uint64 numberOfInputEdgesRight = 5;
     JoinTypeCharacteristic jointype = 6;
@@ -331,50 +286,13 @@ message SerializableOperator{
     Batch Join Details contains properties for the batch join operator
   */
   message BatchJoinDetails {
-    SerializableExpression onBuildKey = 1;
-    SerializableExpression onProbeKey = 2;
-    SerializableExpression buildSchema = 3;
-    SerializableExpression probeSchema = 4;
+    SerializableFunction onBuildKey = 1;
+    SerializableFunction onProbeKey = 2;
+    SerializableFunction buildSchema = 3;
+    SerializableFunction probeSchema = 4;
     uint64 numberOfInputEdgesBuild = 5;
     uint64 numberOfInputEdgesProbe = 6;
   }
-
-  /**
-    Information to serialize a Map operator with a Java UDF.
-   */
-  message MapJavaUdfDetails {
-      JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-  }
-
-    /**
-      Information to serialize a Open CL operator with a Java UDF.
-     */
-    message OpenCLOperatorDetails {
-        JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-        uint64 deviceId = 2;
-        string openCLCode = 3;
-    }
-
-  /**
-    Information to serialize a FlatMap operator with a Java UDF.
-   */
-  message FlatMapJavaUdfDetails {
-    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-  }
-
-  /**
-    Properties of a java window udf
-  */
-  message JavaUdfWindowDetails {
-    JavaUdfDescriptorMessage javaUdfDescriptor = 1;
-
-    google.protobuf.Any windowType = 2;
-    DistributionCharacteristic distrChar = 3;
-    repeated SerializableExpression keys = 4;
-    uint64 allowedLateness = 5;
-    uint64 origin = 6;
-  }
-
 
   google.protobuf.Any details = 1;
   repeated uint64 childrenIds = 2;

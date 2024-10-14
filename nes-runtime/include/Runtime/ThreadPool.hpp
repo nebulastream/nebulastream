@@ -17,7 +17,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <Runtime/RuntimeForwardRefs.hpp>
+
 
 namespace NES::Runtime
 {
@@ -43,7 +43,7 @@ public:
         WorkerId nodeId,
         QueryManagerPtr queryManager,
         uint32_t numThreads,
-        std::vector<BufferManagerPtr> bufferManagers,
+        std::vector<Memory::BufferManagerPtr> bufferManagers,
         uint64_t numberOfBuffersPerWorker,
         std::vector<uint64_t> workerPinningPositionList);
 
@@ -101,7 +101,7 @@ private:
     std::vector<std::thread> threads{};
     mutable std::recursive_mutex reconfigLock;
     QueryManagerPtr queryManager;
-    std::vector<BufferManagerPtr> bufferManagers;
+    std::vector<Memory::BufferManagerPtr> bufferManagers;
 
     uint64_t numberOfBuffersPerWorker;
     /// this is a list of slots where we pin the worker, one after the other

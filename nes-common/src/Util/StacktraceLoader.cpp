@@ -15,17 +15,19 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <cpptrace/cpptrace.hpp>
-#define CALLSTACK_MAX_SIZE 32
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
+constexpr uint32_t callstackMaxSize = 120;
+
 /**
  * @brief This method collects the call stacks and prints it
  */
 std::string collectAndPrintStacktrace()
 {
-    auto stack = cpptrace::generate_trace(1).to_string();
-    NES_ERROR("Stacktrace:\n{}", stack);
+    auto stack = cpptrace::generate_trace(1, callstackMaxSize).to_string();
+    NES_ERROR("{}", stack);
     return stack;
 }
 /**
@@ -36,7 +38,7 @@ std::string collectAndPrintStacktrace()
  */
 std::string collectStacktrace()
 {
-    return cpptrace::generate_trace(1).to_string();
+    return cpptrace::generate_trace(1, callstackMaxSize).to_string();
 }
 
 } /// namespace NES

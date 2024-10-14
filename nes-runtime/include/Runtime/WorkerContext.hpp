@@ -20,15 +20,15 @@
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/ThreadLocal.h>
 
 namespace NES::Runtime
 {
 
-class AbstractBufferProvider;
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
@@ -40,7 +40,7 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 class WorkerContext
 {
 private:
-    using WorkerContextBufferProviderPtr = LocalBufferPoolPtr;
+    using WorkerContextBufferProviderPtr = std::shared_ptr<Memory::AbstractBufferProvider>;
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 
@@ -54,11 +54,11 @@ private:
     WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<OperatorId, std::queue<NES::Memory::TupleBuffer>> reconnectBufferStorage;
 
 public:
     explicit WorkerContext(
-        WorkerThreadId workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
+        WorkerThreadId workerId, Memory::BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
 
     ~WorkerContext();
 
@@ -66,13 +66,13 @@ public:
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer
      */
-    TupleBuffer allocateTupleBuffer();
+    Memory::TupleBuffer allocateTupleBuffer();
 
     /**
      * @brief Returns the thread-local buffer provider singleton.
      * This can be accessed at any point in time also without the pointer to the context.
      * Calling this method from a non worker thread results in undefined behaviour.
-     * @return raw pointer to AbstractBufferProvider
+     * @return WorkerContextBufferProviderRawPtr
      */
     static WorkerContextBufferProviderRawPtr getBufferProviderTLS();
 
@@ -102,11 +102,8 @@ public:
      */
     uint32_t decreaseObjectRefCnt(void* object);
 
-    /**
-     * @brief get the queue id of the the current worker
-     * @return current queue id
-     */
     uint32_t getQueueId() const;
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
+using WorkerContextRef = WorkerContext&;
 } /// namespace NES::Runtime

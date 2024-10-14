@@ -1,0 +1,70 @@
+# name: map/Map_Add.test
+# description: Simple map tests with a mul function
+# groups: [Map]
+
+# LLVM LIT configuration
+# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
+# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
+
+Source window INT64 id INT64 value INT64 timestamp
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# Map with mul function touches one field
+Query::from("window")
+    .map(Attribute("id") = Attribute("id") * 3)
+    .SINK;
+----
+3,1,1000
+6,1,1001
+9,1,1002
+12,2,2000
+15,19,19000
+18,20,20000
+21,21,21000
+
+# Map with mul function touches two fields
+Query::from("window")
+    .map(Attribute("id") = Attribute("id") * Attribute("value"))
+    .SINK;
+----
+1,1,1000
+2,1,1001
+3,1,1002
+8,2,2000
+95,19,19000
+120,20,20000
+147,21,21000
+
+# Map with mul function touches two fields and adds a new field
+Query::from("window")
+    .map(Attribute("new") = Attribute("id") * Attribute("value"))
+    .SINK;
+----
+1,1,1000,1
+2,1,1001,2
+3,1,1002,3
+4,2,2000,8
+5,19,19000,95
+6,20,20000,120
+7,21,21000,147
+
+
+# Two maps after each other that both touch the same fields
+Query::from("window")
+    .map(Attribute("id") = Attribute("id") * 3)
+    .map(Attribute("value") = Attribute("value") * Attribute("id"))
+    .SINK;
+----
+3,3,1000
+6,6,1001
+9,9,1002
+12,24,2000
+15,285,19000
+18,360,20000
+21,441,21000

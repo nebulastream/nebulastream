@@ -14,8 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -27,14 +30,14 @@ RenameSourceOperator::RenameSourceOperator(const std::string& newSourceName, Ope
 
 bool RenameSourceOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<RenameSourceOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<RenameSourceOperator>(rhs)->getId() == id;
 }
 
 bool RenameSourceOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<RenameSourceOperator>())
+    if (NES::Util::instanceOf<RenameSourceOperator>(rhs))
     {
-        auto otherRename = rhs->as<RenameSourceOperator>();
+        auto otherRename = NES::Util::as<RenameSourceOperator>(rhs);
         return newSourceName == otherRename->newSourceName;
     }
     return false;
@@ -88,17 +91,17 @@ OperatorPtr RenameSourceOperator::copy()
 
 void RenameSourceOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "RENAME_STREAM(newStreamName=" << newSourceName << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature

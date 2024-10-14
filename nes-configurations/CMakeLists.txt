@@ -28,16 +28,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
     target_compile_options(nes-configurations PUBLIC "-fPIC")
 endif ()
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-configurations
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+add_tests_if_enabled(tests)

@@ -13,16 +13,16 @@
 */
 
 #pragma once
-#include <list>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution
 {
-
+/// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
+class PipelineExecutionContext;
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 /**
  * @brief Interface to handle specific operator state.
  */
@@ -54,49 +54,18 @@ public:
      * @param stopTS
      * @return list of TupleBuffers
      */
-    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
+    std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
 
     /**
      * @brief Merges migrated slices
      * @param buffer
      */
-    void restoreState(std::vector<Runtime::TupleBuffer>&) override;
+    void restoreState(std::vector<Memory::TupleBuffer>&) override;
 
     /**
      * @brief Default deconstructor
      */
     virtual ~OperatorHandler() override = default;
-
-    /**
-     * @brief Checks if the current operator handler is of type OperatorHandlerType
-     * @tparam OperatorHandlerType
-     * @return bool true if node is of OperatorHandlerType
-     */
-    template <class OperatorHandlerType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<OperatorHandlerType*>(this))
-        {
-            return true;
-        };
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the node to a OperatorHandlerType
-    * @tparam OperatorHandlerType
-    * @return returns a shared pointer of the OperatorHandlerType
-    */
-    template <class OperatorHandlerType>
-    std::shared_ptr<OperatorHandlerType> as()
-    {
-        if (instanceOf<OperatorHandlerType>())
-        {
-            return std::dynamic_pointer_cast<OperatorHandlerType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException(
-            "OperatorHandler:: we performed an invalid cast of operator to type " + std::string(typeid(OperatorHandlerType).name()));
-    }
 };
-
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 } /// namespace NES::Runtime::Execution

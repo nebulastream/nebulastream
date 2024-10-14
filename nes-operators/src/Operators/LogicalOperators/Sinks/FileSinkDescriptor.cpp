@@ -14,6 +14,8 @@
 
 #include <utility>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Util/Common.hpp>
+
 
 namespace NES
 {
@@ -68,11 +70,11 @@ std::string FileSinkDescriptor::toString() const
 
 bool FileSinkDescriptor::equal(SinkDescriptorPtr const& other)
 {
-    if (!other->instanceOf<FileSinkDescriptor>())
+    if (!NES::Util::instanceOf<FileSinkDescriptor>(other))
     {
         return false;
     }
-    auto otherSinkDescriptor = other->as<FileSinkDescriptor>();
+    auto otherSinkDescriptor = NES::Util::as<FileSinkDescriptor>(other);
     return fileName == otherSinkDescriptor->fileName;
 }
 

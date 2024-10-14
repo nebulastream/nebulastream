@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <Util/Common.hpp>
 
 namespace NES
 {
@@ -180,48 +181,6 @@ public:
     bool isValid();
 
     /**
-     * @brief Checks if the current node is of type NodeType
-     * @tparam NodeType
-     * @return bool true if node is of NodeType
-     */
-    template <class NodeType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<NodeType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the node to a NodeType
-    * @tparam NodeType
-    * @return returns a shared pointer of the NodeType
-    */
-    template <class NodeType>
-    std::shared_ptr<NodeType> as()
-    {
-        if (instanceOf<NodeType>())
-        {
-            return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
-        }
-        throw std::logic_error(
-            "Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
-    }
-
-    /**
-     * @brief Dynamically casts the node to a NodeType or returns nullptr.
-     * @tparam NodeType
-     * @return returns a shared pointer of the NodeType or nullptr if the type can't be casted.
-     */
-    template <class NodeType>
-    std::shared_ptr<NodeType> as_if()
-    {
-        return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
-    }
-
-    /**
      * @brief Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
      * @tparam NodeType
      * @return vector of nodes
@@ -358,9 +317,10 @@ private:
     template <class NodeType>
     void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes)
     {
-        if (this->instanceOf<NodeType>())
+        auto sharedThis = this->shared_from_this();
+        if (NES::Util::instanceOf<NodeType>(sharedThis))
         {
-            foundNodes.push_back(this->as<NodeType>());
+            foundNodes.push_back(NES::Util::as<NodeType>(sharedThis));
         }
         for (auto& successor : this->children)
         {
@@ -418,7 +378,7 @@ private:
 
     /**
      * @brief Stores the stacktrace while node creation.
-     * It is empty if CMAKE_NES_TRACE_NODE_CREATION == false.
+     * It is empty if NES_TRACE_NODE_CREATION == false.
      */
     std::string stackTrace;
 };

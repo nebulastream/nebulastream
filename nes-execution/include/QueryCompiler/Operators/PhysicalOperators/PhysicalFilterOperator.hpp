@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <Functions/NodeFunction.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -24,20 +25,15 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalFilterOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
+    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate);
     static PhysicalOperatorPtr
-    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression);
+    create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function);
     std::string toString() const override;
     OperatorPtr copy() override;
-
-    /**
-   * @brief get the filter predicate.
-   * @return PredicatePtr
-   */
-    ExpressionNodePtr getPredicate();
+    NodeFunctionPtr getPredicate();
 
 private:
-    ExpressionNodePtr predicate;
+    NodeFunctionPtr predicate;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

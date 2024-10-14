@@ -18,16 +18,18 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Common.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
 {
-
+/// Forward declaration of OperatorHandler, which directly includes PipelineExecutionContext
+class OperatorHandler;
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */
@@ -69,44 +71,24 @@ struct SequenceState
 class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExecutionContext>
 {
 public:
-    /**
-     * @brief The PipelineExecutionContext is passed to the compiled pipeline and enables interaction with the NES Runtime.
-     * @param emitFunctionHandler an handler to receive the emitted buffers from the pipeline.
-     * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
-     * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
-     */
     explicit PipelineExecutionContext(
         PipelineId pipelineId,
         QueryId queryId,
-        Runtime::BufferManagerPtr bufferProvider,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         size_t numberOfWorkerThreads,
-        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
-        std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+        std::function<void(Memory::TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
+        std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
         std::vector<OperatorHandlerPtr> operatorHandlers);
 
-    /**
-     * @brief Emits a output tuple buffer to the Runtime. Internally we call the emit function which is a callback to the correct handler.
-     * @param tupleBuffer the output tuple buffer that is passed to the Runtime
-     * @param workerContext the worker context
-     */
-    void emitBuffer(TupleBuffer& tupleBuffer, WorkerContext&);
+    /// Emits a output tuple buffer to the Runtime. Internally we call the emit function which is a callback to the correct handler.
+    void emitBuffer(Memory::TupleBuffer& tupleBuffer, WorkerContext&);
 
-    /**
-    * @brief Dispatch a buffer as a new task to the query manager.
-    * Consequently, a new task is created and the call returns directly.
-    * @param outputBuffer the output tuple buffer that is passed to the Runtime
-    * @param workerContext the worker context
-    */
-    void dispatchBuffer(TupleBuffer tupleBuffer);
+    /// Dispatch a buffer as a new task to the query manager.
+    /// Consequently, a new task is created and the call returns directly.
+    void dispatchBuffer(Memory::TupleBuffer tupleBuffer);
 
     [[nodiscard]] std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
-    /**
-     * @brief Retrieves a Operator Handler at a specific index and cast its to an OperatorHandlerType.
-     * @tparam OperatorHandlerType
-     * @param index of the operator handler.
-     * @return
-     */
     template <class OperatorHandlerType>
     auto getOperatorHandler(std::size_t index)
     {
@@ -119,35 +101,21 @@ public:
         return std::dynamic_pointer_cast<OperatorHandlerType>(operatorHandlers[index]);
     }
 
-    std::vector<PredecessorExecutablePipeline>& getPredecessors() { return predecessors; }
-
-    void addPredecessor(PredecessorExecutablePipeline pred) { predecessors.push_back(pred); }
-
     std::string toString() const;
 
     PipelineId getPipelineID() { return this->pipelineId; }
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
-    [[nodiscard]] Runtime::BufferManagerPtr getBufferManager() const;
+    [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const;
 
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
     [[nodiscard]] uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
 
-    /**
-     * @brief Checks if this PipelineExecutionContext has seen all chunks for a given sequence number.
-     * @param seqNumberOriginId
-     * @param chunkNumber
-     * @param isLastChunk
-     * @return True, if all chunks have been seen, false otherwise
-     */
+    /// Checks if this PipelineExecutionContext has seen all chunks for a given sequence number.
     bool isLastChunk(const SeqNumberOriginId seqNumberOriginId, const uint64_t chunkNumber, const bool isLastChunk);
 
-    /**
-     * @brief Removes the sequence state in seqNumberOriginIdToChunkStateInput and seqNumberOriginIdToOutputChunkNumber
-     * for the seqNumberOriginId
-     * @param seqNumberOriginId
-     */
+    /// Removes the sequence state in seqNumberOriginIdToChunkStateInput and seqNumberOriginIdToOutputChunkNumber for the seqNumberOriginId
     void removeSequenceState(const SeqNumberOriginId seqNumberOriginId);
 
 private:
@@ -155,18 +123,16 @@ private:
     QueryId queryId;
 
     /// Emit function handlers to react on an emitted tuple buffer
-    std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
-    std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
+    std::function<void(Memory::TupleBuffer&, WorkerContext&)> emitFunctionHandler;
+    std::function<void(Memory::TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
     folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;
 
-    const Runtime::BufferManagerPtr bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;
-
-    std::vector<PredecessorExecutablePipeline> predecessors;
 };
-
-} /// namespace NES::Runtime::Execution
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
+}

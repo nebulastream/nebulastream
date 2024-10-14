@@ -14,13 +14,15 @@ add_library(nes-single-node-worker-test-util STATIC
         src/IntegrationTestUtil.cpp
 )
 
-target_include_directories(nes-single-node-worker-test-util PRIVATE
+target_include_directories(nes-single-node-worker-test-util PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ # manually including, because the nes-single-worker is an executable
 )
 
 target_compile_definitions(nes-single-node-worker-test-util PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata")
-target_link_libraries(nes-single-node-worker-test-util PRIVATE
+target_link_libraries(nes-single-node-worker-test-util PUBLIC
         nes-runtime
+        nes-memory
         nes-grpc
+        nes-single-node-worker-lib
+        ${GTEST_LIBRARIES}
 )

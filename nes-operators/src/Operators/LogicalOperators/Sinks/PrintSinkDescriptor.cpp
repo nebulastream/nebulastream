@@ -14,6 +14,8 @@
 
 #include <string>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Util/Common.hpp>
+
 
 namespace NES
 {
@@ -34,7 +36,7 @@ std::string PrintSinkDescriptor::toString() const
 
 bool PrintSinkDescriptor::equal(SinkDescriptorPtr const& other)
 {
-    return other->instanceOf<PrintSinkDescriptor>();
+    return NES::Util::instanceOf<PrintSinkDescriptor>(other);
 }
 
 } /// namespace NES

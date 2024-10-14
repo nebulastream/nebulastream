@@ -30,12 +30,12 @@ class MigratableStateInterface
      * @param stopTS
      * @return list of TupleBuffers
      */
-    virtual std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) = 0;
+    virtual std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) = 0;
 
     /**
      * @brief Merges migrated slices
      * @param buffers
      */
-    virtual void restoreState(std::vector<Runtime::TupleBuffer>&) = 0;
+    virtual void restoreState(std::vector<Memory::TupleBuffer>&) = 0;
 };
 } /// namespace NES::Runtime::Execution

@@ -31,7 +31,7 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
         /// Thus, we only check if the next update is the one, which we expect.
         /// This implies, that each watermark barrier has to be received.
         /// If the system looses a watermark barrier, the watermark processor will make no progress.
-        if (currentSequenceNumber + 1 != std::get<1>(nextWatermarkUpdate))
+        if ((currentSequenceNumber + 1) != std::get<1>(nextWatermarkUpdate))
         {
             /// It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;

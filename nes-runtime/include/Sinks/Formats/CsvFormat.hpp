@@ -24,11 +24,11 @@ public:
     /**
      * Ctor for CSV format.
      * @param schema Ptr to the schema
-     * @param bufferManager Ptr to the buffer manager
+     * @param bufferProvider Ptr to the buffer manager
      * @param addTimestamp Flag, to indicate if timestamp shall be added when formatting
      */
-    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
-    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, bool addTimestamp);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
     virtual ~CsvFormat() noexcept = default;
 
     /**
@@ -42,14 +42,14 @@ public:
     * @param a tuple buffers pointer
     * @return formatted content of TupleBuffer, contains timestamp if specified
      */
-    std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
+    std::string getFormattedBuffer(Memory::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(Runtime::TupleBuffer& inputBuffer) override;
+    FormatIterator getTupleIterator(Memory::TupleBuffer& inputBuffer) override;
 
     /**
      * @brief method to return the format as a string

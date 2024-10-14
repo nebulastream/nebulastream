@@ -37,7 +37,7 @@
 #bufferSizeInBytes: 4096
 
 # Number of threads available for the worker node. Defines how many queries can run in parallel.
-#numWorkerThreads: 1
+#numberOfWorkerThreads: 1
 
 # The number of queries to be processed together
 #queryBatchSize: 1

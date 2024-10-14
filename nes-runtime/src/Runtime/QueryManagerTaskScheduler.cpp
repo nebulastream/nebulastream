@@ -20,7 +20,6 @@
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -41,8 +40,8 @@ public:
               queryId,
               queryManager->getBufferManager(),
               queryManager->getNumberOfWorkerThreads(),
-              [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
-              [](TupleBuffer&) {},
+              [](Memory::TupleBuffer&, NES::Runtime::WorkerContext&) {},
+              [](Memory::TupleBuffer&) {},
               std::vector<Execution::OperatorHandlerPtr>())
     {
         /// nop
@@ -54,12 +53,12 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     using base = Execution::ExecutablePipelineStage;
 
 public:
-    explicit ReconfigurationEntryPointPipelineStage() : base(PipelineStageArity::Unary)
+    explicit ReconfigurationEntryPointPipelineStage() : base(Execution::PipelineStageArity::Unary)
     {
         /// nop
     }
 
-    ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
+    ExecutionResult execute(Memory::TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
     {
         NES_TRACE(
             "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread {}",
@@ -163,9 +162,8 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext)
     return ExecutionResult::Finished;
 }
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
+void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable)
 {
-    NES_TRACE("Add Work for executable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline)
     {
         if (!(*nextPipeline)->isRunning())
@@ -182,7 +180,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
         std::stringstream s;
         s << buffer;
         std::string bufferString = s.str();
-        NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {} queueId={}", sink->get()->toString(), bufferString, queueId);
+        NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {}", sink->get()->toString(), bufferString);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     }
@@ -288,7 +286,7 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId, const Reconfigurat
     return addReconfigurationMessage(queryId, std::move(buffer), blocking);
 }
 
-bool QueryManager::addReconfigurationMessage(QueryId queryId, TupleBuffer&& buffer, bool blocking)
+bool QueryManager::addReconfigurationMessage(QueryId queryId, Memory::TupleBuffer&& buffer, bool blocking)
 {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
@@ -331,14 +329,17 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
     using base = Execution::ExecutablePipelineStage;
 
 public:
-    explicit PoisonPillEntryPointPipelineStage() : base(PipelineStageArity::Unary)
+    explicit PoisonPillEntryPointPipelineStage() : base(Execution::PipelineStageArity::Unary)
     {
         /// nop
     }
 
     virtual ~PoisonPillEntryPointPipelineStage() = default;
 
-    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return ExecutionResult::AllFinished; }
+    ExecutionResult execute(Memory::TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef)
+    {
+        return ExecutionResult::AllFinished;
+    }
 };
 } /// namespace detail
 

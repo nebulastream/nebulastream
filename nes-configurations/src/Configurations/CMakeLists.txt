@@ -14,6 +14,7 @@ add_source_files(nes-configurations
         BaseConfiguration.cpp
         BaseOption.cpp
         ConfigurationException.cpp
+        Descriptor.cpp
         ScalarOption.cpp
         TypedBaseOption.cpp
 )
@@ -21,5 +22,3 @@ add_source_files(nes-configurations
 add_subdirectory(Coordinator)
 add_subdirectory(Enums)
 add_subdirectory(Validation)
-add_subdirectory(Worker)
-

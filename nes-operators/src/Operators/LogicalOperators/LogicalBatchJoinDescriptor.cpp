@@ -20,8 +20,8 @@ namespace NES::Join::Experimental
 {
 
 LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(
-    FieldAccessExpressionNodePtr keyTypeBuild,
-    FieldAccessExpressionNodePtr keyTypeProbe,
+    NodeFunctionFieldAccessPtr keyTypeBuild,
+    NodeFunctionFieldAccessPtr keyTypeProbe,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight)
     : keyTypeBuild(std::move(keyTypeBuild))
@@ -37,8 +37,8 @@ LogicalBatchJoinDescriptor::LogicalBatchJoinDescriptor(
 }
 
 LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(
-    const FieldAccessExpressionNodePtr& keyTypeBuild,
-    const FieldAccessExpressionNodePtr& keyTypeProbe,
+    const NodeFunctionFieldAccessPtr& keyTypeBuild,
+    const NodeFunctionFieldAccessPtr& keyTypeProbe,
     uint64_t numberOfInputEdgesLeft,
     uint64_t numberOfInputEdgesRight)
 {
@@ -46,12 +46,12 @@ LogicalBatchJoinDescriptorPtr LogicalBatchJoinDescriptor::create(
         keyTypeBuild, keyTypeProbe, numberOfInputEdgesLeft, numberOfInputEdgesRight);
 }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getBuildJoinKey() const
+NodeFunctionFieldAccessPtr LogicalBatchJoinDescriptor::getBuildJoinKey() const
 {
     return keyTypeBuild;
 }
 
-FieldAccessExpressionNodePtr LogicalBatchJoinDescriptor::getProbeJoinKey() const
+NodeFunctionFieldAccessPtr LogicalBatchJoinDescriptor::getProbeJoinKey() const
 {
     return keyTypeProbe;
 }

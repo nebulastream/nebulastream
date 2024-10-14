@@ -22,6 +22,17 @@
 namespace NES::Testing
 {
 
+#define ASSERT_EXCEPTION_ERRORCODE(statement, errorCode) \
+    try \
+    { \
+        statement; \
+        FAIL(); \
+    } \
+    catch (const Exception& ex) \
+    { \
+        ASSERT_EQ(ex.code(), errorCode); \
+    }
+
 namespace detail
 {
 class TestWaitingHelper
@@ -60,9 +71,10 @@ private:
 
 class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper
 {
+    /// This deleter is used to create a shared_ptr that does not delete the object.
     struct Deleter
     {
-        void operator()(void*) { }
+        void operator()(void*) const { }
     };
 
 public:

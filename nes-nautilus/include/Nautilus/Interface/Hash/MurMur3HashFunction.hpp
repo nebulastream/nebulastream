@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
 namespace NES::Nautilus::Interface
@@ -40,22 +40,13 @@ public:
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, Value<>& value) override;
+    HashValue calculate(HashValue& hash, VarVal& value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(Value<>& value);
-
-    /**
-     * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
-     * @param hash
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
+    HashValue calculate(VarVal& value);
 };
 } /// namespace NES::Nautilus::Interface

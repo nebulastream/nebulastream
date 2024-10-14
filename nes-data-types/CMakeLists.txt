@@ -25,21 +25,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-data-types REUSE_FROM nes-common)
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
-
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/ExecutableType Common/ExecutableType)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/PhysicalTypes Common/PhysicalTypes)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-data-types
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+add_tests_if_enabled(tests)

@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {
@@ -26,14 +25,14 @@ namespace NES
 class LogicalProjectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id);
+    explicit LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
     /**
      * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<ExpressionNodePtr>
+     * @return  std::vector<NodeFunctionPtr>
      */
-    std::vector<ExpressionNodePtr> getExpressions() const;
+    std::vector<NodeFunctionPtr> getFunctions() const;
 
     /**
      * @brief check if two operators have the same output schema
@@ -54,7 +53,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    std::vector<ExpressionNodePtr> expressions;
+    std::vector<NodeFunctionPtr> functions;
 };
 
 } /// namespace NES

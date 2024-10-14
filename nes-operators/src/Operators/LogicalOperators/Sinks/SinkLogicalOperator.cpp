@@ -13,8 +13,11 @@
 */
 
 #include <utility>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -35,14 +38,14 @@ void SinkLogicalOperator::setSinkDescriptor(SinkDescriptorPtr sd)
 
 bool SinkLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<SinkLogicalOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<SinkLogicalOperator>(rhs)->getId() == id;
 }
 
 bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<SinkLogicalOperator>())
+    if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
-        auto sinkOperator = rhs->as<SinkLogicalOperator>();
+        auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
         return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor);
     }
     return false;
@@ -74,17 +77,17 @@ OperatorPtr SinkLogicalOperator::copy()
 
 void SinkLogicalOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "SINK()." << *childSignature.begin()->second.begin();
 
     ///Update the signature

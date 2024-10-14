@@ -15,8 +15,6 @@
 #include <memory>
 #include <utility>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Exceptions/SignalHandling.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -32,102 +30,33 @@ NodeEngineBuilder::NodeEngineBuilder(const Configurations::WorkerConfiguration& 
 {
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<BufferManagerPtr> bufferManagers)
-{
-    this->bufferManagers = std::move(bufferManagers);
-    return *this;
-}
-
 NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager)
 {
     this->queryManager = std::move(queryManager);
     return *this;
 }
 
-class SimpleQueryStatusListener : public AbstractQueryStatusListener
-{
-public:
-    bool canTriggerEndOfStream(QueryId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-
-    bool notifySourceTermination(QueryId, OperatorId, Runtime::QueryTerminationType) override
-    {
-        NES_INFO("Source has terminated");
-        return true;
-    }
-
-    bool notifyQueryFailure(QueryId, std::string errorMsg) override
-    {
-        NES_FATAL_ERROR("Query Failure: {}", errorMsg);
-        return true;
-    }
-
-    bool notifyQueryStatusChange(QueryId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
-
-    bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
-};
-
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
-    try
+    auto bufferManager = Memory::BufferManager::create(
+        workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
+
+    auto queryLog = std::make_shared<QueryLog>();
+    QueryManagerPtr queryManager{this->queryManager};
+    if (!this->queryManager)
     {
-        std::vector<BufferManagerPtr> bufferManagers;
-
-        ///get the list of queue where to pin from the config
-        auto numberOfQueues = workerConfiguration.numberOfQueues.getValue();
-
-        ///create one buffer manager per queue
-        if (numberOfQueues == 1)
-        {
-            bufferManagers.push_back(std::make_shared<BufferManager>(
-                workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
-        }
-        else
-        {
-            for (auto i = 0u; i < numberOfQueues; ++i)
-            {
-                bufferManagers.push_back(std::make_shared<BufferManager>(
-                    workerConfiguration.bufferSizeInBytes.getValue(),
-                    ///if we run in static with multiple queues, we divide the whole buffer manager among the queues
-                    workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues));
-            }
-        }
-
-        if (bufferManagers.empty())
-        {
-            NES_ERROR("Runtime: error while building NodeEngine: no BufferManager provided");
-            throw Exceptions::RuntimeException(
-                "Error while building NodeEngine : no BufferManager provided", NES::collectAndPrintStacktrace());
-        }
-
-        QueryManagerPtr queryManager{this->queryManager};
-        if (!this->queryManager)
-        {
-            auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numWorkerThreads.getValue());
-            auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration.numberOfBuffersPerEpoch.getValue());
-            std::vector<uint64_t> workerToCoreMappingVec
-                = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
-            queryManager = std::make_shared<QueryManager>(
-                std::make_shared<SimpleQueryStatusListener>(),
-                bufferManagers,
-                WorkerId(0),
-                numOfThreads,
-                numberOfBuffersPerEpoch,
-                workerToCoreMappingVec);
-        }
+        auto numThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
+        std::vector<uint64_t> workerToCoreMapping;
+        std::vector<Memory::BufferManagerPtr> bufferManagers = {bufferManager};
+        /// TODO #34: For now, the worker id is always 0 and the numberOfBuffersPerEpoch always 100. We need to change this during the refactoring.
+        queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, 100, workerToCoreMapping);
         if (!queryManager)
         {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
-            throw Exceptions::RuntimeException(
-                "Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
+            throw CannotStartQueryManager("during creation of NodeEngine");
         }
+    }
 
-        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager));
-    }
-    catch (std::exception& err)
-    {
-        NES_ERROR("Cannot start node engine {}", err.what());
-        NES_THROW_RUNTIME_ERROR("Cant start node engine");
-    }
+    return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryManager), std::move(queryLog));
 }
 
 } ///namespace NES::Runtime

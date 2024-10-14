@@ -12,19 +12,23 @@
     limitations under the License.
 */
 
+#include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/InterpreterPipelineProvider.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-std::unique_ptr<ExecutablePipelineStage>
-InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&)
+std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider()
 {
-    return std::make_unique<NautilusExecutablePipelineStage>(physicalOperatorPipeline);
+    return std::make_unique<InterpreterPipelineProvider>();
 }
 
-[[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<InterpreterPipelineProvider>
-    interpretationPipelineProvider("PipelineInterpreter");
+std::unique_ptr<ExecutablePipelineStage>
+InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options)
+{
+    /// As we are creating here a pipeline that is interpreted, we need to set the compilation option to false
+    options.setOption("engine.Compilation", false);
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
+}
 
-} /// namespace NES::Runtime::Execution
+}

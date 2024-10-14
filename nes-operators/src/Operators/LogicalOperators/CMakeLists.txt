@@ -22,7 +22,6 @@ add_source_files(nes-operators
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp
         LogicalUnaryOperator.cpp
-        LogicalOpenCLOperator.cpp
         LogicalLimitOperator.cpp
         LogicalBatchJoinDescriptor.cpp
 )
@@ -31,4 +30,3 @@ add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Watermarks)
 add_subdirectory(Windows)
-add_subdirectory(UDFs)

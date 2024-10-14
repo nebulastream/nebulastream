@@ -12,19 +12,16 @@
     limitations under the License.
 */
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation::Phases
@@ -35,57 +32,30 @@ PhaseFactoryPtr DefaultPhaseFactory::create()
     return std::make_shared<DefaultPhaseFactory>();
 }
 
-PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options)
+PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase()
 {
-    switch (options->getPipeliningStrategy())
-    {
-        case PipeliningStrategy::OPERATOR_FUSION: {
-            NES_DEBUG("Create pipelining phase with fuse policy");
-            auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
-            return DefaultPipeliningPhase::create(operatorFusionPolicy);
-        };
-        case PipeliningStrategy::OPERATOR_AT_A_TIME: {
-            NES_DEBUG("Create pipelining phase with always break policy");
-            auto operatorFusionPolicy = OperatorAtATimePolicy::create();
-            return DefaultPipeliningPhase::create(operatorFusionPolicy);
-        }
-    };
+    NES_DEBUG("Create pipelining phase with fuse policy");
+    auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
+    return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
-LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options)
+LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options)
 {
     NES_DEBUG("Create default lower logical plan phase");
-    auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create(options);
+    auto physicalOperatorProvider = std::make_shared<DefaultPhysicalOperatorProvider>(options);
     return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
-AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr)
+AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions>)
 {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
 
-LowerToExecutableQueryPlanPhasePtr
-DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing)
+std::shared_ptr<LowerToExecutableQueryPlanPhase> DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
 {
     NES_DEBUG("Create lower to executable query plan phase");
-    DataSourceProviderPtr sourceProvider;
-    if (!sourceSharing)
-    {
-        sourceProvider = DefaultDataSourceProvider::create(options);
-    }
-    else
-    {
-        sourceProvider = SourceSharingDataSourceProvider::create(options);
-    }
-
-    auto sinkProvider = DataSinkProvider::create();
-    return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
-}
-BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(QueryCompilerOptionsPtr options)
-{
-    NES_DEBUG("Create buffer optimization phase");
-    return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
+    return LowerToExecutableQueryPlanPhase::create(DataSinkProvider::create(), Sources::SourceProvider::create());
 }
 
-} /// namespace NES::QueryCompilation::Phases
+}

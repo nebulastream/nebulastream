@@ -10,15 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Hash)
 
 add_source_files(nes-nautilus
-        FunctionCall.cpp
         Record.cpp
-        )
-
-add_subdirectory(Hash)
-add_subdirectory(HashMap)
-add_subdirectory(DataTypes)
-add_subdirectory(PagedVector)
-add_subdirectory(Fixed2DArray)
-add_subdirectory(FixedPage)
+)

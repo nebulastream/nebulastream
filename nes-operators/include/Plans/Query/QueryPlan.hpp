@@ -15,14 +15,18 @@
 #pragma once
 
 #include <memory>
-#include <set>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/QueryState.hpp>
+
 
 namespace NES
 {
@@ -33,8 +37,8 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
+class SourceNameLogicalOperator;
+using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -73,11 +77,21 @@ public:
      */
     static QueryPlanPtr create();
 
-    /**
-     * @brief Get all source operators
-     * @return vector of logical source operators
-     */
-    std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
+    template <typename LogicalSourceType>
+    std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
+    {
+        NES_DEBUG("Get all source operators by traversing all the root nodes.");
+        std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
+        for (const auto& rootOperator : rootOperators)
+        {
+            auto sourceOptrs = rootOperator->getNodesByType<LogicalSourceType>();
+            NES_DEBUG("insert all source operators to the collection");
+            sourceOperatorsSet.insert(sourceOptrs.begin(), sourceOptrs.end());
+        }
+        NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
+        std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
+        return sourceOperators;
+    }
 
     /**
      * @brief Get all sink operators
@@ -132,16 +146,16 @@ public:
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
             {
-                auto visitingOp = (*itr)->as<Operator>();
+                auto visitingOp = NES::Util::as<Operator>(*itr);
                 if (visitedOpIds.contains(visitingOp->getId()))
                 {
                     /// skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
-                if (visitingOp->instanceOf<T>())
+                if (NES::Util::instanceOf<T>(visitingOp))
                 {
-                    operators.push_back(visitingOp->as<T>());
+                    operators.push_back(NES::Util::as<T>(visitingOp));
                 }
             }
         }

@@ -14,13 +14,20 @@
 
 #pragma once
 
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/ExecutionResult.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution
 {
+enum class PipelineStageArity : uint8_t
+{
+    Unary,
+    BinaryLeft,
+    BinaryRight
+};
 
 /**
  * @brief The executable pipeline stage represents the executable part of a an specific pipeline.
@@ -36,10 +43,6 @@ public:
         /// nop
     }
 
-    /**
-     * @brief Returns the arity of this pipeline
-     * @return the arity of this pipeline
-     */
     [[nodiscard]] PipelineStageArity getArity() const { return arity; }
 
     /**
@@ -77,7 +80,7 @@ public:
     * @return 0 if an error occurred.
     */
     virtual ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
+    execute(Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
         = 0;
 
     /**
@@ -104,7 +107,7 @@ public:
 private:
     PipelineStageArity arity;
 };
-
+using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 } /// namespace NES::Runtime::Execution
 
 namespace fmt

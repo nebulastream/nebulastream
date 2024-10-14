@@ -39,7 +39,7 @@ SinkMediumTypes PrintSink::getSinkMediumType()
     return SinkMediumTypes::PRINT_SINK;
 }
 
-bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
+bool PrintSink::writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
     std::unique_lock lock(writeMutex);
     NES_DEBUG("PrintSink: getSchema medium  {}  format  {}", toString(), sinkFormat->toString());

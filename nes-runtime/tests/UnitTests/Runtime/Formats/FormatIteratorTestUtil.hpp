@@ -15,8 +15,8 @@
 #pragma once
 
 #include <API/Schema.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime
@@ -31,7 +31,7 @@ template <typename ExpectedType>
 class FormatIteratorTestUtil
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
 
     /**
      * Takes a schema and creates a TestTupleBuffer with row layout (column layout currently breaks the iterator).
@@ -41,8 +41,9 @@ public:
     auto createTestTupleBuffer(SchemaPtr schema) const
     {
         auto tupleBuffer = bufferManager->getBufferBlocking();
-        MemoryLayouts::RowLayoutPtr rowLayout = MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
-        return std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
+        std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowLayout
+            = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        return std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
     }
 
     /**
@@ -70,7 +71,7 @@ public:
     template <typename CreateExpectedTypeFunc, typename... Values>
     auto processTuple(
         SchemaPtr schema,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
         std::vector<std::vector<ExpectedType>>& expectedKVPairs,
         CreateExpectedTypeFunc createExpectedType,
         const Values&... values)
@@ -112,7 +113,7 @@ public:
     template <typename CreateExpectedTypeFunc, typename... Values>
     auto processTupleWithString(
         SchemaPtr schema,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
         std::vector<std::vector<ExpectedType>>& expectedKVPairs,
         CreateExpectedTypeFunc createExpectedType,
         const Values&... values)

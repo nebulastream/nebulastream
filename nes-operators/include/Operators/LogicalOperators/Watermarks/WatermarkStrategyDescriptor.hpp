@@ -38,55 +38,6 @@ public:
 
     virtual std::string toString() = 0;
 
-    /**
-    * @brief Checks if the current node is of type WatermarkStrategyDescriptor
-    * @tparam WatermarkStrategyType
-    * @return bool true if node is of WatermarkStrategyDescriptor
-    */
-    template <class WatermarkStrategyType>
-    bool instanceOf() const
-    {
-        if (dynamic_cast<WatermarkStrategyType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    template <class WatermarkStrategyType>
-    bool instanceOf()
-    {
-        if (dynamic_cast<WatermarkStrategyType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    /**
-    * @brief Dynamically casts the watermark strategy to a WatermarkStrategyType
-    * @tparam WatermarkStrategyType
-    * @return returns a shared pointer of the WatermarkStrategyType
-    */
-    template <class WatermarkStrategyType>
-    std::shared_ptr<WatermarkStrategyType> as() const
-    {
-        if (instanceOf<const WatermarkStrategyType>())
-        {
-            return std::dynamic_pointer_cast<const WatermarkStrategyType>(this->shared_from_this());
-        }
-        throw std::bad_cast();
-    }
-    template <class WatermarkStrategyType>
-    std::shared_ptr<WatermarkStrategyType> as()
-    {
-        if (instanceOf<WatermarkStrategyType>())
-        {
-            return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
-        }
-        throw std::bad_cast();
-    }
-
     virtual bool inferStamp(SchemaPtr schema) = 0;
 };
 } /// namespace NES::Windowing

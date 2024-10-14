@@ -20,11 +20,10 @@
 #include <string>
 #include <typeinfo>
 #include <utility>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Util/GatheringMode.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations
 {
@@ -106,11 +105,11 @@ public:
      * @brief sets the value if it is defined
      * @param yamlNode: the yaml field name to be used
      */
-    void setValueIfDefined(Yaml::Node yamlNode)
+    void setValueIfDefined(YAML::Node yamlNode)
     {
-        if (!yamlNode.IsNone())
+        if (!yamlNode.IsNull())
         {
-            this->value = yamlNode.As<T>();
+            this->value = yamlNode.as<T>();
         }
     }
 
@@ -155,14 +154,6 @@ public:
         if (inputFormat == "CSV")
         {
             this->value = InputFormat::CSV;
-        }
-        else if (inputFormat == "JSON")
-        {
-            this->value = InputFormat::JSON;
-        }
-        else if (inputFormat == "NES_BINARY")
-        {
-            this->value = InputFormat::NES_BINARY;
         }
         else
         {
@@ -224,7 +215,6 @@ using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
-using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
 } /// namespace NES::Configurations

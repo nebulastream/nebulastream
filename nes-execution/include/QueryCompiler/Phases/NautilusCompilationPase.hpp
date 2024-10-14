@@ -13,45 +13,24 @@
 */
 #pragma once
 #include <functional>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
 
-/**
- * @brief Compilation phase, which generates executable machine code for pipelines of nautilus operators.
- */
+/// Compilation phase, which generates executable machine code for pipelines of nautilus operators.
 class NautilusCompilationPhase
 {
 public:
-    /**
-     * @brief Constructor to create a new NautilusCompilationPhase with a set of compilerOptions
-     * @param compilerOptions
-     */
-    explicit NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions);
+    explicit NautilusCompilationPhase(const std::shared_ptr<QueryCompilerOptions>& compilerOptions);
 
-    /**
-     * @brief Creates the compilation phase for nautilus pipelines.
-     * @return CompilationStrategy
-     */
-    static std::shared_ptr<NautilusCompilationPhase> create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions);
-
-    /**
-     * @brief Generates code for all pipelines in a pipelined query plan.
-     * @param pipeline PipelineQueryPlanPtr
-     * @return PipelineQueryPlanPtr
-     */
+    /// Generates code for all pipelines in a pipelined query plan.
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr queryPlan);
 
-    /**
-     * @brief Generates code for a particular pipeline.
-     * @param pipeline OperatorPipelinePtr
-     * @return OperatorPipelinePtr
-     */
+    /// Generates code for a particular pipeline.
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
 private:
-    const QueryCompilation::QueryCompilerOptionsPtr compilerOptions;
+    std::shared_ptr<QueryCompilerOptions> compilerOptions;
 };
-}; /// namespace NES::QueryCompilation
+}

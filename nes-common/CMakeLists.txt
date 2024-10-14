@@ -53,45 +53,25 @@ target_include_directories(nes-grpc PUBLIC
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-install(TARGETS nes-grpc
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
-
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
 # Add Library
 add_library(nes-common ${NES_COMMON_SOURCE_FILES})
 
-find_package(cpptrace CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
+find_package(cpptrace   CONFIG REQUIRED)
+find_package(fmt        CONFIG REQUIRED)
+find_package(libcuckoo  CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
-target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP} cpptrace::cpptrace magic_enum::magic_enum fmt::fmt)
+find_package(spdlog     CONFIG REQUIRED)
+find_package(yaml-cpp   CONFIG REQUIRED)
+target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp)
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers/ Identifiers)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Sequencing Sequencing)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
-
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-common
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+add_tests_if_enabled(tests)

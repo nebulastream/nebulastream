@@ -16,9 +16,14 @@
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 
-namespace NES::Windowing
+namespace NES
+{
+class ExpressionNode;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
+
+namespace Windowing
 {
 
 class TimeCharacteristic;
@@ -55,7 +60,7 @@ public:
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(ExpressionNodePtr field, const TimeUnit& unit = TimeUnit(1));
+    static TimeCharacteristicPtr createEventTime(NodeFunctionPtr field, const TimeUnit& unit = TimeUnit(1));
 
     /**
      * @return The TimeCharacteristic type.
@@ -93,4 +98,5 @@ private:
     AttributeFieldPtr field;
     TimeUnit unit;
 };
-} /// namespace NES::Windowing
+}
+}

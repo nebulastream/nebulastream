@@ -16,14 +16,11 @@
 
 #include <cstdint>
 #include <tuple>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation::Util
 {
-
 /**
  * @brief Get the windowing parameter (size, slide, and time function) for the given window type
  * @param windowType
@@ -32,4 +29,4 @@ namespace NES::QueryCompilation::Util
 std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
-} /// namespace NES::QueryCompilation::Util
+}
