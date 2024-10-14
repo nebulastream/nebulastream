@@ -71,9 +71,10 @@ https://github.com/hyrise/sql-parser
 - \+ A standalone, ready-to-use library.
 - \- No full SQL support and minor bugs (see also https://github.com/hyrise/sql-parser/issues)
 
-# (Optional) Open Questions
-- list relevant questions that cannot or need not be answered before merging
-- create issues if needed
+# Open Questions
+When extending the grammar for streaming, e.g., Windows specifications in the from clause, we recently encountered parser conflicts, e.g., shift/reduce conflicts (https://www.gnu.org/software/bison/manual/html_node/Shift_002fReduce.html).
+The appearance, naturally, depends on the used feature and syntax, e.g., using only brackets (e.g., `[RANGE 10 HOUR]`) or a `WINDOW` keyword for the definition.
+It is open to us how much effort it is to integrate every streaming extension without conflicts.
 
 # Sources and Further Reading
 - [1] Arvind Arasu, Shivnath Babu, Jennifer Widom: The CQL continuous query language: semantic foundations and query execution. VLDB J. 15(2): 121-142 (2006).
