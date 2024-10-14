@@ -7,9 +7,9 @@ on:
         required: true
         type: string
     outputs:
-        image-tag:
-          description: "Docker image tag for the current dependencies"
-          value: ${{ jobs.detect-dependency-changes.outputs.tag }}
+      image-tag:
+        description: "Docker image tag for the current dependencies"
+        value: ${{ jobs.detect-dependency-changes.outputs.tag }}
 
 jobs:
   detect-dependency-changes:
@@ -32,12 +32,27 @@ jobs:
         run: |
           HASH=$(docker/dependency/hash_dependencies.sh)
           echo "Using Hash: $HASH"
-
+          
+          # Check if jq is installed
+          if ! command -v jq &> /dev/null; then
+            echo "jq is not installed."
+            exit 1
+          fi
+          
+          # fetch all available tags for the nes-development image
+          DOCKERHUB_RESPONSE=$(curl -s "https://hub.docker.com/v2/namespaces/nebulastream/repositories/nes-development/tags?page_size=1000")
+          if [ $? -ne 0 ]; then
+            echo "could not fetch tags from the docker repository"
+            exit 1
+          fi
+          
+          TAGS=$(echo $DOCKERHUB_RESPONSE | jq ".results[].name")
+          TAG_FOUND=$(echo $TAGS | jq -r "select (. == \"${HASH}\")")
           # Check if the Docker manifest exists for the computed hash
-          if docker manifest inspect nebulastream/nes-development:$HASH; then
+          if [[ "$TAG_FOUND" == "$HASH" ]]; then
             echo "build-dependency=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Require rebuilt of dependency"
+            echo "Development image with $HASH does not exist in the docker registry"
             echo "build-dependency=true" >> "$GITHUB_OUTPUT"
           fi
 
