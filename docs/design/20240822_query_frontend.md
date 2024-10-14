@@ -1,7 +1,15 @@
 # The Problem
-- describe the current state of the system
-- explain why the system's current state requires a change
-- specify the concrete problems and enumerate them as P1, P2, ...
+Currently, NES has a REST query interface for users, who can submit query strings, such as the following.
+```
+Query::from("default_source")
+    .filter(Attribute("id") < 16)
+    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
+```
+
+For processing, this string is basically written into a c++ file and compiled.
+This approach has the following drawbacks:
+- The compilation is slow, taking about 1 second, which is too long, for example, for running multiple integration tests.
+- The process is insecure because users could add arbitrary c++ code to the query string, which would be compiled.
 
 # Goals
 - describe goals/requirements that the proposed solution must fulfill
