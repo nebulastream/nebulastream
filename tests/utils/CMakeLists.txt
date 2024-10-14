@@ -51,6 +51,10 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
 
         gtest_discover_tests(${TEST_EXECUTABLE}
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+        if (CODE_COVERAGE)
+            target_code_coverage(${TEST_EXECUTABLE} PUBLIC ALL)
+        endif()
 endfunction()
 
 
