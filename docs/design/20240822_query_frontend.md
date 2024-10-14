@@ -35,9 +35,9 @@ The DuckDB version is "stripped down and generally cleaned up to make it easier 
 The DuckDB parser is integrated into DuckDB, i.e., it is no off-the-shelf library.
 This is why we have to extract it.
 In this process, we want to make it a standalone library.
-Given a SQL query string, it will then output an object of type `SQLStatement`.
+Given an SQL query string, it will then output an object of type `SQLStatement`.
 Each `SQLStatement` has a type `TYPE`, e.g., `SELECT_STATEMENT`, `INSERT_STATEMENT`.
-Using the type information, we can cast it into derived classes, e.g., `SQLStatement`.
+Using the type information, we can cast it into derived classes, e.g., `SelectStatement`, `InsertStatement`.
 Derived classes are, in turn, tagged datastructures depending on the components of the query, e.g., whether it contains set operations or has subqueries.
 
 To integrate this system-agnostic parser library into NES, we have to traverse the `SQLStatement`, extract the information, and generate a NES-specific query representation, i.e., `NES::Query` for a start.
@@ -65,7 +65,7 @@ https://github.com/antlr/grammars-v4/tree/master/sql
 -  \- Not well documented and tested.
 -  \- Only grammar file, but no custom data structures (see `SQLStatement` above)
 
-### A3: Hyrise Parser
+### A3: Hyrise parser
 https://github.com/hyrise/sql-parser
 - A c++ parser library, originally built for the Hyrise database system
 - \+ A standalone, ready-to-use library.
