@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <Runtime/BufferManager.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -24,16 +24,6 @@ class PagedVectorRef;
 
 class PagedVector;
 using PagedVectorPtr = std::shared_ptr<PagedVector>;
-
-/**
- * @brief Stores the pointer to the text, the length of the text and the index of the varSizedDataPages where the text begins.
- */
-struct VarSizedDataEntryMapValue
-{
-    int8_t* entryPtr;
-    uint32_t entryLength;
-    uint64_t entryBufIdx;
-} __attribute__((packed));
 
 /**
  * @brief This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
@@ -53,40 +43,13 @@ public:
      */
     void appendPage();
 
-    /**
-     * @brief Appends a new page to the varSizedDataPages vector. It also updates the currVarSizedDataEntry pointer.
-     */
-    void appendVarSizedDataPage();
-
-    /**
-     * @brief Stores text of the given length in the varSizedDataPages. If the current page is full, a new page is appended.
-     * It then creates a new entry in the varSizedDataEntryMap with the given key and the pointer to the text and its length.
-     * @param text
-     * @param length
-     * @return uint64_t Returns the key of the new entry in the varSizedDataEntryMap.
-     */
-    uint64_t storeText(const int8_t* text, uint32_t length);
-
-    /**
-     * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text and its length from the
-     * varSizedDataEntryMap with the given key.
-     * @param textEntryMapKey
-     * @return int8_t*
-     */
-    int8_t* loadText(uint64_t textEntryMapKey);
-
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 
-    /// Checks if the varSizedDataEntryMap is empty.
-    [[nodiscard]] bool varSizedDataEntryMapEmpty() const;
-
     std::vector<Memory::TupleBuffer>& getPages();
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
     [[nodiscard]] uint64_t getNumberOfEntries() const;
     [[nodiscard]] uint64_t getNumberOfEntriesOnCurrentPage() const;
-    [[nodiscard]] uint64_t getVarSizedDataEntryMapCounter() const;
     [[nodiscard]] uint64_t getEntrySize() const;
     [[nodiscard]] uint64_t getCapacityPerPage() const;
     void setLastPageRead(int8_t* page);
@@ -99,9 +62,6 @@ private:
     uint64_t numberOfEntriesOnCurrPage;
     std::vector<Memory::TupleBuffer> pages;
     int8_t* lastPageRead;
-    std::vector<Memory::TupleBuffer> varSizedDataPages;
-    int8_t* currVarSizedDataEntry;
-    std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
-    uint64_t varSizedDataEntryMapCounter;
 };
+
 } /// namespace NES::Nautilus::Interface
