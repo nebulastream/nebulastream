@@ -232,7 +232,7 @@ uint64_t PagedVector::getCapacityPerPage() const
     return memoryLayout->getCapacity();
 }
 
-void PagedVector::setLastPageRead(uint8_t* page)
+void PagedVector::setLastPageRead(int8_t* page)
 {
     lastPageRead = page;
 }

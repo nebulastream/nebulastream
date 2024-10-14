@@ -16,7 +16,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val.hpp>

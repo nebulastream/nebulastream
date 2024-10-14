@@ -13,7 +13,7 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>

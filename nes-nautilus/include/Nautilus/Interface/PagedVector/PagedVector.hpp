@@ -30,7 +30,7 @@ using PagedVectorPtr = std::shared_ptr<PagedVector>;
  */
 struct VarSizedDataEntryMapValue
 {
-    uint8_t* entryPtr;
+    int8_t* entryPtr;
     uint32_t entryLength;
     uint64_t entryBufIdx;
 } __attribute__((packed));
@@ -89,7 +89,7 @@ public:
     [[nodiscard]] uint64_t getVarSizedDataEntryMapCounter() const;
     [[nodiscard]] uint64_t getEntrySize() const;
     [[nodiscard]] uint64_t getCapacityPerPage() const;
-    void setLastPageRead(uint8_t* page);
+    void setLastPageRead(int8_t* page);
 
 private:
     friend PagedVectorRef;
@@ -98,9 +98,9 @@ private:
     uint64_t totalNumberOfEntries;
     uint64_t numberOfEntriesOnCurrPage;
     std::vector<Memory::TupleBuffer> pages;
-    uint8_t* lastPageRead;
+    int8_t* lastPageRead;
     std::vector<Memory::TupleBuffer> varSizedDataPages;
-    uint8_t* currVarSizedDataEntry;
+    int8_t* currVarSizedDataEntry;
     std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
     uint64_t varSizedDataEntryMapCounter;
 };

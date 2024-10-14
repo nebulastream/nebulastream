@@ -14,21 +14,16 @@
 
 #pragma once
 
-#include <memory>
-#include <ostream>
-#include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <memory>
+#include <ostream>
+#include <vector>
 
 namespace NES::Nautilus
 {
 class Record;
-}
-
-namespace NES::Runtime::Execution
-{
-using namespace Nautilus;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.
@@ -83,4 +78,4 @@ private:
     nautilus::val<Memory::TupleBuffer*> tupleBufferRef;
 };
 
-}
+} /// namespace NES::Nautilus

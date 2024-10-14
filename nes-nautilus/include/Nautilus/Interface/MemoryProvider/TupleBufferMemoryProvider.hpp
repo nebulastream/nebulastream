@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
 

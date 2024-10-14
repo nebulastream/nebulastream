@@ -15,7 +15,8 @@
 #pragma once
 
 #include <Runtime/TupleBuffer.hpp>
-namespace NES::Runtime::ProxyFunctions
+
+namespace NES::Nautilus::ProxyFunctions
 {
 int8_t* NES__Memory__TupleBuffer__getBuffer(Memory::TupleBuffer* tupleBuffer)
 {
@@ -98,4 +99,4 @@ bool NES__Memory__TupleBuffer__isLastChunk(Memory::TupleBuffer* tupleBuffer)
     return tupleBuffer->isLastChunk();
 };
 
-}
+} /// namespace NES::Nautilus::ProxyFunctions

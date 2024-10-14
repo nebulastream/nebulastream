@@ -24,11 +24,11 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {
 using namespace Nautilus;
-class RecordBuffer;
 
 namespace Operators
 {
