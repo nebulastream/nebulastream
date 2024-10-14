@@ -12,7 +12,7 @@
 
 # Disabling as the NonBlockingMonotonicSeqQueueTest seems to fail.
 # Dear reviewer, if you can read this, please let me know as I should enable this test for the pr.
-#add_nes_common_test(nes-common-tests
-#        "ThreadNamingTest.cpp"
-#        "NonBlockingMonotonicSeqQueueTest.cpp"
-#        "UtilFunctionTest.cpp")
+add_nes_common_test(nes-common-tests
+        "ThreadNamingTest.cpp"
+        "NonBlockingMonotonicSeqQueueTest.cpp"
+        "UtilFunctionTest.cpp")
