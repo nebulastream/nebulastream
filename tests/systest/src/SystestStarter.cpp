@@ -274,14 +274,15 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     ArgumentParser program("systest");
 
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in. Default: " TEST_DISCOVER_DIR);
+        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
+              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--group").help("run a specific test group");
 
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
 
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
 
-    program.add_argument("-c", "--cache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
+    program.add_argument("-c", "--generateCache").flag().help("do not run the tests directly but cache them in the cache dir: " CACHE_DIR);
     program.add_argument("--cacheDir").help("change the cache directory. Default: " CACHE_DIR);
     program.add_argument("--useCache").flag().help("use cached queries");
 
@@ -293,7 +294,10 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
     program.add_argument("--shuffle").flag().help("run queries in random order");
-    program.add_argument("-n", "--numberConcurrentQueries").help("number of concurrent queries").default_value(6).scan<'i', int>();
+    program.add_argument("-n", "--numberConcurrentQueries")
+        .help("number of concurrent queries. Default: 6")
+        .default_value(6)
+        .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
 
     program.parse_args(argc, argv);
@@ -307,18 +311,53 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 
     if (program.is_used("--testLocation"))
     {
-        auto testFileDefintion = program.get<std::string>("--testLocation");
-        if (std::filesystem::is_directory(testFileDefintion))
+        auto testFileDefinition = program.get<std::string>("--testLocation");
+        std::string testFilePath;
+        /// Check for test numbers (e.g., "testfile.test:5")
+        size_t delimiterPos = testFileDefinition.find(':');
+        if (delimiterPos != std::string::npos)
         {
-            config.testsDiscoverDir = testFileDefintion;
-        }
-        else if (std::filesystem::is_regular_file(testFileDefintion))
-        {
-            config.directlySpecifiedTestsFiles = testFileDefintion;
+            testFilePath = testFileDefinition.substr(0, delimiterPos);
+            std::string testNumberStr = testFileDefinition.substr(delimiterPos + 1);
+
+            std::stringstream ss(testNumberStr);
+            std::string item;
+            // handle sequences (e.g., "1,2")
+            while (std::getline(ss, item, ','))
+            {
+                size_t dashPos = item.find('-');
+                if (dashPos != std::string::npos)
+                {
+                    /// handle ranges (e.g., "3-5")
+                    int start = std::stoi(item.substr(0, dashPos));
+                    int end = std::stoi(item.substr(dashPos + 1));
+                    for (int i = start; i <= end; ++i)
+                    {
+                        config.testNumbers.add(i);
+                    }
+                }
+                else
+                {
+                    config.testNumbers.add(std::stoi(item));
+                }
+            }
         }
         else
         {
-            NES_FATAL_ERROR("{} is not a file or directory.", testFileDefintion);
+            testFilePath = testFileDefinition;
+        }
+
+        if (std::filesystem::is_directory(testFilePath))
+        {
+            config.testsDiscoverDir = testFilePath;
+        }
+        else if (std::filesystem::is_regular_file(testFilePath))
+        {
+            config.directlySpecifiedTestsFiles = testFilePath;
+        }
+        else
+        {
+            NES_FATAL_ERROR("{} is not a file or directory.", testFilePath);
             std::exit(1);
         }
     }
@@ -414,7 +453,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         std::cout << program << std::endl;
         std::exit(0);
     }
-    else if (program.is_used("--cache"))
+    else if (program.is_used("--generateCache"))
     {
         com = Command::cache;
     }
@@ -465,19 +504,34 @@ void clearCacheDir(const std::filesystem::path& cacheDir)
     }
 }
 
-auto getMatchingTestFiles(const std::string& cacheDir, const std::string& testname)
+auto getMatchingTestFiles(const std::string& testname, const NES::Configuration::SystestConfiguration& config)
 {
     std::pair<std::vector<std::filesystem::path>, std::vector<uint64_t>> matchingFiles;
     std::regex pattern(testname + R"_(_(\d+)\.pb)_");
-    for (const auto& entry : std::filesystem::directory_iterator(cacheDir))
+    for (const auto& entry : std::filesystem::directory_iterator(config.cacheDir.getValue()))
     {
         std::smatch match;
         std::string filename = entry.path().filename().string();
+
         if (entry.is_regular_file() && std::regex_match(filename, match, pattern))
         {
             uint64_t digit = std::stoull(match[1].str());
-            matchingFiles.first.emplace_back(entry.path());
-            matchingFiles.second.emplace_back(digit);
+            if (not config.testNumbers.empty()) /// if specified, only run specific test numbers
+            {
+                for (const auto& testNumber : config.testNumbers.getValues())
+                {
+                    if (testNumber.getValue() == digit + 1)
+                    {
+                        matchingFiles.first.emplace_back(entry.path());
+                        matchingFiles.second.emplace_back(digit);
+                    }
+                }
+            }
+            else
+            {
+                matchingFiles.first.emplace_back(entry.path());
+                matchingFiles.second.emplace_back(digit);
+            }
         }
     }
     return matchingFiles;
@@ -511,7 +565,7 @@ int main(int argc, const char** argv)
                 auto cacheDir = config.cacheDir.getValue();
                 if (config.useCachedQueries.getValue())
                 {
-                    auto cacheFiles = getMatchingTestFiles(cacheDir, testname);
+                    auto cacheFiles = getMatchingTestFiles(testname, config);
                     auto serializedPlans = loadFromCacheFiles(cacheFiles.first);
                     INVARIANT(cacheFiles.second.size() == serializedPlans.size(), "expect equal sizes")
                     for (uint64_t i = 0; i < serializedPlans.size(); i++)
@@ -529,7 +583,21 @@ int main(int argc, const char** argv)
                     uint64_t queryNrInFile = 0;
                     for (const auto& plan : loadedPlans)
                     {
-                        queries.emplace_back(plan, testname, testFile, queryNrInFile++);
+                        if (not config.testNumbers.empty()) /// if specified, only run specific test numbers
+                        {
+                            for (const auto& testNumber : config.testNumbers.getValues())
+                            {
+                                if (testNumber.getValue() == queryNrInFile + 1)
+                                {
+                                    queries.emplace_back(plan, testname, testFile, queryNrInFile);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            queries.emplace_back(plan, testname, testFile, queryNrInFile);
+                        }
+                        queryNrInFile++;
                     }
                 }
             }
