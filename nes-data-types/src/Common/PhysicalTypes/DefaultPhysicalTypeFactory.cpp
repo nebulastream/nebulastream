@@ -124,4 +124,4 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
 }
 
-} /// namespace NES
+}
