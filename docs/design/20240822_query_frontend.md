@@ -19,7 +19,7 @@ We will implement the parser using a state-of-the-art parser generator (G2), suc
 # Non-Goals
 We do not implement a parser for the existing functional query sytax, shown in the query above (for time reasons. We may later add one).
 
-# (Optional) Solution Background
+# Solution Background
 A parser is part of every database system with a language interface.
 Most systems use parser generators over handwritten parsers.
 Parser generators generate the the parser code based on the grammar.
@@ -46,7 +46,16 @@ To integrate this system-agnostic parser library into NES, we have to traverse t
 We started to extract a parsing library out of DuckDB.
 
 # Alternatives
-- discuss alternative approaches A1, A2, ..., including their advantages and disadvantages
+Basically, we could base our parser on other systems.
+The PostgreSQL parser implements many SQL features and its dialect is widely used.
+
+### A1: Old NES parser:
+https://github.com/nebulastream/nebulastream/blob/ba-niklas-NESSQL/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4
+- This parser is based on ANTLR and was implemented in scope of a Bachelor's thesis.
+-  \- It has limited SQL support, missing many SQL features, e.g., a complete set of set operations.
+-  \- Also for existing features, it has some shortcomings, which are not documented, such as no case mix (e.g., "SeleCT") for keywords.
+-  \+ It contains streaming extensions, also tailored to the old NES system, e.g., MQTT sink.
+-  \+ There is a POC integration into the old NES (which is rather straight forward).
 
 # (Optional) Open Questions
 - list relevant questions that cannot or need not be answered before merging
