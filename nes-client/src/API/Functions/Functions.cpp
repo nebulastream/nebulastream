@@ -84,14 +84,6 @@ FunctionItem::FunctionItem(bool value)
 {
 }
 
-FunctionItem::FunctionItem(const char* value) : FunctionItem(DataTypeFactory::createFixedCharValue(value))
-{
-}
-
-FunctionItem::FunctionItem(std::string const& value) : FunctionItem(DataTypeFactory::createFixedCharValue(value.c_str()))
-{
-}
-
 FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(NodeFunctionConstantValue::create(std::move(value)))
 {
 }
