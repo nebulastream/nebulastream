@@ -81,3 +81,12 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}.xml
           path: /junit.xml
+
+  run_code_coverage:
+    needs: [ get-dev-images ]
+    name: "Run Code Coverage"
+    uses: ./.github/workflows/code_coverage.yml
+    # Using the tag from the get-dev-images job
+    with:
+      tag_pr: ${{ needs.get-dev-images.outputs.image-tag }}
+    secrets: inherit
