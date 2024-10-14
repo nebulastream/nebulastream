@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -22,16 +20,12 @@ namespace NES::Nautilus::Interface
 
 PagedVector::PagedVector(
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
-    : bufferProvider(std::move(bufferProvider))
-    , memoryLayout(std::move(memoryLayout))
-    , totalNumberOfEntries(0)
-    , lastPageRead(nullptr)
+    : bufferProvider(std::move(bufferProvider)), memoryLayout(std::move(memoryLayout))
 {
-    /// set numberOfEntriesOnCurrPage by appending a new page
-    appendPage();
-
     NES_ASSERT2_FMT(this->memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
+
+    appendPage();
 }
 
 void PagedVector::appendPage()
@@ -39,12 +33,7 @@ void PagedVector::appendPage()
     auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize());
     if (page.has_value())
     {
-        if (!pages.empty())
-        {
-            pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
-        }
         pages.emplace_back(page.value());
-        numberOfEntriesOnCurrPage = 0;
     }
     else
     {
@@ -52,20 +41,53 @@ void PagedVector::appendPage()
     }
 }
 
+Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(uint64_t entryPos)
+{
+    getTupleBufferAndPosForEntry(entryPos);
+    return tupleBufferAndPosForEntry.buffer;
+}
+
+uint64_t PagedVector::getBufferPosForEntry(uint64_t entryPos)
+{
+    getTupleBufferAndPosForEntry(entryPos);
+    return tupleBufferAndPosForEntry.bufferPos;
+}
+
 void PagedVector::appendAllPages(PagedVector& other)
 {
     /// TODO optimize appending the maps
     /// one idea is to get the field indices of the text fields beforehand if there is more than one text field as sequential reading is more efficient
-    NES_ASSERT2_FMT(memoryLayout->getSchema()->hasEqualTypes(other.memoryLayout->getSchema()), "Cannot combine PagedVectors with different PhysicalTypes!");
+    NES_ASSERT2_FMT(
+        memoryLayout->getSchema()->hasEqualTypes(other.memoryLayout->getSchema()),
+        "Cannot combine PagedVectors with different PhysicalTypes!");
 
-    pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
-    totalNumberOfEntries += other.totalNumberOfEntries;
-    numberOfEntriesOnCurrPage = other.numberOfEntriesOnCurrPage;
-
     other.pages.clear();
-    other.totalNumberOfEntries = 0;
-    other.numberOfEntriesOnCurrPage = 0;
+}
+
+void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
+{
+    if (entryPos == tupleBufferAndPosForEntry.entryPos)
+    {
+        return;
+    }
+
+    tupleBufferAndPosForEntry.entryPos = entryPos;
+    for (auto& page : pages)
+    {
+        auto numTuplesOnPage = page.getNumberOfTuples();
+
+        /// store the entry position on the current page and the last page read
+        if (entryPos < numTuplesOnPage)
+        {
+            tupleBufferAndPosForEntry.bufferPos = entryPos;
+            tupleBufferAndPosForEntry.buffer = new Memory::TupleBuffer(page); // TODO
+        }
+        else
+        {
+            entryPos -= numTuplesOnPage;
+        }
+    }
 }
 
 std::vector<Memory::TupleBuffer>& PagedVector::getPages()
@@ -78,16 +100,6 @@ uint64_t PagedVector::getNumberOfPages() const
     return pages.size();
 }
 
-uint64_t PagedVector::getNumberOfEntries() const
-{
-    return totalNumberOfEntries;
-}
-
-uint64_t PagedVector::getNumberOfEntriesOnCurrentPage() const
-{
-    return numberOfEntriesOnCurrPage;
-}
-
 uint64_t PagedVector::getEntrySize() const
 {
     return memoryLayout->getTupleSize();
@@ -96,11 +108,6 @@ uint64_t PagedVector::getEntrySize() const
 uint64_t PagedVector::getCapacityPerPage() const
 {
     return memoryLayout->getCapacity();
-}
-
-void PagedVector::setLastPageRead(int8_t* page)
-{
-    lastPageRead = page;
 }
 
 } /// namespace NES::Nautilus::Interface

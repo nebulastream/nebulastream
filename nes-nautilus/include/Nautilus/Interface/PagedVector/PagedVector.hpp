@@ -26,6 +26,16 @@ class PagedVector;
 using PagedVectorPtr = std::shared_ptr<PagedVector>;
 
 /**
+ * @brief Stores the pointer to the text, the length of the text and the index of the varSizedDataPages where the text begins.
+ */
+struct TupleBufferAndPosForEntry
+{
+    uint64_t entryPos;
+    uint64_t bufferPos;
+    Memory::TupleBuffer* buffer;
+};
+
+/**
  * @brief This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size. Each page can contain page_size/entry_size entries.
  * Additionally to the fixed data types, this PagedVector also supports variable sized data.
@@ -43,25 +53,41 @@ public:
      */
     void appendPage();
 
+    /**
+     * @brief TODO
+     * @param entryPos
+     * @return
+     */
+    Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos);
+
+    /**
+     * @brief TODO
+     * @param entryPos
+     * @return
+     */
+    uint64_t getBufferPosForEntry(uint64_t entryPos);
+
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 
     std::vector<Memory::TupleBuffer>& getPages();
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] uint64_t getNumberOfEntries() const;
-    [[nodiscard]] uint64_t getNumberOfEntriesOnCurrentPage() const;
     [[nodiscard]] uint64_t getEntrySize() const;
     [[nodiscard]] uint64_t getCapacityPerPage() const;
-    void setLastPageRead(int8_t* page);
 
 private:
     friend PagedVectorRef;
+
+    /**
+     * @brief TODO
+     * @param entryPos
+     */
+    void getTupleBufferAndPosForEntry(uint64_t entryPos);
+
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    uint64_t totalNumberOfEntries;
-    uint64_t numberOfEntriesOnCurrPage;
     std::vector<Memory::TupleBuffer> pages;
-    int8_t* lastPageRead;
+    TupleBufferAndPosForEntry tupleBufferAndPosForEntry;
 };
 
 } /// namespace NES::Nautilus::Interface
