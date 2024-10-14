@@ -48,6 +48,7 @@ We started to extract a parsing library out of DuckDB.
 # Alternatives
 Basically, we could base our parser on other systems.
 The PostgreSQL parser implements many SQL features and its dialect is widely used.
+We looked into some alternatives more deeply and list them here:
 
 ### A1: Old NES parser:
 https://github.com/nebulastream/nebulastream/blob/ba-niklas-NESSQL/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4
@@ -64,6 +65,12 @@ https://github.com/antlr/grammars-v4/tree/master/sql
 -  \- Not well documented and tested.
 -  \- Only grammar file, but no custom data structures (see `SQLStatement` above)
 
+### A3: Hyrise Parser
+https://github.com/hyrise/sql-parser
+- A c++ parser library, originally built for the Hyrise database system
+- \+ A standalone, ready-to-use library.
+- \- No full SQL support and minor bugs (see also https://github.com/hyrise/sql-parser/issues)
+
 # (Optional) Open Questions
 - list relevant questions that cannot or need not be answered before merging
 - create issues if needed
@@ -72,5 +79,4 @@ https://github.com/antlr/grammars-v4/tree/master/sql
 - [1] Arvind Arasu, Shivnath Babu, Jennifer Widom: The CQL continuous query language: semantic foundations and query execution. VLDB J. 15(2): 121-142 (2006).
   http://infolab.stanford.edu/~arvind/papers/cql-vldbj.pdf
 
-# (Optional) Appendix
-- provide here nonessential information that could disturb the reading flow, e.g., implementation details
+
