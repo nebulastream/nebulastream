@@ -11,6 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-data-types
-        ArrayValue.cpp
         BasicValue.cpp
 )
