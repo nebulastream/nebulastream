@@ -18,7 +18,6 @@ add_source_files(nes-execution
         ExecutableOperator.cpp
         Emit.cpp
         Scan.cpp
-        Scan2.cpp
         Project.cpp
         ExecutionContext.cpp)
 
