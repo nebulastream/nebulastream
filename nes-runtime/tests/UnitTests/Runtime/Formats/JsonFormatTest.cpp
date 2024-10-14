@@ -21,7 +21,6 @@
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include "FormatIteratorTestUtil.hpp"
 
 namespace NES::Runtime

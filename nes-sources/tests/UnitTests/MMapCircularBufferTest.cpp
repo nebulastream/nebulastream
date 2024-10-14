@@ -18,7 +18,6 @@
 #include <SourcesUtils/MMapCircularBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <magic_enum.hpp>
-#include <Common/ExecutableType/Array.hpp>
 namespace NES
 {
 using namespace std::literals;
