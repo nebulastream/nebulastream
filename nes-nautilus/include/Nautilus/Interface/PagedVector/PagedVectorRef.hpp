@@ -15,6 +15,8 @@
 #pragma once
 
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Nautilus::Interface
@@ -24,7 +26,7 @@ class PagedVectorRefIter;
 class PagedVectorRef
 {
 public:
-    PagedVectorRef(const nautilus::val<int8_t*>& pagedVectorVarSizedRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorVarSizedRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /**
      * @brief Writes a new record to the PagedVectorRef
@@ -80,8 +82,8 @@ private:
     void setNumberOfEntriesOnCurrPage(const nautilus::val<uint64_t>& val);
     nautilus::val<int8_t*> getLastPageRead();
 
-    const nautilus::val<int8_t*> pagedVectorVarSizedRef;
-    const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    const nautilus::val<PagedVector*> pagedVectorRef;
+    const MemoryProvider::MemoryProviderPtr memoryProvider;
 };
 
 class PagedVectorRefIter

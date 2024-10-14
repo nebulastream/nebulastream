@@ -13,3 +13,47 @@
 */
 
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+
+namespace NES::Nautilus::Interface
+{
+PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+    : pagedVectorRef(pagedVectorRef)
+    , memoryProvider(MemoryProvider::TupleBufferMemoryProvider::create(memoryLayout->getBufferSize(), memoryLayout->getSchema()))
+{
+}
+
+void allocateNewPageProxy(PagedVector* pagedVector)
+{
+    return pagedVector->appendPage();
+}
+
+void PagedVectorRef::writeRecord(const Record& record)
+{
+    (void)record;
+}
+
+Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos)
+{
+    (void)pos;
+    Record record;
+    return record;
+}
+
+Record readRecordKeys(const nautilus::val<uint64_t>& pos)
+{
+    (void)pos;
+    Record record;
+    return record;
+}
+
+bool PagedVectorRef::operator==(const PagedVectorRef& other) const
+{
+    if (this == &other)
+    {
+        return true;
+    }
+
+    return memoryLayout == other.memoryLayout && pagedVectorRef == other.pagedVectorRef;
+}
+
+}
