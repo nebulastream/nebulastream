@@ -123,7 +123,7 @@ Value<> encodeData(const Value<>& value, const Value<>& sortOrder)
     }
     else
     {
-        throw NotImplemented("encodeData is not implemented for the given type.");
+        throw FunctionNotImplemented("encodeData is not implemented for the given type.");
     }
 }
 

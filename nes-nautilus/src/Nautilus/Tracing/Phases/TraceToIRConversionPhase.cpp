@@ -208,7 +208,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(
             processCall(scope, frame, currentIrBlock, operation);
             return;
     }
-    ///  throw NotImplemented();
+    ///  throw FunctionNotImplemented();
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processJMP(

@@ -831,7 +831,7 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
     ///    } else if (distrChar.distr() == SerializableOperator_JoinDetails_DistributionCharacteristic_Distribution_Slicing) {
     ///        return LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDef, operatorId)->as<SliceCreationOperator>();
     ///    } else {
-    ///        throw NotImplemented();
+    ///        throw FunctionNotImplemented();
     ///    }
 }
 

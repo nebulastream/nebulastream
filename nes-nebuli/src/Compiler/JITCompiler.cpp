@@ -16,7 +16,7 @@
 #include <Compiler/CompilationCache.hpp>
 #include <Compiler/CompilationRequest.hpp>
 #include <Compiler/CompilationResult.hpp>
-#include <Compiler/Exceptions/CompilerException.hpp>
+#include <ErrorHandling.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
@@ -36,14 +36,14 @@ std::future<CompilationResult> JITCompiler::handleRequest(std::shared_ptr<const 
 {
     if (request->getSourceCode() == nullptr)
     {
-        throw CompilerException("No source code provided");
+        throw CallingNebuliCompiler("No source code provided");
     }
     auto language = request->getSourceCode()->getLanguage();
     auto languageCompiler = languageCompilers.find(language);
 
     if (languageCompiler == languageCompilers.end())
     {
-        throw CompilerException("No language compiler found for language: {}" ,getLanguageAsString(language));
+        throw CallingNebuliCompiler("No language compiler found for language: {}" ,getLanguageAsString(language));
     }
 
     auto compiler = languageCompiler->second;

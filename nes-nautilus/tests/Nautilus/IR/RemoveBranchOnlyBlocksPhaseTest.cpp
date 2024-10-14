@@ -140,7 +140,7 @@ public:
                 }
                 else
                 {
-                    throw NotImplemented("Operation not supported");
+                    throw FunctionNotImplemented("Operation not supported");
                 }
             }
             else

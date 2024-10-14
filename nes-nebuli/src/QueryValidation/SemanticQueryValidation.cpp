@@ -162,7 +162,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     /// Check if root operator exists ina query plan
     if (rootOperators.empty())
     {
-        throw QueryInvalid("Query {}{} does not contain any root operator",s,queryPlan->toString());
+        throw QueryInvalid("Query {} does not contain any root operator",queryPlan->toString());
     }
 
     /// Check if all root operators of type sink
@@ -170,7 +170,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     {
         if (!root->instanceOf<SinkLogicalOperator>())
         {
-            throw QueryInvalid("Query {}{} does not contain a valid sink operator as root",s, queryPlan->toString());
+            throw QueryInvalid("Query {} does not contain a valid sink operator as root",queryPlan->toString());
         }
     }
 }

@@ -55,7 +55,7 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
         substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
     PRECONDITION(
         found == substitutionRules.end(),
-        "substitution rule keywords must be unique. Tried to register for the second time: " << rule.keyword);
+        "substitution rule keywords must be unique. Tried to register for the second time: {}", rule.keyword);
     substitutionRules.emplace_back(rule);
 }
 

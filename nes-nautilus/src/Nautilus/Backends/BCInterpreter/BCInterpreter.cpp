@@ -382,7 +382,7 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args)
         }
         else
         {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     /// set arguments

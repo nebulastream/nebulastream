@@ -400,7 +400,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else
     {
-        throw NotImplemented("No serialization implemented for this arithmetical expression node: {}", expression->toString());
+        throw FunctionNotImplemented("No serialization implemented for this arithmetical expression node: {}", expression->toString());
     }
 }
 
@@ -491,7 +491,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else
     {
-        throw NotImplemented("no serialization implemented for this logical expression node: {}", expression->toString());
+        throw FunctionNotImplemented("no serialization implemented for this logical expression node: {}", expression->toString());
     }
 }
 

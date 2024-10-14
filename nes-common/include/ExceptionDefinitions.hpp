@@ -31,6 +31,8 @@ EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
 EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
 EXCEPTION(InvalidField, 2004, "invalid field")
 EXCEPTION(CannotInferStamp, 2005, "cannot infer stamp")
+EXCEPTION(CallingNebuliCompiler , 2006, "error with calling nebuli jit compiler")
+
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
 EXCEPTION(UnknownWindowType, 2101, "unknown window type")
@@ -65,6 +67,7 @@ EXCEPTION(CannotStartNodeEngine, 3001, "cannot start node engine")
 EXCEPTION(CannotStopNodeEngine, 3002, "cannot stop node engine")
 EXCEPTION(CannotStartQueryManager, 3003, "cannot start query manager")
 EXCEPTION(CannotStopQueryManager, 3004, "cannot stop query manager")
+EXCEPTION(BufferAccessException, 3005, "inccorect way of interacting with a tuple buffer")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
@@ -87,7 +90,8 @@ EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
 EXCEPTION(DeprecatedFeatureUsed, 9003, "deprecated feature used")
 EXCEPTION(CannotAllocateBuffer, 9004, "cannot allocate buffer")
 EXCEPTION(InvalidRefCountForBuffer, 9005, "invalid reference counter for buffer")
-EXCEPTION(NotImplemented, 9006, "not implemented")
+EXCEPTION(DynamicCast, 9006, "Invalid dynamic cast")
+EXCEPTION(UnknownOperator, 9007, "unknown operator")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")

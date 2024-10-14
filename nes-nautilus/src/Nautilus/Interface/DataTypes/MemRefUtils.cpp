@@ -65,11 +65,11 @@ Value<> loadValue(Value<MemRef>& fieldReference, const PhysicalTypePtr& dataType
             default: {
                 std::stringstream dataTypeAsString;
                 dataTypeAsString << dataType;
-                throw NotImplemented("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
+                throw FunctionNotImplemented("load for Physical Type: {} is currently not supported", dataTypeAsString.str());
             };
         }
     }
-    throw NotImplemented();
+    throw FunctionNotImplemented();
 }
 
 bool memeq(void* ptr1, void* ptr2, uint64_t size)

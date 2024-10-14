@@ -324,7 +324,7 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
             generateMLIR(std::static_pointer_cast<IR::Operations::ConstBooleanOperation>(operation), frame);
             break;
         default:
-            throw NotImplemented("MLIRLoweringProvider: Unknown Operation Type");
+            throw FunctionNotImplemented("MLIRLoweringProvider: Unknown Operation Type");
     }
 }
 
@@ -596,7 +596,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ModOpera
     }
     else
     {
-        throw NotImplemented("MLIRLoweringProvider: stamp type not supported");
+        throw FunctionNotImplemented("MLIRLoweringProvider: stamp type not supported");
     }
 }
 

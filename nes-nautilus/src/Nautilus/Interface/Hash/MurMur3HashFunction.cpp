@@ -181,7 +181,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, Value<>&
         }
         return hash;
     }
-    throw NotImplemented();
+    throw FunctionNotImplemented();
 }
 
 HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, Value<>&, Value<MemRef>&)

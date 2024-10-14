@@ -145,7 +145,7 @@ void updatePredecessorBlocks(std::vector<IR::BasicBlockPtr>& brOnlyBlocks, const
             }
             else
             {
-                throw NotImplemented("Case not implemented");
+                throw FunctionNotImplemented("Case not implemented");
             }
         }
     }

@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Compiler/Exceptions/CompilerException.hpp>
+#include <ErrorHandling.hpp>
 #include <Compiler/Util/ClangFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES::Compiler
@@ -43,7 +43,7 @@ void ClangFormat::formatFile(std::shared_ptr<File> file)
     auto* res = popen(formatCommand.c_str(), "r");
     if (res == nullptr)
     {
-        throw CompilerException("ClangFormat: popen() failed!");
+        throw CallingNebuliCompiler("ClangFormat: popen() failed!");
     }
     /// wait till command is complete executed.
     pclose(res);

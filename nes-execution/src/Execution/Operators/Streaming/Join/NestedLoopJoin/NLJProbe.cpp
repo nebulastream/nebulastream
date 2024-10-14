@@ -73,7 +73,7 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
     }
     else
     {
-        throw NotImplemented("JoinBuildSideType not supported");
+        throw FunctionNotImplemented("JoinBuildSideType not supported");
     }
 }
 

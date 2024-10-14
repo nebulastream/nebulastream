@@ -170,7 +170,7 @@ Type getType(const IR::Types::StampPtr& stamp)
     {
         return Type::b;
     }
-    throw NotImplemented();
+    throw FunctionNotImplemented();
 }
 
 void BCLoweringProvider::LoweringContext::process(
@@ -218,7 +218,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::ADD_i64;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -269,7 +269,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::SUB_i64;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -321,7 +321,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::MUL_i64;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -372,7 +372,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::DIV_i64;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -427,7 +427,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::EQ_i64;
                 break;
             default: {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -473,7 +473,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::LESS_THAN_i64;
                 break;
             default: {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -519,7 +519,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::GREATER_THAN_i64;
                 break;
             default: {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -538,7 +538,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::LESS_THAN_d;
                 break;
             default: {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -557,7 +557,7 @@ void BCLoweringProvider::LoweringContext::process(
                 bc = ByteCode::EQ_d;
                 break;
             default: {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         OpCode oc = {bc, leftInput, rightInput, resultReg};
@@ -565,7 +565,7 @@ void BCLoweringProvider::LoweringContext::process(
     }
     else
     {
-        throw NotImplemented();
+        throw FunctionNotImplemented();
     }
 }
 
@@ -616,7 +616,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::LOAD_b;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
 
@@ -670,7 +670,7 @@ void BCLoweringProvider::LoweringContext::process(
             bc = ByteCode::STORE_b;
             break;
         default: {
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     OpCode oc = {bc, addressReg, valueReg, -1};
@@ -1059,7 +1059,7 @@ bool BCLoweringProvider::LoweringContext::processNativeCall(
         else
         {
             /// TODO support void function
-            throw NotImplemented();
+            throw FunctionNotImplemented();
         }
     }
     else if (getType(opt->getStamp()) == Type::i64)

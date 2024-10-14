@@ -186,7 +186,7 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     }
     else
     {
-        throw NotImplemented("Tried to get next block for unsupported operation type:");
+        throw FunctionNotImplemented("Tried to get next block for unsupported operation type:");
     }
 }
 

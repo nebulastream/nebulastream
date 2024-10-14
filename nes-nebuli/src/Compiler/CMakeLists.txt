@@ -22,5 +22,4 @@ add_source_files(nes-compiler
 )
 
 add_subdirectory(CPPCompiler)
-add_subdirectory(Exceptions)
 add_subdirectory(Util)

@@ -152,7 +152,7 @@ MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize
             return std::make_unique<ColumnMemoryProvider>(columnMemoryLayout);
         }
         default:
-            throw NotImplemented("Schema MemoryLayoutType not supported");
+            throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 

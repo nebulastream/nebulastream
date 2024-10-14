@@ -14,7 +14,6 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -369,7 +368,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        throw NotImplemented("Schema MemoryLayoutType not supported");
+        throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 

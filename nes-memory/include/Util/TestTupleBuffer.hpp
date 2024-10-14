@@ -20,7 +20,6 @@
 #include <ostream>
 #include <string>
 #include <variant>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <MemoryLayout/BufferAccessException.hpp>
+#include <ErrorHandling.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>

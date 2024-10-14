@@ -90,7 +90,7 @@ void fillState(
             }
             else
             {
-                throw NotImplemented();
+                throw FunctionNotImplemented();
             }
         }
         /// allocate entry and fill encoded fields and full record

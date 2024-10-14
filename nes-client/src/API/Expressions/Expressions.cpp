@@ -104,7 +104,7 @@ ExpressionItem ExpressionItem::as(std::string newName)
     ///rename expression node
     if (!expression->instanceOf<FieldAccessExpressionNode>())
     {
-        throw NotImplemented("Renaming is only allowed on Field Access Attributes");
+        throw FunctionNotImplemented("Renaming is only allowed on Field Access Attributes");
     }
     auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
     return FieldRenameExpressionNode::create(fieldAccessExpression, std::move(newName));

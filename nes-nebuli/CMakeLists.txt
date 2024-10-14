@@ -32,34 +32,45 @@ target_compile_definitions(nebuli-lib PRIVATE PATH_TO_NES_SOURCE_CODE="${PATH_TO
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
+find_package(cpptrace CONFIG REQUIRED)
 target_include_directories(nebuli-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PUBLIC cpptrace
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nebuli-lib
         PUBLIC nes-operators
-        PRIVATE yaml-cpp::yaml-cpp nes-client
+        PRIVATE yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client,cpptrace::cpptrace>"
 )
 
 add_executable(nebuli src/NebuLIStarter.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nebuli PUBLIC nebuli-lib argparse::argparse)
+target_link_libraries(nebuli
+        PUBLIC nebuli-lib argparse::argparse "$<LINK_LIBRARY:WHOLE_ARCHIVE,cpptrace::cpptrace>"
+)
 target_include_directories(nebuli
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PUBLIC cpptrace::cpptrace
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
 
 ### Installing Nebuli using cmake install or cpack
 # Collect all headers required for our "query-parsing" and store them in a file_set
-macro(add_nebuli_header TARGET PATH)
-    file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH}/*.hpp)
+macro(add_nebuli_header TARGET PATH_OR_FILES)
+    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
+        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES}/*.hpp)
+    else()
+        set(HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
+    endif()
+
     foreach (ABSOLUTE_PATH_TO_HEADER IN LISTS HEADER)
         file(RELATIVE_PATH RELATIVE_PATH_TO_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/" "${ABSOLUTE_PATH_TO_HEADER}")
         configure_file(${ABSOLUTE_PATH_TO_HEADER} "${CMAKE_BINARY_DIR}/include/nebulastream/${RELATIVE_PATH_TO_HEADER}" COPYONLY)
     endforeach ()
 
     if (NOT HEADER)
-        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH})
+        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
     endif ()
 
     target_sources(nebuli PUBLIC
@@ -73,6 +84,7 @@ endmacro()
 add_nebuli_header(nes-client API/ API)
 add_nebuli_header(nes-common Identifiers/ Identifiers)
 add_nebuli_header(nes-common Nodes/ Node/)
+add_nebuli_header(nes-common ErrorHandling.hpp ErrorHandling.hpp)
 add_nebuli_header(nes-data-types Common/DataTypes Common/DataTypes)
 add_nebuli_header(nes-data-types Common/ExecutableType Common/ExecutableType)
 add_nebuli_header(nes-data-types Common/PhysicalTypes Common/PhysicalTypes)
