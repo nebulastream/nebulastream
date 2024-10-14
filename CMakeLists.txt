@@ -26,9 +26,8 @@ option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
-option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
-option(NES_ENABLES_TESTS "Compute test coverage" ON)
-option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
+option(CODE_COVERAGE "Compute test coverage" OFF)
+option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
@@ -87,11 +86,6 @@ endif ()
 if (NES_ENABLE_CXA_THROW_HOOK)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
 endif ()
-
-# this is an experimental feature; do not rely on it yet
-#if(NES_COMPUTE_COVERAGE)
-#    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-#endif
 
 # enables tracing of stack traces if operator / function nodes are created
 if (NES_TRACE_NODE_CREATION)
@@ -312,8 +306,7 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
-    if (NES_CODE_COVERAGE)
-        set(CODE_COVERAGE ON)
+    if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         enable_extra_test_features()
         message(STATUS "Tests are enabled with code coverage")
@@ -354,8 +347,18 @@ set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
 add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 
-#Other configurations
+# Other configurations
 project_enable_format()
-instrument_codebase()
 include(cmake/SystemTests.cmake)
 project_enable_system_level_tests()
+
+# Adding targets for code coverage if it is enabled
+if (CODE_COVERAGE)
+    if (CODE_COVERAGE)
+        file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+        foreach(NES_DIR ${NES_DIRECTORIES})
+            target_code_coverage(${NES_DIR} PUBLIC AUTO)
+        endforeach()
+    endif ()
+    target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO)
+endif ()
