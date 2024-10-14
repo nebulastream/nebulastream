@@ -15,7 +15,6 @@
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -54,17 +53,7 @@ bool NodeFunctionLogicalBinary::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (NES::Util::instanceOf<TextType>(childLeft->getStamp()) || NES::Util::instanceOf<TextType>(childRight->getStamp())
-        || NES::Util::instanceOf<ArrayType>(childLeft->getStamp()) || NES::Util::instanceOf<ArrayType>(childRight->getStamp()))
-    {
-        return false;
-    }
-
-    /// If one of the children has a stamp of type charArray, the other child must also have a stamp of type charArray
-    if ((NES::Util::instanceOf<ArrayType>(childLeft->getStamp())
-         && NES::Util::instanceOf<Char>(NES::Util::as<ArrayType>(childLeft->getStamp())->component))
-        != (NES::Util::instanceOf<ArrayType>(childRight->getStamp())
-            && NES::Util::instanceOf<Char>(NES::Util::as<ArrayType>(childRight->getStamp())->component)))
+    if (NES::Util::instanceOf<TextType>(childLeft->getStamp()) || NES::Util::instanceOf<TextType>(childRight->getStamp()))
     {
         return false;
     }
