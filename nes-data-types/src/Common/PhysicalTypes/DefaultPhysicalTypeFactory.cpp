@@ -21,7 +21,6 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/TextType.hpp>
-#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/TextPhysicalType.hpp>

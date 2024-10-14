@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
@@ -77,15 +76,6 @@ bool isDouble(PhysicalTypePtr physicalType)
 {
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::DOUBLE;
-}
-
-bool isArray(PhysicalTypePtr physicalType)
-{
-    return physicalType->isArrayType();
-}
-PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType)
-{
-    return std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType)->physicalComponentType;
 }
 
 bool isText(PhysicalTypePtr physicalType)
