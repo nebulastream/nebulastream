@@ -285,6 +285,9 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("--cacheDir").help("change the cache directory. Default: " CACHE_DIR);
     program.add_argument("--useCache").flag().help("use cached queries");
 
+    program.add_argument("-w", "--workerConfig").help("load worker config file (.yaml)");
+    program.add_argument("-q", "--queryCompilerConfig").help("load query compiler config file (.yaml)");
+
     program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/tests/result/");
 
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
@@ -368,6 +371,26 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     {
         config.useCachedQueries = true;
         std::cout << "use cached queries provided in: " << config.cacheDir.getValue() << "\n";
+    }
+
+    if (program.is_used("-w"))
+    {
+        config.workerConfig = program.get<std::string>("-w");
+        if (not std::filesystem::is_regular_file(config.workerConfig.getValue()))
+        {
+            NES_FATAL_ERROR("{} is not a file.", config.workerConfig.getValue());
+            std::exit(1);
+        }
+    }
+
+    if (program.is_used("-q"))
+    {
+        config.queryCompilerConfig = program.get<std::string>("-q");
+        if (not std::filesystem::is_regular_file(config.queryCompilerConfig.getValue()))
+        {
+            NES_FATAL_ERROR("{} is not a file.", config.queryCompilerConfig.getValue());
+            std::exit(1);
+        }
     }
 
     if (program.is_used("--resultDir"))
@@ -568,8 +591,15 @@ int main(int argc, const char** argv)
             }
             else /// case: run locally without grpc
             {
-                /// Use default configuration
                 Configuration::SingleNodeWorkerConfiguration conf = Configuration::SingleNodeWorkerConfiguration();
+                if (not config.workerConfig.getValue().empty())
+                {
+                    conf.engineConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig.getValue());
+                }
+                if (not config.queryCompilerConfig.getValue().empty())
+                {
+                    conf.queryCompilerConfiguration.overwriteConfigWithYAMLFileInput(config.queryCompilerConfig.getValue());
+                }
                 SingleNodeWorker worker = SingleNodeWorker(conf);
 
                 std::atomic<size_t> queriesToResultCheck{0};

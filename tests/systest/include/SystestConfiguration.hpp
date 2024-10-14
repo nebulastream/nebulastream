@@ -39,6 +39,8 @@ public:
     Configurations::BoolOption useCachedQueries = {"useCachedQueries", "false", "use cached queries"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
+    Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
+    Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
     Configurations::StringOption grpcAddressUri
         = {"grpc",
            "",
