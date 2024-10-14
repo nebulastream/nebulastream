@@ -62,6 +62,7 @@ jobs:
         - ccache:/ccache
       env:
         CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
