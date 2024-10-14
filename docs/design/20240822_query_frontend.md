@@ -25,7 +25,7 @@ Most systems use parser generators over handwritten parsers.
 Parser generators generate the the parser code based on the grammar.
 One then must only transform the geric data stuctures of pared tokens into custom datastructed, for example representing SQL statements with a select, from, and where clasue.
 
-Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custim data structures.
+Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custom data structures.
 
 # Our Proposed Solution
 We want to base our implementation on the DuckDB parser (https://github.com/duckdb/duckdb/tree/main/third_party/libpg_query), which in turn is based on the PostgreSQL parser (https://github.com/pganalyze/libpg_query).
@@ -57,11 +57,18 @@ https://github.com/nebulastream/nebulastream/blob/ba-niklas-NESSQL/nes-core/src/
 -  \+ It contains streaming extensions, also tailored to the old NES system, e.g., MQTT sink.
 -  \+ There is a POC integration into the old NES (which is rather straight forward).
 
+### A2: Use existing ANTLR grammar files
+https://github.com/antlr/grammars-v4/tree/master/sql
+- The ANTLR project provides grammars of different systems, e.g., PostgreSQL, SQLite
+-  \+ It supports a rich set of SQL features.
+-  \- Not well documented and tested.
+-  \- Only grammar file, but no custom data structures (see `SQLStatement` above)
+
 # (Optional) Open Questions
 - list relevant questions that cannot or need not be answered before merging
 - create issues if needed
 
-# (Optional) Sources and Further Reading
+# Sources and Further Reading
 - [1] Arvind Arasu, Shivnath Babu, Jennifer Widom: The CQL continuous query language: semantic foundations and query execution. VLDB J. 15(2): 121-142 (2006).
   http://infolab.stanford.edu/~arvind/papers/cql-vldbj.pdf
 
