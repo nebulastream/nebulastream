@@ -8,10 +8,6 @@ function(project_enable_system_level_tests)
         return()
     endif()
 
-    if (NES_ENABLE_LLVM_LIT)
-        install_llvm_lit()
-    endif()
-
     discover_tests()
     discover_test_groups()
 
@@ -29,18 +25,6 @@ function(project_enable_system_level_tests)
     message(STATUS "Enabled System Tests")
 endfunction()
 
-function(install_llvm_lit)
-    set(VENV_DIR "${CMAKE_BINARY_DIR}/venv")
-    # Loading dependencies. We might want to ship them with vcpkg in the future
-    if(EXISTS "${VENV_DIR}/bin/lit")
-        message(STATUS "Use llvm-lit in python environment at " ${VENV_DIR})
-    else()
-        execute_process(COMMAND ${Python3_EXECUTABLE} -m venv ${VENV_DIR})
-        execute_process(COMMAND ${VENV_DIR}/bin/pip install --upgrade pip)
-        execute_process(COMMAND ${VENV_DIR}/bin/pip install lit)
-        message(STATUS "Created python virtual environment with llvm-lit at " ${VENV_DIR})
-    endif()
-endfunction()
 
 # We discover all tests and write them into tests/tests_discovery.json
 function(discover_tests)
@@ -85,25 +69,6 @@ function(create_test_targets)
         get_filename_component(TEST_NAME ${TEST_FILEPATH} NAME_WE)
         message(STATUS "Found test ${TEST_NAME}")
 
-        # Create llvm-lit target for the CI
-        if (NES_ENABLE_LLVM_LIT)
-            if (NES_SYSTEM_TEST_VERBOSE)
-                set(VERBOSE "--verbose")
-            else()
-                set(VERBOSE "")
-            endif()
-            set(VENV_DIR "${CMAKE_BINARY_DIR}/venv")
-            add_custom_target(
-                    LIT_${TEST_NAME}
-                    USES_TERMINAL
-                    COMMAND ${VENV_DIR}/bin/lit --filter ${TEST_NAME} ${VERBOSE} ${CMAKE_SOURCE_DIR}/tests
-                    -DCLIENT_BINARY=$<TARGET_FILE:nebuli>
-                    -DWORKER_BINARY=$<TARGET_FILE:single-node>
-                    DEPENDS $<TARGET_FILE:nebuli> $<TARGET_FILE:single-node>
-                    COMMENT "Running system level test ${TEST_NAME}"
-            )
-        endif()
-
         # Create the test target for local execution
         add_system_test(${TEST_FILEPATH} ${TEST_NAME})
     endforeach()
@@ -142,29 +107,6 @@ function(create_test_group_targets)
             endif()
         endforeach()
 
-        # Create llvm-lit target for the CI
-        if (NES_ENABLE_LLVM_LIT)
-            # Add parentheses around the combined filenames for lit filtering
-            set(COMBINED_TEST_FILENAMES_PIPE "\"(${COMBINED_TEST_FILENAMES_PIPE})\"")
-
-            if (NES_SYSTEM_TEST_VERBOSE)
-                set(VERBOSE "--verbose")
-            else()
-                set(VERBOSE "")
-            endif()
-
-            set(VENV_DIR "${CMAKE_BINARY_DIR}/venv")
-            add_custom_target(
-                    "LITGRP_${GROUP_NAME}"
-                    USES_TERMINAL
-                    COMMAND ${VENV_DIR}/bin/lit --filter ${COMBINED_TEST_FILENAMES_PIPE} ${VERBOSE} ${CMAKE_SOURCE_DIR}/tests
-                    -DCLIENT_BINARY=$<TARGET_FILE:nebuli>
-                    -DWORKER_BINARY=$<TARGET_FILE:single-node>
-                    DEPENDS $<TARGET_FILE:nebuli> $<TARGET_FILE:single-node>
-                    COMMENT "Running system level tests in group ${GROUP_NAME}"
-            )
-        endif()
-
         # Create the test target for local execution
         add_system_test_group(${GROUP_NAME} ${COMBINED_TEST_FILENAMES_SPACE} ${COMBINED_TEST_NAMES_SPACE})
     endforeach()
@@ -173,5 +115,4 @@ endfunction()
 # Copy necessary test data and scripts to the build directory
 function(copy_test_files_to_build_directory)
     file(COPY ${CMAKE_SOURCE_DIR}/tests/testdata DESTINATION ${CMAKE_BINARY_DIR}/tests)
-    file(COPY ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/result_checker.py DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endfunction()
