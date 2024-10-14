@@ -19,7 +19,6 @@
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 #include "Common/DataTypes/DataTypeFactory.hpp"
-#include <Common/ExecutableType/Array.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
