@@ -112,20 +112,6 @@ bool isFloat(PhysicalTypePtr physicalType);
 bool isDouble(PhysicalTypePtr physicalType);
 
 /**
- * @brief Function to check if the physical type is a array
- * @param physicalType
- * @return true if the physical type is a array
- */
-bool isArray(PhysicalTypePtr physicalType);
-
-/**
- * @brief Gets the component physical type of an array
- * @param physicalType
- * @return true if the physical type of an array
- */
-PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType);
-
-/**
  * @brief Function to check that a compile-time type is the same as a particular physical type.
  * Depending on the compile-time type parameter, this method selects the suitable type check on the physical type at runtime.
  * @tparam Type parameter
@@ -186,14 +172,6 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType)
     else if constexpr (IsDouble<Type>)
     {
         return isDouble(std::move(physicalType));
-    }
-    else if constexpr (std::is_pointer_v<Type>)
-    {
-        return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
-    }
-    else if constexpr (std::is_base_of_v<NESType, Type>)
-    {
-        return isArray(physicalType);
     }
     return false;
 }
