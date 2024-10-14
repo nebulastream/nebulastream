@@ -36,7 +36,6 @@
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::Optimizer
@@ -675,11 +674,6 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctio
     if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
     {
         return basicValueType->value;
-    }
-
-    if (auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(constantValue); arrayValueType)
-    {
-        return std::accumulate(arrayValueType->values.begin(), arrayValueType->values.end(), std::string());
     }
 
     NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
