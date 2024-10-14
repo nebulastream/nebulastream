@@ -52,7 +52,7 @@ jobs:
           # As on the current main, we have not added the test coverage targets yet, therefore, we need to check out a specific commit for now.
           # This will be removed once we have the test coverage targets in the main branch.
           #ref: code-coverage-base-branch
-          ref: code-coverage-the-third
+          ref: code-coverage-the-third-base-branch
 #          #ref: ${{ github.base_ref }}
           ssh-key: ${{ secrets.CI_SECRET }}
       - name: Build base coverage if not in cache
