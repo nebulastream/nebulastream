@@ -22,8 +22,6 @@ class OptionVisitor
 {
 public:
     virtual ~OptionVisitor() = default;
-    virtual void enterBase(BaseConfiguration& baseConfiguration) = 0;
-    virtual void exitBase(BaseConfiguration& baseConfiguration) = 0;
-    virtual void visitConcrete(std::string_view optionDefault) = 0;
+    virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue) = 0;
 };
 }

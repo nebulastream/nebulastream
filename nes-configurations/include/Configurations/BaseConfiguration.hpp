@@ -51,13 +51,6 @@ public:
 
     std::string toString() override;
 
-    /// prints all config options of root configuration
-    void generateHelpOutput(
-        std::ostream& ostream,
-        OptionVisitor& visitor,
-        std::map<std::string, Configurations::BaseOption*> optionMap,
-        const std::string& indent = "");
-
 protected:
     void parseFromYAMLNode(const YAML::Node config) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;

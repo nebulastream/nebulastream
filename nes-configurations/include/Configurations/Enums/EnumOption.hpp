@@ -50,7 +50,15 @@ public:
         return os.str();
     };
 
-    void accept(OptionVisitor& visitor) override { visitor.visitConcrete(magic_enum::enum_name(this->getDefaultValue())); }
+    void accept(OptionVisitor& visitor) override
+    {
+        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
+        visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
+        if (config)
+        {
+            config->accept(visitor);
+        }
+    }
 
 
 protected:

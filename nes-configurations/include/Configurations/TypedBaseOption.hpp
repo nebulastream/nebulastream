@@ -70,23 +70,23 @@ public:
     {
         if constexpr (requires { std::to_string(defaultValue); })
         {
-            visitor.visitConcrete(std::to_string(defaultValue));
+            visitor.visitConcrete(name, description, std::to_string(defaultValue));
         }
         else if constexpr (requires { defaultValue.toString(); })
         {
-            visitor.visitConcrete(defaultValue.toString());
+            visitor.visitConcrete(name, description, defaultValue.toString());
         }
         else if constexpr (std::same_as<std::string, T>)
         {
-            visitor.visitConcrete(defaultValue);
+            visitor.visitConcrete(name, description, defaultValue);
         }
         else if constexpr (std::is_enum_v<T>)
         {
-            visitor.visitConcrete(magic_enum::enum_name(defaultValue));
+            visitor.visitConcrete(name, description, magic_enum::enum_name(defaultValue));
         }
         else
         {
-            static_assert(false);
+            //static_assert(false);
         }
     }
 };

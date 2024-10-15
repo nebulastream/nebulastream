@@ -49,8 +49,8 @@ template <typename T>
 void generateHelp(std::ostream& ostream)
 {
     T config;
-    Configurations::PrintingVisitor visitor;
-    config.generateHelpOutput(ostream, visitor, config.getOptionMap());
+    Configurations::PrintingVisitor visitor{ostream};
+    config.accept(visitor);
 }
 
 ///TODO(#130): Generalize and move into `nes-configuration`
