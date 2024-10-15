@@ -36,7 +36,7 @@ public:
 
 TEST_F(QueryPlanTest, testHasOperator)
 {
-    const QueryPlanPtr queryPlan = QueryPlan::create();
+    const QueryPlanPtr queryPlan = std::make_shared<QueryPlan>();
     const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);

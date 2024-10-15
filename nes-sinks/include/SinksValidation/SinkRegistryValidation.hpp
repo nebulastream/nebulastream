@@ -14,47 +14,21 @@
 
 #pragma once
 
-#include <functional>
-#include <iostream>
-#include <optional>
 #include <string>
 #include <unordered_map>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Util/PluginRegistry.hpp>
 
 namespace NES::Sinks
 {
 
-class SinkRegistryValidation final
+using SinkRegistryValidationSignature
+    = RegistrySignatureTemplate<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>;
+class SinkRegistryValidation final : public BaseRegistry<SinkRegistryValidation, SinkRegistryValidationSignature>
 {
-public:
-    SinkRegistryValidation();
-    ~SinkRegistryValidation() = default;
-
-    template <bool update = false>
-    void registerPlugin(
-        const std::string& name,
-        const std::function<Configurations::DescriptorConfig::Config(std::unordered_map<std::string, std::string>&& sinkConfig)>& creator)
-    {
-        if (!update && registry.contains(name))
-        {
-            std::cerr << "Plugin '" << name << "', but it already exists.\n";
-            return;
-        }
-        registry[name] = creator;
-    }
-
-    std::optional<Configurations::DescriptorConfig::Config>
-    tryCreate(const std::string& name, std::unordered_map<std::string, std::string>&& sinkConfig) const;
-
-    [[nodiscard]] bool contains(const std::string& name) const;
-
-    static SinkRegistryValidation& instance();
-
-private:
-    std::unordered_map<
-        std::string,
-        std::function<Configurations::DescriptorConfig::Config(std::unordered_map<std::string, std::string>&& sinkConfig)>>
-        registry;
 };
 
 }
+
+#define INCLUDED_FROM_SINK_REGISTRY_VALIDATION
+#include <SinksValidation/SinkGeneratedRegistrarValidation.hpp>
+#undef INCLUDED_FROM_REGISTRY_VALIDATION

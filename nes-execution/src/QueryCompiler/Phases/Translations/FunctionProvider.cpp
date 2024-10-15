@@ -64,8 +64,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
     }
 
     /// 4. Calling the registry to create an executable function.
-    auto function
-        = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(nodeFunction->getType(), std::move(childFunction));
+    auto function = Execution::Functions::RegistryFunctionExecutable::instance().create(nodeFunction->getType(), std::move(childFunction));
     if (not function.has_value())
     {
         throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));
