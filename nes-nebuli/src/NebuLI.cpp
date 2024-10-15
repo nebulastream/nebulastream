@@ -20,6 +20,7 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -39,7 +40,6 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
-#include "Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp"
 
 namespace NES::CLI
 {
@@ -160,20 +160,17 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
     throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
 }
 
-void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptor(const QueryPlan& query, const QueryConfig& config)
 {
     INVARIANT(
         query.getSinkOperators().size() == 1,
         fmt::format(
             "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
-    for (const auto& sinkOperator : query.getSinkOperators())
+    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
-        if (const auto sink = config.sinks.find(sinkOperator->sinkName); sink != config.sinks.end())
-        {
-            auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-            sinkOperator->sinkDescriptor
-                = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
-        }
+        auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
+        query.getSinkOperators().at(0)->sinkDescriptor
+            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
 }
 
@@ -255,8 +252,10 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
         {"SINK",
          [&](std::string& substitute)
          {
-             static size_t queryNr = 0;
-             const std::string sinkName = testname + std::to_string(queryNr++);
+             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
+             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
+             static size_t currentQueryNumber = 0;
+             const std::string sinkName = testname + "_" + std::to_string(currentQueryNumber++);
              const auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + sinkName + ".csv";
              auto sink = Sink{
                  sinkName,

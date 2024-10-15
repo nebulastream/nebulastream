@@ -14,36 +14,30 @@
 
 #pragma once
 
-#include <SinksValidation/SinkGeneratedRegistrarValidation.hpp>
-#include <SinksValidation/SinkRegistryValidation.hpp>
+#ifndef INCLUDED_FROM_SINK_REGISTRY_VALIDATION
+#    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
+#endif
 
-namespace NES::Sinks
+#include <string>
+#include <unordered_map>
+#include <Util/PluginRegistry.hpp>
+
+namespace NES::Sinks::SinkGeneratedRegistrarValidation
 {
 
-/// Auto generated, injects all plugins into the RegistrySink
-class SinkGeneratedRegistrarValidation
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&&);
+
+}
+
+namespace NES
 {
-public:
-    SinkGeneratedRegistrarValidation() = default;
-    ~SinkGeneratedRegistrarValidation() = default;
-
-    static void registerAllPlugins(SinkRegistryValidation& registry)
-    {
-        /// External register functions
-        /// no external plugins yet
-
-        /// Internal register functions
-        RegisterSinkValidationPrint(registry);
-        RegisterSinkValidationFile(registry);
-    }
-
-private:
-    /// External Registry Header Functions
-    /// no external plugins yet
-
-    /// Internal Registry Header Functions
-    static void RegisterSinkValidationPrint(SinkRegistryValidation& registry);
-    static void RegisterSinkValidationFile(SinkRegistryValidation& registry);
-};
-
+template <>
+inline void Registrar<Sinks::SinkRegistryValidation, Sinks::SinkRegistryValidationSignature>::registerAll(
+    [[maybe_unused]] Registry<Registrar>& registry)
+{
+    using namespace NES::Sinks::SinkGeneratedRegistrarValidation;
+    registry.registerPlugin("Print", RegisterSinkValidationPrint);
+    registry.registerPlugin("File", RegisterSinkValidationFile);
+}
 }

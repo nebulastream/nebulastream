@@ -25,14 +25,22 @@
 namespace NES::Sinks
 {
 
+namespace SinkConfigurationConstraints
+{
+/// Make sure that SourceSpecificConfiguration::parameterMap exists.
+template <typename T>
+concept HasParameterMap = requires(T configuration) {
+    { configuration.parameterMap };
+};
+}
+
+/// Todo #355 : combine configuration with source configuration (get rid of duplicated code, e.g. validateAndFormatImpl)
 class Sink
 {
 public:
     Sink(const QueryId queryId) : queryId(queryId) {};
     virtual ~Sink() = default;
 
-    /// Todo: make input of interface function abstract. As a result, we can easily switch out the type of input, without needing to change every single source.
-    /// - could do: SourceInput that has a generic interface.
     virtual bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
 
     /// Not purely virtual, because some sinks, e.g., SinkPrint, don't need to open/close.
@@ -48,32 +56,20 @@ protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
     [[nodiscard]] virtual bool equals(const Sink& other) const = 0;
 
-    /// Todo: if validation works, sources and sinks should share validation, to avoid copy&paste
-    /// Make sure that SinkSpecificConfiguration::parameterMap exists.
-    template <typename T, typename = void>
-    struct has_parameter_map : std::false_type
-    {
-    };
-    template <typename T>
-    struct has_parameter_map<T, std::void_t<decltype(std::declval<T>().parameterMap)>> : std::true_type
-    {
-    };
     /// Iterates over all parameters in a user provided config and checks if they are supported by a sink-specific config.
     /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
     /// Uses default parameters if the user did not specify a parameter.
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SinkSpecificConfiguration>
-    static Configurations::DescriptorConfig::Config
+    requires NES::Sinks::SinkConfigurationConstraints::HasParameterMap<SinkSpecificConfiguration>
+    static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormatImpl(std::unordered_map<std::string, std::string>&& config, const std::string_view sinkName)
     {
-        Configurations::DescriptorConfig::Config validatedConfig;
+        auto validatedConfig = std::make_unique<Configurations::DescriptorConfig::Config>();
 
         /// First check if all user-specified keys are valid.
         for (const auto& [key, _] : config)
         {
-            static_assert(
-                has_parameter_map<SinkSpecificConfiguration>::value,
-                "A sink configuration must have a parameterMap containing all configuration parameters.");
             if (key != "type" && not SinkSpecificConfiguration::parameterMap.contains(key))
             {
                 throw(InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key)));
@@ -89,13 +85,13 @@ protected:
             const auto validatedParameter = configParameter.validate(config);
             if (validatedParameter.has_value())
             {
-                validatedConfig.emplace(key, validatedParameter.value());
+                validatedConfig->emplace(key, validatedParameter.value());
                 continue;
             }
             /// If the user did not specify a parameter that is optional, use the default value.
             if (not config.contains(key) && configParameter.getDefaultValue().has_value())
             {
-                validatedConfig.emplace(key, configParameter.getDefaultValue().value());
+                validatedConfig->emplace(key, configParameter.getDefaultValue().value());
                 continue;
             }
             throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in Sink: {}", key, sinkName));
