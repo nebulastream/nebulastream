@@ -13,36 +13,31 @@
 */
 
 #pragma once
+#ifndef INCLUDED_FROM_SINK_REGISTRY
+#    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
+#endif
 
-#include <Sinks/SinkRegistry.hpp>
+#include <memory>
+#include <string>
+#include <Sinks/Sink.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 
-namespace NES::Sinks
+namespace NES::Sinks::SinkGeneratedRegistrar
 {
 
-/// Auto generated, injects all plugins into the SinkRegistry
-class SinkGeneratedRegistrar
+std::unique_ptr<Sink> RegisterSinkPrint(QueryId, const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterSinkFile(QueryId, const SinkDescriptor&);
+
+}
+
+namespace NES
 {
-public:
-    SinkGeneratedRegistrar() = default;
-    ~SinkGeneratedRegistrar() = default;
-
-    static void registerAllPlugins(SinkRegistry& registry)
-    {
-        /// External register functions
-        /// no external plugins yet
-
-        /// Internal register functions
-        RegisterSinkPrint(registry);
-        RegisterSinkFile(registry);
-    }
-
-private:
-    /// External Registry Header Functions
-    /// no external plugins yet
-
-    /// Internal Registry Header Functions
-    static void RegisterSinkPrint(SinkRegistry& registry);
-    static void RegisterSinkFile(SinkRegistry& registry);
-};
+template <>
+inline void Registrar<Sinks::SinkRegistry, Sinks::SinkRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+{
+    using namespace NES::Sinks::SinkGeneratedRegistrar;
+    registry.registerPlugin("Print", RegisterSinkPrint);
+    registry.registerPlugin("File", RegisterSinkFile);
+}
 
 }
