@@ -68,34 +68,20 @@ private:
         {
         }
 
-        /**
-         * @brief This methods emplaces <chunkNumber, lastChunk, value> into the container.
-         * @param chunkNumber
-         * @param lastChunk
-         * @param value
-         */
+        /// This methods emplaces <chunkNumber, lastChunk, value> into the container.
         void emplaceChunk(ChunkNumber chunkNumber, bool lastChunk, T value)
         {
             if (lastChunk)
             {
                 this->lastChunkNumber = chunkNumber;
             }
-            seenChunks = seenChunks + 1;
+            ++seenChunks;
             mergeValues(this->value, value);
         }
 
         void setSeqNumber(const SequenceNumber& seqNumber) { this->seqNumber = seqNumber; }
 
-        /**
-         * @brief Returns the value
-         * @return T
-         */
         T getValue() const { return value; }
-
-        /**
-         * @brief Gets the sequence number corresponding to this container
-         * @return SequenceNumber
-         */
         [[nodiscard]] SequenceNumber getSeqNumber() const { return seqNumber; }
 
         bool seenAllChunks() { return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber); }
@@ -311,4 +297,4 @@ private:
     std::atomic<SequenceNumber> currentSeq;
 };
 
-} /// namespace NES::Sequencing
+}
