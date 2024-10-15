@@ -18,11 +18,11 @@
 namespace NES::Execution::Functions
 {
 
-class RegistryFunctionExecutable : public BaseRegistry<
-                                       RegistryFunctionExecutable,
-                                       std::string,
-                                       Runtime::Execution::Functions::Function,
-                                       std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>
+using RegistryFunctionExecutableSignature = RegistrySignatureTemplate<
+    std::string,
+    Runtime::Execution::Functions::Function,
+    std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>;
+class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutable, RegistryFunctionExecutableSignature>
 {
 };
 }

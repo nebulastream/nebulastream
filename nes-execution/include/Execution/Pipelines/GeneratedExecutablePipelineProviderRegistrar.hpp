@@ -27,7 +27,9 @@ std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider();
 namespace NES
 {
 template <>
-inline void Registrar<std::string, Runtime::Execution::ExecutablePipelineProvider>::registerAll(Registry<Registrar>& registry)
+inline void
+Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, Runtime::Execution::ExecutablePipelineProviderRegistrySignature>::
+    registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution;
     registry.registerPlugin("PipelineInterpreter", RegisterInterpreterPipelineProvider);
