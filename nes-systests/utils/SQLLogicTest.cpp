@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <regex>
 #include <string>
+#include <optional>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -64,7 +65,7 @@ public:
         std::cout << "Find the log at: file://" << logPath.string() << std::endl;
         std::cout << "Find the test file at: file://" SYSTEM_TEST_FILE_PATH << std::endl;
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/tests/result/" + systemTestName + std::to_string(testId) + ".csv");
+        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/nes-systests/result/" + systemTestName + std::to_string(testId) + ".csv");
 
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cachedQueryPlanFile);
@@ -80,7 +81,8 @@ public:
         IntegrationTestUtil::waitForQueryToEnd(queryId, *uut);
         IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
-        ASSERT_TRUE(NES::checkResult(testFile, systemTestName, testId));
+        Systest::Query query = {systemTestName, nullptr, testId, std::nullopt, testFile};
+        ASSERT_TRUE(Systest::checkResult(query);
     }
 
 private:

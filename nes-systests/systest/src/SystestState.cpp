@@ -12,14 +12,10 @@
     limitations under the License.
 */
 
-#pragma once
+#include <SystestState.hpp>
+#include <filesystem>
 
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-
-namespace NES
+namespace NES::Systest
 {
-std::vector<DecomposedQueryPlanPtr>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname);
-std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles);
-bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr);
+
 }
