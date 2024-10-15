@@ -37,8 +37,8 @@ std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::uniq
 
 template <>
 inline void
-Registrar<std::string, Runtime::Execution::Functions::Function, std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>::
-    registerAll(Registry<Registrar>& registry)
+Registrar<Execution::Functions::RegistryFunctionExecutable, Execution::Functions::RegistryFunctionExecutableSignature>::registerAll(
+    Registry<Registrar>& registry)
 {
     using namespace NES::Runtime::Execution::Functions;
 
