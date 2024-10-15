@@ -14,14 +14,69 @@
 
 #include <filesystem>
 #include <regex>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <NebuLI.hpp>
 #include <SLTParser.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <SystestGrpc.hpp>
+#include <SystestHelper.hpp>
 #include <SystestRunner.hpp>
 
-namespace NES
+namespace NES::Systest
 {
+std::vector<Query> collectQueriesToTest(const Configuration::SystestConfiguration &configuration)
+{
+    auto testFiles = discoverTestFiles(configuration);
+
+    std::vector<Query> queries{};
+    for (const auto& testFile : testFiles)
+    {
+        auto testname = testFile.path.stem().string();
+
+        std::vector<DecomposedQueryPlanPtr> loadedPlans{};
+        auto cacheDir = configuration.cacheDir.getValue();
+        if (configuration.useCachedQueries.getValue())
+        {
+            auto cacheFiles = getMatchingTestFiles(testname, configuration);
+            auto serializedPlans = loadFromCacheFiles(cacheFiles.first);
+            INVARIANT(cacheFiles.second.size() == serializedPlans.size(), "expect equal sizes")
+            for (uint64_t i = 0; i < serializedPlans.size(); i++)
+            {
+                queries.emplace_back(
+                    testname,
+                    DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&serializedPlans[i]),
+                    cacheFiles.second[i],
+                    std::nullopt);
+            }
+        }
+        else
+        {
+            loadedPlans = loadFromSLTFile(testFile.path, configuration.resultDir.getValue(), testname);
+            uint64_t queryNrInFile = 0;
+            for (const auto& plan : loadedPlans)
+            {
+                if (not configuration.testNumbers.empty()) /// if specified, only run specific test numbers
+                {
+                    for (const auto& testNumber : configuration.testNumbers.getValues())
+                    {
+                        if (testNumber.getValue() == queryNrInFile + 1)
+                        {
+                            queries.emplace_back(testname, plan, queryNrInFile);
+                        }
+                    }
+                }
+                else
+                {
+                    queries.emplace_back(testname, plan, queryNrInFile);
+                }
+                queryNrInFile++;
+            }
+        }
+    }
+    return queries;
+}
+
 std::vector<DecomposedQueryPlanPtr>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
 {
@@ -177,12 +232,12 @@ bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector
     return true;
 }
 
-bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr)
+bool checkResult(const Query& query)
 {
     SLTParser::SLTParser parser{};
-    if (!parser.loadFile(testFilePath))
+    if (!parser.loadFile(query.testFile.value().get().path))
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
+        NES_FATAL_ERROR("Failed to parse test file: {}", query.testFile.value().get().path);
         return false;
     }
 
@@ -194,14 +249,14 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
 
     constexpr bool printOnlyDifferences = true;
     parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, queryNr, testName, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
+        [&seenResultTupleSections, &errorMessages, &query, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
         {
             /// Result section matches with query --> we found the expected result to check for
-            if (seenResultTupleSections == queryNr)
+            if (seenResultTupleSections == query.nrInFile)
             {
                 /// 1. Get query result
                 std::vector<std::string> queryResult;
-                if (!getResultOfQuery(testName, seenResultTupleSections, queryResult))
+                if (!getResultOfQuery(query.name, seenResultTupleSections, queryResult))
                 {
                     same = false;
                     return;
@@ -300,11 +355,11 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
         });
 
     parser.registerOnQueryCallback(
-        [&seenQuerySections, queryNr, &printMessages](const std::string& query)
+        [&seenQuerySections, &query, &printMessages](const std::string& queryStr)
         {
-            if (seenQuerySections == queryNr)
+            if (seenQuerySections == query.nrInFile)
             {
-                printMessages = query;
+                printMessages = queryStr;
             }
             seenQuerySections++;
         });

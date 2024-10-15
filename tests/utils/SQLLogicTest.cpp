@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <regex>
 #include <string>
+#include <optional>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -83,7 +84,8 @@ public:
         }
         IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
-        ASSERT_TRUE(NES::checkResult(testFile, systemTestName, testId));
+        Systest::Query query = {systemTestName, nullptr, testId, std::nullopt, testFile};
+        ASSERT_TRUE(Systest::checkResult(query);
     }
 
 private:

@@ -13,4 +13,7 @@
 add_source_files(nes-systest-lib
         SLTParser.cpp
         SystestRunner.cpp
+        SystestGrpc.cpp
+        SystestHelper.cpp
+        SystestState.cpp
 )
