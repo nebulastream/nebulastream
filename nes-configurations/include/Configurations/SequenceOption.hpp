@@ -51,12 +51,11 @@ public:
 
     std::string toString() override;
 
+    void accept(OptionVisitor&) override;
+
 protected:
     void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
-
-public:
-    void accept(OptionVisitor&) override;
 
 private:
     std::vector<T> options;
@@ -99,7 +98,7 @@ void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::st
 template <DerivedBaseOption T>
 void SequenceOption<T>::accept(OptionVisitor&)
 {
-    NES_WARNING("visiting sequence Option not implemented");
+    //visitor.visitConcrete(", Multiple");
 }
 
 template <DerivedBaseOption T>

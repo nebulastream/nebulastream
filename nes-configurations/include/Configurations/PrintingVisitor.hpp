@@ -1,4 +1,4 @@
-/*
+    /*
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -20,15 +20,13 @@ namespace NES::Configurations
 class PrintingVisitor : public OptionVisitor
 {
 public:
-    void enterBase(BaseConfiguration& baseConfiguration) override { currentPath.push_back(baseConfiguration.toString()); }
+    PrintingVisitor(std::ostream& ostream) : os(ostream) { }
 
-    void exitBase(BaseConfiguration&) override { currentPath.pop_back(); }
+    void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override
+    {
+        os << "- " << name << ": " << description << " " << "(Default: " << defaultValue << ")" << "\n";
+    }
 
-    void visitConcrete(std::string_view optionDefault) override { stringBuilder << " (Default: " << optionDefault << ")"; }
-
-    std::string toString() { return stringBuilder.str(); }
-
-    std::stringstream stringBuilder;
-    std::vector<std::string> currentPath;
+    std::ostream& os;
 };
 }
