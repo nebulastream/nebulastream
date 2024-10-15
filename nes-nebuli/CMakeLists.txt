@@ -58,8 +58,6 @@ function(add_nes_test_nebuli)
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
 
-add_tests_if_enabled(tests)
-
 # install Nebuli and all its dependencies + the file_set with the headers
 install(TARGETS nes-nebuli nes-operators nes-functions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
         FILE_SET nebuliPublicHeaders DESTINATION "${CMAKE_INSTALL_PREFIX}/include/nebulastream"
