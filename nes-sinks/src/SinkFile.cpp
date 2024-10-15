@@ -21,9 +21,8 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sinks/SinkFile.hpp>
-#include <Sinks/SinkGeneratedRegistrar.hpp>
+#include <Sinks/SinkRegistry.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <SinksValidation/SinkGeneratedRegistrarValidation.hpp>
 #include <SinksValidation/SinkRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -125,23 +124,20 @@ bool SinkFile::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
     return true;
 }
 
-Configurations::DescriptorConfig::Config SinkFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+std::unique_ptr<Configurations::DescriptorConfig::Config> SinkFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Sink::validateAndFormatImpl<ConfigParametersFile>(std::move(config), NAME);
 }
 
-void SinkGeneratedRegistrarValidation::RegisterSinkValidationFile(SinkRegistryValidation& registry)
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+SinkGeneratedRegistrarValidation::RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&& sinkConfig)
 {
-    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> Configurations::DescriptorConfig::Config
-    { return SinkFile::validateAndFormat(std::move(sourceConfig)); };
-    registry.registerPlugin((SinkFile::NAME), validateFunc);
+    return SinkFile::validateAndFormat(std::move(sinkConfig));
 }
 
-void SinkGeneratedRegistrar::RegisterSinkFile(SinkRegistry& registry)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkFile(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    const auto constructorFunc = [](const QueryId queryId, const SinkDescriptor& descriptorSource) -> std::unique_ptr<Sink>
-    { return std::make_unique<SinkFile>(queryId, descriptorSource); };
-    registry.registerPlugin((SinkFile::NAME), constructorFunc);
+    return std::make_unique<SinkFile>(queryId, sinkDescriptor);
 }
 
 }

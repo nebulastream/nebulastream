@@ -19,11 +19,11 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
-
 namespace NES::Sources
 {
 
-class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, const Schema&, const SourceDescriptor&>
+using SourceRegistrySignature = RegistrySignatureTemplate<std::string, Source, const Schema&, const SourceDescriptor&>;
+class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
 {
 };
 

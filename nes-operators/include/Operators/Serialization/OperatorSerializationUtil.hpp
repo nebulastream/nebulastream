@@ -97,20 +97,9 @@ public:
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
-    /**
-     * @brief Deserializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
-     * @param sourceDetails The serialized source operator details.
-     * @return SourceDescriptorPtr
-     */
     static std::unique_ptr<Sources::SourceDescriptor>
     deserializeSourceDescriptor(const SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor& sourceDescriptor);
 
-    /**
-     * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.
-     * @param sinkDescriptor The sink descriptor.
-     * @param sinkDetails The sink details object.
-     * @param numberOfOrigins the number of origins
-     */
     static void serializeSinkDescriptor(
         std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails);
 

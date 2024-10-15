@@ -11,11 +11,9 @@
 # limitations under the License.
 
 add_subdirectory(SinksParsing)
-add_subdirectory(SinksValidation)
 
 add_source_files(nes-sinks
         SinkDescriptor.cpp
-        SinkRegistry.cpp
         Sink.cpp
         SinkProvider.cpp
         SinkFile.cpp

@@ -12,8 +12,10 @@
     limitations under the License.
 */
 #include <utility>
+
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -43,7 +45,9 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
         if (NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
             or Util::instanceOf<SinkLogicalOperator>(node))
         {
-            NES_DEBUG("Skipped node: {} as it is already a physical or a SourceDescriptor logical operator.", node->toString());
+            NES_DEBUG(
+                "Skipped node: {} as it is already a physical operator, a SourceDescriptorLogicalOperator, or a SinkLogicalOperator.",
+                node->toString());
             continue;
         }
         provider->lower(decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));
@@ -51,4 +55,4 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
     return decomposedQueryPlan;
 }
 
-} /// namespace NES::QueryCompilation
+}

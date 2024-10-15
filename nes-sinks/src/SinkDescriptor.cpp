@@ -14,7 +14,6 @@
 
 #include <ostream>
 #include <sstream>
-#include <API/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksValidation/SinkRegistryValidation.hpp>
 #include <ErrorHandling.hpp>
@@ -27,12 +26,12 @@ SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorC
 {
 }
 
-Configurations::DescriptorConfig::Config
+std::unique_ptr<Configurations::DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
-    if (auto validatedConfig = SinkRegistryValidation::instance().tryCreate(sinkType, std::move(configPairs)))
+    if (auto validatedConfig = SinkRegistryValidation::instance().create(sinkType, std::move(configPairs)))
     {
-        return validatedConfig.value();
+        return std::move(validatedConfig.value());
     }
     throw UnknownSinkType(fmt::format("Cannot find sink type: {} in validation registry for sinks.", sinkType));
 }
@@ -41,7 +40,7 @@ std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor
 {
     return out << "SinkDescriptor:"
                << "\nSink type: " << sinkDescriptor.sinkType << "\nadd timestamp: " << sinkDescriptor.addTimestamp << "\nConfig:\n"
-               << sinkDescriptor.toStringConfig(); ///-Todo: use ostream(Config) from Descriptor?
+               << sinkDescriptor.toStringConfig();
 }
 
 bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
@@ -49,4 +48,4 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
     return lhs.sinkType == rhs.sinkType && lhs.config == rhs.config;
 }
 
-} /// namespace NES
+}
