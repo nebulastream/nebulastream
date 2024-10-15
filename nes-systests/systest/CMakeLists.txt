@@ -18,6 +18,8 @@ add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nebuli-lib)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PUBLIC PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}")
+target_compile_definitions(nes-systest-lib PUBLIC CACHE_DIR="${CMAKE_BINARY_DIR}/cache/")
+target_compile_definitions(nes-systest-lib PUBLIC TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../")
 
 find_package(argparse CONFIG REQUIRED)
 
@@ -25,9 +27,6 @@ add_executable(systest src/SystestStarter.cpp)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse nes-single-node-worker-lib)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
-# Compile time definitions used in systest configuration
-target_compile_definitions(systest PRIVATE CACHE_DIR="${CMAKE_BINARY_DIR}/cache/")
-target_compile_definitions(systest PRIVATE TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../")
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})
