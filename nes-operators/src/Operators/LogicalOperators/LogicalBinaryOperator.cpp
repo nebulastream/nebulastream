@@ -31,14 +31,18 @@ bool LogicalBinaryOperator::inferSchema()
 {
     PRECONDITION(children.size() >= 2, "BinaryOperator: this node should have at least two child operators");
     distinctSchemas.clear();
+    ///Check the number of child operators
+    if (children.size() < 2)
+    {
+        throw CannotInferSchema("BinaryOperator: this node should have at least two child operators");
+    }
 
     /// Infer schema of all child operators
     for (const auto& child : children)
     {
         if (!NES::Util::as<LogicalOperator>(child)->inferSchema())
         {
-            NES_ERROR("BinaryOperator: failed inferring the schema of the child operator");
-            throw TypeInferenceException("BinaryOperator: failed inferring the schema of the child operator");
+            throw CannotInferSchema("BinaryOperator: failed inferring the schema of the child operator");
         }
     }
 

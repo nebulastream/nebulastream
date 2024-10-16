@@ -21,7 +21,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
-
+#include <ErrorHandling.hpp>
 
 namespace NES::Experimental
 {
@@ -58,8 +58,8 @@ bool LogicalBatchJoinOperator::inferSchema()
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
     {
-        throw TypeInferenceException(
-            fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
+        auto count = std::to_string(distinctSchemas.size());
+        throw CannotInferSchema("BinaryOperator: Found" + count + "distinct schemas but expected 2 distinct schemas.");
     }
 
     ///reset left and right schema
