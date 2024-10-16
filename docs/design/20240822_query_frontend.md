@@ -12,10 +12,11 @@ This approach has the following drawbacks:
 - The process is insecure because users could add arbitrary c++ code to the query string, which would be compiled.
 
 # Goals
-We want to add a new parser, which (G1) checks the grammar and (G2) is reasonably efficient.
+We want to add a new parser, which (G1) checks the grammar, (G2) is reasonably efficient, and (G3) transforms the query into the NebulaStream-internal format.
 We want a declarative query syntax similar to CQL [1].
 Therefore, we will extend an existing SQL grammar (file) (G1), which already correctly implements a rich set of SQL syntax, e.g., aliases, set and date operations.
 In this process, we will use a state-of-the-art parser generator (G2), such as GNU Bison or ANTLR.
+The NebulaStream-internal format (see G3) is described by the old query string (see above).
 
 # Non-Goals
 We do not implement a parser for the existing functional query sytax, shown in the query above (for time reasons. We may later add one).
