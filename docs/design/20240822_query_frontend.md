@@ -7,66 +7,61 @@ Query::from("default_source")
 ```
 
 For processing, this string is basically written into a c++ file and compiled.
+
 We want a streaming SQL frontend.
+
 Besides, the current approach has the following drawbacks:
 - The compilation is slow, taking about 1 second, which is too long, for example, for running multiple integration tests.
 - The process is insecure because users could add arbitrary c++ code to the query string, which would be compiled.
 
 # Goals
-We want to add a new parser, which (G1) checks the grammar, (G2) is reasonably efficient, and (G3) transforms the query into the NebulaStream-internal format.
-We want a declarative query syntax similar to CQL [1].
-Therefore, we will extend an existing SQL grammar (file) (G1), which already correctly implements a rich set of SQL syntax, e.g., aliases, set and date operations.
-In this process, we will use a state-of-the-art parser generator (G2), such as GNU Bison or ANTLR.
-The NebulaStream-internal format (see G3) is described by the old query string (see above).
+We want to add a new parser, which:
+- (G1) supports an SQL-like declarative streaming syntax (see CQL paper [1]),
+- (G2) is reasonably efficient (i.e., below a millisecond for a (TPC-H-style complex) query, and
+- (G3) transforms the query into the NebulaStream-internal format (see the query above).
 
 # Non-Goals
-Highest performance is no primary goal.
+- Highest performance is no primary goal.
+- Full SQL support and a discussion of desired SQL features are no goals of this DD.
+- A specific streaming extension syntax will we discussed in another DD.
 
 # Solution Background
 A parser is part of every database system with a language interface.
-Most systems use parser generators over handwritten parsers.
+Most systems use parser generators (e.g., ANTLR or Flex/Bison) over handwritten parsers.
 Parser generators generate the parser code based on the grammar.
-One then must only transform the generic data structures of parsed tokens into custom data structed, for example representing SQL statements with a select, from, and where clause.
+One then must only transform the generic data structures of parsed tokens into custom data structured, for example, representing SQL statements with a select, from, and where clause.
 
 Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custom data structures.
+But one can also start with a simpler, potentially easier to extend or maintain grammar.
+
+After looking into alternative approaches and discussing them, we find (on the one hand) that there is no evident best approach to choose (see advantages, disadvantages, and open questions).
+On the other hand, we could base our parser on different investigated alternatives.
 
 # Our Proposed Solution
-We want to base our implementation on the DuckDB parser (https://github.com/duckdb/duckdb/tree/main/third_party/libpg_query), which in turn is based on the PostgreSQL parser (https://github.com/pganalyze/libpg_query).
-PostgreSQL's SQL dialect and implementation have a rich set of features and are widely used.
-The DuckDB version is "stripped down and generally cleaned up to make it easier to modify and extend".
-
-The DuckDB parser is integrated into DuckDB, i.e., it is no off-the-shelf library.
-This is why we have to extract it.
-In this process, we want to make it a standalone library.
-Given an SQL query string, it will then output an object of type `SQLStatement`.
-Each `SQLStatement` has a type `TYPE`, e.g., `SELECT_STATEMENT`, `INSERT_STATEMENT`.
-Using the type information, we can cast it into derived classes, e.g., `SelectStatement`, `InsertStatement`.
-Derived classes are, in turn, tagged datastructures depending on the components of the query, e.g., whether it contains set operations or has subqueries.
-
-To integrate this system-agnostic parser library into NES, we have to traverse the `SQLStatement`, extract the information, and generate a NES-specific query representation, i.e., `NES::Query` for a start.
+Based on the research group's experience and our discussion, we voted to use an ANTLR-based parser over the alternatives below.
+We would like to start with a stripped-down grammar (over a full-fledged SQL support).
+To get this grammar, we want to use a solid base grammar (e.g., with expression support) and delete features over defining our grammar from scratch.
 
 # Proof of Concept
-We started to extract a parsing library out of DuckDB.
+A former student integrated an ANTLR parser into NES https://github.com/nebulastream/nebulastream/tree/ba-niklas-NESSQL/nes-core/src/Parsers
+- grammar: https://github.com/nebulastream/nebulastream/blob/ba-niklas-NESSQL/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4
+-  \- This parser has limited SQL support, missing many SQL features, e.g., a complete set of set operations.
+-  \- Also for existing features, it has some shortcomings, which are not documented, such as no case mix (e.g., "SeleCT") for keywords.
+-  \+ It contains streaming extensions, also tailored to the old NES system, e.g., MQTT sink.
 
 # Alternatives
 Basically, we could base our parser on other systems.
-The PostgreSQL parser implements many SQL features and its dialect is widely used.
 We looked into some alternatives more deeply and list them here:
 
-### A1: Old NES parser:
-https://github.com/nebulastream/nebulastream/blob/ba-niklas-NESSQL/nes-core/src/Parsers/NebulaSQL/gen/NebulaSQL.g4
-- This parser is based on ANTLR and was implemented in scope of a Bachelor's thesis.
--  \- It has limited SQL support, missing many SQL features, e.g., a complete set of set operations.
--  \- Also for existing features, it has some shortcomings, which are not documented, such as no case mix (e.g., "SeleCT") for keywords.
--  \+ It contains streaming extensions, also tailored to the old NES system, e.g., MQTT sink.
--  \+ There is a POC integration into the old NES (which is rather straight forward).
+### A1: The Extracted PostgreSQL Parser
+https://github.com/pganalyze/libpg_query
+- PostgreSQL's SQL dialect and implementation have a rich set of features and are widely used.
 
-### A2: Use existing ANTLR grammar files
-https://github.com/antlr/grammars-v4/tree/master/sql
-- The ANTLR project provides grammars of different systems, e.g., PostgreSQL, SQLite
--  \+ It supports a rich set of SQL features.
--  \- Not well documented and tested.
--  \- Only grammar file, but no custom data structures (see `SQLStatement` above)
+### A2: The DuckDB Parser
+https://github.com/duckdb/duckdb/tree/main/third_party/libpg_query
+- based on the PostgreSQL parser, written in C++
+- "stripped down and generally cleaned up to make it easier to modify and extend" (see link above)
+- this parser is integrated into DuckDB, i.e., it is no off-the-shelf library; we would have to extract it, e.g., in a system-agnostic library (which is straight-forward but takes time) https://github.com/klauck/nebulastream-frontend
 
 ### A3: Hyrise parser
 https://github.com/hyrise/sql-parser
@@ -76,10 +71,17 @@ https://github.com/hyrise/sql-parser
 
 ### Other Alternatives
 - Google's zetasql https://github.com/google/zetasql
-- libpg_query (extracted PostgreSQL parser in C) https://github.com/pganalyze/libpg_query
 - Datafusion's SQL parser (in Rust) https://github.com/apache/datafusion-sqlparser-rs
 
 # Open Questions
+### Which specific ANTLR grammar file to base on:
+- the NES one has some limitations (see above)
+- The ANTLR project provides grammars of different systems, e.g., PostgreSQL, SQLite  https://github.com/antlr/grammars-v4/tree/master/sql
+    -  \+ It supports a rich set of SQL features.
+    -  \- Not well documented and tested.
+    -  \- Only grammar file, but no custom data structures (see `SQLStatement` above)  
+
+### Future difficulties
 When extending the grammar for streaming, e.g., Windows specifications in the from clause, we recently encountered parser conflicts, e.g., shift/reduce conflicts (https://www.gnu.org/software/bison/manual/html_node/Shift_002fReduce.html).
 The appearance, naturally, depends on the used feature and syntax, e.g., using only brackets (e.g., `[RANGE 10 HOUR]`) or a `WINDOW` keyword for the definition.
 It is open to us how much effort it is to integrate every streaming extension without conflicts.
