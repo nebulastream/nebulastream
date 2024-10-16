@@ -26,7 +26,7 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -63,7 +63,7 @@ bool LogicalJoinOperator::inferSchema()
     ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
     {
-        throw TypeInferenceException(
+        throw CannotInferSchema(
             fmt::format("LogicalJoinOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
     }
 
@@ -123,18 +123,17 @@ bool LogicalJoinOperator::inferSchema()
                     const auto leftJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getLeft());
                     const auto leftJoinKeyName = leftJoinKey->getFieldName();
                     const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
-                    NES_ASSERT_THROW_EXCEPTION(
-                        foundLeftKey,
-                        TypeInferenceException,
-                        "LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+                    if (!foundLeftKey)
+                    {
+                        throw CannotInferSchema("LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+                    }
                     const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getRight());
                     const auto rightJoinKeyName = rightJoinKey->getFieldName();
                     const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
-                    NES_ASSERT_THROW_EXCEPTION(
-                        foundRightKey,
-                        TypeInferenceException,
-                        "LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName + " in schemas.");
-
+                    if (!foundRightKey)
+                    {
+                        throw CannotInferSchema("LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName + " in schemas.");
+                    }
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedFunctions.insert(visitingOp);
                 }
@@ -145,14 +144,18 @@ bool LogicalJoinOperator::inferSchema()
     distinctSchemas.clear();
 
     /// Checking if left and right input schema are not empty and are not equal
-    NES_ASSERT_THROW_EXCEPTION(
-        leftInputSchema->getSchemaSizeInBytes() > 0, TypeInferenceException, "LogicalJoinOperator: left schema is emtpy");
-    NES_ASSERT_THROW_EXCEPTION(
-        rightInputSchema->getSchemaSizeInBytes() > 0, TypeInferenceException, "LogicalJoinOperator: right schema is emtpy");
-    NES_ASSERT_THROW_EXCEPTION(
-        !rightInputSchema->equals(leftInputSchema, false),
-        TypeInferenceException,
-        "LogicalJoinOperator: Found both left and right input schema to be same.");
+    if(leftInputSchema->getSchemaSizeInBytes() == 0)
+    {
+        throw CannotInferSchema("LogicalJoinOperator: left schema is emtpy");
+    }
+    if(rightInputSchema->getSchemaSizeInBytes() == 0)
+    {
+        throw CannotInferSchema("LogicalJoinOperator: right schema is emtpy");
+    }
+    if(rightInputSchema->equals(leftInputSchema, false))
+    {
+        throw CannotInferSchema("LogicalJoinOperator: Found both left and right input schema to be same.");
+    }
 
     ///Infer stamp of window definition
     const auto windowType = Util::as<Windowing::TimeBasedWindowType>(joinDefinition->getWindowType());

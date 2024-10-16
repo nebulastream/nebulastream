@@ -18,8 +18,8 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-
 
 namespace NES
 {
@@ -69,10 +69,6 @@ bool LogicalUnionOperator::inferSchema()
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema))
     {
-        NES_ERROR(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
-            leftInputSchema->toString(),
-            rightInputSchema->toString());
         throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString() + " and Right schema "
             + rightInputSchema->toString());
@@ -80,9 +76,7 @@ bool LogicalUnionOperator::inferSchema()
 
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
     {
-        NES_ERROR("Left and right should have same memory layout");
-        throw CannotInferSchema(fmt::format(
-            "Left and right should have same memory layout ({} vs {})", leftInputSchema->toString(), rightInputSchema->toString()));
+        throw CannotInferSchema("Left and right should have same memory layout");
     }
 
     ///Copy the schema of left input
