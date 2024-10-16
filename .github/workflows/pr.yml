@@ -50,7 +50,7 @@ jobs:
     name: "Build ${{matrix.arch}}"
     needs: [ get-dev-images ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}
       volumes:
         - ccache:/ccache
       env:
@@ -62,6 +62,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x64, arm64 ]
+        stdlib: [ 'libstdcxx', 'libcxx' ]
     steps:
       - uses: actions/checkout@v4
       - name: Configure NebulaStream
