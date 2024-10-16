@@ -25,7 +25,7 @@ We do not implement a parser for the existing functional query sytax, shown in t
 A parser is part of every database system with a language interface.
 Most systems use parser generators over handwritten parsers.
 Parser generators generate the parser code based on the grammar.
-One then must only transform the geric data stuctures of pared tokens into custom datastructed, for example representing SQL statements with a select, from, and where clasue.
+One then must only transform the generic data structures of parsed tokens into custom data structed, for example representing SQL statements with a select, from, and where clause.
 
 Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custom data structures.
 
