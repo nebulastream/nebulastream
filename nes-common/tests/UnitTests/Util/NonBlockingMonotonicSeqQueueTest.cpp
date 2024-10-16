@@ -314,11 +314,12 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
  */
 TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRandomFashionTest)
 {
+    constexpr auto blockSize = 100_u64;
     constexpr auto noSeqNumbers = 10000_u64;
     constexpr auto averageUpdatesPerRound = 100_u64;
     constexpr auto threadsCount = 10;
     constexpr auto maxChunksPerSeqNumber = 20_u64;
-    auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
+    auto watermarkProcessor = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t, blockSize>();
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= noSeqNumbers; i++)
     {
