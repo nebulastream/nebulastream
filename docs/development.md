@@ -62,6 +62,18 @@ docker run \
      ctest --test-dir build-docker -j
 ```
 
+### Modifying dependencies
+
+When using the docker images, it is not straightforward to edit the dependencies, as a new docker image would need to be
+created. Currently, the simplest solution is to create a pull request which would run the docker build on the
+nebulastream
+CI and provide a branch specific version of the development image. The development image with changed dependencies is
+available via:
+
+```shell
+docker pull nebulastream/nes-development:branch-name
+```
+
 ### Dependencies via VCPKG
 
 The development container has an environment variable `NES_PREBUILT_VCPKG_ROOT`, which, once detected by the CMake build
@@ -152,3 +164,34 @@ cmake -B build \
 It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
 sanitizers
 also require llvm to be built with sanitization enabled which is not the case for the pre-built version.
+
+## Standard Libraries
+
+In its current state, NebulaStream supports both libstdc++ and libc++. Both libraries offer compelling reasons to use
+one over the other. For local debugging, CLion offers custom type renderers for stl types (e.g., vector and maps).
+Libc++
+frees us from being tied to a hard-to-change libstdc++ distributed with GCC. Additionally, libc++ enables the use
+of a hardened library version.
+
+Effectively using both libraries makes NebulaStream more robust by enabling tooling for both libraries. This flexibility
+means we are not locked into a specific standard library, allowing us to take advantage of tools and debugging features
+for both libstdc++ and libc++. It also reduces the likelihood of encountering undefined behavior or
+implementation-specific details, which can complicate development and hinder portability. By leveraging both libraries,
+we improve the potential for porting NebulaStream to smaller embedded IoT devices.
+
+However, using both libraries comes with trade-offs. It limits us to the intersection of the features and behavior
+supported by both libraries. Additionally, the CI ensures that
+code compiles and runs successfully with libstdc++ and libc++ to maintain this dual compatibility.
+
+### Compiling with Libstdc++
+
+By default, NebulaStream attempts to build with libc++ if it is available on the host system (which is the case for all
+docker images).
+Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fallback to the default standard library on
+the system.
+
+If you intend to use the docker image with libstdc++ you can get the development image by pulling
+
+```shell
+docker pull nebulastream/nes-development:latest-libstdcxx
+```
