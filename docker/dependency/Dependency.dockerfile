@@ -10,29 +10,39 @@ FROM alpine:latest AS llvm-download
 # Which architecture to build the dependencies for. Either x64 or arm64, matches the names in our vcpkg toolchains
 ARG ARCH
 RUN apk update && apk add wget 7zip
-ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-libc%2B%2B-mlir-only/nes-clang-18-ubuntu-22.04-libc++-${ARCH}.7z nes-clang
-RUN 7z x nes-clang && rm nes-clang
+ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-libc%2B%2B-mlir-only/nes-clang-18-ubuntu-22.04-libc++-${ARCH}.7z libcxx/nes-clang
+ADD https://github.com/nebulastream/clang-binaries/releases/download/vllvm-18-libc%2B%2B-mlir-only/nes-clang-18-ubuntu-22.04-stdlibc++-${ARCH}.7z libstdcxx/nes-clang
+RUN cd libcxx && 7z x nes-clang && rm nes-clang
+RUN cd libstdcxx && 7z x nes-clang && rm nes-clang
 
 FROM nebulastream/nes-development-base:${TAG}
-COPY --from=llvm-download /clang /clang
+ARG STDLIB=libcxx
+
+COPY --from=llvm-download ${STDLIB}/clang /clang
 ENV CMAKE_PREFIX_PATH="/clang/:${CMAKE_PREFIX_PATH}"
+
 ADD vcpkg /vcpkg_input
-# Which vcpkg variant, e.g. with enabled sanitizers or the default `nes` variant.
-ARG VARIANT=nes
-ENV VCPKG_FORCE_SYSTEM_BINARIES=1
-# Which architecture to build the dependencies for. Either x64 or arm64, matches the names in our vcpkg toolchains
+ARG VARIANT=none
 ARG ARCH
-RUN cd /vcpkg_input \
+ENV VCPKG_FORCE_SYSTEM_BINARIES=1
+
+RUN \
+    if [ "$STDLIB" = "libcxx" ]; then \
+      export VCPKG_STDLIB="libcxx"; \
+    else \
+      export VCPKG_STDLIB="local"; \
+    fi; \
+    cd /vcpkg_input \
     && git clone https://github.com/microsoft/vcpkg.git vcpkg_repository \
     && vcpkg_repository/bootstrap-vcpkg.sh --disableMetrics \
-    && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}" --host-triplet="${ARCH}-linux-${VARIANT}" \
-    && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}" --host-triplet="${ARCH}-linux-${VARIANT}" --raw --output-dir / --output vcpkg \
+    && vcpkg_repository/vcpkg install --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" \
+    && vcpkg_repository/vcpkg export --overlay-triplets=custom-triplets --overlay-ports=vcpkg-registry/ports --triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --host-triplet="${ARCH}-linux-${VARIANT}-${VCPKG_STDLIB}" --raw --output-dir / --output vcpkg \
     && cp vcpkg_repository/scripts/vcpkgTools.xml /vcpkg/scripts/ \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
 
-
 # This hash is used to determine if a development/dependency image is compatible with the current checked out branch
 ARG VCPKG_DEPENDENCY_HASH
 ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
+ENV VCPKG_STDLIB=${STDLIB}
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
