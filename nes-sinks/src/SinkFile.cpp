@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>

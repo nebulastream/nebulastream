@@ -175,7 +175,7 @@ void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     }
-    else if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executable))
+    else if (const auto sink = std::get_if<std::shared_ptr<Sinks::Sink>>(&executable))
     {
         NES_DEBUG("QueryManager: added Task for Sink {} inputBuffer {}", **sink, fmt::streamed(buffer));
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));

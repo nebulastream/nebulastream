@@ -73,7 +73,6 @@ public:
     std::vector<OperatorPtr> getRootOperators() const;
 
     /// add subQuery's rootnode into the current node for merging purpose.
-    /// @note: improves this when we have to due with multi-root use case.
     void addRootOperator(const OperatorPtr& newRootOperator);
 
     void removeAsRootOperator(OperatorPtr root);

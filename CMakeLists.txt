@@ -284,14 +284,6 @@ if (NES_USE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
 
-# Print all used include directories
-message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach (dir ${dirs})
-    message(STATUS "  - ${dir}")
-endforeach ()
-
 message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 

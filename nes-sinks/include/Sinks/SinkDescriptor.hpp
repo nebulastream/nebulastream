@@ -18,10 +18,8 @@
 #include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES::Sinks
 {

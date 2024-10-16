@@ -97,8 +97,7 @@ std::string CSVFormat::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const 
             /// handle variable-length field
             if (dataType->isText())
             {
-                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
-                          "from the tuple buffer");
+                NES_DEBUG("trying to read the variable length TEXT field: {} from the tuple buffer", field->toString());
 
                 /// read the child buffer index from the tuple buffer
                 auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);

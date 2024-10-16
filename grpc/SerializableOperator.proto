@@ -50,7 +50,7 @@ message SerializableVariantDescriptor {
     int32 int_value = 1;
     uint32 uint_value = 2;
     bool bool_value = 3;
-    fixed32 char_value = 4;  // Represents a single byte (0-255)
+    fixed32 char_value = 4;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
     float float_value = 5;
     double double_value = 6;
     string string_value = 7;

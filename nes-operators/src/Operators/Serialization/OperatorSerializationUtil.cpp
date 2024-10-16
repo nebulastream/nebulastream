@@ -983,8 +983,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
 void OperatorSerializationUtil::serializeSinkDescriptor(
     std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
-    /// cleaned up by protobuf
-    auto serializedSinkDescriptor = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New();
+    auto serializedSinkDescriptor = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf
     SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor->mutable_sinkschema());
     serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
     serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);

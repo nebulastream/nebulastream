@@ -44,7 +44,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
 {
     /// the +1 is the termination token for the query plan itself
     /// not tracking sinks. Sinks don't have a successor and therefore don't need to notify their successors. We rely on the sink destructor.
-    /// improved by @ls-1801 in the QueryManager refactoring.
+    /// Todo #34: improved by @ls-1801 in the QueryManager refactoring.
     numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size());
 }
 

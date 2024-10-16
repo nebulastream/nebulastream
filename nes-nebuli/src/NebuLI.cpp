@@ -164,7 +164,8 @@ void validateAndSetSinkDescriptor(const QueryPlan& query, const QueryConfig& con
 {
     INVARIANT(
         query.getSinkOperators().size() == 1,
-        fmt::format("NebulaStream currently only supports a single sink, but the query contains: {}", query.getSinkOperators().size()));
+        fmt::format(
+            "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
@@ -215,11 +216,8 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
     auto query = syntacticQueryValidation->validate(config.query);
-    semanticQueryValidation->validate(query);
     validateAndSetSinkDescriptor(*query, config);
-
-    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
-    typeInference->performTypeInferenceQuery(query);
+    semanticQueryValidation->validate(query); /// performs the first type inference
 
     logicalSourceExpansionRule->apply(query);
     typeInference->performTypeInferenceQuery(query);

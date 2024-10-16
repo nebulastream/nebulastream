@@ -121,7 +121,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 {
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
-    /// Todo(ls-1801 & alepping): As soon as the QueryManager stores sinks as pipelines that become tasks, we can return unique_ptrs.
+    /// Todo #34 (ls-1801 & alepping): As soon as the QueryManager stores sinks as pipelines that become tasks, we can return unique_ptrs.
     /// Right new we store a shared_ptr to use the sink as a task, and to later call sink->open() in QueryManagerLifecycle::registerQuery
     auto sinkSharedPtr = Sinks::SinkProvider::lower(queryId, sinkOperator->getSinkDescriptorRef());
     sinks.emplace(sinkSharedPtr);
