@@ -78,6 +78,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x64, arm64 ]
+        stdlib: [ 'libstdcxx', 'libcxx' ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,14 +107,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ inputs.ref }}-${{matrix.arch}},mode=max
+          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ inputs.ref }}-${{matrix.arch}}-${{matrix.stdlib}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{ inputs.ref }}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:${{ inputs.ref }}-${{matrix.arch}}-${{matrix.stdlib}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}
           build-args: |
             TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
             ARCH=${{matrix.arch}}
+            STDLIB=${{matrix.stdlib}}
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
           context: .
           file: docker/dependency/Dependency.dockerfile
@@ -121,12 +123,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
           cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}}-${{matrix.stdlib}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
           context: .
           file: docker/dependency/Development.dockerfile
 
@@ -156,19 +158,36 @@ jobs:
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
 
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libstdcxx
+
+          docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libstdcxx
+
           docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }} \
-            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
-            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
-
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+          
           docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }} \
-            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
-            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
-
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+          
+          docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+          
           docker buildx imagetools create -t nebulastream/nes-development-base:${{ inputs.ref }} \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}
 
           docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ inputs.ref }} \
             nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}
 
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ inputs.ref }}-libstdcxx \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
+          
           docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.ref }} \
             nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+          
+          docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.ref }}-libstdcxx \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
