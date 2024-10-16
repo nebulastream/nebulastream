@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -85,14 +85,8 @@ bool LogicalProjectionOperator::inferSchema()
         }
         else
         {
-            NES_ERROR(
-                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a FieldRenameFunction "
-                "but it was a {}",
-                function->toString());
-            throw TypeInferenceException(
-                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a "
-                "FieldRenameFunction but it was a "
-                + function->toString());
+            throw CannotInferSchema(
+                "Expression has to be an FieldAccessExpression or a FieldRenameExpression but it was a {}", function->toString());
         }
     }
     return true;

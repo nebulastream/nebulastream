@@ -32,6 +32,7 @@ EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
 EXCEPTION(FieldNotFound, 2004, "field not found")
 EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
 EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
+EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
@@ -50,12 +51,13 @@ EXCEPTION(UnknownUserDefinedFunctionType, 2112, "unknown user defined function t
 EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
-EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
-EXCEPTION(UnknownInvocationType, 2117, "unknown invocation type")
-EXCEPTION(UnknownExecutablePipelineProviderType, 2118, "unknown executable pipeline provider type")
-EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
-EXCEPTION(InvalidUseOfFunction, 2120, "function is not valid")
-EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
+EXCEPTION(UnknownExpressionArgumentType, 2116, "unknown expression argument type")
+EXCEPTION(UnknownWatermarkStrategy, 2117, "unknown watermark strategy")
+EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
+EXCEPTION(UnknownExecutablePipelineProviderType, 2119, "unknown executable pipeline provider type")
+EXCEPTION(UnknownCompilationBackendType, 2120, "unknown compilation backend type")
+EXCEPTION(InvalidUseOfFunction, 2121, "function is not valid")
+EXCEPTION(UnsupportedOperation, 2122, "tried to execute an unsupported operation")
 
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
@@ -68,10 +70,10 @@ EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
-EXCEPTION(CannotStartNodeEngine, 3003, "cannot start node engine")
-EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")
-EXCEPTION(CannotStartQueryManager, 3005, "cannot start query manager")
-EXCEPTION(CannotStopQueryManager, 3006, "cannot stop query manager")
+EXCEPTION(CannotStartNodeEngine, 3001, "cannot start node engine")
+EXCEPTION(CannotStopNodeEngine, 3002, "cannot stop node engine")
+EXCEPTION(CannotStartQueryManager, 3003, "cannot start query manager")
+EXCEPTION(CannotStopQueryManager, 3004, "cannot stop query manager")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
@@ -96,6 +98,7 @@ EXCEPTION(CannotAllocateBuffer, 9004, "cannot allocate buffer")
 EXCEPTION(InvalidRefCountForBuffer, 9005, "invalid reference counter for buffer")
 EXCEPTION(InvalidDynamicCast, 9006, "Invalid dynamic cast")
 EXCEPTION(UnknownOperator, 9007, "unknown operator")
+EXCEPTION(NotImplemented, 9008, "not implemented")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
