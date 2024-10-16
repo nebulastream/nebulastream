@@ -7,7 +7,8 @@ Query::from("default_source")
 ```
 
 For processing, this string is basically written into a c++ file and compiled.
-This approach has the following drawbacks:
+We want a streaming SQL frontend.
+Besides, the current approach has the following drawbacks:
 - The compilation is slow, taking about 1 second, which is too long, for example, for running multiple integration tests.
 - The process is insecure because users could add arbitrary c++ code to the query string, which would be compiled.
 
@@ -19,7 +20,7 @@ In this process, we will use a state-of-the-art parser generator (G2), such as G
 The NebulaStream-internal format (see G3) is described by the old query string (see above).
 
 # Non-Goals
-We do not implement a parser for the existing functional query sytax, shown in the query above (for time reasons. We may later add one).
+Highest performance is no primary goal.
 
 # Solution Background
 A parser is part of every database system with a language interface.
@@ -72,6 +73,11 @@ https://github.com/hyrise/sql-parser
 - A c++ parser library, originally built for the Hyrise database system
 - \+ A standalone, ready-to-use library.
 - \- No full SQL support and minor bugs (see also https://github.com/hyrise/sql-parser/issues)
+
+### Other Alternatives
+- Google's zetasql https://github.com/google/zetasql
+- libpg_query (extracted PostgreSQL parser in C) https://github.com/pganalyze/libpg_query
+- Datafusion's SQL parser (in Rust) https://github.com/apache/datafusion-sqlparser-rs
 
 # Open Questions
 When extending the grammar for streaming, e.g., Windows specifications in the from clause, we recently encountered parser conflicts, e.g., shift/reduce conflicts (https://www.gnu.org/software/bison/manual/html_node/Shift_002fReduce.html).
