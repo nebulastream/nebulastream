@@ -35,8 +35,8 @@ overrides
 defaults set by vcpkg. A CMake Toolchain file allows us to inject flags or choose a specific compiler toolchain or
 linker.
 
-More concretely [x64-linux-nes.cmake](vcpkg/custom-triplets/x64-linux-nes.cmake), is a custom triplet which includes
-the [linux-clang.cmake](vcpkg/custom-triplets/linux-clang.cmake) toolchain file. The triplet file can modify specific
+More concretely [x64-linux-none-libcxx.cmake](../vcpkg/custom-triplets/x64-linux-none-libcxx.cmake), is a custom triplet which includes
+the [libcxx-toolchain.cmake](../vcpkg/custom-triplets/libcxx-toolchain.cmake) toolchain file. The triplet file can modify specific
 dependencies (vcpkg calls them ports), whereas the toolchain file is a general set of compiler options, i.e., it enables
 building with the libc++ standard library. For example, we use the triplet file to enable building with different
 sanitizers.
