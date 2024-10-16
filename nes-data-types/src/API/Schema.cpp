@@ -31,12 +31,6 @@
 namespace NES
 {
 
-/// TODO #386 REMOVE THIS FUNCTION AFTER REFACTORING
-bool startsWith(const std::string& fullString, std::string_view ending)
-{
-    return (fullString.rfind(ending, 0) == 0);
-}
-
 Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType) {};
 
 SchemaPtr Schema::create(MemoryLayoutType layoutType)
@@ -283,7 +277,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) const
     bool found = false;
     for (const auto& field : this->fields)
     {
-        if (startsWith(field->getName(), fieldName))
+        if (field->getName().starts_with(fieldName))
         {
             found = true;
             break;
