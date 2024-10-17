@@ -49,9 +49,9 @@ uint64_t Schema::getSize() const
     return fields.size();
 }
 
-Schema::Schema(const SchemaPtr& schema, MemoryLayoutType layoutType) : layoutType(layoutType)
+Schema::Schema(const SchemaPtr& schema1, MemoryLayoutType layoutType1) : layoutType(layoutType1)
 {
-    copyFields(schema);
+    copyFields(schema1);
 }
 
 SchemaPtr Schema::copy() const
