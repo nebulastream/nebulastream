@@ -8,6 +8,11 @@ name: NES PR CI
 # Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
 
 on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
   pull_request:
     # The ready_for_review event is used when a draft pr is changed into a non-draft version. If we did
     # not use the ready_for_review the ci would not be triggered and appear to have passed.
@@ -27,7 +32,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         # has to be sha since github.base_ref would have to be checked out
-        BASE_REF: ${{ github.event.pull_request.base.sha }}
+        BASE_REF: ${{ github.event.pull_request.base.sha }} || ${{ inputs.branch }}
     permissions:
       issues: read
       contents: read
