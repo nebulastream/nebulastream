@@ -865,37 +865,37 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
 
 SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
 {
-    SerializableVariantDescriptor proto_var;
+    SerializableVariantDescriptor protoVar;
     std::visit(
-        [&proto_var]<typename T>(T&& arg)
+        [&protoVar]<typename T>(T&& arg)
         {
             /// Remove const, volatile, and reference to simplify type matching
             using U = std::remove_cvref_t<T>;
             if constexpr (std::is_same_v<U, int32_t>)
-                proto_var.set_int_value(arg);
+                protoVar.set_int_value(arg);
             else if constexpr (std::is_same_v<U, uint32_t>)
-                proto_var.set_uint_value(arg);
+                protoVar.set_uint_value(arg);
             else if constexpr (std::is_same_v<U, bool>)
-                proto_var.set_bool_value(arg);
+                protoVar.set_bool_value(arg);
             else if constexpr (std::is_same_v<U, char>)
-                proto_var.set_char_value(arg);
+                protoVar.set_char_value(arg);
             else if constexpr (std::is_same_v<U, float>)
-                proto_var.set_float_value(arg);
+                protoVar.set_float_value(arg);
             else if constexpr (std::is_same_v<U, double>)
-                proto_var.set_double_value(arg);
+                protoVar.set_double_value(arg);
             else if constexpr (std::is_same_v<U, std::string>)
-                proto_var.set_string_value(arg);
+                protoVar.set_string_value(arg);
             else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
             {
                 auto enumWrapper = SerializableEnumWrapper().New();
                 enumWrapper->set_value(arg.getValue());
-                proto_var.set_allocated_enum_value(enumWrapper);
+                protoVar.set_allocated_enum_value(enumWrapper);
             }
             else
                 static_assert(!std::is_same_v<U, U>, "Unsupported type in SourceDescriptorConfigTypeToProto"); /// is_same_v for logging T
         },
         var);
-    return proto_var;
+    return protoVar;
 }
 void OperatorSerializationUtil::serializeSourceDescriptor(
     const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)

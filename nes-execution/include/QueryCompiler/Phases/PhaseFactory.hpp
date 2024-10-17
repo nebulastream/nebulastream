@@ -27,7 +27,6 @@ public:
     virtual LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
     virtual PipeliningPhasePtr createPipeliningPhase() = 0;
     virtual AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) = 0;
-    virtual std::shared_ptr<LowerToExecutableQueryPlanPhase> createLowerToExecutableQueryPlanPhase() = 0;
 };
 using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 } /// namespace NES::QueryCompilation::Phases
