@@ -266,7 +266,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
          }});
 
     parser.registerSubstitutionRule(
-        {"TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/test/testdata"; }});
+        {"TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/tests/testdata"; }});
 
     if (!parser.loadFile(filePath))
     {
