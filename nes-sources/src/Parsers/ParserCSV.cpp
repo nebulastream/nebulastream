@@ -49,13 +49,13 @@ bool ParserCSV::writeInputTupleToTupleBuffer(
     }
     catch (std::exception e)
     {
-        NES_THROW_RUNTIME_ERROR(
-            "ParserCSV::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
+        throw CSVParsingError(fmt::format(
+            "ParserCSV::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
     }
 
     if (values.size() != schema.getSize())
     {
-        NES_THROW_RUNTIME_ERROR(fmt::format(
+        throw CSVParsingError(fmt::format(
             "ParserCSV: The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
