@@ -51,6 +51,37 @@ jobs:
     with:
       ref: ${{ github.event.pull_request.head.ref }}
 
+  check-clang-tidy:
+    needs: [ get-dev-images ]
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      options: --user root
+      env:
+        GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          # Otherwise, we are not able to run clang-tidy on the diff, as we are not fetching the base branch.
+          fetch-depth: 0
+      - name: Configure NebulaStream for Clang-Tidy
+        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Create results directory
+        run: mkdir clang-tidy-result
+      - name: Analyze by running Clang-Tidy
+        run: git diff -U0 "$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}")" | python3 ./scripts/clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -config-file .clang-tidy
+      - name: Run clang-tidy-pr-comments action
+        uses: platisd/clang-tidy-pr-comments@v1
+        with:
+          github_token: ${{ github.token }}
+          clang_tidy_fixes: clang-tidy-result/fixes.yml
+          request_changes: false
+          suggestions_per_comment: 20
+          # As we are running it in a docker, we need to set the repo path prefix to /__w
+          # This is mentioned in https://github.com/platisd/clang-tidy-pr-comments/blob/master/action.yml
+          repo_path_prefix: /__w
+
   build-linux:
     name: "Build ${{matrix.arch}}"
     needs: [ get-dev-images ]
