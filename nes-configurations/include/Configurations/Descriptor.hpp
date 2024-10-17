@@ -139,11 +139,11 @@ private:
             auto caseInsensitiveEqual = [](const unsigned char leftChar, const unsigned char rightChar)
             { return std::tolower(leftChar) == std::tolower(rightChar); };
 
-            if (std::ranges::equal(stringParameter, std::string_view("true"), caseInsensitiveEqual))
+            if (std::ranges::equal(stringParameter, "true"sv, caseInsensitiveEqual))
             {
                 return true;
             }
-            if (std::ranges::equal(stringParameter, std::string_view("false"), caseInsensitiveEqual))
+            if (std::ranges::equal(stringParameter, "false"sv, caseInsensitiveEqual))
             {
                 return false;
             }
