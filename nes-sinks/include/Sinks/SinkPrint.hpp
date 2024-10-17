@@ -19,11 +19,10 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
-
 
 
 namespace NES::Sinks
