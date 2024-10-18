@@ -63,6 +63,16 @@ void PagedVector::appendAllPages(PagedVector& other)
     other.pages.clear();
 }
 
+uint64_t PagedVector::getTotalNumberOfEntries() const
+{
+    auto totalNumEntries = 0UL;
+    for (const auto& page : pages)
+    {
+        totalNumEntries += page.getNumberOfTuples();
+    }
+    return totalNumEntries;
+}
+
 void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
 {
     if (entryPos == tupleBufferAndPosForEntry.entryPos)
@@ -74,18 +84,18 @@ void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
     for (auto& page : pages)
     {
         auto numTuplesOnPage = page.getNumberOfTuples();
-
-        /// store the entry position on the current page and the last page read
         if (entryPos < numTuplesOnPage)
         {
             tupleBufferAndPosForEntry.bufferPos = entryPos;
             tupleBufferAndPosForEntry.buffer = page.operator&(); // TODO
+            return;
         }
-        else
-        {
-            entryPos -= numTuplesOnPage;
-        }
+
+        entryPos -= numTuplesOnPage;
     }
+
+    tupleBufferAndPosForEntry.bufferPos = 0;
+    tupleBufferAndPosForEntry.buffer = nullptr;
 }
 
 std::vector<Memory::TupleBuffer>& PagedVector::getPages()

@@ -70,6 +70,9 @@ public:
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 
+    /// Iterates over all pages and sums up the number of tuples
+    uint64_t getTotalNumberOfEntries() const;
+
     std::vector<Memory::TupleBuffer>& getPages();
     [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] uint64_t getEntrySize() const;

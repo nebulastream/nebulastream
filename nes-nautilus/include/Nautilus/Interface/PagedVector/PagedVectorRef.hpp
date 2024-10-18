@@ -14,10 +14,8 @@
 
 #pragma once
 
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -26,7 +24,7 @@ class PagedVectorRefIter;
 class PagedVectorRef
 {
 public:
-    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorVarSizedRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /**
      * @brief Writes a new record to the PagedVectorRef
@@ -39,33 +37,33 @@ public:
      * @param pos
      * @return Record
      */
-    Record readRecord(const nautilus::val<uint64_t>& pos);
+    Record readRecord(const nautilus::val<uint64_t>& pos) const;
 
     /**
      * @brief Reads the keys from a record in the PagedVectorRef
      * @param pos
      * @return Record
      */
-    Record readRecordKeys(const nautilus::val<uint64_t>& pos);
+    Record readRecordKeys(const nautilus::val<uint64_t>& pos) const;
 
     /**
-     * @brief Creates a PageVectorVarSizedRefIter that points to the first entry in the PagedVectorRef
+     * @brief Creates a PageVectorRefIter that points to the first entry in the PagedVectorRef
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter begin();
+    PagedVectorRefIter begin() const;
 
     /**
-     * @brief Creates a PageVectorVarSizedRefIter that points to the entry at the given position in the PagedVectorRef
+     * @brief Creates a PageVectorRefIter that points to the entry at the given position in the PagedVectorRef
      * @param pos
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter at(nautilus::val<uint64_t> pos);
+    PagedVectorRefIter at(const nautilus::val<uint64_t>& pos) const;
 
     /**
-     * @brief Creates a PageVectorVarSizedRefIter that points to the end of the PagedVectorRef
+     * @brief Creates a PageVectorRefIter that points to the end of the PagedVectorRef
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter end();
+    PagedVectorRefIter end() const;
 
     /**
      * @brief Equality operator
@@ -74,16 +72,10 @@ public:
      */
     bool operator==(const PagedVectorRef& other) const;
 
-    nautilus::val<uint64_t> getTotalNumberOfEntries();
-
 private:
-    void setTotalNumberOfEntries(const nautilus::val<uint64_t>& val);
-    nautilus::val<uint64_t> getNumberOfEntriesOnCurrPage();
-    void setNumberOfEntriesOnCurrPage(const nautilus::val<uint64_t>& val);
-    nautilus::val<int8_t*> getLastPageRead();
-
     const nautilus::val<PagedVector*> pagedVectorRef;
-    const MemoryProvider::MemoryProviderPtr memoryProvider;
+    const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    nautilus::val<uint64_t> totalNumberOfEntries;
 };
 
 class PagedVectorRefIter
@@ -91,13 +83,13 @@ class PagedVectorRefIter
 public:
     friend class PagedVectorRef;
 
-    explicit PagedVectorRefIter(const PagedVectorRef& pagedVectorVarSized);
+    explicit PagedVectorRefIter(const PagedVectorRef& pagedVector);
 
     /**
      * @brief Dereference operator that returns the record at a given entry in the ListRef
      * @return Record
      */
-    Record operator*();
+    Record operator*() const;
 
     /**
      * @brief Pre-increment operator that first increments and then returns the reference
@@ -120,9 +112,10 @@ public:
     bool operator!=(const PagedVectorRefIter& other) const;
 
 private:
-    void setPos(nautilus::val<uint64_t> newValue);
+    void setPos(const nautilus::val<uint64_t>& newPos);
 
     nautilus::val<uint64_t> pos;
-    PagedVectorRef pagedVector;
+    const PagedVectorRef pagedVector;
 };
+
 } ///namespace NES::Nautilus::Interface

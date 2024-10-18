@@ -16,34 +16,85 @@
 
 namespace NES::Nautilus::Interface
 {
-PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
-    : pagedVectorRef(pagedVectorRef)
-    , memoryProvider(MemoryProvider::TupleBufferMemoryProvider::create(memoryLayout->getBufferSize(), memoryLayout->getSchema()))
+
+uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
 {
+    return pagedVector->getTotalNumberOfEntries();
 }
 
 void allocateNewPageProxy(PagedVector* pagedVector)
 {
-    return pagedVector->appendPage();
+    pagedVector->appendPage();
+}
+
+Memory::TupleBuffer* getTupleBufferForEntryProxy(PagedVector* pagedVector, const uint64_t entryPos)
+{
+    return pagedVector->getTupleBufferForEntry(entryPos);
+}
+
+uint64_t getBufferPosForEntryProxy(PagedVector* pagedVector, const uint64_t entryPos)
+{
+    return pagedVector->getBufferPosForEntry(entryPos);
+}
+
+PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+    : pagedVectorRef(pagedVectorRef)
+    , memoryLayout(std::move(memoryLayout))
+    , totalNumberOfEntries(invoke(getTotalNumberOfEntriesProxy, pagedVectorRef))
+{
 }
 
 void PagedVectorRef::writeRecord(const Record& record)
 {
-    (void)record;
+    auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, totalNumberOfEntries));
+
+    auto numTuplesOnPage = recordBuffer.getNumRecords();
+    if (numTuplesOnPage >= memoryLayout->getCapacity())
+    {
+        invoke(allocateNewPageProxy, pagedVectorRef);
+        numTuplesOnPage = 0;
+    }
+
+    recordBuffer.setNumRecords(numTuplesOnPage + 1);
+    totalNumberOfEntries += 1;
+
+    const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(memoryLayout->getBufferSize(), memoryLayout->getSchema());
+    memoryProvider->writeRecord(numTuplesOnPage, recordBuffer, record);
 }
 
-Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos)
+Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos) const
 {
-    (void)pos;
-    Record record;
-    return record;
+    auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos));
+    auto recordEntry = invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
+
+    const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(memoryLayout->getBufferSize(), memoryLayout->getSchema());
+    return memoryProvider->readRecord(memoryLayout->getSchema()->getFieldNames(), recordBuffer, recordEntry);
 }
 
-Record readRecordKeys(const nautilus::val<uint64_t>& pos)
+Record PagedVectorRef::readRecordKeys(const nautilus::val<uint64_t>& pos) const
 {
-    (void)pos;
-    Record record;
-    return record;
+    auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, pos));
+    auto recordEntry = invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
+
+    const auto memoryProvider = MemoryProvider::TupleBufferMemoryProvider::create(memoryLayout->getBufferSize(), memoryLayout->getSchema());
+    return memoryProvider->readRecord(memoryLayout->getKeyFieldNames(), recordBuffer, recordEntry);
+}
+
+PagedVectorRefIter PagedVectorRef::begin() const
+{
+    return at(0);
+}
+
+PagedVectorRefIter PagedVectorRef::at(const nautilus::val<uint64_t>& pos) const
+{
+    PagedVectorRefIter pagedVectorRefIter(*this);
+    pagedVectorRefIter.setPos(pos);
+    return pagedVectorRefIter;
+}
+
+PagedVectorRefIter PagedVectorRef::end() const
+{
+    return at(totalNumberOfEntries);
 }
 
 bool PagedVectorRef::operator==(const PagedVectorRef& other) const
@@ -53,7 +104,43 @@ bool PagedVectorRef::operator==(const PagedVectorRef& other) const
         return true;
     }
 
-    return memoryLayout == other.memoryLayout && pagedVectorRef == other.pagedVectorRef;
+    return memoryLayout == other.memoryLayout && pagedVectorRef == other.pagedVectorRef
+        && totalNumberOfEntries == other.totalNumberOfEntries;
+}
+
+PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRef& pagedVector) : pos(0), pagedVector(pagedVector)
+{
+}
+
+Record PagedVectorRefIter::operator*() const
+{
+    return pagedVector.readRecord(pos);
+}
+
+PagedVectorRefIter& PagedVectorRefIter::operator++()
+{
+    pos = pos + 1;
+    return *this;
+}
+
+bool PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const
+{
+    if (this == &other)
+    {
+        return true;
+    }
+
+    return pos == other.pos && pagedVector == other.pagedVector;
+}
+
+bool PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const
+{
+    return !(*this == other);
+}
+
+void PagedVectorRefIter::setPos(const nautilus::val<uint64_t>& newPos)
+{
+    pos = newPos;
 }
 
 }
