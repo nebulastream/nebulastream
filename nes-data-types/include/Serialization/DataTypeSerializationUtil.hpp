@@ -58,7 +58,7 @@ public:
      * @param serializedDataValue The corresponding protobuff object, which is used to capture the state of the object.
      * @return the modified serializedDataValue
      */
-    static SerializableDataValue* serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
+    static SerializableDataValue* serializeBasicValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
 
     /**
     * @brief De-serializes the SerializableDataValue and all its children to a ValueTypePtr

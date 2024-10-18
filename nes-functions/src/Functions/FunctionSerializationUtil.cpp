@@ -71,7 +71,7 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
         auto value = constantValueFunction->getConstantValue();
         /// serialize value
         auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
-        DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue.mutable_value());
+        DataTypeSerializationUtil::serializeBasicValue(value, serializedConstantValue.mutable_value());
         serializedFunction->mutable_details()->PackFrom(serializedConstantValue);
     }
     else if (Util::instanceOf<NodeFunctionFieldAccess>(function))

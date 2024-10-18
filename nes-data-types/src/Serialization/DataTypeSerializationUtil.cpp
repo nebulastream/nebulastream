@@ -134,13 +134,12 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
 }
 
 SerializableDataValue*
-DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue)
+DataTypeSerializationUtil::serializeBasicValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue)
 {
-    /// serialize data value
     /// serialize all information for basic value types
     /// 1. cast to BasicValueType
     auto const basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
-    assert(basicValueType);
+    PRECONDITION(basicValueType, "valueType argument must be a BasicValue");
     /// 2. create basic value details
     auto serializedBasicValue = SerializableDataValue_BasicValue();
     /// 3. copy value
