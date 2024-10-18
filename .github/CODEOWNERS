@@ -21,6 +21,7 @@
 /nes-operators/ @adrianmichalke @alepping @keyseven123
 /nes-runtime/ @keyseven123 @ls-1801 @adrianmichalke
 /nes-single-node-worker/ @alepping @adrianmichalke @ls-1801
+/nes-systests/systest/ @adrianmichalke
 /nes-sources/ @alepping @keyseven123 @ls-1801
 /nes-systests/ @adrianmichalke @ls-1801
 /nes-window-types/ @alepping @adrianmichalke @keyseven123 @ls-1801
