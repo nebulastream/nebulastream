@@ -81,7 +81,7 @@ private:
 #define PRECONDITION(condition, ...) \
     if (!(condition)) \
     { \
-        throw PreconditionViolated(__VA_ARGS__); \
+        throw NES::PreconditionViolated(__VA_ARGS__); \
     }
 
 /**
@@ -93,7 +93,7 @@ private:
 #define INVARIANT(condition, ...) \
     if (!(condition)) \
     { \
-        throw InvariantViolated(__VA_ARGS__); \
+        throw NES::InvariantViolated(__VA_ARGS__); \
     }
 
 /**
