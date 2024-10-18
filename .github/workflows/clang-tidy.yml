@@ -22,6 +22,7 @@ jobs:
     runs-on: [ self-hosted, linux, Build ]
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      # TODO #401 Investigate rootless docker containers
       options: --user root
     steps:
       - uses: actions/checkout@v4
