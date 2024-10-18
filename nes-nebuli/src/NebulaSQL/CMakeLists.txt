@@ -1,3 +1,5 @@
+# Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_test_nebuli(slt-parser-test "SLTParserTests.cpp"  "SLTParserInvalidTestFilesTests.cpp" "SLTParserValidTestFilesTests.cpp")
-target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
+add_source_files(nes-parser
+        NebulaSQLQueryPlanCreator.cpp
+        NebulaSQLHelper.cpp
+)
 
-add_nes_test_nebuli(sql-query-plan-test "SQLParsingServiceTest.cpp")
-target_compile_definitions(sql-query-plan-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
+add_subdirectory(gen)
+

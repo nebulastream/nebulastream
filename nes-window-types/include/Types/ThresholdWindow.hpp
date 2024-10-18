@@ -21,7 +21,6 @@
 namespace NES
 {
 
-using ExpressionNodePtr = std::shared_ptr<class ExpressionNode>;
 
 namespace Windowing
 {
