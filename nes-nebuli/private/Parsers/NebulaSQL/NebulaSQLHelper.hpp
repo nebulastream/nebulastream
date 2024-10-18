@@ -60,7 +60,7 @@ public:
     std::shared_ptr<Windowing::WindowType> windowType;
     bool isTimeBasedWindow = true;
     bool isSetOperation = false;
-    bool isGroupBy;
+    bool isGroupBy = false;
     std::vector<WindowAggregationDescriptorPtr> windowAggs;
 
     std::vector<std::shared_ptr<NES::NodeFunction>> projections;

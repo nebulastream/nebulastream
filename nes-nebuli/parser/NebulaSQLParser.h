@@ -1,13 +1,18 @@
 
-// Generated from NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
 
-#include <antlr4-runtime.h>
+#include "antlr4-runtime.h"
 
 
-namespace NES::Parsers {
+#include <Util/DisableWarningsPragma.hpp>
+DISABLE_WARNING_PUSH
+DISABLE_WARNING(-Wlogical-op-parentheses)
+DISABLE_WARNING(-Wunused-parameter)
+
+
 
 
 class  NebulaSQLParser : public antlr4::Parser {
@@ -70,26 +75,24 @@ public:
   };
 
   explicit NebulaSQLParser(antlr4::TokenStream *input);
-  ~NebulaSQLParser();
 
-  virtual std::string getGrammarFileName() const override;
-  virtual const antlr4::atn::ATN& getATN() const override { return _atn; };
-  // virtual const dfa::Vocabulary getVocabulary() const override { return _tokenNames; }; // deprecated: use vocabulary instead.
-  // virtual const std::vector<std::string>& getTokenNames() const override { return _tokenNames; }; // deprecated: use vocabulary instead.
-  virtual const std::vector<std::string>& getRuleNames() const override;
-  virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
+  NebulaSQLParser(antlr4::TokenStream *input, const antlr4::atn::ParserATNSimulatorOptions &options);
+
+  ~NebulaSQLParser() override;
+
+  std::string getGrammarFileName() const override;
+
+  const antlr4::atn::ATN& getATN() const override;
+
+  const std::vector<std::string>& getRuleNames() const override;
+
+  const antlr4::dfa::Vocabulary& getVocabulary() const override;
+
+  antlr4::atn::SerializedATNView getSerializedATN() const override;
 
 
-    /**
-     * When true, the behavior of keywords follows ANSI SQL standard.
-     */
-    bool SQL_standard_keyword_behavior = false;
-
-      /**
-       * When false, a literal with an exponent would be converted into
-       * double type rather than decimal type.
-       */
-    bool legacy_exponent_literal_as_decimal_enabled = false;
+        bool SQL_standard_keyword_behavior = false;
+        bool legacy_exponent_literal_as_decimal_enabled = false;
 
 
   class SingleStatementContext;
@@ -2142,7 +2145,8 @@ public:
   NonReservedContext* nonReserved();
 
 
-  virtual bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+  bool sempred(antlr4::RuleContext *_localctx, size_t ruleIndex, size_t predicateIndex) override;
+
   bool queryTermSempred(QueryTermContext *_localctx, size_t predicateIndex);
   bool identifierSempred(IdentifierContext *_localctx, size_t predicateIndex);
   bool strictIdentifierSempred(StrictIdentifierContext *_localctx, size_t predicateIndex);
@@ -2151,23 +2155,11 @@ public:
   bool primaryExpressionSempred(PrimaryExpressionContext *_localctx, size_t predicateIndex);
   bool numberSempred(NumberContext *_localctx, size_t predicateIndex);
 
+  // By default the static state used to implement the parser is lazily initialized during the first
+  // call to the constructor. You can call this function if you wish to initialize the static state
+  // ahead of time.
+  static void initialize();
+
 private:
-  static std::vector<antlr4::dfa::DFA> _decisionToDFA;
-  static antlr4::atn::PredictionContextCache _sharedContextCache;
-  static std::vector<std::string> _ruleNames;
-  static std::vector<std::string> _tokenNames;
-
-  static std::vector<std::string> _literalNames;
-  static std::vector<std::string> _symbolicNames;
-  static antlr4::dfa::Vocabulary _vocabulary;
-  static antlr4::atn::ATN _atn;
-  static std::vector<uint16_t> _serializedATN;
-
-
-  struct Initializer {
-    Initializer();
-  };
-  static Initializer _init;
 };
 
-}  // namespace NES::Parsers

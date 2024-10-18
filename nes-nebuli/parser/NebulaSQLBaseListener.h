@@ -1,14 +1,12 @@
 
-// Generated from NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
 
 #include "antlr4-runtime.h"
-#include <Parsers/NebulaSQL/gen/NebulaSQLListener.h>
+#include "NebulaSQLListener.h"
 
-
-namespace NES::Parsers {
 
 /**
  * This class provides an empty implementation of NebulaSQLListener,
@@ -398,4 +396,3 @@ public:
 
 };
 
-}  // namespace NES::Parsers

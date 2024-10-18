@@ -12,29 +12,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// #include <Operators/Expressions/FieldAssignmentExpressionNode.hpp>
+// #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <regex>
+
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-// #include <Operators/Expressions/LogicalExpressions/AndExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/LessExpressionNode.hpp>
-// #include <Operators/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-// #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperatorNode.hpp>
-// #include <Operators/LogicalOperators/Windows/Actions/CompleteAggregationTriggerActionDescriptor.hpp>
-// #include <Operators/LogicalOperators/Windows/Actions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-// #include <Operators/LogicalOperators/Windows/DistributionCharacteristic.hpp>
-// #include <Operators/LogicalOperators/Windows/LogicalWindowDefinition.hpp>
-// #include <Operators/LogicalOperators/Windows/Measures/TimeCharacteristic.hpp>
-// #include <Operators/LogicalOperators/Windows/TriggerPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include "Common/DataTypes/Integer.hpp"
+#include "Functions/LogicalFunctions/NodeFunctionLess.hpp"
+
+
 #include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
+#include "Operators/LogicalOperators/LogicalOperatorFactory.hpp"
 
 namespace NES::Parsers
 {
@@ -136,7 +134,7 @@ void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinary
     }
     else if (opText == "OR")
     {
-        expression = NES::OrExpressionNode::create(leftExpression, rightExpression);
+        expression = NES::NodeFunctionOr::create(leftExpression, rightExpression);
     }
 
     helper.expressionBuilder.push_back(expression);
@@ -144,9 +142,9 @@ void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinary
 }
 void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context)
 {
-    ExpressionNodePtr expressionNode;
+    NodeFunctionPtr expressionNode;
     NebulaSQLHelper helper = helpers.top();
-    for (const ExpressionNodePtr& selectExpression : helper.expressionBuilder)
+    for (const NodeFunctionPtr& selectExpression : helper.expressionBuilder)
     {
         helper.addProjectionField(selectExpression);
     }
@@ -192,7 +190,7 @@ void NebulaSQLQueryPlanCreator::enterComparisonOperator(NebulaSQLParser::Compari
 void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    NES::ExpressionNodePtr expression;
+    NES::NodeFunctionPtr expression;
 
     auto rightExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
@@ -230,7 +228,7 @@ void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::Arithmetic
 void NebulaSQLQueryPlanCreator::exitArithmeticUnary(NebulaSQLParser::ArithmeticUnaryContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    NES::ExpressionNodePtr expression;
+    NES::NodeFunctionPtr expression;
 
     auto innerExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
@@ -295,7 +293,7 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
     }
     if (helper.isGroupBy)
     {
-        FieldAccessExpressionNodePtr key = FieldAccessExpressionNode::create(context->getText())->as<FieldAccessExpressionNode>();
+        NodeFunctionFieldAccessPtr key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -317,12 +315,12 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
         }
         else if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            ExpressionNodePtr attr = helper.expressionBuilder.back();
+            NodeFunctionPtr attr = helper.expressionBuilder.back();
             helper.expressionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
                 // rename of a single attribute
-                ExpressionItem cattr = static_cast<ExpressionItem>(attr);
+                FunctionItem cattr = static_cast<FunctionItem>(attr);
                 cattr = cattr.as(context->getText());
                 helper.expressionBuilder.push_back(cattr);
             }
@@ -395,46 +393,7 @@ void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryCo
     {
         queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
     }
-    if (helper.windowType != nullptr && helper.joinSources.empty())
-    {
-        if (helper.isTimeBasedWindow)
-        {
-            queryPlan = QueryPlanBuilder::checkAndAddWatermarkAssignment(queryPlan, helper.windowType);
-        }
-        auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
-        auto distributionType = Windowing::DistributionCharacteristic::createCompleteWindowType();
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-        LogicalWindowDefinitionPtr windowDefinition;
-        if (helper.groupByFields.empty())
-        {
-            windowDefinition = Windowing::LogicalWindowDefinition::create(
-                helper.windowAggs, helper.windowType, distributionType, triggerPolicy, triggerAction, 0);
-        }
-        else
-        {
-            windowDefinition = Windowing::LogicalWindowDefinition::create(
-                helper.groupByFields, helper.windowAggs, helper.windowType, distributionType, triggerPolicy, triggerAction, 0);
-        }
-        auto op = LogicalOperatorFactory::createWindowOperator(windowDefinition);
-        queryPlan->appendOperatorAsNewRoot(op);
-    }
-    else
-    {
-        // Join Handling
-        //  Vector von StreamName, Linkes Join Attribute, Recchtes Join Attribute
-        for (unsigned long i = 0; i < helper.joinSources.size(); i++)
-        {
-            auto queryPlanRight = QueryPlanBuilder::createQueryPlan(helper.joinSources[i]);
-            if (!helper.joinSourceRenames[i].empty() && helper.joinSourceRenames[i] != helper.joinSources[i])
-            {
-                queryPlanRight = QueryPlanBuilder::addRename(helper.joinSourceRenames[i], queryPlanRight);
-            }
-            auto leftKey = helper.joinKeys[i].first;
-            auto rightKey = helper.joinKeys[i].second;
-            queryPlan = QueryPlanBuilder::addJoin(
-                queryPlan, queryPlanRight, leftKey, rightKey, helper.windowType, Join::LogicalJoinDefinition::JoinType::INNER_JOIN);
-        }
-    }
+
     if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
     {
         queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
@@ -561,7 +520,7 @@ void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpres
         && context->children.size() == 1)
     {
         std::string implicitFieldName = "mapField" + std::to_string(helper.implicitMapCountHelper);
-        ExpressionNodePtr attr = helper.expressionBuilder.back();
+        NodeFunctionPtr attr = helper.expressionBuilder.back();
         helper.expressionBuilder.pop_back();
         helper.mapBuilder.push_back(Attribute(implicitFieldName) = attr);
 
@@ -603,9 +562,10 @@ void NebulaSQLQueryPlanCreator::exitHavingClause(NebulaSQLParser::HavingClauseCo
 void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    NES::ExpressionNodePtr expression;
+    NES::NodeFunctionPtr expression;
     if (!helper.isJoinRelation)
     {
+        INVARIANT(helper.expressionBuilder.size() >= 2, "Requires two expressions")
         auto rightExpression = helper.expressionBuilder.back();
         helper.expressionBuilder.pop_back();
         auto leftExpression = helper.expressionBuilder.back();
@@ -613,23 +573,23 @@ void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContex
         std::string op = context->children.at(1)->getText();
         if (op == ">")
         {
-            expression = NES::GreaterExpressionNode::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionGreater::create(leftExpression, rightExpression);
         }
         else if (op == "<")
         {
-            expression = NES::LessExpressionNode::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionLess::create(leftExpression, rightExpression);
         }
         else if (op == ">=")
         {
-            expression = NES::GreaterEqualsExpressionNode::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionGreaterEquals::create(leftExpression, rightExpression);
         }
         else if (op == "<=")
         {
-            expression = NES::LessEqualsExpressionNode::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionLessEquals::create(leftExpression, rightExpression);
         }
         else if (op == "==" || op == "=")
         {
-            expression = NES::EqualsExpressionNode::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionEquals::create(leftExpression, rightExpression);
         }
         else
         {
@@ -651,7 +611,7 @@ void NebulaSQLQueryPlanCreator::enterJoinRelation(NebulaSQLParser::JoinRelationC
 void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    NES::ExpressionNodePtr expression;
+    NES::NodeFunctionPtr expression;
 
     auto innerExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
@@ -665,7 +625,10 @@ void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContex
 void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
+    std::shared_ptr<DataType> dataType = std::make_shared<Integer>(std::stoi(context->getText()), 0, 128);
+    const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
+    auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(valueType));
+    helper.expressionBuilder.push_back(constFunctionItem);
     poppush(helper);
 }
 

@@ -267,7 +267,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw DynamicCast(std::format("Invalid dynamic cast: from {} to {}", typeid(In).name(), typeid(Out).name()));
+    throw DynamicCast();
 }
 
 /// cast the given object to the specified type.

@@ -1,14 +1,12 @@
 
-// Generated from NebulaSQL.g4 by ANTLR 4.9.2
+// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
 
 #include "antlr4-runtime.h"
-#include <Parsers/NebulaSQL/gen/NebulaSQLParser.h>
+#include "NebulaSQLParser.h"
 
-
-namespace NES::Parsers {
 
 /**
  * This interface defines an abstract listener for a parse tree produced by NebulaSQLParser.
@@ -391,4 +389,3 @@ public:
 
 };
 
-}  // namespace NES::Parsers

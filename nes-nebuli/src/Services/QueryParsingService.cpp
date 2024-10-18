@@ -20,11 +20,12 @@
 #include <Compiler/DynamicObject.hpp>
 #include <Compiler/JITCompiler.hpp>
 #include <Compiler/SourceCode.hpp>
+#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ANTLRInputStream.h>
 #include <ErrorHandling.hpp>
-
 namespace NES
 {
 
@@ -79,6 +80,21 @@ SchemaPtr QueryParsingService::createSchemaFromCode(const std::string& queryCode
         NES_ERROR("QueryParsingService : Failed to create the query from input code string: {}", queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
+}
+QueryPlanPtr QueryParsingService::createQueryFromSQL(const std::string& query)
+{
+    antlr4::ANTLRInputStream input(query.c_str(), query.length());
+    NebulaSQLLexer lexer(&input);
+    antlr4::CommonTokenStream tokens(&lexer);
+    NebulaSQLParser parser(&tokens);
+    NebulaSQLParser::QueryContext* tree = parser.query();
+    NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string {}", tree->toStringTree(&parser));
+    NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
+    Parsers::NebulaSQLQueryPlanCreator queryPlanCreator;
+    antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
+    auto queryPlan = queryPlanCreator.getQueryPlan();
+    NES_DEBUG("PatternParsingService: created the query from AST \n{}", queryPlan->toString());
+    return queryPlan;
 }
 
 QueryPlanPtr QueryParsingService::createQueryFromCodeString(const std::string& queryCodeSnippet)

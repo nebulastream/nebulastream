@@ -16,6 +16,3 @@ add_source_files(nes-parser
         NebulaSQLQueryPlanCreator.cpp
         NebulaSQLHelper.cpp
 )
-
-add_subdirectory(gen)
-
