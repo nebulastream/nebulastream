@@ -25,6 +25,7 @@ concurrency:
 
 jobs:
   check-format:
+    if: ${{ !cancelled() && !github.event.workflow_call }}
     runs-on: [ self-hosted, linux, Build ]
     container:
       image: nebulastream/nes-development:latest
