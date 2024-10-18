@@ -55,8 +55,6 @@ uint64_t PagedVector::getBufferPosForEntry(uint64_t entryPos)
 
 void PagedVector::appendAllPages(PagedVector& other)
 {
-    /// TODO optimize appending the maps
-    /// one idea is to get the field indices of the text fields beforehand if there is more than one text field as sequential reading is more efficient
     NES_ASSERT2_FMT(
         memoryLayout->getSchema()->hasEqualTypes(other.memoryLayout->getSchema()),
         "Cannot combine PagedVectors with different PhysicalTypes!");
@@ -81,7 +79,7 @@ void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
         if (entryPos < numTuplesOnPage)
         {
             tupleBufferAndPosForEntry.bufferPos = entryPos;
-            tupleBufferAndPosForEntry.buffer = new Memory::TupleBuffer(page); // TODO
+            tupleBufferAndPosForEntry.buffer = page.operator&(); // TODO
         }
         else
         {
@@ -110,4 +108,4 @@ uint64_t PagedVector::getCapacityPerPage() const
     return memoryLayout->getCapacity();
 }
 
-} /// namespace NES::Nautilus::Interface
+}
