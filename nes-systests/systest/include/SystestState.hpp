@@ -16,6 +16,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <filesystem>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -29,17 +30,20 @@ using TestGroup = std::string;
 
 struct Query
 {
-    std::string name;
+    Query(std::string name) : name(std::move(name)) {};
+
+    const std::string name;
+
+private:
     DecomposedQueryPlanPtr queryPlan;
     const std::filesystem::path cacheFile;
     uint64_t queryId;
 };
 
-/// Representation of a system test file
 class TestFile
 {
 public:
-    TestFile(std::filesystem::path file) : file(file), groups(readGroups()), queries(readQueries()) {};
+    TestFile(std::filesystem::path file) : file(std::move(file)), groups(readGroups()), queries(readQueries()) {};
 
     std::string name(){
         return file.stem().string();
@@ -49,14 +53,51 @@ public:
     const std::vector<TestGroup> groups;
     const std::vector<Query> queries;
 
-    private:
+private:
     std::vector<Query> readQueries();
     std::vector<TestGroup> readGroups();
 };
 
 using TestFileMap = std::unordered_map<TestName, TestFile>;
 
-TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
+TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
+{
+    TestFileMap testFiles;
+    if (not config.directlySpecifiedTestsFiles.getValue().empty()) /// load specifc test file
+    {
+        auto testPath = config.directlySpecifiedTestsFiles.getValue();
+        testFiles.emplace_back(testFile(testPath));
+    }
+    else if (not config.testGroup.getValue().empty()) /// load specific test group
+    {
+        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
+        auto testFileExtension = config.testFileExtension.getValue();
+        auto groupname = config.testGroup.getValue();
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
+        {
+            auto testname = entry.path().stem().string();
+            if (entry.is_regular_file() && entry.path().extension() == testFileExtension && isInGroup(entry, groupname))
+            {
+                TestGroup group = {groupname, {testname, {entry.path()}}};
+                TestFile file = {testname, canonical(entry.path()), {},{group}};
+                testFiles.push_back(file);
+            }
+        }
+    }
+    else /// laod from test dir
+    {
+        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
+        auto testFileExtension = config.testFileExtension.getValue();
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
+        {
+            if (entry.is_regular_file() && entry.path().extension() == testFileExtension)
+            {
+                testFiles.push_back({entry.path().stem().string(), canonical(entry.path()), {}, {}});
+            }
+        }
+    }
+    return testFiles;
+}
 
 std::vector<TestGroup> getGroups(const TestFileMap& testMap){
     std::unordered_map<TestGroup, std::vector<std::filesystem::path>> groups{};

@@ -65,7 +65,7 @@ public:
         std::cout << "Find the log at: file://" << logPath.string() << std::endl;
         std::cout << "Find the test file at: file://" SYSTEM_TEST_FILE_PATH << std::endl;
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/tests/result/" + systemTestName + std::to_string(testId) + ".csv");
+        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/nes-systests/result/" + systemTestName + std::to_string(testId) + ".csv");
 
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cachedQueryPlanFile);

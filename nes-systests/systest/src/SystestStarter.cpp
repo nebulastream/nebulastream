@@ -27,6 +27,7 @@
 #include <SystestGrpc.hpp>
 #include <SystestHelper.hpp>
 #include <SystestRunner.hpp>
+#include <SystestState.hpp>
 
 using namespace std::literals;
 
@@ -60,7 +61,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
     program.add_argument("-w", "--workerConfig").help("load worker config file (.yaml)");
     program.add_argument("-q", "--queryCompilerConfig").help("load query compiler config file (.yaml)");
 
-    program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/tests/result/");
+    program.add_argument("--resultDir").help("change the result directory. Default: " PATH_TO_BINARY_DIR "/nes-systests/result/");
 
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
 
@@ -241,6 +242,13 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
 }
 
 
+void shuffleQueries(std::vector<NES::Systest::Query> queries)
+{
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(queries.begin(), queries.end(), g);
+}
+
 int main(int argc, const char** argv)
 {
     using namespace NES;
@@ -249,22 +257,26 @@ int main(int argc, const char** argv)
     {
         Logger::setupLogging("systest.log", LogLevel::LOG_ERROR);
 
+        /// Read the configuration
         auto [config, com] = Systest::readConfiguration(argc, argv);
 
         DecomposedQueryPlanPtr decomposedQueryPlan;
 
         if (com == Systest::Command::run)
         {
+            /// Clear files in result dir
             auto resultDir = std::filesystem::path(config.resultDir.getValue());
             Systest::removeFilesInDirectory(resultDir);
 
+            /// TODO: relaod test data files -> why dont we just use them from the original dir?
+
+            /// Collect all queries
             std::vector<Systest::Query> queries = Systest::collectQueriesToTest(config);
 
+            /// Reorder if needed
             if (config.randomQueryOrder)
             {
-                std::random_device rd;
-                std::mt19937 g(rd());
-                std::shuffle(queries.begin(), queries.end(), g);
+
             }
 
             auto capacity = config.numberConcurrentQueries.getValue();
