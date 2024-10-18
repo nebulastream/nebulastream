@@ -24,8 +24,9 @@ get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-compiler COMPILER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
+get_source(nes-parser PARSER_SOURCE_FILES)
 
-add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${PARSER_SOURCE_FILES})
 
 target_compile_definitions(nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -33,13 +34,14 @@ target_compile_definitions(nebuli-lib PRIVATE PATH_TO_NES_SOURCE_CODE="${PATH_TO
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
-target_include_directories(nebuli-lib
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+find_package(antlr4-runtime CONFIG REQUIRED)
 
+target_include_directories(nebuli-lib
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> ${ANTLR4_INCLUDE_DIR}
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_link_libraries(nebuli-lib
         PUBLIC nes-operators
-        PRIVATE yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
+        PRIVATE antlr4_static yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
 )
 
 add_executable(nebuli src/NebuLIStarter.cpp)
@@ -98,7 +100,7 @@ add_nebuli_header(nes-window-types Types/ Types)
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nebuli-lib)
+    target_link_libraries(${TARGET_NAME} nebuli-lib "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>")
     target_include_directories(${TARGET_NAME}
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
