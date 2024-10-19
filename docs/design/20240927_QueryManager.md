@@ -511,6 +511,29 @@ The Task stops `Node1`'s pipeline and releases `Node1`.
 `Node1` releases its reference to the `TerminationCallback` and `SinkNode`.
 Every component of the `RunningQueryPlan` is referenced by its predecessors; thus, no further termination will occur.
 
+## Prevent data loss during EndOfStream
+
+The current system does not guarantee what data is processed when the system terminates a query.
+For example, from the perspective of QueryEngine, receiving data on the source side and terminating a query from the system side happens asynchronously.
+From an outside perspective it is impossible to observe if data has been processed by a source and was skipped because the query was terminated after receiving or if the source was terminated before receiving.
+
+Giving tasks access to only a `weak_ptr` of the successor pipelines allows us to terminate the pipeline easily and skip all pending tasks.
+
+However, if a stop originates from a `Source`, we can establish an order, and data received before an `EndOfStream` should not be dropped. 
+This turns out to be problematic because tasks do not keep pipelines alive, and eventually, a pipeline stop task may overtake a task that is processing previously received data.
+
+To resolve this issue, we introduce a `PendingPipelineStopTask` and an extra reference counter for each `RunningQueryPlanNode`, which counts the number of pending tasks referencing a pipeline.
+Whenever a predecessor task or a source emits a new task, it also increases the reference counter of the newly created task's target pipeline. 
+The worker thread processing the tasks decreases the reference counter.
+
+Since each source produces data in order, this guarantees that the successor pipeline's reference counter will only be zero once it has processed all previously received data.
+
+Once the target's reference counter reaches zero, the `PendingPipelineStopTask` will be transformed into a normal `PipelineStopTask`. 
+A worker thread receiving a `PendingPipelineStopTask` while the pipeline is still referenced will reenter it into the queue until the reference counter reaches 0.
+
+Lastly, the reference counter can be ignored if we want to forcefully terminate the query. 
+The `weak_ptr` implementation prevents invalid memory accesses to expired pipelines, just like it would do during a hard stop.
+
 # Proof of Concept
 
 The PoC is implemented on a stacked branch. You can find it in PR #465.
