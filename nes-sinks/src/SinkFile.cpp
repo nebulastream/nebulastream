@@ -30,8 +30,8 @@
 namespace NES::Sinks
 {
 
-SinkFile::SinkFile(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
-    : Sink(queryId)
+SinkFile::SinkFile(const SinkDescriptor& sinkDescriptor)
+    : Sink()
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
@@ -45,25 +45,10 @@ SinkFile::SinkFile(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
 }
-
-std::ostream& SinkFile::toString(std::ostream& str) const
-{
-    str << fmt::format("SinkFile(filePathOutput: {}, isAppend: {})", outputFilePath, isAppend);
-    return str;
-}
-bool SinkFile::equals(const Sink& other) const
-{
-    if (const auto* otherSinkFile = dynamic_cast<const SinkFile*>(&other))
-    {
-        return (this->queryId == other.queryId) && (this->outputFilePath == otherSinkFile->outputFilePath)
-            && (this->isAppend == otherSinkFile->isAppend) && (this->isOpen == otherSinkFile->isOpen);
-    }
-    return false;
-}
-
-void SinkFile::open()
+uint32_t SinkFile::setup(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
+    auto stream = outputFileStream.wlock();
     /// Remove an existing file unless the isAppend mode is isAppend.
     if (!isAppend)
     {
@@ -74,58 +59,59 @@ void SinkFile::open()
             {
                 NES_ERROR("Could not remove existing output file: filePath={} ", outputFilePath);
                 isOpen = false;
-                return;
+                return 1;
             }
         }
     }
 
     /// Open the file stream
-    if (!outputFileStream.is_open())
+    if (!stream->is_open())
     {
-        outputFileStream.open(outputFilePath, std::ofstream::binary | std::ofstream::app);
+        stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
     }
-    isOpen = outputFileStream.is_open() && outputFileStream.good();
+    isOpen = stream->is_open() && stream->good();
     if (!isOpen)
     {
         NES_ERROR(
-            "Could not open output file; filePathOutput={}, is_open()={}, good={}",
-            outputFilePath,
-            outputFileStream.is_open(),
-            outputFileStream.good());
-        return;
+            "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
+        return 1;
     }
 
     /// Write the schema to the file, if it is empty.
-    if (outputFileStream.tellp() == 0)
+    if (stream->tellp() == 0)
     {
         const auto schemaStr = formatter->getFormattedSchema();
-        outputFileStream.write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
+        stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
-}
 
-void SinkFile::close()
-{
-    NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    outputFileStream.close();
+    return 0;
 }
-
-bool SinkFile::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
+void SinkFile::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in SinkFile.");
-    if (!isOpen)
-    {
-        NES_ERROR("The output file could not be opened during setup of the file sink.");
-        return false;
-    }
+    PRECONDITION(isOpen, "Sink was not opened");
 
-    std::unique_lock lock(writeMutex);
     {
         auto fBuffer = formatter->getFormattedBuffer(inputBuffer);
         NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
-        outputFileStream.write(fBuffer.c_str(), fBuffer.size());
-        outputFileStream.flush();
+        {
+            auto wlocked = outputFileStream.wlock();
+            wlocked->write(fBuffer.c_str(), fBuffer.size());
+            wlocked->flush();
+        }
     }
-    return true;
+}
+uint32_t SinkFile::stop(Runtime::Execution::PipelineExecutionContext&)
+{
+    NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
+    outputFileStream.wlock()->close();
+    return 0;
+}
+
+std::ostream& SinkFile::toString(std::ostream& str) const
+{
+    str << fmt::format("SinkFile(filePathOutput: {}, isAppend: {})", outputFilePath, isAppend);
+    return str;
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config> SinkFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
@@ -139,9 +125,9 @@ SinkGeneratedRegistrarValidation::RegisterSinkValidationFile(std::unordered_map<
     return SinkFile::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkFile(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkFile(const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<SinkFile>(queryId, sinkDescriptor);
+    return std::make_unique<SinkFile>(sinkDescriptor);
 }
 
 }

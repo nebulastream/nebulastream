@@ -15,8 +15,12 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-namespace NES
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Executable.hpp>
+
+
+namespace NES
 {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -37,7 +41,6 @@ public:
         OperatorId operatorId,
         const SinkDescriptorPtr& sinkDescriptor,
         const SchemaPtr& schema,
-        const Runtime::NodeEnginePtr& nodeEngine,
         const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
         size_t numOfProducers);
 

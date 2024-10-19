@@ -23,6 +23,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <folly/Synchronized.h>
 
 
 namespace NES::Sinks
@@ -33,22 +34,21 @@ class SinkPrint : public Sink
 public:
     static inline std::string NAME = "Print";
 
-    explicit SinkPrint(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    explicit SinkPrint(const SinkDescriptor& sinkDescriptor);
     ~SinkPrint() override = default;
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void
+    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-    void open() override { /* noop */ };
-    void close() override { /* noop */ };
-
-    bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
 
 private:
-    std::ostream& outputStream;
+    folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<CSVFormat> outputParser;
 };
 

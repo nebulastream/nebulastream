@@ -28,11 +28,10 @@
 namespace NES
 {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
+std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> ConvertLogicalToPhysicalSink::createDataSink(
     OperatorId operatorId,
     const SinkDescriptorPtr& sinkDescriptor,
     const SchemaPtr& schema,
-    const Runtime::NodeEnginePtr& nodeEngine,
     const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
     size_t numOfProducers)
 {
@@ -44,7 +43,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = NES::Util::as<PrintSinkDescriptor>(sinkDescriptor);
         return createCsvPrintSink(
-            schema, pipelineQueryPlan->getQueryId(), nodeEngine, numOfProducers, std::cout, printSinkDescriptor->getNumberOfOrigins());
+            schema, pipelineQueryPlan->getQueryId(), numOfProducers, std::cout, printSinkDescriptor->getNumberOfOrigins());
     }
     if (NES::Util::instanceOf<FileSinkDescriptor>(sinkDescriptor))
     {
@@ -55,7 +54,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
             return createCSVFileSink(
                 schema,
                 pipelineQueryPlan->getQueryId(),
-                nodeEngine,
                 numOfProducers,
                 fileSinkDescriptor->getFileName(),
                 fileSinkDescriptor->getAppend(),

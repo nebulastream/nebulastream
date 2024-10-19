@@ -21,6 +21,7 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES::Sinks
 {
@@ -30,20 +31,20 @@ class SinkFile : public Sink
 {
 public:
     static inline std::string NAME = "File";
-    explicit SinkFile(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    explicit SinkFile(const SinkDescriptor& sinkDescriptor);
     ~SinkFile() override = default;
 
-    /// Opens file and writes schema to file, if the file is empty.
-    void open() override;
-    void close() override;
+    uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void
+    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-    bool emitTupleBuffer(Memory::TupleBuffer& inputBuffer) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
+
 
 private:
     std::string outputFilePath;
@@ -51,8 +52,7 @@ private:
     bool isOpen;
     /// Todo #417: support abstract/arbitrary formatter
     std::unique_ptr<CSVFormat> formatter;
-    std::mutex writeMutex;
-    std::ofstream outputFileStream;
+    folly::Synchronized<std::ofstream> outputFileStream;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
