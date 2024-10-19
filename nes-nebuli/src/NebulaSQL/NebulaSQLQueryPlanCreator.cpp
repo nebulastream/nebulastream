@@ -12,7 +12,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <regex>
 
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
@@ -25,10 +24,7 @@ limitations under the License.
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include "Common/DataTypes/Integer.hpp"
-#include "Functions/LogicalFunctions/NodeFunctionLess.hpp"
-
-
+#include <Common/DataTypes/Integer.hpp>
 #include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -259,7 +255,7 @@ void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::Unquote
 {
     NebulaSQLHelper helper = helpers.top();
 
-    // Get Index of  Parent Rule to check type of parent rule in conditions
+    /// Get Index of  Parent Rule to check type of parent rule in conditions
     auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
@@ -284,7 +280,7 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
 {
     NebulaSQLHelper helper = helpers.top();
 
-    // Get Index of  Parent Rule to check type of parent rule in conditions
+    /// Get Index of  Parent Rule to check type of parent rule in conditions
     auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
@@ -298,17 +294,17 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
-        // add identifiers in select, window, where and having clauses to the expression builder list
+        /// add identifiers in select, window, where and having clauses to the expression builder list
         helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
     }
     else if (helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
-        // get main source name
+        /// get main source name
         helper.addSource(context->getText());
     }
     else if (NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation)
     {
-        // handle renames of identifiers
+        /// handle renames of identifiers
         if (helper.isArithmeticBinary)
         {
             NES_THROW_RUNTIME_ERROR("Why are we here? Just to suffer?");
@@ -319,14 +315,14 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
             helper.expressionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
-                // rename of a single attribute
+                /// rename of a single attribute
                 FunctionItem cattr = static_cast<FunctionItem>(attr);
                 cattr = cattr.as(context->getText());
                 helper.expressionBuilder.push_back(cattr);
             }
             else
             {
-                // rename of an expression
+                /// rename of an expression
                 helper.mapBuilder.push_back(Attribute(context->getText()) = attr);
             }
         }
@@ -359,7 +355,7 @@ void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryC
 
     NebulaSQLHelper helper;
 
-    // Get Index of  Parent Rule to check type of parent rule in conditions
+    /// Get Index of  Parent Rule to check type of parent rule in conditions
     auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
@@ -367,7 +363,7 @@ void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryC
         parentRuleIndex = parentContext->getRuleIndex();
     }
 
-    // PrimaryQuery is a queryterm too, but if it's a child of a queryterm we are in a union!
+    /// PrimaryQuery is a queryterm too, but if it's a child of a queryterm we are in a union!
     if (parentRuleIndex == NebulaSQLParser::RuleQueryTerm)
     {
         helper.isSetOperation = true;
@@ -416,14 +412,6 @@ void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryCo
             queryPlan = QueryPlanBuilder::addFilter(havingExpr, queryPlan);
         }
     }
-    //alternative SubQueryHandling
-    /*
-            for(const QueryPlanPtr& qp : helper.queryPlans){
-                QueryId subQueryId = qp->getQueryId();
-                // TODO there is only one querySubPlanId that gets overwritten for each subquery
-                queryPlan->setQuerySubPlanId(subQueryId);
-            }
-             */
     helpers.pop();
     if (helpers.empty() || helper.isSetOperation)
     {
@@ -472,7 +460,7 @@ void NebulaSQLQueryPlanCreator::exitTimestampParameter(NebulaSQLParser::Timestam
     helper.timestamp = context->getText();
     poppush(helper);
 }
-// WINDOWS
+/// WINDOWS
 void NebulaSQLQueryPlanCreator::exitTumblingWindow(NebulaSQLParser::TumblingWindowContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
@@ -515,7 +503,7 @@ void NebulaSQLQueryPlanCreator::enterNamedExpression(NebulaSQLParser::NamedExpre
 void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpressionContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    // handle implicit maps when no "AS" is supplied, but a rename is needed
+    /// handle implicit maps when no "AS" is supplied, but a rename is needed
     if (!helper.isFunctionCall && !helper.expressionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1
         && context->children.size() == 1)
     {
@@ -725,7 +713,7 @@ void NebulaSQLQueryPlanCreator::exitSetOperation(NebulaSQLParser::SetOperationCo
     auto queryPlan = QueryPlanBuilder::addUnion(leftQuery, rightQuery);
     if (!helpers.empty())
     {
-        // we are in a subquery
+        /// we are in a subquery
         auto helper = helpers.top();
         helper.queryPlans.push_back(queryPlan);
         poppush(helper);
@@ -753,4 +741,4 @@ void NebulaSQLQueryPlanCreator::exitAggregationClause(NebulaSQLParser::Aggregati
 }
 
 
-} // namespace NES::Parsers
+}

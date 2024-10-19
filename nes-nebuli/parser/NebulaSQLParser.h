@@ -1,5 +1,5 @@
 
-// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
+// Generated from /home/rudi/dima/nebulastream-public/nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
@@ -33,16 +33,15 @@ public:
     WINDOW = 77, WITH = 78, TUMBLING = 79, SLIDING = 80, THRESHOLD = 81, 
     SIZE = 82, ADVANCE = 83, MS = 84, SEC = 85, MIN = 86, HOUR = 87, DAY = 88, 
     MAX = 89, AVG = 90, SUM = 91, COUNT = 92, MEDIAN = 93, WATERMARK = 94, 
-    OFFSET = 95, ZMQ = 96, KAFKA = 97, FILE = 98, MQTT = 99, OPC = 100, 
-    PRINT = 101, LOCALHOST = 102, CSV_FORMAT = 103, NES_FORMAT = 104, TEXT_FORMAT = 105, 
-    AT_MOST_ONCE = 106, AT_LEAST_ONCE = 107, BOOLEAN_VALUE = 108, EQ = 109, 
-    NSEQ = 110, NEQ = 111, NEQJ = 112, LT = 113, LTE = 114, GT = 115, GTE = 116, 
-    PLUS = 117, MINUS = 118, ASTERISK = 119, SLASH = 120, PERCENT = 121, 
-    TILDE = 122, AMPERSAND = 123, PIPE = 124, CONCAT_PIPE = 125, HAT = 126, 
-    STRING = 127, BIGINT_LITERAL = 128, SMALLINT_LITERAL = 129, TINYINT_LITERAL = 130, 
-    INTEGER_VALUE = 131, EXPONENT_VALUE = 132, DECIMAL_VALUE = 133, FLOAT_LITERAL = 134, 
-    DOUBLE_LITERAL = 135, BIGDECIMAL_LITERAL = 136, IDENTIFIER = 137, SIMPLE_COMMENT = 138, 
-    BRACKETED_COMMENT = 139, WS = 140, FOUR_OCTETS = 141, OCTET = 142, UNRECOGNIZED = 143
+    OFFSET = 95, FILE = 96, PRINT = 97, LOCALHOST = 98, CSV_FORMAT = 99, 
+    AT_MOST_ONCE = 100, AT_LEAST_ONCE = 101, BOOLEAN_VALUE = 102, EQ = 103, 
+    NSEQ = 104, NEQ = 105, NEQJ = 106, LT = 107, LTE = 108, GT = 109, GTE = 110, 
+    PLUS = 111, MINUS = 112, ASTERISK = 113, SLASH = 114, PERCENT = 115, 
+    TILDE = 116, AMPERSAND = 117, PIPE = 118, CONCAT_PIPE = 119, HAT = 120, 
+    STRING = 121, BIGINT_LITERAL = 122, SMALLINT_LITERAL = 123, TINYINT_LITERAL = 124, 
+    INTEGER_VALUE = 125, EXPONENT_VALUE = 126, DECIMAL_VALUE = 127, FLOAT_LITERAL = 128, 
+    DOUBLE_LITERAL = 129, BIGDECIMAL_LITERAL = 130, IDENTIFIER = 131, SIMPLE_COMMENT = 132, 
+    BRACKETED_COMMENT = 133, WS = 134, FOUR_OCTETS = 135, OCTET = 136, UNRECOGNIZED = 137
   };
 
   enum {
@@ -62,16 +61,13 @@ public:
     RuleTimeWindow = 41, RuleCountWindow = 42, RuleConditionWindow = 43, 
     RuleConditionParameter = 44, RuleThresholdMinSizeParameter = 45, RuleSizeParameter = 46, 
     RuleAdvancebyParameter = 47, RuleTimeUnit = 48, RuleTimestampParameter = 49, 
-    RuleFunctionName = 50, RuleSinkClause = 51, RuleSinkType = 52, RuleSinkTypeZMQ = 53, 
-    RuleNullNotnull = 54, RuleZmqKeyword = 55, RuleStreamName = 56, RuleHost = 57, 
-    RulePort = 58, RuleSinkTypeKafka = 59, RuleKafkaKeyword = 60, RuleKafkaBroker = 61, 
-    RuleKafkaTopic = 62, RuleKafkaProducerTimout = 63, RuleSinkTypeFile = 64, 
-    RuleFileFormat = 65, RuleSinkTypeMQTT = 66, RuleQos = 67, RuleSinkTypeOPC = 68, 
-    RuleSinkTypePrint = 69, RuleSortItem = 70, RulePredicate = 71, RuleValueExpression = 72, 
-    RuleComparisonOperator = 73, RuleHint = 74, RuleHintStatement = 75, 
-    RulePrimaryExpression = 76, RuleQualifiedName = 77, RuleNumber = 78, 
-    RuleConstant = 79, RuleBooleanValue = 80, RuleStrictNonReserved = 81, 
-    RuleAnsiNonReserved = 82, RuleNonReserved = 83
+    RuleFunctionName = 50, RuleSinkClause = 51, RuleSinkType = 52, RuleNullNotnull = 53, 
+    RuleStreamName = 54, RuleSinkTypeFile = 55, RuleSinkTypePrint = 56, 
+    RuleFileFormat = 57, RuleSortItem = 58, RulePredicate = 59, RuleValueExpression = 60, 
+    RuleComparisonOperator = 61, RuleHint = 62, RuleHintStatement = 63, 
+    RulePrimaryExpression = 64, RuleQualifiedName = 65, RuleNumber = 66, 
+    RuleConstant = 67, RuleBooleanValue = 68, RuleStrictNonReserved = 69, 
+    RuleAnsiNonReserved = 70, RuleNonReserved = 71
   };
 
   explicit NebulaSQLParser(antlr4::TokenStream *input);
@@ -148,23 +144,11 @@ public:
   class FunctionNameContext;
   class SinkClauseContext;
   class SinkTypeContext;
-  class SinkTypeZMQContext;
   class NullNotnullContext;
-  class ZmqKeywordContext;
   class StreamNameContext;
-  class HostContext;
-  class PortContext;
-  class SinkTypeKafkaContext;
-  class KafkaKeywordContext;
-  class KafkaBrokerContext;
-  class KafkaTopicContext;
-  class KafkaProducerTimoutContext;
   class SinkTypeFileContext;
-  class FileFormatContext;
-  class SinkTypeMQTTContext;
-  class QosContext;
-  class SinkTypeOPCContext;
   class SinkTypePrintContext;
+  class FileFormatContext;
   class SortItemContext;
   class PredicateContext;
   class ValueExpressionContext;
@@ -1255,11 +1239,7 @@ public:
   public:
     SinkTypeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SinkTypeZMQContext *sinkTypeZMQ();
-    SinkTypeKafkaContext *sinkTypeKafka();
     SinkTypeFileContext *sinkTypeFile();
-    SinkTypeMQTTContext *sinkTypeMQTT();
-    SinkTypeOPCContext *sinkTypeOPC();
     SinkTypePrintContext *sinkTypePrint();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1268,25 +1248,6 @@ public:
   };
 
   SinkTypeContext* sinkType();
-
-  class  SinkTypeZMQContext : public antlr4::ParserRuleContext {
-  public:
-    NebulaSQLParser::StreamNameContext *zmqStreamName = nullptr;
-    NebulaSQLParser::HostContext *zmqHostLabel = nullptr;
-    NebulaSQLParser::PortContext *zmqPort = nullptr;
-    SinkTypeZMQContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    ZmqKeywordContext *zmqKeyword();
-    StreamNameContext *streamName();
-    HostContext *host();
-    PortContext *port();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeZMQContext* sinkTypeZMQ();
 
   class  NullNotnullContext : public antlr4::ParserRuleContext {
   public:
@@ -1302,19 +1263,6 @@ public:
 
   NullNotnullContext* nullNotnull();
 
-  class  ZmqKeywordContext : public antlr4::ParserRuleContext {
-  public:
-    ZmqKeywordContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *ZMQ();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  ZmqKeywordContext* zmqKeyword();
-
   class  StreamNameContext : public antlr4::ParserRuleContext {
   public:
     StreamNameContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1327,104 +1275,6 @@ public:
   };
 
   StreamNameContext* streamName();
-
-  class  HostContext : public antlr4::ParserRuleContext {
-  public:
-    HostContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *FOUR_OCTETS();
-    antlr4::tree::TerminalNode *LOCALHOST();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  HostContext* host();
-
-  class  PortContext : public antlr4::ParserRuleContext {
-  public:
-    PortContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *INTEGER_VALUE();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  PortContext* port();
-
-  class  SinkTypeKafkaContext : public antlr4::ParserRuleContext {
-  public:
-    NebulaSQLParser::KafkaBrokerContext *broker = nullptr;
-    NebulaSQLParser::KafkaTopicContext *topic = nullptr;
-    NebulaSQLParser::KafkaProducerTimoutContext *timeout = nullptr;
-    SinkTypeKafkaContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    KafkaKeywordContext *kafkaKeyword();
-    KafkaBrokerContext *kafkaBroker();
-    KafkaTopicContext *kafkaTopic();
-    KafkaProducerTimoutContext *kafkaProducerTimout();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeKafkaContext* sinkTypeKafka();
-
-  class  KafkaKeywordContext : public antlr4::ParserRuleContext {
-  public:
-    KafkaKeywordContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *KAFKA();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  KafkaKeywordContext* kafkaKeyword();
-
-  class  KafkaBrokerContext : public antlr4::ParserRuleContext {
-  public:
-    KafkaBrokerContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *IDENTIFIER();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  KafkaBrokerContext* kafkaBroker();
-
-  class  KafkaTopicContext : public antlr4::ParserRuleContext {
-  public:
-    KafkaTopicContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *IDENTIFIER();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  KafkaTopicContext* kafkaTopic();
-
-  class  KafkaProducerTimoutContext : public antlr4::ParserRuleContext {
-  public:
-    KafkaProducerTimoutContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *INTEGER_VALUE();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  KafkaProducerTimoutContext* kafkaProducerTimout();
 
   class  SinkTypeFileContext : public antlr4::ParserRuleContext {
   public:
@@ -1445,82 +1295,6 @@ public:
 
   SinkTypeFileContext* sinkTypeFile();
 
-  class  FileFormatContext : public antlr4::ParserRuleContext {
-  public:
-    FileFormatContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *CSV_FORMAT();
-    antlr4::tree::TerminalNode *NES_FORMAT();
-    antlr4::tree::TerminalNode *TEXT_FORMAT();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  FileFormatContext* fileFormat();
-
-  class  SinkTypeMQTTContext : public antlr4::ParserRuleContext {
-  public:
-    antlr4::Token *mqttHostLabel = nullptr;
-    antlr4::Token *topic = nullptr;
-    antlr4::Token *user = nullptr;
-    antlr4::Token *maxBufferedMSGs = nullptr;
-    NebulaSQLParser::TimeUnitContext *mqttTimeUnitLabel = nullptr;
-    antlr4::Token *messageDelay = nullptr;
-    NebulaSQLParser::QosContext *qualityOfService = nullptr;
-    antlr4::Token *asynchronousClient = nullptr;
-    SinkTypeMQTTContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *MQTT();
-    std::vector<antlr4::tree::TerminalNode *> STRING();
-    antlr4::tree::TerminalNode* STRING(size_t i);
-    std::vector<antlr4::tree::TerminalNode *> INTEGER_VALUE();
-    antlr4::tree::TerminalNode* INTEGER_VALUE(size_t i);
-    TimeUnitContext *timeUnit();
-    QosContext *qos();
-    antlr4::tree::TerminalNode *BOOLEAN_VALUE();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeMQTTContext* sinkTypeMQTT();
-
-  class  QosContext : public antlr4::ParserRuleContext {
-  public:
-    QosContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *AT_MOST_ONCE();
-    antlr4::tree::TerminalNode *AT_LEAST_ONCE();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  QosContext* qos();
-
-  class  SinkTypeOPCContext : public antlr4::ParserRuleContext {
-  public:
-    antlr4::Token *url = nullptr;
-    antlr4::Token *nodeId = nullptr;
-    antlr4::Token *user = nullptr;
-    antlr4::Token *password = nullptr;
-    SinkTypeOPCContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *OPC();
-    std::vector<antlr4::tree::TerminalNode *> STRING();
-    antlr4::tree::TerminalNode* STRING(size_t i);
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeOPCContext* sinkTypeOPC();
-
   class  SinkTypePrintContext : public antlr4::ParserRuleContext {
   public:
     SinkTypePrintContext(antlr4::ParserRuleContext *parent, size_t invokingState);
@@ -1533,6 +1307,19 @@ public:
   };
 
   SinkTypePrintContext* sinkTypePrint();
+
+  class  FileFormatContext : public antlr4::ParserRuleContext {
+  public:
+    FileFormatContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    virtual size_t getRuleIndex() const override;
+    antlr4::tree::TerminalNode *CSV_FORMAT();
+
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+   
+  };
+
+  FileFormatContext* fileFormat();
 
   class  SortItemContext : public antlr4::ParserRuleContext {
   public:

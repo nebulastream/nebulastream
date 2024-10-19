@@ -63,7 +63,7 @@ queryPrimary
     | inlineTable                                                           #inlineTableDefault1
     | '(' query ')'                                                         #subquery
     ;
-//new layout to be closer to traditional SQL
+/// new layout to be closer to traditional SQL
 querySpecification: selectClause fromClause whereClause? windowedAggregationClause? havingClause? sinkClause?;
 
 
@@ -180,7 +180,7 @@ booleanExpression
     | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
     | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
     ;
-//Problem fixed that the querySpecification rule could match an empty string
+/// Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
     aggregationClause? windowClause watermarkClause?;
 
@@ -204,7 +204,7 @@ windowClause
 watermarkClause: WATERMARK '(' watermarkParameters ')';
 
 watermarkParameters: watermarkIdentifier=identifier ',' watermark=INTEGER_VALUE watermarkTimeUnit=timeUnit;
-//Adding Threshold Windows
+/// Adding Threshold Windows
 windowSpec:
     timeWindow #timeBasedWindow
     | countWindow #countBasedWindow
@@ -240,56 +240,28 @@ timeUnit: MS
 
 timestampParameter: IDENTIFIER;
 
-//added Median
+/// added Median
 functionName:  AVG | MAX | MIN | SUM | COUNT | MEDIAN
             ;
 
 sinkClause: INTO sinkType AS?
         ;
 
-sinkType: sinkTypeZMQ
-        | sinkTypeKafka
-        | sinkTypeFile
-        | sinkTypeMQTT
-        | sinkTypeOPC
+sinkType: sinkTypeFile
         | sinkTypePrint;
-
-
-sinkTypeZMQ: zmqKeyword '(' zmqStreamName=streamName ',' zmqHostLabel=host ',' zmqPort=port ')';
 
 nullNotnull
     : NOT? NULLTOKEN
     ;
 
-zmqKeyword: ZMQ;
-
 streamName: IDENTIFIER;
 
-host: FOUR_OCTETS | LOCALHOST;
-
-port: INTEGER_VALUE;
-
-sinkTypeKafka: kafkaKeyword '(' broker=kafkaBroker ',' topic=kafkaTopic ',' timeout=kafkaProducerTimout ')';
-
-kafkaKeyword: KAFKA;
-
-kafkaBroker: IDENTIFIER;
-
-kafkaTopic: IDENTIFIER;
-
-kafkaProducerTimout: INTEGER_VALUE;
-
-// New Sinks
+/// New Sinks
 sinkTypeFile: FILE '(' path=STRING ',' format=fileFormat ',' append=STRING ')';
-
-fileFormat: CSV_FORMAT | NES_FORMAT | TEXT_FORMAT;
-
-sinkTypeMQTT: MQTT '(' mqttHostLabel=STRING ',' topic=STRING ',' user=STRING ',' maxBufferedMSGs=INTEGER_VALUE ',' mqttTimeUnitLabel=timeUnit ',' messageDelay=INTEGER_VALUE ',' qualityOfService=qos ',' asynchronousClient=BOOLEAN_VALUE ')';
-qos: AT_MOST_ONCE | AT_LEAST_ONCE;
-
-sinkTypeOPC: OPC '(' url=STRING ',' nodeId=STRING ',' user=STRING ',' password=STRING ')';
-
 sinkTypePrint: PRINT;
+
+fileFormat: CSV_FORMAT;
+
 
 sortItem
     : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?
@@ -379,7 +351,7 @@ booleanValue
     : TRUE | FALSE
     ;
 
-//can not be used as stream alias
+/// can not be used as stream alias
 strictNonReserved
     : FULL
     | INNER
@@ -393,7 +365,7 @@ strictNonReserved
     ;
 
 ansiNonReserved
-//--ANSI-NON-RESERVED-START
+///--ANSI-NON-RESERVED-START
     : ASC
     | AT
     | BETWEEN
@@ -420,11 +392,11 @@ ansiNonReserved
     | TYPE
     | VALUES
     | WINDOW
-//--ANSI-NON-RESERVED-END
+///--ANSI-NON-RESERVED-END
     ;
 
 nonReserved
-//--DEFAULT-NON-RESERVED-START
+///--DEFAULT-NON-RESERVED-START
     : ASC
     | AT
     | BETWEEN
@@ -473,7 +445,7 @@ nonReserved
 	| TABLE
 	| WHERE
 	| WITH
-//--DEFAULT-NON-RESERVED-END
+///--DEFAULT-NON-RESERVED-END
     ;
 
 ALL: 'ALL' | 'all';
@@ -563,22 +535,16 @@ COUNT: 'COUNT' | 'count';
 MEDIAN: 'MEDIAN' | 'median';
 WATERMARK: 'WATERMARK' | 'watermark';
 OFFSET: 'OFFSET' | 'offset';
-ZMQ: 'ZMQ' | 'zmq';
-KAFKA: 'KAFKA' | 'kafka';
-FILE: 'FILE';
-MQTT: 'MQTT';
-OPC: 'OPC';
-PRINT: 'PRINT' | 'print';
+FILE: 'File'; /// Todo: enable aliases in registry
+PRINT: 'Print';  /// Todo: enable aliases in registry
 LOCALHOST: 'LOCALHOST' | 'localhost';
 CSV_FORMAT : 'CSV_FORMAT';
-NES_FORMAT : 'NES_FORMAT';
-TEXT_FORMAT : 'TEXT_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
-//--NebulaSQL-KEYWORD-LIST-END
-//****************************
-// End of the keywords list
-//****************************
+///--NebulaSQL-KEYWORD-LIST-END
+///****************************
+/// End of the keywords list
+///****************************
 
 BOOLEAN_VALUE: 'true' | 'false';
 EQ  : '=' | '==';
@@ -683,9 +649,9 @@ WS
 FOUR_OCTETS: OCTET '.' OCTET '.' OCTET '.' OCTET;
 OCTET: [0-2][0-9]?[0-9]?;
 
-// Catch-all for anything we can't recognize.
-// We use this to be able to ignore and recover all the text
-// when splitting statements with DelimiterLexer
+/// Catch-all for anything we can't recognize.
+/// We use this to be able to ignore and recover all the text
+/// when splitting statements with DelimiterLexer
 UNRECOGNIZED
     : .
     ;

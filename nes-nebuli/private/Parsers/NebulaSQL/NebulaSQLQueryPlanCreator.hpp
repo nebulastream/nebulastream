@@ -12,21 +12,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLQUERYPLANCREATOR_HPP_
-#define NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLQUERYPLANCREATOR_HPP_
+#pragma once
 
-#include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <NebulaSQLBaseListener.h>
 #include <NebulaSQLLexer.h>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-
 
 namespace NES::Parsers
 {
@@ -87,6 +85,4 @@ public:
 };
 
 
-} // namespace NES::Parsers
-
-#endif // NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLQUERYPLANCREATOR_HPP_
+}

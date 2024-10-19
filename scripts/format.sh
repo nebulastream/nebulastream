@@ -70,7 +70,7 @@ fi
 # Only /// allowed, as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex matches an even number of slashes (i.e. //, ////, ...)
 # The regex does not match "://" (for e.g. https://foo)
-if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "nes-*"
+if git grep -n -E -e "([^/:]|^)(//)+[^/]" -- "nes-*" ':!nes-nebuli/parser/*'
 then
     echo
     echo Found forbidden comments. Please use /// for doc comments, remove all else.

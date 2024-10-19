@@ -12,8 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLHELPER_HPP_
-#define NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLHELPER_HPP_
+#pragma once
 
 #include <list>
 #include <map>
@@ -44,7 +43,7 @@ private:
     std::string source;
 
 public:
-    //Constructors
+    /// Constructors
     NebulaSQLHelper() = default;
 
     std::vector<QueryPlanPtr> queryPlans;
@@ -90,7 +89,7 @@ public:
     std::vector<std::string> joinSourceRenames;
 
 
-    // Getter and Setter
+    /// Getter and Setter
 
     const std::list<std::shared_ptr<NES::NodeFunction>>& getWhereClauses() const;
     const std::list<std::shared_ptr<NES::NodeFunction>>& getHavingClauses() const;
@@ -105,6 +104,4 @@ public:
     std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> getMapExpressions() const;
     void setMapExpressions(std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions);
 };
-} // namespace NES::Parsers
-
-#endif // NES_CORE_INCLUDE_PARSERS_NEBULASQL_NEBULASQLHELPER_HPP_
+}

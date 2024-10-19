@@ -1,5 +1,5 @@
 
-// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
+// Generated from /home/rudi/dima/nebulastream-public/nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
@@ -224,56 +224,20 @@ public:
   virtual void enterSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
   virtual void exitSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
 
-  virtual void enterSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext *ctx) = 0;
-  virtual void exitSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext *ctx) = 0;
-
   virtual void enterNullNotnull(NebulaSQLParser::NullNotnullContext *ctx) = 0;
   virtual void exitNullNotnull(NebulaSQLParser::NullNotnullContext *ctx) = 0;
-
-  virtual void enterZmqKeyword(NebulaSQLParser::ZmqKeywordContext *ctx) = 0;
-  virtual void exitZmqKeyword(NebulaSQLParser::ZmqKeywordContext *ctx) = 0;
 
   virtual void enterStreamName(NebulaSQLParser::StreamNameContext *ctx) = 0;
   virtual void exitStreamName(NebulaSQLParser::StreamNameContext *ctx) = 0;
 
-  virtual void enterHost(NebulaSQLParser::HostContext *ctx) = 0;
-  virtual void exitHost(NebulaSQLParser::HostContext *ctx) = 0;
-
-  virtual void enterPort(NebulaSQLParser::PortContext *ctx) = 0;
-  virtual void exitPort(NebulaSQLParser::PortContext *ctx) = 0;
-
-  virtual void enterSinkTypeKafka(NebulaSQLParser::SinkTypeKafkaContext *ctx) = 0;
-  virtual void exitSinkTypeKafka(NebulaSQLParser::SinkTypeKafkaContext *ctx) = 0;
-
-  virtual void enterKafkaKeyword(NebulaSQLParser::KafkaKeywordContext *ctx) = 0;
-  virtual void exitKafkaKeyword(NebulaSQLParser::KafkaKeywordContext *ctx) = 0;
-
-  virtual void enterKafkaBroker(NebulaSQLParser::KafkaBrokerContext *ctx) = 0;
-  virtual void exitKafkaBroker(NebulaSQLParser::KafkaBrokerContext *ctx) = 0;
-
-  virtual void enterKafkaTopic(NebulaSQLParser::KafkaTopicContext *ctx) = 0;
-  virtual void exitKafkaTopic(NebulaSQLParser::KafkaTopicContext *ctx) = 0;
-
-  virtual void enterKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext *ctx) = 0;
-  virtual void exitKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext *ctx) = 0;
-
   virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
   virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
 
-  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
-  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
-
-  virtual void enterSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext *ctx) = 0;
-  virtual void exitSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext *ctx) = 0;
-
-  virtual void enterQos(NebulaSQLParser::QosContext *ctx) = 0;
-  virtual void exitQos(NebulaSQLParser::QosContext *ctx) = 0;
-
-  virtual void enterSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext *ctx) = 0;
-  virtual void exitSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext *ctx) = 0;
-
   virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
   virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
+
+  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
+  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
 
   virtual void enterSortItem(NebulaSQLParser::SortItemContext *ctx) = 0;
   virtual void exitSortItem(NebulaSQLParser::SortItemContext *ctx) = 0;

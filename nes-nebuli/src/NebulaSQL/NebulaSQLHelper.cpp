@@ -17,7 +17,7 @@ limitations under the License.
 namespace NES::Parsers
 {
 
-//Getter and Setter for the map/list entries of each clause
+/// Getter and Setter for the map/list entries of each clause
 const std::string NebulaSQLHelper::getSource() const
 {
     return this->source;
@@ -36,7 +36,7 @@ const std::vector<std::shared_ptr<NES::NodeFunction>>& NebulaSQLHelper::getProje
     return this->projectionFields;
 }
 
-// methods to update the clauses maps/lists
+/// methods to update the clauses maps/lists
 void NebulaSQLHelper::addSource(std::string sourceName)
 {
     this->source = sourceName;
@@ -75,4 +75,4 @@ void NebulaSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::N
     this->mapBuilder = expressions;
 }
 
-} // namespace NES::Parsers
+}

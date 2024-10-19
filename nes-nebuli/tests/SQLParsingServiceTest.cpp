@@ -14,12 +14,9 @@
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <BaseIntegrationTest.hpp>
-// #include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-// #include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
 #include <climits>
 #include <iostream>
 #include <regex>
-
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -27,7 +24,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include "Operators/LogicalOperators/LogicalOperatorFactory.hpp"
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 
 using namespace NES;
 /*
@@ -58,49 +55,22 @@ TEST_F(SQLParsingServiceTest, selectionTest)
     std::shared_ptr<QueryParsingService> SQLParsingService;
     std::string inputQuery;
     QueryPlanPtr actualPlan;
-    double totalTime = 0.0;
 
-
-    std::cout << "-------------------------Selection-------------------------\n";
-
-    // Test case for simple selection
-    inputQuery = "select f1 from StreamName where f1 > 30 INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
+    inputQuery = "SELECT f1 FROM StreamName WHERE f1 > 30 INTO Print";
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName").project(Attribute("f1")).filter(Attribute("f1") > 30).sink("PRINT");
+    Query query = Query::from("StreamName").project(Attribute("f1")).filter(Attribute("f1") > 30).sink("Print");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT";
-    // start = std::chrono::high_resolution_clock::now();
-    // actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration = end - start;
-    // totalTime += duration.count();
-    // std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    // query = Query::from("StreamName").filter(Attribute("f1") > 10 && Attribute("f2") < 10).sink("PRINT");
-    // EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-    //
-    // std::string SQLString = "SELECT * FROM default_logical INTO PRINT;";
-    // start = std::chrono::high_resolution_clock::now();
-    // actualPlan = SQLParsingService->createQueryFromSQL(SQLString);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration = end - start;
-    // totalTime += duration.count();
-    // std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    // LogicalOperatorPtr source = LogicalOperatorFactory::createSourceOperator("default_logical");
-    // LogicalOperatorPtr sink = LogicalOperatorFactory::createSinkOperator("PRINT");
-    // sink->addChild(source);
-    // QueryPlanPtr queryPlan = QueryPlan::create(sink);
-    // queryPlan->appendOperatorAsNewRoot(sink);
-    // std::cout << queryPlanToString(actualPlan) << "/n";
-    // std::cout << "Time taken for all Selection Queries: " << totalTime / 3 << " ms" << std::endl;
-    //
-    // //comparison of the expected and the actual generated query plan
-    // EXPECT_EQ(queryPlanToString(queryPlan), queryPlanToString(actualPlan));
+    inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO Print";
+    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
+    query = Query::from("StreamName").filter(Attribute("f1") > 10 && Attribute("f2") < 10).sink("Print");
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+
+    std::string SQLString = "SELECT * FROM default_logical INTO Print;";
+    actualPlan = SQLParsingService->createQueryFromSQL(SQLString);
+    query = Query::from("default_logical").sink("Print");
+
+    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
 TEST(SQLParsingServiceTest, projectionTest)
@@ -114,7 +84,7 @@ TEST(SQLParsingServiceTest, projectionTest)
 
     std::cout << "-------------------------Projection-------------------------\n";
 
-    // Test case for simple projection
+    /// Test case for simple projection
     inputQuery = "select * from StreamName INTO PRINT;";
     auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -125,7 +95,7 @@ TEST(SQLParsingServiceTest, projectionTest)
     Query query = Query::from("StreamName").sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection with alias
+    /// Test case for projection with alias
     inputQuery = "select * from StreamName as sn INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -136,7 +106,7 @@ TEST(SQLParsingServiceTest, projectionTest)
     query = Query::from("StreamName").sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection of specific fields
+    /// Test case for projection of specific fields
     inputQuery = "select f1,f2 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -147,7 +117,7 @@ TEST(SQLParsingServiceTest, projectionTest)
     query = Query::from("StreamName").project(Attribute("f1"), Attribute("f2")).sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection of specific fields
+    /// Test case for projection of specific fields
     inputQuery = "select f1,f2,f3 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -158,7 +128,7 @@ TEST(SQLParsingServiceTest, projectionTest)
     query = Query::from("StreamName").project(Attribute("f1"), Attribute("f2"), Attribute("f3")).sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection of specific fields
+    /// Test case for projection of specific fields
     inputQuery = "select f1,f2,f3, f4 as project4 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -171,7 +141,7 @@ TEST(SQLParsingServiceTest, projectionTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection with rename
+    /// Test case for projection with rename
     inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -194,7 +164,7 @@ TEST(SQLParsingServiceTest, mergeTest)
 
     std::cout << "-------------------------Merge-------------------------\n";
 
-    // Test case for simple merge
+    /// Test case for simple merge
     inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT";
     auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -230,7 +200,7 @@ TEST(SQLParsingServiceTest, mergeTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for merge with multiple unions
+    /// Test case for merge with multiple unions
     inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -259,7 +229,7 @@ TEST(SQLParsingServiceTest, mapTest)
 
     std::cout << "-------------------------Map-------------------------\n";
 
-    // Test case for simple map
+    /// Test case for simple map
     inputQuery = "select f1*f2 as newfield from StreamName INTO PRINT";
     auto start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -270,7 +240,7 @@ TEST(SQLParsingServiceTest, mapTest)
     Query query = Query::from("StreamName").map(Attribute("newfield") = Attribute("f1") * Attribute("f2")).sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for parenthesis expression for map
+    /// Test case for parenthesis expression for map
     inputQuery = "select (f1*f2)/(f3+f4) as f5 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -283,7 +253,7 @@ TEST(SQLParsingServiceTest, mapTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for complex map expression
+    /// Test case for complex map expression
     inputQuery = "select f1*f2/f3+f4 as f5 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -296,7 +266,7 @@ TEST(SQLParsingServiceTest, mapTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for two maps
+    /// Test case for two maps
     inputQuery = "select f1*f2 as newfield, f1+5 as newfield2 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -310,7 +280,7 @@ TEST(SQLParsingServiceTest, mapTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for projection and map together
+    /// Test case for projection and map together
     inputQuery = "select f1*f2 as newfield, f1+5 as newfield2, f1 as f from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
@@ -325,7 +295,7 @@ TEST(SQLParsingServiceTest, mapTest)
                 .sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    // Test case for when alias is not provided
+    /// Test case for when alias is not provided
     inputQuery = "select f1*f2 from StreamName INTO PRINT";
     start = std::chrono::high_resolution_clock::now();
     actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);

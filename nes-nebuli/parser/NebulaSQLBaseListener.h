@@ -1,5 +1,5 @@
 
-// Generated from nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
+// Generated from /home/rudi/dima/nebulastream-public/nes-nebuli/parser/NebulaSQL.g4 by ANTLR 4.13.2
 
 #pragma once
 
@@ -226,56 +226,20 @@ public:
   virtual void enterSinkType(NebulaSQLParser::SinkTypeContext * /*ctx*/) override { }
   virtual void exitSinkType(NebulaSQLParser::SinkTypeContext * /*ctx*/) override { }
 
-  virtual void enterSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext * /*ctx*/) override { }
-  virtual void exitSinkTypeZMQ(NebulaSQLParser::SinkTypeZMQContext * /*ctx*/) override { }
-
   virtual void enterNullNotnull(NebulaSQLParser::NullNotnullContext * /*ctx*/) override { }
   virtual void exitNullNotnull(NebulaSQLParser::NullNotnullContext * /*ctx*/) override { }
-
-  virtual void enterZmqKeyword(NebulaSQLParser::ZmqKeywordContext * /*ctx*/) override { }
-  virtual void exitZmqKeyword(NebulaSQLParser::ZmqKeywordContext * /*ctx*/) override { }
 
   virtual void enterStreamName(NebulaSQLParser::StreamNameContext * /*ctx*/) override { }
   virtual void exitStreamName(NebulaSQLParser::StreamNameContext * /*ctx*/) override { }
 
-  virtual void enterHost(NebulaSQLParser::HostContext * /*ctx*/) override { }
-  virtual void exitHost(NebulaSQLParser::HostContext * /*ctx*/) override { }
-
-  virtual void enterPort(NebulaSQLParser::PortContext * /*ctx*/) override { }
-  virtual void exitPort(NebulaSQLParser::PortContext * /*ctx*/) override { }
-
-  virtual void enterSinkTypeKafka(NebulaSQLParser::SinkTypeKafkaContext * /*ctx*/) override { }
-  virtual void exitSinkTypeKafka(NebulaSQLParser::SinkTypeKafkaContext * /*ctx*/) override { }
-
-  virtual void enterKafkaKeyword(NebulaSQLParser::KafkaKeywordContext * /*ctx*/) override { }
-  virtual void exitKafkaKeyword(NebulaSQLParser::KafkaKeywordContext * /*ctx*/) override { }
-
-  virtual void enterKafkaBroker(NebulaSQLParser::KafkaBrokerContext * /*ctx*/) override { }
-  virtual void exitKafkaBroker(NebulaSQLParser::KafkaBrokerContext * /*ctx*/) override { }
-
-  virtual void enterKafkaTopic(NebulaSQLParser::KafkaTopicContext * /*ctx*/) override { }
-  virtual void exitKafkaTopic(NebulaSQLParser::KafkaTopicContext * /*ctx*/) override { }
-
-  virtual void enterKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext * /*ctx*/) override { }
-  virtual void exitKafkaProducerTimout(NebulaSQLParser::KafkaProducerTimoutContext * /*ctx*/) override { }
-
   virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
   virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
 
-  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
-  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
-
-  virtual void enterSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext * /*ctx*/) override { }
-  virtual void exitSinkTypeMQTT(NebulaSQLParser::SinkTypeMQTTContext * /*ctx*/) override { }
-
-  virtual void enterQos(NebulaSQLParser::QosContext * /*ctx*/) override { }
-  virtual void exitQos(NebulaSQLParser::QosContext * /*ctx*/) override { }
-
-  virtual void enterSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext * /*ctx*/) override { }
-  virtual void exitSinkTypeOPC(NebulaSQLParser::SinkTypeOPCContext * /*ctx*/) override { }
-
   virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
   virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
+
+  virtual void enterFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
+  virtual void exitFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
 
   virtual void enterSortItem(NebulaSQLParser::SortItemContext * /*ctx*/) override { }
   virtual void exitSortItem(NebulaSQLParser::SortItemContext * /*ctx*/) override { }

@@ -13,6 +13,7 @@
 */
 #include <iostream>
 #include <sstream>
+#include <ANTLRInputStream.h>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -24,7 +25,6 @@
 #include <Services/QueryParsingService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ANTLRInputStream.h>
 #include <ErrorHandling.hpp>
 namespace NES
 {
