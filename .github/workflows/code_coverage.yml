@@ -58,9 +58,7 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v4
         with:
-          # As on the current main, we have not added the test coverage targets yet, therefore, we need to check out a specific commit for now.
-          # This will be removed with PR #393
-          ref: code-coverage-the-third-base-branch
+          ref: ${{ github.base_ref }}
       - name: Build base coverage if not in cache
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: |
