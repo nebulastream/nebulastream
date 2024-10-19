@@ -1,8 +1,8 @@
 query: |
-  Query::from("csv_source").sink("csv_sink");
+  SELECT * FROM csv_source INTO File
 
 sink:
-  name: csv_sink
+  name: File
   type: File
   config:
     inputFormat: CSV
