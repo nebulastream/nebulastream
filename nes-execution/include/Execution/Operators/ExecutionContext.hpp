@@ -46,7 +46,7 @@ class OperatorState;
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    ExecutionContext(const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext);
+    ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext);
 
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
@@ -55,23 +55,12 @@ struct ExecutionContext final
     nautilus::val<WorkerThreadId> getWorkerThreadId();
     nautilus::val<Memory::TupleBuffer*> allocateBuffer();
     const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
-    const nautilus::val<WorkerContext*>& getWorkerContext() const;
 
 
     /// Emit a record buffer to the next pipeline or sink
     void emitBuffer(const RecordBuffer& buffer);
 
-    /// Removes the sequence state for the current <OrigindId, uint64_t>
-    void removeSequenceState() const;
-
-    /// Checks if all chunks have been seen
-    nautilus::val<bool> isLastChunk() const;
-
-    /// Returns the next chunk number for the emitted sequence numbers
-    [[nodiscard]] nautilus::val<ChunkNumber> getNextChunkNumber() const;
-
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    const nautilus::val<WorkerContext*> workerContext;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.

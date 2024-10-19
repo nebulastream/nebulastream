@@ -57,8 +57,10 @@ private:
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        size_t bufferSize,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
