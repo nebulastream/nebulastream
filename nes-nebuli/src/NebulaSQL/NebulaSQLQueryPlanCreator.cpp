@@ -323,8 +323,11 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
             }
             else
             {
-                /// rename of an expression
-                helper.mapBuilder.push_back(Attribute(context->getText()) = attr);
+                /// Todo: renaming an expression (mapBuilder) and adding a projection (expressionBuilder) on the renamed expression.
+                const auto renamedAttribute = Attribute(context->getText()) = attr;
+                helper.expressionBuilder.push_back(renamedAttribute);
+                helper.addMapExpression(renamedAttribute);
+                // helper.mapBuilder.push_back(renamedAttribute);
             }
         }
     }
@@ -391,19 +394,21 @@ void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryCo
         queryPlan = QueryPlanBuilder::addRename(helper.newSourceName, queryPlan);
     }
 
-    if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
-    {
-        queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
-    }
     for (auto& whereExpr : helper.getWhereClauses())
     {
         queryPlan = QueryPlanBuilder::addFilter(whereExpr, queryPlan);
     }
 
-
     for (const auto& mapExpr : helper.mapBuilder)
     {
         queryPlan = QueryPlanBuilder::addMap(mapExpr, queryPlan);
+    }
+    /// We handle projections AFTER map expressions, because:
+    /// SELECT (id * 3) as new_id FROM ...
+    ///     we project on new_id, but new_id is the result of an expression, so we need to execute the expression before projecting.
+    if (!helper.getProjectionFields().empty() && helper.windowType == nullptr)
+    {
+        queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
     }
 
     if (helper.windowType != nullptr)
@@ -516,7 +521,7 @@ void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpres
             if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
             {
                 const auto fieldAccessNodePtr = NES::Util::as<NodeFunctionFieldAccess>(child);
-                implicitFieldName = fieldAccessNodePtr->getFieldName();
+                implicitFieldName = fmt::format("{}_{}", fieldAccessNodePtr->getFieldName(), helper.implicitMapCountHelper);
                 INVARIANT(++i < 2, "The expression of a named expression must only have one child that is a field access expression.")
             }
         }

@@ -50,15 +50,105 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
     return queryPlanStr;
 }
 
-TEST_F(SQLParsingServiceTest, systemLevelTestsMilestone)
+bool parseAndCompareQueryPlans(const std::string antlrQueryString, const Query& legacyQuery)
 {
     std::shared_ptr<QueryParsingService> SQLParsingService;
-    const std::string antlrQueryString = "SELECT 3 * id FROM window WHERE id != 1 INTO File";
     const QueryPlanPtr antlrQueryParsed = SQLParsingService->createQueryFromSQL(antlrQueryString);
+    NES_DEBUG("{}", antlrQueryParsed->toString());
+    // NES_DEBUG("{} vs. \n{}", antlrQueryParsed->toString(), legacyQuery.getQueryPlan()->toString());
+    return antlrQueryParsed->compare(legacyQuery.getQueryPlan());
+}
 
-    auto legacyQuery = Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File");
-
-    EXPECT_TRUE(antlrQueryParsed->compare(legacyQuery.getQueryPlan()));
+TEST_F(SQLParsingServiceTest, projectionAndMapTests)
+{
+    /// Query::from("window").project(Attribute("id")).sink("File")
+    /// @note: SELECT (field * 3) AS new_filed will always lead to a projection first, followed by a map. Thus, the query
+    /// 'Query::from("window").map(Attribute("new_id").project(Attribute("new_id"))' is diffuclt/impossible to create using the SQL syntax.
+    /// Given that a projection first should be more efficient, this seems to be ok for now.
+    {
+        const std::string antlrQueryString = "SELECT (id*3) AS new_id FROM window INTO File";
+        const auto legacyQuery
+            = Query::from("window").project(Attribute("new_id")).map(Attribute("new_id") = Attribute("id") * 3).sink("File");
+        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    }
+    /// Todo: the grammar currently does not support a mixture of '*' and projections.
+    ///     in Flink, a 'SELECT id*3 AS id, * FROM ....' query would return a schma like: 'id10, id, ...'
+    ///     in the legacy, functional API, we would replace the 'id' attribute and therefore return a schema like: 'id, ...'
+    ///     the antlr parser supports neither of the above versions. Still, we can explicitly name the attributes we want.
+    /// Query::from("window").map(Attribute("id")).sink("File")
+    /// {
+    ///     const std::string antlrQueryString = "SELECT *, (id*3) AS id FROM window INTO File";
+    ///     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") * 3).sink("File");
+    ///     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    /// }
+}
+TEST_F(SQLParsingServiceTest, systemLevelTestsMilestone)
+{
+    // /// Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File")
+    // {
+    //     const std::string antlrQueryString = "SELECT 3 * id AS id FROM window WHERE id != 1 INTO File";
+    //     const auto legacyQuery = Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").filter(Attribute("value") == 1).sink("File")
+    // {
+    //     const std::string antlrQueryString = "SELECT * FROM window WHERE value == 1 INTO File";
+    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") == 1).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").filter(Attribute("value") == 1).filter(Attribute("id") == 12).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT * FROM (SELECT * FROM window WHERE value == 1) WHERE id == 12 INTO File";
+    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") == 1).filter(Attribute("id") == 12).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").filter(Attribute("value") != 1).filter(Attribute("id") != 16).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT * FROM (SELECT * FROM window WHERE value != 1) WHERE id == 16 INTO File";
+    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") != 1).filter(Attribute("id") == 16).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").map(Attribute("id") = Attribute("id") + 1).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT id + 1 AS id FROM window INTO File";
+    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + 1).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").map(Attribute("id") = Attribute("id") + Attribute("value")).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT id + value AS id FROM window INTO File";
+    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + Attribute("value")).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").map(Attribute("new") = Attribute("id") + Attribute("value")).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT id + value AS new FROM window INTO File";
+    //     const auto legacyQuery = Query::from("window").map(Attribute("new") = Attribute("id") + Attribute("value")).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    // /// Query::from("window").map(Attribute("id") = Attribute("id") + 1).map(Attribute("id") = Attribute("value") + Attribute("id")).SINK
+    // {
+    //     const std::string antlrQueryString = "SELECT id + 1 AS id, id + value AS id FROM window INTO File";
+    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + 1).map(Attribute("id") = Attribute("value") + Attribute("id")).sink("File");
+    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    // }
+    /// Query::from("window").map(Attribute("id") = Attribute("id") + 1)
+    /// .map(Attribute("new") = Attribute("id") + Attribute("value"))
+    /// .map(Attribute("new2") = Attribute("new") + Attribute("value"))
+    /// .project(Attribute("id"), Attribute("new2"))
+    /// .map(Attribute("id") = Attribute("id") + Attribute("new2")).SINK
+    {
+        /// Todo: Attribute name: 'new2' is incorrectly parsed as 'new'
+        /// Todo: errors just slip through, e.g., an extraneous ',' in front of 'FROM'
+        const std::string antlrQueryString = "SELECT id + value + value AS newer, id + 1 + newer AS id FROM window INTO File";
+        const auto legacyQuery = Query::from("window")
+                                     .map(Attribute("new") = Attribute("id") + Attribute("value"))
+                                     .map(Attribute("new2") = Attribute("new") + Attribute("value"))
+                                     .map(Attribute("id") = Attribute("id") + Attribute("new2"))
+                                     .sink("File")
+                                     .project(Attribute("id"), Attribute("new2"));
+        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
+    }
 }
 
 TEST_F(SQLParsingServiceTest, selectionTest)

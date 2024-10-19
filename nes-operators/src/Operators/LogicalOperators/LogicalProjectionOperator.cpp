@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -55,7 +56,36 @@ bool LogicalProjectionOperator::equal(NodePtr const& rhs) const
 std::string LogicalProjectionOperator::toString() const
 {
     std::stringstream ss;
-    ss << "PROJECTION(" << id << ", schema=" << outputSchema->toString() << ")";
+    if (not outputSchema->getFieldNames().empty())
+    {
+        ss << "PROJECTION(" << "opId: " << id << ", schema=" << outputSchema->toString();
+    }
+    else if (not functions.empty())
+    {
+        INVARIANT(
+            NES::Util::instanceOf<NodeFunctionFieldAccess>(functions.front())
+                or NES::Util::instanceOf<NodeFunctionFieldAssignment>(functions.front()),
+            "Projection function operator must be field access or assignment operator.")
+        ss << "PROJECTION(" << "opId: " << id << ", fields: [";
+        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(functions.front()))
+            ss << NES::Util::as<NodeFunctionFieldAccess>(functions.front())->getFieldName();
+        else
+            ss << NES::Util::as<NodeFunctionFieldAssignment>(functions.front())->getField()->getFieldName();
+        for (const auto& field : functions | std::ranges::views::drop(1))
+        {
+            INVARIANT(
+                NES::Util::instanceOf<NodeFunctionFieldAccess>(functions.front())
+                    or NES::Util::instanceOf<NodeFunctionFieldAssignment>(functions.front()),
+                "Projection function operator must be field access or assignment operator.")
+            ss << ", ";
+            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(field))
+                ss << NES::Util::as<NodeFunctionFieldAccess>(field)->getFieldName();
+            else
+                ss << NES::Util::as<NodeFunctionFieldAssignment>(field)->getField()->getFieldName();
+        }
+        ss << ']';
+    }
+    ss << ')';
     return ss.str();
 }
 

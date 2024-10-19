@@ -16,6 +16,7 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 7,21,21000
 
 # Map with add function touches one field
+
 Query::from("window")
     .map(Attribute("id") = Attribute("id") + 1)
     .SINK;

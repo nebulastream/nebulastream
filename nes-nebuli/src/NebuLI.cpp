@@ -162,7 +162,7 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
 
 void validateAndSetSinkDescriptor(const QueryPlan& query, const QueryConfig& config)
 {
-    INVARIANT(
+    PRECONDITION(
         query.getSinkOperators().size() == 1,
         fmt::format(
             "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
