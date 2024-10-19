@@ -23,7 +23,7 @@ jobs:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
-      ref: ${{ github.head_ref }}
+      ref: ${{ github.event.pull_request.base.sha }}
 
   build-code-coverage-ref:
     needs: [ get-dev-images-ref ]
@@ -50,7 +50,7 @@ jobs:
           cache-name: ref-cov-cache
         with:
           path: /tmp/cache/ref-coverage.lcov
-          key: ${{ matrix.platform }}-ref-cov-${{ github.head_ref }}
+          key: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}
       - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses:
           AutoModality/action-clean@v1
@@ -73,7 +73,7 @@ jobs:
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-ref-cov-${{ github.head_ref }}.info
+          name: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}.info
           path: /tmp/cache/ref-coverage.lcov
 
   build-code-coverage-pr-branch:
@@ -184,7 +184,7 @@ jobs:
       - name: Downloading code coverage for ref branch
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.platform }}-ref-cov-${{ github.head_ref }}.info
+          name: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}.info
       - name: Downloading code coverage for pr branch
         uses: actions/download-artifact@v4
         with:
