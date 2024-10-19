@@ -87,7 +87,7 @@ void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
         if (entryPos < numTuplesOnPage)
         {
             tupleBufferAndPosForEntry.bufferPos = entryPos;
-            tupleBufferAndPosForEntry.buffer = page.operator&(); // TODO
+            tupleBufferAndPosForEntry.buffer = new Memory::TupleBuffer(page);
             return;
         }
 

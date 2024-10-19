@@ -33,6 +33,14 @@ struct TupleBufferAndPosForEntry
     uint64_t entryPos;
     uint64_t bufferPos;
     Memory::TupleBuffer* buffer;
+
+    ~TupleBufferAndPosForEntry()
+    {
+        if (buffer != nullptr)
+        {
+          delete buffer;
+        }
+    }
 };
 
 /**
@@ -47,24 +55,12 @@ class PagedVector
 public:
     PagedVector(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
-    /**
-     * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
-     * and updates the numberOfEntriesOnCurrPage.
-     */
+    /// Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
+    /// and updates the numberOfEntriesOnCurrPage.
     void appendPage();
 
-    /**
-     * @brief TODO
-     * @param entryPos
-     * @return
-     */
     Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos);
 
-    /**
-     * @brief TODO
-     * @param entryPos
-     * @return
-     */
     uint64_t getBufferPosForEntry(uint64_t entryPos);
 
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
