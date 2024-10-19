@@ -11,20 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/Query.hpp>
-#include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <climits>
 #include <iostream>
 #include <regex>
+#include <API/Query.hpp>
+#include <API/QueryAPI.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 /*
@@ -48,6 +48,17 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
     queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
     return queryPlanStr;
+}
+
+TEST_F(SQLParsingServiceTest, systemLevelTestsMilestone)
+{
+    std::shared_ptr<QueryParsingService> SQLParsingService;
+    const std::string antlrQueryString = "SELECT 3 * id FROM window WHERE id != 1 INTO File";
+    const QueryPlanPtr antlrQueryParsed = SQLParsingService->createQueryFromSQL(antlrQueryString);
+
+    auto legacyQuery = Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File");
+
+    EXPECT_TRUE(antlrQueryParsed->compare(legacyQuery.getQueryPlan()));
 }
 
 TEST_F(SQLParsingServiceTest, selectionTest)

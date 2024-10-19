@@ -41,7 +41,9 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
         const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return this->sinkName == sinkOperator->sinkName and *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef();
+        return this->sinkName == sinkOperator->sinkName and (this->sinkDescriptor)
+            ? *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef()
+            : true;
     }
     return false;
 };

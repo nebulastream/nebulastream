@@ -1278,15 +1278,9 @@ public:
 
   class  SinkTypeFileContext : public antlr4::ParserRuleContext {
   public:
-    antlr4::Token *path = nullptr;
-    NebulaSQLParser::FileFormatContext *format = nullptr;
-    antlr4::Token *append = nullptr;
     SinkTypeFileContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *FILE();
-    std::vector<antlr4::tree::TerminalNode *> STRING();
-    antlr4::tree::TerminalNode* STRING(size_t i);
-    FileFormatContext *fileFormat();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

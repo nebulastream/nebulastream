@@ -257,7 +257,7 @@ nullNotnull
 streamName: IDENTIFIER;
 
 /// New Sinks
-sinkTypeFile: FILE '(' path=STRING ',' format=fileFormat ',' append=STRING ')';
+sinkTypeFile: FILE;
 sinkTypePrint: PRINT;
 
 fileFormat: CSV_FORMAT;

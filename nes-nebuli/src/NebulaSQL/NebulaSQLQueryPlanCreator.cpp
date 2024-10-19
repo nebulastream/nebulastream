@@ -24,10 +24,11 @@ limitations under the License.
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include "Functions/LogicalFunctions/NodeFunctionNegate.hpp"
 #include "Operators/LogicalOperators/LogicalOperatorFactory.hpp"
 
 namespace NES::Parsers
@@ -507,10 +508,21 @@ void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpres
     if (!helper.isFunctionCall && !helper.expressionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1
         && context->children.size() == 1)
     {
-        std::string implicitFieldName = "mapField" + std::to_string(helper.implicitMapCountHelper);
-        NodeFunctionPtr attr = helper.expressionBuilder.back();
+        std::string implicitFieldName;
+        const NodeFunctionPtr mapExpression = helper.expressionBuilder.back();
+        /// there must be a field access function node in mapExpression.
+        for (size_t i = 0; const auto& child : mapExpression->getChildren())
+        {
+            if (NES::Util::instanceOf<NodeFunctionFieldAccess>(child))
+            {
+                const auto fieldAccessNodePtr = NES::Util::as<NodeFunctionFieldAccess>(child);
+                implicitFieldName = fieldAccessNodePtr->getFieldName();
+                INVARIANT(++i < 2, "The expression of a named expression must only have one child that is a field access expression.")
+            }
+        }
+        INVARIANT(not implicitFieldName.empty(), "")
         helper.expressionBuilder.pop_back();
-        helper.mapBuilder.push_back(Attribute(implicitFieldName) = attr);
+        helper.mapBuilder.push_back(Attribute(implicitFieldName) = mapExpression);
 
         helper.implicitMapCountHelper++;
     }
@@ -579,6 +591,11 @@ void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContex
         {
             expression = NES::NodeFunctionEquals::create(leftExpression, rightExpression);
         }
+        else if (op == "!=")
+        {
+            const auto equalsExpression = NES::NodeFunctionEquals::create(leftExpression, rightExpression);
+            expression = NES::NodeFunctionNegate::create(equalsExpression);
+        }
         else
         {
             NES_ERROR("Unknown Comparison Operator");
@@ -613,7 +630,8 @@ void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContex
 void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    std::shared_ptr<DataType> dataType = std::make_shared<Integer>(std::stoi(context->getText()), 0, 128);
+    /// Todo: figure out type of constant value.
+    std::shared_ptr<DataType> dataType = DataTypeFactory::createInt32();
     const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
     auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(valueType));
     helper.expressionBuilder.push_back(constFunctionItem);
