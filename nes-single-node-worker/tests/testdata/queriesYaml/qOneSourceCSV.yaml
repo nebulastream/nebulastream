@@ -1,8 +1,8 @@
 query: |
-  SELECT * FROM csv_source INTO File
+  SELECT * FROM csv_source INTO file_sink
 
 sink:
-  name: File
+  name: file_sink
   type: File
   config:
     inputFormat: CSV

@@ -113,15 +113,16 @@ bool LogicalProjectionOperator::inferSchema()
             auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
+        else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
+        {
+            auto fieldAccess = NES::Util::as<NodeFunctionFieldAssignment>(function);
+            outputSchema->addField(fieldAccess->getField()->getFieldName(), fieldAccess->getStamp());
+        }
         else
         {
-            NES_ERROR(
-                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a FieldRenameFunction "
-                "but it was a {}",
-                function->toString());
             throw TypeInferenceException(
-                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a "
-                "FieldRenameFunction but it was a "
+                "LogicalProjectionOperator: Function has to be an NodeFunctionFieldAccess, a "
+                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a "
                 + function->toString());
         }
     }

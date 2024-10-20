@@ -54,8 +54,7 @@ bool parseAndCompareQueryPlans(const std::string antlrQueryString, const Query& 
 {
     std::shared_ptr<QueryParsingService> SQLParsingService;
     const QueryPlanPtr antlrQueryParsed = SQLParsingService->createQueryFromSQL(antlrQueryString);
-    NES_DEBUG("{}", antlrQueryParsed->toString());
-    // NES_DEBUG("{} vs. \n{}", antlrQueryParsed->toString(), legacyQuery.getQueryPlan()->toString());
+    NES_DEBUG("{} vs. \n{}", antlrQueryParsed->toString(), legacyQuery.getQueryPlan()->toString());
     return antlrQueryParsed->compare(legacyQuery.getQueryPlan());
 }
 
@@ -81,74 +80,6 @@ TEST_F(SQLParsingServiceTest, projectionAndMapTests)
     ///     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") * 3).sink("File");
     ///     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
     /// }
-}
-TEST_F(SQLParsingServiceTest, systemLevelTestsMilestone)
-{
-    // /// Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File")
-    // {
-    //     const std::string antlrQueryString = "SELECT 3 * id AS id FROM window WHERE id != 1 INTO File";
-    //     const auto legacyQuery = Query::from("window").filter(Attribute("id") != 1).map(Attribute("id") = Attribute("id") * 3).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").filter(Attribute("value") == 1).sink("File")
-    // {
-    //     const std::string antlrQueryString = "SELECT * FROM window WHERE value == 1 INTO File";
-    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") == 1).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").filter(Attribute("value") == 1).filter(Attribute("id") == 12).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT * FROM (SELECT * FROM window WHERE value == 1) WHERE id == 12 INTO File";
-    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") == 1).filter(Attribute("id") == 12).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").filter(Attribute("value") != 1).filter(Attribute("id") != 16).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT * FROM (SELECT * FROM window WHERE value != 1) WHERE id == 16 INTO File";
-    //     const auto legacyQuery = Query::from("window").filter(Attribute("value") != 1).filter(Attribute("id") == 16).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").map(Attribute("id") = Attribute("id") + 1).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT id + 1 AS id FROM window INTO File";
-    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + 1).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").map(Attribute("id") = Attribute("id") + Attribute("value")).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT id + value AS id FROM window INTO File";
-    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + Attribute("value")).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").map(Attribute("new") = Attribute("id") + Attribute("value")).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT id + value AS new FROM window INTO File";
-    //     const auto legacyQuery = Query::from("window").map(Attribute("new") = Attribute("id") + Attribute("value")).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    // /// Query::from("window").map(Attribute("id") = Attribute("id") + 1).map(Attribute("id") = Attribute("value") + Attribute("id")).SINK
-    // {
-    //     const std::string antlrQueryString = "SELECT id + 1 AS id, id + value AS id FROM window INTO File";
-    //     const auto legacyQuery = Query::from("window").map(Attribute("id") = Attribute("id") + 1).map(Attribute("id") = Attribute("value") + Attribute("id")).sink("File");
-    //     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    // }
-    /// Query::from("window").map(Attribute("id") = Attribute("id") + 1)
-    /// .map(Attribute("new") = Attribute("id") + Attribute("value"))
-    /// .map(Attribute("new2") = Attribute("new") + Attribute("value"))
-    /// .project(Attribute("id"), Attribute("new2"))
-    /// .map(Attribute("id") = Attribute("id") + Attribute("new2")).SINK
-    {
-        /// Todo: Attribute name: 'new2' is incorrectly parsed as 'new'
-        /// Todo: errors just slip through, e.g., an extraneous ',' in front of 'FROM'
-        const std::string antlrQueryString = "SELECT id + value + value AS newer, id + 1 + newer AS id FROM window INTO File";
-        const auto legacyQuery = Query::from("window")
-                                     .map(Attribute("new") = Attribute("id") + Attribute("value"))
-                                     .map(Attribute("new2") = Attribute("new") + Attribute("value"))
-                                     .map(Attribute("id") = Attribute("id") + Attribute("new2"))
-                                     .sink("File")
-                                     .project(Attribute("id"), Attribute("new2"));
-        EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, legacyQuery));
-    }
 }
 
 TEST_F(SQLParsingServiceTest, selectionTest)

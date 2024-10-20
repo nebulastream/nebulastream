@@ -61,6 +61,7 @@ bool SourceNameLogicalOperator::inferSchema()
 {
     inputSchema = schema;
     outputSchema = schema;
+    NES_DEBUG("{}\n{}", inputSchema->toString(), outputSchema->toString());
     return true;
 }
 

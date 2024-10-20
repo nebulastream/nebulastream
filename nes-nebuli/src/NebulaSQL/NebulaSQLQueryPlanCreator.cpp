@@ -1,15 +1,15 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-    https://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <regex>
@@ -44,37 +44,22 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
 
 QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const
 {
-    if (not sinkName.empty())
-    {
-        return QueryPlanBuilder::addSink(std::move(sinkName), queryPlans.top());
-    }
-    else
-    {
-        return queryPlans.top();
-    }
+    /// Todo: support multiple sinks
+    return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
 Windowing::TimeMeasure NebulaSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase)
 {
     if (timebase == "MS")
-    {
         return Milliseconds(size);
-    }
-    else if (timebase == "SEC")
-    {
+    if (timebase == "SEC")
         return Seconds(size);
-    }
-    else if (timebase == "MIN")
-    {
+    if (timebase == "MIN")
         return Minutes(size);
-    }
-    else if (timebase == "HOUR")
-    {
+    if (timebase == "HOUR")
         return Hours(size);
-    }
-    else
-    {
-        return Milliseconds(0);
-    }
+
+    /// default: return milliseconds
+    return Milliseconds(0);
 }
 
 void NebulaSQLQueryPlanCreator::poppush(NebulaSQLHelper helper)
@@ -97,10 +82,13 @@ void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseConte
 
 void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext* context)
 {
-    if (context->sinkType())
+    if (context->sink().empty())
+        throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
+    /// Store all specified sinks.
+    for (const auto& sink : context->sink())
     {
-        auto sinkType = context->sinkType()->getText();
-        sinkName = sinkType;
+        const auto sinkIdentifier = sink->identifier();
+        sinkNames.emplace_back(sinkIdentifier->getText());
     }
 }
 
@@ -323,11 +311,10 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
             }
             else
             {
-                /// Todo: renaming an expression (mapBuilder) and adding a projection (expressionBuilder) on the renamed expression.
+                /// renaming an expression (mapBuilder) and adding a projection (expressionBuilder) on the renamed expression.
                 const auto renamedAttribute = Attribute(context->getText()) = attr;
                 helper.expressionBuilder.push_back(renamedAttribute);
-                helper.addMapExpression(renamedAttribute);
-                // helper.mapBuilder.push_back(renamedAttribute);
+                helper.mapBuilder.push_back(renamedAttribute);
             }
         }
     }
@@ -603,7 +590,7 @@ void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContex
         }
         else
         {
-            NES_ERROR("Unknown Comparison Operator");
+            throw InvalidQuerySyntax(fmt::format("Unknown Comparison Operator: {}", op));
         }
         helper.expressionBuilder.push_back(expression);
         poppush(helper);
@@ -635,8 +622,61 @@ void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContex
 void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context)
 {
     NebulaSQLHelper helper = helpers.top();
-    /// Todo: figure out type of constant value.
-    std::shared_ptr<DataType> dataType = DataTypeFactory::createInt32();
+    std::shared_ptr<DataType> dataType;
+    if (const auto valueAsNumeric = dynamic_cast<NebulaSQLParser::NumericLiteralContext*>(context->constant()))
+    {
+        const auto concreteValue = valueAsNumeric->number();
+        /// Signed Integers
+        if (dynamic_cast<NebulaSQLParser::TinyIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt8();
+        }
+        else if (dynamic_cast<NebulaSQLParser::SmallIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt16();
+        }
+        else if (dynamic_cast<NebulaSQLParser::IntegerLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt32();
+        }
+        else if (dynamic_cast<NebulaSQLParser::BigIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt64();
+        }
+
+        /// Unsigned Integers
+        else if (dynamic_cast<NebulaSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt8();
+        }
+        else if (dynamic_cast<NebulaSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt16();
+        }
+        else if (dynamic_cast<NebulaSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt32();
+        }
+        else if (dynamic_cast<NebulaSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createInt64();
+        }
+
+        /// Floating Point
+        else if (dynamic_cast<NebulaSQLParser::DoubleLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createDouble();
+        }
+        else if (dynamic_cast<NebulaSQLParser::FloatLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createFloat();
+        }
+        /// We currently do not support decimals.
+        else if (dynamic_cast<NebulaSQLParser::DecimalLiteralContext*>(concreteValue))
+        {
+            dataType = DataTypeFactory::createDouble();
+        }
+    }
     const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
     auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(valueType));
     helper.expressionBuilder.push_back(constFunctionItem);

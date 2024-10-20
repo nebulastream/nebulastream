@@ -37,9 +37,7 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 1,21,21000
 
 # Filter equal
-Query::from("window")
-    .filter(Attribute("value") == 1)
-    .SINK;
+SELECT * FROM window WHERE value == 1 INTO SINK
 ----
 1,1,1000
 12,1,1001
@@ -48,22 +46,14 @@ Query::from("window")
 
 
 # Filter equal with non-existing value
-Query::from("window")
-    .filter(Attribute("value") == 1234)
-    .SINK;
+SELECT * FROM window WHERE value == 1234 INTO SINK
 ----
 
 # Two filters after each other
-Query::from("window")
-    .filter(Attribute("value") == 1)
-    .filter(Attribute("id") == 12)
-    .SINK;
+SELECT * FROM window WHERE value == 1 AND id == 12 INTO SINK
 ----
 12,1,1001
 
 # Two filters after each other with no results
-Query::from("window")
-    .filter(Attribute("value") == 1)
-    .filter(Attribute("id") == 1234)
-    .SINK;
+SELECT * FROM window WHERE value == 1 AND id == 1234 INTO SINK
 ----

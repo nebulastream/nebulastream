@@ -223,20 +223,14 @@ public:
   virtual void enterSinkClause(NebulaSQLParser::SinkClauseContext * /*ctx*/) override { }
   virtual void exitSinkClause(NebulaSQLParser::SinkClauseContext * /*ctx*/) override { }
 
-  virtual void enterSinkType(NebulaSQLParser::SinkTypeContext * /*ctx*/) override { }
-  virtual void exitSinkType(NebulaSQLParser::SinkTypeContext * /*ctx*/) override { }
+  virtual void enterSink(NebulaSQLParser::SinkContext * /*ctx*/) override { }
+  virtual void exitSink(NebulaSQLParser::SinkContext * /*ctx*/) override { }
 
   virtual void enterNullNotnull(NebulaSQLParser::NullNotnullContext * /*ctx*/) override { }
   virtual void exitNullNotnull(NebulaSQLParser::NullNotnullContext * /*ctx*/) override { }
 
   virtual void enterStreamName(NebulaSQLParser::StreamNameContext * /*ctx*/) override { }
   virtual void exitStreamName(NebulaSQLParser::StreamNameContext * /*ctx*/) override { }
-
-  virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
-  virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext * /*ctx*/) override { }
-
-  virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
-  virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext * /*ctx*/) override { }
 
   virtual void enterFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
   virtual void exitFileFormat(NebulaSQLParser::FileFormatContext * /*ctx*/) override { }
@@ -315,6 +309,18 @@ public:
 
   virtual void enterTinyIntLiteral(NebulaSQLParser::TinyIntLiteralContext * /*ctx*/) override { }
   virtual void exitTinyIntLiteral(NebulaSQLParser::TinyIntLiteralContext * /*ctx*/) override { }
+
+  virtual void enterUnsignedIntegerLiteral(NebulaSQLParser::UnsignedIntegerLiteralContext * /*ctx*/) override { }
+  virtual void exitUnsignedIntegerLiteral(NebulaSQLParser::UnsignedIntegerLiteralContext * /*ctx*/) override { }
+
+  virtual void enterUnsignedBigIntLiteral(NebulaSQLParser::UnsignedBigIntLiteralContext * /*ctx*/) override { }
+  virtual void exitUnsignedBigIntLiteral(NebulaSQLParser::UnsignedBigIntLiteralContext * /*ctx*/) override { }
+
+  virtual void enterUnsignedSmallIntLiteral(NebulaSQLParser::UnsignedSmallIntLiteralContext * /*ctx*/) override { }
+  virtual void exitUnsignedSmallIntLiteral(NebulaSQLParser::UnsignedSmallIntLiteralContext * /*ctx*/) override { }
+
+  virtual void enterUnsignedTinyIntLiteral(NebulaSQLParser::UnsignedTinyIntLiteralContext * /*ctx*/) override { }
+  virtual void exitUnsignedTinyIntLiteral(NebulaSQLParser::UnsignedTinyIntLiteralContext * /*ctx*/) override { }
 
   virtual void enterDoubleLiteral(NebulaSQLParser::DoubleLiteralContext * /*ctx*/) override { }
   virtual void exitDoubleLiteral(NebulaSQLParser::DoubleLiteralContext * /*ctx*/) override { }

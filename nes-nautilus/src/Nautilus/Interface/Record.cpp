@@ -59,7 +59,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const R
     return os;
 }
 
-nautilus::val<uint64_t> Record::getNumberOfFields() const
+nautilus::static_val<uint64_t> Record::getNumberOfFields() const
 {
     return recordFields.size();
 }

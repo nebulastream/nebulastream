@@ -33,7 +33,7 @@ namespace NES::SLTParser
 {
 static std::string CSVSourceToken = "SourceCSV";
 static std::string SLTSourceToken = "Source";
-static std::string QueryToken = "Query::from";
+static std::string QueryToken = "SELECT";
 static std::string ResultDelimiter = "----";
 
 static std::array<std::pair<std::string_view, TokenType>, 4> stringToToken

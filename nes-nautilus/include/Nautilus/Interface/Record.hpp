@@ -34,7 +34,7 @@ public:
 
     const VarVal& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType);
-    nautilus::val<uint64_t> getNumberOfFields() const;
+    nautilus::static_val<uint64_t> getNumberOfFields() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
 

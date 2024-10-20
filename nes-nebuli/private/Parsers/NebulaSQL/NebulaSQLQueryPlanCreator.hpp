@@ -33,7 +33,7 @@ class NebulaSQLQueryPlanCreator : public NebulaSQLBaseListener
 private:
     std::stack<NebulaSQLHelper> helpers;
     QueryPlanPtr completeQueryPlan;
-    std::string sinkName;
+    std::vector<std::string> sinkNames;
     std::stack<QueryPlanPtr> queryPlans;
 
 

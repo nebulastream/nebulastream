@@ -9,323 +9,142 @@
 Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
 -42, -129,-32769,-2147483649,42, 256,65536,4294967296,23,23
 
-# Check if the values are added correctly with a constant
-Query::from("window")
-    .map(Attribute("val_i64") = Attribute("val_i64") + 42)
-    .map(Attribute("val_i32") = Attribute("val_i32") + 42)
-    .map(Attribute("val_i16") = Attribute("val_i16") + 42)
-    .map(Attribute("val_i8") = Attribute("val_i8") + 42)
+# Since equals is commutative, e.g., 'val_i8 + val_f32' equals 'val_f32 + val_i8', so we check only one direction.
+# - Todo: the above statement is currently not true.
+#   - int8_t + int16_t = int8_t -> -42(int8) + -129(int16) = 85(int8)
+#   - int16_t + int8_t = int16_t -> -129(int16) + -42(int8) = -171(int16)
+# - the above follows the c++ standard, given that there is no implicit cast to a larger datatype and the
+#   left-side datatype determines the type.
+# Check if different numeric types support the equals operation
+SELECT
+    val_i8 + 42 AS val_i8,
+    val_i16 + 42 AS val_i16,
+    val_i32 + 42 AS val_i32,
+    val_i64 + 42 AS val_i64,
 
-    .map(Attribute("val_u64") = Attribute("val_u64") + 42)
-    .map(Attribute("val_u32") = Attribute("val_u32") + 42)
-    .map(Attribute("val_u16") = Attribute("val_u16") + 42)
-    .map(Attribute("val_u8") = Attribute("val_u8") + 42)
+    val_u8 + 42_U AS val_u8,
+    val_u16 + 42_U AS val_u16,
+    val_u32 + 42_U AS val_u32,
+    val_u64 + 42_U AS val_u64,
 
-    .map(Attribute("val_f64") = Attribute("val_f64") + 42.0)
-    .map(Attribute("val_f32") = Attribute("val_f32") + 42.0f)
-
-    .SINK;
+    val_f32 + 42.0_F AS val_f32,
+    val_f64 + 42.0_D AS val_f64
+FROM window INTO SINK
 ----
-0,-87,-32727,-2147483607,84,298,65578,4294967338,65.000000,65.000000
+0 -87 -32727 -2147483607 84 298 65578 4294967338 65.000000 65.000000
 
-# Add i8 value with all other data types
-Query::from("window")
-    .map(Attribute("val_i8_i8") = Attribute("val_i8") + Attribute("val_i8"))
-    .map(Attribute("val_i8_i8_plus_1") = Attribute("val_i8") + Attribute("val_i8") + 1)
-    .map(Attribute("val_i8_i16") = Attribute("val_i8") + Attribute("val_i16"))
-    .map(Attribute("val_i8_i16_plus_1") = Attribute("val_i8") + Attribute("val_i16") + 1)
-    .map(Attribute("val_i8_i32") = Attribute("val_i8") + Attribute("val_i32"))
-    .map(Attribute("val_i8_i32_plus_1") = Attribute("val_i8") + Attribute("val_i32") + 1)
-    .map(Attribute("val_i8_i64") = Attribute("val_i8") + Attribute("val_i64"))
-    .map(Attribute("val_i8_i64_plus_1") = Attribute("val_i8") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_i8_u8") = Attribute("val_i8") + Attribute("val_u8"))
-    .map(Attribute("val_i8_u8_plus_1") = Attribute("val_i8") + Attribute("val_u8") + 1)
-    .map(Attribute("val_i8_u16") = Attribute("val_i8") + Attribute("val_u16"))
-    .map(Attribute("val_i8_u16_plus_1") = Attribute("val_i8") + Attribute("val_u16") + 1)
-    .map(Attribute("val_i8_u32") = Attribute("val_i8") + Attribute("val_u32"))
-    .map(Attribute("val_i8_u32_plus_1") = Attribute("val_i8") + Attribute("val_u32") + 1)
-    .map(Attribute("val_i8_u64") = Attribute("val_i8") + Attribute("val_u64"))
-    .map(Attribute("val_i8_u64_plus_1") = Attribute("val_i8") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_i8_f32") = Attribute("val_i8") + Attribute("val_f32"))
-    .map(Attribute("val_i8_f32_plus_1") = Attribute("val_i8") + Attribute("val_f32") + 1)
-    .map(Attribute("val_i8_f64") = Attribute("val_i8") + Attribute("val_f64"))
-    .map(Attribute("val_i8_f64_plus_1") = Attribute("val_i8") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_i8_i8"), Attribute("val_i8_i8_plus_1"), Attribute("val_i8_i16"), Attribute("val_i8_i16_plus_1"), Attribute("val_i8_i32"), Attribute("val_i8_i32_plus_1"), Attribute("val_i8_i64"), Attribute("val_i8_i64_plus_1"), Attribute("val_i8_u8"), Attribute("val_i8_u8_plus_1"), Attribute("val_i8_u16"), Attribute("val_i8_u16_plus_1"), Attribute("val_i8_u32"), Attribute("val_i8_u32_plus_1"), Attribute("val_i8_u64"), Attribute("val_i8_u64_plus_1"), Attribute("val_i8_f32"), Attribute("val_i8_f32_plus_1"), Attribute("val_i8_f64"), Attribute("val_i8_f64_plus_1"))
-    .SINK;
+# Equal i8 value with all other data types
+SELECT
+    # signed
+    val_i8 + val_i8 AS val_i8_i8,
+    val_i8 + val_i8 + 1 AS val_i8_i8_plus_1,
+    val_i8 + val_i16 AS val_i8_i16,
+    val_i8 + val_i16 + 1 AS val_i8_i16_plus_1,
+    val_i8 + val_i32 AS val_i8_i32,
+    val_i8 + val_i32 + 1 AS val_i8_i32_plus_1,
+    val_i8 + val_i64 AS val_i8_i64,
+    val_i8 + val_i64 + 1 AS val_i8_i64_plus_1,
+    # unsigned
+    val_i8 + val_u8  AS val_i8_u8,
+    val_i8 + val_u8  + 1_U AS val_i8_u8_plus_1,
+    val_i8 + val_u16 AS val_i8_u16,
+    val_i8 + val_u16 + 1_U AS val_i8_u16_plus_1,
+    val_i8 + val_u32 AS val_i8_u32,
+    val_i8 + val_u32 + 1_U AS val_i8_u32_plus_1,
+    val_i8 + val_u64 AS val_i8_u64,
+    val_i8 + val_u64 + 1_U AS val_i8_u64_plus_1,
+    # float
+    val_i8 + val_f32 AS val_i8_f32_,
+    val_i8 + val_f32 + 1_F AS val_i8_f32_plus_1,
+    val_i8 + val_f64 AS val_i8_f64,
+    val_i8 + val_f64 + 1_D AS val_i8_f64_plus_1
+FROM window INTO SINK
 ----
--84,-83,-171,-170,-32811,-32810,-2147483691,-2147483690,0,1,214,215,65494,65495,4294967254,4294967255,-19.000000,-18.000000,-19.000000,-18.000000
+-84 -83 85 86 -43 -42 -43 -42 0 1 -42 -41 -42 -41 -42 -41 0 0 0 0
 
-# Add i16 value with all other data types
-Query::from("window")
-    .map(Attribute("val_i16_i8") = Attribute("val_i16") + Attribute("val_i8"))
-    .map(Attribute("val_i16_i8_plus_1") = Attribute("val_i16") + Attribute("val_i8") + 1)
-    .map(Attribute("val_i16_i16") = Attribute("val_i16") + Attribute("val_i16"))
-    .map(Attribute("val_i16_i16_plus_1") = Attribute("val_i16") + Attribute("val_i16") + 1)
-    .map(Attribute("val_i16_i32") = Attribute("val_i16") + Attribute("val_i32"))
-    .map(Attribute("val_i16_i32_plus_1") = Attribute("val_i16") + Attribute("val_i32") + 1)
-    .map(Attribute("val_i16_i64") = Attribute("val_i16") + Attribute("val_i64"))
-    .map(Attribute("val_i16_i64_plus_1") = Attribute("val_i16") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_i16_u8") = Attribute("val_i16") + Attribute("val_u8"))
-    .map(Attribute("val_i16_u8_plus_1") = Attribute("val_i16") + Attribute("val_u8") + 1)
-    .map(Attribute("val_i16_u16") = Attribute("val_i16") + Attribute("val_u16"))
-    .map(Attribute("val_i16_u16_plus_1") = Attribute("val_i16") + Attribute("val_u16") + 1)
-    .map(Attribute("val_i16_u32") = Attribute("val_i16") + Attribute("val_u32"))
-    .map(Attribute("val_i16_u32_plus_1") = Attribute("val_i16") + Attribute("val_u32") + 1)
-    .map(Attribute("val_i16_u64") = Attribute("val_i16") + Attribute("val_u64"))
-    .map(Attribute("val_i16_u64_plus_1") = Attribute("val_i16") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_i16_f32") = Attribute("val_i16") + Attribute("val_f32"))
-    .map(Attribute("val_i16_f32_plus_1") = Attribute("val_i16") + Attribute("val_f32") + 1)
-    .map(Attribute("val_i16_f64") = Attribute("val_i16") + Attribute("val_f64"))
-    .map(Attribute("val_i16_f64_plus_1") = Attribute("val_i16") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_i16_i8"), Attribute("val_i16_i8_plus_1"), Attribute("val_i16_i16"), Attribute("val_i16_i16_plus_1"), Attribute("val_i16_i32"), Attribute("val_i16_i32_plus_1"), Attribute("val_i16_i64"), Attribute("val_i16_i64_plus_1"), Attribute("val_i16_u8"), Attribute("val_i16_u8_plus_1"), Attribute("val_i16_u16"), Attribute("val_i16_u16_plus_1"), Attribute("val_i16_u32"), Attribute("val_i16_u32_plus_1"), Attribute("val_i16_u64"), Attribute("val_i16_u64_plus_1"), Attribute("val_i16_f32"), Attribute("val_i16_f32_plus_1"), Attribute("val_i16_f64"), Attribute("val_i16_f64_plus_1"))
-    .SINK;
+# Equal i16 value with all other data types
+SELECT
+    # signed
+    val_i16 + val_i8 AS val_i16_i8,
+    val_i16 + val_i8 + 1 AS val_i16_i8_plus_1,
+    val_i16 + val_i16 AS val_i16_i16,
+    val_i16 + val_i16 + 1 AS val_i16_i16_plus_1,
+    val_i16 + val_i32 AS val_i16_i32,
+    val_i16 + val_i32 + 1 AS val_i16_i32_plus_1,
+    val_i16 + val_i64 AS val_i16_i64,
+    val_i16 + val_i64 + 1 AS val_i16_i64_plus_1,
+    # unsigned
+    val_i16 + val_u8 AS val_i16_u8,
+    val_i16 + val_u8 + 1_U AS val_i16_u8_plus_1,
+    val_u16 + val_i16 AS val_i16_u16,
+    val_u16 + val_i16 + 1_U AS val_i16_u16_plus_1,
+    val_i16 + val_u32 AS val_i16_u32,
+    val_i16 + val_u32 + 1_U AS val_i16_u32_plus_1,
+    val_i16 + val_u64 AS val_i16_u64,
+    val_i16 + val_u64 + 1_U AS val_i16_u64_plus_1,
+    # float
+    val_i16 + val_f32 AS val_i16_f32,
+    val_i16 + val_f32 + 1_F AS val_i16_f32_plus_1,
+    val_i16 + val_f64 AS val_i16_f64,
+    val_i16 + val_f64 + 1_D AS val_i16_f64_plus_1
+FROM window INTO SINK
 ----
--171,-170,-258,-257,-32898,-32897,-2147483778,-2147483777,-87,-86,127,128,65407,65408,4294967167,4294967168,-106.000000,-105.000000,-106.000000,-105.000000
+-171 -170 -258 -257 32638 32639 -130 -129 -87 -86 127 128 -129 -128 -129 -128 0 0 0 0
 
-# Add i32 value with all other data types
-Query::from("window")
-    .map(Attribute("val_i32_i8") = Attribute("val_i32") + Attribute("val_i8"))
-    .map(Attribute("val_i32_i8_plus_1") = Attribute("val_i32") + Attribute("val_i8") + 1)
-    .map(Attribute("val_i32_i16") = Attribute("val_i32") + Attribute("val_i16"))
-    .map(Attribute("val_i32_i16_plus_1") = Attribute("val_i32") + Attribute("val_i16") + 1)
-    .map(Attribute("val_i32_i32") = Attribute("val_i32") + Attribute("val_i32"))
-    .map(Attribute("val_i32_i32_plus_1") = Attribute("val_i32") + Attribute("val_i32") + 1)
-    .map(Attribute("val_i32_i64") = Attribute("val_i32") + Attribute("val_i64"))
-    .map(Attribute("val_i32_i64_plus_1") = Attribute("val_i32") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_i32_u8") = Attribute("val_i32") + Attribute("val_u8"))
-    .map(Attribute("val_i32_u8_plus_1") = Attribute("val_i32") + Attribute("val_u8") + 1)
-    .map(Attribute("val_i32_u16") = Attribute("val_i32") + Attribute("val_u16"))
-    .map(Attribute("val_i32_u16_plus_1") = Attribute("val_i32") + Attribute("val_u16") + 1)
-    .map(Attribute("val_i32_u32") = Attribute("val_i32") + Attribute("val_u32"))
-    .map(Attribute("val_i32_u32_plus_1") = Attribute("val_i32") + Attribute("val_u32") + 1)
-    .map(Attribute("val_i32_u64") = Attribute("val_i32") + Attribute("val_u64"))
-    .map(Attribute("val_i32_u64_plus_1") = Attribute("val_i32") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_i32_f32") = Attribute("val_i32") + Attribute("val_f32"))
-    .map(Attribute("val_i32_f32_plus_1") = Attribute("val_i32") + Attribute("val_f32") + 1)
-    .map(Attribute("val_i32_f64") = Attribute("val_i32") + Attribute("val_f64"))
-    .map(Attribute("val_i32_f64_plus_1") = Attribute("val_i32") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_i32_i8"), Attribute("val_i32_i8_plus_1"), Attribute("val_i32_i16"), Attribute("val_i32_i16_plus_1"), Attribute("val_i32_i32"), Attribute("val_i32_i32_plus_1"), Attribute("val_i32_i64"), Attribute("val_i32_i64_plus_1"), Attribute("val_i32_u8"), Attribute("val_i32_u8_plus_1"), Attribute("val_i32_u16"), Attribute("val_i32_u16_plus_1"), Attribute("val_i32_u32"), Attribute("val_i32_u32_plus_1"), Attribute("val_i32_u64"), Attribute("val_i32_u64_plus_1"), Attribute("val_i32_f32"), Attribute("val_i32_f32_plus_1"), Attribute("val_i32_f64"), Attribute("val_i32_f64_plus_1"))
-    .SINK;
+# Equal i32 value with all other data types
+SELECT
+    # signed
+    val_i32 + val_i8 AS val_i32_i8,
+    val_i32 + val_i8 + 1 AS val_i32_i8_plus_1,
+    val_i32 + val_i16 AS val_i32_i16,
+    val_i32 + val_i16 + 1 AS val_i32_i16_plus_1,
+    val_i32 + val_i32 AS val_i32_i32,
+    val_i32 + val_i32 + 1 AS val_i32_i32_plus_1,
+    val_i32 + val_i64 AS val_i32_i64,
+    val_i32 + val_i64 + 1 AS val_i32_i64_plus_1,
+    # unsigned
+    val_i32 + val_u8 AS val_i32_u8,
+    val_i32 + val_u8 + 1_U AS val_i32_u8_plus_1,
+    val_i32 + val_u16 AS val_i32_u16,
+    val_i32 + val_u16 + 1_U AS val_i32_u16_plus_1,
+    val_i32 + val_u32 AS val_i32_u32,
+    val_i32 + val_u32 + 1_U AS val_i32_u32_plus_1,
+    val_i32 + val_u64 AS val_i32_u64,
+    val_i32 + val_u64 + 1_U AS val_i32_u64_plus_1,
+    # float
+    val_i32 + val_f32 AS val_i32_f32,
+    val_i32 + val_f32 + 1_F AS val_i32_f32_plus_1,
+    val_i32 + val_f64 AS val_i32_f64,
+    val_i32 + val_f64 + 1_D AS val_i32_f64_plus_1
+FROM window INTO SINK
 ----
--32811,-32810,-32898,-32897,-65538,-65537,-2147516418,-2147516417,-32727,-32726,-32513,-32512,32767,32768,4294934527,4294934528,-32746.000000,-32745.000000,-32746.000000,-32745.000000
+-32811 -32810 -32898 -32897 -65538 -65537 2147450878 2147450879 -32727 -32726 -32513 -32512 32767 32768 -32769 -32768 -956312576 -956313088 0 0
 
-
-# Add i64 value with all other data types
-Query::from("window")
-    .map(Attribute("val_i64_i8") = Attribute("val_i64") + Attribute("val_i8"))
-    .map(Attribute("val_i64_i8_plus_1") = Attribute("val_i64") + Attribute("val_i8") + 1)
-    .map(Attribute("val_i64_i16") = Attribute("val_i64") + Attribute("val_i16"))
-    .map(Attribute("val_i64_i16_plus_1") = Attribute("val_i64") + Attribute("val_i16") + 1)
-    .map(Attribute("val_i64_i32") = Attribute("val_i64") + Attribute("val_i32"))
-    .map(Attribute("val_i64_i32_plus_1") = Attribute("val_i64") + Attribute("val_i32") + 1)
-    .map(Attribute("val_i64_i64") = Attribute("val_i64") + Attribute("val_i64"))
-    .map(Attribute("val_i64_i64_plus_1") = Attribute("val_i64") + Attribute("val_i64") + 1)
-    .map(Attribute("val_i64_u8") = Attribute("val_i64") + Attribute("val_u8"))
-    .map(Attribute("val_i64_u8_plus_1") = Attribute("val_i64") + Attribute("val_u8") + 1)
-    .map(Attribute("val_i64_u16") = Attribute("val_i64") + Attribute("val_u16"))
-    .map(Attribute("val_i64_u16_plus_1") = Attribute("val_i64") + Attribute("val_u16") + 1)
-    .map(Attribute("val_i64_u32") = Attribute("val_i64") + Attribute("val_u32"))
-    .map(Attribute("val_i64_u32_plus_1") = Attribute("val_i64") + Attribute("val_u32") + 1)
-    .map(Attribute("val_i64_u64") = Attribute("val_i64") + Attribute("val_u64"))
-    .map(Attribute("val_i64_u64_plus_1") = Attribute("val_i64") + Attribute("val_u64") + 1)
-    .map(Attribute("val_i64_f32") = Attribute("val_i64") + Attribute("val_f32"))
-    .map(Attribute("val_i64_f32_plus_1") = Attribute("val_i64") + Attribute("val_f32") + 1)
-    .map(Attribute("val_i64_f64") = Attribute("val_i64") + Attribute("val_f64"))
-    .map(Attribute("val_i64_f64_plus_1") = Attribute("val_i64") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_i64_i8"), Attribute("val_i64_i8_plus_1"), Attribute("val_i64_i16"), Attribute("val_i64_i16_plus_1"), Attribute("val_i64_i32"), Attribute("val_i64_i32_plus_1"), Attribute("val_i64_i64"), Attribute("val_i64_i64_plus_1"), Attribute("val_i64_u8"), Attribute("val_i64_u8_plus_1"), Attribute("val_i64_u16"), Attribute("val_i64_u16_plus_1"), Attribute("val_i64_u32"), Attribute("val_i64_u32_plus_1"), Attribute("val_i64_u64"), Attribute("val_i64_u64_plus_1"), Attribute("val_i64_f32"), Attribute("val_i64_f32_plus_1"), Attribute("val_i64_f64"), Attribute("val_i64_f64_plus_1"))
-    .SINK;
+# Equal i64 value with all other data types
+SELECT
+    # signed
+    val_i64 + val_i8 AS val_i64_i8,
+    val_i64 + val_i8 + 1 AS val_i64_i8_plus_1,
+    val_i64 + val_i16 AS val_i64_i16,
+    val_i64 + val_i16 + 1 AS val_i64_i16_plus_1,
+    val_i64 + val_i32 AS val_i64_i32,
+    val_i64 + val_i32 + 1 AS val_i64_i32_plus_1,
+    val_i64 + val_i64 AS val_i64_i64,
+    val_i64 + val_i64 + 1 AS val_i64_i64_plus_1,
+    # unsigned
+    val_i64 + val_u8 AS val_i64_u8,
+    val_i64 + val_u8 + 1_U AS val_i64_u8_plus_1,
+    val_i64 + val_u16 AS val_i64_u16,
+    val_i64 + val_u16 + 1_U AS val_i64_u16_plus_1,
+    val_i64 + val_u32 AS val_i64_u32,
+    val_i64 + val_u32 + 1_U AS val_i64_u32_plus_1,
+    val_i64 + val_u64 AS val_i64_u64,
+    val_i64 + val_u64 + 1_U AS val_i64_u64_plus_1,
+    # float
+    val_i64 + val_f32 AS val_i64_f32,
+    val_i64 + val_f32 + 1_F AS val_i64_f32_plus_1,
+    val_i64 + val_f64 AS val_i64_f64,
+    val_i64 + val_f64 + 1_D AS val_i64_f64_plus_1
+FROM window INTO SINK
 ----
--2147483691,-2147483690,-2147483778,-2147483777,-2147516418,-2147516417,-4294967298,-4294967297,-2147483607,-2147483606,-2147483393,-2147483392,-2147418113,-2147418112,2147483647,2147483648,0.000000,0.000000,-2147483626.000000,-2147483625.000000
-
-# Add u8 value with all other data types
-Query::from("window")
-    .map(Attribute("val_u8_i8") = Attribute("val_u8") + Attribute("val_i8"))
-    .map(Attribute("val_u8_i8_plus_1") = Attribute("val_u8") + Attribute("val_i8") + 1)
-    .map(Attribute("val_u8_i16") = Attribute("val_u8") + Attribute("val_i16"))
-    .map(Attribute("val_u8_i16_plus_1") = Attribute("val_u8") + Attribute("val_i16") + 1)
-    .map(Attribute("val_u8_i32") = Attribute("val_u8") + Attribute("val_i32"))
-    .map(Attribute("val_u8_i32_plus_1") = Attribute("val_u8") + Attribute("val_i32") + 1)
-    .map(Attribute("val_u8_i64") = Attribute("val_u8") + Attribute("val_i64"))
-    .map(Attribute("val_u8_i64_plus_1") = Attribute("val_u8") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_u8_u8") = Attribute("val_u8") + Attribute("val_u8"))
-    .map(Attribute("val_u8_u8_plus_1") = Attribute("val_u8") + Attribute("val_u8") + 1)
-    .map(Attribute("val_u8_u16") = Attribute("val_u8") + Attribute("val_u16"))
-    .map(Attribute("val_u8_u16_plus_1") = Attribute("val_u8") + Attribute("val_u16") + 1)
-    .map(Attribute("val_u8_u32") = Attribute("val_u8") + Attribute("val_u32"))
-    .map(Attribute("val_u8_u32_plus_1") = Attribute("val_u8") + Attribute("val_u32") + 1)
-    .map(Attribute("val_u8_u64") = Attribute("val_u8") + Attribute("val_u64"))
-    .map(Attribute("val_u8_u64_plus_1") = Attribute("val_u8") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_u8_f32") = Attribute("val_u8") + Attribute("val_f32"))
-    .map(Attribute("val_u8_f32_plus_1") = Attribute("val_u8") + Attribute("val_f32") + 1)
-    .map(Attribute("val_u8_f64") = Attribute("val_u8") + Attribute("val_f64"))
-    .map(Attribute("val_u8_f64_plus_1") = Attribute("val_u8") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_u8_i8"), Attribute("val_u8_i8_plus_1"), Attribute("val_u8_i16"), Attribute("val_u8_i16_plus_1"), Attribute("val_u8_i32"), Attribute("val_u8_i32_plus_1"), Attribute("val_u8_i64"), Attribute("val_u8_i64_plus_1"), Attribute("val_u8_u8"), Attribute("val_u8_u8_plus_1"), Attribute("val_u8_u16"), Attribute("val_u8_u16_plus_1"), Attribute("val_u8_u32"), Attribute("val_u8_u32_plus_1"), Attribute("val_u8_u64"), Attribute("val_u8_u64_plus_1"), Attribute("val_u8_f32"), Attribute("val_u8_f32_plus_1"), Attribute("val_u8_f64"), Attribute("val_u8_f64_plus_1"))
-    .SINK;
-----
-0,1,-87,-86,-32727,-32726,-2147483607,-2147483606,84,85,298,299,65578,65579,4294967338,4294967339,65.000000,66.000000,65.000000,66.000000
-
-# Add u16 value with all other data types
-Query::from("window")
-    .map(Attribute("val_u16_i8") = Attribute("val_u16") + Attribute("val_i8"))
-    .map(Attribute("val_u16_i8_plus_1") = Attribute("val_u16") + Attribute("val_i8") + 1)
-    .map(Attribute("val_u16_i16") = Attribute("val_u16") + Attribute("val_i16"))
-    .map(Attribute("val_u16_i16_plus_1") = Attribute("val_u16") + Attribute("val_i16") + 1)
-    .map(Attribute("val_u16_i32") = Attribute("val_u16") + Attribute("val_i32"))
-    .map(Attribute("val_u16_i32_plus_1") = Attribute("val_u16") + Attribute("val_i32") + 1)
-    .map(Attribute("val_u16_i64") = Attribute("val_u16") + Attribute("val_i64"))
-    .map(Attribute("val_u16_i64_plus_1") = Attribute("val_u16") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_u16_u8") = Attribute("val_u16") + Attribute("val_u8"))
-    .map(Attribute("val_u16_u8_plus_1") = Attribute("val_u16") + Attribute("val_u8") + 1)
-    .map(Attribute("val_u16_u16") = Attribute("val_u16") + Attribute("val_u16"))
-    .map(Attribute("val_u16_u16_plus_1") = Attribute("val_u16") + Attribute("val_u16") + 1)
-    .map(Attribute("val_u16_u32") = Attribute("val_u16") + Attribute("val_u32"))
-    .map(Attribute("val_u16_u32_plus_1") = Attribute("val_u16") + Attribute("val_u32") + 1)
-    .map(Attribute("val_u16_u64") = Attribute("val_u16") + Attribute("val_u64"))
-    .map(Attribute("val_u16_u64_plus_1") = Attribute("val_u16") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_u16_f32") = Attribute("val_u16") + Attribute("val_f32"))
-    .map(Attribute("val_u16_f32_plus_1") = Attribute("val_u16") + Attribute("val_f32") + 1)
-    .map(Attribute("val_u16_f64") = Attribute("val_u16") + Attribute("val_f64"))
-    .map(Attribute("val_u16_f64_plus_1") = Attribute("val_u16") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_u16_i8"), Attribute("val_u16_i8_plus_1"), Attribute("val_u16_i16"), Attribute("val_u16_i16_plus_1"), Attribute("val_u16_i32"), Attribute("val_u16_i32_plus_1"), Attribute("val_u16_i64"), Attribute("val_u16_i64_plus_1"), Attribute("val_u16_u8"), Attribute("val_u16_u8_plus_1"), Attribute("val_u16_u16"), Attribute("val_u16_u16_plus_1"), Attribute("val_u16_u32"), Attribute("val_u16_u32_plus_1"), Attribute("val_u16_u64"), Attribute("val_u16_u64_plus_1"), Attribute("val_u16_f32"), Attribute("val_u16_f32_plus_1"), Attribute("val_u16_f64"), Attribute("val_u16_f64_plus_1"))
-    .SINK;
-----
-214,215,127,128,-32513,-32512,-2147483393,-2147483392,298,299,512,513,65792,65793,4294967552,4294967553,279.000000,280.000000,279.000000,280.000000
-
-
-# Add u32 value with all other data types
-Query::from("window")
-    .map(Attribute("val_u32_i8") = Attribute("val_u32") + Attribute("val_i8"))
-    .map(Attribute("val_u32_i8_plus_1") = Attribute("val_u32") + Attribute("val_i8") + 1)
-    .map(Attribute("val_u32_i16") = Attribute("val_u32") + Attribute("val_i16"))
-    .map(Attribute("val_u32_i16_plus_1") = Attribute("val_u32") + Attribute("val_i16") + 1)
-    .map(Attribute("val_u32_i32") = Attribute("val_u32") + Attribute("val_i32"))
-    .map(Attribute("val_u32_i32_plus_1") = Attribute("val_u32") + Attribute("val_i32") + 1)
-    .map(Attribute("val_u32_i64") = Attribute("val_u32") + Attribute("val_i64"))
-    .map(Attribute("val_u32_i64_plus_1") = Attribute("val_u32") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_u32_u8") = Attribute("val_u32") + Attribute("val_u8"))
-    .map(Attribute("val_u32_u8_plus_1") = Attribute("val_u32") + Attribute("val_u8") + 1)
-    .map(Attribute("val_u32_u16") = Attribute("val_u32") + Attribute("val_u16"))
-    .map(Attribute("val_u32_u16_plus_1") = Attribute("val_u32") + Attribute("val_u16") + 1)
-    .map(Attribute("val_u32_u32") = Attribute("val_u32") + Attribute("val_u32"))
-    .map(Attribute("val_u32_u32_plus_1") = Attribute("val_u32") + Attribute("val_u32") + 1)
-    .map(Attribute("val_u32_u64") = Attribute("val_u32") + Attribute("val_u64"))
-    .map(Attribute("val_u32_u64_plus_1") = Attribute("val_u32") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_u32_f32") = Attribute("val_u32") + Attribute("val_f32"))
-    .map(Attribute("val_u32_f32_plus_1") = Attribute("val_u32") + Attribute("val_f32") + 1)
-    .map(Attribute("val_u32_f64") = Attribute("val_u32") + Attribute("val_f64"))
-    .map(Attribute("val_u32_f64_plus_1") = Attribute("val_u32") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_u32_i8"), Attribute("val_u32_i8_plus_1"), Attribute("val_u32_i16"), Attribute("val_u32_i16_plus_1"), Attribute("val_u32_i32"), Attribute("val_u32_i32_plus_1"), Attribute("val_u32_i64"), Attribute("val_u32_i64_plus_1"), Attribute("val_u32_u8"), Attribute("val_u32_u8_plus_1"), Attribute("val_u32_u16"), Attribute("val_u32_u16_plus_1"), Attribute("val_u32_u32"), Attribute("val_u32_u32_plus_1"), Attribute("val_u32_u64"), Attribute("val_u32_u64_plus_1"), Attribute("val_u32_f32"), Attribute("val_u32_f32_plus_1"), Attribute("val_u32_f64"), Attribute("val_u32_f64_plus_1"))
-    .SINK;
-----
-65494,65495,65407,65408,32767,32768,-2147418113,-2147418112,65578,65579,65792,65793,131072,131073,4295032832,4295032833,65559.000000,65560.000000,65559.000000,65560.000000
-
-
-# Add u64 value with all other data types
-Query::from("window")
-    .map(Attribute("val_u64_i8") = Attribute("val_u64") + Attribute("val_i8"))
-    .map(Attribute("val_u64_i8_plus_1") = Attribute("val_u64") + Attribute("val_i8") + 1)
-    .map(Attribute("val_u64_i16") = Attribute("val_u64") + Attribute("val_i16"))
-    .map(Attribute("val_u64_i16_plus_1") = Attribute("val_u64") + Attribute("val_i16") + 1)
-    .map(Attribute("val_u64_i32") = Attribute("val_u64") + Attribute("val_i32"))
-    .map(Attribute("val_u64_i32_plus_1") = Attribute("val_u64") + Attribute("val_i32") + 1)
-    .map(Attribute("val_u64_i64") = Attribute("val_u64") + Attribute("val_i64"))
-    .map(Attribute("val_u64_i64_plus_1") = Attribute("val_u64") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_u64_u8") = Attribute("val_u64") + Attribute("val_u8"))
-    .map(Attribute("val_u64_u8_plus_1") = Attribute("val_u64") + Attribute("val_u8") + 1)
-    .map(Attribute("val_u64_u16") = Attribute("val_u64") + Attribute("val_u16"))
-    .map(Attribute("val_u64_u16_plus_1") = Attribute("val_u64") + Attribute("val_u16") + 1)
-    .map(Attribute("val_u64_u32") = Attribute("val_u64") + Attribute("val_u32"))
-    .map(Attribute("val_u64_u32_plus_1") = Attribute("val_u64") + Attribute("val_u32") + 1)
-    .map(Attribute("val_u64_u64") = Attribute("val_u64") + Attribute("val_u64"))
-    .map(Attribute("val_u64_u64_plus_1") = Attribute("val_u64") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_u64_f32") = Attribute("val_u64") + Attribute("val_f32"))
-    .map(Attribute("val_u64_f32_plus_1") = Attribute("val_u64") + Attribute("val_f32") + 1)
-    .map(Attribute("val_u64_f64") = Attribute("val_u64") + Attribute("val_f64"))
-    .map(Attribute("val_u64_f64_plus_1") = Attribute("val_u64") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_u64_i8"), Attribute("val_u64_i8_plus_1"), Attribute("val_u64_i16"), Attribute("val_u64_i16_plus_1"), Attribute("val_u64_i32"), Attribute("val_u64_i32_plus_1"), Attribute("val_u64_i64"), Attribute("val_u64_i64_plus_1"), Attribute("val_u64_u8"), Attribute("val_u64_u8_plus_1"), Attribute("val_u64_u16"), Attribute("val_u64_u16_plus_1"), Attribute("val_u64_u32"), Attribute("val_u64_u32_plus_1"), Attribute("val_u64_u64"), Attribute("val_u64_u64_plus_1"), Attribute("val_u64_f32"), Attribute("val_u64_f32_plus_1"), Attribute("val_u64_f64"), Attribute("val_u64_f64_plus_1"))
-    .SINK;
-----
-4294967254,4294967255,4294967167,4294967168,4294934527,4294934528,2147483647,2147483648,4294967338,4294967339,4294967552,4294967553,4295032832,4295032833,8589934592,8589934593,0.000000,0.000000,4294967319.000000,4294967320.000000
-
-
-# Add f32 value with all other data types
-Query::from("window")
-    .map(Attribute("val_f32_i8") = Attribute("val_f32") + Attribute("val_i8"))
-    .map(Attribute("val_f32_i8_plus_1") = Attribute("val_f32") + Attribute("val_i8") + 1)
-    .map(Attribute("val_f32_i16") = Attribute("val_f32") + Attribute("val_i16"))
-    .map(Attribute("val_f32_i16_plus_1") = Attribute("val_f32") + Attribute("val_i16") + 1)
-    .map(Attribute("val_f32_i32") = Attribute("val_f32") + Attribute("val_i32"))
-    .map(Attribute("val_f32_i32_plus_1") = Attribute("val_f32") + Attribute("val_i32") + 1)
-    .map(Attribute("val_f32_i64") = Attribute("val_f32") + Attribute("val_i64"))
-    .map(Attribute("val_f32_i64_plus_1") = Attribute("val_f32") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_f32_u8") = Attribute("val_f32") + Attribute("val_u8"))
-    .map(Attribute("val_f32_u8_plus_1") = Attribute("val_f32") + Attribute("val_u8") + 1)
-    .map(Attribute("val_f32_u16") = Attribute("val_f32") + Attribute("val_u16"))
-    .map(Attribute("val_f32_u16_plus_1") = Attribute("val_f32") + Attribute("val_u16") + 1)
-    .map(Attribute("val_f32_u32") = Attribute("val_f32") + Attribute("val_u32"))
-    .map(Attribute("val_f32_u32_plus_1") = Attribute("val_f32") + Attribute("val_u32") + 1)
-    .map(Attribute("val_f32_u64") = Attribute("val_f32") + Attribute("val_u64"))
-    .map(Attribute("val_f32_u64_plus_1") = Attribute("val_f32") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_f32_f32") = Attribute("val_f32") + Attribute("val_f32"))
-    .map(Attribute("val_f32_f32_plus_1") = Attribute("val_f32") + Attribute("val_f32") + 1)
-    .map(Attribute("val_f32_f64") = Attribute("val_f32") + Attribute("val_f64"))
-    .map(Attribute("val_f32_f64_plus_1") = Attribute("val_f32") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_f32_i8"), Attribute("val_f32_i8_plus_1"), Attribute("val_f32_i16"), Attribute("val_f32_i16_plus_1"), Attribute("val_f32_i32"), Attribute("val_f32_i32_plus_1"), Attribute("val_f32_i64"), Attribute("val_f32_i64_plus_1"), Attribute("val_f32_u8"), Attribute("val_f32_u8_plus_1"), Attribute("val_f32_u16"), Attribute("val_f32_u16_plus_1"), Attribute("val_f32_u32"), Attribute("val_f32_u32_plus_1"), Attribute("val_f32_u64"), Attribute("val_f32_u64_plus_1"), Attribute("val_f32_f32"), Attribute("val_f32_f32_plus_1"), Attribute("val_f32_f64"), Attribute("val_f32_f64_plus_1"))
-    .SINK;
-----
--19.000000,-18.000000,-106.000000,-105.000000,-32746.000000,-32745.000000,0.000000,0.000000,65.000000,66.000000,279.000000,280.000000,65559.000000,65560.000000,0.000000,0.000000,46.000000,47.000000,46.000000,47.000000
-
-# Add f64 value with all other data types
-Query::from("window")
-    .map(Attribute("val_f64_i8") = Attribute("val_f64") + Attribute("val_i8"))
-    .map(Attribute("val_f64_i8_plus_1") = Attribute("val_f64") + Attribute("val_i8") + 1)
-    .map(Attribute("val_f64_i16") = Attribute("val_f64") + Attribute("val_i16"))
-    .map(Attribute("val_f64_i16_plus_1") = Attribute("val_f64") + Attribute("val_i16") + 1)
-    .map(Attribute("val_f64_i32") = Attribute("val_f64") + Attribute("val_i32"))
-    .map(Attribute("val_f64_i32_plus_1") = Attribute("val_f64") + Attribute("val_i32") + 1)
-    .map(Attribute("val_f64_i64") = Attribute("val_f64") + Attribute("val_i64"))
-    .map(Attribute("val_f64_i64_plus_1") = Attribute("val_f64") + Attribute("val_i64") + 1)
-
-    .map(Attribute("val_f64_u8") = Attribute("val_f64") + Attribute("val_u8"))
-    .map(Attribute("val_f64_u8_plus_1") = Attribute("val_f64") + Attribute("val_u8") + 1)
-    .map(Attribute("val_f64_u16") = Attribute("val_f64") + Attribute("val_u16"))
-    .map(Attribute("val_f64_u16_plus_1") = Attribute("val_f64") + Attribute("val_u16") + 1)
-    .map(Attribute("val_f64_u32") = Attribute("val_f64") + Attribute("val_u32"))
-    .map(Attribute("val_f64_u32_plus_1") = Attribute("val_f64") + Attribute("val_u32") + 1)
-    .map(Attribute("val_f64_u64") = Attribute("val_f64") + Attribute("val_u64"))
-    .map(Attribute("val_f64_u64_plus_1") = Attribute("val_f64") + Attribute("val_u64") + 1)
-
-    .map(Attribute("val_f64_f32") = Attribute("val_f64") + Attribute("val_f32"))
-    .map(Attribute("val_f64_f32_plus_1") = Attribute("val_f64") + Attribute("val_f32") + 1)
-    .map(Attribute("val_f64_f64") = Attribute("val_f64") + Attribute("val_f64"))
-    .map(Attribute("val_f64_f64_plus_1") = Attribute("val_f64") + Attribute("val_f64") + 1)
-
-    .project(Attribute("val_f64_i8"), Attribute("val_f64_i8_plus_1"), Attribute("val_f64_i16"), Attribute("val_f64_i16_plus_1"), Attribute("val_f64_i32"), Attribute("val_f64_i32_plus_1"), Attribute("val_f64_i64"), Attribute("val_f64_i64_plus_1"), Attribute("val_f64_u8"), Attribute("val_f64_u8_plus_1"), Attribute("val_f64_u16"), Attribute("val_f64_u16_plus_1"), Attribute("val_f64_u32"), Attribute("val_f64_u32_plus_1"), Attribute("val_f64_u64"), Attribute("val_f64_u64_plus_1"), Attribute("val_f64_f32"), Attribute("val_f64_f32_plus_1"), Attribute("val_f64_f64"), Attribute("val_f64_f64_plus_1"))
-    .SINK;
-----
--19.000000,-18.000000,-106.000000,-105.000000,-32746.000000,-32745.000000,-2147483626.000000,-2147483625.000000,65.000000,66.000000,279.000000,280.000000,65559.000000,65560.000000,4294967319.000000,4294967320.000000,46.000000,47.000000,46.000000,47.000000
+-2147483691 -2147483690 -2147483778 -2147483777 -2147516418 -2147516417 -4294967298 -4294967297 -2147483607 -2147483606 -2147483393 -2147483392 -2147418113 -2147418112 2147483647 2147483648 3472883712 3472883712 -4476578029698547712 -4476578029702742016

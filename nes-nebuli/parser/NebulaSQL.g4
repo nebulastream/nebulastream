@@ -241,24 +241,17 @@ timeUnit: MS
 timestampParameter: IDENTIFIER;
 
 /// added Median
-functionName:  AVG | MAX | MIN | SUM | COUNT | MEDIAN
-            ;
+functionName:  AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
-sinkClause: INTO sinkType AS?
-        ;
+sinkClause: INTO sink (',' sink)*;
 
-sinkType: sinkTypeFile
-        | sinkTypePrint;
+sink: identifier;
 
 nullNotnull
     : NOT? NULLTOKEN
     ;
 
 streamName: IDENTIFIER;
-
-/// New Sinks
-sinkTypeFile: FILE;
-sinkTypePrint: PRINT;
 
 fileFormat: CSV_FORMAT;
 
@@ -330,13 +323,17 @@ number
     : {!legacy_exponent_literal_as_decimal_enabled}? MINUS? EXPONENT_VALUE #exponentLiteral
     | {!legacy_exponent_literal_as_decimal_enabled}? MINUS? DECIMAL_VALUE  #decimalLiteral
     | {legacy_exponent_literal_as_decimal_enabled}? MINUS? (EXPONENT_VALUE | DECIMAL_VALUE) #legacyDecimalLiteral
-    | MINUS? INTEGER_VALUE            #integerLiteral
-    | MINUS? BIGINT_LITERAL           #bigIntLiteral
-    | MINUS? SMALLINT_LITERAL         #smallIntLiteral
-    | MINUS? TINYINT_LITERAL          #tinyIntLiteral
-    | MINUS? DOUBLE_LITERAL           #doubleLiteral
-    | MINUS? FLOAT_LITERAL            #floatLiteral
-    | MINUS? BIGDECIMAL_LITERAL       #bigDecimalLiteral
+    | MINUS? INTEGER_VALUE              #integerLiteral
+    | MINUS? BIGINT_LITERAL             #bigIntLiteral
+    | MINUS? SMALLINT_LITERAL           #smallIntLiteral
+    | MINUS? TINYINT_LITERAL            #tinyIntLiteral
+    | MINUS? UNSIGNED_INTEGER_VALUE     #unsignedIntegerLiteral
+    | MINUS? UNSIGNED_BIGINT_LITERAL    #unsignedBigIntLiteral
+    | MINUS? UNSIGNED_SMALLINT_LITERAL  #unsignedSmallIntLiteral
+    | MINUS? UNSIGNED_TINYINT_LITERAL   #unsignedTinyIntLiteral
+    | MINUS? DOUBLE_LITERAL             #doubleLiteral
+    | MINUS? FLOAT_LITERAL              #floatLiteral
+    | MINUS? BIGDECIMAL_LITERAL         #bigDecimalLiteral
     ;
 
 constant
@@ -572,20 +569,32 @@ STRING
     | '"' ( ~('"'|'\\') | ('\\' .) )* '"'
     ;
 
+/// Signed integer literals.
 BIGINT_LITERAL
-    : DIGIT+ 'L'
+    : DIGIT+ '_L'
     ;
-
 SMALLINT_LITERAL
-    : DIGIT+ 'S'
+    : DIGIT+ '_S'
     ;
-
 TINYINT_LITERAL
-    : DIGIT+ 'Y'
+    : DIGIT+ '_Y'
     ;
-
 INTEGER_VALUE
     : DIGIT+
+    ;
+
+/// Unsigned integer literals.
+UNSIGNED_SMALLINT_LITERAL
+    : DIGIT+ '_US'
+    ;
+UNSIGNED_TINYINT_LITERAL
+    : DIGIT+ '_UY'
+    ;
+UNSIGNED_INTEGER_VALUE
+    : DIGIT+ '_U'
+    ;
+UNSIGNED_BIGINT_LITERAL
+    : DIGIT+ '_UL'
     ;
 
 EXPONENT_VALUE
@@ -598,18 +607,18 @@ DECIMAL_VALUE
     ;
 
 FLOAT_LITERAL
-    : DIGIT+ EXPONENT? 'F'
-    | DECIMAL_DIGITS EXPONENT? 'F' {isValidDecimal()}?
+    : DIGIT+ EXPONENT? '_F'
+    | DECIMAL_DIGITS EXPONENT? '_F' {isValidDecimal()}?
     ;
 
 DOUBLE_LITERAL
-    : DIGIT+ EXPONENT? 'D'
-    | DECIMAL_DIGITS EXPONENT? 'D' {isValidDecimal()}?
+    : DIGIT+ EXPONENT? '_D'
+    | DECIMAL_DIGITS EXPONENT? '_D' {isValidDecimal()}?
     ;
 
 BIGDECIMAL_LITERAL
-    : DIGIT+ EXPONENT? 'BD'
-    | DECIMAL_DIGITS EXPONENT? 'BD' {isValidDecimal()}?
+    : DIGIT+ EXPONENT? '_BD'
+    | DECIMAL_DIGITS EXPONENT? '_BD' {isValidDecimal()}?
     ;
 
 IDENTIFIER

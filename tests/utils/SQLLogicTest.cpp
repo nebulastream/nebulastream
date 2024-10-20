@@ -31,7 +31,6 @@ public:
     static void SetUpTestSuite()
     {
         Configuration::SingleNodeWorkerConfiguration configuration{};
-        // configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
     }
     static std::unique_ptr<GRPCServer> uut;

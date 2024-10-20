@@ -88,12 +88,10 @@ QueryPlanPtr QueryParsingService::createQueryFromSQL(const std::string& query)
     antlr4::CommonTokenStream tokens(&lexer);
     NebulaSQLParser parser(&tokens);
     NebulaSQLParser::QueryContext* tree = parser.query();
-    NES_DEBUG("QueryParsingService: ANTLR created the following AST from pattern string {}", tree->toStringTree(&parser));
-    NES_DEBUG("QueryParsingService: Parse the AST into a query plan");
     Parsers::NebulaSQLQueryPlanCreator queryPlanCreator;
     antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
     auto queryPlan = queryPlanCreator.getQueryPlan();
-    NES_DEBUG("PatternParsingService: created the query from AST \n{}", queryPlan->toString());
+    NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan->toString());
     return queryPlan;
 }
 

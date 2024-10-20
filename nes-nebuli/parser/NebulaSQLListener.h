@@ -221,20 +221,14 @@ public:
   virtual void enterSinkClause(NebulaSQLParser::SinkClauseContext *ctx) = 0;
   virtual void exitSinkClause(NebulaSQLParser::SinkClauseContext *ctx) = 0;
 
-  virtual void enterSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
-  virtual void exitSinkType(NebulaSQLParser::SinkTypeContext *ctx) = 0;
+  virtual void enterSink(NebulaSQLParser::SinkContext *ctx) = 0;
+  virtual void exitSink(NebulaSQLParser::SinkContext *ctx) = 0;
 
   virtual void enterNullNotnull(NebulaSQLParser::NullNotnullContext *ctx) = 0;
   virtual void exitNullNotnull(NebulaSQLParser::NullNotnullContext *ctx) = 0;
 
   virtual void enterStreamName(NebulaSQLParser::StreamNameContext *ctx) = 0;
   virtual void exitStreamName(NebulaSQLParser::StreamNameContext *ctx) = 0;
-
-  virtual void enterSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
-  virtual void exitSinkTypeFile(NebulaSQLParser::SinkTypeFileContext *ctx) = 0;
-
-  virtual void enterSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
-  virtual void exitSinkTypePrint(NebulaSQLParser::SinkTypePrintContext *ctx) = 0;
 
   virtual void enterFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
   virtual void exitFileFormat(NebulaSQLParser::FileFormatContext *ctx) = 0;
@@ -313,6 +307,18 @@ public:
 
   virtual void enterTinyIntLiteral(NebulaSQLParser::TinyIntLiteralContext *ctx) = 0;
   virtual void exitTinyIntLiteral(NebulaSQLParser::TinyIntLiteralContext *ctx) = 0;
+
+  virtual void enterUnsignedIntegerLiteral(NebulaSQLParser::UnsignedIntegerLiteralContext *ctx) = 0;
+  virtual void exitUnsignedIntegerLiteral(NebulaSQLParser::UnsignedIntegerLiteralContext *ctx) = 0;
+
+  virtual void enterUnsignedBigIntLiteral(NebulaSQLParser::UnsignedBigIntLiteralContext *ctx) = 0;
+  virtual void exitUnsignedBigIntLiteral(NebulaSQLParser::UnsignedBigIntLiteralContext *ctx) = 0;
+
+  virtual void enterUnsignedSmallIntLiteral(NebulaSQLParser::UnsignedSmallIntLiteralContext *ctx) = 0;
+  virtual void exitUnsignedSmallIntLiteral(NebulaSQLParser::UnsignedSmallIntLiteralContext *ctx) = 0;
+
+  virtual void enterUnsignedTinyIntLiteral(NebulaSQLParser::UnsignedTinyIntLiteralContext *ctx) = 0;
+  virtual void exitUnsignedTinyIntLiteral(NebulaSQLParser::UnsignedTinyIntLiteralContext *ctx) = 0;
 
   virtual void enterDoubleLiteral(NebulaSQLParser::DoubleLiteralContext *ctx) = 0;
   virtual void exitDoubleLiteral(NebulaSQLParser::DoubleLiteralContext *ctx) = 0;

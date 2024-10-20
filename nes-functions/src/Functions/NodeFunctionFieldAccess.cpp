@@ -61,7 +61,7 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
+    return "NodeFunctionFieldAccess(" + fieldName + "[" + stamp->toString() + "])";
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)

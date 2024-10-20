@@ -215,13 +215,8 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
-    // Todo: replace with SQLParsingService
-    // - the new parser cannot handle sink names yet. Suggestion: '... INTO Sink(sink_name)', could also cut out the 'Sink(..)'
-    // - we can currently only parse INT32s (hard coded) as constants. The (antlr) query api needs to support specifying the exact types, e.g. UINT64
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    QueryPlanPtr query = SQLParsingService->createQueryFromSQL(config.query);
-    NES_DEBUG("Query plan parsed by antlr: {}", query->toString());
-    // auto query = syntacticQueryValidation->validate(config.query);
+    auto query = QueryParsingService::createQueryFromSQL(config.query);
+
     validateAndSetSinkDescriptor(*query, config);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
@@ -268,7 +263,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                  "File",
                  {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
              config.sinks.emplace(sinkName, std::move(sink));
-             substitute = "sink(\"" + sinkName + "\");";
+             substitute = sinkName;
          }});
 
     parser.registerSubstitutionRule(

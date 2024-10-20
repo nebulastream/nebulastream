@@ -39,9 +39,11 @@ public:
     PLUS = 111, MINUS = 112, ASTERISK = 113, SLASH = 114, PERCENT = 115, 
     TILDE = 116, AMPERSAND = 117, PIPE = 118, CONCAT_PIPE = 119, HAT = 120, 
     STRING = 121, BIGINT_LITERAL = 122, SMALLINT_LITERAL = 123, TINYINT_LITERAL = 124, 
-    INTEGER_VALUE = 125, EXPONENT_VALUE = 126, DECIMAL_VALUE = 127, FLOAT_LITERAL = 128, 
-    DOUBLE_LITERAL = 129, BIGDECIMAL_LITERAL = 130, IDENTIFIER = 131, SIMPLE_COMMENT = 132, 
-    BRACKETED_COMMENT = 133, WS = 134, FOUR_OCTETS = 135, OCTET = 136, UNRECOGNIZED = 137
+    INTEGER_VALUE = 125, UNSIGNED_SMALLINT_LITERAL = 126, UNSIGNED_TINYINT_LITERAL = 127, 
+    UNSIGNED_INTEGER_VALUE = 128, UNSIGNED_BIGINT_LITERAL = 129, EXPONENT_VALUE = 130, 
+    DECIMAL_VALUE = 131, FLOAT_LITERAL = 132, DOUBLE_LITERAL = 133, BIGDECIMAL_LITERAL = 134, 
+    IDENTIFIER = 135, SIMPLE_COMMENT = 136, BRACKETED_COMMENT = 137, WS = 138, 
+    FOUR_OCTETS = 139, OCTET = 140, UNRECOGNIZED = 141
   };
 
   enum {
@@ -61,13 +63,12 @@ public:
     RuleTimeWindow = 41, RuleCountWindow = 42, RuleConditionWindow = 43, 
     RuleConditionParameter = 44, RuleThresholdMinSizeParameter = 45, RuleSizeParameter = 46, 
     RuleAdvancebyParameter = 47, RuleTimeUnit = 48, RuleTimestampParameter = 49, 
-    RuleFunctionName = 50, RuleSinkClause = 51, RuleSinkType = 52, RuleNullNotnull = 53, 
-    RuleStreamName = 54, RuleSinkTypeFile = 55, RuleSinkTypePrint = 56, 
-    RuleFileFormat = 57, RuleSortItem = 58, RulePredicate = 59, RuleValueExpression = 60, 
-    RuleComparisonOperator = 61, RuleHint = 62, RuleHintStatement = 63, 
-    RulePrimaryExpression = 64, RuleQualifiedName = 65, RuleNumber = 66, 
-    RuleConstant = 67, RuleBooleanValue = 68, RuleStrictNonReserved = 69, 
-    RuleAnsiNonReserved = 70, RuleNonReserved = 71
+    RuleFunctionName = 50, RuleSinkClause = 51, RuleSink = 52, RuleNullNotnull = 53, 
+    RuleStreamName = 54, RuleFileFormat = 55, RuleSortItem = 56, RulePredicate = 57, 
+    RuleValueExpression = 58, RuleComparisonOperator = 59, RuleHint = 60, 
+    RuleHintStatement = 61, RulePrimaryExpression = 62, RuleQualifiedName = 63, 
+    RuleNumber = 64, RuleConstant = 65, RuleBooleanValue = 66, RuleStrictNonReserved = 67, 
+    RuleAnsiNonReserved = 68, RuleNonReserved = 69
   };
 
   explicit NebulaSQLParser(antlr4::TokenStream *input);
@@ -143,11 +144,9 @@ public:
   class TimestampParameterContext;
   class FunctionNameContext;
   class SinkClauseContext;
-  class SinkTypeContext;
+  class SinkContext;
   class NullNotnullContext;
   class StreamNameContext;
-  class SinkTypeFileContext;
-  class SinkTypePrintContext;
   class FileFormatContext;
   class SortItemContext;
   class PredicateContext;
@@ -1225,8 +1224,8 @@ public:
     SinkClauseContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *INTO();
-    SinkTypeContext *sinkType();
-    antlr4::tree::TerminalNode *AS();
+    std::vector<SinkContext *> sink();
+    SinkContext* sink(size_t i);
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1235,19 +1234,18 @@ public:
 
   SinkClauseContext* sinkClause();
 
-  class  SinkTypeContext : public antlr4::ParserRuleContext {
+  class  SinkContext : public antlr4::ParserRuleContext {
   public:
-    SinkTypeContext(antlr4::ParserRuleContext *parent, size_t invokingState);
+    SinkContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
-    SinkTypeFileContext *sinkTypeFile();
-    SinkTypePrintContext *sinkTypePrint();
+    IdentifierContext *identifier();
 
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
    
   };
 
-  SinkTypeContext* sinkType();
+  SinkContext* sink();
 
   class  NullNotnullContext : public antlr4::ParserRuleContext {
   public:
@@ -1275,32 +1273,6 @@ public:
   };
 
   StreamNameContext* streamName();
-
-  class  SinkTypeFileContext : public antlr4::ParserRuleContext {
-  public:
-    SinkTypeFileContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *FILE();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypeFileContext* sinkTypeFile();
-
-  class  SinkTypePrintContext : public antlr4::ParserRuleContext {
-  public:
-    SinkTypePrintContext(antlr4::ParserRuleContext *parent, size_t invokingState);
-    virtual size_t getRuleIndex() const override;
-    antlr4::tree::TerminalNode *PRINT();
-
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-   
-  };
-
-  SinkTypePrintContext* sinkTypePrint();
 
   class  FileFormatContext : public antlr4::ParserRuleContext {
   public:
@@ -1637,6 +1609,16 @@ public:
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
+  class  UnsignedSmallIntLiteralContext : public NumberContext {
+  public:
+    UnsignedSmallIntLiteralContext(NumberContext *ctx);
+
+    antlr4::tree::TerminalNode *UNSIGNED_SMALLINT_LITERAL();
+    antlr4::tree::TerminalNode *MINUS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
   class  BigIntLiteralContext : public NumberContext {
   public:
     BigIntLiteralContext(NumberContext *ctx);
@@ -1652,6 +1634,46 @@ public:
     TinyIntLiteralContext(NumberContext *ctx);
 
     antlr4::tree::TerminalNode *TINYINT_LITERAL();
+    antlr4::tree::TerminalNode *MINUS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  UnsignedBigIntLiteralContext : public NumberContext {
+  public:
+    UnsignedBigIntLiteralContext(NumberContext *ctx);
+
+    antlr4::tree::TerminalNode *UNSIGNED_BIGINT_LITERAL();
+    antlr4::tree::TerminalNode *MINUS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  ExponentLiteralContext : public NumberContext {
+  public:
+    ExponentLiteralContext(NumberContext *ctx);
+
+    antlr4::tree::TerminalNode *EXPONENT_VALUE();
+    antlr4::tree::TerminalNode *MINUS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  UnsignedIntegerLiteralContext : public NumberContext {
+  public:
+    UnsignedIntegerLiteralContext(NumberContext *ctx);
+
+    antlr4::tree::TerminalNode *UNSIGNED_INTEGER_VALUE();
+    antlr4::tree::TerminalNode *MINUS();
+    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
+    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
+  };
+
+  class  SmallIntLiteralContext : public NumberContext {
+  public:
+    SmallIntLiteralContext(NumberContext *ctx);
+
+    antlr4::tree::TerminalNode *SMALLINT_LITERAL();
     antlr4::tree::TerminalNode *MINUS();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1673,16 +1695,6 @@ public:
     BigDecimalLiteralContext(NumberContext *ctx);
 
     antlr4::tree::TerminalNode *BIGDECIMAL_LITERAL();
-    antlr4::tree::TerminalNode *MINUS();
-    virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
-    virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
-  };
-
-  class  ExponentLiteralContext : public NumberContext {
-  public:
-    ExponentLiteralContext(NumberContext *ctx);
-
-    antlr4::tree::TerminalNode *EXPONENT_VALUE();
     antlr4::tree::TerminalNode *MINUS();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -1718,11 +1730,11 @@ public:
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;
   };
 
-  class  SmallIntLiteralContext : public NumberContext {
+  class  UnsignedTinyIntLiteralContext : public NumberContext {
   public:
-    SmallIntLiteralContext(NumberContext *ctx);
+    UnsignedTinyIntLiteralContext(NumberContext *ctx);
 
-    antlr4::tree::TerminalNode *SMALLINT_LITERAL();
+    antlr4::tree::TerminalNode *UNSIGNED_TINYINT_LITERAL();
     antlr4::tree::TerminalNode *MINUS();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
     virtual void exitRule(antlr4::tree::ParseTreeListener *listener) override;

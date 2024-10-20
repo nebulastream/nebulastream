@@ -57,6 +57,7 @@ bool LogicalMapOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
+    NES_DEBUG("{}\n{}", getInputSchema()->toString(), getOutputSchema()->toString());
     mapFunction->inferStamp(getInputSchema());
 
     auto assignedField = mapFunction->getField();

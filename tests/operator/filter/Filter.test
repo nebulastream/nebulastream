@@ -2,13 +2,7 @@
 # description: Simple filter tests
 # groups: [Filter]
 
-# LLVM LIT configuration
-# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
-# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
-
-SourceLogical window UINT64 id UINT64 value UINT64 timestamp
-
-Source window
+Source window UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 12,1,1001
 4,1,1002
@@ -38,21 +32,15 @@ Source window
 1,20,20000
 1,21,21000
 
-SourceCSV window TESTDATA/200x8-rows-fields.csv
-
 # Filter equal
-Query::from("window")
-    .filter(Attribute("value") == 1)
-    .SINK;
+SELECT * FROM window WHERE value == 1 INTO SINK
 ----
 1,1,1000
 12,1,1001
 4,1,1002
 
 # Filter not equal
-Query::from("window")
-    .filter(Attribute("value") !=  1)
-    .SINK;
+SELECT * FROM window WHERE value != 1 INTO SINK
 ----
 1,2,2000
 11,2,2001

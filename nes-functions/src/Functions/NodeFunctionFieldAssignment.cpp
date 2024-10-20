@@ -51,7 +51,7 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 std::string NodeFunctionFieldAssignment::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "=" << children[1]->toString();
+    ss << "NodeFunctionFieldAssignment(" << children[0]->toString() << "=" << children[1]->toString() << ")";
     return ss.str();
 }
 

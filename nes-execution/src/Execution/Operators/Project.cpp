@@ -25,7 +25,8 @@ void Project::execute(ExecutionContext& ctx, Record& record) const
     if (inputFields.size() == outputFields.size())
     {
         Record projectedRecord;
-        for (nautilus::static_val<size_t> index = 0; index < record.getNumberOfFields(); ++index)
+        const auto recordSize = record.getNumberOfFields();
+        for (nautilus::static_val<size_t> index = 0; index < recordSize; ++index)
         {
             auto inputName = inputFields.at(index);
             auto value = record.read(inputName);
