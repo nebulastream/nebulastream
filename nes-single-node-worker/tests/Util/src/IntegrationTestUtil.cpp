@@ -17,6 +17,7 @@
 #include <fstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -28,13 +29,11 @@
 #include <Util/Common.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-
-#include <Util/Common.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::IntegrationTestUtil
 {
@@ -100,8 +99,8 @@ namespace NES::IntegrationTestUtil
         {
             tupleBuffer.setNumberOfTuples(tupleCount);
             tupleBuffer.setOriginId(OriginId(originId));
-            tupleBuffer.setSequenceNumber(++sequenceNumber);
-            tupleBuffer.setWatermark(watermarkTS);
+            tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
+            tupleBuffer.setWatermark(Timestamp(watermarkTS));
             NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
@@ -115,8 +114,8 @@ namespace NES::IntegrationTestUtil
     {
         tupleBuffer.setNumberOfTuples(tupleCount);
         tupleBuffer.setOriginId(OriginId(originId));
-        tupleBuffer.setSequenceNumber(++sequenceNumber);
-        tupleBuffer.setWatermark(watermarkTS);
+        tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
+        tupleBuffer.setWatermark(Timestamp(watermarkTS));
         recordBuffers.emplace_back(tupleBuffer);
         NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }

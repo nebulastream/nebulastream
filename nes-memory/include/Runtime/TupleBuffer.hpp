@@ -21,8 +21,9 @@
 #include <memory>
 #include <ostream>
 #include <sstream>
+#include <string>
 #include <utility>
-#include <Sequencing/SequenceData.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include "BufferRecycler.hpp"
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
@@ -177,22 +178,18 @@ public:
     void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
 
     /// @brief get the watermark as a timestamp
-    [[nodiscard]] WatermarkTs getWatermark() const noexcept;
+    [[nodiscard]] Timestamp getWatermark() const noexcept;
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(WatermarkTs value) noexcept;
+    void setWatermark(Timestamp value) noexcept;
 
     /// @brief get the creation timestamp in milliseconds
-    [[nodiscard]] WatermarkTs getCreationTimestampInMS() const noexcept;
+    [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
 
     /// @brief set the sequence number
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
-    /// @brief set the sequence data, i.e., sequenceNumber, chunkNumber, and lastChunk
-    void setSequenceData(SequenceData sequenceData) noexcept;
-
-    /// @brief gets the sequence data from this buffer
-    [[nodiscard]] SequenceData getSequenceData() const noexcept;
+    [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
     /// @brief get the sequence number
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
@@ -210,7 +207,7 @@ public:
     [[nodiscard]] bool isLastChunk() const noexcept;
 
     /// @brief set the creation timestamp in milliseconds
-    void setCreationTimestampInMS(WatermarkTs value) noexcept;
+    void setCreationTimestampInMS(Timestamp value) noexcept;
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;

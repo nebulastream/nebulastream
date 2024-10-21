@@ -131,15 +131,15 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
-WatermarkTs TupleBuffer::getWatermark() const noexcept
+Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(WatermarkTs value) noexcept
+void TupleBuffer::setWatermark(Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-WatermarkTs TupleBuffer::getCreationTimestampInMS() const noexcept
+Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
@@ -147,16 +147,12 @@ void TupleBuffer::setSequenceNumber(SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
-void TupleBuffer::setSequenceData(SequenceData sequenceData) noexcept
+
+std::string TupleBuffer::getSequenceDataAsString() const noexcept
 {
-    setSequenceNumber(sequenceData.sequenceNumber);
-    setChunkNumber(sequenceData.chunkNumber);
-    setLastChunk(sequenceData.lastChunk);
+    return fmt::format("SeqNumber: {}, ChunkNumber: {}, LastChunk: {}", getSequenceNumber(), getChunkNumber(), isLastChunk());
 }
-SequenceData TupleBuffer::getSequenceData() const noexcept
-{
-    return {getSequenceNumber(), getChunkNumber(), isLastChunk()};
-}
+
 SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
@@ -173,7 +169,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(WatermarkTs value) noexcept
+void TupleBuffer::setCreationTimestampInMS(Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }

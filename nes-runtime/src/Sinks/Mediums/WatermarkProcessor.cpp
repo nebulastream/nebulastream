@@ -11,18 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
 namespace NES::Windowing
 {
 
 WatermarkProcessor::WatermarkProcessor() = default;
 
-void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber)
+void WatermarkProcessor::updateWatermark(const Timestamp timestamp, const SequenceNumber sequenceNumber)
 {
     std::unique_lock lock(watermarkLatch);
 
     /// emplace current watermark barrier in the update log
-    transactionLog.emplace(ts, sequenceNumber);
+    transactionLog.emplace(timestamp.getRawValue(), sequenceNumber.getRawValue());
     /// process all outstanding updates from the queue
     while (!transactionLog.empty())
     {
@@ -43,9 +44,9 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
     }
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() const
+Timestamp WatermarkProcessor::getCurrentWatermark() const
 {
-    return currentWatermark;
+    return Timestamp(currentWatermark);
 }
 
 bool WatermarkProcessor::isWatermarkSynchronized() const
