@@ -68,16 +68,16 @@ struct ExecutionContext final
     nautilus::val<bool> isLastChunk() const;
 
     /// Returns the next chunk number for the emitted sequence numbers
-    nautilus::val<uint64_t> getNextChunkNumber() const;
+    [[nodiscard]] nautilus::val<ChunkNumber> getNextChunkNumber() const;
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     const nautilus::val<WorkerContext*> workerContext;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
-    nautilus::val<uint64_t> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<uint64_t> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<uint64_t> currentTs; /// Stores the current time stamp. This is set by a time function
-    nautilus::val<uint64_t> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<uint64_t> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<Timestamp> currentTs; /// Stores the current time stamp. This is set by a time function
+    nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
     nautilus::val<bool> lastChunk;
 };
 

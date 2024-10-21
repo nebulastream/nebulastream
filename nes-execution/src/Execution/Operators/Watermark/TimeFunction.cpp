@@ -23,7 +23,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuffer&)
+void EventTimeFunction::open(ExecutionContext&, RecordBuffer&)
 {
     /// nop
 }
@@ -33,21 +33,21 @@ EventTimeFunction::EventTimeFunction(std::unique_ptr<Functions::Function> timest
 {
 }
 
-nautilus::val<WatermarkTs> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record)
+nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record)
 {
     const auto ts = this->timestampFunction->execute(record).cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
-    const auto tsInMs = ts * timeMultiplier;
+    const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
     ctx.currentTs = tsInMs;
     return tsInMs;
 }
 
-void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer)
+void IngestionTimeFunction::open(ExecutionContext& ctx, RecordBuffer& buffer)
 {
     ctx.currentTs = buffer.getCreatingTs();
 }
 
-nautilus::val<uint64_t> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&)
+nautilus::val<Timestamp> IngestionTimeFunction::getTs(ExecutionContext& ctx, Record&)
 {
     return ctx.currentTs;
 }

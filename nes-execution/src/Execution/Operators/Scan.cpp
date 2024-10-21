@@ -37,8 +37,8 @@ void Scan::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) cons
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNr();
-    executionCtx.chunkNumber = recordBuffer.getChunkNr();
+    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     /// call open on all child operators
     child->open(executionCtx, recordBuffer);

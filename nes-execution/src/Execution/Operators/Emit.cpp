@@ -78,8 +78,8 @@ void Emit::emitRecordBuffer(
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
-    recordBuffer.setSequenceNr(ctx.sequenceNumber);
-    recordBuffer.setChunkNr(ctx.getNextChunkNumber());
+    recordBuffer.setSequenceNumber(ctx.sequenceNumber);
+    recordBuffer.setChunkNumber(ctx.getNextChunkNumber());
     recordBuffer.setLastChunk(lastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
     ctx.emitBuffer(recordBuffer);

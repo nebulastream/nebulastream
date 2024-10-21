@@ -17,11 +17,11 @@
 #include <iostream>
 #include <thread>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/SourceThread.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
@@ -54,7 +54,7 @@ void SourceThread::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
         /// set the origin id for this source
         buffer.setOriginId(originId);
         /// set the creation timestamp
-        buffer.setCreationTimestampInMS(WatermarkTs(
+        buffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         /// Set the sequence number of this buffer.
         /// A data source generates a monotonic increasing sequence number
