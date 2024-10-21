@@ -336,7 +336,6 @@ bool NesWorker::connect() {
     registrationRequest.set_bandwidthinmbps(workerConfig->bandwidth.getValue());
     registrationRequest.set_latencyinms(workerConfig->latency.getValue());
     registrationRequest.mutable_registrationmetrics()->Swap(monitoringAgent->getRegistrationMetrics().serialize().get());
-    //todo: what about this?
     registrationRequest.set_javaudfsupported(workerConfig->isJavaUDFSupported.getValue());
     registrationRequest.set_spatialtype(
         NES::Spatial::Util::SpatialTypeUtility::toProtobufEnum(workerConfig->nodeSpatialType.getValue()));
@@ -548,7 +547,12 @@ bool NesWorker::notifySourceTermination(SharedQueryId sharedQueryId,
                                         OperatorId sourceId,
                                         Runtime::QueryTerminationType queryTermination) {
     NES_ASSERT(waitForConnect(), "cannot connect");
-    return coordinatorRpcClient->notifySourceStopTriggered(sharedQueryId, decomposedQueryId, sourceId, queryTermination);
+    if (queryTermination == Runtime::QueryTerminationType::Reconfiguration) {
+        //todo #5133: notify coordinator of drain
+        return true;
+    } else {
+        return coordinatorRpcClient->notifySourceStopTriggered(sharedQueryId, decomposedQueryId, sourceId, queryTermination);
+    }
 }
 
 bool NesWorker::notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryId subQueryId, std::string errorMsg) {

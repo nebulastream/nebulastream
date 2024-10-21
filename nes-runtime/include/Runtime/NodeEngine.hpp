@@ -348,13 +348,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief add reconfiguration marker to the decomposed query plan
      * @param sharedQueryId shared query id
-     * @param decomposedQueryId Decomposed query id
-     * @param reconfigurationMarker reconfiguration marker containing information about how to reconfigure decomposed query plans
+     * @param decomposedQueryid Decomposed query id
+     * @param reconfigurationMarker the marker to pass into the decomposed query plan
      * @return true if successful else false.
      */
     bool addReconfigureMarker(SharedQueryId sharedQueryId,
-                              DecomposedQueryId decomposedQueryId,
-                              ReconfigurationMarkerPtr& reconfigurationMarker);
+                              DecomposedQueryId decomposedQueryid,
+                              ReconfigurationMarkerPtr reconfigurationMarker);
 
   public:
     /**

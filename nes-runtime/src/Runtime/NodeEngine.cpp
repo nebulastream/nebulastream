@@ -823,8 +823,17 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
-bool NodeEngine::addReconfigureMarker(SharedQueryId, DecomposedQueryId, ReconfigurationMarkerPtr&) {
-    NES_WARNING("NOT IMPLEMENTED")
+bool NodeEngine::addReconfigureMarker(SharedQueryId,
+                                      DecomposedQueryId decomposedQueryid,
+                                      ReconfigurationMarkerPtr reconfigurationMarker) {
+    auto qep = deployedExecutableQueryPlans.find(decomposedQueryid);
+    NES_ASSERT2_FMT(qep != deployedExecutableQueryPlans.end(), "Trying to insert reconfiguration marker but plan was not found");
+    for (const auto& sink : qep->second->getSinks()) {
+        const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
+        if (networkSink) {
+            networkSink->applyNextSinkDescriptor(std::move(reconfigurationMarker));
+        }
+    }
     return false;
 }
 

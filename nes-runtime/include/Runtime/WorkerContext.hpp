@@ -178,6 +178,12 @@ class WorkerContext {
     std::optional<NES::Runtime::TupleBuffer> getTopTupleFromStorage(Network::NesPartition nesPartition);
 
     /**
+     * @brief if the storage is not empty get the oldest buffered tuple for the specified partition without removing it
+     * @param nesPartition the target partition of the network channel
+     */
+    std::optional<NES::Runtime::TupleBuffer> peekBufferFromReconnectBufferStorage(OperatorId operatorId);
+
+    /**
      * @brief if the storage is not empty remove the oldest buffered tuple for the specified partition
      * @param nesPartition partition
      */

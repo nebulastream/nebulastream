@@ -106,7 +106,14 @@ void WorkerContext::insertIntoStorage(Network::NesPartition nesPartition, NES::R
 }
 
 void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
-    reconnectBufferStorage[operatorId].push(std::move(buffer));
+    auto bufferCopy = localBufferPool->getUnpooledBuffer(buffer.getBufferSize()).value();
+    std::memcpy(bufferCopy.getBuffer(), buffer.getBuffer(), buffer.getBufferSize());
+    bufferCopy.setNumberOfTuples(buffer.getNumberOfTuples());
+    bufferCopy.setOriginId(buffer.getOriginId());
+    bufferCopy.setWatermark(buffer.getWatermark());
+    bufferCopy.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    bufferCopy.setSequenceNumber(buffer.getSequenceNumber());
+    reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
 bool WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t timestamp) {
@@ -122,6 +129,15 @@ std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(N
     auto iteratorPartitionId = this->storage.find(nesPartition);
     if (iteratorPartitionId != this->storage.end()) {
         return this->storage[nesPartition]->getTopElementFromQueue();
+    }
+    return {};
+}
+
+std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectBufferStorage(OperatorId operatorId) {
+    auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
+    if (iteratorAtOperatorId != reconnectBufferStorage.end() && !iteratorAtOperatorId->second.empty()) {
+        auto buffer = iteratorAtOperatorId->second.front();
+        return buffer;
     }
     return {};
 }

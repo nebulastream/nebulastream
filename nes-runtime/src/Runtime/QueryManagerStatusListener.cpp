@@ -160,7 +160,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
                 queryStatusListener->notifySourceTermination(entry->getSharedQueryId(),
                                                              entry->getDecomposedQueryId(),
                                                              operatorId,
-                                                             QueryTerminationType::Graceful);
+                                                             terminationType);
             }
         } else {
             NES_TRACE("notifySourceCompletion: operator id={} plan id={} subplan={} is already finished",

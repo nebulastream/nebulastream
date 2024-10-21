@@ -137,6 +137,10 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
             auto* call = static_cast<AsyncClientCall<StopDecomposedQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
+        } else if (requestClientMode == RpcClientMode::Reconfiguration) {
+            auto* call = static_cast<AsyncClientCall<ReconfigurationMarkerReply>*>(got_tag);
+            status = call->status.ok();
+            delete call;
         } else {
             NES_NOT_IMPLEMENTED();
         }
@@ -368,7 +372,6 @@ void WorkerRPCClient::addReconfigurationMarker(const std::string& address,
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
-    delete call;
 }
 
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {

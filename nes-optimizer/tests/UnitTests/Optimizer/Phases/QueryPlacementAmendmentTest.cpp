@@ -2874,9 +2874,16 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
             std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans =
                 executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+                bool foundMigration = false;
                 auto ops = decomposedQueryPlan->getRootOperators();
                 if (executionNode->operator*()->getId() == WorkerId(1)) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
+                    ASSERT_EQ(decomposedQueryPlans.size(), 2);
+                    if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_MIGRATION) {
+                        ASSERT_FALSE(foundMigration);
+                        foundMigration = true;
+                        continue;
+                    }
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     EXPECT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                     EXPECT_EQ(ops[0]->getChildren().size(), 1);
