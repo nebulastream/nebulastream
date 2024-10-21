@@ -202,15 +202,15 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                     nesPartition.toString());
                 return;
             }
-            // TODO: #5171 uncomment event channels
-            /*
+
             if (networkManager->getConnectSourceEventChannelsAsync()) {
-                auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
-                                                                                            nesPartition,
-                                                                                            localBufferManager,
-                                                                                            waitTime,
-                                                                                            retryTimes);
-                workerContext.storeEventChannelFuture(this->operatorId, version, std::move(channelFuture));
+                //todo #5160 implement async event channel connection
+                //                 auto channelFuture = networkManager->registerSubpartitionEventProducerAsync(sinkLocation,
+                //                                                                                             nesPartition,
+                //                                                                                             localBufferManager,
+                //                                                                                             waitTime,
+                //                                                                                             retryTimes);
+                //                 workerContext.storeEventChannelFuture(this->operatorId, std::move(channelFuture));
                 break;
             } else {
                 auto channel = networkManager->registerSubpartitionEventProducer(sinkLocation,
@@ -228,7 +228,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                 NES_DEBUG("NetworkSource: reconfigure() stored event-channel {} Thread {}",
                           nesPartition.toString(),
                           Runtime::NesThread::getId());
-            }*/
+            }
             break;
         }
         case Runtime::ReconfigurationType::Destroy: {
@@ -272,8 +272,6 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
         }
     }
     if (isTermination) {
-        // TODO: #5171 uncomment event channels
-        /*
         if (!workerContext.doesEventChannelExist(this->operatorId)) {
             //todo #4490: allow aborting connection here
             auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
@@ -284,7 +282,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             }
             return;
         }
-        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);*/
+        workerContext.releaseEventOnlyChannel(this->operatorId, terminationType);
         NES_DEBUG("NetworkSource: reconfigure() released channel on {} Thread {}",
                   nesPartition.toString(),
                   Runtime::NesThread::getId());

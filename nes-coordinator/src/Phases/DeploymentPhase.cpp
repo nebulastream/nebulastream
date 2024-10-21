@@ -99,6 +99,13 @@ void DeploymentPhase::registerOrStopDecomposedQueryPlan(const std::set<Optimizer
             }
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
+                    /* todo #5133: In the new redeployment logic migrated plans get undeployed via reconfiguration markers they
+                     * receive from their upstream worker nodes. We therefore do not have to send a direct message from the
+                     * coordinator.
+                     * But the logic below that updates the query catalog will have to be reactivated (or moved) when the query
+                     * catalog is adjusted to the new redeployment logic
+                     */
+                    continue;
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryId,
@@ -193,6 +200,13 @@ void DeploymentPhase::startOrUnregisterDecomposedQueryPlan(const std::set<Optimi
             }
             case QueryState::MARKED_FOR_MIGRATION: {
                 if (requestType == RequestType::AddQuery) {
+                    /* todo #5133: In the new redeployment logic migrated plans get undeployed via reconfiguration markers they
+                     * receive from their upstream worker nodes. We therefore do not have to send a direct message from the
+                     * coordinator.
+                     * But the logic below that updates the query catalog will have to be reactivated (or moved) when the query
+                     * catalog is adjusted to the new redeployment logic
+                     */
+                    continue;
                     // Update decomposed query plan status
                     queryCatalog->updateDecomposedQueryPlanStatus(sharedQueryId,
                                                                   decomposedQueryId,

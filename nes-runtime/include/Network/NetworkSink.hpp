@@ -114,6 +114,16 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     SinkMediumTypes getSinkMediumType() override;
 
     /**
+     * @brief try writing a buffered tuple buffer to the network channel without inserting it into the reconnect buffer on failure
+     * This function is to be used from the unbuffer function instead of the writeData() function to avoid recursively calling
+     * unbuffer again
+     * @param inputBuffer the buffer to write.
+     * @param workerContext the worker context
+     * @return true if the buffer was written successfully, false otherwise
+     */
+    bool writeBufferedData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext);
+
+    /**
      * @brief method to return the network sinks descriptor id
      * @return id
      */
@@ -136,8 +146,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newPartition the partition of the new downstram source
      * @param newReceiverLocation the location of the node where the new downstream source is located
      * @param newVersion The new version number assigned to this sink
+     * @param marker the reconfiguration marker to be passed to the old downstream source
      */
-    void configureNewSinkDescriptor(const NetworkSinkDescriptor& newNetworkSinkDescriptor);
+    void configureNewSinkDescriptor(const NetworkSinkDescriptor& newNetworkSinkDescriptor, ReconfigurationMarkerPtr marker);
 
     /**
      * @brief schedule a new receiver location and new receiver partition and versio number to be set for this sink.
@@ -149,9 +160,10 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     /**
      * @brief apply pending changes to the receiver location, receiver partition and version number
+     * @param marker the reconfiguration marker to be passed to the old downstream source
      * @return true if pending changes were found and applied, false if no pending changes could be found
      */
-    bool applyNextSinkDescriptor();
+    bool applyNextSinkDescriptor(ReconfigurationMarkerPtr marker);
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 

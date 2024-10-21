@@ -935,17 +935,42 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 continue;
                                             }
 
-                                            bool mergedSource = false;
-                                            if (upstreamOperator->instanceOf<SourceLogicalOperator>()) {
-                                                mergedSource =
-                                                    tryMergingNetworkSource(decomposedQueryPlanVersion,
-                                                                            matchingPinnedRootOperator,
-                                                                            upstreamOperator->as<SourceLogicalOperator>());
-                                            }
-                                            if (!mergedSource) {
-                                                matchingPinnedRootOperator->addChild(upstreamOperator);
+                                            //todo #5157: reactivate source merging
+                                            //                                            bool mergedSource = false;
+                                            //                                            if (upstreamOperator->instanceOf<SourceLogicalOperator>()) {
+                                            //                                                mergedSource =
+                                            //                                                    tryMergingNetworkSource(decomposedQueryPlanVersion,
+                                            //                                                                            matchingPinnedRootOperator,
+                                            //                                                                            upstreamOperator->as<SourceLogicalOperator>());
+                                            //                                            }
+                                            //                                            if (!mergedSource) {
+                                            //                                               matchingPinnedRootOperator->addChild(upstreamOperator);
+                                            //                                            }
+
+                                            matchingPinnedRootOperator->addChild(upstreamOperator);
+                                        }
+
+                                        /*reassign operator ids to avoid worker side operator id collisions between the two
+                                         * versions of the plan*/
+                                        for (const auto& sinkOperator : placedDecomposedQueryPlan->getSinkOperators()) {
+                                            auto sinkDescriptor = sinkOperator->getSinkDescriptor();
+                                            if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+                                                auto newNetworkSinkDescriptor =
+                                                    sinkDescriptor->as<Network::NetworkSinkDescriptor>();
+                                                auto newId = getNextOperatorId();
+                                                auto mergedNetworkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+                                                    newNetworkSinkDescriptor->getNodeLocation(),
+                                                    newNetworkSinkDescriptor->getNesPartition(),
+                                                    SINK_RETRY_WAIT,
+                                                    SINK_RETRIES,
+                                                    decomposedQueryPlanVersion,
+                                                    newNetworkSinkDescriptor->getNumberOfOrigins(),
+                                                    newId);
+                                                sinkOperator->setSinkDescriptor(mergedNetworkSinkDescriptor);
+                                                sinkOperator->setId(getNextOperatorId());
                                             }
                                         }
+
                                         hostDecomposedQueryPlans.emplace(placedDecomposedQueryPlan);
                                         found = true;
                                         break;
@@ -976,9 +1001,11 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         }
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
-                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
+                        //todo #5158: check if the plan was actually changed and omit redeploymentif not
+                        updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
+                        updatedDecomposedQueryPlan->setDecomposedQueryPlanId(PlanIdGenerator::getNextDecomposedQueryPlanId());
                         globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);

@@ -214,14 +214,6 @@ bool AbstractQueryManager::startExecutableQueryPlan(const Execution::ExecutableQ
         }
     }
 
-    //apply any pending reconfigurations to the sinks
-    for (const auto& sink : qep->getSinks()) {
-        const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-        if (networkSink) {
-            networkSink->applyNextSinkDescriptor();
-        }
-    }
-
     // register start timestamp of query in statistics
     if (queryToStatisticsMap.contains(qep->getDecomposedQueryId())) {
         auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryId());
