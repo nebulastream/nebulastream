@@ -34,7 +34,6 @@ jobs:
       env:
         CCACHE_DIR: /ccache
       # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
     strategy:
