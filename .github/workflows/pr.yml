@@ -30,7 +30,6 @@ jobs:
     container:
       image: nebulastream/nes-development:latest
       # TODO #401 Investigate rootless docker containers
-      options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
         # has to be sha since github.base_ref would have to be checked out
@@ -64,7 +63,6 @@ jobs:
         CCACHE_DIR: /ccache
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
