@@ -17,18 +17,18 @@
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Common.hpp>
-#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class WatermarkState : public OperatorState
+struct WatermarkState final : OperatorState
 {
-public:
-    explicit WatermarkState() { }
-    nautilus::val<uint64_t> currentWatermark = 0;
+    explicit WatermarkState() = default;
+    nautilus::val<Timestamp> currentWatermark = INITIAL_WATERMARK_TS_NUMBER;
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};

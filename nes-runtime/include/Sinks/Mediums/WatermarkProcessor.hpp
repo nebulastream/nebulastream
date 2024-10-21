@@ -38,15 +38,10 @@ public:
      * @brief In this implementation, update watermark processes a watermark barrier and applies all
      * outstanding updates from the transaction log.
      * To this end, it leverage the implicit sorting of the priority queue.
-     * @param watermarkBarrier
      */
-    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber);
+    void updateWatermark(Timestamp timestamp, SequenceNumber sequenceNumber);
 
-    /**
-     * @brief Returns the current watermark.
-     * @return WatermarkTs
-     */
-    WatermarkTs getCurrentWatermark() const;
+    Timestamp getCurrentWatermark() const;
 
     /**
      * @brief Returns success if there are no tuples with smaller sequence number that haven't arrived yet than current seen last tuple
@@ -57,19 +52,21 @@ public:
 private:
     struct WatermarkBarrierComparator
     {
-        bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2)
+        bool operator()(
+            std::tuple<Timestamp::Underlying, SequenceNumber::Underlying> const& wb1,
+            std::tuple<Timestamp::Underlying, SequenceNumber::Underlying> const& wb2) const
         {
             /// return "true" if "wb1" is ordered before "wb2", for example:
             return std::get<1>(wb1) > std::get<1>(wb2);
         }
     };
     mutable std::mutex watermarkLatch;
-    std::atomic<WatermarkTs> currentWatermark = WatermarkTs{0};
-    SequenceNumber currentSequenceNumber{0};
+    std::atomic<Timestamp::Underlying> currentWatermark = INITIAL_WATERMARK_TS_NUMBER.getRawValue();
+    SequenceNumber::Underlying currentSequenceNumber{0};
     /// Use a priority queue to keep track of all in flight transactions.
     std::priority_queue<
-        std::tuple<WatermarkTs, SequenceNumber>,
-        std::vector<std::tuple<WatermarkTs, SequenceNumber>>,
+        std::tuple<Timestamp::Underlying, SequenceNumber::Underlying>,
+        std::vector<std::tuple<Timestamp::Underlying, SequenceNumber::Underlying>>,
         WatermarkBarrierComparator>
         transactionLog;
 };

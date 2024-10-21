@@ -39,7 +39,7 @@ public:
      * @brief Deletes q pair<id,buffer> from buffer storage
      * @param timestamp max timestamp of current epoch
      */
-    virtual void trimBuffer(uint64_t timestamp) = 0;
+    virtual void trimBuffer(Timestamp timestamp) = 0;
 
     /**
      * @brief Return current storage size

@@ -13,8 +13,10 @@
 */
 #include <algorithm>
 #include <atomic>
+#include <map>
 #include <random>
 #include <thread>
+#include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -83,7 +85,7 @@ public:
         return currentValue;
     }
 
-    std::map<SequenceNumber, ChunkStateTest> seenSequenceData;
+    std::map<SequenceNumber::Underlying, ChunkStateTest> seenSequenceData;
     std::vector<std::tuple<SequenceData, uint64_t>> watermarkBarriers;
 };
 
@@ -100,7 +102,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadSequentialUpdaterTest)
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= updates; i++)
     {
-        watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, 1, true}, /*ts*/ i));
+        watermarkBarriers.emplace_back(
+            std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(1), true}, /*ts*/ i));
     }
     for (auto i = 0_u64; i < updates; i++)
     {
@@ -126,7 +129,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadReversSequentialUpdaterTest
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= updates; i++)
     {
-        watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, 1, true}, /*ts*/ i));
+        watermarkBarriers.emplace_back(
+            std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(1), true}, /*ts*/ i));
     }
     /// reverse updates
     std::reverse(watermarkBarriers.begin(), watermarkBarriers.end());
@@ -157,7 +161,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadRandomeUpdaterTest)
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= updates; i++)
     {
-        watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, 1, true}, /*ts*/ i));
+        watermarkBarriers.emplace_back(
+            std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(1), true}, /*ts*/ i));
     }
     std::mt19937 randomGenerator(42);
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), randomGenerator);
@@ -182,7 +187,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentLockFreeWatermarkUpdaterTest)
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= updates * threadsCount; i++)
     {
-        watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, 1, true}, /*ts*/ i));
+        watermarkBarriers.emplace_back(
+            std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(1), true}, /*ts*/ i));
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
@@ -225,7 +231,8 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithLostUpdateThreadTe
     /// preallocate watermarks for each transaction
     for (auto i = 1_u64; i <= updates * threadsCount; i++)
     {
-        watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, 1, true}, /*ts*/ i));
+        watermarkBarriers.emplace_back(
+            std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(1), true}, /*ts*/ i));
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
@@ -281,10 +288,11 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, singleThreadedUpdatesWithChunkNumberInR
         auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
         for (auto chunk = 1_u64; chunk < noChunks; ++chunk)
         {
-            watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, chunk, false}, /*ts*/ i));
+            watermarkBarriers.emplace_back(
+                std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(chunk), false}, /*ts*/ i));
         }
         watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(
-            /*sequence data*/ {i, noChunks, true},
+            /*sequence data*/ {SequenceNumber(i), ChunkNumber(noChunks), true},
             /*ts*/ i));
     }
 
@@ -326,10 +334,11 @@ TEST_F(NonBlockingMonotonicSeqQueueTest, concurrentUpdatesWithChunkNumberInRando
         auto noChunks = 1 + rand() % maxChunksPerSeqNumber;
         for (auto chunk = 1_u64; chunk < noChunks; ++chunk)
         {
-            watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(/*sequence data*/ {i, chunk, false}, /*ts*/ i));
+            watermarkBarriers.emplace_back(
+                std::tuple<SequenceData, uint64_t>(/*sequence data*/ {SequenceNumber(i), ChunkNumber(chunk), false}, /*ts*/ i));
         }
         watermarkBarriers.emplace_back(std::tuple<SequenceData, uint64_t>(
-            /*sequence data*/ {i, noChunks, true},
+            /*sequence data*/ {SequenceNumber(i), ChunkNumber(noChunks), true},
             /*ts*/ i));
     }
 

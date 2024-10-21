@@ -61,7 +61,7 @@ nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer()
 
 void emitBufferProxy(WorkerContext* workerContext, PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tupleBuffer)
 {
-    NES_TRACE("Emitting buffer with SequenceData = {}", tupleBuffer->getSequenceData().toString());
+    NES_TRACE("Emitting buffer with SequenceData = {}", tupleBuffer->getSequenceDataAsString());
 
     /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
@@ -124,20 +124,26 @@ nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint6
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-uint64_t getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+ChunkNumber::Underlying
+getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
 {
     NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
 bool isLastChunkProxy(
-    PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk)
+    PipelineExecutionContext* pipelineCtx,
+    OriginId::Underlying originId,
+    SequenceNumber::Underlying sequenceNumber,
+    ChunkNumber::Underlying chunkNumber,
+    bool isLastChunk)
 {
     NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+void removeSequenceStateProxy(
+    PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
 {
     NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
@@ -149,9 +155,9 @@ nautilus::val<bool> ExecutionContext::isLastChunk() const
         isLastChunkProxy, this->pipelineContext, this->originId, this->sequenceNumber, this->chunkNumber, this->lastChunk);
 }
 
-nautilus::val<uint64_t> ExecutionContext::getNextChunkNumber() const
+nautilus::val<ChunkNumber> ExecutionContext::getNextChunkNumber() const
 {
-    return nautilus::invoke(getNextChunkNumberProxy, this->pipelineContext, this->originId, this->sequenceNumber);
+    return {nautilus::invoke(getNextChunkNumberProxy, this->pipelineContext, this->originId, this->sequenceNumber)};
 }
 
 void ExecutionContext::removeSequenceState() const

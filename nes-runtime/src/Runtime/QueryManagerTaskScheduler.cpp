@@ -197,15 +197,15 @@ void QueryManager::updateStatistics(const Task& task, QueryId queryId, PipelineI
     if (queryToStatisticsMap.contains(queryId))
     {
         auto statistics = queryToStatisticsMap.find(queryId);
-        auto now
+        uint64_t now
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
         statistics->setTimestampFirstProcessedTask(now, true);
         statistics->setTimestampLastProcessedTask(now);
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
-        auto creation = task.getBufferRef().getCreationTimestampInMS();
-        if (static_cast<unsigned long>(now) < creation)
+        const auto creation = task.getBufferRef().getCreationTimestampInMS().getRawValue();
+        if (now < creation)
         {
             NES_WARNING(
                 "Creation timestamp is in the future; skipping statistics update: creation timestamp = {}, buffer origin "

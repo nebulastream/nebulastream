@@ -100,18 +100,18 @@ public:
     bool release();
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
-    [[nodiscard]] uint64_t getWatermark() const noexcept;
-    void setWatermark(uint64_t watermark);
-    [[nodiscard]] uint64_t getSequenceNumber() const noexcept;
-    void setSequenceNumber(uint64_t sequenceNumber);
-    [[nodiscard]] uint64_t getChunkNumber() const noexcept;
-    void setChunkNumber(uint64_t chunkNumber);
+    [[nodiscard]] Timestamp getWatermark() const noexcept;
+    void setWatermark(Timestamp watermark);
+    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
+    void setSequenceNumber(SequenceNumber sequenceNumber);
+    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
+    void setChunkNumber(ChunkNumber chunkNumber);
     [[nodiscard]] bool isLastChunk() const noexcept;
     void setLastChunk(bool lastChunk);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
-    void setCreationTimestamp(uint64_t ts);
-    [[nodiscard]] uint64_t getCreationTimestamp() const noexcept;
+    void setCreationTimestamp(Timestamp timestamp);
+    [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
@@ -122,11 +122,11 @@ public:
 private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    WatermarkTs watermark = 0;
-    SequenceNumber sequenceNumber = 0;
-    ChunkNumber chunkNumber = 0;
+    Timestamp watermark = INVALID_WATERMARK_TS_NUMBER;
+    SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
+    ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
-    int64_t creationTimestamp{};
+    Timestamp creationTimestamp = INITIAL_CREATION_TS_NUMBER;
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;
 

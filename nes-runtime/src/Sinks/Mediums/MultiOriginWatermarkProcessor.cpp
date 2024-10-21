@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,7 +35,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
 }
 
-void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId)
+void MultiOriginWatermarkProcessor::updateWatermark(Timestamp timestamp, SequenceNumber sequenceNumber, OriginId originId)
 {
     std::unique_lock lock(watermarkLatch);
     /// insert new local watermark processor if the id is not present in the map
@@ -45,7 +47,7 @@ void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumb
         localWatermarkProcessor.size() <= numberOfOrigins,
         "The watermark processor maintains watermarks from " << localWatermarkProcessor.size() << " origins but we only expected  "
                                                              << numberOfOrigins);
-    localWatermarkProcessor[originId]->updateWatermark(ts, sequenceNumber);
+    localWatermarkProcessor[originId]->updateWatermark(timestamp, sequenceNumber);
 }
 
 bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const
@@ -59,20 +61,18 @@ bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) c
     return false;
 }
 
-WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
+Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
 {
     std::unique_lock lock(watermarkLatch);
     /// check if we already registered each expected origin in the local watermark processor map
     if (localWatermarkProcessor.size() != numberOfOrigins)
     {
-        return WatermarkTs(0);
+        return INITIAL_WATERMARK_TS_NUMBER;
     }
-    WatermarkTs maxWatermarkTs = WatermarkTs(UINT64_MAX);
-    for (const auto& localWatermarkManager : localWatermarkProcessor)
-    {
-        maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager.second->getCurrentWatermark());
-    }
-    return maxWatermarkTs;
+
+    const auto minTimestamp
+        = std::ranges::min_element(localWatermarkProcessor, {}, [](const auto& current) { return current.second->getCurrentWatermark(); });
+    return minTimestamp->second->getCurrentWatermark();
 }
 
 }

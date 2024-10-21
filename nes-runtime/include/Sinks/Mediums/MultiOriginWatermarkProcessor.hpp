@@ -55,17 +55,10 @@ public:
      */
     static std::shared_ptr<MultiOriginWatermarkProcessor> create(uint64_t numberOfOrigins);
 
-    /**
-     * @brief Processes a watermark barrier.
-     * @param watermarkBarrier
-     */
-    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
+    void updateWatermark(Timestamp timestamp, SequenceNumber sequenceNumber, OriginId origin);
 
-    /**
-     * @brief Returns the visible watermark across all origins.
-     * @return WatermarkTs
-     */
-    [[nodiscard]] WatermarkTs getCurrentWatermark() const;
+    /// Returns the visible watermark across all origins.
+    [[nodiscard]] Timestamp getCurrentWatermark() const;
 
     /**
      * @brief Returns success if there are no tuples with smaller sequence number that haven't arrived yet than the last tuple seen
