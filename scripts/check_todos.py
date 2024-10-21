@@ -44,7 +44,10 @@ def main():
         print("Set env var BASE_REF to override base, e.g. call:")
         print(f"\n  BASE_REF=origin/main python3 {sys.argv[0]}")
 
-    diff = run_cmd(["git", "diff", "--merge-base", base])
+    diff = run_cmd(["git", "diff", "--merge-base", base, "--",
+                    # Ignore patch files in our vcpkg ports
+                    ":!vcpkg/vcpkg-registry/**/*.patch"
+                    ])
 
     file_header = re.compile(r"diff --git a/.* b/(.*)")
     line_context = re.compile(r"@@ -\d*,\d \+(\d+),\d+ @@")
