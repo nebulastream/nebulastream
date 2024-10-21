@@ -30,7 +30,6 @@ jobs:
     container:
       image: nebulastream/nes-development:latest
       # TODO #401 Investigate rootless docker containers
-      options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
         # has to be sha since github.base_ref would have to be checked out
