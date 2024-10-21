@@ -27,6 +27,13 @@ void allocateNewPageProxy(PagedVector* pagedVector)
     pagedVector->appendPage();
 }
 
+Memory::TupleBuffer* getLastPageProxy(PagedVector* pagedVector, const uint64_t entryPos)
+{
+    auto lastPage = pagedVector->getPages().back();
+    lastPage.setNumberOfTuples(lastPage.getNumberOfTuples() + 1);
+    return pagedVector->getTupleBufferForEntry(entryPos);
+}
+
 Memory::TupleBuffer* getTupleBufferForEntryProxy(PagedVector* pagedVector, const uint64_t entryPos)
 {
     return pagedVector->getTupleBufferForEntry(entryPos);
@@ -46,7 +53,7 @@ PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef
 
 void PagedVectorRef::writeRecord(const Record& record)
 {
-    auto recordBuffer = RecordBuffer(invoke(getTupleBufferForEntryProxy, pagedVectorRef, totalNumberOfEntries));
+    auto recordBuffer = RecordBuffer(invoke(getLastPageProxy, pagedVectorRef, totalNumberOfEntries));
 
     auto numTuplesOnPage = recordBuffer.getNumRecords();
     if (numTuplesOnPage >= memoryLayout->getCapacity())

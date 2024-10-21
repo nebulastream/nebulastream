@@ -38,7 +38,7 @@ struct TupleBufferAndPosForEntry
     {
         if (buffer != nullptr)
         {
-          delete buffer;
+            delete buffer;
         }
     }
 };
@@ -59,15 +59,15 @@ public:
     /// and updates the numberOfEntriesOnCurrPage.
     void appendPage();
 
-    Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos);
-
-    uint64_t getBufferPosForEntry(uint64_t entryPos);
-
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 
     /// Iterates over all pages and sums up the number of tuples
     uint64_t getTotalNumberOfEntries() const;
+
+    Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos);
+
+    uint64_t getBufferPosForEntry(uint64_t entryPos);
 
     std::vector<Memory::TupleBuffer>& getPages();
     [[nodiscard]] uint64_t getNumberOfPages() const;

@@ -26,6 +26,7 @@ PagedVector::PagedVector(
     NES_ASSERT2_FMT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
 
     appendPage();
+    tupleBufferAndPosForEntry = TupleBufferAndPosForEntry(0, 0, nullptr);
 }
 
 void PagedVector::appendPage()
@@ -39,18 +40,6 @@ void PagedVector::appendPage()
     {
         NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
     }
-}
-
-Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(uint64_t entryPos)
-{
-    getTupleBufferAndPosForEntry(entryPos);
-    return tupleBufferAndPosForEntry.buffer;
-}
-
-uint64_t PagedVector::getBufferPosForEntry(uint64_t entryPos)
-{
-    getTupleBufferAndPosForEntry(entryPos);
-    return tupleBufferAndPosForEntry.bufferPos;
 }
 
 void PagedVector::appendAllPages(PagedVector& other)
@@ -73,9 +62,21 @@ uint64_t PagedVector::getTotalNumberOfEntries() const
     return totalNumEntries;
 }
 
+Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(uint64_t entryPos)
+{
+    getTupleBufferAndPosForEntry(entryPos);
+    return tupleBufferAndPosForEntry.buffer;
+}
+
+uint64_t PagedVector::getBufferPosForEntry(uint64_t entryPos)
+{
+    getTupleBufferAndPosForEntry(entryPos);
+    return tupleBufferAndPosForEntry.bufferPos;
+}
+
 void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
 {
-    if (entryPos == tupleBufferAndPosForEntry.entryPos)
+    if (entryPos == tupleBufferAndPosForEntry.entryPos && tupleBufferAndPosForEntry.buffer != nullptr)
     {
         return;
     }
