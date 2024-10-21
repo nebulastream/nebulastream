@@ -21,6 +21,7 @@
 #include <list>
 #include <memory>
 #include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -64,7 +65,10 @@ private:
     {
     public:
         Container()
-            : seqNumber(INVALID_SEQ_NUMBER), lastChunkNumber(INVALID_CHUNK_NUMBER), seenChunks(0), mergeValues(Util::updateAtomicMax<T>)
+            : seqNumber(INVALID_SEQ_NUMBER.getRawValue())
+            , lastChunkNumber(INVALID_CHUNK_NUMBER.getRawValue())
+            , seenChunks(INITIAL_CHUNK_NUMBER.getRawValue())
+            , mergeValues(Util::updateAtomicMax<T>)
         {
         }
 
@@ -74,7 +78,7 @@ private:
          * @param lastChunk
          * @param value
          */
-        void emplaceChunk(ChunkNumber chunkNumber, bool lastChunk, T value)
+        void emplaceChunk(ChunkNumber::Underlying chunkNumber, const bool lastChunk, T value)
         {
             if (lastChunk)
             {
@@ -84,17 +88,17 @@ private:
             mergeValues(this->value, value);
         }
 
-        void setSeqNumber(const SequenceNumber& seqNumber) { this->seqNumber = seqNumber; }
+        void setSeqNumber(const SequenceNumber::Underlying& seqNumber) { this->seqNumber = seqNumber; }
 
         T getValue() const { return value; }
-        [[nodiscard]] SequenceNumber getSeqNumber() const { return seqNumber; }
+        [[nodiscard]] SequenceNumber::Underlying getSeqNumber() const { return seqNumber; }
 
-        bool seenAllChunks() const { return (lastChunkNumber != INVALID_CHUNK_NUMBER) && (seenChunks == lastChunkNumber); }
+        bool seenAllChunks() const { return (lastChunkNumber != INVALID_CHUNK_NUMBER.getRawValue()) && (seenChunks == lastChunkNumber); }
 
     private:
-        SequenceNumber seqNumber;
-        ChunkNumber lastChunkNumber;
-        std::atomic<ChunkNumber> seenChunks;
+        SequenceNumber::Underlying seqNumber;
+        ChunkNumber::Underlying lastChunkNumber;
+        std::atomic<ChunkNumber::Underlying> seenChunks;
         std::atomic<T> value;
         std::function<void(std::atomic<T>&, const T&)> mergeValues;
     };
@@ -246,8 +250,7 @@ private:
                 if (nextBlock != nullptr)
                 {
                     /// this will always be the first element
-                    auto& value = nextBlock->log[0];
-                    if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
+                    if (auto& value = nextBlock->log[0]; value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
                     {
                         /// Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
@@ -299,7 +302,7 @@ private:
     /// Stores a reference to the current block
     std::shared_ptr<Block> head;
     /// Stores the current sequence number
-    std::atomic<SequenceNumber> currentSeq;
+    std::atomic<SequenceNumber::Underlying> currentSeq;
 };
 
 }

@@ -110,13 +110,13 @@ public:
     [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const;
 
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
-    [[nodiscard]] uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
+    [[nodiscard]] ChunkNumber::Underlying getNextChunkNumber(SeqNumberOriginId seqNumberOriginId);
 
     /// Checks if this PipelineExecutionContext has seen all chunks for a given sequence number.
-    bool isLastChunk(const SeqNumberOriginId seqNumberOriginId, const uint64_t chunkNumber, const bool isLastChunk);
+    bool isLastChunk(SeqNumberOriginId seqNumberOriginId, ChunkNumber chunkNumber, bool isLastChunk);
 
     /// Removes the sequence state in seqNumberOriginIdToChunkStateInput and seqNumberOriginIdToOutputChunkNumber for the seqNumberOriginId
-    void removeSequenceState(const SeqNumberOriginId seqNumberOriginId);
+    void removeSequenceState(SeqNumberOriginId seqNumberOriginId);
 
 private:
     PipelineId pipelineId;
@@ -129,7 +129,7 @@ private:
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
-    folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;
+    folly::Synchronized<std::map<SeqNumberOriginId, ChunkNumber::Underlying>> seqNumberOriginIdToOutputChunkNumber;
 
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;

@@ -16,6 +16,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <nautilus/tracing/TypedValueRef.hpp>
 #include <nautilus/val.hpp>
 
 namespace nautilus
@@ -32,19 +33,24 @@ constexpr Type to_type()
 }
 
 /// This class is a nautilus wrapper for our NESStrongType
-template <typename T, typename Tag, T invalid, T initial>
-class val<NES::NESStrongType<T, Tag, invalid, initial>>
+template <typename T, typename Tag, T Invalid, T Initial>
+class val<NES::NESStrongType<T, Tag, Invalid, Initial>>
 {
 public:
-    using Underlying = typename NES::NESStrongType<T, Tag, invalid, initial>::Underlying;
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const Underlying t) : value(t.value) { }
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const val<Underlying> t) : value(t) { }
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const NES::NESStrongType<T, Tag, invalid, initial> t) : value(t.getRawValue()) { }
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
-    val<NES::NESStrongType<T, Tag, invalid, initial>>(const val<NES::NESStrongType<T, Tag, invalid, initial>>& other) : value(other.value)
+    using Underlying = typename NES::NESStrongType<T, Tag, Invalid, Initial>::Underlying;
+    /// ReSharper disable once CppNonExplicitConvertingConstructor
+    val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const Underlying type) : value(type) { }
+    /// ReSharper disable once CppNonExplicitConvertingConstructor
+    val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const val<Underlying> type) : value(type) { }
+    /// ReSharper disable once CppNonExplicitConvertingConstructor
+    val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const NES::NESStrongType<T, Tag, Invalid, Initial> type) : value(type.getRawValue())
     {
     }
-    val<NES::NESStrongType<T, Tag, invalid, initial>> operator=(const val<NES::NESStrongType<T, Tag, invalid, initial>>& other)
+    explicit val<NES::NESStrongType<T, Tag, Invalid, Initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+    val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& other) : value(other.value)
+    {
+    }
+    val<NES::NESStrongType<T, Tag, Invalid, Initial>>& operator=(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& other)
     {
         value = other.value;
         return *this;
@@ -59,4 +65,20 @@ public:
 
     val<Underlying> value;
 };
+
+namespace details
+{
+template <typename T, typename Tag, T Invalid, T Initial>
+T inline getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
+{
+    return details::getRawValue(val.value);
+}
+
+template <typename T, typename Tag, T Invalid, T Initial>
+tracing::TypedValueRef inline getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
+{
+    return details::getState(val.value);
+}
+}
+
 }
