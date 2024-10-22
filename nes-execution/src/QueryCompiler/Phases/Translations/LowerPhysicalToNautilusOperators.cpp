@@ -17,58 +17,32 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Map.hpp>
-#include <Execution/Operators/Project.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
-#include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Measures/TimeCharacteristic.hpp>
 #include <MemoryLayout/RowLayout.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
-#include <Types/TimeBasedWindowType.hpp>
-#include <Types/TumblingWindow.hpp>
 #include <Util/Core.hpp>
 #include <Util/Execution.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -100,9 +74,13 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 
     for (const auto& node : nodes)
     {
+        /// The scan and emit phase already contain the schema changes of the physical project operator.
+        if (NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(node))
+        {
+            continue;
+        }
         NES_INFO("Lowering node: {}", node->toString());
-        parentOperator
-            = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
+        parentOperator = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (auto& root : rootOperators)
@@ -118,48 +96,39 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-    size_t bufferSize,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>&)
+    size_t bufferSize)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
-        auto scan = lowerScan(pipeline, operatorNode, bufferSize);
+        auto scan = lowerScan(operatorNode, bufferSize);
         pipeline.setRootOperator(scan);
         return scan;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
-        auto emit = lowerEmit(pipeline, operatorNode, bufferSize);
+        auto emit = lowerEmit(operatorNode, bufferSize);
         parentOperator->setChild(emit);
         return emit;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalFilterOperator>(operatorNode))
     {
-        auto filter = lowerFilter(pipeline, operatorNode);
+        auto filter = lowerFilter(operatorNode);
         parentOperator->setChild(filter);
         return filter;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(operatorNode))
     {
-        auto map = lowerMap(pipeline, operatorNode);
+        auto map = lowerMap(operatorNode);
         parentOperator->setChild(map);
         return map;
-    }
-    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalProjectOperator>(operatorNode))
-    {
-        auto projectOperator = NES::Util::as<PhysicalOperators::PhysicalProjectOperator>(operatorNode);
-        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
-            projectOperator->getInputSchema()->getFieldNames(), projectOperator->getOutputSchema()->getFieldNames());
-        parentOperator->setChild(projection);
-        return projection;
     }
 
     throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", operatorNode->toString()));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerScan(
-    Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
+std::shared_ptr<Runtime::Execution::Operators::Operator>
+LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -170,8 +139,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
-    Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -182,16 +151,16 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerFilter(
-    Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
     auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalFilterOperator>(operatorPtr);
     auto function = FunctionProvider::lowerFunction(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerMap(
-    Runtime::Execution::PhysicalOperatorPipeline&, const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerMap(const PhysicalOperators::PhysicalOperatorPtr& operatorPtr)
 {
     auto mapOperator = NES::Util::as<PhysicalOperators::PhysicalMapOperator>(operatorPtr);
     auto assignmentField = mapOperator->getMapFunction()->getField();
