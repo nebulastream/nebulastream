@@ -55,7 +55,7 @@ public:
 
 protected:
     void parseFromYAMLNode(YAML::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
     std::vector<T> options;
@@ -88,7 +88,7 @@ void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
     }
 }
 template <DerivedBaseOption T>
-void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+void SequenceOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     auto option = T();
     option.parseFromString(identifier, inputParams);

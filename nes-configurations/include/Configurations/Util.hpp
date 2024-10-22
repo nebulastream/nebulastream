@@ -36,7 +36,7 @@ template <typename T>
 std::optional<T> loadConfiguration(const int argc, const char** argv)
 {
     /// Convert the POSIX command line arguments to a map of strings.
-    std::map<std::string, std::string> commandLineParams;
+    std::unordered_map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i)
     {
         const size_t pos = std::string(argv[i]).find('=');

@@ -76,7 +76,7 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
     };
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override
     {
         auto value = inputParams[identifier];
         /// Check if the value is a member of this enum type.
