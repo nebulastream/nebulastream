@@ -85,10 +85,6 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex)
 {
-    if (projections.empty())
-    {
-        return false;
-    }
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 
