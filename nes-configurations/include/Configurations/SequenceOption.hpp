@@ -96,9 +96,9 @@ void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::st
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(OptionVisitor&)
+void SequenceOption<T>::accept(OptionVisitor& visitor)
 {
-    //visitor.visitConcrete(", Multiple");
+    visitor.visitConcrete(name, description, ", Multiple");
 }
 
 template <DerivedBaseOption T>

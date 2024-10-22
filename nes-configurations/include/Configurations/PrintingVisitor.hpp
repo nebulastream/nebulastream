@@ -24,7 +24,7 @@ public:
 
     void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override
     {
-        os << "- " << name << ": " << description << " " << "(Default: " << defaultValue << ")" << "\n";
+        os << indent << "- " << name << ": " << description << " " << "(Default: " << defaultValue << ")" << "\n";
     }
 
     std::ostream& os;
