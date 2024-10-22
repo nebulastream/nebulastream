@@ -30,7 +30,7 @@ endfunction()
 function(discover_tests)
     execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/parse_tests.py
-            --test_dirs ${CMAKE_SOURCE_DIR}/tests
+            --test_dirs ${CMAKE_SOURCE_DIR}/nes-systests
             --file_endings ".test"
             --output ${CMAKE_BINARY_DIR}/nes-systests/tests_discovery.json
     )
@@ -46,7 +46,7 @@ endfunction()
 function(discover_test_groups)
     execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/parse_test_groups.py
-            --test_dirs ${CMAKE_SOURCE_DIR}/tests
+            --test_dirs ${CMAKE_SOURCE_DIR}/nes-systests
             --file_endings ".test"
             --output ${CMAKE_BINARY_DIR}/nes-systests/test_groups_discovery.json
     )
@@ -114,5 +114,5 @@ endfunction()
 
 # Copy necessary test data and scripts to the build directory
 function(copy_test_files_to_build_directory)
-    file(COPY ${CMAKE_SOURCE_DIR}/nes-systests/testdata DESTINATION ${CMAKE_BINARY_DIR}/tests)
+    file(COPY ${CMAKE_SOURCE_DIR}/nes-systests/testdata DESTINATION ${CMAKE_BINARY_DIR}/nes-systests)
 endfunction()

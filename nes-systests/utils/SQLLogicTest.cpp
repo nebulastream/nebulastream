@@ -14,13 +14,15 @@
 
 #include <chrono>
 #include <filesystem>
+#include <optional>
 #include <regex>
 #include <string>
-#include <optional>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
+#include <SystestState.hpp>
 
 /// DEBUG option: set to true to log as well to stdout, otherwise only the log file is populated
 auto constexpr LOG_TO_STDOUT = false;
@@ -41,11 +43,12 @@ std::unique_ptr<GRPCServer> SystemTestTemplate::uut = nullptr;
 class SystemTest : public SystemTestTemplate
 {
 public:
-    explicit SystemTest(std::string systemTestName, std::string cachedQueryPlanFile, std::string testFile, uint64_t testId)
+    explicit SystemTest(
+        std::string systemTestName, std::filesystem::path cacheFile, std::filesystem::path sqlLogicTestFile, uint64_t queryNrInFile)
         : systemTestName(std::move(systemTestName))
-        , cachedQueryPlanFile(std::move(cachedQueryPlanFile))
-        , testFile(std::move(testFile))
-        , testId(testId)
+        , cacheFile(std::move(cacheFile))
+        , sqlLogicTestFile(std::move(sqlLogicTestFile))
+        , queryNrInFile(queryNrInFile)
     {
     }
 
@@ -57,7 +60,8 @@ public:
         char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
         std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&now_time_t));
         /// Ordering: time -> system test name -> test id
-        const auto logFileName = std::filesystem::path("test") / fmt::format("SystemTest_{}_{}_{}.log", timestamp, systemTestName, testId);
+        const auto logFileName
+            = std::filesystem::path("test") / fmt::format("SystemTest_{}_{}_{}.log", timestamp, systemTestName, queryNrInFile);
 
         Logger::setupLogging(logFileName, LogLevel::LOG_DEBUG, LOG_TO_STDOUT);
         std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
@@ -65,13 +69,13 @@ public:
         std::cout << "Find the log at: file://" << logPath.string() << std::endl;
         std::cout << "Find the test file at: file://" SYSTEM_TEST_FILE_PATH << std::endl;
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/nes-systests/result/" + systemTestName + std::to_string(testId) + ".csv");
+        IntegrationTestUtil::removeFile(fmt::format("{}/nes-systests/result/{}{}.csv", CMAKE_BINARY_DIR, systemTestName, queryNrInFile));
 
         SerializableDecomposedQueryPlan queryPlan;
-        std::ifstream file(cachedQueryPlanFile);
+        std::ifstream file(cacheFile);
         if (!file || !queryPlan.ParseFromIstream(&file))
         {
-            NES_ERROR("Could not load protobuffer file: {}", cachedQueryPlanFile);
+            NES_ERROR("Could not load protobuffer file: {}", cacheFile);
             GTEST_SKIP();
         }
 
@@ -81,15 +85,15 @@ public:
         IntegrationTestUtil::waitForQueryToEnd(queryId, *uut);
         IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
-        Systest::Query query = {systemTestName, nullptr, testId, std::nullopt, testFile};
-        ASSERT_TRUE(Systest::checkResult(query);
+        Systest::Query query = {systemTestName, sqlLogicTestFile, queryPlan, queryNrInFile, cacheFile};
+        ASSERT_TRUE(Systest::checkResult(query));
     }
 
 private:
     const std::string systemTestName;
-    const std::string cachedQueryPlanFile;
-    const std::string testFile;
-    const uint64_t testId;
+    const std::filesystem::path cacheFile;
+    const std::filesystem::path sqlLogicTestFile;
+    const uint64_t queryNrInFile;
 };
 
 namespace
