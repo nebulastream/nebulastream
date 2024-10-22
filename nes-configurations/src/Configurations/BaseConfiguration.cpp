@@ -176,7 +176,9 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
     visitor.visitConcrete(getName(), getDescription(), "");
     for (auto& option : getOptions())
     {
+        visitor.increaseIndent();
         option->accept(visitor);
+        visitor.decreaseIndent();
     }
 };
 
