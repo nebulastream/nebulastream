@@ -39,7 +39,7 @@ public:
     void overwriteConfigWithYAMLFileInput(const std::string& filePath);
 
     /// @param inputParams map with key=command line parameter and value = value
-    void overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams);
+    void overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams);
 
     /// @param withOverwrite false if workerId is not in yaml file, true if it is and has to be changed
     bool persistWorkerIdInYamlConfigFile(std::string yamlFilePath, WorkerId workerId, bool withOverwrite);
@@ -56,8 +56,8 @@ protected:
     friend class SequenceOption;
 
     void parseFromYAMLNode(const YAML::Node config) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
     virtual std::vector<BaseOption*> getOptions() = 0;
-    std::map<std::string, BaseOption*> getOptionMap();
+    std::unordered_map<std::string, BaseOption*> getOptionMap();
 };
 }
