@@ -14,10 +14,10 @@
 #pragma once
 
 #include <vector>
-#include <Util/Logger/Logger.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
 #include <Configurations/TypedBaseOption.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Configurations
 {

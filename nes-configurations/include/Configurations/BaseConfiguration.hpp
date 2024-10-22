@@ -51,11 +51,10 @@ public:
 
     std::string toString() override;
 
-   protected:
+protected:
     void parseFromYAMLNode(const YAML::Node config) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<BaseOption*> getOptions() = 0;
     std::map<std::string, BaseOption*> getOptionMap();
-    
 };
 }
