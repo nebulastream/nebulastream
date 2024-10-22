@@ -26,7 +26,7 @@ using LogicalSourceTypePtr = std::shared_ptr<class LogicalSourceType>;
 class LogicalSourceTypeFactory
 {
 public:
-    static LogicalSourceTypePtr createFromString(std::string identifier, std::map<std::string, std::string>& inputParams);
+    static LogicalSourceTypePtr createFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams);
     static LogicalSourceTypePtr createFromYaml(YAML::Node& yamlConfig);
 };
 }

@@ -13,13 +13,13 @@
 */
 #pragma once
 
-#include "Configurations/TypedBaseOption.hpp"
+#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations
 {
 
 template <class Type, class Factory>
-concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, YAML::Node node) {
+concept IsFactory = requires(std::string identifier, std::unordered_map<std::string, std::string>& inputParams, YAML::Node node) {
     { Factory::createFromString(identifier, inputParams) };
     { Factory::createFromYaml(node) };
 };
@@ -49,7 +49,7 @@ public:
 
 protected:
     virtual void parseFromYAMLNode(YAML::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
     template <DerivedBaseOption X>
@@ -65,7 +65,7 @@ WrapOption<Type, Factory>::WrapOption(const std::string& name, const std::string
 
 template <class Type, class Factory>
 requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     this->value = Factory::createFromString(identifier, inputParams);
 }

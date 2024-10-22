@@ -22,7 +22,8 @@
 namespace NES::Configurations
 {
 
-LogicalSourceTypePtr LogicalSourceTypeFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams)
+LogicalSourceTypePtr
+LogicalSourceTypeFactory::createFromString(std::string, std::unordered_map<std::string, std::string>& commandLineParams)
 {
     std::string logicalSourceName, fieldNodeName, fieldNodeType, fieldNodeNesType, fieldNodeLength;
     std::vector<SchemaFieldDetail> schemaFieldDetails;

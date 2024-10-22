@@ -46,9 +46,9 @@ public:
         return argv;
     }
 
-    static std::map<std::string, std::string> makeCommandLineArgs(const std::vector<std::string>& args)
+    static std::unordered_map<std::string, std::string> makeCommandLineArgs(const std::vector<std::string>& args)
     {
-        std::map<std::string, std::string> result;
+        std::unordered_map<std::string, std::string> result;
         for (auto arg : args)
         {
             auto pos = arg.find('=');

@@ -82,7 +82,7 @@ public:
 
 protected:
     virtual void parseFromYAMLNode(YAML::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
     template <DerivedBaseOption X>
@@ -195,7 +195,7 @@ void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 }
 
 template <class T>
-void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     if (!inputParams.contains(this->getName()))
     {
