@@ -1,0 +1,166 @@
+# name: map/Map_Add.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+Source window UINT64 id UINT64 value UINT64 timestamp
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# [value] (3->1)
+SELECT value FROM window INTO SINK
+----
+1
+1
+1
+2
+19
+20
+21
+
+# [timestamp] (3->1)
+SELECT timestamp FROM window INTO SINK
+----
+1000
+1001
+1002
+2000
+19000
+20000
+21000
+
+# [id, value] (3->2)
+SELECT id, value FROM window INTO SINK
+----
+1,1
+2,1
+3,1
+4,2
+5,19
+6,20
+7,21
+
+# [id, timestamp] (3->2)[second(value) field skipped]
+SELECT id, timestamp FROM window INTO SINK
+----
+1,1000
+2,1001
+3,1002
+4,2000
+5,19000
+6,20000
+7,21000
+
+# [value, timestamp] (3->2)[first(id) field skipped]
+SELECT value, timestamp FROM window INTO SINK
+----
+1,1000
+1,1001
+1,1002
+2,2000
+19,19000
+20,20000
+21,21000
+
+# [id, value, timestamp] (3->3)
+SELECT id, value, timestamp FROM window INTO SINK
+----
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# [timestamp, id, value] (3->3)[fields >> 1]
+SELECT timestamp, id, value FROM window INTO SINK
+----
+1000,1,1
+1001,2,1
+1002,3,1
+2000,4,2
+19000,5,19
+20000,6,20
+21000,7,21
+
+# [value, timestamp, id] (3->3)[fields >> 2]
+SELECT value, timestamp, id FROM window INTO SINK
+----
+1,1000,1
+1,1001,2
+1,1002,3
+2,2000,4
+19,19000,5
+20,20000,6
+21,21000,7
+
+# [id, new_field] (3->2)[1 new field]
+SELECT id, id as new_field FROM window INTO SINK
+----
+1,1
+2,2
+3,3
+4,4
+5,5
+6,6
+7,7
+
+# [id, value, new_field] (3->3)[1 new field]
+SELECT id, value, id as new_field FROM window INTO SINK
+----
+1,1,1
+2,1,2
+3,1,3
+4,2,4
+5,19,5
+6,20,6
+7,21,7
+
+# [id, value, timestamp, new_field] (3->4)[1 new field]
+SELECT id, value, timestamp, id as new_field FROM window INTO SINK
+----
+1,1,1000,1
+2,1,1001,2
+3,1,1002,3
+4,2,2000,4
+5,19,19000,5
+6,20,20000,6
+7,21,21000,7
+
+# [new_field, id, value, timestamp] (3->4)[1 new field, fields >> 1]
+SELECT id as new_field, id, value, timestamp FROM window INTO SINK
+----
+1,1,1,1000
+2,2,1,1001
+3,3,1,1002
+4,4,2,2000
+5,5,19,19000
+6,6,20,20000
+7,7,21,21000
+
+# [new_field, id, value, timestamp] (3->4)[4 new fields]
+SELECT timestamp as new_field_1, timestamp as new_field_2, timestamp as new_field_3, timestamp as new_field_4 FROM window INTO SINK
+----
+1000,1000,1000,1000
+1001,1001,1001,1001
+1002,1002,1002,1002
+2000,2000,2000,2000
+19000,19000,19000,19000
+20000,20000,20000,20000
+21000,21000,21000,21000
+
+# [new_field_1, id, new_field_2, value, new_field_3, timestamp] (3->6)[3 new fields, interleaved new fields]
+SELECT timestamp as new_field_1, id, timestamp as new_field_2, value, timestamp as new_field_3, timestamp as new_field_4 FROM window INTO SINK
+----
+1000,1,1000,1,1000,1000
+1001,2,1001,1,1001,1001
+1002,3,1002,1,1002,1002
+2000,4,2000,2,2000,2000
+19000,5,19000,19,19000,19000
+20000,6,20000,20,20000,20000
+21000,7,21000,21,21000,21000
