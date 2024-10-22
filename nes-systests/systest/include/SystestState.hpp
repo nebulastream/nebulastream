@@ -14,13 +14,18 @@
 
 #pragma once
 
+#include <algorithm>
+#include <filesystem>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
-#include <filesystem>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestConfiguration.hpp>
+#include <SystestRunner.hpp>
 
 namespace NES::Systest
 {
@@ -30,115 +35,54 @@ using TestGroup = std::string;
 
 struct Query
 {
-    Query(std::string name) : name(std::move(name)) {};
+    Query() = default;
+    explicit Query(TestName name, std::filesystem::path sqlLogicTestFile, DecomposedQueryPlanPtr queryPlan, uint64_t queryIdInFile)
+        : name(std::move(name)), sqlLogicTestFile(std::move(sqlLogicTestFile)), queryPlan(queryPlan), queryIdInFile(queryIdInFile) {};
 
-    const std::string name;
+    [[nodiscard]] inline std::filesystem::path resultFile() const
+    {
+        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile.value()));
+    }
 
-private:
+    TestName name;
+    std::filesystem::path sqlLogicTestFile;
     DecomposedQueryPlanPtr queryPlan;
-    const std::filesystem::path cacheFile;
-    uint64_t queryId;
+    std::optional<uint64_t> queryIdInFile;
+};
+
+struct RunningQuery
+{
+    Query query;
+    QueryId queryId;
 };
 
 class TestFile
 {
 public:
-    TestFile(std::filesystem::path file) : file(std::move(file)), groups(readGroups()), queries(readQueries()) {};
+    explicit TestFile(std::filesystem::path file) : file(std::move(file)), groups(readGroups()) {};
+    /// Load a testfile but consider only queries with a specific id (location in test file)
+    explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithId)
+        : file(std::move(file)), onlyEnableQueriesWithId(std::move(onlyEnableQueriesWithId)), groups(readGroups()) {};
 
-    std::string name(){
-        return file.stem().string();
-    }
+    [[nodiscard]] TestName name() { return file.stem().string(); }
 
     const std::filesystem::path file;
+    const std::vector<uint64_t> onlyEnableQueriesWithId{};
     const std::vector<TestGroup> groups;
-    const std::vector<Query> queries;
+
+    std::vector<Query> queries;
 
 private:
-    std::vector<Query> readQueries();
     std::vector<TestGroup> readGroups();
 };
 
+/// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<TestName, TestFile>;
+std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
 
-TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
-{
-    TestFileMap testFiles;
-    if (not config.directlySpecifiedTestsFiles.getValue().empty()) /// load specifc test file
-    {
-        auto testPath = config.directlySpecifiedTestsFiles.getValue();
-        testFiles.emplace_back(testFile(testPath));
-    }
-    else if (not config.testGroup.getValue().empty()) /// load specific test group
-    {
-        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
-        auto testFileExtension = config.testFileExtension.getValue();
-        auto groupname = config.testGroup.getValue();
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
-        {
-            auto testname = entry.path().stem().string();
-            if (entry.is_regular_file() && entry.path().extension() == testFileExtension && isInGroup(entry, groupname))
-            {
-                TestGroup group = {groupname, {testname, {entry.path()}}};
-                TestFile file = {testname, canonical(entry.path()), {},{group}};
-                testFiles.push_back(file);
-            }
-        }
-    }
-    else /// laod from test dir
-    {
-        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
-        auto testFileExtension = config.testFileExtension.getValue();
-        for (const auto& entry : std::filesystem::recursive_directory_iterator(std::filesystem::path(testsDiscoverDir)))
-        {
-            if (entry.is_regular_file() && entry.path().extension() == testFileExtension)
-            {
-                testFiles.push_back({entry.path().stem().string(), canonical(entry.path()), {}, {}});
-            }
-        }
-    }
-    return testFiles;
-}
+/// laad test file map objects from files defined in systest config
+TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
-std::vector<TestGroup> getGroups(const TestFileMap& testMap){
-    std::unordered_map<TestGroup, std::vector<std::filesystem::path>> groups{};
-    for (const auto& testFile : testMap)
-    {
-        for(const auto& group : testFile.second.groups)
-        {
-            groups.insert(group);
-        }
-    }
-    return std::vector<std::string>(groups.begin(), groups.end());
-}
-
-void print(const TestFileMap& testMap)
-{
-    if (testMap.empty())
-    {
-        std::cout << "No matching test files found\n";
-    }
-    else
-    {
-        std::cout << "Discovered Test Files:\n";
-        for (const auto& testFile : testMap)
-        {
-            std::cout << "\t" << testFile.first << "\tfile://" << testFile.second.file << "\n";
-        }
-
-        auto testGroups = getGroups(testMap);
-        if (not testGroups.empty())
-        {
-            std::cout << "\nDiscovered Test Groups:\n";
-            for (const auto& testGroup : testGroups)
-            {
-                std::cout << "\t" << testGroup. << "\n";
-                for (const auto& filename : testGroup.files)
-                {
-                    std::cout << "\t\tfile://" << filename << "\n";
-                }
-            }
-        }
-    }
-}
-
+/// returns a vector of queries to run derived for our testfilemap
+std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir);
 }

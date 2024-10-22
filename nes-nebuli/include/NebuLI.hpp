@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
@@ -24,6 +25,13 @@ struct SchemaField
 {
     std::string name;
     BasicType type;
+};
+
+struct Sink
+{
+    std::string name;
+    std::string type;
+    std::unordered_map<std::string, std::string> config;
 };
 
 struct LogicalSource
@@ -41,6 +49,7 @@ struct PhysicalSource
 struct QueryConfig
 {
     std::string query;
+    std::unordered_map<std::string, Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };
