@@ -19,22 +19,17 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-/**
- * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperator interfaces.
- * A physical unary operator has exactly one child operators.
- */
+/// Physical Unary operator combines the PhysicalOperator and UnaryOperator interfaces.
+/// A physical unary operator has exactly one child operators.
 class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 {
+    /// only other Physical-/UnaryOperators should construct a PhysicalUnaryOperator.
 protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 
 public:
     ~PhysicalUnaryOperator() noexcept override = default;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
     std::string toString() const override;
 };
 
