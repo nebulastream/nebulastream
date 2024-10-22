@@ -20,15 +20,9 @@
 
 namespace NES
 {
-/**
- * @brief Base class for all nes specific data types
- */
-class NESType
-{
-};
 
 template <class Type>
-concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_base_of_v<NESType, Type>;
+concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>;
 
 /**
  * @brief This concept checks via tuple unpacking if Types contains at least one string.
