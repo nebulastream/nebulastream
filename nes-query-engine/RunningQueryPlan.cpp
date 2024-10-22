@@ -88,7 +88,7 @@ CallbackOwner::~CallbackOwner()
     }
 }
 
-void CallbackOwner::addCallback(std::move_only_function<void()> fn) const
+void CallbackOwner::addCallback(absl::AnyInvocable<void()> fn) const
 {
     if (auto ptr = owner.lock())
     {
