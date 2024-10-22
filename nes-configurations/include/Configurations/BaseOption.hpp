@@ -53,7 +53,7 @@ protected:
 
     /// ParseFromString fills the content of this option with a specific string value.
     /// If this option is nested it uses the identifier to lookup the particular children option.
-    virtual void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) = 0;
+    virtual void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) = 0;
 
     std::string name;
     std::string description;
