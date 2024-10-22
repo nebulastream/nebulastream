@@ -14,23 +14,18 @@
 
 #pragma once
 
-#include <SystestConfiguration.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
+#include <filesystem>
+#include <string>
+#include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 
 namespace NES::Systest
 {
 
-using DecomposedQueryPlanPtr = std::shared_ptr<class DecomposedQueryPlan>;
-struct TestFile;
-struct TestGroup;
+/// Forward refs to avoid cyclic deps with SystestState
+struct CacheFile;
 
-
-// collect query objects --> before running
-std::vector<Query> collectQueriesToTest(const Configuration::SystestConfiguration& configuration);
-
-// Laad decomposed query plans
 std::vector<DecomposedQueryPlanPtr>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname);
-std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles);
+std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<CacheFile>& cacheFiles);
 
 }

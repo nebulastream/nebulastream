@@ -12,70 +12,19 @@
     limitations under the License.
 */
 
-#include <filesystem>
 #include <regex>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <NebuLI.hpp>
 #include <SLTParser.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestGrpc.hpp>
-#include <SystestHelper.hpp>
 #include <SystestRunner.hpp>
+#include <SystestState.hpp>
 
 namespace NES::Systest
 {
-std::vector<Query> collectQueriesToTest(const Configuration::SystestConfiguration &configuration)
-{
-    auto testFiles = discoverTestFiles(configuration);
-
-    std::vector<Query> queries{};
-    for (const auto& testFile : testFiles)
-    {
-        auto testname = testFile.path.stem().string();
-
-        std::vector<DecomposedQueryPlanPtr> loadedPlans{};
-        auto cacheDir = configuration.cacheDir.getValue();
-        if (configuration.useCachedQueries.getValue())
-        {
-            auto cacheFiles = getMatchingTestFiles(testname, configuration);
-            auto serializedPlans = loadFromCacheFiles(cacheFiles.first);
-            INVARIANT(cacheFiles.second.size() == serializedPlans.size(), "expect equal sizes")
-            for (uint64_t i = 0; i < serializedPlans.size(); i++)
-            {
-                queries.emplace_back(
-                    testname,
-                    DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(&serializedPlans[i]),
-                    cacheFiles.second[i],
-                    std::nullopt);
-            }
-        }
-        else
-        {
-            loadedPlans = loadFromSLTFile(testFile.path, configuration.resultDir.getValue(), testname);
-            uint64_t queryNrInFile = 0;
-            for (const auto& plan : loadedPlans)
-            {
-                if (not configuration.testNumbers.empty()) /// if specified, only run specific test numbers
-                {
-                    for (const auto& testNumber : configuration.testNumbers.getValues())
-                    {
-                        if (testNumber.getValue() == queryNrInFile + 1)
-                        {
-                            queries.emplace_back(testname, plan, queryNrInFile);
-                        }
-                    }
-                }
-                else
-                {
-                    queries.emplace_back(testname, plan, queryNrInFile);
-                }
-                queryNrInFile++;
-            }
-        }
-    }
-    return queries;
-}
 
 std::vector<DecomposedQueryPlanPtr>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
@@ -88,9 +37,21 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
         {"SINK",
          [&](std::string& substitute)
          {
+             /// While parsing we keep track of the query nr to derrive the correct result parse for the query
              static uint64_t queryNr = 0;
-             auto resultFile = resultDir.string() + "/" + testname + std::to_string(queryNr++) + ".csv";
-             substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"OVERWRITE\"));";
+             static std::string lastTestname = "";
+             if (testname == lastTestname)
+             {
+                 queryNr++;
+             }
+             else
+             {
+                 lastTestname = testname;
+                 queryNr = 0;
+             }
+
+             auto resultFile = fmt::format("{}/{}{}.csv", resultDir.string(), testname, queryNr);
+             substitute = fmt::format(R"(sink(FileSinkDescriptor::create("{}", "CSV_FORMAT", "OVERWRITE"));)", resultFile);
          }});
 
     parser.registerSubstitutionRule(
@@ -142,8 +103,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .config = {{"type", "CSV_SOURCE"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
-
+                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
 
             /// Write the tuples to a tmp file
             std::ofstream sourceFile(tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
@@ -188,20 +148,20 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     return plans;
 }
 
-std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<std::filesystem::path>& cacheFiles)
+std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<CacheFile>& cacheFiles)
 {
     std::vector<SerializableDecomposedQueryPlan> plans{};
     for (const auto& cacheFile : cacheFiles)
     {
         SerializableDecomposedQueryPlan queryPlan;
-        std::ifstream file(cacheFile);
+        std::ifstream file(cacheFile.file);
         if (!file || !queryPlan.ParseFromIstream(&file))
         {
-            NES_ERROR("Could not load protobuffer file: {}", cacheFile);
+            NES_ERROR("Could not load protobuffer file: {}", cacheFile.file);
         }
         else
         {
-            std::cout << "loaded cached file:" << cacheFile << "\n";
+            std::cout << "loaded cached file:" << cacheFile.file << "\n";
             plans.emplace_back(queryPlan);
         }
     }
