@@ -27,10 +27,11 @@ public:
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
     std::string getFormattedSchema() const;
 
-    /// return formatted content of TupleBuffer, contains timestamp if specified
+    /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     std::string getFormattedBuffer(Memory::TupleBuffer& inputBuffer);
 
-    static std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
+    /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
+    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
