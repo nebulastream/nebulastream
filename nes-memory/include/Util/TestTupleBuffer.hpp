@@ -19,18 +19,31 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
+
+template <class Type>
+concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>;
+
+/**
+ * @brief This concept checks via tuple unpacking if Types contains at least one string.
+ * @tparam Types
+ */
+template <class... Types>
+concept ContainsString = requires { requires(std::is_same_v<std::string, Types> || ...); };
+
+template <class Type>
+concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 
 class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
