@@ -19,7 +19,7 @@
 namespace NES::Runtime::Execution
 {
 /// TODO #323: !!!IMPORTANT!!! This is not how we should use registries. We have an open issue to address this problem
-using ExecutablePipelineProviderRegistrySignature = RegistrySignatureTemplate<std::string, ExecutablePipelineProvider>;
+using ExecutablePipelineProviderRegistrySignature = RegistrySignature<std::string, ExecutablePipelineProvider>;
 class ExecutablePipelineProviderRegistry
     : public BaseRegistry<ExecutablePipelineProviderRegistry, ExecutablePipelineProviderRegistrySignature>
 {

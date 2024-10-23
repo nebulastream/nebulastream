@@ -89,7 +89,7 @@ class Registrar
 };
 
 template <typename K, typename BaseType, typename... Args>
-struct RegistrySignatureTemplate
+struct RegistrySignature
 {
     using Key = K;
     using Type = std::unique_ptr<BaseType>;
