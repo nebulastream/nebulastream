@@ -130,7 +130,7 @@ bool SinkFile::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
 
 std::unique_ptr<Configurations::DescriptorConfig::Config> SinkFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
-    return Sink::validateAndFormatImpl<ConfigParametersFile>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
