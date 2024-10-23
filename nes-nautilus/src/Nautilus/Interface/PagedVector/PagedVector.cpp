@@ -42,7 +42,8 @@ Memory::TupleBuffer* PagedVector::appendPage()
     if (page.has_value())
     {
         pages.emplace_back(new Memory::TupleBuffer(page.value()));
-        return reinterpret_cast<Memory::TupleBuffer *>(pages.data());
+        //return reinterpret_cast<Memory::TupleBuffer *>(pages.data());
+        return (Memory::TupleBuffer *)(pages.data());
     }
 
     NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");

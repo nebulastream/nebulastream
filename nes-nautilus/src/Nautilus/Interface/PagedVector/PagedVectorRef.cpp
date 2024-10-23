@@ -24,7 +24,10 @@ uint64_t getNumberOfPagesProxy(PagedVector* pagedVector)
 
 Memory::TupleBuffer* getFirstPageProxy(PagedVector* pagedVector)
 {
-    return reinterpret_cast<Memory::TupleBuffer *>(pagedVector->getPages().data());
+    const auto dataStart = pagedVector->getPages().data();
+    //const auto firstPage = reinterpret_cast<Memory::TupleBuffer *>(dataStart);
+    const auto firstPage = (Memory::TupleBuffer *)(dataStart);
+    return firstPage;
 }
 
 Memory::TupleBuffer* allocateNewPageProxy(PagedVector* pagedVector)
