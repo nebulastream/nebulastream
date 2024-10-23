@@ -20,73 +20,40 @@
 namespace NES::Nautilus::Interface
 {
 
-class PagedVectorRef;
-
 class PagedVector;
 using PagedVectorPtr = std::shared_ptr<PagedVector>;
-
-/**
- * @brief Stores the pointer to the text, the length of the text and the index of the varSizedDataPages where the text begins.
- */
-struct TupleBufferAndPosForEntry
-{
-    uint64_t entryPos;
-    uint64_t bufferPos;
-    Memory::TupleBuffer* buffer;
-
-    ~TupleBufferAndPosForEntry()
-    {
-        if (buffer != nullptr)
-        {
-            delete buffer;
-        }
-    }
-};
 
 /**
  * @brief This class provides a dynamically growing stack/list data structure of entries. All data is stored in a list of pages.
  * Entries consume a fixed size, which has to be smaller then the page size. Each page can contain page_size/entry_size entries.
  * Additionally to the fixed data types, this PagedVector also supports variable sized data.
  * To know where each variable sized data lies, we store the entryPtr, the entryLength and the entryBufIdx in the
- * map at varSizedDataEntryMap[varSizedDataEntryMapCounter] and increment the varSizedDataEntryMapCounter for each new record.
+ * map at varSizedDataEntryMap[varSizedDataEntryMapCounter] and increment the varSizedDataEntryMapCounter for each new record. TODO
  */
 class PagedVector
 {
 public:
     PagedVector(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
+    ~PagedVector();
 
     /// Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
-    /// and updates the numberOfEntriesOnCurrPage.
-    void appendPage();
+    /// and updates the numberOfEntriesOnCurrPage. TODO
+    Memory::TupleBuffer** appendPage();
 
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
 
-    /// Iterates over all pages and sums up the number of tuples
+    /// Iterates over all pages and sums up the number of tuples.
     uint64_t getTotalNumberOfEntries() const;
 
-    Memory::TupleBuffer* getTupleBufferForEntry(uint64_t entryPos);
-
-    uint64_t getBufferPosForEntry(uint64_t entryPos);
-
-    std::vector<Memory::TupleBuffer>& getPages();
-    [[nodiscard]] uint64_t getNumberOfPages() const;
+    std::vector<Memory::TupleBuffer*>& getPages();
     [[nodiscard]] uint64_t getEntrySize() const;
     [[nodiscard]] uint64_t getCapacityPerPage() const;
 
 private:
-    friend PagedVectorRef;
-
-    /**
-     * @brief TODO
-     * @param entryPos
-     */
-    void getTupleBufferAndPosForEntry(uint64_t entryPos);
-
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    std::vector<Memory::TupleBuffer> pages;
-    TupleBufferAndPosForEntry tupleBufferAndPosForEntry;
+    const std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    std::vector<Memory::TupleBuffer*> pages;
 };
 
 } /// namespace NES::Nautilus::Interface

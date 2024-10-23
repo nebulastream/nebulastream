@@ -26,20 +26,26 @@ PagedVector::PagedVector(
     NES_ASSERT2_FMT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
 
     appendPage();
-    tupleBufferAndPosForEntry = TupleBufferAndPosForEntry(0, 0, nullptr);
 }
 
-void PagedVector::appendPage()
+PagedVector::~PagedVector()
+{
+    for (auto& page : pages)
+    {
+        delete page;
+    }
+}
+
+Memory::TupleBuffer** PagedVector::appendPage()
 {
     auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize());
     if (page.has_value())
     {
-        pages.emplace_back(page.value());
+        pages.emplace_back(new Memory::TupleBuffer(page.value()));
+        return pages.data();
     }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
-    }
+
+    NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
 }
 
 void PagedVector::appendAllPages(PagedVector& other)
@@ -55,58 +61,16 @@ void PagedVector::appendAllPages(PagedVector& other)
 uint64_t PagedVector::getTotalNumberOfEntries() const
 {
     auto totalNumEntries = 0UL;
-    for (const auto& page : pages)
+    for (const auto* page : pages)
     {
-        totalNumEntries += page.getNumberOfTuples();
+        totalNumEntries += page->getNumberOfTuples();
     }
     return totalNumEntries;
 }
 
-Memory::TupleBuffer* PagedVector::getTupleBufferForEntry(uint64_t entryPos)
-{
-    getTupleBufferAndPosForEntry(entryPos);
-    return tupleBufferAndPosForEntry.buffer;
-}
-
-uint64_t PagedVector::getBufferPosForEntry(uint64_t entryPos)
-{
-    getTupleBufferAndPosForEntry(entryPos);
-    return tupleBufferAndPosForEntry.bufferPos;
-}
-
-void PagedVector::getTupleBufferAndPosForEntry(uint64_t entryPos)
-{
-    if (entryPos == tupleBufferAndPosForEntry.entryPos && tupleBufferAndPosForEntry.buffer != nullptr)
-    {
-        return;
-    }
-
-    tupleBufferAndPosForEntry.entryPos = entryPos;
-    for (auto& page : pages)
-    {
-        auto numTuplesOnPage = page.getNumberOfTuples();
-        if (entryPos < numTuplesOnPage)
-        {
-            tupleBufferAndPosForEntry.bufferPos = entryPos;
-            tupleBufferAndPosForEntry.buffer = new Memory::TupleBuffer(page);
-            return;
-        }
-
-        entryPos -= numTuplesOnPage;
-    }
-
-    tupleBufferAndPosForEntry.bufferPos = 0;
-    tupleBufferAndPosForEntry.buffer = nullptr;
-}
-
-std::vector<Memory::TupleBuffer>& PagedVector::getPages()
+std::vector<Memory::TupleBuffer*>& PagedVector::getPages()
 {
     return pages;
-}
-
-uint64_t PagedVector::getNumberOfPages() const
-{
-    return pages.size();
 }
 
 uint64_t PagedVector::getEntrySize() const

@@ -50,20 +50,20 @@ public:
      * @brief Creates a PageVectorRefIter that points to the first entry in the PagedVectorRef
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter begin() const;
+    [[nodiscard]] PagedVectorRefIter begin() const;
 
     /**
      * @brief Creates a PageVectorRefIter that points to the entry at the given position in the PagedVectorRef
      * @param pos
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter at(const nautilus::val<uint64_t>& pos) const;
+    [[nodiscard]] PagedVectorRefIter at(const nautilus::val<uint64_t>& pos) const;
 
     /**
      * @brief Creates a PageVectorRefIter that points to the end of the PagedVectorRef
      * @return PagedVectorRefIter
      */
-    PagedVectorRefIter end() const;
+    [[nodiscard]] PagedVectorRefIter end() const;
 
     /**
      * @brief Equality operator
@@ -73,9 +73,26 @@ public:
     bool operator==(const PagedVectorRef& other) const;
 
 private:
+    /// Stores the pointer to the text, the length of the text and the index of the varSizedDataPages where the text begins.
+    struct TupleBufferAndPosForEntry
+    {
+        nautilus::val<uint64_t> posInBuffer;
+        nautilus::val<Memory::TupleBuffer*> buffer;
+    };
+
+    /**
+     * @brief TODO
+     * @param entryPos
+     * @return
+     */
+    PagedVectorRef::TupleBufferAndPosForEntry getTupleBufferAndPosForEntry(nautilus::val<uint64_t> entryPos) const;
+
+    [[nodiscard]] nautilus::val<uint64_t> getTotalNumberOfEntries() const;
+
     const nautilus::val<PagedVector*> pagedVectorRef;
     const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    nautilus::val<uint64_t> totalNumberOfEntries;
+    nautilus::val<Memory::TupleBuffer**> firstPage;
+    nautilus::val<uint64_t> numPages;
 };
 
 class PagedVectorRefIter

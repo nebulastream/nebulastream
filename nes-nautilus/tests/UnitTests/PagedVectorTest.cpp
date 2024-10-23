@@ -99,12 +99,12 @@ public:
         }
 
         ASSERT_EQ(pagedVector.getTotalNumberOfEntries(), expectedNumberOfEntries);
-        ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
+        ASSERT_EQ(pagedVector.getPages().size(), numberOfPages);
 
         // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool const lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
-        ASSERT_EQ(pagedVector.getPages().back().getNumberOfTuples(), numTuplesLastPage);
+        ASSERT_EQ(pagedVector.getPages().back()->getNumberOfTuples(), numTuplesLastPage);
     }
 
     static void runRetrieveTest(
@@ -153,10 +153,9 @@ public:
             {
                 auto& otherPagedVec = allPagedVectors[i];
                 firstPagedVec->appendAllPages(*otherPagedVec);
-                EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
-                EXPECT_EQ(otherPagedVec->getNumberOfPages(), 0);
+                EXPECT_EQ(otherPagedVec->getPages().size(), 0);
                 EXPECT_EQ(otherPagedVec->getTotalNumberOfEntries(), 0);
-                EXPECT_EQ(otherPagedVec->getPages().back().getNumberOfTuples(), 0);
+                EXPECT_EQ(otherPagedVec->getPages().back()->getNumberOfTuples(), 0);
             }
 
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
