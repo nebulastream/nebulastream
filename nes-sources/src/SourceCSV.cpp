@@ -149,7 +149,7 @@ bool SourceCSV::fillTupleBuffer(
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
-    return Source::validateAndFormatImpl<ConfigParametersCSV>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
 std::ostream& SourceCSV::toString(std::ostream& str) const
