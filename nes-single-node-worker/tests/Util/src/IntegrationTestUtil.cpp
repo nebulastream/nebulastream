@@ -451,10 +451,11 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
         auto sinkDescriptorUpdated
             = std::make_unique<Sinks::SinkDescriptor>(descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
         sinkDescriptorUpdated->schema = deserializedOutputSchema;
-        const auto SinkLogicalOperatorUpdated = std::make_shared<SinkLogicalOperator>(
-            deserializedSinkOperator->sinkName, std::move(sinkDescriptorUpdated), deserializedSinkOperator->getId());
-        SinkLogicalOperatorUpdated->setOutputSchema(deserializedOutputSchema);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(SinkLogicalOperatorUpdated);
+        auto sinkLogicalOperatorUpdated
+            = std::make_shared<SinkLogicalOperator>(deserializedSinkOperator->sinkName, deserializedSinkOperator->getId());
+        sinkLogicalOperatorUpdated->sinkDescriptor = std::move(sinkDescriptorUpdated);
+        sinkLogicalOperatorUpdated->setOutputSchema(deserializedOutputSchema);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
         serializedOperator.set_operatorid(rootOperator.operatorid());
