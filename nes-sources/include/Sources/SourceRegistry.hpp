@@ -22,7 +22,7 @@
 namespace NES::Sources
 {
 
-using SourceRegistrySignature = RegistrySignatureTemplate<std::string, Source, const Schema&, const SourceDescriptor&>;
+using SourceRegistrySignature = RegistrySignature<std::string, Source, const Schema&, const SourceDescriptor&>;
 class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
 {
 };
