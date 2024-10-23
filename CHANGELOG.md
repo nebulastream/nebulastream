@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.187](https://github.com/nebulastream/nebulastream/tree/v0.6.187) (2024-10-23)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.186...v0.6.187)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add out-of-order Data Provider [\#5107](https://github.com/nebulastream/nebulastream/issues/5107)
+
 ## [v0.6.186](https://github.com/nebulastream/nebulastream/tree/v0.6.186) (2024-10-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.185...v0.6.186)
