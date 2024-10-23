@@ -20,7 +20,6 @@ set(LLVM_MAJOR_VERSION 18)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
 
-#toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
