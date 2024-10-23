@@ -350,7 +350,7 @@ bool SourceTCP::fillBuffer(
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 SourceTCP::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
-    return Source::validateAndFormatImpl<ConfigParametersTCP>(std::move(config), NAME);
+    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
 }
 
 void SourceTCP::close()
