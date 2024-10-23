@@ -18,7 +18,7 @@
 namespace NES::Execution::Functions
 {
 
-using RegistryFunctionExecutableSignature = RegistrySignatureTemplate<
+using RegistryFunctionExecutableSignature = RegistrySignature<
     std::string,
     Runtime::Execution::Functions::Function,
     std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>;
