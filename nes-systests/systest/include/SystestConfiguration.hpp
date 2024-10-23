@@ -24,8 +24,6 @@ namespace NES::Configuration
 class SystestConfiguration final : public Configurations::BaseConfiguration
 {
 public:
-    Configurations::StringOption cacheDir
-        = {"cacheDir", CACHE_DIR, "Directory to store protobuf (.pb) cache files into. Default: " CACHE_DIR};
     Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
     Configurations::StringOption directlySpecifiedTestsFiles
@@ -38,7 +36,6 @@ public:
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
     Configurations::StringOption resultDir = {"resultDir", PATH_TO_BINARY_DIR "/nes-systests/result/", "Directory for query results"};
     Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
-    Configurations::BoolOption useCachedQueries = {"useCachedQueries", "false", "use cached queries"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
     Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
     Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
@@ -56,13 +53,11 @@ protected:
     std::vector<BaseOption*> getOptions() override
     {
         return {
-            &cacheDir,
             &testsDiscoverDir,
             &directlySpecifiedTestsFiles,
             &testFileExtension,
             &resultDir,
             &randomQueryOrder,
-            &useCachedQueries,
             &numberConcurrentQueries,
             &testGroup,
             &grpcAddressUri};
