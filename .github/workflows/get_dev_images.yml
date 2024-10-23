@@ -124,7 +124,7 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}},mode=max
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}}-${{matrix.stdlib}},mode=max
           cache-from: |
             type=registry,ref=nebulastream/nes-development-cache:${{ inputs.ref }}-${{matrix.arch}}-${{matrix.stdlib}}
             type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}
