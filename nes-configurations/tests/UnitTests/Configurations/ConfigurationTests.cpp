@@ -17,7 +17,6 @@
 #include <string>
 #include <vector>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -85,28 +84,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
-}
-
-TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
-{
-    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "coordinatorLogicalSourceAndSchema.yaml");
-    EXPECT_FALSE(coordinatorConfigPtr->logicalSourceTypes.empty());
-    EXPECT_EQ(coordinatorConfigPtr->logicalSourceTypes.size(), 3);
-    auto logicalSources = coordinatorConfigPtr->logicalSourceTypes.getValues();
-    EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
-    EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
-    EXPECT_EQ(logicalSources[2].getValue()->getLogicalSourceName(), "lsn3");
-    auto firstSourceSchema = logicalSources[0].getValue()->getSchemaType();
-    auto secondSourceSchema = logicalSources[1].getValue()->getSchemaType();
-    auto thirdSourceSchema = logicalSources[2].getValue()->getSchemaType();
-    EXPECT_EQ(firstSourceSchema->getSchemaFieldDetails().size(), 3);
-    EXPECT_EQ(secondSourceSchema->getSchemaFieldDetails().size(), 1);
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id"));
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id_2"));
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
-    EXPECT_TRUE(secondSourceSchema->contains("csv_id_4"));
-    EXPECT_TRUE(thirdSourceSchema->contains("csv_id_5"));
 }
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
