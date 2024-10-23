@@ -24,8 +24,13 @@ namespace NES
 class SinkLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    SinkLogicalOperator(std::string sinkName, OperatorId id);
-    SinkLogicalOperator(std::string sinkName, std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor, OperatorId id);
+    /// During deserialization, we don't need to know/use the name of the sink anymore.
+    SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) {};
+
+    /// During query parsing, we require the name of the sink and need to assign it an id.
+    SinkLogicalOperator(std::string sinkName, const OperatorId id)
+        : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
+
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     std::string toString() const override;
