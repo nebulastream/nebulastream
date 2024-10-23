@@ -38,7 +38,7 @@ public:
 
     /// Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
     /// and updates the numberOfEntriesOnCurrPage. TODO
-    Memory::TupleBuffer** appendPage();
+    Memory::TupleBuffer* appendPage();
 
     /// Combines the pages of the given PagedVector with the pages of this PagedVector.
     void appendAllPages(PagedVector& other);
@@ -56,4 +56,4 @@ private:
     std::vector<Memory::TupleBuffer*> pages;
 };
 
-} /// namespace NES::Nautilus::Interface
+}

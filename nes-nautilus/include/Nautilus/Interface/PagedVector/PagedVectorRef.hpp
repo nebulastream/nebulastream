@@ -91,7 +91,7 @@ private:
 
     const nautilus::val<PagedVector*> pagedVectorRef;
     const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    nautilus::val<Memory::TupleBuffer**> firstPage;
+    nautilus::val<Memory::TupleBuffer*> firstPage;
     nautilus::val<uint64_t> numPages;
 };
 
