@@ -73,7 +73,7 @@ if (CMAKE_TOOLCHAIN_FILE)
     cmake_path(GET CMAKE_TOOLCHAIN_FILE PARENT_PATH ParentPath)
     cmake_path(GET ParentPath PARENT_PATH ParentPath)
     cmake_path(GET ParentPath PARENT_PATH ParentPath)
-    set(NES_DEPENDENCIES_BINARY_ROOT ${ParentPath}/installed/${VCPKG_TARGET_TRIPLET}/)
+    set(NES_DEPENDENCIES_BINARY_ROOT ${ParentPath}/installed/${VCPKG_TARGET_TRIPLET})
 elseif (NES_BUILD_DEPENDENCIES_LOCAL)
     # Build all dependencies locally.
     # To this end, we check out the nebulastream-dependencies repository and use its manifest file.
