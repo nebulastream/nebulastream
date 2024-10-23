@@ -15,11 +15,16 @@
 #include <API/AttributeField.hpp>
 #include <BaseUnitTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Util/Common.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/TextType.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -51,10 +56,9 @@ public:
                 auto const fieldType = schema->get(field)->getDataType();
                 auto tupleNo = (schema->getSize() * i) + fieldCnt++;
 
-                if (fieldType->isText())
+                if (NES::Util::instanceOf<TextType>(fieldType))
                 {
-                    auto buffer = bufferManager->getUnpooledBuffer(PAGE_SIZE);
-                    if (buffer.has_value())
+                    if (auto buffer = bufferManager->getUnpooledBuffer(PAGE_SIZE); buffer.has_value())
                     {
                         std::stringstream ss;
                         ss << "testing TextValue" << tupleNo;
@@ -70,7 +74,7 @@ public:
                         NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
                     }
                 }
-                else if (fieldType->isInteger())
+                else if (NES::Util::instanceOf<Integer>(fieldType))
                 {
                     newRecord.write(field, nautilus::val<uint64_t>(tupleNo));
                 }
@@ -104,7 +108,7 @@ public:
         // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool const lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
-        ASSERT_EQ(pagedVector.getPages().back()->getNumberOfTuples(), numTuplesLastPage);
+        ASSERT_EQ(pagedVector.getPages().back().getNumberOfTuples(), numTuplesLastPage);
     }
 
     static void runRetrieveTest(
@@ -155,7 +159,7 @@ public:
                 firstPagedVec->appendAllPages(*otherPagedVec);
                 EXPECT_EQ(otherPagedVec->getPages().size(), 0);
                 EXPECT_EQ(otherPagedVec->getTotalNumberOfEntries(), 0);
-                EXPECT_EQ(otherPagedVec->getPages().back()->getNumberOfTuples(), 0);
+                EXPECT_EQ(otherPagedVec->getPages().back().getNumberOfTuples(), 0);
             }
 
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());

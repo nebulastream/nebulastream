@@ -24,10 +24,12 @@ uint64_t getNumberOfPagesProxy(PagedVector* pagedVector)
 
 Memory::TupleBuffer* getFirstPageProxy(PagedVector* pagedVector)
 {
-    const auto dataStart = pagedVector->getPages().data();
-    //const auto firstPage = reinterpret_cast<Memory::TupleBuffer *>(dataStart);
-    const auto firstPage = (Memory::TupleBuffer *)(dataStart);
-    return firstPage;
+    auto& dataVec = pagedVector->getPages();
+    const auto dataStart = dataVec.data();
+    const auto dataStart2 = dataVec.begin();
+    const auto firstItem = dataVec[0];
+    auto tmpBuffer = new Memory::TupleBuffer(dataVec[0]);
+    return tmpBuffer;
 }
 
 Memory::TupleBuffer* allocateNewPageProxy(PagedVector* pagedVector)
@@ -45,15 +47,15 @@ PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef
 
 void PagedVectorRef::writeRecord(const Record& record)
 {
-    auto recordBuffer = RecordBuffer(firstPage + ((numPages - 1) * sizeof(Memory::TupleBuffer*)));
+    auto recordBuffer = RecordBuffer(firstPage + ((numPages - 1) * sizeof(Memory::TupleBuffer)));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
 
     if (numTuplesOnPage >= memoryLayout->getCapacity())
     {
         /// pages vector is potentially moved due to resize
         firstPage = invoke(allocateNewPageProxy, pagedVectorRef);
-        numPages += 1; /// as we have no added a page
-        recordBuffer = RecordBuffer(firstPage + ((numPages - 1) * sizeof(Memory::TupleBuffer*)));
+        numPages += 1; /// as we have now added a page
+        recordBuffer = RecordBuffer(firstPage + ((numPages - 1) * sizeof(Memory::TupleBuffer)));
         numTuplesOnPage = 0;
     }
 
@@ -112,7 +114,7 @@ PagedVectorRef::TupleBufferAndPosForEntry PagedVectorRef::getTupleBufferAndPosFo
 {
     for (nautilus::val<uint64_t> i = 0; i < numPages; ++i)
     {
-        auto currPageAddr = firstPage + i * sizeof(Memory::TupleBuffer*);
+        auto currPageAddr = firstPage + i * sizeof(Memory::TupleBuffer);
         auto numTuplesOnPage = RecordBuffer(currPageAddr).getNumRecords();
 
         if (entryPos < numTuplesOnPage)
@@ -131,7 +133,7 @@ nautilus::val<uint64_t> PagedVectorRef::getTotalNumberOfEntries() const
     nautilus::val<uint64_t> totalNumEntries = 0;
     for (nautilus::val<uint64_t> i = 0; i < numPages; ++i)
     {
-        auto currPage = RecordBuffer(firstPage + i * sizeof(Memory::TupleBuffer*));
+        auto currPage = RecordBuffer(firstPage + i * sizeof(Memory::TupleBuffer));
         totalNumEntries += currPage.getNumRecords();
     }
     return totalNumEntries;
@@ -143,7 +145,7 @@ PagedVectorRefIter::PagedVectorRefIter(const PagedVectorRef& pagedVector) : pos(
 
 Record PagedVectorRefIter::operator*() const
 {
-    return pagedVector.readRecordKeys(pos);
+    return pagedVector.readRecord(pos);
 }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++()

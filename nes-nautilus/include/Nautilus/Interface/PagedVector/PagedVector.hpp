@@ -46,14 +46,14 @@ public:
     /// Iterates over all pages and sums up the number of tuples.
     uint64_t getTotalNumberOfEntries() const;
 
-    std::vector<Memory::TupleBuffer*>& getPages();
+    std::vector<Memory::TupleBuffer>& getPages();
     [[nodiscard]] uint64_t getEntrySize() const;
     [[nodiscard]] uint64_t getCapacityPerPage() const;
 
 private:
     const std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-    std::vector<Memory::TupleBuffer*> pages;
+    std::vector<Memory::TupleBuffer> pages;
 };
 
 }

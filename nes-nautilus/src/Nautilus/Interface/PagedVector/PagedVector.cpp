@@ -32,7 +32,7 @@ PagedVector::~PagedVector()
 {
     for (auto& page : pages)
     {
-        delete page;
+        // delete page;
     }
 }
 
@@ -41,9 +41,8 @@ Memory::TupleBuffer* PagedVector::appendPage()
     auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize());
     if (page.has_value())
     {
-        pages.emplace_back(new Memory::TupleBuffer(page.value()));
-        //return reinterpret_cast<Memory::TupleBuffer *>(pages.data());
-        return (Memory::TupleBuffer *)(pages.data());
+        pages.emplace_back(page.value());
+        return new Memory::TupleBuffer(pages[0]);
     }
 
     NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
@@ -62,14 +61,14 @@ void PagedVector::appendAllPages(PagedVector& other)
 uint64_t PagedVector::getTotalNumberOfEntries() const
 {
     auto totalNumEntries = 0UL;
-    for (const auto* page : pages)
+    for (const auto& page : pages)
     {
-        totalNumEntries += page->getNumberOfTuples();
+        totalNumEntries += page.getNumberOfTuples();
     }
     return totalNumEntries;
 }
 
-std::vector<Memory::TupleBuffer*>& PagedVector::getPages()
+std::vector<Memory::TupleBuffer>& PagedVector::getPages()
 {
     return pages;
 }
