@@ -15,7 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <Common/ExecutableType/NESType.hpp>
+#include <type_traits>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::PhysicalTypes
 {
@@ -121,55 +122,55 @@ bool isDouble(PhysicalTypePtr physicalType);
 template <class Type>
 bool isSamePhysicalType(PhysicalTypePtr physicalType)
 {
-    if (isText(physicalType) && IsUInt32<Type>)
+    if (isText(physicalType) && std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
         return true;
     }
-    if constexpr (IsChar<Type>)
+    if constexpr (std::is_same_v<std::remove_cvref_t<Type>, char>)
     {
         return isChar(std::move(physicalType));
     }
-    else if constexpr (IsUInt8<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint8_t>)
     {
         return isUInt8(std::move(physicalType));
     }
-    else if constexpr (IsBool<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, bool>)
     {
         return isBool(std::move(physicalType));
     }
-    else if constexpr (IsUInt16<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint16_t>)
     {
         return isUInt16(std::move(physicalType));
     }
-    else if constexpr (IsUInt32<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
         return isUInt32(std::move(physicalType));
     }
-    else if constexpr (IsUInt64<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>)
     {
         return isUInt64(std::move(physicalType));
     }
-    else if constexpr (IsInt8<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int8_t>)
     {
         return isInt8(std::move(physicalType));
     }
-    else if constexpr (IsInt16<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int16_t>)
     {
         return isInt16(std::move(physicalType));
     }
-    else if constexpr (IsInt32<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int32_t>)
     {
         return isInt32(std::move(physicalType));
     }
-    else if constexpr (IsInt64<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int64_t>)
     {
         return isInt64(std::move(physicalType));
     }
-    else if constexpr (IsFloat<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, float>)
     {
         return isFloat(std::move(physicalType));
     }
-    else if constexpr (IsDouble<Type>)
+    else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, double>)
     {
         return isDouble(std::move(physicalType));
     }
