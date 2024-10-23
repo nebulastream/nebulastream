@@ -1,4 +1,4 @@
-# System-Level Test
+ # System-Level Test
 
 System-level tests treat NebulaStream as a black box, focusing on testing the system as a whole by executing queries
 and verifying the outputs. These tests are defined using declarative test definition files (`.test`, `.test_nightly`),
@@ -33,14 +33,6 @@ We classify test targets using two types of groupings:
     They are indicated the in-file-comment `# groups: [legacy, join]` for subgroups legacy and join.
     A test can belong to multiple subgroups.
 
-
-
-### Run system-level tests locally
-
-To run system-level tests locally, you can run targets `ST_<test_name>` or `STGRP_<group name>`.
-
-
-
 ### System-level tests during continuous integration
 > Will be implemented with TODO #250 [(link)](https://github.com/nebulastream/nebulastream-public/issues/250)
 
@@ -74,6 +66,3 @@ flowchart LR
     C -->|localhost:8083| G(Worker - Thread Sanitizer)
     end
 ```
-
-One can run the system-level tests locally by enabling the cmake option `NES_ENABLE_LLVM_LIT` and running the `LIT_<test_name>` or
-`LITGRP_<group name>` targets.
