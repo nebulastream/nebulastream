@@ -22,20 +22,10 @@ class OptionVisitor
 public:
     virtual ~OptionVisitor() = default;
 
-    OptionVisitor() : indent("") { }
+    OptionVisitor() { }
 
     virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue) = 0;
-
-    void increaseIndent() { indent += "    "; }
-
-    void decreaseIndent()
-    {
-        if (indent.length() >= 4)
-        {
-            indent.erase(indent.length() - 4);
-        }
-    }
-
-    std::string indent;
+    virtual void push() = 0;
+    virtual void pop() = 0;
 };
 }
