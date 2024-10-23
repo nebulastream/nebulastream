@@ -17,7 +17,6 @@
 #include <vector>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ConfigurationException.hpp>
-#include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 
@@ -84,10 +83,6 @@ public:
         else if constexpr (std::is_enum_v<T>)
         {
             visitor.visitConcrete(name, description, magic_enum::enum_name(defaultValue));
-        }
-        else if constexpr (std::is_same_v<T, std::shared_ptr<LogicalSourceType>>)
-        {
-            visitor.visitConcrete(name, description, "");
         }
         else
         {
