@@ -160,7 +160,7 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
     throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
 }
 
-void validateAndSetSinkDescriptor(const QueryPlan& query, const QueryConfig& config)
+void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
 {
     INVARIANT(
         query.getSinkOperators().size() == 1,
