@@ -338,8 +338,6 @@ add_tests_if_enabled(nes-systests)
 
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
-# We always want to exclude the local system test targets
-set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
 
 # The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
@@ -349,16 +347,13 @@ add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST
 
 # Other configurations
 project_enable_format()
-include(cmake/SystemTests.cmake)
-project_enable_system_level_tests()
 
 # Adding targets for code coverage if it is enabled
 if (CODE_COVERAGE)
-    if (CODE_COVERAGE)
-        file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
-        foreach(NES_DIR ${NES_DIRECTORIES})
-            target_code_coverage(${NES_DIR} PUBLIC AUTO)
-        endforeach()
-    endif ()
+    file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-systests")
+    foreach(NES_DIR ${NES_DIRECTORIES})
+        target_code_coverage(${NES_DIR} PUBLIC AUTO)
+    endforeach()
     target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO)
 endif ()

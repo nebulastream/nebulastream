@@ -148,24 +148,4 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     return plans;
 }
 
-std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<CacheFile>& cacheFiles)
-{
-    std::vector<SerializableDecomposedQueryPlan> plans{};
-    for (const auto& cacheFile : cacheFiles)
-    {
-        SerializableDecomposedQueryPlan queryPlan;
-        std::ifstream file(cacheFile.file);
-        if (!file || !queryPlan.ParseFromIstream(&file))
-        {
-            NES_ERROR("Could not load protobuffer file: {}", cacheFile.file);
-        }
-        else
-        {
-            std::cout << "loaded cached file:" << cacheFile.file << "\n";
-            plans.emplace_back(queryPlan);
-        }
-    }
-    return plans;
-}
-
 }

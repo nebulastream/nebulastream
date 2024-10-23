@@ -32,13 +32,7 @@ using namespace std::literals;
 namespace NES::Systest
 {
 
-enum class Command : uint8_t
-{
-    run,
-    cache
-};
-
-std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int argc, const char** argv)
+Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
 {
     using namespace argparse;
     ArgumentParser program("systest");
@@ -203,7 +197,6 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         }
     }
 
-    Command com;
     if (program.is_used("--list"))
     {
         std::cout << loadTestFileMap(config);
@@ -214,7 +207,7 @@ std::tuple<Configuration::SystestConfiguration, Command> readConfiguration(int a
         std::cout << program << std::endl;
         std::exit(0);
     }
-    return {config, com};
+    return config;
 }
 }
 
@@ -447,7 +440,7 @@ int main(int argc, const char** argv)
         setupLogging();
 
         /// Read the configuration
-        auto [config, com] = Systest::readConfiguration(argc, argv);
+        auto config = Systest::readConfiguration(argc, argv);
 
         auto testMap = Systest::loadTestFileMap(config);
         auto queries = loadQueries(std::move(testMap), config);
@@ -479,7 +472,6 @@ int main(int argc, const char** argv)
             }
 
             returnCode = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration) ? 0 : 1;
-            ;
         }
     }
     catch (...)
