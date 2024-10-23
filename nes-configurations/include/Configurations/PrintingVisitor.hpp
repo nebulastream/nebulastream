@@ -13,21 +13,29 @@
 */
 
 #pragma once
-#include <Configurations/BaseConfiguration.hpp>
+#include <cstddef>
+#include <ostream>
+#include <string>
+#include <string_view>
 #include <Configurations/OptionVisitor.hpp>
 
 namespace NES::Configurations
 {
-class PrintingVisitor : public OptionVisitor
+class PrintingVisitor final : public OptionVisitor
 {
 public:
-    PrintingVisitor(std::ostream& ostream) : os(ostream) { }
+    explicit PrintingVisitor(std::ostream& ostream) : os(ostream) { }
+
+    void push() override { indent += 1; }
+    void pop() override { indent -= 1; }
 
     void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override
     {
-        os << indent << "- " << name << ": " << description << " " << "(Default: " << defaultValue << ")" << "\n";
+        os << std::string(indent * 4, ' ') << "- " << name << ": " << description << " " << "(Default: " << defaultValue << ")" << "\n";
     }
 
+private:
+    size_t indent = 0;
     std::ostream& os;
 };
 }
