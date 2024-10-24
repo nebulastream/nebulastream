@@ -13,7 +13,8 @@ RUN apt-get update && \
         apt-get install -y software-properties-common && \
         add-apt-repository ppa:deadsnakes/ppa && \
         apt-get update && \
-        apt-get install -y python3.11 python3.11-dev python3.11-distutils -y
+        apt-get install -y default-jre python3.11 python3.11-dev python3.11-distutils pipx -y && \
+        PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin PIPX_MAN_DIR=/usr/local/share/man pipx install antlr4-tools && antlr4
 
 RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
