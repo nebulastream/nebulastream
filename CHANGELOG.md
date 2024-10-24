@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.188](https://github.com/nebulastream/nebulastream/tree/v0.6.188) (2024-10-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.187...v0.6.188)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NESBinaryParser Ingestion Time Field Assert Error & Double Checking [\#5123](https://github.com/nebulastream/nebulastream/issues/5123)
+
 ## [v0.6.187](https://github.com/nebulastream/nebulastream/tree/v0.6.187) (2024-10-23)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.186...v0.6.187)
