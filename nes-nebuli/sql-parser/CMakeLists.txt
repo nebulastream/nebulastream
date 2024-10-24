@@ -17,7 +17,7 @@ add_custom_command(
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLListener.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLParser.cpp
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4
-        COMMAND antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND yes | antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 find_package(antlr4-runtime CONFIG REQUIRED)
