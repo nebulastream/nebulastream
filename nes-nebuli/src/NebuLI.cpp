@@ -16,8 +16,6 @@
 #include <fstream>
 #include <regex>
 
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -27,8 +25,8 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Parser/SLTParser.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
@@ -205,10 +203,6 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
                 INITIAL<WorkerId>));
     }
 
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto parsingService = QueryParsingService::create(jitCompiler);
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(parsingService);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);

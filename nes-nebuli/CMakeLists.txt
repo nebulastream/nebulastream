@@ -23,10 +23,9 @@ set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
-get_source(nes-compiler COMPILER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
 target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nes-nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -51,51 +50,6 @@ target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse)
 target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
 )
-
-### Installing Nebuli using cmake install or cpack
-# Collect all headers required for our "query-parsing" and store them in a file_set
-macro(add_nebuli_header TARGET PATH_OR_FILES)
-    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
-        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES}/*.hpp)
-    else()
-        set(HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
-    endif()
-
-    foreach (ABSOLUTE_PATH_TO_HEADER IN LISTS HEADER)
-        file(RELATIVE_PATH RELATIVE_PATH_TO_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/" "${ABSOLUTE_PATH_TO_HEADER}")
-        configure_file(${ABSOLUTE_PATH_TO_HEADER} "${CMAKE_BINARY_DIR}/include/nebulastream/${RELATIVE_PATH_TO_HEADER}" COPYONLY)
-    endforeach ()
-
-    if (NOT HEADER)
-        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
-    endif ()
-
-    target_sources(nes-nebuli PUBLIC
-            FILE_SET nebuliPublicHeaders
-            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include
-            FILES ${HEADER}
-            TYPE HEADERS
-    )
-endmacro()
-
-add_nebuli_header(nes-client API/ API)
-add_nebuli_header(nes-common Identifiers/ Identifiers)
-add_nebuli_header(nes-common Nodes/ Node/)
-add_nebuli_header(nes-common Util/ Util/)
-add_nebuli_header(nes-common Exceptions/ Exceptions/)
-add_nebuli_header(nes-common Sequencing/ Sequencing/)
-add_nebuli_header(nes-common ErrorHandling.hpp ErrorHandling.hpp)
-add_nebuli_header(nes-common ExceptionDefinitions.hpp ExceptionDefinitions.hpp)
-add_nebuli_header(nes-data-types Common/DataTypes Common/DataTypes)
-add_nebuli_header(nes-data-types Common/ExecutableType Common/ExecutableType)
-add_nebuli_header(nes-data-types Common/PhysicalTypes Common/PhysicalTypes)
-add_nebuli_header(nes-data-types API/ API)
-add_nebuli_header(nes-functions Functions/ Functions)
-add_nebuli_header(nes-operators Operators/LogicalOperators Operators/LogicalOperators)
-add_nebuli_header(nes-operators Plans/Query/ Plans/Query)
-add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
-add_nebuli_header(nes-window-types Measures/ Measures)
-add_nebuli_header(nes-window-types Types/ Types)
 
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
