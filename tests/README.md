@@ -11,7 +11,7 @@ to unit tests, they offer several advantages:
 - **Simplicity:** These tests are generally easier to write, often requiring only a query to be specified.
 - **User Perspective:** System-level tests force us to use our software the same way an end-user uses it, lowering the discrepancy between the development of components internally and the actual user perspective. Additionally, if a user discovers a query that is problematic, we can very easily create a test for it.
 
-The initial design can be found at [DD System-Level Tests]().
+The initial design can be found at [DD System-Level Tests](../docs/design/20240724_system_level_tests.md).
 
 
 ## Overview
@@ -42,12 +42,12 @@ To run system-level tests locally, you can run targets `ST_<test_name>` or `STGR
 
 
 ### System-level tests during continuous integration
-> Will be implemented with [#250](https://github.com/nebulastream/nebulastream-public/issues/250)
+> Will be implemented with TODO #250 [(link)](https://github.com/nebulastream/nebulastream-public/issues/250)
 
 We perform system-level tests in isolated Docker containers. The testing process begins by launching a Docker container 
 running the client. Then, multiple Docker containers are started, each running a worker assigned to different test 
-categories: vanilla, performance profiler, code coverage, and thread sanitizer. Depending on the chosen test group and s
-ubgroups, the client distributes queries to all relevant workers.
+categories: vanilla, performance profiler, code coverage, and thread sanitizer. Depending on the chosen test group and
+subgroups, the client distributes queries to all relevant workers.
 
 ``` mermaid
 ---
