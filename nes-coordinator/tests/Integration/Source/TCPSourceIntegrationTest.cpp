@@ -1029,6 +1029,7 @@ TEST_F(TCPSourceIntegrationTest, DISABLED_TCPSourceReadCSVData) {
     sourceConfig->setPersistentTcpSource(true);
     sourceConfig->setDecideMessageSize(Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE);
     sourceConfig->setSocketBufferSize(32);
+    sourceConfig->setAddIngestionTime(true);
 
     workerConfig1->physicalSourceTypes.add(sourceConfig);
     workerConfig1->bufferSizeInBytes = 50;

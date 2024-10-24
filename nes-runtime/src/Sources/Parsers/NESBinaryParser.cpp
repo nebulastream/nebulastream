@@ -30,10 +30,7 @@ NESBinaryParser::NESBinaryParser(const SchemaPtr& schema, bool addIngestionTime)
     if (this->addIngestionTime) {
         auto ingestionFieldName = "ingestionTime";
         const auto& field = schema->getField(ingestionFieldName);
-        NES_ASSERT(!field, "'ingestionTime' field missing in the input schema");
-        if (!field) {
-            NES_ERROR("Unable to find the field");
-        }
+        NES_ASSERT(field, "'ingestionTime' field missing in the input schema");
         ingestionTimeFiledName = field->getName();
     }
 }
