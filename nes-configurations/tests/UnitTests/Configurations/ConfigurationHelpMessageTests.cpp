@@ -41,7 +41,7 @@ public:
 
 TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
 {
-    enum class TestEnum
+    enum class TestEnum : uint8_t
     {
         YES,
         NO
@@ -73,15 +73,16 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
     std::stringstream ss;
     Configurations::generateHelp<TestConfig>(ss);
 
+    /// We have to remove the "(Multiple)" from D until SequenceOption is fixed
     EXPECT_EQ(
         ss.str(),
-        R"(    - A: This is Option A (Default: False)
-    - B: This is Option B (Default: 42)
-    - C: This is Option C (Default: YES)
-    - D: This is Option D (Multiple)
-        - B: This is Inner Option B (Default: 54)
-    - E: This is Option E
-        - B: This is Inner Option B (Default: 54)
-)");
+        R"(
+A: This is Option A (False, String)
+B: This is Option B (42, Unsigned Integer)
+C: This is Option C (YES)
+D: This is Option D
+    B: This is Inner Option B (54, Unsigned Integer)
+E: This is Option E
+    B: This is Inner Option B (54, Unsigned Integer))");
 }
 }

@@ -65,29 +65,7 @@ protected:
     void isValid(std::string);
 
 public:
-    void accept(OptionVisitor& visitor) override
-    {
-        if constexpr (requires { std::to_string(defaultValue); })
-        {
-            visitor.visitConcrete(name, description, std::to_string(defaultValue));
-        }
-        else if constexpr (requires { defaultValue.toString(); })
-        {
-            visitor.visitConcrete(name, description, defaultValue.toString());
-        }
-        else if constexpr (std::same_as<std::string, T>)
-        {
-            visitor.visitConcrete(name, description, defaultValue);
-        }
-        else if constexpr (std::is_enum_v<T>)
-        {
-            visitor.visitConcrete(name, description, magic_enum::enum_name(defaultValue));
-        }
-        else
-        {
-            static_assert(false, "Unsupported type in TypedBaseOption::accept");
-        }
-    }
+    void accept(OptionVisitor& visitor) override { visitor.visit(*this); }
 };
 
 template <class T>
@@ -102,8 +80,10 @@ TypedBaseOption<T>::TypedBaseOption(const std::string& name, const std::string& 
 
 template <class T>
 TypedBaseOption<T>::TypedBaseOption(const std::string& name, T defaultValue, const std::string& description)
-    : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue)
+    : BaseOption(name, description), defaultValue(defaultValue)
 {
+    /// With clear() we avoid the case value == null, ProtobufDeserialize only works with value != null
+    clear();
 }
 
 template <class T>
@@ -112,8 +92,9 @@ TypedBaseOption<T>::TypedBaseOption(
     T defaultValue,
     const std::string& description,
     std::vector<std::shared_ptr<ConfigurationValidation>> validators)
-    : BaseOption(name, description), value(defaultValue), defaultValue(defaultValue), validators(validators)
+    : BaseOption(name, description), defaultValue(defaultValue), validators(validators)
 {
+    clear();
 }
 
 template <class T>

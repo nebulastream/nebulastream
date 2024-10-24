@@ -55,7 +55,7 @@ public:
     void accept(OptionVisitor& visitor) override
     {
         auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
-        visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
+        visitor.visit(*this);
         if (config)
         {
             config->accept(visitor);
