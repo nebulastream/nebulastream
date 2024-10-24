@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(src)
-add_subdirectory(parser)
+add_subdirectory(sql-parser)
 
 find_program(CLANG_EXECUTABLE NAMES clang clang-18 REQUIRED)
 message(STATUS "Found Clang Binary: ${CLANG_EXECUTABLE}")
@@ -34,6 +34,7 @@ target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_NES_SOURCE_CODE="${PAT
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
+
 target_include_directories(nes-nebuli-lib
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
