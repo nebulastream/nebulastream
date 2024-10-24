@@ -229,6 +229,10 @@ endforeach ()
 # Other configurations
 project_enable_format()
 
+add_executable(grpc-option-serializer-test protobuf-config.cpp)
+find_package(magic_enum CONFIG REQUIRED)
+target_link_libraries(grpc-option-serializer-test magic_enum::magic_enum gRPC::grpc++)
+
 # Adding targets for code coverage if it is enabled
 if (CODE_COVERAGE)
     file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")

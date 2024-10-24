@@ -17,3 +17,5 @@ add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/TestDat
 ### Config Tests ###
 add_nes_unit_test(configuration-help-message-tests "UnitTests/Configurations/ConfigurationHelpMessageTests.cpp")
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
+
+add_nes_unit_test(serialization-tests "UnitTests/Configurations/SerializationTest.cpp")

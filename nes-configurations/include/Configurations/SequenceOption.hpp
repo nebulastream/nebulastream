@@ -105,7 +105,7 @@ void SequenceOption<T>::accept(OptionVisitor& visitor)
     }
     else
     {
-        visitor.visitConcrete(name, description + " (Multiple)");
+        visitor.visit(options);
     }
 }
 

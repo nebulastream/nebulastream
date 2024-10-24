@@ -23,23 +23,25 @@ namespace NES::Configurations
 class PrintingVisitor final : public OptionVisitor
 {
 public:
-    explicit PrintingVisitor(std::ostream& ostream) : os(ostream) { }
-
-    void push() override { indent += 1; }
-    void pop() override { indent -= 1; }
-
-    void visitConcrete(std::string name, std::string description, std::string_view defaultValue) override
+    explicit PrintingVisitor(std::ostream& os) : os(os) { }
+    void push(BaseOption& o) override
     {
-        os << std::string(indent * 4, ' ') << "- " << name << ": " << description;
-        if (!defaultValue.empty())
-        {
-            os << " (Default: " << defaultValue << ")";
-        }
-        os << "\n";
+        os << '\n' << std::string(indent * 4, ' ') << o.getName() << ": " << o.getDescription();
+        indent++;
     }
+    void pop(BaseOption&) override { indent--; }
+
+protected:
+    void visitLeaf(BaseOption&) override { }
+    void visitEnum(std::string_view enumName, size_t&) override { os << " (" << enumName << ')'; }
+    void visitUnsignedInteger(size_t& v) override { os << " (" << v << ", Unsigned Integer)"; }
+    void visitSignedInteger(ssize_t& v) override { os << " (" << v << ", Signed Integer)"; }
+    void visitFloat(double& v) override { os << " (" << v << ", Float)"; }
+    void visitBool(bool& v) override { os << " (" << (v ? "True" : "False") << ", Bool)"; }
+    void visitString(std::string& v) override { os << " (" << v << ", String)"; }
 
 private:
-    size_t indent = 0;
     std::ostream& os;
+    size_t indent = 0;
 };
 }

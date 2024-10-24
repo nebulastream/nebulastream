@@ -163,15 +163,11 @@ void BaseConfiguration::clear()
 
 void BaseConfiguration::accept(OptionVisitor& visitor)
 {
-    if (!name.empty())
-    {
-        visitor.visitConcrete(getName(), getDescription(), "");
-    }
     for (auto& option : getOptions())
     {
-        visitor.push();
+        visitor.push(*option);
         option->accept(visitor);
-        visitor.pop();
+        visitor.pop(*option);
     }
 };
 
