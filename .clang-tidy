@@ -47,6 +47,7 @@ Checks: [
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
+  "-llvm-namespace-comment", # we do not require namespace comments
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
