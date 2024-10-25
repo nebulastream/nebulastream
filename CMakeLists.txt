@@ -20,7 +20,6 @@ set(LLVM_MAJOR_VERSION 18)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
 
-#toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
@@ -335,15 +334,6 @@ add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
 add_tests_if_enabled(nes-systests)
-
-# Custom test commands --------------------------------------------------------
-# Define test suffixes for filtering
-
-# The test_default target runs tests without any special suffix
-message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
-set(NES_TEST_REPEAT_UNTIL_FAIL 3)
-set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 
 # Other configurations
 project_enable_format()
