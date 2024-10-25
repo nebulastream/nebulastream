@@ -20,12 +20,8 @@
 #include <API/Windowing.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -364,10 +360,10 @@ Query& Query::inferModel(
     return *this;
 }
 
-Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId)
+Query& Query::sink(std::string sinkName, WorkerId workerId)
 {
     NES_DEBUG("Query: add sink operator to query");
-    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
+    this->queryPlan = QueryPlanBuilder::addSink(std::move(sinkName), this->queryPlan, workerId);
     return *this;
 }
 

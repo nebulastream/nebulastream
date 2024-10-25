@@ -94,6 +94,7 @@ add_nebuli_header(nes-operators Plans/Query/ Plans/Query)
 add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
 add_nebuli_header(nes-window-types Measures/ Measures)
 add_nebuli_header(nes-window-types Types/ Types)
+add_nebuli_header(nes-configurations Configurations/ Configurations)
 
 function(add_nes_test_nebuli)
     add_nes_test(${ARGN})
