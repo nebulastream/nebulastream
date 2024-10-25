@@ -329,15 +329,6 @@ add_subdirectory(nes-sql-parser)
 
 add_tests_if_enabled(nes-systests)
 
-# Custom test commands --------------------------------------------------------
-# Define test suffixes for filtering
-
-# The test_default target runs tests without any special suffix
-message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
-set(NES_TEST_REPEAT_UNTIL_FAIL 3)
-set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
-
 # Other configurations
 project_enable_format()
 
