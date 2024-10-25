@@ -27,7 +27,7 @@ def line_contains_todo(filename: str, line: str) -> bool:
     if line.endswith("NO_TODO_CHECK"):
         return False
 
-    return re.match(".*(///|#).* TODO.*", line)  # NO_TODO_CHECK
+    return re.match(".*(///|#).*todo.*", line, re.IGNORECASE)  # NO_TODO_CHECK
 
 
 def main():
