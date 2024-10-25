@@ -98,7 +98,7 @@ protected:
     bool isDemultiplex(const LogicalOperatorPtr& operatorNode);
 
     void lowerBinaryOperator(const LogicalOperatorPtr& operatorNode);
-    void lowerUnaryOperator(const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode);
+    void lowerUnaryOperator(const LogicalOperatorPtr& operatorNode);
 
     /// Lowers a union operator. However, A Union operator is not realized via executable code. It is realized by
     /// using a Multiplex operation that connects two sources with one sink. The two sources then form one stream

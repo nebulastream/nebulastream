@@ -55,7 +55,10 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan)
 
     try
     {
-        auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+        const auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase->performTypeInferenceSources(
+            queryPlan->getSourceOperators<SourceNameLogicalOperator>(), queryPlan->getQueryId());
+        typeInferencePhase->performTypeInferenceQuery(queryPlan);
     }
     catch (std::exception& e)
     {

@@ -22,7 +22,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -245,16 +244,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                             queryId,
                             (*pipe)->getPipelineId());
                     }
-                    else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline))
-                    {
-                        auto newReconf = ReconfigurationMessage(queryId, task.getType(), *sink);
-                        queryManager->addReconfigurationMessage(queryId, newReconf, false);
-                        NES_DEBUG(
-                            "Going to reconfigure next sink belonging to subplanId: {} sink id:{} got FailEndOfStream  "
-                            "with nextPipeline",
-                            queryId,
-                            (*sink)->toString());
-                    }
                 }
             }
         }
@@ -304,16 +293,6 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                             "with nextPipeline",
                             queryId,
                             (*pipe)->getPipelineId());
-                    }
-                    else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline))
-                    {
-                        auto newReconf = ReconfigurationMessage(queryId, task.getType(), *sink);
-                        queryManager->addReconfigurationMessage(queryId, newReconf, false);
-                        NES_DEBUG(
-                            "Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
-                            "nextPipeline",
-                            queryId,
-                            (*sink)->toString());
                     }
                 }
             }
