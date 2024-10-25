@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ranges>
 #include <utility>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -36,14 +38,14 @@ LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperato
 
 DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
-    std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
-    for (const auto& node : nodes)
+    auto isAlreadyLowered = [](const auto& node)
     {
-        if (NES::Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node))
-        {
-            NES_DEBUG("Skipped node: {} as it is already a physical or a LogicalSourceDescriptor operator.", node->toString());
-            continue;
-        }
+        return Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
+            or Util::instanceOf<SinkLogicalOperator>(node);
+    };
+    const std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
+    for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
+    {
         provider->lower(decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));
     }
     return decomposedQueryPlan;

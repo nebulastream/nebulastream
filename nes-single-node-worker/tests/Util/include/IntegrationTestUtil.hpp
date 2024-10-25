@@ -98,7 +98,7 @@ bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view
 void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
 
 /// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
 void replacePortInSourceTCPs(

@@ -1,6 +1,13 @@
 query: |
   Query::from("tcp_source")
-    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
+    .sink("csv_sink");
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "[GENERATED_IN_TEST]"
+    append: false
 logical:
   - name: tcp_source
     schema:
