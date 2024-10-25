@@ -26,7 +26,6 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -54,7 +53,7 @@ public:
         PipelineExecutionContextPtr pipelineExecutionContext,
         ExecutablePipelineStagePtr executablePipelineStage,
         uint32_t numOfProducingPipelines,
-        std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>> successorPipelines,
+        std::vector<std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>> successorPipelines,
         bool reconfiguration = false);
 
     static std::shared_ptr<ExecutablePipeline> create(
@@ -64,7 +63,7 @@ public:
         const PipelineExecutionContextPtr& pipelineExecutionContext,
         const ExecutablePipelineStagePtr& executablePipelineStage,
         uint32_t numOfProducingPipelines,
-        const std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>>& successorPipelines,
+        const std::vector<std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>>& successorPipelines,
         bool reconfiguration = false);
 
     /// Execute a pipeline stage
@@ -89,7 +88,7 @@ public:
     /// final reconfigure callback called upon a reconfiguration
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    const std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>>& getSuccessors() const;
+    const std::vector<std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>>& getSuccessors() const;
 
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
@@ -102,8 +101,8 @@ private:
     bool reconfiguration;
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers = 0;
-    std::vector<std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>> successorPipelines;
+    std::vector<std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>> successorPipelines;
 };
 using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
-using SuccessorExecutablePipeline = std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>;
+using SuccessorExecutablePipeline = std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>;
 }

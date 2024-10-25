@@ -24,6 +24,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/Task.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -32,6 +33,7 @@
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
+
 
 #include <folly/MPMCQueue.h>
 
@@ -192,11 +194,9 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
+    /// No notifySinkCompletion, since it was only used by the postReconfigurationCallback, which we don't support anymore.
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
-
     void notifyPipelineCompletion(QueryId queryId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
-
-    void notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType);
 
 private:
     friend class ThreadPool;

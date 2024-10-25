@@ -177,9 +177,9 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(
     return leftQueryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId)
+QueryPlanPtr QueryPlanBuilder::addSink(std::string sinkName, QueryPlanPtr queryPlan, WorkerId workerId)
 {
-    OperatorPtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, workerId);
+    OperatorPtr op = LogicalOperatorFactory::createSinkOperator(std::move(sinkName), workerId);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
