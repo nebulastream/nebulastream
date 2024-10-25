@@ -13,8 +13,8 @@ import urllib.request
 
 def run_cmd(cmd: list) -> str:
     try:
-        #ignoring errors to pass format check. Proper fix in: Todo #343
-        p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='ignore')
+        # Handle decode errors by replacing illegal chars with � (see #343)
+        p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='replace')
     except subprocess.CalledProcessError as e:
         print(e)
         print("\nstderr output:")
