@@ -24,12 +24,15 @@ def run_cmd(cmd: list) -> str:
 
 
 def line_contains_todo(filename: str, line: str) -> bool:
-    return re.match(".*(///|#).* TODO.*", line)
+    if line.endswith("NO_TODO_CHECK"):
+        return False
+
+    return re.match(".*(///|#).* TODO.*", line)  # NO_TODO_CHECK
 
 
 def main():
     # Note: corresponding regex also in closing issue gh action
-    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")
+    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")  # NO_TODO_CHECK
 
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
