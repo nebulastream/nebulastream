@@ -24,8 +24,8 @@ def run_cmd(cmd: list) -> str:
 
 
 def main():
-    todo_regex      = re.compile(r".*(///|#).* TODO.*")
-    todo_with_issue = re.compile(r".*(///|#).* TODO #(\d+).*")  # Note: corresponding regex also in closing issue gh action
+    todo_regex      = re.compile(".*(///|#).* TODO.*")
+    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")  # Note: corresponding regex also in closing issue gh action
 
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
@@ -49,7 +49,7 @@ def main():
                     ":!vcpkg/vcpkg-registry/**/*.patch"
                     ])
 
-    file_header = re.compile(r"diff --git a/.* b/(.*)")
+    file_header = re.compile("diff --git a/.* b/(.*)")
     line_context = re.compile(r"@@ -\d*,\d \+(\d+),\d+ @@")
 
     todos_without_issue_no = []
