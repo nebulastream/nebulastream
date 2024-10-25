@@ -16,6 +16,7 @@
 
 namespace NES::Sources
 {
+
 std::ostream& operator<<(std::ostream& out, const Source& source)
 {
     return source.toString(out);

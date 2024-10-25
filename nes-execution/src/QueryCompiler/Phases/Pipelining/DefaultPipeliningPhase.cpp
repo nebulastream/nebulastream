@@ -14,11 +14,11 @@
 
 #include <utility>
 
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
@@ -144,9 +144,9 @@ void DefaultPipeliningPhase::processSink(
     const PipelineQueryPlanPtr& pipelinePlan,
     std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
     const OperatorPipelinePtr& currentPipeline,
-    const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
+    const SinkLogicalOperator& currentOperator)
 {
-    for (const auto& child : currentOperator->getChildren())
+    for (const auto& child : currentOperator.getChildren())
     {
         auto cp = OperatorPipeline::create();
         pipelinePlan->addPipeline(cp);
@@ -181,7 +181,7 @@ void DefaultPipeliningPhase::process(
 {
     PRECONDITION(
         Util::instanceOf<PhysicalOperators::PhysicalOperator>(currentOperator)
-            or Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator),
+            or Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator) or Util::instanceOf<SinkLogicalOperator>(currentOperator),
         "expected a PhysicalOperator, but got " + currentOperator->toString());
 
     /// Depending on the operator we apply different pipelining strategies
@@ -189,9 +189,9 @@ void DefaultPipeliningPhase::process(
     {
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, Util::as<SourceDescriptorLogicalOperator>(currentOperator));
     }
-    else if (Util::instanceOf<PhysicalOperators::PhysicalSinkOperator>(currentOperator))
+    else if (Util::instanceOf<SinkLogicalOperator>(currentOperator))
     {
-        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, Util::as<PhysicalOperators::PhysicalOperator>(currentOperator));
+        processSink(pipelinePlan, pipelineOperatorMap, currentPipeline, Util::as<const SinkLogicalOperator>(*currentOperator));
     }
     else if (Util::instanceOf<PhysicalOperators::PhysicalUnionOperator>(currentOperator))
     {

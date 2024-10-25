@@ -16,16 +16,9 @@ get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-sources nes-window-types)
+target_link_libraries(nes-operators PUBLIC nes-sources nes-sinks nes-window-types)
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
-
-# Library containing OPC client
-if (NES_USE_OPC)
-    find_package(open62541 CONFIG REQUIRED)
-    target_link_libraries(nes-operators PUBLIC open62541::open62541)
-    add_compile_definitions(ENABLE_OPC_BUILD)
-endif (NES_USE_OPC)
 
 add_tests_if_enabled(tests)

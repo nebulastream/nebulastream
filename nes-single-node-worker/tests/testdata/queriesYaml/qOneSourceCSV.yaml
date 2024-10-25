@@ -1,15 +1,23 @@
 query: |
-  Query::from("default_source")
-    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
+  Query::from("csv_source").sink("csv_sink");
+
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "[GENERATED_IN_TEST]"
+    append: false
+
 logical:
-  - name: default_source
+  - name: csv_source
     schema:
       - name: id
         type: UINT64
       - name: id2
         type: UINT64
 physical:
-  - logical: default_source
+  - logical: csv_source
     config:
       type: CSV
       filePath: oneToThirtyOneDoubleColumn.csv

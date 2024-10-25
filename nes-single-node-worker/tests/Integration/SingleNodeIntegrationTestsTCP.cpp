@@ -171,7 +171,7 @@ INSTANTIATE_TEST_CASE_P(
     SingleNodeIntegrationTest,
     testing::Values(
         QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
-        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */, 200},
-        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */, 200},
+        QueryTestParam{"qOneSourceTCPWithFilter", 1, 31, 480 /* SUM(0, 1, ..., 32) - 16 */, 32},
+        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 62, 960 /* 2 * (SUM(0, 1, ..., 32) - 16) */, 32},
         QueryTestParam{"qOneSourceTCP", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
 }
