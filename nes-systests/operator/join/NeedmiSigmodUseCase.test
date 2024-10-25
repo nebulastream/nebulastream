@@ -1,0 +1,38 @@
+# Source definition for ABP
+Source windowABP UINT64 id FLOAT64 value UINT64 timestamp
+1,72.55899567834196,1729844451
+1,71.62353747124685,1729844452
+1,70.70455464202705,1729844453
+1,69.81911466326348,1729844454
+1,68.97927436477552,1729844455
+1,68.19557359658856,1729844456
+1,67.47862524079099,1729844457
+1,66.83893986033407,1729844458
+
+# Source definition for ECMO
+Source windowECMO UINT64 id FLOAT64 value UINT64 timestamp
+1,40.6,1729844451
+1,40.4,1729844452
+1,39.9,1729844453
+1,39.2,1729844454
+1,38.5,1729844455
+1,37.1,1729844456
+1,36.0,1729844457
+1,35.5,1729844458
+
+# Query
+Query::from("windowABP")
+
+// join on a synthetic key with window of 1 ms
+.map(Attribute("JoinKey") = 1)
+.joinWith(Query::from("windowECMO")
+	  .map(Attribute("JoinKey") = 1)
+          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1)))
+.where(Attribute("JoinKey") == Attribute("JoinKey"))
+
+// check values
+.where(Attribute("windowABP$value") < 68 && Attribute("windowECMO$value") < 40)
+.SINK;
+----
+1,67.47862524079099,36.0,1729844457,1
+1,66.83893986033407,35.5,1729844458,1
