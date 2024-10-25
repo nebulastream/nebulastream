@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <utility>
@@ -50,9 +51,8 @@ DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool d
     , outputPath(std::move(outputPath))
 {
     auto now = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
-    ss << contextIdentifier << "-" << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H:%M:%S");
+    ss << contextIdentifier << "-" << fmt::format("{:%F %T}", now);
     std::string path = this->outputPath.empty() ? std::filesystem::current_path().string() : this->outputPath;
     path = path + std::filesystem::path::preferred_separator + "dump";
     if (!std::filesystem::is_directory(path))
