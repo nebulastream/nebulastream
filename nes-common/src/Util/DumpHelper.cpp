@@ -12,11 +12,14 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <utility>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 namespace NES
 {
@@ -49,17 +52,14 @@ DumpHelper::DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool d
     , dumpToFile(dumpToFile)
     , outputPath(std::move(outputPath))
 {
-    auto now = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(now);
-    std::stringstream ss;
-    ss << contextIdentifier << "-" << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d_%H:%M:%S");
     std::string path = this->outputPath.empty() ? std::filesystem::current_path().string() : this->outputPath;
     path = path + std::filesystem::path::preferred_separator + "dump";
     if (!std::filesystem::is_directory(path))
     {
         std::filesystem::create_directory(path);
     }
-    path = path + std::filesystem::path::preferred_separator + ss.str();
+    path = path + std::filesystem::path::preferred_separator
+        + fmt::format("{}-{:%F %T}", this->contextIdentifier, std::chrono::system_clock::now());
     if (!std::filesystem::is_directory(path))
     {
         std::filesystem::create_directory(path);
