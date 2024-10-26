@@ -13,7 +13,7 @@
 add_source_files(nes-execution
         ExecutableFunctionReadField.cpp
         ExecutableFunctionWriteField.cpp
+        ExecutableFunctionTrivialBinary.cpp
         )
 
-add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(LogicalFunctions)
