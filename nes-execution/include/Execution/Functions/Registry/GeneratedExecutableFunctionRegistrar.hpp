@@ -33,6 +33,11 @@ std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<std::unique_
 std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 
 /// Defining all logical supported functions
+std::unique_ptr<Function> RegisterExecutableFunctionLess(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionGreater(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionLessEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionGreaterEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionNotEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 std::unique_ptr<Function> RegisterExecutableFunctionNegate(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 }
@@ -51,6 +56,10 @@ Registrar<Execution::Functions::RegistryFunctionExecutable, Execution::Functions
     registry.registerPlugin("Div", RegisterExecutableFunctionDiv);
 
     /// Registering all logical supported functions
+    registry.registerPlugin("Less", RegisterExecutableFunctionLess);
+    registry.registerPlugin("Greater", RegisterExecutableFunctionGreater);
+    registry.registerPlugin("LessEquals", RegisterExecutableFunctionLessEquals);
+    registry.registerPlugin("GreaterEquals", RegisterExecutableFunctionGreaterEquals);
     registry.registerPlugin("Equals", RegisterExecutableFunctionEquals);
     registry.registerPlugin("Negate", RegisterExecutableFunctionNegate);
 }
