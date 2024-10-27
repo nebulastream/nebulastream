@@ -20,18 +20,13 @@
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <ExecutableQueryPlan.hpp>
+#include <QueryEngine.hpp>
 
 namespace NES::Runtime
 {
 /// Forward declaration of QueryManager, which includes Task, which includes SinkMedium, which includes NodeEngine
-class QueryManager;
-
-namespace Execution
-{
-/// Forward declaration of ExecutableQueryPlan, which includes SinkMedium, which includes NodeEngine
-class ExecutableQueryPlan;
-using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
-}
+class QueryTracker;
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -45,11 +40,15 @@ public:
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;
     NodeEngine& operator=(const NodeEngine&) = delete;
+    ~NodeEngine();
 
-    explicit NodeEngine(
-        const std::shared_ptr<Memory::BufferManager>&, const std::shared_ptr<QueryManager>&, const std::shared_ptr<QueryLog>&);
+    NodeEngine(
+        std::shared_ptr<Sources::SourceProvider> source_provider,
+        std::shared_ptr<Memory::BufferManager> buffer_manager,
+        std::shared_ptr<QueryLog> query_log,
+        std::unique_ptr<QueryEngine> query_manager);
 
-    [[nodiscard]] QueryId registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
+    [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan);
     void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
@@ -57,15 +56,16 @@ public:
     void stopQuery(QueryId queryId, QueryTerminationType terminationType = QueryTerminationType::HardStop);
 
     [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
-    [[nodiscard]] std::shared_ptr<QueryManager> getQueryManager() { return queryManager; }
+    [[nodiscard]] QueryEngine& getQueryManager() { return *queryManager; }
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 
 private:
+    std::shared_ptr<Sources::SourceProvider> sourceProvider;
     std::shared_ptr<Memory::BufferManager> bufferManager;
-    std::shared_ptr<QueryManager> queryManager;
     std::shared_ptr<QueryLog> queryLog;
 
-    std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
+    std::unique_ptr<QueryEngine> queryManager;
+    std::unique_ptr<QueryTracker> queryTracker;
 };
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 }

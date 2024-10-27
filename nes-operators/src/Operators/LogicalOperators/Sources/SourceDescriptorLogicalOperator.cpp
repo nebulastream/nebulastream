@@ -60,6 +60,11 @@ const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescr
     return *sourceDescriptor;
 }
 
+std::shared_ptr<Sources::SourceDescriptor> SourceDescriptorLogicalOperator::getSourceDescriptor() const
+{
+    return sourceDescriptor;
+}
+
 bool SourceDescriptorLogicalOperator::inferSchema()
 {
     inputSchema = sourceDescriptor->schema;

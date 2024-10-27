@@ -39,7 +39,11 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Util/Core.hpp>
 #include <Util/Execution.hpp>
 #include <ErrorHandling.hpp>
@@ -96,7 +100,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-    size_t bufferSize)
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
