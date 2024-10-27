@@ -25,22 +25,16 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SchemaPtr schema,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-    Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId),
-        std::move(schema),
-        std::move(bufferPool),
-        std::move(emitFunction),
-        numSourceLocalBuffers,
-        std::move(sourceImplementation));
+        std::move(originId), std::move(schema), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));
 }
 
-bool SourceHandle::start() const
+bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
-    return this->sourceThread->start();
+    return this->sourceThread->start(std::move(emitFunction));
 }
 bool SourceHandle::stop() const
 {

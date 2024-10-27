@@ -35,11 +35,8 @@ public:
     static std::unique_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    static std::unique_ptr<SourceHandle> lower(
-        OriginId originId,
-        const SourceDescriptor& sourceDescriptor,
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&& emitFunction);
+    static std::unique_ptr<SourceHandle>
+    lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool);
 
     ~SourceProvider() = default;
 };

@@ -11,3 +11,5 @@
 # limitations under the License.
 
 add_nes_test_sources(mmap-circular-buffer-tests "MMapCircularBufferTest.cpp")
+add_nes_test_sources(data-source-test DataSourceTest.cpp)
+target_link_libraries(data-source-test nes-source-test-utils nes-memory-test-utils)

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <thread>
 #include <type_traits>
 #include <unordered_map>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -40,7 +41,8 @@ public:
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
         /// passing schema by value to create a new TestTupleBuffer in the Parser.
         NES::Memory::AbstractBufferProvider& bufferManager,
-        std::shared_ptr<Schema> schema)
+        std::shared_ptr<Schema> schema,
+        const std::stop_token& stopToken)
         = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.

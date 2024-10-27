@@ -33,160 +33,189 @@ SourceThread::SourceThread(
     OriginId originId,
     SchemaPtr schema,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-    SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
     , schema(schema)
     , localBufferManager(std::move(poolProvider))
-    , emitFunction(std::move(emitFunction))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
 {
     NES_DEBUG("SourceThread  {} : Init Data Source with schema  {}", originId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
-
-void SourceThread::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
+SourceThread::~SourceThread()
 {
-    if (addBufferMetaData)
+    NES_DEBUG("Source Thread Destroyed");
+    if (bufferProvider)
     {
-        /// set the origin id for this source
-        buffer.setOriginId(originId);
-        /// set the creation timestamp
-        buffer.setCreationTimestampInMS(Timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
-        /// Set the sequence number of this buffer.
-        /// A data source generates a monotonic increasing sequence number
-        maxSequenceNumber++;
-        buffer.setSequenceNumber(SequenceNumber(maxSequenceNumber));
-        buffer.setChunkNumber(ChunkNumber(1));
-        buffer.setLastChunk(true);
-        NES_DEBUG(
-            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
-            buffer.getOriginId(),
-            buffer.getOriginId(),
-            buffer.getSequenceNumber(),
-            buffer.getChunkNumber(),
-            buffer.isLastChunk());
+        bufferProvider->destroy();
     }
-    emitFunction(originId, SourceReturnType::Data{buffer});
 }
 
-bool SourceThread::start()
-{
-    NES_DEBUG("SourceThread  {} : start source", originId);
-    std::promise<bool> prom;
-    std::unique_lock lock(startStopMutex);
-    {
-        bool expected = false;
-
-        /// Check if the SourceThread is already running.
-        if (!running.compare_exchange_strong(expected, true))
-        {
-            NES_WARNING("SourceThread {}: is already running", originId);
-            return false;
-        }
-        NES_DEBUG("SourceThread {}: Spawn thread", originId);
-        expected = false;
-        if (wasStarted.compare_exchange_strong(expected, true))
-        {
-            /// thread runs the runningRoutine indepenently (detach), until runningRoutine finishes.
-            thread = std::make_unique<std::thread>(
-                [this, &prom]()
-                {
-                    prom.set_value(true);
-                    runningRoutine();
-                    NES_DEBUG("SourceThread {}: runningRoutine is finished", originId);
-                });
-        }
-    }
-    return prom.get_future().get();
-}
 
 namespace detail
 {
-/// Called only in asserts of stop(). If deadline is reached, the assert fails, thus during normal execution the future is not reached.
-bool waitForFuture(std::future<bool>&& future, const std::chrono::seconds deadline)
+void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory::TupleBuffer& buffer)
 {
-    auto terminationStatus = future.wait_for(deadline);
-    return (terminationStatus == std::future_status::ready) ? future.get() : false;
+    /// set the origin id for this source
+    buffer.setOriginId(originId);
+    /// set the creation timestamp
+    buffer.setCreationTimestampInMS(Timestamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    /// Set the sequence number of this buffer.
+    /// A data source generates a monotonic increasing sequence number
+    buffer.setSequenceNumber(sequenceNumber);
+    buffer.setChunkNumber(ChunkNumber(1));
+    buffer.setLastChunk(true);
+    NES_TRACE(
+        "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
+        buffer.getOriginId(),
+        buffer.getOriginId(),
+        buffer.getSequenceNumber(),
+        buffer.getChunkNumber(),
+        buffer.isLastChunk());
+}
+
+using EmitFn = std::function<void(Memory::TupleBuffer)>;
+void threadSetup(OriginId originId)
+{
+    std::string thName = fmt::format("DataSrc-{}", originId);
+    setThreadName(thName.c_str());
+}
+
+struct source_handle
+{
+    source_handle(Source& source) : source(source) { source.open(); }
+    ~source_handle()
+    {
+        /// Throwing in a destructor would terminate the application
+        try
+        {
+            source.close();
+        }
+        catch (...)
+        {
+            tryLogCurrentException();
+        }
+    }
+    Source& source;
+};
+
+SourceImplementationTermination dataSourceThreadRoutine(
+    const std::stop_token& stopToken,
+    Source& source,
+    const std::shared_ptr<Schema>& schema,
+    Memory::AbstractBufferProvider& bufferProvider,
+    const EmitFn& emit)
+{
+    source_handle s(source);
+    while (!stopToken.stop_requested())
+    {
+        /// 4 Things that could happen:
+        /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
+        /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
+        ///    fillTupleBuffer will return false, however this is not a EndOfStream, the source simply could not produce a buffer.
+        ///    The thread exits with `StopRequested`
+        /// 3. EndOfStream was signaled by the source implementation. It returned false, but the Stop Token was not triggered.
+        ///    The thread exits with `EndOfStream`
+        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
+        ///    The thread exists with an exception
+        auto emptyBuffer = bufferProvider.getBufferBlocking();
+        auto successfulFill = source.fillTupleBuffer(emptyBuffer, bufferProvider, schema, stopToken);
+        if (stopToken.stop_requested())
+        {
+            return {SourceImplementationTermination::StopRequested};
+        }
+        if (!successfulFill)
+        {
+            return {SourceImplementationTermination::EndOfStream};
+        }
+        emit(emptyBuffer);
+    }
+    return {SourceImplementationTermination::StopRequested};
+}
+
+void dataSourceThread(
+    const std::stop_token& stopToken,
+    std::promise<SourceImplementationTermination>&& result,
+    Source* source,
+    SourceReturnType::EmitFunction&& emit,
+    OriginId originId,
+    std::shared_ptr<Schema> schema,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
+{
+    threadSetup(originId);
+    EmitFn dataEmit = [&, sequenceNumber = size_t(0)](Memory::TupleBuffer&& buffer) mutable
+    {
+        addBufferMetaData(originId, SequenceNumber(sequenceNumber++), buffer);
+        emit(originId, SourceReturnType::Data{buffer});
+    };
+
+    try
+    {
+        result.set_value(dataSourceThreadRoutine(stopToken, *source, schema, *bufferProvider, dataEmit));
+        if (!stopToken.stop_requested())
+        {
+            emit(originId, SourceReturnType::EoS{});
+        }
+    }
+    catch (std::exception const& e)
+    {
+        auto ingestionException = RunningRoutineFailure(e.what());
+        result.set_exception(std::make_exception_ptr(ingestionException));
+        emit(originId, SourceReturnType::Error{std::move(ingestionException)});
+    }
 }
 }
 
+bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
+{
+    NES_ASSERT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
+    if (started.exchange(true))
+    {
+        return false;
+    }
+
+    NES_DEBUG("SourceThread  {} : start source", originId);
+    std::promise<SourceImplementationTermination> terminationPromise;
+    this->terminationFuture = terminationPromise.get_future();
+    this->bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+
+    std::jthread sourceThread(
+        detail::dataSourceThread,
+        std::move(terminationPromise),
+        sourceImplementation.get(),
+        std::move(emitFunction),
+        originId,
+        schema,
+        this->bufferProvider);
+    thread = std::move(sourceThread);
+    return true;
+}
 
 bool SourceThread::stop()
 {
-    using namespace std::chrono_literals;
+    PRECONDITION(thread.get_id() != std::this_thread::get_id(), "DataSrc Thread should never request the source termination");
+    if (!started.exchange(false))
+    {
+        return false;
+    }
 
-    NES_DEBUG("SourceThread {}: Stop called and source is {}", originId, (running ? "running" : "not running"));
-    bool expected = true;
+    NES_DEBUG("SourceThread  {} : stop source", originId);
+    thread.request_stop();
 
-    bool isStopped = false;
     try
     {
-        if (!running.compare_exchange_strong(expected, false))
-        {
-            NES_DEBUG("SourceThread {} was not running, retrieving future now...", originId);
-            expected = false;
-            if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true))
-            {
-                NES_ASSERT2_FMT(
-                    detail::waitForFuture(completedPromise.get_future(), STOP_TIMEOUT_NOT_RUNNING),
-                    "Cannot complete future to stop source " << originId);
-            }
-            NES_DEBUG("SourceThread {} was not running, future retrieved", originId);
-        }
-        else
-        {
-            NES_DEBUG("SourceThread {} was running, retrieving future now...", originId);
-            auto expected = false;
-            NES_ASSERT2_FMT(
-                wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
-                    && detail::waitForFuture(completedPromise.get_future(), STOP_TIMEOUT_RUNNING),
-                "Cannot complete future to stop source " << originId);
-            NES_WARNING("Stopped Source {}", originId);
-        }
-        /// it's ok to return true because the source is stopped
-        isStopped = true;
+        this->terminationFuture.get();
+        auto _ = std::move(thread);
     }
-    catch (...)
+    catch (const Exception& exception)
     {
-        auto expPtr = std::current_exception();
-        try
-        {
-            if (expPtr)
-            {
-                std::rethrow_exception(expPtr);
-            }
-            isStopped = false;
-        }
-        catch (std::exception const& e) /// e needs to be passed by reference
-        {
-            /// stop() can be called from an outside class before the start() finished creating the SourceThread thread.
-            /// if the SourceThread thread was not started, it cannot call notifySourceFailure, so we need to do it here instead.
-            if (!wasStarted)
-            {
-                /// Todo #237: Improve error handling in sources
-                auto ingestionException = StopBeforeStartFailure();
-                ingestionException.what() += e.what();
-                emitFunction(originId, SourceReturnType::Error{ingestionException});
-            }
-            isStopped = true;
-        }
+        NES_ERROR("Source encountered an error: {}", exception.what());
     }
-
-    return isStopped;
-}
-
-void SourceThread::close()
-{
-    sourceImplementation->close();
-    std::unique_lock lock(startStopMutex);
-    {
-        emitFunction(originId, SourceReturnType::Stopped{});
-        bufferProvider->destroy();
-    }
+    NES_DEBUG("SourceThread  {} : stopped", originId);
+    return true;
 }
 
 OriginId SourceThread::getOriginId() const
@@ -194,97 +223,11 @@ OriginId SourceThread::getOriginId() const
     return this->originId;
 }
 
-void SourceThread::runningRoutine()
-{
-    try
-    {
-        NES_ASSERT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
-        std::string thName = fmt::format("DataSrc-{}", originId);
-        setThreadName(thName.c_str());
-        NES_DEBUG("SourceThread: {}", fmt::streamed(*this));
-
-        /// open
-        bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
-        sourceImplementation->open();
-
-        uint64_t numberOfBuffersProduced = 0;
-        while (running)
-        {
-            auto tupleBuffer = bufferProvider->getBufferBlocking();
-            /// filling the TupleBuffer might block.
-            /// passing schema by value to create a new TestTupleBuffer in the Parser, will be improved in Todo: #72.
-            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, schema);
-            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuples: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
-
-            ///this checks we received a valid output buffer
-            if (isReceivedData)
-            {
-                NES_TRACE(
-                    "SourceThread produced buffer {}, Num filled tuples: {}, SourceThread: {}",
-                    numberOfBuffersProduced,
-                    tupleBuffer.getNumberOfTuples(),
-                    fmt::streamed(*this));
-
-                emitWork(tupleBuffer);
-                ++numberOfBuffersProduced;
-            }
-            else
-            {
-                NES_DEBUG("SourceThread {}: stopping cause of invalid buffer", originId);
-                running = false;
-                NES_DEBUG("SourceThread {}: Thread going to terminating with graceful exit.", originId);
-            }
-            if (!running)
-            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
-                NES_DEBUG("Source is not running anymore.")
-                break;
-            }
-            NES_TRACE("SourceThread {} : Data Source finished processing iteration {}", originId, numberOfBuffersProduced);
-        }
-        NES_DEBUG("SourceThread {} call close", originId);
-        close();
-        completedPromise.set_value(true);
-        NES_DEBUG("SourceThread {} end running", originId);
-    }
-    catch (std::exception const& e)
-    {
-        /// Todo #237: Improve error handling in sources
-        auto ingestionException = RunningRoutineFailure();
-        ingestionException.what() += e.what();
-        emitFunction(originId, SourceReturnType::Error{ingestionException});
-        completedPromise.set_exception(std::make_exception_ptr(ingestionException));
-    }
-    catch (...)
-    {
-        try
-        {
-            auto expPtr = std::current_exception();
-            if (expPtr)
-            {
-                completedPromise.set_exception(expPtr);
-                std::rethrow_exception(expPtr);
-            }
-        }
-        catch (std::exception const& e)
-        {
-            /// Todo #237: Improve error handling in sources
-            auto ingestionException = RunningRoutineFailure();
-            ingestionException.what() += e.what();
-            emitFunction(originId, SourceReturnType::Error{ingestionException});
-        }
-    }
-    NES_DEBUG("SourceThread {} end runningRoutine", originId);
-}
-
 std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
 {
     out << "\nSourceThread(";
     out << "\n  originId: " << sourceThread.originId;
     out << "\n  numSourceLocalBuffers: " << sourceThread.numSourceLocalBuffers;
-    out << "\n  running: " << sourceThread.running;
-    out << "\n  wasStarted: " << sourceThread.wasStarted;
-    out << "\n  futureRetrieved: " << sourceThread.futureRetrieved;
-    out << "\n  maxSequenceNumber: " << sourceThread.maxSequenceNumber;
     out << "\n  source implementation:" << *sourceThread.sourceImplementation;
     out << ")\n";
     return out;

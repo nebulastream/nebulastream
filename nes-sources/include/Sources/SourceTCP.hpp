@@ -160,7 +160,10 @@ public:
     ~SourceTCP() override = default;
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
+        NES::Memory::TupleBuffer& tupleBuffer,
+        NES::Memory::AbstractBufferProvider& bufferManager,
+        std::shared_ptr<Schema> schema,
+        const std::stop_token&) override;
 
     /// Open TCP connection.
     void open() override;
