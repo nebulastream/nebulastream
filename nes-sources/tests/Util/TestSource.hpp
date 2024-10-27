@@ -15,8 +15,12 @@
 #pragma once
 #include <memory>
 #include <span>
+#include <fcntl.h>
 #include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/MPMCQueue.h>
+#include <gmock/gmock-function-mocker.h>
 
 namespace NES::Sources
 {
@@ -24,19 +28,36 @@ namespace NES::Sources
 class TestSourceControl
 {
 public:
-    void injectEoS();
-    void injectData(std::vector<std::byte> data, size_t numberOfTuples);
-    void injectError(std::string error);
+    bool injectEoS();
+    bool injectData(std::vector<std::byte> data, size_t numberOfTuples);
+    bool injectError(std::string error);
+
+    ::testing::AssertionResult waitUntilOpened();
+    ::testing::AssertionResult waitUntilClosed();
+    ::testing::AssertionResult waitUntilDestroyed();
 
     bool wasClosed() const;
     bool wasOpened() const;
     bool wasDestroyed() const;
 
+    void failDuringOpen(std::chrono::milliseconds blockFor = std::chrono::milliseconds(0));
+    void failDuringClose(std::chrono::milliseconds blockFor = std::chrono::milliseconds(0));
+
 private:
     friend class TestSource;
-    std::atomic_bool closed = false;
-    std::atomic_bool opened = false;
-    std::atomic_bool destroyed = false;
+    std::promise<void> open;
+    std::promise<void> close;
+    std::promise<void> destroyed;
+    std::atomic_bool failed;
+
+    std::shared_future<void> openFuture = open.get_future().share();
+    std::shared_future<void> closeFuture = close.get_future().share();
+    std::shared_future<void> destroyedFuture = destroyed.get_future().share();
+
+    bool fail_during_open = false;
+    bool fail_during_close = false;
+    std::atomic<std::chrono::milliseconds> fail_during_open_duration;
+    std::atomic<std::chrono::milliseconds> fail_during_close_duration;
 
     struct EoS
     {
@@ -51,7 +72,7 @@ private:
         std::string error;
     };
     using control_data = std::variant<EoS, Data, Error>;
-    folly::MPMCQueue<control_data> q;
+    folly::MPMCQueue<control_data> q{10};
 };
 
 
@@ -65,19 +86,26 @@ class TestSource : public Source
 {
 public:
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::TupleBuffer& tupleBuffer,
+        NES::Memory::AbstractBufferProvider& bufferManager,
+        std::shared_ptr<Schema> schema,
+        const std::stop_token& stopToken) override;
     void open() override;
     void close() override;
-    [[nodiscard]] SourceType getType() const override;
-    [[nodiscard]] std::string toString() const override;
-    explicit TestSource(const std::shared_ptr<TestSourceControl>& control);
-    ~TestSource() override { control_->destroyed.exchange(true); };
+
+protected:
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+public:
+    explicit TestSource(OriginId sourceId, const std::shared_ptr<TestSourceControl>& control);
+    ~TestSource() override;
 
 private:
+    OriginId sourceId;
     std::shared_ptr<TestSourceControl> control_;
 };
 
-std::pair<SourceHandlePtr, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool, SourceReturnType::EmitFunction&& emit);
+std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+getTestSource(OriginId originId, std::shared_ptr<Memory::AbstractPoolProvider> bufferPool);
 
 }
