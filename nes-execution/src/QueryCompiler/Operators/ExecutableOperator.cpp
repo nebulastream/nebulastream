@@ -14,6 +14,7 @@
 #include <utility>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -37,9 +38,13 @@ OperatorPtr ExecutableOperator::create(
         ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage()
+const Runtime::Execution::ExecutablePipelineStage& ExecutableOperator::getExecutablePipelineStage() const
 {
-    return executablePipelineStage;
+    return *executablePipelineStage;
+}
+std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> ExecutableOperator::takeExecutablePipelineStage()
+{
+    return std::move(executablePipelineStage);
 }
 
 std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers()
@@ -54,7 +59,7 @@ std::string ExecutableOperator::toString() const
 
 OperatorPtr ExecutableOperator::copy()
 {
-    return create(executablePipelineStage, operatorHandlers);
+    throw NotImplemented();
 }
 
 }

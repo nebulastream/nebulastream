@@ -35,7 +35,7 @@ uint64_t QueryStatistics::getProcessedBuffers() const
     return processedBuffers.load();
 }
 
-uint64_t QueryStatistics::getTimestampQueryStart() const
+std::chrono::high_resolution_clock::time_point QueryStatistics::getTimestampQueryStart() const
 {
     return timestampQueryStart.load();
 }
@@ -84,14 +84,6 @@ void QueryStatistics::setProcessedTuple(uint64_t processedTuple)
     this->processedTuple = processedTuple;
 }
 
-void QueryStatistics::setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite = false)
-{
-    if (!noOverwrite || this->timestampQueryStart == 0)
-    {
-        NES_DEBUG("QueryStatistics::setTimestampQueryStart called with  {}", timestampQueryStart);
-        this->timestampQueryStart = timestampQueryStart;
-    }
-}
 void QueryStatistics::setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite = false)
 {
     if (!noOverwrite || this->timestampFirstProcessedTask == 0)
@@ -195,6 +187,10 @@ void QueryStatistics::clear()
 QueryId QueryStatistics::getQueryId() const
 {
     return queryId.load();
+}
+void QueryStatistics::logStartQueryTimestamp()
+{
+    this->timestampQueryStart = std::chrono::high_resolution_clock::now();
 }
 
 QueryStatistics::QueryStatistics(const QueryStatistics& other)

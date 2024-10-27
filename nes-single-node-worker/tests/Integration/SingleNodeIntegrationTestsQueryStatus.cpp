@@ -110,6 +110,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::stopQuery(queryId, StopQueryRequest::HardStop, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     /// Test for query status after registration
     auto summary = IntegrationTestUtil::querySummary(queryId, uut);
     EXPECT_EQ(summary.status(), Stopped);
@@ -118,10 +119,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 
     /// Test for invalid queryId
     auto invalidQueryId = QueryId{42};
-    summary = IntegrationTestUtil::querySummary(invalidQueryId, uut);
-    EXPECT_EQ(summary.status(), Invalid);
-    EXPECT_EQ(summary.numberofrestarts(), 0);
-    EXPECT_EQ(summary.error_size(), 0);
+    IntegrationTestUtil::querySummaryFailure(invalidQueryId, uut);
 
     IntegrationTestUtil::removeFile(queryResultFile);
     IntegrationTestUtil::removeFile(querySpecificDataFileName);

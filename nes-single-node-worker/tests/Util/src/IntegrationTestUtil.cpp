@@ -322,6 +322,17 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut)
     return reply;
 }
 
+std::string querySummaryFailure(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    auto response = uut.RequestQuerySummary(&context, &request, &reply);
+    EXPECT_NE(response.error_code(), grpc::StatusCode::OK);
+    return response.error_message();
+}
+
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
@@ -338,7 +349,7 @@ testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
     constexpr size_t maxNumberOfTimeoutChecks = 80;
     size_t numTimeouts = 0;
     auto currentQueryStatus = queryStatus(queryId, uut);
-    while (currentQueryStatus != Stopped && currentQueryStatus != Failed && currentQueryStatus != Finished)
+    while (currentQueryStatus != Stopped && currentQueryStatus != Failed)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (++numTimeouts > maxNumberOfTimeoutChecks)

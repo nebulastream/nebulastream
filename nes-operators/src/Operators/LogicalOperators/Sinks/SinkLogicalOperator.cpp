@@ -55,6 +55,10 @@ const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
     }
     throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
 }
+std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() const
+{
+    return sinkDescriptor;
+}
 
 OperatorPtr SinkLogicalOperator::copy()
 {

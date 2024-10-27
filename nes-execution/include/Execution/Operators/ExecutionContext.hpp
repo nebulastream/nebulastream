@@ -13,8 +13,8 @@
 */
 
 #pragma once
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Executable.hpp>
 
 
 #include <cstdint>

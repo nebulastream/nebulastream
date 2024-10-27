@@ -90,6 +90,7 @@ EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
 
 /// 6XXX API error
 EXCEPTION(BadApiRequest, 6000, "bad api request")
+EXCEPTION(QueryNotFound, 6001, "query is not registered")
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(PreconditionViolated, 9000, "precondition violated")

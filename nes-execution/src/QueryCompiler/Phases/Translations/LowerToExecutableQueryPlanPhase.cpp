@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <ranges>
 #include <variant>
-
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -23,79 +24,65 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Sinks/Sink.hpp>
-#include <Sinks/SinkProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <Executable.hpp>
 #include <magic_enum.hpp>
 
 
 namespace NES::QueryCompilation
 {
+using namespace NES::Runtime::Execution;
 
-Runtime::Execution::ExecutableQueryPlanPtr
-LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine)
+struct LoweringContext
 {
-    std::vector<std::unique_ptr<Sources::SourceHandle>> sources;
-    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>> sinks;
-    std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
+    std::vector<Sink> sinks;
+    std::vector<Source> sources;
+    std::map<PipelineId, std::shared_ptr<ExecutablePipeline>> pipelineToExecutableMap;
+};
+
+using Predecessor = std::variant<OriginId, std::weak_ptr<ExecutablePipeline>>;
+using Successor = std::variant<std::shared_ptr<ExecutablePipeline>, Sink>;
+
+static std::shared_ptr<ExecutablePipeline>
+processOperatorPipeline(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context);
+static Sink processSink(Predecessor predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& context);
+static Successor processSuccessor(
+    Predecessor predecessor, const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context);
+static Source processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context);
+
+
+ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan)
+{
+    LoweringContext context;
     ///Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines)
     {
-        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
+        processSource(pipeline, pipelineQueryPlan, context);
     }
-    return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(
-        pipelineQueryPlan->getQueryId(),
-        std::move(sources),
-        std::move(sinks),
-        std::move(executablePipelines),
-        nodeEngine->getQueryManager(),
-        nodeEngine->getBufferManager());
+
+    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
+    std::ranges::copy(std::views::values(context.pipelineToExecutableMap), std::back_inserter(pipelines));
+    return ExecutableQueryPlan::create(std::move(pipelines), std::move(context.sinks), std::move(context.sources));
 }
-Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
+
+static Successor processSuccessor(
+    Predecessor predecessor, const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context)
 {
     PRECONDITION(pipeline->isSinkPipeline() || pipeline->isOperatorPipeline(), "expected a Sink or OperatorPipeline");
 
-    /// check if the particular pipeline already exist in the pipeline map.
-    if (const auto executable = pipelineToExecutableMap.find(pipeline->getPipelineId()); executable != pipelineToExecutableMap.end())
-    {
-        return executable->second;
-    }
     if (pipeline->isSinkPipeline())
     {
-        auto executableSink = processSink(pipeline, sinks, pipelineQueryPlan->getQueryId());
-        pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
-        return executableSink;
+        return processSink(predecessor, pipeline, context);
     }
-    /// if it is an OperatorPipeline
-    auto executablePipeline
-        = processOperatorPipeline(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
-    pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
-    return executablePipeline;
+    return processOperatorPipeline(pipeline, pipelineQueryPlan, context);
 }
 
-void LowerToExecutableQueryPlanPhase::processSource(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
+static Source processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context)
 {
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
@@ -103,99 +90,52 @@ void LowerToExecutableQueryPlanPhase::processSource(
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
+    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
     {
-        auto executableSuccessor
-            = processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
-        executableSuccessorPipelines.emplace_back(executableSuccessor);
+        auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, context);
+        if (auto* successorPipeline = std::get_if<std::shared_ptr<ExecutablePipeline>>(&executableSuccessor))
+        {
+            executableSuccessorPipelines.emplace_back(*successorPipeline);
+        }
     }
-    auto emitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(executableSuccessorPipelines));
-    auto source = Sources::SourceProvider::lower(
-        sourceOperator->getOriginId(), sourceOperator->getSourceDescriptorRef(), nodeEngine->getBufferManager(), std::move(emitFunction));
-    sources.emplace_back(std::move(source));
+
+    context.sources.emplace_back(sourceOperator->getSourceDescriptor(), sourceOperator->getOriginId(), executableSuccessorPipelines);
+    return context.sources.back();
 }
 
-Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
-    const OperatorPipelinePtr& pipeline, std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks, QueryId queryId)
+static Sink processSink(Predecessor predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& context)
 {
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
-    /// Todo #34 (ls-1801 & alepping): As soon as the QueryManager stores sinks as pipelines that become tasks, we can return unique_ptrs.
-    /// Right new we store a shared_ptr to use the sink as a task, and to later call sink->open() in QueryManagerLifecycle::registerQuery
-    auto sinkSharedPtr = Sinks::SinkProvider::lower(queryId, sinkOperator->getSinkDescriptorRef());
-    sinks.emplace(sinkSharedPtr);
-    return sinkSharedPtr;
+    auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator)->getSinkDescriptor();
+    context.sinks.emplace_back(sinkOperator, predecessor);
+    return context.sinks.back();
 }
 
-Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
-    std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan,
-    std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
+static std::shared_ptr<ExecutablePipeline>
+processOperatorPipeline(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context)
 {
+    /// check if the particular pipeline already exist in the pipeline map.
+    if (const auto executable = context.pipelineToExecutableMap.find(pipeline->getPipelineId());
+        executable != context.pipelineToExecutableMap.end())
+    {
+        return executable->second;
+    }
+
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
+    auto executablePipeline = ExecutablePipeline::create(executableOperator->takeExecutablePipelineStage(), {});
 
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
     {
-        auto executableSuccessor
-            = processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
-        executableSuccessorPipelines.emplace_back(executableSuccessor);
+        auto executableSuccessor = processSuccessor(executablePipeline, successor, pipelineQueryPlan, context);
+        if (auto* successorPipeline = std::get_if<std::shared_ptr<ExecutablePipeline>>(&executableSuccessor))
+        {
+            executablePipeline->successors.emplace_back(*successorPipeline);
+        }
     }
 
-    auto queryManager = nodeEngine->getQueryManager();
-
-    auto emitToSuccessorFunctionHandler
-        = [executableSuccessorPipelines](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef workerContext)
-    {
-        for (const auto& executableSuccessor : executableSuccessorPipelines)
-        {
-            if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executableSuccessor))
-            {
-                NES_TRACE("Emit Buffer to data sink {}", **sink);
-                (*sink)->emitTupleBuffer(buffer);
-            }
-            else if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
-            {
-                NES_TRACE("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
-                (*nextExecutablePipeline)->execute(buffer, workerContext);
-            }
-        }
-    };
-
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Memory::TupleBuffer& buffer)
-    {
-        for (const auto& executableSuccessor : executableSuccessorPipelines)
-        {
-            NES_TRACE("Emit buffer to query manager");
-            queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
-        }
-    };
-
-    auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
-        pipeline->getPipelineId(),
-        pipelineQueryPlan->getQueryId(),
-        queryManager->getBufferManager(),
-        queryManager->getNumberOfWorkerThreads(),
-        emitToSuccessorFunctionHandler,
-        emitToQueryManagerFunctionHandler,
-        executableOperator->getOperatorHandlers());
-
-    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(
-        pipeline->getPipelineId(),
-        pipelineQueryPlan->getQueryId(),
-        queryManager,
-        executionContext,
-        executableOperator->getExecutablePipelineStage(),
-        pipeline->getPredecessors().size(),
-        executableSuccessorPipelines);
-
-    executablePipelines.emplace_back(executablePipeline);
+    context.pipelineToExecutableMap.emplace(pipeline->getPipelineId(), executablePipeline);
     return executablePipeline;
 }
 

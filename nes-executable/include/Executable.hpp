@@ -1,0 +1,58 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
+namespace NES::Runtime::Execution
+{
+class OperatorHandler;
+class PipelineExecutionContext
+{
+public:
+    /// Policy wether a emitted tuple is able to be processed immediatly or
+    /// needs to be disptached.
+    enum class ContinuationPolicy
+    {
+        POSSIBLE, /// It is possible for the emitted tuple buffer to be processed immediatly. This is not a guarantee that that will happen
+        NEVER /// The tuple buffer should never be processed immediatly
+    };
+
+    virtual ~PipelineExecutionContext() = default;
+    virtual void emitBuffer(const Memory::TupleBuffer&, ContinuationPolicy) = 0;
+    virtual WorkerThreadId getId() const = 0;
+    virtual Memory::TupleBuffer allocateTupleBuffer() = 0;
+    virtual uint64_t getNumberOfWorkerThreads() = 0;
+    virtual std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() = 0;
+    virtual PipelineId getPipelineID() = 0;
+
+    virtual std::vector<std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
+    virtual void setOperatorHandlers(std::vector<std::shared_ptr<OperatorHandler>>&) = 0;
+};
+
+class ExecutablePipelineStage
+{
+public:
+    virtual ~ExecutablePipelineStage() = default;
+    virtual uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) = 0;
+    virtual void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
+    virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) = 0;
+};
+
+using ExecutablePipelineStagePtr = std::unique_ptr<ExecutablePipelineStage>;
+}

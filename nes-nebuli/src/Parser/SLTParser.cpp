@@ -31,10 +31,10 @@
 
 namespace NES::SLTParser
 {
-static std::string CSVSourceToken = "SourceCSV";
-static std::string SLTSourceToken = "Source";
-static std::string QueryToken = "SELECT";
-static std::string ResultDelimiter = "----";
+static std::string_view CSVSourceToken = "SourceCSV"sv;
+static std::string_view SLTSourceToken = "Source"sv;
+static std::string_view QueryToken = "SELECT"sv;
+static std::string_view ResultDelimiter = "----"sv;
 
 static std::array<std::pair<std::string_view, TokenType>, 4> stringToToken
     = {{{CSVSourceToken, TokenType::CSV_SOURCE},
@@ -159,12 +159,12 @@ void SLTParser::parse()
             }
             else
             {
-                throw SLTUnexpectedToken("expected result delimiter `{}` after query", ResultDelimiter);
+                throw SLTUnexpectedToken(fmt::format("expected result delimiter `{}` after query", ResultDelimiter));
             }
         }
         else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            throw SLTUnexpectedToken("unexpected occurence of result delimiter `{}`", ResultDelimiter);
+            throw SLTUnexpectedToken(fmt::format("unexpected occurence of result delimiter `{}`", ResultDelimiter));
         }
         else if (token.value() == TokenType::INVALID)
         {
@@ -263,7 +263,7 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
     {
         throw SLTUnexpectedToken("failed to read the first word in: {}", line);
     }
-    INVARIANT(discard == SLTSourceToken, "Expected first word to be `{}` for source statement", SLTSourceToken);
+    INVARIANT(discard == SLTSourceToken, fmt::format("Expected first word to be `{}` for source statement", SLTSourceToken));
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))
@@ -317,7 +317,7 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
     {
         throw SLTUnexpectedToken("failed to read the first word in: " + line);
     }
-    INVARIANT(discard == CSVSourceToken, "Expected first word to be `" + CSVSourceToken + "` for csv source statement");
+    INVARIANT(discard == CSVSourceToken, fmt::format("Expected first word to be `{}` for csv source statement", CSVSourceToken));
 
     /// Read the source name and check if successful
     if (!(stream >> source.name))

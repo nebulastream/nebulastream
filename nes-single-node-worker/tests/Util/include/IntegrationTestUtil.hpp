@@ -70,6 +70,7 @@ void unregisterQuery(QueryId queryId, GRPCServer& uut);
 
 /// Summary structure of the query containing current status, number of retries and the exceptions.
 QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
+std::string querySummaryFailure(QueryId queryId, GRPCServer& uut);
 
 /// Current status of the query.
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);

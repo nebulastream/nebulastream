@@ -395,7 +395,7 @@ std::shared_ptr<AbstractBufferProvider> BufferManager::createLocalBufferPool(siz
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_DEBUG("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
+    NES_TRACE("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
     NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers"); ///TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {

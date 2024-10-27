@@ -37,9 +37,6 @@ public:
     void setProcessedBuffers(uint64_t processedBuffers);
 
     /// @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
-    void setTimestampQueryStart(uint64_t timestampQueryStart, bool noOverwrite);
-
-    /// @param noOverwrite If true, the value is only set, if the previous value was 0 (if it was never set).
     void setTimestampFirstProcessedTask(uint64_t timestampFirstProcessedTask, bool noOverwrite);
 
     void setTimestampLastProcessedTask(uint64_t timestampLastProcessedTask);
@@ -68,7 +65,7 @@ public:
     [[nodiscard]] uint64_t getProcessedBuffers() const;
 
     /// In milliseconds
-    [[nodiscard]] uint64_t getTimestampQueryStart() const;
+    [[nodiscard]] std::chrono::high_resolution_clock::time_point getTimestampQueryStart() const;
     /// In milliseconds
     [[nodiscard]] uint64_t getTimestampFirstProcessedTask() const;
     /// In milliseconds
@@ -89,6 +86,8 @@ public:
 
     [[nodiscard]] QueryId getQueryId() const;
 
+    void logStartQueryTimestamp();
+
     /// Clear the content of the statistics
     void clear();
 
@@ -102,7 +101,7 @@ private:
     std::atomic<uint64_t> availableGlobalBufferSum = 0;
     std::atomic<uint64_t> availableFixedBufferSum = 0;
 
-    std::atomic<uint64_t> timestampQueryStart = 0;
+    std::atomic<std::chrono::high_resolution_clock::time_point> timestampQueryStart;
     std::atomic<uint64_t> timestampFirstProcessedTask = 0;
     std::atomic<uint64_t> timestampLastProcessedTask = 0;
 

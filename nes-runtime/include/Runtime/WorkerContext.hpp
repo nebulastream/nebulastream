@@ -46,19 +46,13 @@ private:
 
     /// the id of this worker context (unique per thread).
     WorkerThreadId workerId;
-    /// object reference counters
-    std::unordered_map<uintptr_t, uint32_t> objectRefCounters;
     /// worker local buffer pool stored in tls
     static folly::ThreadLocalPtr<WorkerContextBufferProvider> localBufferPoolTLS;
     /// worker local buffer pool stored :: use this for fast access
     WorkerContextBufferProviderPtr localBufferPool;
-    /// numa location of current worker
-    uint32_t queueId = 0;
-    std::unordered_map<OperatorId, std::queue<NES::Memory::TupleBuffer>> reconnectBufferStorage;
 
 public:
-    explicit WorkerContext(
-        WorkerThreadId workerId, Memory::BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
+    explicit WorkerContext(WorkerThreadId workerId, Memory::BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker);
 
     ~WorkerContext();
 
@@ -87,22 +81,6 @@ public:
      * @return current worker context thread id
      */
     WorkerThreadId getId() const;
-
-    /**
-     * @brief Sets the ref counter for a generic object using its pointer address as lookup
-     * @param object the object that we want to track
-     * @param refCnt the initial ref cnt
-     */
-    void setObjectRefCnt(void* object, uint32_t refCnt);
-
-    /**
-     * @brief Reduces by one the ref cnt. It deletes the object as soon as ref cnt reaches 0.
-     * @param object the object that we want to ref count
-     * @return the prev ref cnt
-     */
-    uint32_t decreaseObjectRefCnt(void* object);
-
-    uint32_t getQueueId() const;
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 using WorkerContextRef = WorkerContext&;
