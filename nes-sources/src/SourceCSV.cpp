@@ -93,7 +93,10 @@ void SourceCSV::close()
 }
 
 bool SourceCSV::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
+    NES::Memory::TupleBuffer& tupleBuffer,
+    NES::Memory::AbstractBufferProvider& bufferManager,
+    std::shared_ptr<Schema> schema,
+    const std::stop_token&)
 {
     NES_TRACE("SourceCSV::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)

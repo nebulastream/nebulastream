@@ -35,13 +35,12 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SchemaPtr schema,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
 
     ~SourceHandle() = default;
 
-    bool start() const;
+    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
     bool stop() const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);

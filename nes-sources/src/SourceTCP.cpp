@@ -159,7 +159,10 @@ void SourceTCP::open()
 }
 
 bool SourceTCP::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
+    NES::Memory::TupleBuffer& tupleBuffer,
+    NES::Memory::AbstractBufferProvider& bufferManager,
+    std::shared_ptr<Schema> schema,
+    const std::stop_token&)
 {
     std::stringstream ss;
     ss << this;
