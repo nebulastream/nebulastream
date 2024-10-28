@@ -61,7 +61,7 @@ bool checkResult(const Query& query)
         [&seenResultTupleSections, &errorMessages, &query, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
         {
             /// Result section matches with query --> we found the expected result to check for
-            if (seenResultTupleSections == query.queryNrInFile)
+            if (seenResultTupleSections == query.queryIdInFile)
             {
                 /// 1. Get query result
                 auto opt = loadQueryResult(query);
@@ -167,7 +167,7 @@ bool checkResult(const Query& query)
     parser.registerOnQueryCallback(
         [&seenQuerySections, &query, &printMessages](const std::string& queryStr)
         {
-            if (seenQuerySections == query.queryNrInFile)
+            if (seenQuerySections == query.queryIdInFile)
             {
                 printMessages = queryStr;
             }
@@ -191,7 +191,7 @@ bool checkResult(const Query& query)
     if (!same)
     {
         std::cerr << errorMessages << "\nrerun with:\t" << "systest -t " << query.sqlLogicTestFile.c_str() << ":"
-                  << query.queryNrInFile.value() + 1 << "\n";
+                  << query.queryIdInFile.value() + 1 << "\n";
     }
 
     return same;
