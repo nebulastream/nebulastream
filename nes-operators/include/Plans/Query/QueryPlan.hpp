@@ -19,7 +19,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Operator.hpp>
@@ -40,6 +39,9 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SourceNameLogicalOperator;
 using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
+
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 /**
  * @brief The query plan encapsulates a set of operators and provides a set of utility functions.
@@ -95,7 +97,7 @@ public:
      * @brief Get all sink operators
      * @return vector of logical sink operators
      */
-    std::vector<std::shared_ptr<SinkLogicalOperator>> getSinkOperators() const;
+    std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     /**
      * @brief Appends an operator to the query plan and make the new operator as root.
@@ -115,7 +117,11 @@ public:
      */
     std::vector<OperatorPtr> getRootOperators() const;
 
-    /// add subQuery's rootnode into the current node for merging purpose.
+    /**
+     * add subQuery's rootnode into the current node for merging purpose.
+     * Note: improves this when we have to due with multi-root use case.
+     * @param newRootOperator
+     */
     void addRootOperator(const OperatorPtr& newRootOperator);
 
     /**

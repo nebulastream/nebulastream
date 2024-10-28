@@ -44,9 +44,10 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(
     return std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), id, originId);
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createSinkOperator(std::string sinkName, WorkerId workerId, OperatorId id)
+LogicalUnaryOperatorPtr
+LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr& sinkDescriptor, WorkerId workerId, OperatorId id)
 {
-    auto sinkOperator = std::make_shared<SinkLogicalOperator>(std::move(sinkName), id);
+    auto sinkOperator = std::make_shared<SinkLogicalOperator>(sinkDescriptor, id);
     if (workerId != INVALID_WORKER_NODE_ID)
     {
         sinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, workerId);

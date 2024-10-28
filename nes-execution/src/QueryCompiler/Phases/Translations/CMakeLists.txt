@@ -11,10 +11,12 @@
 # limitations under the License.
 
 add_source_files(nes-execution
+        ConvertLogicalToPhysicalSink.cpp
         NautilusOperatorLoweringPlugin.cpp
         LowerLogicalToPhysicalOperators.cpp
         DefaultPhysicalOperatorProvider.cpp
         LowerToExecutableQueryPlanPhase.cpp
+        DataSinkProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         FunctionProvider.cpp
         TimestampField.cpp

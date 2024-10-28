@@ -23,7 +23,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Sink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 
 namespace NES::Runtime
@@ -79,8 +79,8 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
     /// 4. start data sinks
     for (const auto& sink : qep->getSinks())
     {
-        NES_DEBUG("QueryManager: start sink  {}", *sink);
-        sink->open();
+        NES_DEBUG("QueryManager: start sink  {}", sink->toString());
+        sink->setup();
     }
 
     {
@@ -300,6 +300,17 @@ bool QueryManager::addSoftEndOfStream(OriginId sourceId, const std::vector<Execu
                 threadPool->getNumberOfThreads(),
                 executablePipeline->get()->getQueryId());
         }
+        else if (auto* sink = std::get_if<DataSinkPtr>(&successor))
+        {
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(), ReconfigurationType::SoftEndOfStream, (*sink));
+            addReconfigurationMessage(sink->get()->getQueryId(), reconfMessageSink, false);
+            NES_DEBUG(
+                "soft end-of-stream Sink opId={} reconfType={} queryId={} threadPool->getNumberOfThreads()={}",
+                sourceId,
+                magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
+                sink->get()->getQueryId(),
+                threadPool->getNumberOfThreads());
+        }
     }
     return true;
 }
@@ -322,6 +333,17 @@ bool QueryManager::addHardEndOfStream(OriginId sourceId, const std::vector<Execu
                 magic_enum::enum_name(ReconfigurationType::HardEndOfStream),
                 executablePipeline->get()->getQueryId(),
                 executablePipeline->get()->getQueryId(),
+                threadPool->getNumberOfThreads());
+        }
+        else if (auto* sink = std::get_if<DataSinkPtr>(&successor))
+        {
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(), ReconfigurationType::HardEndOfStream, (*sink));
+            addReconfigurationMessage(sink->get()->getQueryId(), reconfMessageSink, false);
+            NES_DEBUG(
+                "hard end-of-stream Sink opId={} reconfType={} queryId={} threadPool->getNumberOfThreads()={}",
+                sourceId,
+                magic_enum::enum_name(ReconfigurationType::HardEndOfStream),
+                sink->get()->getQueryId(),
                 threadPool->getNumberOfThreads());
         }
     }
@@ -349,6 +371,18 @@ bool QueryManager::addFailureEndOfStream(OriginId sourceId, const std::vector<Ex
                 executablePipeline->get()->getQueryId(),
                 threadPool->getNumberOfThreads(),
                 executablePipeline->get()->getQueryId());
+        }
+        else if (auto* sink = std::get_if<DataSinkPtr>(&successor))
+        {
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getQueryId(), ReconfigurationType::FailEndOfStream, (*sink));
+            addReconfigurationMessage(sink->get()->getQueryId(), reconfMessageSink, false);
+            NES_DEBUG(
+                "failure end-of-stream Sink opId={} reconfType={} "
+                "threadPool->getNumberOfThreads()={} qep {}",
+                sourceId,
+                magic_enum::enum_name(ReconfigurationType::FailEndOfStream),
+                threadPool->getNumberOfThreads(),
+                sink->get()->getQueryId());
         }
     }
     return true;

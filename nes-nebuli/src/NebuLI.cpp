@@ -15,7 +15,6 @@
 #include <algorithm>
 #include <fstream>
 #include <regex>
-
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -39,7 +38,6 @@
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
-#include "Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp"
 
 namespace NES::CLI
 {
@@ -47,13 +45,6 @@ struct SchemaField
 {
     std::string name;
     BasicType type;
-};
-
-struct Sink
-{
-    std::string name;
-    std::string type;
-    std::unordered_map<std::string, std::string> config;
 };
 
 struct LogicalSource
@@ -71,7 +62,6 @@ struct PhysicalSource
 struct QueryConfig
 {
     std::string query;
-    std::unordered_map<std::string, Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };
@@ -87,17 +77,6 @@ struct convert<SchemaField>
     {
         rhs.name = node["name"].as<std::string>();
         rhs.type = *magic_enum::enum_cast<NES::BasicType>(node["type"].as<std::string>());
-        return true;
-    }
-};
-template <>
-struct convert<NES::CLI::Sink>
-{
-    static bool decode(const Node& node, NES::CLI::Sink& rhs)
-    {
-        rhs.name = node["name"].as<std::string>();
-        rhs.type = node["type"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -126,8 +105,6 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
-        const auto sink = node["sink"].as<NES::CLI::Sink>();
-        rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
@@ -158,23 +135,6 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
             std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
     }
     throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
-}
-
-void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
-{
-    INVARIANT(
-        query.getSinkOperators().size() == 1,
-        fmt::format(
-            "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
-    for (const auto& sinkOperator : query.getSinkOperators())
-    {
-        if (const auto sink = config.sinks.find(sinkOperator->sinkName); sink != config.sinks.end())
-        {
-            auto validatedSinkConfig = Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
-            sinkOperator->sinkDescriptor
-                = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
-        }
-    }
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -219,8 +179,9 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
     auto query = syntacticQueryValidation->validate(config.query);
-    validateAndSetSinkDescriptors(*query, config);
-    semanticQueryValidation->validate(query); /// performs the first type inference
+    semanticQueryValidation->validate(query);
+    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
+    typeInference->performTypeInferenceQuery(query);
 
     logicalSourceExpansionRule->apply(query);
     typeInference->performTypeInferenceQuery(query);
@@ -255,15 +216,9 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
         {"SINK",
          [&](std::string& substitute)
          {
-             static size_t queryNr = 0;
-             const std::string sinkName = testname + std::to_string(queryNr++);
-             const auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + sinkName + ".csv";
-             auto sink = Sink{
-                 sinkName,
-                 "File",
-                 {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-             config.sinks.emplace(sinkName, std::move(sink));
-             substitute = "sink(\"" + sinkName + "\");";
+             static uint64_t queryNr = 0;
+             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + testname + std::to_string(queryNr++) + ".csv";
+             substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
          }});
 
     parser.registerSubstitutionRule(
@@ -363,7 +318,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 
 bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
 {
-    std::string resultFileName = PATH_TO_BINARY_DIR "/tests/result/" + testName + "_" + std::to_string(queryNr) + ".csv";
+    std::string resultFileName = PATH_TO_BINARY_DIR "/tests/result/" + testName + std::to_string(queryNr) + ".csv";
     std::ifstream resultFile(resultFileName);
     if (!resultFile)
     {

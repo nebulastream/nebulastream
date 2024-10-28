@@ -1,14 +1,7 @@
 query: |
   Query::from("csv_source")
-    .filter(Attribute("id") != 16)
-    .sink("csv_sink");
-sink:
-  name: csv_sink
-  type: File
-  config:
-    inputFormat: CSV
-    filePath: "[GENERATED_IN_TEST]"
-    append: false
+    .filter(Attribute("id") < 16)
+    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
 logical:
   - name: csv_source
     schema:

@@ -27,6 +27,9 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -193,13 +196,13 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         details.UnpackTo(&serializedSourceDescriptorLogicalOperator);
         operatorNode = deserializeSourceOperator(serializedSourceDescriptorLogicalOperator);
     }
-    else if (details.Is<SerializableOperator_SinkLogicalOperator>())
+    else if (details.Is<SerializableOperator_SinkDetails>())
     {
         /// de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
-        auto serializedSinkLogicalOperator = SerializableOperator_SinkLogicalOperator();
-        details.UnpackTo(&serializedSinkLogicalOperator);
-        operatorNode = deserializeSinkOperator(serializedSinkLogicalOperator);
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails();
+        details.UnpackTo(&serializedSinkDescriptor);
+        operatorNode = deserializeSinkOperator(serializedSinkDescriptor);
     }
     else if (details.Is<SerializableOperator_FilterDetails>())
     {
@@ -368,27 +371,6 @@ OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_
     return LogicalOperatorFactory::createSourceOperator(std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceId));
 }
 
-void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator)
-{
-    NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
-    auto sinkDetails = SerializableOperator_SinkLogicalOperator();
-    sinkDetails.set_sinkname(sinkOperator.sinkName);
-    auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
-    serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, sinkDetails);
-    serializedOperator.mutable_details()->PackFrom(sinkDetails);
-}
-
-LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails)
-{
-    const auto serializedSinkDescriptor = sinkDetails.sinkdescriptor();
-    auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
-    /// Todo: why don't we serialize the operator ids and deserialize them, instead of assigning new operator Ids.
-    /// -> getNextOperatorId() is used throughout this class. (Could be irrelevant after operator refactoring.)
-    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDetails.sinkname(), INVALID_WORKER_NODE_ID, getNextOperatorId());
-    NES::Util::as<SinkLogicalOperator>(sinkOperator)->sinkDescriptor = std::move(sinkDescriptor);
-    return sinkOperator;
-}
-
 void OperatorSerializationUtil::serializeFilterOperator(
     const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator)
 {
@@ -430,6 +412,21 @@ OperatorSerializationUtil::deserializeProjectionOperator(const SerializableOpera
     }
 
     return LogicalOperatorFactory::createProjectionOperator(exps, getNextOperatorId());
+}
+
+void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator& sinkOperator, SerializableOperator& serializedOperator)
+{
+    NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
+    auto sinkDetails = SerializableOperator_SinkDetails();
+    auto sinkDescriptor = sinkOperator.getSinkDescriptor();
+    serializeSinkDescriptor(*sinkDescriptor, sinkDetails, sinkOperator.getInputOriginIds().size());
+    serializedOperator.mutable_details()->PackFrom(sinkDetails);
+}
+
+LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const SerializableOperator_SinkDetails& sinkDetails)
+{
+    auto sinkDescriptor = deserializeSinkDescriptor(sinkDetails);
+    return LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator)
@@ -865,9 +862,10 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
     return retValue;
 }
 
-SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
+SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor
+SourceDescriptorConfigTypeToProto(const Configurations::DescriptorConfig::ConfigType& var)
 {
-    SerializableVariantDescriptor proto_var;
+    SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor proto_var;
     std::visit(
         [&proto_var]<typename T>(T&& arg)
         {
@@ -889,7 +887,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::
                 proto_var.set_string_value(arg);
             else if constexpr (std::is_same_v<U, Configurations::EnumWrapper>)
             {
-                auto enumWrapper = SerializableEnumWrapper().New();
+                auto enumWrapper = SerializableOperator_SourceDescriptorLogicalOperator_EnumWrapper().New();
                 enumWrapper->set_value(arg.getValue());
                 proto_var.set_allocated_enum_value(enumWrapper);
             }
@@ -922,30 +920,31 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     for (const auto& [key, value] : sourceDescriptor.config)
     {
         auto* kv = serializedSourceDescriptor->mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
+        kv->emplace(key, SourceDescriptorConfigTypeToProto(value));
     }
     sourceDetails.set_allocated_sourcedescriptor(serializedSourceDescriptor);
 }
 
-Configurations::DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& proto_var)
+Configurations::DescriptorConfig::ConfigType
+protoToSourceDescriptorConfigType(const SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor& proto_var)
 {
     switch (proto_var.value_case())
     {
-        case SerializableVariantDescriptor::kIntValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kIntValue:
             return proto_var.int_value();
-        case SerializableVariantDescriptor::kUintValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kUintValue:
             return proto_var.uint_value();
-        case SerializableVariantDescriptor::kBoolValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kBoolValue:
             return proto_var.bool_value();
-        case SerializableVariantDescriptor::kCharValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kCharValue:
             return static_cast<char>(proto_var.char_value()); /// Convert (fixed32) ascii number to char.
-        case SerializableVariantDescriptor::kFloatValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kFloatValue:
             return proto_var.float_value();
-        case SerializableVariantDescriptor::kDoubleValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kDoubleValue:
             return proto_var.double_value();
-        case SerializableVariantDescriptor::kStringValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kStringValue:
             return proto_var.string_value();
-        case SerializableVariantDescriptor::kEnumValue:
+        case SerializableOperator_SourceDescriptorLogicalOperator_VariantSourceDescriptor::kEnumValue:
             return Configurations::EnumWrapper(proto_var.enum_value().value());
         default:
             std::string protoVarAsJson;
@@ -971,7 +970,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
     for (const auto& kv : sourceDescriptor.config())
     {
-        SourceDescriptorConfig[kv.first] = protoToDescriptorConfigType(kv.second);
+        SourceDescriptorConfig[kv.first] = protoToSourceDescriptorConfigType(kv.second);
     }
 
     return std::make_unique<Sources::SourceDescriptor>(
@@ -983,41 +982,93 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
 }
 
 void OperatorSerializationUtil::serializeSinkDescriptor(
-    std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
+    const SinkDescriptor& sinkDescriptor, SerializableOperator_SinkDetails& sinkDetails, uint64_t numberOfOrigins)
 {
-    auto serializedSinkDescriptor = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf
-    SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor->mutable_sinkschema());
-    serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
-    serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);
-    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : sinkDescriptor.config)
+    /// serialize a sink descriptor and all its properties depending on its type
+    NES_DEBUG("OperatorSerializationUtil:: serialized SinkDescriptor ");
+    if (Util::instanceOf<const PrintSinkDescriptor>(sinkDescriptor))
     {
-        auto* kv = serializedSinkDescriptor->mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
+        /// serialize print sink descriptor
+        auto printSinkDescriptor = Util::as<const PrintSinkDescriptor>(sinkDescriptor);
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+        sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
-    sinkDetails.set_allocated_sinkdescriptor(serializedSinkDescriptor);
+    else if (Util::instanceOf<const FileSinkDescriptor>(sinkDescriptor))
+    {
+        /// serialize file sink descriptor. The file sink has different types which have to be set correctly
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableFileSinkDescriptor");
+        auto fileSinkDescriptor = Util::as<const FileSinkDescriptor>(sinkDescriptor);
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
+
+        serializedSinkDescriptor.set_filepath(fileSinkDescriptor.getFileName());
+        serializedSinkDescriptor.set_append(fileSinkDescriptor.getAppend());
+        serializedSinkDescriptor.set_addtimestamp(fileSinkDescriptor.getAddTimestamp());
+
+        auto format = fileSinkDescriptor.getSinkFormatAsString();
+        if (format == "JSON_FORMAT")
+        {
+            serializedSinkDescriptor.set_sinkformat("JSON_FORMAT");
+        }
+        else if (format == "CSV_FORMAT")
+        {
+            serializedSinkDescriptor.set_sinkformat("CSV_FORMAT");
+        }
+        else if (format == "NES_FORMAT")
+        {
+            serializedSinkDescriptor.set_sinkformat("NES_FORMAT");
+        }
+        else if (format == "TEXT_FORMAT")
+        {
+            serializedSinkDescriptor.set_sinkformat("TEXT_FORMAT");
+        }
+        else
+        {
+            NES_ERROR("serializeSinkDescriptor: format not supported");
+        }
+        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+        sinkDetails.set_numberoforiginids(numberOfOrigins);
+    }
+    else
+    {
+        NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - {}", sinkDescriptor.toString());
+        throw std::invalid_argument("Unknown Sink Descriptor Type");
+    }
 }
 
-std::unique_ptr<Sinks::SinkDescriptor> OperatorSerializationUtil::deserializeSinkDescriptor(
-    const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor)
+SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const SerializableOperator_SinkDetails& sinkDetails)
 {
-    /// Declaring variables outside of DescriptorSource for readability/debuggability.
-    auto schema = SchemaSerializationUtil::deserializeSchema(serializableSinkDescriptor.sinkschema());
-    auto addTimestamp = serializableSinkDescriptor.addtimestamp();
-    auto sinkType = serializableSinkDescriptor.sinktype();
-
-
-    /// Deserialize DescriptorSource config. Convert from protobuf variant to DescriptorSource::ConfigType.
-    Configurations::DescriptorConfig::Config sinkDescriptorConfig{};
-    for (const auto& kv : serializableSinkDescriptor.config())
+    /// de-serialize a sink descriptor and all its properties to a SinkDescriptor.
+    NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor {}", sinkDetails.DebugString());
+    const auto& deserializedSinkDescriptor = sinkDetails.sinkdescriptor();
+    const auto deserializedNumberOfOrigins = sinkDetails.numberoforiginids();
+    if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor>())
     {
-        sinkDescriptorConfig[kv.first] = protoToDescriptorConfigType(kv.second);
+        /// de-serialize print sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
+        return PrintSinkDescriptor::create(deserializedNumberOfOrigins);
     }
-
-    auto sinkDescriptor
-        = std::make_unique<Sinks::SinkDescriptor>(std::move(sinkType), std::move(sinkDescriptorConfig), std::move(addTimestamp));
-    sinkDescriptor->schema = std::move(schema);
-    return sinkDescriptor;
+    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>())
+    {
+        /// de-serialize file sink descriptor
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableFileSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as FileSinkDescriptor");
+        return FileSinkDescriptor::create(
+            serializedSinkDescriptor.filepath(),
+            serializedSinkDescriptor.sinkformat(),
+            serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE",
+            serializedSinkDescriptor.addtimestamp(),
+            deserializedNumberOfOrigins);
+    }
+    else
+    {
+        NES_ERROR("OperatorSerializationUtil: Unknown sink Descriptor Type {}", sinkDetails.DebugString());
+        throw std::invalid_argument("Unknown Sink Descriptor Type");
+    }
 }
 
 void OperatorSerializationUtil::serializeLimitOperator(const LogicalLimitOperator& limitOperator, SerializableOperator& serializedOperator)

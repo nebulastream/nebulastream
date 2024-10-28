@@ -72,7 +72,12 @@ private:
         {
         }
 
-        /// This methods emplaces <chunkNumber, lastChunk, value> into the container.
+        /**
+         * @brief This methods emplaces <chunkNumber, lastChunk, value> into the container.
+         * @param chunkNumber
+         * @param lastChunk
+         * @param value
+         */
         void emplaceChunk(ChunkNumber::Underlying chunkNumber, const bool lastChunk, T value)
         {
             if (lastChunk)

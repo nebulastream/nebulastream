@@ -18,7 +18,6 @@
 #include <fstream>
 #include <numeric>
 #include <Runtime/BufferManager.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
@@ -57,7 +56,7 @@ public:
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
 
-/// Takes a serialized fully-specified query plan, executes it and checks if the correct results are produced.
+
 TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
 {
     using ResultSchema = struct
@@ -119,6 +118,6 @@ INSTANTIATE_TEST_CASE_P(
     SingleNodeIntegrationTest,
     testing::Values(
         QueryTestParam{"qOneSourceCSV", 32, 496 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qOneSourceCSVWithFilter", 31, 480 /* SUM(0, 1, ..., 32) - 16 */},
-        QueryTestParam{"qTwoSourcesCSVWithFilter", 62, 960 /*  2 * (SUM(0, 1, ..., 32) - 16) */}));
+        QueryTestParam{"qOneSourceCSVWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
+        QueryTestParam{"qTwoSourcesCSVWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
 }

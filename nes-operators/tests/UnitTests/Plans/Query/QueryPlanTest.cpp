@@ -15,6 +15,7 @@
 #include <iostream>
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -50,7 +51,7 @@ TEST_F(QueryPlanTest, testLeafOperators)
 {
     const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
     const QueryPlanPtr queryPlan = QueryPlan::create(op1);
-    const LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator("print_sink");
+    const LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<OperatorPtr> leafOptrs = queryPlan->getLeafOperators();

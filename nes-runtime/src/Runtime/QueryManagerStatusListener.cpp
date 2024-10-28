@@ -24,6 +24,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime
@@ -88,9 +89,9 @@ void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipe
     {
         queryId = (*pipe)->getQueryId();
     }
-    else if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&pipelineOrSink))
+    else if (auto* sink = std::get_if<DataSinkPtr>(&pipelineOrSink))
     {
-        queryId = (*sink)->queryId;
+        queryId = (*sink)->getQueryId();
     }
     {
         std::unique_lock lock(queryMutex);
@@ -143,5 +144,13 @@ void QueryManager::notifyPipelineCompletion(
     auto& qep = runningQEPs[queryId];
     NES_ASSERT2_FMT(qep, "invalid query plan for pipeline " << pipeline->getPipelineId());
     qep->notifyPipelineCompletion(pipeline, terminationType);
+}
+
+void QueryManager::notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType)
+{
+    std::unique_lock lock(queryMutex);
+    auto& qep = runningQEPs[queryId];
+    NES_ASSERT2_FMT(qep, "invalid query id " << queryId << " for sink " << sink->toString());
+    qep->notifySinkCompletion(sink, terminationType);
 }
 }

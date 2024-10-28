@@ -20,7 +20,7 @@
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/Task.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Sink.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -44,16 +44,23 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext)
         {
             return (*executablePipeline)->execute(buf, workerContext);
         }
-        if (const auto dataSink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&pipeline))
+        if (auto* dataSink = std::get_if<DataSinkPtr>(&pipeline))
         {
-            if ((*dataSink)->emitTupleBuffer(buf))
+            auto result = (*dataSink)->writeData(buf, workerContext);
+            if (result)
             {
                 return ExecutionResult::Ok;
             }
+            else
+            {
+                return ExecutionResult::Error;
+            }
+        }
+        else
+        {
+            NES_ERROR("Executable pipeline was not of any suitable type");
             return ExecutionResult::Error;
         }
-        NES_ERROR("Executable pipeline was not of any suitable type");
-        return ExecutionResult::Error;
     }
     catch (std::exception const& error)
     {
@@ -113,7 +120,7 @@ std::string Task::toString() const
     {
         ss << " execute pipelineId=" << (*executablePipeline)->getPipelineId() << " qepParentId=" << (*executablePipeline)->getQueryId();
     }
-    else if (std::holds_alternative<std::shared_ptr<NES::Sinks::Sink>>(pipeline))
+    else if (std::holds_alternative<DataSinkPtr>(pipeline))
     {
         ss << " execute data sink";
     }
