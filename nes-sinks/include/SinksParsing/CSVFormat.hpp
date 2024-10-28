@@ -25,11 +25,12 @@ public:
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
-    std::string getFormattedSchema() const;
+    std::string getFormattedSchema();
 
     /// return formatted content of TupleBuffer, contains timestamp if specified
     std::string getFormattedBuffer(Memory::TupleBuffer& inputBuffer);
 
+    static std::string toCSVString(const Schema& schema);
     static std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
