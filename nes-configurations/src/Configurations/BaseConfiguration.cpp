@@ -185,7 +185,7 @@ void BaseConfiguration::accept(OptionVisitor& visitor)
     }
 };
 
-std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
+std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
 {
     std::unordered_map<std::string, Configurations::BaseOption*> optionMap;
     for (auto* option : getOptions())
