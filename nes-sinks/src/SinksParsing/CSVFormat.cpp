@@ -17,13 +17,13 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/TextType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -52,19 +52,14 @@ std::string CSVFormat::getFormattedSchema() const
     return formattedSchema.str();
 }
 
-constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement)
-{
+constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement) {
     std::string result;
     result.reserve(input.size());
 
-    for (const char c : input)
-    {
-        if (c == '\n')
-        {
+    for (const char c : input) {
+        if (c == '\n') {
             result += replacement;
-        }
-        else
-        {
+        } else {
             result += c;
         }
     }

@@ -22,6 +22,14 @@
 
 namespace NES
 {
+SinkLogicalOperator::SinkLogicalOperator(std::string sinkName, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName))
+{
+}
+SinkLogicalOperator::SinkLogicalOperator(std::string sinkName, std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor, const OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)), sinkDescriptor(std::move(sinkDescriptor))
+{
+}
 
 bool SinkLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
@@ -55,8 +63,7 @@ OperatorPtr SinkLogicalOperator::copy()
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
     auto sinkDescriptorPtrCopy = sinkDescriptor;
-    auto copy = std::make_shared<SinkLogicalOperator>(sinkName, id);
-    copy->sinkDescriptor = std::move(sinkDescriptorPtrCopy);
+    auto copy = std::make_shared<SinkLogicalOperator>(sinkName, std::move(sinkDescriptorPtrCopy), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
