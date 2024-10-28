@@ -38,6 +38,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(
     , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
+    , lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase())
     , pipeliningPhase(phaseFactory->createPipeliningPhase())
     , addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options))
 {
@@ -82,7 +83,7 @@ std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(Quer
     pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
     timer.snapshot("AfterNautilusCompilationPhase");
 
-    auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan, request->getNodeEngine());
+    auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
     return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
 }
 }

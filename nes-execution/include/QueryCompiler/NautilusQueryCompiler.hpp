@@ -31,6 +31,7 @@ protected:
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;
     NautilusCompilationPhasePtr compileNautilusPlanPhase;
+    std::shared_ptr<LowerToExecutableQueryPlanPhase> lowerToExecutableQueryPlanPhase;
     PipeliningPhasePtr pipeliningPhase;
     AddScanAndEmitPhasePtr addScanAndEmitPhase;
 };
