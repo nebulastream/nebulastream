@@ -96,19 +96,41 @@ public:
         const Windowing::WindowTypePtr& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
-    /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
+    /**
+     * @brief This methods add the batch join operator to a query
+     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
+     * @param leftQueryPlan the left query plan to combine by the join
+     * @param rightQueryPlan the right query plan to combine by the join
+     * @param onProbeKey key attribute of the left source
+     * @param onBuildKey key attribute of the right source
+     * @return the updated queryPlan
+     */
     static QueryPlanPtr
     addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey);
+    /**
+     * @brief Adds the sink operator to the queryPlan.
+     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
+     * @param sinkDescriptor to add to the queryPlan
+     * @param workerId id of the worker node where sink need to be placed
+     * @return the updated queryPlan
+     */
+    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
-    /// Adds a
-    static QueryPlanPtr addSink(std::string sinkName, QueryPlanPtr queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
-
-    /// Create watermark assigner operator and adds it to the queryPlan
+    /**
+     * @brief Create watermark assigner operator and adds it to the queryPlan
+     * @param watermarkStrategyDescriptor which represents the semantic of this watermarkStrategy.
+     * @return queryPlan
+     */
     static QueryPlanPtr
     assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
 
-    /// Checks in case a window is contained in the query.
-    /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
+    /**
+    * @brief: Method that checks in case a window is contained in the query
+    * if a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan
+    * @param: windowTypePtr the window description assigned to the query plan
+    * @param queryPlan the queryPlan to check and add the watermark strategy to
+    * @return the updated queryPlan
+    */
     static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
 
 private:

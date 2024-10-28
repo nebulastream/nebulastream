@@ -68,10 +68,10 @@ QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId)
 {
 }
 
-std::vector<std::shared_ptr<SinkLogicalOperator>> QueryPlan::getSinkOperators() const
+std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() const
 {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
-    std::vector<std::shared_ptr<SinkLogicalOperator>> sinkOperators;
+    std::vector<SinkLogicalOperatorPtr> sinkOperators;
     for (const auto& rootOperator : rootOperators)
     {
         auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);

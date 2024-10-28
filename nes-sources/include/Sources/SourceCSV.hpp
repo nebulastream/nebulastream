@@ -28,6 +28,25 @@
 namespace NES::Sources
 {
 
+struct ConfigParametersCSV
+{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
+        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
+        }};
+    static inline const Configurations::DescriptorConfig::ConfigParameter<bool> SKIP_HEADER{
+        "skipHeader", false, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(SKIP_HEADER, config);
+        }};
+    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> DELIMITER{
+        "delimiter", ",", [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(DELIMITER, config);
+        }};
+
+    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
+        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
+};
+
 class SourceCSV final : public Source
 {
 public:
@@ -66,23 +85,6 @@ private:
     uint64_t generatedBuffers{0};
 };
 
-struct ConfigParametersCSV
-{
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
-        }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<bool> SKIP_HEADER{
-        "skipHeader", false, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(SKIP_HEADER, config);
-        }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> DELIMITER{
-        "delimiter", ",", [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(DELIMITER, config);
-        }};
-
-    static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
-        = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH, SKIP_HEADER, DELIMITER);
-};
+using SourceCSVPtr = std::shared_ptr<SourceCSV>;
 
 }

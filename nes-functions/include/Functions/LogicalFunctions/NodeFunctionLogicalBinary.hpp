@@ -18,8 +18,9 @@
 #include <Util/Common.hpp>
 namespace NES
 {
-
-/// This node represents a logical binary function.
+/**
+ * @brief This node represents a logical binary function.
+ */
 class NodeFunctionLogicalBinary : public NodeFunctionBinary, public LogicalNodeFunction
 {
 public:

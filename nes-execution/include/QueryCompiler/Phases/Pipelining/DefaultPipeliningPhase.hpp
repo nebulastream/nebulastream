@@ -14,7 +14,6 @@
 #pragma once
 
 #include <map>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
@@ -49,7 +48,7 @@ protected:
         const PipelineQueryPlanPtr& pipelinePlan,
         std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
         const OperatorPipelinePtr& currentPipeline,
-        const SinkLogicalOperator& currentOperator);
+        const PhysicalOperators::PhysicalOperatorPtr& currentOperator);
     static void processSource(
         const PipelineQueryPlanPtr& pipelinePlan,
         std::map<OperatorPtr, OperatorPipelinePtr>& pipelineOperatorMap,
