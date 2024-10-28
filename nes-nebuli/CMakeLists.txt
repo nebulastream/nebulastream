@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_subdirectory(src)
-add_subdirectory(sql-parser)
 
 find_program(CLANG_EXECUTABLE NAMES clang clang-18 REQUIRED)
 message(STATUS "Found Clang Binary: ${CLANG_EXECUTABLE}")
@@ -25,7 +24,7 @@ get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES} ${SQL_PARSER_SOURCE_FILES})
 
 target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nes-nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -40,7 +39,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
-        PRIVATE sql-parser yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
+        PRIVATE nes-sql-parser yaml-cpp::yaml-cpp nes-client
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp)

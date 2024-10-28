@@ -20,12 +20,12 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <SQLParser/NebulaSQLQueryPlanCreator.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include "Functions/LogicalFunctions/NodeFunctionNegate.hpp"
-#include "Operators/LogicalOperators/LogicalOperatorFactory.hpp"
 
 namespace NES::Parsers
 {
