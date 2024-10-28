@@ -52,7 +52,7 @@ bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
 std::string SourceNameLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "LogicalSource(opId: " << id << ")";
+    ss << "SOURCE(opId: " << id << ")";
 
     return ss.str();
 }
