@@ -14,8 +14,12 @@ Therefore, NebulaStream can not allocate any buffers for data processing, leadin
 This leads to harder-to-understand code and implementation and violates basic OOP principles like separation of concerns.
 
 # Goals
+**G1**:
+**G2**:
+**G3**:
+**G4**:
+
 - describe goals/requirements that the proposed solution must fulfill
-- enumerate goals as G1, G2, ...
 - describe how the goals G1, G2, ... address the problems P1, P2, ...
 
 # Non-Goals
@@ -78,7 +82,7 @@ In this example, each time we invoke the `async_read_some` function, we yield co
 
 
 # Our Proposed Solution
-The proposed solution depends on three key design decisions:
+The proposed solution depends on three design decisions:
 1. To handle a large number of concurrently running sources on relatively few threads, sources should make asynchronous calls to the outside.
 2. I/O threads/buffers should be kept separate from computation threads/buffers to prevent deadlocks.
 3. Sources have a single task and they should do this task well: ingest raw bytes into the systems buffers as fast as possible
@@ -88,37 +92,49 @@ From "C++11 - Concurrency in Action": *"If your thread is blocked waiting for ex
 We need asynchronous I/O requests because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls on these few threads.
 To put 1) into practice, we employ a `SourceServer` that orchestrates all registered physical sources on a single worker node.
 Each source defines how to read data into `TupleBuffer`s asynchronously by utilizing `boost::asio` I/O objects or similar.
-The server runs an event loop provided by `boost::asio::io_context` and schedules coroutines onto threads of it's fixed-size thread pool.
-It deals with the adding and removal of sources, propagation of errors to the `QueryManager` and thread synchronization when writing results downstream.
+The server runs an event loop provided by `boost::asio::io_context` and schedules coroutines onto threads of its fixed-size thread pool.
+It deals with the addition and removal of sources, propagation of errors to the `QueryManager` and thread synchronization when writing results downstream.
 
 ## 2) I/O and compute separation
 From the docs of ClickHouse: *The main purpose of IO thread pool is to avoid exhaustion of the global pool with IO jobs, which could prevent queries from fully utilizing CPU.*
 For 2), we create the threads internally in the `SourceServer`, as it runs the event loop and knows when and how to schedule threads for execution.
-However, we do not concern the `SourceServer` directly with the management of buffers, as this is the task of the `BufferManager`.
-We could, however, track statistics on how fast each source produces data (like currently implemented), and hint this to the buffer manager to help it out fairly distributing resources.
+We do not concern the `SourceServer` directly with the management of buffers, as this is the task of the `BufferManager`, which still needs to be made aware of the sources and their buffer usage.
 For flow control (handling speed differences between producer and consumer), the following questions arise with respect to buffers:
-- **Fast Source, Slow Downstream**: How do we apply backpressure to help the system under high load?
-If we work with a fixed-size buffer pool, we can apply backpressure to a source by rejecting a request to a buffer.
-This could be done by returning an error and forcing the source to try again later.
-The source could then set a timeout and be woken up by the I/O executor at a later point to try again.
-In the meantime, the external system will be throttled.
-Still, if a single source is able to request all buffers, this would then slow down all sources.
-Therefore, we need to make sure not all buffers from the pool can be allocated by a single source (e.g., a maximum of N - NUM_SOURCES with N being the number of buffers).
-- **Slow Source, Fast Downstream**: How do we keep the latency in check when a source takes a very long time filling a buffer? 
-I see several possibilities here:
-- Demand-based: If a downstream pipeline sees that the task queue is empty, it may ask the `SourceServer` to release a partially filled buffer.
+1. **Slow Source, Fast Downstream**: How do we keep the latency in check when a source takes a very long time to fill a buffer? 
+This will be the general case where the system is not overwhelmed with external data, and I see two approaches here:
+- *Demand-based*: If a downstream pipeline sees that the task queue is empty, it may ask the `SourceServer` via the `BufferManager` to release a partially filled buffer.
 Instead of issuing new requests or waiting for more data, the coroutine driving the source could yield control and give out the buffer, asking the `BufferManager` for a new one.
-This approach would require pipelines having access to the `SourceServer`, but it would give a consistent approach for controlling the latency.
-- Timeout-based: After some time is passed, the source releases its buffer, writing it downstream.
+This approach would require pipelines to have some kind of backwards control flow to the `SourceServer`, but it would give a consistent approach for controlling the latency.
+- *Timeout-based*: After some time has passed, the source releases its buffer, writing it downstream.
 Here, we get another hyperparameter for the system. 
 Global timeouts are not suitable as each query might have different latency requirements.
-Also, the timeout set might not even reflect in the final latency (it only reflects on the latency of the source).
+Also, the timeout set might not even be reflected in the final latency (it only reflects on the latency of the source).
+2. **Fast Source, Slow Downstream**: How do we apply backpressure to help the system under high load?
+If we work with a fixed-size buffer pool, we can apply backpressure to a source by rejecting its request to acquire a buffer.
+This could be done by returning an error and forcing the source to try again later.
+The source could then set a timeout and be woken up by the I/O executor at a later point to try again.
+Or, we could use a thread synchronization primitive like a condition variable or some other event-based mechanism to allow the source to continue when a buffer is available.
+In the meantime, the external system will be throttled.
+- **Fast Sources, Slow Sources**: 
+Speed differences between the different sources can be defined as differences in buffer requests per unit time.
+When downstream tasks are reading and thus releasing the buffers faster than the source can fill a new buffer, case 1) applies. 
+We do not get a problem with regard to system performance **as long as the source always has a single buffer available that it can fill in the background**.
+If we can not provide this guarantee because other sources have taken all buffers, all queries depending on this source will be slowed down.
+Therefore, the `BufferManager` needs to make sure it always holds a reserve of a single buffer per source that it does not give out to other sources.
+When a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies.
+When enough buffers are available, the buffer manager will happily give out buffers to fast producers and the available buffers will be automatically be distributed relative to the demand.
+Again, we only need to make sure that with N currently registered sources and M currently available buffers, M - N buffers are given to a single source at a maximum.
+This necessitates the assumption/invariant that more buffers exist than the number of sources registered.
+When a source wants to be registered and this would violate the requirement, we deny and answer to the `QueryManager` that the given source and therefore the queries that depend on it can not be placed on this node.
 
 ## 3) Move parsing out of the sources
 From the docs of ClickHouse: *For byte-oriented input/output, there are ReadBuffer and WriteBuffer abstract classes [...] Read/WriteBuffers only deal with bytes.*
 Having parsers inside the sources mixes logic and code for retrieving external data (I/O) with the interpretation of the raw bytes ingested (compute).
 Instead, parsing should be done as the first part of a pipeline.
 This enables the sources to concern themselves with the single simple task of reading data into `TupleBuffer`s and handing them out to consumers.
+Furthermore, pushing certain operations to parsing will be possible, like filtering unparsed data, etc.
+To implement this, we simply remove all parsing-related code from the sources.
+Other components need to handle it from now on.
 
 - start with a high-level overview of the solution
 - explain the interface and interaction with other system components
@@ -132,6 +148,11 @@ This enables the sources to concern themselves with the single simple task of re
 - discuss alternative approaches A1, A2, ..., including their advantages and disadvantages
 
 # Open Questions
+- How to enforce async I/O, or how to fallback to baseline when to async I/O is possible 
+- How to deal with source sharing?
+- How to deal with internal sources?
+
+
 - list relevant questions that cannot or need not be answered before merging
 - create issues if needed
 
