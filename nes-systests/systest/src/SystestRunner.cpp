@@ -16,10 +16,14 @@
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <folly/MPMCQueue.h>
+#include <grpc++/create_channel.h>
 #include <NebuLI.hpp>
 #include <SLTParser.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+#include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
+#include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
@@ -146,6 +150,132 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
         return {};
     }
     return plans;
+}
+
+bool runQueriesAtLocalWorker(
+    std::vector<Query> queries, uint64_t numConcurrentQueries, const NES::Configuration::SingleNodeWorkerConfiguration& configuration)
+{
+    bool allTestSucceeded = true;
+
+    folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    NES::SingleNodeWorker worker = NES::SingleNodeWorker(configuration);
+
+    std::atomic<size_t> queriesToResultCheck{0};
+    std::atomic finishedProducing{false};
+
+    std::thread producer(
+        [&]()
+        {
+            for (auto& query : queries)
+            {
+                while (queriesToResultCheck.load() >= numConcurrentQueries)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                }
+
+                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
+                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
+                {
+                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
+                }
+                else
+                {
+                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
+                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
+                }
+
+                auto queryId = worker.registerQuery(decomposedQueryPlan);
+                worker.startQuery(queryId);
+
+                RunningQuery const runningQuery = {query, queryId};
+
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                runningQueries.blockingWrite(std::move(runningQueryPtr));
+                queriesToResultCheck.fetch_add(1);
+            }
+            finishedProducing = true;
+        });
+
+    while (not finishedProducing or queriesToResultCheck.load() > 0)
+    {
+        std::unique_ptr<RunningQuery> runningQuery;
+        runningQueries.blockingRead(runningQuery);
+        while (worker.getQuerySummary(NES::QueryId(runningQuery->queryId))->currentStatus != NES::Runtime::Execution::QueryStatus::Stopped)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        }
+        worker.unregisterQuery(NES::QueryId(runningQuery->queryId));
+
+        if (!checkResult(runningQuery->query))
+        {
+            allTestSucceeded = false;
+        }
+        queriesToResultCheck.fetch_sub(1, std::memory_order_release);
+    }
+    producer.join();
+    return allTestSucceeded;
+}
+
+bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI)
+{
+    bool allTestSucceeded = true;
+
+    folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    GRPCClient client(grpc::CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
+
+    std::atomic<size_t> runningQueryCount{0};
+    std::atomic finishedProducing{false};
+
+    std::thread producer(
+        [&]()
+        {
+            for (auto& query : queries)
+            {
+                while (runningQueryCount.load() >= numConcurrentQueries)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                }
+
+                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
+                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
+                {
+                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
+                }
+                else
+                {
+                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
+                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
+                }
+
+                auto queryId = client.registerQuery(decomposedQueryPlan);
+                client.start(queryId);
+                RunningQuery const runningQuery = {query, NES::QueryId(queryId)};
+
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                runningQueries.blockingWrite(std::move(runningQueryPtr));
+                runningQueryCount.fetch_add(1);
+            }
+            finishedProducing = true;
+        });
+
+    while (not finishedProducing)
+    {
+        std::unique_ptr<RunningQuery> runningQuery;
+        runningQueries.blockingRead(runningQuery);
+        INVARIANT(runningQuery != nullptr, "query is not running");
+        while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        }
+        client.unregister(runningQuery->queryId.getRawValue());
+        if (!checkResult(runningQuery->query))
+        {
+            allTestSucceeded = false;
+        }
+        runningQueryCount.fetch_sub(1);
+    }
+    producer.join();
+    return allTestSucceeded;
 }
 
 }
