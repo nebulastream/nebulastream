@@ -39,8 +39,10 @@ bool NodeFunctionOr::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionOr>(rhs))
     {
-        auto otherAndNode = NES::Util::as<NodeFunctionOr>(rhs);
-        return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
+        auto other = NES::Util::as<NodeFunctionOr>(rhs);
+        const bool simpleMatch = getLeft()->equal(other->getLeft()) and getRight()->equal(other->getRight());
+        const bool commutativeMatch = getLeft()->equal(other->getRight()) and getRight()->equal(other->getLeft());
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }
