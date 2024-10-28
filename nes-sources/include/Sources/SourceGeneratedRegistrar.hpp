@@ -35,8 +35,8 @@ std::unique_ptr<Source> RegisterSourceTCP(const Schema&, const SourceDescriptor&
 namespace NES
 {
 template <>
-inline void
-Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+inline void Registrar<std::string, NES::Sources::Source, const Schema&, const Sources::SourceDescriptor&>::registerAll(
+    [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrar;
     registry.registerPlugin("CSV", RegisterSourceCSV);

@@ -17,9 +17,9 @@
 #include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <Sinks/Sink.hpp>
+#include <Sinks/SinkGeneratedRegistrar.hpp>
 #include <Sinks/SinkPrint.hpp>
-#include <Sinks/SinkRegistry.hpp>
-#include <SinksValidation/SinkRegistryValidation.hpp>
+#include <SinksValidation/SinkGeneratedRegistrarValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Sinks
@@ -57,21 +57,23 @@ bool SinkPrint::equals(const Sink& other) const
     return this->queryId == other.queryId;
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config>
-SinkPrint::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+Configurations::DescriptorConfig::Config SinkPrint::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Sink::validateAndFormatImpl<ConfigParametersPrint>(std::move(config), NAME);
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SinkGeneratedRegistrarValidation::RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&& sinkConfig)
+void SinkGeneratedRegistrarValidation::RegisterSinkValidationPrint(SinkRegistryValidation& registry)
 {
-    return SinkPrint::validateAndFormat(std::move(sinkConfig));
+    const auto validateFunc = [](std::unordered_map<std::string, std::string>&& sourceConfig) -> Configurations::DescriptorConfig::Config
+    { return SinkPrint::validateAndFormat(std::move(sourceConfig)); };
+    registry.registerPlugin((SinkPrint::NAME), validateFunc);
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkPrint(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+void SinkGeneratedRegistrar::RegisterSinkPrint(SinkRegistry& registry)
 {
-    return std::make_unique<SinkPrint>(queryId, sinkDescriptor);
+    const auto constructorFunc = [](const QueryId queryId, const SinkDescriptor& sinkDescriptor) -> std::unique_ptr<Sink>
+    { return std::make_unique<SinkPrint>(queryId, sinkDescriptor); };
+    registry.registerPlugin((SinkPrint::NAME), constructorFunc);
 }
 
 }

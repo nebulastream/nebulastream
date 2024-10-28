@@ -31,14 +31,28 @@
 namespace NES
 {
 
-QueryPlanPtr QueryPlan::create(OperatorPtr rootOperator)
-{
-    return std::make_shared<QueryPlan>(std::move(rootOperator));
-}
-
 QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 {
-    return std::make_shared<QueryPlan>(std::move(queryId), std::move(rootOperators));
+    return std::make_shared<QueryPlan>(QueryPlan(queryId, std::move(rootOperators)));
+}
+
+QueryPlanPtr QueryPlan::create(QueryId queryId)
+{
+    return std::make_shared<QueryPlan>(QueryPlan(queryId));
+}
+
+QueryPlanPtr QueryPlan::create(OperatorPtr rootOperator)
+{
+    return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
+}
+
+QueryPlanPtr QueryPlan::create()
+{
+    return std::make_shared<QueryPlan>(QueryPlan());
+}
+
+QueryPlan::QueryPlan()
+{
 }
 
 QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID)
@@ -47,6 +61,10 @@ QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID)
 }
 
 QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators) : rootOperators(std::move(rootOperators)), queryId(queryId)
+{
+}
+
+QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId)
 {
 }
 
@@ -445,4 +463,5 @@ void QueryPlan::setQueryState(QueryState newState)
 {
     currentState = newState;
 }
+
 }

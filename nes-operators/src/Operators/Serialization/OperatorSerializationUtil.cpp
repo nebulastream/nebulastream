@@ -382,6 +382,8 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const
 {
     const auto serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
+    /// Todo: why don't we serialize the operator ids and deserialize them, instead of assigning new operator Ids.
+    /// -> getNextOperatorId() is used throughout this class. (Could be irrelevant after operator refactoring.)
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDetails.sinkname(), INVALID_WORKER_NODE_ID, getNextOperatorId());
     NES::Util::as<SinkLogicalOperator>(sinkOperator)->sinkDescriptor = std::move(sinkDescriptor);
     return sinkOperator;
