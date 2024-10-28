@@ -14,7 +14,6 @@
 
 #pragma once
 
-/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SINK_REGISTRY_VALIDATION
 #    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
 #endif
