@@ -14,6 +14,7 @@
 
 #pragma once
 
+/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
