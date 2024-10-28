@@ -13,6 +13,8 @@
 */
 
 #pragma once
+
+/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SINK_REGISTRY
 #    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
 #endif

@@ -14,6 +14,7 @@
 
 #pragma once
 
+/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
 #    error "This file should not be included directly! " \
 "Include instead include <Execution/Pipelines/ExecutablePipelineProviderRegistry.hpp>"
