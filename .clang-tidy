@@ -43,6 +43,13 @@ Checks: [
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
+  # it is not possible to disable this for structs
+  "-misc-non-private-member-variables-in-classes",
+  # does not work with our error of unused variable
+  "-readability-named-parameter",
+  # we can not overload the operator() anywhere
+  "-fuchsia-overloaded-operator",
+
   # annyoing and useless
   "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-bugprone-easily-swappable-parameters", # annoying-ish
