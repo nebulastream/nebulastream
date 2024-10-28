@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -22,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -52,11 +54,27 @@ bool LogicalProjectionOperator::equal(NodePtr const& rhs) const
     return false;
 };
 
+std::string getFieldName(const NodeFunction& function)
+{
+    /// We assert that the projection operator only contains field access and assignment functions in the constructor.
+    if (const auto* nodeFunctionFieldAccess = dynamic_cast<NodeFunctionFieldAccess const*>(&function))
+    {
+        return nodeFunctionFieldAccess->getFieldName();
+    }
+    return dynamic_cast<NodeFunctionFieldAssignment const*>(&function)->getField()->getFieldName();
+}
+
 std::string LogicalProjectionOperator::toString() const
 {
     std::stringstream ss;
-    ss << "PROJECTION(" << id << ", schema=" << outputSchema->toString() << ")";
-    return ss.str();
+    if (not outputSchema->getFieldNames().empty())
+    {
+        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
+    }
+    return fmt::format(
+        "PROJECTION(opId: {}, fields: [{}])",
+        id,
+        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
 }
 
 bool LogicalProjectionOperator::inferSchema()
@@ -83,10 +101,17 @@ bool LogicalProjectionOperator::inferSchema()
             auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
+        else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
+        {
+            auto fieldAccess = NES::Util::as<NodeFunctionFieldAssignment>(function);
+            outputSchema->addField(fieldAccess->getField()->getFieldName(), fieldAccess->getStamp());
+        }
         else
         {
             throw CannotInferSchema(
-                "function has to be an NodeFunctionFieldAccess or a NodeFunctionFieldRename but it was a {}", function->toString());
+                "LogicalProjectionOperator: Function has to be an NodeFunctionFieldAccess, a "
+                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a "
+                + function->toString());
         }
     }
     return true;
