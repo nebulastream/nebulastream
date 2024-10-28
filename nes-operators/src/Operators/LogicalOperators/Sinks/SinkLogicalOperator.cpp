@@ -41,7 +41,7 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
         const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return this->sinkName == sinkOperator->sinkName and *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef();
+        return *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef();
     }
     return false;
 };
@@ -49,9 +49,7 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
-    ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
-    ss << ")\n";
+    ss << "SINK(opId: " << id << ": {" << sinkDescriptor << "})";
     return ss.str();
 }
 const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
@@ -61,20 +59,11 @@ const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
 
 OperatorPtr SinkLogicalOperator::copy()
 {
-    ///We pass invalid worker id here because the properties will be copied later automatically.
     auto sinkDescriptorPtrCopy = sinkDescriptor;
-    auto copy = std::make_shared<SinkLogicalOperator>(sinkName, std::move(sinkDescriptorPtrCopy), id);
-    copy->setInputOriginIds(inputOriginIds);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setZ3Signature(z3Signature);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setOperatorState(operatorState);
-    for (const auto& [propertyName, propertyValue] : properties)
-    {
-        copy->addProperty(propertyName, propertyValue);
-    }
-    return copy;
+    auto result = std::make_shared<SinkLogicalOperator>(sinkName, std::move(sinkDescriptorPtrCopy), id);
+    result->inferSchema();
+    result->addAllProperties(properties);
+    return result;
 }
 
 void SinkLogicalOperator::inferStringSignature()

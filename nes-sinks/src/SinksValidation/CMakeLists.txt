@@ -10,14 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(SinksParsing)
-add_subdirectory(SinksValidation)
-
 add_source_files(nes-sinks
-        SinkDescriptor.cpp
-        SinkRegistry.cpp
-        Sink.cpp
-        SinkProvider.cpp
-        SinkFile.cpp
-        SinkPrint.cpp
+        SinkRegistryValidation.cpp
 )

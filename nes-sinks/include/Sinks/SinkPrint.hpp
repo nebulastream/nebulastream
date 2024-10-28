@@ -14,16 +14,13 @@
 
 #pragma once
 
-
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Sinks/Sink.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-
 
 
 namespace NES::Sinks
@@ -41,8 +38,7 @@ public:
     void close() override { /* noop */ };
 
     bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
-    static std::unique_ptr<Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -53,7 +49,6 @@ private:
     std::unique_ptr<CSVFormat> outputParser;
 };
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersPrint
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>

@@ -38,8 +38,7 @@ public:
     void close() override;
 
     bool emitTupleBuffer(Memory::TupleBuffer& inputBuffer) override;
-    static std::unique_ptr<Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    static Configurations::DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -55,7 +54,6 @@ private:
     std::ofstream outputFileStream;
 };
 
-/// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
 struct ConfigParametersFile
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
