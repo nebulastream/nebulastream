@@ -35,6 +35,7 @@ There are two naive threading models to manage data ingestion:
 2. Have a single thread per operation/connection perform the work (as currently implemented in NES)
 The former leads to serial execution, limiting throughput. 
 The latter leads to a lot of overhead in the case of very large numbers of connections/queries.
+From "C++11 - Concurrency in Action": *"When you have an application that needs to handle a lot of network connections, it’s often tempting to handle each connection on a separate thread, because this can make the network communication easier to think about and easier to program. This works well for low numbers of connections (and thus low numbers of threads). Unfortunately, as the number of connections rises, this becomes less suitable; the large numbers of threads consequently consume large numbers of operating system resources and potentially cause a lot of context switching (when the number of threads exceeds the available hardware concurrency), impacting performance. In the extreme case, the operating system may run out of resources for running new threads before its capacity for network connections is exhausted. In applications with very large numbers of network connections, it’s therefore common to have a small number of threads (possibly only one) handling the connections, each thread dealing with multiple connections at once."*
 To solve these problems, web servers and (some) query engines use separate thread pools for I/O and compute.
 This decoupling prevents tasks that are CPU-bound to hog threads and being unable to respond to external requests. 
 At the same time, threads that do blocking I/O calls (e.g., asking for a disk page, making a request to S3, etc.), they stall compute threads or other threads that could issue I/O requests the meantime.
@@ -83,6 +84,7 @@ The proposed solution depends on three key design decisions:
 3. Sources have a single task and they should do this task well: ingest raw bytes into the systems buffers as fast as possible
 
 ## 1) Async I/O
+From "C++11 - Concurrency in Action": *"If your thread is blocked waiting for external input, it can't proceed [...] It's therefore undesirable to block on external input from a thread that also performs tasks that other threads may be waiting for."*
 We need asynchronous I/O requests because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls on these few threads.
 To put 1) into practice, we employ a `SourceServer` that orchestrates all registered physical sources on a single worker node.
 Each source defines how to read data into `TupleBuffer`s asynchronously by utilizing `boost::asio` I/O objects or similar.
@@ -90,6 +92,7 @@ The server runs an event loop provided by `boost::asio::io_context` and schedule
 It deals with the adding and removal of sources, propagation of errors to the `QueryManager` and thread synchronization when writing results downstream.
 
 ## 2) I/O and compute separation
+From the docs of ClickHouse: *The main purpose of IO thread pool is to avoid exhaustion of the global pool with IO jobs, which could prevent queries from fully utilizing CPU.*
 For 2), we create the threads internally in the `SourceServer`, as it runs the event loop and knows when and how to schedule threads for execution.
 However, we do not concern the `SourceServer` directly with the management of buffers, as this is the task of the `BufferManager`.
 We could, however, track statistics on how fast each source produces data (like currently implemented), and hint this to the buffer manager to help it out fairly distributing resources.
@@ -112,6 +115,7 @@ Global timeouts are not suitable as each query might have different latency requ
 Also, the timeout set might not even reflect in the final latency (it only reflects on the latency of the source).
 
 ## 3) Move parsing out of the sources
+From the docs of ClickHouse: *For byte-oriented input/output, there are ReadBuffer and WriteBuffer abstract classes [...] Read/WriteBuffers only deal with bytes.*
 Having parsers inside the sources mixes logic and code for retrieving external data (I/O) with the interpretation of the raw bytes ingested (compute).
 Instead, parsing should be done as the first part of a pipeline.
 This enables the sources to concern themselves with the single simple task of reading data into `TupleBuffer`s and handing them out to consumers.
@@ -123,18 +127,17 @@ This enables the sources to concern themselves with the single simple task of re
 - use diagrams if reasonable
 
 # Proof of Concept
-- demonstrate that the solution should work
-- can be done after the first draft
 
 # Alternatives
 - discuss alternative approaches A1, A2, ..., including their advantages and disadvantages
 
-# (Optional) Open Questions
+# Open Questions
 - list relevant questions that cannot or need not be answered before merging
 - create issues if needed
 
-# (Optional) Sources and Further Reading
+# Sources and Further Reading
 - https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html
+- https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how
 
 # (Optional) Appendix
-- provide here nonessential information that could disturb the reading flow, e.g., implementation details
+
