@@ -14,7 +14,6 @@
 
 #pragma once
 
-/// NOLINT(clang-diagnostic-error)
 #ifndef EXCEPTION
 #    error "This file should not be included directly! Include it via <ErrorHandling.hpp>"
 #endif
