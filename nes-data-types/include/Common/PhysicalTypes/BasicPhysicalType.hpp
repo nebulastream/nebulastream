@@ -59,12 +59,6 @@ public:
     static PhysicalTypePtr create(const DataTypePtr& type, NativeType nativeType);
 
     /**
-     * @brief Indicates if this is a basic data type.
-     * @return true
-     */
-    [[nodiscard]] bool isBasicType() const noexcept override { return true; }
-
-    /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return uint64_t
      */

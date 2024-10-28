@@ -73,7 +73,7 @@ bool ParserCSV::writeInputTupleToTupleBuffer(
         const auto dataType = schema.fields[j]->getDataType();
         const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         auto testTupleBufferDynamicField = testTupleBuffer[tupleCount][j];
-        if (physicalType->isBasicType())
+        if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
         {
             const auto basicPhysicalType = std::dynamic_pointer_cast<const BasicPhysicalType>(physicalType);
             Parser::writeBasicTypeToTupleBuffer(values[j], testTupleBufferDynamicField, *basicPhysicalType);

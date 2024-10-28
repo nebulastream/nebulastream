@@ -47,10 +47,6 @@ public:
 
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    [[nodiscard]] virtual bool isBasicType() const noexcept { return false; }
-
-    [[nodiscard]] virtual bool isVariableSizedDataType() const noexcept { return false; }
-
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
 
     /// Type that is contained by this PhysicalType container

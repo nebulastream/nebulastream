@@ -142,7 +142,7 @@ void writeFieldValueToTupleBuffer(
     /// TODO #371 replace with csv parsing library
     try
     {
-        if (physicalType->isBasicType())
+        if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
         {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
             switch (basicPhysicalType->nativeType)

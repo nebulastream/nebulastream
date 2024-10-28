@@ -23,6 +23,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -40,7 +41,7 @@ const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, c
 Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
-    if (type->isBasicType())
+    if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
         return Nautilus::VarVal::readVarValFromMemory(fieldReference, type);
     }
@@ -65,7 +66,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
     const nautilus::val<int8_t*>& fieldReference,
     Nautilus::VarVal value)
 {
-    if (type->isBasicType())
+    if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
         value.writeToMemory(fieldReference);
         return value;
