@@ -30,15 +30,6 @@
 namespace NES::Configurations
 {
 
-namespace DescriptorConfigurationConstraints
-{
-/// Make sure that SourceSpecificConfiguration::parameterMap exists.
-template <typename T>
-concept HasParameterMap = requires(T configuration) {
-    { configuration.parameterMap };
-};
-}
-
 /// Todo #355 : refactor usages of Descriptor, specifically in Sources and Sinks, into general configuration
 /// Config: The design principle of the Descriptor config is that the entire definition of the configuration happens in one place.
 /// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
@@ -131,49 +122,6 @@ public:
         std::shared_ptr<const ConfigParameterConcept> configParameter;
     };
 
-    /// Iterates over all parameters in a user provided config and checks if they are supported by a specific config.
-    /// Then iterates over all supported config parameters, validates and formats the strings provided by the user.
-    /// Uses default parameters if the user did not specify a parameter.
-    /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
-    template <typename SpecificConfiguration>
-    requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
-    static std::unique_ptr<Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config, const std::string_view implementationName)
-    {
-        auto validatedConfig = std::make_unique<Config>();
-
-        /// First check if all user-specified keys are valid.
-        for (const auto& [key, _] : config)
-        {
-            if (key != "type" and not SpecificConfiguration::parameterMap.contains(key))
-            {
-                throw InvalidConfigParameter(fmt::format("Unknown configuration parameter: {}.", key));
-            }
-        }
-        /// Next, try to validate all config parameters.
-        for (const auto& [key, configParameter] : SpecificConfiguration::parameterMap)
-        {
-            for (const auto& [keyString, configParameterString] : config)
-            {
-                NES_DEBUG("key: {}, value: {}", keyString, configParameterString);
-            }
-            const auto validatedParameter = configParameter.validate(config);
-            if (validatedParameter.has_value())
-            {
-                validatedConfig->emplace(key, validatedParameter.value());
-                continue;
-            }
-            /// If the user did not specify a parameter that is optional, use the default value.
-            if (not config.contains(key) and configParameter.getDefaultValue().has_value())
-            {
-                validatedConfig->emplace(key, configParameter.getDefaultValue().value());
-                continue;
-            }
-            throw InvalidConfigParameter(fmt::format("Failed validation of config parameter: {}, in: {}", key, implementationName));
-        }
-        return validatedConfig;
-    }
-
 private:
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
@@ -227,19 +175,12 @@ private:
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
-            if (auto enumWrapperValue = EnumWrapper(stringParameter); enumWrapperValue.asEnum<EnumType>().has_value())
+            if (auto enumWrapperValue = EnumWrapper(stringParameter); enumWrapperValue.asEnum<EnumType>().has_value()
+                && magic_enum::enum_contains<EnumType>(enumWrapperValue.asEnum<EnumType>().value()))
             {
-                if (magic_enum::enum_contains<EnumType>(enumWrapperValue.asEnum<EnumType>().value()))
-                {
-                    return enumWrapperValue;
-                }
-                NES_ERROR(
-                    "Could not match the enum string: {}, to any enum of the existing enum values of the supplied enum type.",
-                    stringParameter);
-                return std::nullopt;
+                return enumWrapperValue;
             }
-            NES_ERROR(
-                "Failed to convert EnumWrapper with value: {}, to InputFormat enum, because the enum had the wrong type.", stringParameter);
+            NES_ERROR("Failed to convert EnumWrapper with value: {}, to InputFormat enum.", stringParameter);
             return std::nullopt;
         }
         else
