@@ -401,10 +401,16 @@ public:
      */
     Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
+    Query& inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
+
     /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
     /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
     virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
+    /**
+     * @brief Gets the query plan from the current query.
+     * @return QueryPlan
+     */
     QueryPlanPtr getQueryPlan() const;
 
     /// creates a new query object
