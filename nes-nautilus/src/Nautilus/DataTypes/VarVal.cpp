@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Util/Common.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -86,7 +87,7 @@ VarVal::operator bool() const
 
 VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type)
 {
-    if (type->isBasicType())
+    if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
         switch (const auto basicType = std::static_pointer_cast<BasicPhysicalType>(type); basicType->nativeType)
         {
