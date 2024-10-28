@@ -13,6 +13,7 @@
 */
 
 #include <iostream>
+#include <regex>
 #include <utility>
 
 #include <API/AttributeField.hpp>
@@ -36,34 +37,20 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema
 
 std::string CSVFormat::getFormattedSchema() const
 {
-    std::stringstream formattedSchema;
+    std::stringstream ss;
     for (auto& attributeField : schema->fields)
     {
-        formattedSchema << attributeField->toString() << ", ";
+        ss << attributeField->toString() << ", ";
     }
-    formattedSchema.seekp(-1, std::ios_base::end);
-    formattedSchema << std::endl;
+    ss.seekp(-1, std::ios_base::end);
+    ss << std::endl;
 
     if (addTimestamp)
     {
-        formattedSchema << Util::trimWhiteSpaces(formattedSchema.str());
-        formattedSchema << ", timestamp\n";
+        ss << Util::trimWhiteSpaces(ss.str());
+        ss << ", timestamp\n";
     }
-    return formattedSchema.str();
-}
-
-constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement) {
-    std::string result;
-    result.reserve(input.size());
-
-    for (const char c : input) {
-        if (c == '\n') {
-            result += replacement;
-        } else {
-            result += c;
-        }
-    }
-    return result;
+    return ss.str();
 }
 
 std::string CSVFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
@@ -73,19 +60,19 @@ std::string CSVFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
     {
         auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, schema);
+        bufferContent = printTupleBufferAsCSV(inputBuffer, schema);
         std::string repReg = "," + std::to_string(timestamp) + "\n";
-        bufferContent = replaceNewlines(bufferContent, repReg);
+        bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
         schema->addField("timestamp", BasicType::UINT64);
     }
     else
     {
-        bufferContent = tupleBufferToFormattedCSVString(inputBuffer, schema);
+        bufferContent = printTupleBufferAsCSV(inputBuffer, schema);
     }
     return bufferContent;
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string CSVFormat::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
