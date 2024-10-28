@@ -33,7 +33,8 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
         const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return this->sinkName == sinkOperator->sinkName and *this->sinkDescriptor == sinkOperator->getSinkDescriptorRef();
+        return this->sinkName == sinkOperator->sinkName
+            and ((this->sinkDescriptor) ? this->sinkDescriptor == sinkOperator->sinkDescriptor : true);
     }
     return false;
 };
@@ -41,9 +42,9 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
+    ss << fmt::format("\nSINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
     ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
-    ss << ")\n";
+    ss << ")";
     return ss.str();
 }
 const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
