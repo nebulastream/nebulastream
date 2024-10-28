@@ -202,8 +202,8 @@ private:
 
     mutable std::recursive_mutex unpooledBuffersMutex;
 
-    size_t bufferSize;
-    size_t numOfBuffers;
+    uint32_t bufferSize;
+    uint32_t numOfBuffers;
 
     uint8_t* basePointer{nullptr};
     size_t allocatedAreaSize;
