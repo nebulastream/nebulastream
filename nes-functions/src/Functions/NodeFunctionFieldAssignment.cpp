@@ -40,9 +40,11 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(rhs))
     {
-        auto otherFieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(rhs);
+        const auto otherFieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(rhs);
         /// a field assignment function has always two children.
-        return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
+        const bool fieldsMatch = getField()->equal(otherFieldAssignment->getField());
+        const bool assignmentsMatch = getAssignment()->equal(otherFieldAssignment->getAssignment());
+        return fieldsMatch and assignmentsMatch;
     }
     return false;
 }
@@ -50,7 +52,7 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 std::string NodeFunctionFieldAssignment::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "=" << children[1]->toString();
+    ss << "NodeFunctionFieldAssignment(" << children[0]->toString() << "=" << children[1]->toString() << ")";
     return ss.str();
 }
 

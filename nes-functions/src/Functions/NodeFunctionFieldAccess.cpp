@@ -42,7 +42,9 @@ bool NodeFunctionFieldAccess::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionFieldAccess>(rhs))
     {
         auto otherFieldRead = NES::Util::as<NodeFunctionFieldAccess>(rhs);
-        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->equals(stamp);
+        bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
+        bool stampsMatch = otherFieldRead->stamp->equals(stamp);
+        return fieldNamesMatch and stampsMatch;
     }
     return false;
 }
@@ -59,7 +61,7 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
+    return "NodeFunctionFieldAccess(" + fieldName + "[" + stamp->toString() + "])";
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
