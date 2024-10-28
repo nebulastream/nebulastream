@@ -47,27 +47,30 @@ public:
 ///TODO #130: Generalize and move into `nes-configuration`
 /// CLI > ConfigFile
 template <typename T>
-auto loadConfiguration(const int argc, const char** argv)
+auto loadConfiguration(int argc, const char** argv)
 {
-    /// Convert the POSIX command line arguments to a map of strings.
     std::unordered_map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i)
     {
-        const size_t pos = std::string(argv[i]).find('=');
-        const std::string arg{argv[i]};
-        commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
+        std::string arg = argv[i];
+        size_t pos = arg.find('=');
+        if (pos != std::string::npos)
+        {
+            commandLineParams[arg.substr(0, pos)] = arg.substr(pos + 1);
+        }
+        else
+        {
+            NES_WARNING("Argument \"{}\" is missing '=' for key-value pairing.", arg);
+        }
     }
 
-    /// Create a configuration object with default values.
     T config;
 
-    /// Read options from the YAML file.
     if (const auto configPath = commandLineParams.find("--" + Configurations::CONFIG_PATH); configPath != commandLineParams.end())
     {
         config.overwriteConfigWithYAMLFileInput(configPath->second);
     }
 
-    /// Options specified on the command line have the highest precedence.
     config.overwriteConfigWithCommandLineInput(commandLineParams);
 
     return config;

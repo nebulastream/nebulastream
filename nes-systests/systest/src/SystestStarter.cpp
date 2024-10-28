@@ -63,6 +63,12 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         .scan<'i', int>();
     program.add_argument("--sequential").flag().help("force sequential query execution. Equivalent to `-n 1`");
 
+    /// single node worker config
+    program.add_argument("--")
+        .help("Arguments passed to the worker config, e.g., `-- --workerConfiguration.numberOfWorkerThreads=10`")
+        .default_value(std::vector<std::string>{})
+        .remaining();
+
     program.parse_args(argc, argv);
 
     auto config = Configuration::SystestConfiguration();
@@ -183,6 +189,30 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
     }
 
+    if (program.is_used("--"))
+    {
+        auto confVec = program.get<std::vector<std::string>>("--");
+
+        int argc_ = confVec.size() + 1;
+        std::vector<const char*> argv_;
+        argv_.reserve(argc_ + 1);
+        argv_.push_back("systest"); /// dummy option as arg expects first arg to be the program name
+        for (auto& arg : confVec)
+        {
+            argv_.push_back(const_cast<char*>(arg.c_str()));
+        }
+
+        try
+        {
+            config.singleNodeWorkerConfig
+                = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
+        }
+        catch (const std::exception& e)
+        {
+            tryLogCurrentException();
+        }
+    }
+
     if (program.is_used("--resultDir"))
     {
         config.resultDir = program.get<std::string>("--resultDir");
@@ -250,38 +280,6 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
     std::shuffle(queries.begin(), queries.end(), g);
 }
 
-void saveDecomposedQueryPlans(std::filesystem::path savePath, const std::vector<NES::Systest::Query>& plans)
-{
-    for (std::size_t testnr = 0; const auto& plan : plans)
-    {
-        NES::SerializableDecomposedQueryPlan serialized;
-        if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(plan.queryPlan))
-        {
-            auto decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(plan.queryPlan);
-            NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, &serialized);
-        }
-        else
-        {
-            INVARIANT(false, "trying to cache already a cached query plan")
-        }
-
-        auto outfilename = fmt::format("{}/{}_{}.pb", savePath, plan.name, testnr);
-        std::ofstream file;
-        file = std::ofstream(outfilename);
-        if (!file)
-        {
-            NES_FATAL_ERROR("Could not open output file: {}", outfilename);
-            std::exit(1);
-        }
-        if (!serialized.SerializeToOstream(&file))
-        {
-            NES_FATAL_ERROR("Failed to write message to file.");
-            std::exit(1);
-        }
-        ++testnr;
-    }
-}
-
 void setupLogging()
 {
     std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -290,9 +288,8 @@ void setupLogging()
 
     const auto logFileName = fmt::format(PATH_TO_BINARY_DIR "/nes-systests/SystemTest_{}.log", timestamp);
 
-    std::cout << logFileName << "\n";
     NES::Logger::setupLogging(logFileName, NES::LogLevel::LOG_DEBUG, false);
-    std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
+    const std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
     /// file:// to make the link clickable in the console
     std::cout << "Find the log at: file://" << logPath.string() << std::endl;
 }
@@ -310,7 +307,7 @@ int main(int argc, const char** argv)
         auto config = Systest::readConfiguration(argc, argv);
 
         auto testMap = Systest::loadTestFileMap(config);
-        auto queries = loadQueries(std::move(testMap), config);
+        auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
 
         std::filesystem::remove_all(config.resultDir.getValue());
         std::filesystem::create_directory(config.resultDir.getValue());
@@ -328,17 +325,29 @@ int main(int argc, const char** argv)
         }
         else
         {
-            Configuration::SingleNodeWorkerConfiguration singleNodeWorkerConfiguration = Configuration::SingleNodeWorkerConfiguration();
-            if (not config.workerConfig.getValue().empty())
+            std::unique_ptr<Configuration::SingleNodeWorkerConfiguration> singleNodeWorkerConfiguration;
+
+            if (config.singleNodeWorkerConfig.has_value())
             {
-                singleNodeWorkerConfiguration.engineConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+                singleNodeWorkerConfiguration
+                    = std::make_unique<Configuration::SingleNodeWorkerConfiguration>(config.singleNodeWorkerConfig.value());
             }
-            if (not config.queryCompilerConfig.getValue().empty())
+            else
             {
-                singleNodeWorkerConfiguration.queryCompilerConfiguration.overwriteConfigWithYAMLFileInput(config.queryCompilerConfig);
+                singleNodeWorkerConfiguration = std::make_unique<Configuration::SingleNodeWorkerConfiguration>();
             }
 
-            returnCode = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration) ? 0 : 1;
+            if (!config.workerConfig.getValue().empty())
+            {
+                singleNodeWorkerConfiguration->engineConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+            }
+
+            if (!config.queryCompilerConfig.getValue().empty())
+            {
+                singleNodeWorkerConfiguration->queryCompilerConfiguration.overwriteConfigWithYAMLFileInput(config.queryCompilerConfig);
+            }
+
+            returnCode = runQueriesAtLocalWorker(queries, numberConcurrentQueries, *singleNodeWorkerConfiguration) ? 0 : 1;
         }
     }
     catch (...)
