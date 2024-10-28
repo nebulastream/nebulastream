@@ -26,6 +26,9 @@
 
 namespace NES
 {
+class PhysicalSourceType;
+using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
+
 
 namespace QueryCompilation
 {
@@ -33,11 +36,13 @@ namespace QueryCompilation
 class LowerToExecutableQueryPlanPhase
 {
 public:
-    static Runtime::Execution::ExecutableQueryPlanPtr
+    LowerToExecutableQueryPlanPhase() = default;
+
+    Runtime::Execution::ExecutableQueryPlanPtr
     apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
 
 private:
-    static void processSource(
+    void processSource(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
@@ -46,7 +51,7 @@ private:
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    static Runtime::Execution::SuccessorExecutablePipeline processSuccessor(
+    Runtime::Execution::SuccessorExecutablePipeline processSuccessor(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
@@ -55,10 +60,10 @@ private:
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    static Runtime::Execution::SuccessorExecutablePipeline
+    Runtime::Execution::SuccessorExecutablePipeline
     processSink(const OperatorPipelinePtr& pipeline, std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks, QueryId queryId);
 
-    static Runtime::Execution::SuccessorExecutablePipeline processOperatorPipeline(
+    Runtime::Execution::SuccessorExecutablePipeline processOperatorPipeline(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
         std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
