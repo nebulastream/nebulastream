@@ -10,8 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_source_files(nes-parser
+add_source_files(nes-sql-parser
         NebulaSQLQueryPlanCreator.cpp
         NebulaSQLHelper.cpp
 )

@@ -16,7 +16,7 @@
 #include <ANTLRInputStream.h>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <Parsers/NebulaSQL/NebulaSQLQueryPlanCreator.hpp>
+#include <SQLParser/NebulaSQLQueryPlanCreator.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>

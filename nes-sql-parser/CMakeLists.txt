@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(src)
+get_source(nes-sql-parser SQL_PARSER_SOURCE_FILES)
+
 add_custom_command(
         OUTPUT
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLBaseListener.cpp
@@ -19,14 +22,17 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4
         COMMAND yes | antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
 )
-
 find_package(antlr4-runtime CONFIG REQUIRED)
-add_library(sql-parser
+add_library(nes-sql-parser
+        ${SQL_PARSER_SOURCE_FILES}
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLBaseListener.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLLexer.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLListener.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLParser.cpp
 )
 
-target_include_directories(sql-parser PUBLIC ${CMAKE_CURRENT_BINARY_DIR} ${ANTLR4_INCLUDE_DIR})
-target_link_libraries(sql-parser PUBLIC antlr4_static nes-common)
+target_include_directories(nes-sql-parser PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        ${CMAKE_CURRENT_BINARY_DIR} ${ANTLR4_INCLUDE_DIR})
+target_link_libraries(nes-sql-parser PUBLIC antlr4_static nes-common nes-functions nes-sinks nes-sources nes-client nes-operators PRIVATE nes-client)
