@@ -79,7 +79,7 @@ void SinkFile::open()
         }
     }
 
-    /// Open the file stream
+    /// Open the file stream Todo: make exclusive? <-- optional
     if (!outputFileStream.is_open())
     {
         outputFileStream.open(outputFilePath, std::ofstream::binary | std::ofstream::app);
@@ -92,7 +92,6 @@ void SinkFile::open()
             outputFilePath,
             outputFileStream.is_open(),
             outputFileStream.good());
-        return;
     }
 
     /// Write the schema to the file, if it is empty.

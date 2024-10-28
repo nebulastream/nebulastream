@@ -35,22 +35,15 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema
 {
 }
 
-std::string CSVFormat::getFormattedSchema() const
+std::string CSVFormat::getFormattedSchema()
 {
-    std::stringstream ss;
-    for (auto& attributeField : schema->fields)
-    {
-        ss << attributeField->toString() << ", ";
-    }
-    ss.seekp(-1, std::ios_base::end);
-    ss << std::endl;
-
+    std::string out = toCSVString(schema);
     if (addTimestamp)
     {
-        ss << Util::trimWhiteSpaces(ss.str());
-        ss << ", timestamp\n";
+        out = Util::trimWhiteSpaces(out);
+        out.append(",timestamp\n");
     }
-    return ss.str();
+    return out;
 }
 
 std::string CSVFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
@@ -70,6 +63,18 @@ std::string CSVFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
         bufferContent = printTupleBufferAsCSV(inputBuffer, schema);
     }
     return bufferContent;
+}
+
+std::string CSVFormat::toCSVString(const Schema& schema)
+{
+    std::stringstream ss;
+    for (auto& attributeField : schema.fields)
+    {
+        ss << attributeField->toString() << ",";
+    }
+    ss.seekp(-1, std::ios_base::end);
+    ss << std::endl;
+    return ss.str();
 }
 
 std::string CSVFormat::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
