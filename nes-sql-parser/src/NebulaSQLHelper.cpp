@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
+#include <SQLParser/NebulaSQLHelper.hpp>
 
 namespace NES::Parsers
 {

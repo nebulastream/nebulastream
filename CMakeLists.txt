@@ -325,6 +325,7 @@ add_subdirectory(nes-window-types)
 add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
+add_subdirectory(nes-sql-parser)
 
 add_tests_if_enabled(tests)
 

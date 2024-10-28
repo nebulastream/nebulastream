@@ -18,13 +18,10 @@
 #include <NebulaSQLLexer.h>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
-#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Parsers/NebulaSQL/NebulaSQLHelper.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <SQLParser/NebulaSQLHelper.hpp>
 
 namespace NES::Parsers
 {
