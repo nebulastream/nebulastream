@@ -17,6 +17,7 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES::Configuration
 {
@@ -48,6 +49,8 @@ the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
+
+    std::optional<Configuration::SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:
     std::vector<BaseOption*> getOptions() override

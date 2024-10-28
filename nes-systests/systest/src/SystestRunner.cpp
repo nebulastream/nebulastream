@@ -173,18 +173,7 @@ bool runQueriesAtLocalWorker(
                     std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 }
 
-                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
-                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
-                {
-                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
-                }
-                else
-                {
-                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
-                }
-
-                auto queryId = worker.registerQuery(decomposedQueryPlan);
+                auto queryId = worker.registerQuery(query.queryPlan);
                 worker.startQuery(queryId);
 
                 RunningQuery const runningQuery = {query, queryId};
@@ -236,18 +225,7 @@ bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrent
                     std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 }
 
-                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
-                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
-                {
-                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
-                }
-                else
-                {
-                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
-                }
-
-                auto queryId = client.registerQuery(decomposedQueryPlan);
+                auto queryId = client.registerQuery(query.queryPlan);
                 client.start(queryId);
                 RunningQuery const runningQuery = {query, NES::QueryId(queryId)};
 
