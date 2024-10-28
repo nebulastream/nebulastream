@@ -282,6 +282,7 @@ int main(int argc, char** argv)
 
                 /// A SqlLogicTest format file might have >=1 tests
                 auto decomposedQueryPlans = NES::CLI::loadFromSLTFile(input, testname);
+                INVARIANT(decomposedQueryPlans.size(), "A test file must contain at least one test.")
                 for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
                 {
                     SerializableDecomposedQueryPlan serialized;

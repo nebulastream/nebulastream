@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(src)
+add_subdirectory(parser)
 
 find_program(CLANG_EXECUTABLE NAMES clang clang-18 REQUIRED)
 message(STATUS "Found Clang Binary: ${CLANG_EXECUTABLE}")
@@ -39,7 +40,7 @@ target_include_directories(nes-nebuli-lib
 
 target_link_libraries(nes-nebuli-lib
         PUBLIC nes-operators
-        PRIVATE yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
+        PRIVATE sql-parser yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp)

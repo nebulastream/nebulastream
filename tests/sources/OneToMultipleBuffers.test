@@ -1,10 +1,6 @@
-# name: filter/Filter.test
-# description: Simple filter tests
-# groups: [Filter]
-
-# LLVM LIT configuration
-# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
-# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
+# name: sources/OneToMultipleBuffers.test
+# description: Simple source/buffer tests
+# groups: [Sources]
 
 Source fiveTuples UINT64 field_1
 1
@@ -13,12 +9,11 @@ Source fiveTuples UINT64 field_1
 4
 5
 
-SourceCSV 200x8x8 UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8 TESTDATA/200x8-rows-fields.csv
+SourceCSV multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8 TESTDATA/200x8-rows-fields.csv
 
 # Name: Simple Source-Sink
 # Description: simply reads in five tuples with a single value and produces the same tuples
-Query::from("fiveTuples")
-    .SINK;
+SELECT field_1 FROM fiveTuples INTO SINK
 ----
 1
 2
@@ -29,8 +24,7 @@ Query::from("fiveTuples")
 # Name: Multiple Buffers
 # Description: Read 200 tuples (rows). Each row contains 8 UINT8 fields. Size of a tuple: 64 byte. Size of all tuples: (64 * 200 = 12800) bytes
 #   our default buffer size is (2^12 = 4096) bytes. Since 12800 / 4096 = 3.125, we use four buffers in this test.
-Query::from("200x8x8")
-    .SINK;
+SELECT * FROM multiBuffer INTO SINK
 ----
 1 10 100 1000 10000 100000 1000000 10000000
 2 20 200 2000 20000 200000 2000000 20000000
