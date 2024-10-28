@@ -17,15 +17,27 @@
 #include <filesystem>
 #include <string>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <Configuration.hpp>
 
 namespace NES::Systest
 {
 
 /// Forward refs to avoid cyclic deps with SystestState
-struct CacheFile;
+struct Query;
 
+/// Load query plan objects by parsing a SLT file for queries and lowering it
 std::vector<DecomposedQueryPlanPtr>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname);
-std::vector<SerializableDecomposedQueryPlan> loadFromCacheFiles(const std::vector<CacheFile>& cacheFiles);
+
+/// Run queries locally ie not on single-node-worker in a separate process
+/// @return false if one query result is incorrect
+bool runQueriesAtLocalWorker(
+    std::vector<NES::Systest::Query> queries,
+    uint64_t numConcurrentQueries,
+    const NES::Configuration::SingleNodeWorkerConfiguration& configuration);
+
+/// Run queries remote on the single-node-worker specified by the URI
+/// @return false if one query result is incorrect
+bool runQueriesAtRemoteWorker(std::vector<NES::Systest::Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI);
 
 }
