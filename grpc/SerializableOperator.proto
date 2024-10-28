@@ -86,7 +86,8 @@ message SerializableOperator {
         map<string, SerializableVariantDescriptor> config = 4;
     }
 
-    SerializableSinkDescriptor sinkDescriptor = 1;
+    string sinkName = 1;
+    SerializableSinkDescriptor sinkDescriptor = 2;
   }
 
   /**

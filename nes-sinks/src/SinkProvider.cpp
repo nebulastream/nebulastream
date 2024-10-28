@@ -26,8 +26,7 @@ namespace NES::Sinks::SinkProvider
 
 std::shared_ptr<Sink> lower(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
 {
-    NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
-    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.sinkType, queryId, sinkDescriptor); sink.has_value())
+    if (auto sink = SinkRegistry::instance().tryCreate(sinkDescriptor.sinkType, queryId, sinkDescriptor); sink.has_value())
     {
         return std::move(sink.value());
     }
