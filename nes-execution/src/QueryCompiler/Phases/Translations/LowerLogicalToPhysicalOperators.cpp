@@ -42,9 +42,8 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
 {
     auto isAlreadyLowered = [](const auto& node)
     {
-        return not(
-            Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
-            or Util::instanceOf<SinkLogicalOperator>(node));
+        return Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
+            or Util::instanceOf<SinkLogicalOperator>(node);
     };
     const std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
     for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
