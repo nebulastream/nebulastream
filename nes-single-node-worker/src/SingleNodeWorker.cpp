@@ -33,7 +33,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     : qc(std::make_unique<QueryCompilation::NautilusQueryCompiler>(
           QueryCompilation::queryCompilationOptionsFromConfig(configuration.queryCompilerConfiguration),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.engineConfiguration).build())
+    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration).build())
 {
 }
 
