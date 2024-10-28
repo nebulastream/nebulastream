@@ -34,10 +34,10 @@ std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceVal
 
 namespace NES
 {
-
 template <>
 inline void
-Registrar<Sources::SourceRegistryValidation, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
+Registrar<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>::registerAll(
+    [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrarValidation;
     registry.registerPlugin("CSV", RegisterSourceValidationCSV);

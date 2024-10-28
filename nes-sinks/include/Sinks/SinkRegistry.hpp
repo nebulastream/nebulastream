@@ -14,21 +14,42 @@
 
 #pragma once
 
+#include <functional>
+#include <iostream>
+#include <optional>
 #include <string>
+#include <unordered_map>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <Sinks/SinkRegistry.hpp>
 
 namespace NES::Sinks
 {
 
-using SinkRegistrySignature = RegistrySignatureTemplate<std::string, Sink, const QueryId, const SinkDescriptor&>;
-class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
+class SinkRegistry final
 {
+public:
+    SinkRegistry();
+    ~SinkRegistry() = default;
+
+    template <bool update = false>
+    void registerPlugin(
+        const std::string& name, const std::function<std::unique_ptr<Sink>(QueryId queryId, const SinkDescriptor& sinkDescriptor)>& creator)
+    {
+        if (!update && registry.contains(name))
+        {
+            std::cerr << "Plugin '" << name << "', but it already exists.\n";
+            return;
+        }
+        registry[name] = creator;
+    }
+
+    std::optional<std::unique_ptr<Sink>> tryCreate(const std::string& name, QueryId queryId, const SinkDescriptor& sinkDescriptor) const;
+
+    static SinkRegistry& instance();
+
+private:
+    std::unordered_map<std::string, std::function<std::unique_ptr<Sink>(QueryId queryId, const SinkDescriptor& sinkDescriptor)>> registry;
 };
 
 }
-
-#define INCLUDED_FROM_SINK_REGISTRY
-#include <Sinks/SinkGeneratedRegistrar.hpp>
-#undef INCLUDED_FROM_SINK_REGISTRY
