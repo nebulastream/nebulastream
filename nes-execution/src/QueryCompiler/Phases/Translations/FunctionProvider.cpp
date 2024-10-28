@@ -77,7 +77,7 @@ std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::sha
 {
     auto value = constantFunction->getConstantValue();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (physicalType->isBasicType())
+    if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
     {
         auto stringValue = std::dynamic_pointer_cast<BasicValue>(value)->value;
         auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
