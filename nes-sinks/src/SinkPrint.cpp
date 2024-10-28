@@ -60,7 +60,7 @@ bool SinkPrint::equals(const Sink& other) const
 std::unique_ptr<Configurations::DescriptorConfig::Config>
 SinkPrint::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
-    return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
+    return Sink::validateAndFormatImpl<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
