@@ -22,7 +22,7 @@ namespace NES::Sources
 {
 
 using SourceRegistryValidationSignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>;
+    = RegistrySignatureTemplate<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>;
 class SourceRegistryValidation final : public BaseRegistry<SourceRegistryValidation, SourceRegistryValidationSignature>
 {
 };
