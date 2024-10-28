@@ -136,7 +136,6 @@ private:
         }
         else if constexpr (std::is_same_v<T, bool>)
         {
-            using namespace std::literals::string_view_literals;
             auto caseInsensitiveEqual = [](const unsigned char leftChar, const unsigned char rightChar)
             { return std::tolower(leftChar) == std::tolower(rightChar); };
 

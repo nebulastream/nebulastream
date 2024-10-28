@@ -105,7 +105,6 @@ bool SourceCSV::fillTupleBuffer(
     /// Todo #72: remove TestTupleBuffer creation.
     /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
     /// TestTupleBuffer for the same TupleBuffer.
-    NES_DEBUG("BUFFER SIZE IS REALLY: {}", tupleBuffer.getBufferSize());
     auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
     uint64_t generatedTuplesThisPass = testTupleBuffer.getCapacity();
     NES_TRACE("SourceCSV::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
