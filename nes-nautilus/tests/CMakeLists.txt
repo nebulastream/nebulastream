@@ -16,3 +16,6 @@ target_link_libraries(var-val-unit-tests nes-nautilus)
 
 add_nes_unit_test(variable-sized-data-unit-tests "UnitTests/VariableSizedDataTest.cpp")
 target_link_libraries(variable-sized-data-unit-tests nes-nautilus)
+
+add_nes_unit_test(memory-provider-test "UnitTests/MemoryProvider.cpp")
+target_link_libraries(memory-provider-test nautilus::nautilus nes-nautilus)

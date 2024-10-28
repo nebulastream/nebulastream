@@ -28,7 +28,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-nautilus PUBLIC "-fPIC")
 endif ()
 
-add_tests_if_enabled(tests)
 
 # Add MLIR and LLVM dependencies
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
@@ -124,3 +123,5 @@ install(TARGETS nes-nautilus
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
+
+add_tests_if_enabled(tests)
