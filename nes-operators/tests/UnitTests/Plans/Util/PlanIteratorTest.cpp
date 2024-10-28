@@ -17,6 +17,7 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
@@ -57,9 +58,9 @@ public:
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
         filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
         filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        sinkOp1 = LogicalOperatorFactory::createSinkOperator("print_sink");
-        sinkOp2 = LogicalOperatorFactory::createSinkOperator("print_sink");
-        sinkOp3 = LogicalOperatorFactory::createSinkOperator("print_sink");
+        sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+        sinkOp3 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
 
         children.clear();
         parents.clear();

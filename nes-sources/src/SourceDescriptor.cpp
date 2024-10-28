@@ -36,7 +36,7 @@ SourceDescriptor::SourceDescriptor(
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor)
 {
     return out << "SourceDescriptor:"
-               << "\nlogical source name: " << sourceDescriptor.logicalSourceName << "\nSource type: " << sourceDescriptor.sourceType
+               << "\nSource type: " << sourceDescriptor.sourceType
                << "\nSchema: " << ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL")
                << "\nInputformat: " << std::string(magic_enum::enum_name(sourceDescriptor.inputFormat)) << "\nConfig:\n"
                << sourceDescriptor.toStringConfig();

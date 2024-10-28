@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -73,6 +74,9 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalUnionOperator>().size() == 1);
-    queryPlan = QueryPlanBuilder::addSink("print_source", queryPlan, WorkerId(0));
+    /// test addSink
+    auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
+    queryPlan = QueryPlanBuilder::addSink(queryPlan, sinkDescriptorPtr);
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>().size() == 1);
+    EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>()[0]->getSinkDescriptor()->equal(sinkDescriptorPtr));
 }

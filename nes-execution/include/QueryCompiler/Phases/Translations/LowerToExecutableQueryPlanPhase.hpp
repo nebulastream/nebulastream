@@ -13,22 +13,18 @@
 */
 #pragma once
 
-
-#include <unordered_set>
 #include <vector>
+#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Sinks/Sink.hpp>
-#include <Sinks/SinkProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 
 namespace NES
 {
+
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
-
 
 namespace QueryCompilation
 {
@@ -36,16 +32,20 @@ namespace QueryCompilation
 class LowerToExecutableQueryPlanPhase
 {
 public:
-    LowerToExecutableQueryPlanPhase() = default;
+    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider);
+    static std::shared_ptr<LowerToExecutableQueryPlanPhase>
+    create(const DataSinkProviderPtr& sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider);
 
     Runtime::Execution::ExecutableQueryPlanPtr
     apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine);
 
 private:
+    DataSinkProviderPtr sinkProvider;
+    std::unique_ptr<Sources::SourceProvider> sourceProvider;
     void processSource(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-        std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
+        std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const Runtime::NodeEnginePtr& nodeEngine,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
@@ -54,21 +54,24 @@ private:
     Runtime::Execution::SuccessorExecutablePipeline processSuccessor(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-        std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
+        std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const Runtime::NodeEnginePtr& nodeEngine,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    Runtime::Execution::SuccessorExecutablePipeline
-    processSink(const OperatorPipelinePtr& pipeline, std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks, QueryId queryId);
+    Runtime::Execution::SuccessorExecutablePipeline processSink(
+        const OperatorPipelinePtr& pipeline,
+        std::vector<DataSinkPtr>& sinks,
+        Runtime::NodeEnginePtr nodeEngine,
+        const PipelineQueryPlanPtr& pipelineQueryPlan);
 
     Runtime::Execution::SuccessorExecutablePipeline processOperatorPipeline(
         const OperatorPipelinePtr& pipeline,
         std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-        std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
+        std::vector<DataSinkPtr>& sinks,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-        const std::shared_ptr<Runtime::NodeEngine>& nodeEngine,
+        const Runtime::NodeEnginePtr& nodeEngine,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 };

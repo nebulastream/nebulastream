@@ -39,6 +39,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -95,7 +96,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 
     if (NES::Util::instanceOf<UnaryOperator>(operatorNode))
     {
-        lowerUnaryOperator(operatorNode);
+        lowerUnaryOperator(decomposedQueryPlan, operatorNode);
     }
     else if (NES::Util::instanceOf<BinaryOperator>(operatorNode))
     {
@@ -109,7 +110,8 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
     NES_DEBUG("DefaultPhysicalOperatorProvider:: Plan after lowering \n{}", decomposedQueryPlan->toString());
 }
 
-void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPtr& operatorNode)
+void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
+    const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode)
 {
     PRECONDITION(operatorNode->getParents().size() <= 1, "A unary operator should have at most one parent.");
 
@@ -119,7 +121,17 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (Util::instanceOf<LogicalFilterOperator>(operatorNode))
+    if (NES::Util::instanceOf<SinkLogicalOperator>(operatorNode))
+    {
+        auto logicalSinkOperator = NES::Util::as<SinkLogicalOperator>(operatorNode);
+
+        auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(
+            logicalSinkOperator->getInputSchema(), logicalSinkOperator->getOutputSchema(), logicalSinkOperator->getSinkDescriptor());
+        physicalSinkOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        operatorNode->replace(physicalSinkOperator);
+        decomposedQueryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalFilterOperator>(operatorNode))
     {
         auto filterOperator = NES::Util::as<LogicalFilterOperator>(operatorNode);
         auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(
@@ -156,7 +168,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
     }
     else
     {
-        throw UnknownLogicalOperator("Operator: {}", operatorNode->toString());
+        throw UnknownLogicalOperator();
     }
 }
 

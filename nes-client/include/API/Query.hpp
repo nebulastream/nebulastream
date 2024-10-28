@@ -37,6 +37,12 @@ using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignme
 class SourceNameLogicalOperator;
 using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
+
+class SinkDescriptor;
+using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
+
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -401,11 +407,21 @@ public:
      */
     Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
+    /**
+     * @brief: inferModel
+     * @example example
+     * @param param
+     * @return query
+     */
     Query& inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
 
-    /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
-    /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
-    virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
+    /**
+     * @brief Add sink operator for the query.
+     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
+     * @param sinkDescriptor
+     * @param workerId: location where sink is to be placed
+     */
+    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /**
      * @brief Gets the query plan from the current query.

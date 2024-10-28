@@ -16,26 +16,30 @@
 
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
 
+class SinkLogicalOperator;
+using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
+
+/**
+ * @brief Node representing logical sink operator
+ */
 class SinkLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    SinkLogicalOperator(std::string sinkName, OperatorId id);
-    SinkLogicalOperator(std::string sinkName, std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor, OperatorId id);
+    SinkLogicalOperator(SinkDescriptorPtr const& sinkDescriptor, OperatorId id);
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     std::string toString() const override;
-
-    const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
-
+    SinkDescriptorPtr getSinkDescriptor() const;
+    void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorPtr copy() override;
     void inferStringSignature() override;
 
-    std::string sinkName;
-    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+private:
+    SinkDescriptorPtr sinkDescriptor;
 };
 }
