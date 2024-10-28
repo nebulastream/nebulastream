@@ -89,7 +89,7 @@ TEST_F(SLTParserTest, testCallbackSourceCSV)
 TEST_F(SLTParserTest, testCallbackQuery)
 {
     SLTParser parser{};
-    std::string queryIn = "Query::from('window').filter(Attribute('value') == 1).SINK;";
+    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
@@ -180,11 +180,11 @@ TEST_F(SLTParserTest, testResultTuplesWithoutQuery)
 TEST_F(SLTParserTest, testSubstitutionRule)
 {
     SLTParser parser{};
-    std::string const queryIn = "Query::from('window').filter(Attribute('value') == 1).SINK;";
+    const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     std::string const delim = "----";
     std::string const result = "1 1 1";
 
-    std::string queryExpect = "Query::from('window').filter(Attribute('value') == 1).TestSink();";
+    std::string queryExpect = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO TestSink()";
 
     bool callbackCalled = false;
 

@@ -162,7 +162,7 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
 {
-    INVARIANT(
+    PRECONDITION(
         query.getSinkOperators().size() == 1,
         fmt::format(
             "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
@@ -215,7 +215,8 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
-    auto query = syntacticQueryValidation->validate(config.query);
+    auto query = QueryParsingService::createQueryFromSQL(config.query);
+
     validateAndSetSinkDescriptors(*query, config);
     semanticQueryValidation->validate(query); /// performs the first type inference
 
@@ -262,7 +263,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                  "File",
                  {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
              config.sinks.emplace(sinkName, std::move(sink));
-             substitute = "sink(\"" + sinkName + "\");";
+             substitute = sinkName;
          }});
 
     parser.registerSubstitutionRule(

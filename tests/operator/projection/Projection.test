@@ -12,9 +12,7 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 7,21,21000
 
 # 0: [id]
-Query::from("window")
-    .project(Attribute("id"))
-    .SINK
+SELECT id FROM window INTO SINK
 ----
 1
 2
@@ -24,10 +22,9 @@ Query::from("window")
 6
 7
 
+
 # 1: [value]
-Query::from("window")
-    .project(Attribute("value"))
-    .SINK
+SELECT value FROM window INTO SINK
 ----
 1
 1
@@ -38,9 +35,7 @@ Query::from("window")
 21
 
 # 2: [timestamp]
-Query::from("window")
-    .project(Attribute("timestamp"))
-    .SINK
+SELECT timestamp FROM window INTO SINK
 ----
 1000
 1001
@@ -51,22 +46,18 @@ Query::from("window")
 21000
 
 # 3: [id, value]
-Query::from("window")
-    .project(Attribute("id"), Attribute("timestamp"))
-    .SINK
+SELECT id, value FROM window INTO SINK
 ----
-1,1000
-2,1001
-3,1002
-4,2000
-5,19000
-6,20000
-7,21000
+1,1
+2,1
+3,1
+4,2
+5,19
+6,20
+7,21
 
 # 4: [id, timestamp]
-Query::from("window")
-    .project(Attribute("id"), Attribute("timestamp"))
-    .SINK
+SELECT id, timestamp FROM window INTO SINK
 ----
 1,1000
 2,1001
@@ -77,9 +68,7 @@ Query::from("window")
 7,21000
 
 # 5: [value, timestamp]
-Query::from("window")
-    .project(Attribute("value"), Attribute("timestamp"))
-    .SINK
+SELECT value, timestamp FROM window INTO SINK
 ----
 1,1000
 1,1001
@@ -90,9 +79,7 @@ Query::from("window")
 21,21000
 
 # 6: [id, value, timestamp]
-Query::from("window")
-    .project(Attribute("id"), Attribute("value"), Attribute("timestamp"))
-    .SINK
+SELECT id, value, timestamp FROM window INTO SINK
 ----
 1,1,1000
 2,1,1001
@@ -102,23 +89,30 @@ Query::from("window")
 6,20,20000
 7,21,21000
 
-# 7: [id, timestamp]
-Query::from("window")
-    .project(Attribute("timestamp"), Attribute("id"), Attribute("value"))
-    .SINK
+# 7: [id, timestamp, value]
+SELECT id, timestamp, value FROM window INTO SINK
 ----
-1000,1,1
-1001,2,1
-1002,3,1
-2000,4,2
-19000,5,19
-20000,6,20
-21000,7,21
+1,1000,1
+2,1001,1
+3,1002,1
+4,2000,2
+5,19000,19
+6,20000,20
+7,21000,21
 
-# 8: [id, timestamp]
-Query::from("window")
-    .project(Attribute("value"), Attribute("timestamp"), Attribute("id"))
-    .SINK
+# 8: [value, id, timestamp]
+SELECT value, id, timestamp FROM window INTO SINK
+----
+1,1,1000
+1,2,1001
+1,3,1002
+2,4,2000
+19,5,19000
+20,6,20000
+21,7,21000
+
+# 8: [value, timestamp, id]
+SELECT value, timestamp, id FROM window INTO SINK
 ----
 1,1000,1
 1,1001,2
@@ -128,11 +122,30 @@ Query::from("window")
 20,20000,6
 21,21000,7
 
-# 9: [id, id -> new_field]
-Query::from("window")
-    .map(Attribute("new_field") = Attribute("id"))
-    .project(Attribute("id"), Attribute("new_field"))
-    .SINK
+# 9: [timestamp, id, value]
+SELECT timestamp, id, value FROM window INTO SINK
+----
+1000,1,1
+1001,2,1
+1002,3,1
+2000,4,2
+19000,5,19
+20000,6,20
+21000,7,21
+
+# 10: [timestamp, value, id]
+SELECT timestamp, value, id FROM window INTO SINK
+----
+1000,1,1
+1001,1,2
+1002,1,3
+2000,2,4
+19000,19,5
+20000,20,6
+21000,21,7
+
+# 11: [id, id -> new_field]
+SELECT id, id AS new_field FROM window INTO SINK
 ----
 1,1
 2,2
@@ -142,11 +155,9 @@ Query::from("window")
 6,6
 7,7
 
-# 10: [id, value, id -> new_field]
+# 12: [id, value, id -> new_field]
+SELECT id, value, id AS new_field FROM window INTO SINK
 Query::from("window")
-    .map(Attribute("new_field") = Attribute("id"))
-    .project(Attribute("id"), Attribute("value"), Attribute("new_field"))
-    .SINK
 ----
 1,1,1
 2,1,2
@@ -156,11 +167,8 @@ Query::from("window")
 6,20,6
 7,21,7
 
-# 11: [id, value, timestamp, id -> new_field]
-Query::from("window")
-    .map(Attribute("new_field") = Attribute("id"))
-    .project(Attribute("id"), Attribute("value"), Attribute("timestamp"), Attribute("new_field"))
-    .SINK
+## 13: [id, value, timestamp, id -> new_field]
+SELECT id, value, timestamp, id AS new_field FROM window INTO SINK
 ----
 1,1,1000,1
 2,1,1001,2
@@ -170,11 +178,8 @@ Query::from("window")
 6,20,20000,6
 7,21,21000,7
 
-# 12: [id -> new_field, id, value, timestamp]
-Query::from("window")
-    .map(Attribute("new_field") = Attribute("id"))
-    .project(Attribute("new_field"), Attribute("id"), Attribute("value"), Attribute("timestamp"))
-    .SINK
+# 14: [id -> new_field, id, value, timestamp]
+SELECT id AS new_field, id, value, timestamp FROM window INTO SINK
 ----
 1,1,1,1000
 2,2,1,1001
@@ -184,11 +189,8 @@ Query::from("window")
 6,6,20,20000
 7,7,21,21000
 
-# 13: [timestamp -> new_field, timestamp -> new_field, id, value, timestamp]
-Query::from("window")
-    .map(Attribute("new_field") = Attribute("timestamp"))
-    .project(Attribute("new_field"), Attribute("new_field"), Attribute("id"), Attribute("value"), Attribute("timestamp"))
-    .SINK
+# 15: [timestamp -> new_field, timestamp -> new_field, id, value, timestamp]
+SELECT timestamp AS new_field, timestamp, id, value, timestamp FROM window INTO SINK
 ----
 1000,1000,1,1,1000
 1001,1001,2,1,1001
@@ -199,12 +201,7 @@ Query::from("window")
 21000,21000,7,21,21000
 
 ## 14: [id -> new_field_1, id, value -> new_field_2, value, timestamp -> new_field_3, timestamp]
-Query::from("window")
-    .map(Attribute("new_field_1") = Attribute("id"))
-    .map(Attribute("new_field_2") = Attribute("value"))
-    .map(Attribute("new_field_3") = Attribute("timestamp"))
-    .project(Attribute("new_field_1"), Attribute("id"), Attribute("new_field_2"), Attribute("value"), Attribute("new_field_3"), Attribute("timestamp"))
-    .SINK
+SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM window INTO SINK
 ----
 1,1,1,1,1000,1000
 2,2,1,1,1001,1001

@@ -2,10 +2,6 @@
 # description: Simple map tests with an add function
 # groups: [Map]
 
-# LLVM LIT configuration
-# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
-# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
-
 Source window UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 2,1,1001
@@ -16,9 +12,7 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 7,21,21000
 
 # Map with add function touches one field
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") + 1)
-    .SINK;
+SELECT id + 1 AS id, value, timestamp FROM window INTO SINK
 ----
 2,1,1000
 3,1,1001
@@ -29,9 +23,7 @@ Query::from("window")
 8,21,21000
 
 # Map with add function touches two fields
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") + Attribute("value"))
-    .SINK;
+SELECT id + value AS id, value, timestamp FROM window INTO SINK
 ----
 2,1,1000
 3,1,1001
@@ -42,9 +34,7 @@ Query::from("window")
 28,21,21000
 
 # Map with add function touches two fields and adds a new field
-Query::from("window")
-    .map(Attribute("new") = Attribute("id") + Attribute("value"))
-    .SINK;
+SELECT id, value, timestamp, id + value AS new FROM window INTO SINK
 ----
 1,1,1000,2
 2,1,1001,3
@@ -54,12 +44,9 @@ Query::from("window")
 6,20,20000,26
 7,21,21000,28
 
-
 # Two maps after each other that both touch the same fields
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") + 1)
-    .map(Attribute("id") = Attribute("value") + Attribute("id"))
-    .SINK;
+# Todo: SELECT id + 1 AS new_id, new_id + value AS id <--- does not work 'field new_id does not exist'
+SELECT id + 1 + value AS id, value, timestamp FROM window INTO SINK
 ----
 3,1,1000
 4,1,1001
@@ -70,11 +57,7 @@ Query::from("window")
 29,21,21000
 
 # Three maps after each other that use a newly created field to create another field
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") + 1)
-    .map(Attribute("new") = Attribute("id") + Attribute("value"))
-    .map(Attribute("new2") = Attribute("new") + Attribute("value"))
-    .SINK;
+SELECT id + 1 AS id, value, timestamp, id + value AS new, new + value AS new2 FROM window INTO SINK
 ----
 2,1,1000,3,4
 3,1,1001,4,5
@@ -86,18 +69,12 @@ Query::from("window")
 
 # Four maps that use a newly created field to create another field,
 # but we keep id, and new2 only. We also add id and new2 together in the end.
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") + 1)
-    .map(Attribute("new") = Attribute("id") + Attribute("value"))
-    .map(Attribute("new2") = Attribute("new") + Attribute("value"))
-    .project(Attribute("id"), Attribute("new2"))
-    .map(Attribute("id") = Attribute("id") + Attribute("new2"))
-    .SINK;
+SELECT value + (id + 1) + value AS new2, (id + 1) + new2 AS id FROM window INTO SINK
 ----
-6,4
-8,5
-10,6
-14,9
-50,44
-54,47
-58,50
+4,6
+5,8
+6,10
+9,14
+44,50
+47,54
+50,58

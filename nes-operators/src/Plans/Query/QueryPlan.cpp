@@ -351,7 +351,7 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
     return operatorsBetween;
 }
 
-bool QueryPlan::compare(QueryPlanPtr& otherPlan)
+bool QueryPlan::compare(const QueryPlanPtr& otherPlan)
 {
     auto leftRootOperators = this->getRootOperators();
     auto rightRootOperators = otherPlan->getRootOperators();
