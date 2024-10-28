@@ -13,10 +13,10 @@
 */
 
 #include <grpcpp/server_builder.h>
-#include <Configuration.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 int main(const int argc, const char* argv[])
 {
