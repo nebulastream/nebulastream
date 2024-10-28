@@ -17,7 +17,7 @@
 #include <filesystem>
 #include <string>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
-#include <Configuration.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES::Systest
 {

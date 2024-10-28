@@ -18,7 +18,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Configuration.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
