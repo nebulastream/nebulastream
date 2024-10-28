@@ -372,6 +372,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkLogicalOperator();
+    sinkDetails.set_sinkname(sinkOperator.sinkName);
     auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
     serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, sinkDetails);
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
@@ -381,9 +382,8 @@ LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSinkOperator(const
 {
     const auto serializedSinkDescriptor = sinkDetails.sinkdescriptor();
     auto sinkDescriptor = deserializeSinkDescriptor(serializedSinkDescriptor);
-    auto sinkOperator
-        = NES::Util::as<SinkLogicalOperator>(LogicalOperatorFactory::createSinkOperator(INVALID_WORKER_NODE_ID, getNextOperatorId()));
-    sinkOperator->sinkDescriptor = std::move(sinkDescriptor);
+    auto sinkOperator = LogicalOperatorFactory::createSinkOperator(sinkDetails.sinkname(), INVALID_WORKER_NODE_ID, getNextOperatorId());
+    NES::Util::as<SinkLogicalOperator>(sinkOperator)->sinkDescriptor = std::move(sinkDescriptor);
     return sinkOperator;
 }
 

@@ -70,8 +70,6 @@ public:
     static LogicalUnaryOperatorPtr
     createProjectionOperator(const std::vector<NodeFunctionPtr>& functions, OperatorId id = getNextOperatorId());
 
-    static LogicalUnaryOperatorPtr createSinkOperator(WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
-
     static LogicalUnaryOperatorPtr
     createSinkOperator(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
 
