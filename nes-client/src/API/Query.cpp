@@ -337,6 +337,29 @@ Query& Query::map(const NodeFunctionFieldAssignmentPtr& mapFunction)
     return *this;
 }
 
+Query& Query::inferModel(
+    const std::string model, const std::initializer_list<FunctionItem> inputFields, const std::initializer_list<FunctionItem> outputFields)
+{
+    NES_DEBUG("Query: add map inferModel to query");
+    auto inputFieldVector = std::vector(inputFields);
+    auto outputFieldVector = std::vector(outputFields);
+    std::vector<NodeFunctionPtr> inputFieldsPtr;
+    std::vector<NodeFunctionPtr> outputFieldsPtr;
+    for (const auto& inputField : inputFieldVector)
+    {
+        inputFieldsPtr.push_back(inputField.getNodeFunction());
+    }
+    for (const auto& outputField : outputFieldVector)
+    {
+        outputFieldsPtr.push_back(outputField.getNodeFunction());
+    }
+
+    OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
+    NES_DEBUG("Query::inferModel: Current Operator: {}", op->toString());
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Query& Query::sink(std::string sinkName, WorkerId workerId)
 {
     NES_DEBUG("Query: add sink operator to query");
