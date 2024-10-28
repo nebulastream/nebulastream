@@ -54,6 +54,8 @@ public:
     */
     SchemaPtr createSchemaFromCode(const std::string& schemaCodeSnippet);
 
+    static QueryPlanPtr createQueryFromSQL(const std::string& string);
+
 private:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
 };

@@ -2,10 +2,6 @@
 # description: Simple tests that contain map and filter
 # groups: [Filter, Map]
 
-# LLVM LIT configuration
-# RUN: sed -e "s@SINK@%sink@g" -e "s@TESTDATA@%testdata@g"< %s > %t &&  rm %tsink || true
-# RUN: %client test -f %t -s %worker_address && %result_checker %t %tsink
-
 Source window INT64 id INT64 value UINT64 timestamp
 1,1,1000
 2,1,1001
@@ -15,10 +11,7 @@ Source window INT64 id INT64 value UINT64 timestamp
 6,22,2021
 
 # Filter and then map
-Query::from("window")
-    .filter(Attribute("value") != 1)
-    .map(Attribute("id") = Attribute("id") * 3)
-    .SINK;
+SELECT id * 3 AS id_x_3, value, timestamp FROM window WHERE value != 1 INTO SINK
 ----
 9,11,1002
 12,412,2000
@@ -26,32 +19,39 @@ Query::from("window")
 18,22,2021
 
 # Filter, Map and then Filter again
-Query::from("window")
-    .filter(Attribute("value") != 1)
-    .map(Attribute("id") = Attribute("id") * 3)
-    .filter(Attribute("id") != 9)
-    .filter(Attribute("value") != 312)
-    .SINK;
+SELECT id_x_3, value, timestamp FROM
+    (SELECT id * 3 AS id_x_3, value, timestamp FROM window WHERE value != 1)
+WHERE id_x_3 != 9 AND value != 312 INTO SINK
 ----
 12,412,2000
 18,22,2021
 
-
 # Map, filter and then map again
-Query::from("window")
-    .map(Attribute("id") = Attribute("id") * 3)
-    .filter(Attribute("value") == 1)
-    .map(Attribute("id") = Attribute("id") * 3)
-    .SINK;
+# Todo #445: enable arithmetics on fields of sub-queries
+#   the query below does not work. 'id_x_3 * 3' causes an exception, because the type of 'id_x_3' is undefined.
+#SELECT id_x_3 * 3 AS id_x_9, value, timestamp FROM
+#    (SELECT id * 3 AS id_x_3, value, timestamp FROM window WHERE value != 1)
+#INTO SINK
+SELECT id * 9 AS id_x_3, value, timestamp FROM window WHERE value != 1 INTO SINK
 ----
-9,1,1000
-18,1,1001
+27 11 1002
+36 412 2000
+45 312 2012
+54 22 2021
+
+
+#Query::from("window")
+#    .map(Attribute("id") = (Attribute("id") * 3 / Attribute("value")) + (Attribute("value") * 2))
+#    .map(Attribute("value") = Attribute("value") * 25 - (Attribute("id") * 5) - 125)
+#    .SINK;
 
 # Nested Map functions and the second map depends on the first map
-Query::from("window")
-    .map(Attribute("id") = (Attribute("id") * 3 / Attribute("value")) + (Attribute("value") * 2))
-    .map(Attribute("value") = Attribute("value") * 25 - (Attribute("id") * 5) - 125)
-    .SINK;
+# Todo #445: enable arithmetics on fields of sub-queries
+#   the query below does not work. 'value * 25 - id_new * 5' causes an exception, because the type of 'id_new' is undefined.
+#SELECT id_new, value * 25 - id_new * 5 - 125 AS value_new, timestamp FROM
+#    (SELECT id * 3 / value + value * 2 AS id_new FROM window)
+#INTO SINK
+SELECT id * 3 / value + value * 2 AS id_new, value * 25 - (id * 3 / value + value * 2) * 5 - 125 AS value_new, timestamp FROM window INTO SINK
 ----
 5,-125,1000
 8,-140,1001

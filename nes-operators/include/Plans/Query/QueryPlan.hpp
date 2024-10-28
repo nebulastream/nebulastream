@@ -146,7 +146,7 @@ public:
 
     /// Comparison to another plan and its children nodes by tree traversal.
     /// @return true, if this and other plan are equal in their structure and operators, false else
-    bool compare(QueryPlanPtr& otherPlan);
+    bool compare(const QueryPlanPtr& otherPlan);
 
 private:
     /// Find operators between source and target operators

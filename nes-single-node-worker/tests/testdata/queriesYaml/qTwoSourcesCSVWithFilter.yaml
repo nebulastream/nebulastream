@@ -1,7 +1,5 @@
 query: |
-  Query::from("csv_source")
-    .filter(Attribute("id") != 16)
-    .sink("csv_sink");
+  SELECT * FROM csv_source WHERE id != 16 INTO csv_sink
 sink:
   name: csv_sink
   type: File

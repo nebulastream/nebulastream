@@ -61,7 +61,7 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return "NodeFunctionFieldAccess(" + fieldName + "[" + stamp->toString() + "])";
+    return std::format("NodeFunctionFieldAccess( {} + [ {} ])", fieldName, stamp->toString());
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
@@ -73,7 +73,7 @@ void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
         stamp = existingField->getDataType();
         return;
     }
-    throw QueryInvalid(fmt::format("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema->toString()));
+    throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema->toString());
 }
 
 NodeFunctionPtr NodeFunctionFieldAccess::deepCopy()

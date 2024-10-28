@@ -18,6 +18,7 @@
     }
   },
   "dependencies": [
+    "antlr4",
     "argparse",
     "benchmark",
     "boost-asio",
