@@ -339,7 +339,7 @@ int main(int argc, const char** argv)
 
             if (!config.workerConfig.getValue().empty())
             {
-                singleNodeWorkerConfiguration->engineConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+                singleNodeWorkerConfiguration->workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
             }
 
             if (!config.queryCompilerConfig.getValue().empty())
