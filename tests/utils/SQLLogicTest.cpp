@@ -77,7 +77,10 @@ public:
         auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, *uut);
         ASSERT_NE(queryId, INVALID_QUERY_ID);
         IntegrationTestUtil::startQuery(queryId, *uut);
-        IntegrationTestUtil::waitForQueryToEnd(queryId, *uut);
+        while (!IntegrationTestUtil::isQueryStopped(queryId, *uut))
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        }
         IntegrationTestUtil::unregisterQuery(queryId, *uut);
 
         ASSERT_TRUE(NES::CLI::checkResult(testFile, systemTestName, testId));
