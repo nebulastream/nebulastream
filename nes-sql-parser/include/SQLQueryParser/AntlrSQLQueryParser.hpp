@@ -11,30 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <memory>
-#include <API/QueryAPI.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES
+namespace NES::AntlrSQLQueryParser
 {
-class Query;
-using QueryPtr = std::shared_ptr<Query>;
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-}
-
-namespace NES::Compiler
-{
-class JITCompiler;
-}
-namespace NES
-{
-
-struct QueryParsingService
-{
-    static QueryPlanPtr createQueryFromSQL(const std::string& string);
-};
-
+std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view string);
 }

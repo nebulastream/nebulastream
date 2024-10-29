@@ -16,28 +16,24 @@
 #include <regex>
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Services/QueryParsingService.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 
 using namespace NES;
-/*
- * This test checks for the correctness of the SQL queries created by the NebulaSQL Parsing Service.
- */
-class SQLParsingServiceTest : public Testing::BaseUnitTest
+
+/// This test checks for the correctness of the SQL queries created by the Antlr SQL Parsing Service.
+class AntlrSQLQueryParserTest : public Testing::BaseUnitTest
 {
 public:
     /* Will be called before a test is executed. */
     static void SetUpTestCase()
     {
-        NES::Logger::setupLogging("QueryPlanTest.log", NES::LogLevel::LOG_DEBUG);
-        NES_INFO("Setup QueryPlanTest test case.");
+        NES::Logger::setupLogging("AntlrSQLQueryParserTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup AntlrSQLQueryParserTest test case.");
     }
 };
 
@@ -52,13 +48,12 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
 
 bool parseAndCompareQueryPlans(const std::string antlrQueryString, const Query& internalLogicalQuery)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    const QueryPlanPtr antlrQueryParsed = SQLParsingService->createQueryFromSQL(antlrQueryString);
-    NES_DEBUG("{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
+    const QueryPlanPtr antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
+    NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
     return antlrQueryParsed->compare(internalLogicalQuery.getQueryPlan());
 }
 
-TEST_F(SQLParsingServiceTest, projectionAndMapTests)
+TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
 {
     /// Query::from("window").project(Attribute("id")).sink("File")
     /// @note: SELECT (field * 3) AS new_filed will always lead to a projection first, followed by a map. Thus, the query
@@ -82,26 +77,21 @@ TEST_F(SQLParsingServiceTest, projectionAndMapTests)
     /// }
 }
 
-TEST_F(SQLParsingServiceTest, selectionTest)
+TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-
-    inputQuery = "SELECT f1 FROM StreamName WHERE f1 > 30 INTO Print";
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("StreamName").filter(Attribute("f1") > 30).project(Attribute("f1")).sink("Print");
+    std::string inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print";
+    std::shared_ptr<QueryPlan> actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery);
+    Query query = Query::from("StreamName").filter(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
-    inputQuery = "select * from StreamName where (f1 > 10 AND f2 < 10) INTO Print";
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    query = Query::from("StreamName").filter(Attribute("f1") > 10 && Attribute("f2") < 10).sink("Print");
+    inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print";
+    actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery);
+    query = Query::from("StreamName").filter(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 
     std::string SQLString = "SELECT * FROM default_logical INTO Print;";
-    actualPlan = SQLParsingService->createQueryFromSQL(SQLString);
+    actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(SQLString);
     query = Query::from("default_logical").sink("Print");
-
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 

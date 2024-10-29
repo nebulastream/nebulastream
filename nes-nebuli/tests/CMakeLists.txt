@@ -12,3 +12,6 @@
 
 add_nes_test_nebuli(slt-parser-test "SLTParserTests.cpp"  "SLTParserInvalidTestFilesTests.cpp" "SLTParserValidTestFilesTests.cpp")
 target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
+
+add_nes_test_nebuli(sql-parser-test "AntlrSQLQueryParserTest.cpp")
+target_link_libraries(sql-parser-test nes-sql-parser)
