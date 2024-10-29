@@ -13,10 +13,21 @@
 */
 
 #pragma once
+#include <algorithm>
+#include <iterator>
+#include <map>
 #include <memory>
 #include <vector>
+#include <Sinks/SinkProvider.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <Sources/SourceHandle.hpp>
+
+template <typename... U>
+struct Overloaded : U...
+{
+    using U::operator()...;
+};
 
 namespace NES::Runtime
 {
@@ -30,10 +41,25 @@ struct InstantiatedQueryPlan
         std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>>
             instantiatedSources;
 
-        for (auto [id, descriptor, successors] : executableQueryPlan->sources)
+        std::unordered_map<OriginId, std::vector<Execution::ExecutablePipelinePtr>> instantiatedSinksWithSourcePredecessor;
+
+        for (auto [descriptor, predecessor] : executableQueryPlan->sinks)
         {
-            instantiatedSources.emplace_back(sourceProvider.lower(id, *descriptor, poolProvider), std::move(successors));
+            auto sink = Execution::ExecutablePipeline::create(Sinks::SinkProvider::lower(*descriptor), {});
+            std::visit(
+                Overloaded{
+                    [&](OriginId source) { instantiatedSinksWithSourcePredecessor[source].push_back(sink); },
+                    [&](std::weak_ptr<Execution::ExecutablePipeline> predecessor) { predecessor.lock()->successors.push_back(sink); },
+                },
+                sink);
         }
+
+        for (auto [descriptor, id, successors] : executableQueryPlan->sources)
+        {
+            std::ranges::copy(instantiatedSinksWithSourcePredecessor[id], std::back_inserter(successors));
+            instantiatedSources.emplace_back(NES::Sources::SourceProvider::lower(id, *descriptor, poolProvider), std::move(successors));
+        }
+
 
         return std::make_unique<InstantiatedQueryPlan>(std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
     }

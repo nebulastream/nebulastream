@@ -33,7 +33,7 @@ class SinkPrint : public Sink
 public:
     static inline std::string NAME = "Print";
 
-    explicit SinkPrint(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    explicit SinkPrint(const SinkDescriptor& sinkDescriptor);
     ~SinkPrint() override = default;
 
     void open() override { /* noop */ };
@@ -45,8 +45,6 @@ public:
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
-
 private:
     std::ostream& outputStream;
     std::unique_ptr<CSVFormat> outputParser;

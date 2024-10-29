@@ -25,7 +25,7 @@
 namespace NES::Sinks
 {
 
-SinkPrint::SinkPrint(const QueryId queryId, const SinkDescriptor& sinkDescriptor) : Sink(queryId), outputStream(std::cout)
+SinkPrint::SinkPrint(const SinkDescriptor& sinkDescriptor) : outputStream(std::cout)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
@@ -52,11 +52,6 @@ std::ostream& SinkPrint::toString(std::ostream& str) const
     return str;
 }
 
-bool SinkPrint::equals(const Sink& other) const
-{
-    return this->queryId == other.queryId;
-}
-
 std::unique_ptr<Configurations::DescriptorConfig::Config>
 SinkPrint::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
@@ -69,9 +64,9 @@ SinkGeneratedRegistrarValidation::RegisterSinkValidationPrint(std::unordered_map
     return SinkPrint::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkPrint(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkPrint(const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<SinkPrint>(queryId, sinkDescriptor);
+    return std::make_unique<SinkPrint>(sinkDescriptor);
 }
 
 }

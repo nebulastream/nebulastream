@@ -27,8 +27,8 @@
 namespace NES::Sinks::SinkGeneratedRegistrar
 {
 
-std::unique_ptr<Sink> RegisterSinkPrint(QueryId, const SinkDescriptor&);
-std::unique_ptr<Sink> RegisterSinkFile(QueryId, const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterSinkPrint(const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterSinkFile(const SinkDescriptor&);
 
 }
 

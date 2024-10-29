@@ -50,6 +50,10 @@ const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
 {
     return *sinkDescriptor;
 }
+std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() const
+{
+    return sinkDescriptor;
+}
 
 OperatorPtr SinkLogicalOperator::copy()
 {

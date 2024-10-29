@@ -36,6 +36,7 @@ public:
     std::string toString() const override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
+    std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
     OperatorPtr copy() override;
     void inferStringSignature() override;

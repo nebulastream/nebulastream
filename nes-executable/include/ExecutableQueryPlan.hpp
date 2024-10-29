@@ -22,6 +22,8 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Executable.hpp>
 
@@ -46,26 +48,35 @@ struct ExecutablePipeline
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
 };
 
+struct Source
+{
+    std::shared_ptr<Sources::SourceDescriptor> descriptor;
+    OriginId originId;
+    std::vector<std::weak_ptr<ExecutablePipeline>> successors;
+};
+
+struct Sink
+{
+    std::shared_ptr<Sinks::SinkDescriptor> descriptor;
+    std::variant<OriginId, std::weak_ptr<ExecutablePipeline>> predecessor;
+};
+
 struct ExecutableQueryPlan
 {
-    static std::unique_ptr<ExecutableQueryPlan> create(
-        std::vector<std::shared_ptr<ExecutablePipeline>> pipelines,
-        std::vector<std::tuple<OriginId, std::shared_ptr<Sources::SourceDescriptor>, std::vector<std::weak_ptr<ExecutablePipeline>>>>
-            sources)
+    static std::unique_ptr<ExecutableQueryPlan>
+    create(std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
     {
-        return std::make_unique<ExecutableQueryPlan>(std::move(pipelines), std::move(sources));
+        return std::make_unique<ExecutableQueryPlan>(std::move(pipelines), std::move(sinks), std::move(sources));
     }
 
-    ExecutableQueryPlan(
-        const std::vector<std::shared_ptr<ExecutablePipeline>>& pipelines,
-        const std::vector<std::tuple<OriginId, std::shared_ptr<Sources::SourceDescriptor>, std::vector<std::weak_ptr<ExecutablePipeline>>>>&
-            sources)
-        : pipelines(pipelines), sources(sources)
+    ExecutableQueryPlan(std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
+        : sinks(std::move(sinks)), sources(std::move(sources)), pipelines(std::move(pipelines))
     {
     }
 
+    std::vector<Sink> sinks;
+    std::vector<Source> sources;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
-    std::vector<std::tuple<OriginId, std::shared_ptr<Sources::SourceDescriptor>, std::vector<std::weak_ptr<ExecutablePipeline>>>> sources;
 };
 
 using ExecutableQueryPlanPtr = std::unique_ptr<ExecutableQueryPlan>;

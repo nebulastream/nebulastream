@@ -39,33 +39,32 @@ public:
 
 private:
     DataSinkProviderPtr sinkProvider;
-    using Sources = std::vector<std::tuple<
-        OriginId,
-        std::shared_ptr<Sources::SourceDescriptor>,
-        std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>>>>;
     void processSource(
         const OperatorPipelinePtr& pipeline,
-        Sources& sources,
+        std::vector<Runtime::Execution::Sink>& sinks,
+        std::vector<Runtime::Execution::Source>& sources,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::ExecutablePipelinePtr>& pipelineToExecutableMap);
 
-    Runtime::Execution::ExecutablePipelinePtr processSuccessor(
+    std::shared_ptr<Runtime::Execution::ExecutablePipeline> processSuccessor(
+        std::variant<OriginId, std::weak_ptr<Runtime::Execution::ExecutablePipeline>> predecessor,
         const OperatorPipelinePtr& pipeline,
-        Sources& sources,
+        std::vector<Runtime::Execution::Sink>& sinks,
+        std::vector<Runtime::Execution::Source>& sources,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::ExecutablePipelinePtr>& pipelineToExecutableMap);
 
-    Runtime::Execution::ExecutablePipelinePtr processSink(
+    void processSink(
+        std::variant<OriginId, std::weak_ptr<Runtime::Execution::ExecutablePipeline>> predecessor,
         const OperatorPipelinePtr& pipeline,
-        Sources& sources,
-        std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
-        const PipelineQueryPlanPtr& pipelineQueryPlan);
+        std::vector<Runtime::Execution::Sink>& sinks);
 
     Runtime::Execution::ExecutablePipelinePtr processOperatorPipeline(
         const OperatorPipelinePtr& pipeline,
-        Sources& sources,
+        std::vector<Runtime::Execution::Sink>& sinks,
+        std::vector<Runtime::Execution::Source>& sources,
         std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::ExecutablePipelinePtr>& pipelineToExecutableMap);
