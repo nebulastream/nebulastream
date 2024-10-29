@@ -13,6 +13,7 @@ usage() {
 # If set we built rebuilt all docker images locally
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
+STDLIB=libcxx
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
         -l|--local)
@@ -21,6 +22,11 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -r|--rootless)
             FORCE_ROOTLESS=1
+            shift
+            ;;
+        --libstdcxx)
+            echo "Building with libstdc++"
+            STDLIB=libstdcxx
             shift
             ;;
         -*)
@@ -35,6 +41,10 @@ done
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
+TAG=${HASH}
+if [[ $STDLIB != 'libcxx' ]]; then
+    TAG=${TAG}-stdlibcxx
+fi
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current 
 # user
@@ -77,6 +87,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
   docker build -f docker/dependency/Dependency.dockerfile \
           --build-arg VCPKG_DEPENDENCY_HASH=${HASH} \
           --build-arg TAG=local \
+          --build-arg STDLIB=${STDLIB} \
           --build-arg ARCH=${ARCH} \
           -t nebulastream/nes-development-dependency:local .
 
@@ -92,18 +103,18 @@ if [ $BUILD_LOCAL -eq 1 ]; then
                --build-arg ROOTLESS=${USE_ROOTLESS} \
                --build-arg TAG=default .
 else
-  if ! docker manifest inspect nebulastream/nes-development:${HASH} > /dev/null 2>&1 ; then
-   echo -e "${RED}Remote image development image for hash ${HASH} does not exist.
+  if ! docker manifest inspect nebulastream/nes-development:${TAG} > /dev/null 2>&1 ; then
+   echo -e "${RED}Remote image development image for hash ${TAG} does not exist.
 Either build locally with the -l option, or open a PR (draft) and let the CI build the development image${NC}"
    exit 1
   fi
 
-  echo "Basing local development image on remote on nebulastream/nes-development:${HASH}"
+  echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
                -t nebulastream/nes-development:local \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
                --build-arg ROOTLESS=${USE_ROOTLESS} \
-               --build-arg TAG=${HASH} .
+               --build-arg TAG=${TAG} .
 fi
