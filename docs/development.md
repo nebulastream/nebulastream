@@ -19,6 +19,9 @@ docker container, which prevents permission issues. Building a local image will 
 image which matches the current set of dependencies (based on a hash). If you are using docker in rootless mode the
 user inside the container will be root.
 
+If no development image matches the current dependency hash, you can build the development environment locally (using the
+`-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
+
 ```shell
 ./scripts/install-local-docker-environment.sh
 ```
