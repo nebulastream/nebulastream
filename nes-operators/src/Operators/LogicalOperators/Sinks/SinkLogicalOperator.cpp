@@ -49,7 +49,9 @@ std::string SinkLogicalOperator::toString() const
 }
 const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
 {
-    return *sinkDescriptor;
+    if (this->sinkDescriptor)
+        return *sinkDescriptor;
+    throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
 }
 
 OperatorPtr SinkLogicalOperator::copy()
