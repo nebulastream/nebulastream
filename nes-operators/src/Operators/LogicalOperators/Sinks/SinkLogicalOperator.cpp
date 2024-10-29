@@ -42,7 +42,7 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << fmt::format("\nSINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
+    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
     ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
     ss << ")";
     return ss.str();
@@ -50,7 +50,9 @@ std::string SinkLogicalOperator::toString() const
 const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
 {
     if (this->sinkDescriptor)
+    {
         return *sinkDescriptor;
+    }
     throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
 }
 

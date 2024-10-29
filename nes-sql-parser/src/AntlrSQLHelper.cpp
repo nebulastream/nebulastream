@@ -12,65 +12,65 @@
     limitations under the License.
 */
 
-#include <SQLParser/NebulaSQLHelper.hpp>
+#include <AntlrSQLParser/AntlrSQLHelper.hpp>
 
 namespace NES::Parsers
 {
 
 /// Getter and Setter for the map/list entries of each clause
-const std::string NebulaSQLHelper::getSource() const
+const std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
-const std::list<std::shared_ptr<NES::NodeFunction>>& NebulaSQLHelper::getWhereClauses() const
+const std::list<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getWhereClauses() const
 {
     return this->whereClauses;
 }
-const std::list<std::shared_ptr<NES::NodeFunction>>& NebulaSQLHelper::getHavingClauses() const
+const std::list<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getHavingClauses() const
 {
     return this->havingClauses;
 }
 
-const std::vector<std::shared_ptr<NES::NodeFunction>>& NebulaSQLHelper::getProjectionFields() const
+const std::vector<std::shared_ptr<NES::NodeFunction>>& AntlrSQLHelper::getProjectionFields() const
 {
     return this->projectionFields;
 }
 
 /// methods to update the clauses maps/lists
-void NebulaSQLHelper::addSource(std::string sourceName)
+void AntlrSQLHelper::setSource(std::string sourceName)
 {
     this->source = sourceName;
 }
-void NebulaSQLHelper::addWhereClause(std::shared_ptr<NES::NodeFunction> expressionNode)
+void AntlrSQLHelper::addWhereClause(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
     auto pos = this->whereClauses.begin();
     this->whereClauses.insert(pos, expressionNode);
 }
-void NebulaSQLHelper::addHavingClause(std::shared_ptr<NES::NodeFunction> expressionNode)
+void AntlrSQLHelper::addHavingClause(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
     auto pos = this->havingClauses.begin();
     this->havingClauses.insert(pos, expressionNode);
 }
-void NebulaSQLHelper::addProjectionField(std::shared_ptr<NES::NodeFunction> expressionNode)
+void AntlrSQLHelper::addProjectionField(std::shared_ptr<NES::NodeFunction> expressionNode)
 {
     this->projectionFields.push_back(expressionNode);
 }
 
-const NES::Windowing::WindowTypePtr NebulaSQLHelper::getWindowType() const
+const NES::Windowing::WindowTypePtr AntlrSQLHelper::getWindowType() const
 {
     return NES::Windowing::WindowTypePtr();
 }
 
-void NebulaSQLHelper::addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssignment> expressionNode)
+void AntlrSQLHelper::addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssignment> expressionNode)
 {
     auto pos = this->mapBuilder.begin();
     this->mapBuilder.insert(pos, expressionNode);
 }
-std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> NebulaSQLHelper::getMapExpressions() const
+std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> AntlrSQLHelper::getMapExpressions() const
 {
     return this->mapBuilder;
 }
-void NebulaSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions)
+void AntlrSQLHelper::setMapExpressions(const std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions)
 {
     this->mapBuilder = expressions;
 }

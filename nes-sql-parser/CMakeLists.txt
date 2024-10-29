@@ -15,24 +15,28 @@ get_source(nes-sql-parser SQL_PARSER_SOURCE_FILES)
 
 add_custom_command(
         OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLBaseListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLLexer.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLParser.cpp
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4
-        COMMAND yes | antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/NebulaSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLBaseListener.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLLexer.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLListener.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLParser.cpp
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4
+        COMMAND antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+# The VCPKG port is called 'antlr4', finding the package requires to look for 'antlr4-runtime' and
+# adding antlr library as a dependency to another library, requires to link against 'antlr-static'.
 find_package(antlr4-runtime CONFIG REQUIRED)
 add_library(nes-sql-parser
         ${SQL_PARSER_SOURCE_FILES}
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLBaseListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLLexer.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaSQLParser.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLBaseListener.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLLexer.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLListener.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLParser.cpp
 )
 
 target_include_directories(nes-sql-parser PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
-        ${CMAKE_CURRENT_BINARY_DIR} ${ANTLR4_INCLUDE_DIR})
+        ${CMAKE_CURRENT_BINARY_DIR} ${ANTLR4_INCLUDE_DIR}
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_link_libraries(nes-sql-parser PUBLIC antlr4_static nes-common nes-functions nes-sinks nes-sources nes-client nes-operators PRIVATE nes-client)

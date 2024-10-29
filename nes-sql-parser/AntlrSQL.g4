@@ -1,4 +1,4 @@
-grammar NebulaSQL;
+grammar AntlrSQL;
 
 @lexer::postinclude {
 #include <Util/DisableWarningsPragma.hpp>
@@ -254,7 +254,6 @@ nullNotnull
 streamName: IDENTIFIER;
 
 fileFormat: CSV_FORMAT;
-
 
 sortItem
     : expression ordering=(ASC | DESC)? (NULLS nullOrder=(LAST | FIRST))?

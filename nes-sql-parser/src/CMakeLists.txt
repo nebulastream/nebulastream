@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-sql-parser
-        NebulaSQLQueryPlanCreator.cpp
-        NebulaSQLHelper.cpp
+        AntlrSQLQueryPlanCreator.cpp
+        AntlrSQLHelper.cpp
+        AntlrSQLQueryParser.cpp
 )
