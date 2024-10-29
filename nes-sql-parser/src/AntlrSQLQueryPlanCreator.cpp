@@ -40,7 +40,7 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
 
 QueryPlanPtr AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
-    /// Todo: support multiple sinks
+    /// Todo #421: support multiple sinks
     return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
 Windowing::TimeMeasure AntlrSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase)
@@ -156,7 +156,7 @@ void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContex
     AntlrSQLHelper helper = helpers.top();
     if (helper.expressionBuilder.size() != 1)
     {
-        NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
+        throw InvalidQuerySyntax("There were more than 1 functions in the expressionBuilder in exitWhereClause.");
     }
     helper.addWhereClause(helper.expressionBuilder.back());
     helper.expressionBuilder.clear();
@@ -182,8 +182,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     auto leftExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
 
-    std::string opText = context->op->getText();
-    if (opText == "*")
+    if (const std::string opText = context->op->getText(); opText == "*")
     {
         expression = leftExpression * rightExpression;
     }
@@ -205,7 +204,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     }
     else
     {
-        NES_ERROR("Unknown Arithmetic Binary Operator");
+        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {}", opText);
     }
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
@@ -218,9 +217,7 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     auto innerExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
 
-    std::string opText = context->op->getText();
-
-    if (opText == "+")
+    if (const std::string opText = context->op->getText(); opText == "+")
     {
         expression = innerExpression;
     }
@@ -228,13 +225,9 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     {
         expression = -1 * innerExpression;
     }
-    else if (opText == "~")
-    {
-        NES_WARNING("Operation tilde not supported yeet");
-    }
     else
     {
-        NES_ERROR("Unknown Arithmetic Unary Operator");
+        throw InvalidQuerySyntax("Unknown Arithmetic Binary Operator: {}", opText);
     }
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
@@ -296,9 +289,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         /// handle renames of identifiers
         if (helper.isArithmeticBinary)
         {
-            NES_THROW_RUNTIME_ERROR("Why are we here? Just to suffer?");
+            throw InvalidQuerySyntax("There must not be a binary arithmetic token at this point: {}", context->getText());
         }
-        else if ((helper.isWhereOrHaving || helper.isSelect))
+        if ((helper.isWhereOrHaving || helper.isSelect))
         {
             NodeFunctionPtr attr = helper.expressionBuilder.back();
             helper.expressionBuilder.pop_back();
@@ -341,7 +334,7 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
 {
     if (!helpers.empty() && !helpers.top().isFrom && !helpers.top().isSetOperation)
     {
-        NES_ERROR("Subqueries are only supported in FROM clauses");
+        throw InvalidQuerySyntax("Subqueries are only supported in FROM clauses, but got {}", context->getText());
     }
 
     AntlrSQLHelper helper;
@@ -543,7 +536,7 @@ void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseCont
     AntlrSQLHelper helper = helpers.top();
     if (helper.expressionBuilder.size() != 1)
     {
-        NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
+        throw InvalidQuerySyntax("There were more than 1 functions in the expressionBuilder in exitWhereClause.");
     }
     helper.addHavingClause(helper.expressionBuilder.back());
     helper.expressionBuilder.clear();
@@ -655,10 +648,9 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         {
             dataType = DataTypeFactory::createFloat();
         }
-        /// We currently do not support decimals.
-        else if (dynamic_cast<AntlrSQLParser::DecimalLiteralContext*>(concreteValue))
+        else
         {
-            dataType = DataTypeFactory::createDouble();
+            throw InvalidQuerySyntax("Unknown data type: {}", concreteValue->getText());
         }
     }
     const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
@@ -710,7 +702,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     }
     else
     {
-        NES_THROW_RUNTIME_ERROR("Invalid Aggregation Function: " + funcName);
+        throw InvalidQuerySyntax("Unknown aggregation function: {}", funcName);
     }
     poppush(helper);
 }
@@ -738,7 +730,7 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
     }
     else
     {
-        NES_ERROR("Join Keys have to be specified explicitly")
+        throw InvalidQuerySyntax("Join keys must be specified explicitly.");
     }
     if (helper.joinSources.size() == helper.joinSourceRenames.size() + 1)
     {
@@ -751,7 +743,9 @@ void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationCont
 void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationContext* context)
 {
     if (queryPlans.size() < 2)
-        NES_ERROR("Union does not have sufficient amount of QueryPlans for unifiying");
+    {
+        throw InvalidQuerySyntax("Union does not have sufficient amount of QueryPlans for unifying.");
+    }
 
     auto rightQuery = queryPlans.top();
     queryPlans.pop();
