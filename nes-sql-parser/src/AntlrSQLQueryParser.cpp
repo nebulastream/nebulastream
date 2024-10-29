@@ -16,32 +16,33 @@
 #include <ANTLRInputStream.h>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <SQLParser/NebulaSQLQueryPlanCreator.hpp>
-#include <Services/QueryParsingService.hpp>
+#include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-namespace NES
+
+namespace NES::AntlrSQLQueryParser
 {
 
-QueryPlanPtr QueryParsingService::createQueryFromSQL(const std::string& query)
+std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view query)
 {
     try
     {
-        antlr4::ANTLRInputStream input(query.c_str(), query.length());
-        NebulaSQLLexer lexer(&input);
+        antlr4::ANTLRInputStream input(query.data(), query.length());
+        AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
-        NebulaSQLParser parser(&tokens);
-        NebulaSQLParser::QueryContext* tree = parser.query();
-        Parsers::NebulaSQLQueryPlanCreator queryPlanCreator;
+        AntlrSQLParser parser(&tokens);
+        AntlrSQLParser::QueryContext* tree = parser.query();
+        Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, tree);
         auto queryPlan = queryPlanCreator.getQueryPlan();
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan->toString());
         return queryPlan;
     }
-    catch (...)
+    catch (std::exception invalidQuerySyntaxError)
     {
-        throw InvalidQuerySyntax("Error during query parsing");
+        throw;
     }
 }
 

@@ -27,7 +27,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
-#include <Services/QueryParsingService.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
@@ -209,7 +209,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
-    auto query = QueryParsingService::createQueryFromSQL(config.query);
+    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 
     validateAndSetSinkDescriptors(*query, config);
     semanticQueryValidation->validate(query); /// performs the first type inference

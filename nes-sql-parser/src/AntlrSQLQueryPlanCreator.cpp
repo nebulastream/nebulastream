@@ -14,18 +14,18 @@
 
 #include <regex>
 
+#include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
-#include <SQLParser/NebulaSQLQueryPlanCreator.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include "Functions/LogicalFunctions/NodeFunctionNegate.hpp"
 
 namespace NES::Parsers
 {
@@ -38,12 +38,12 @@ std::string queryPlanToString(const QueryPlanPtr queryPlan)
     return queryPlanStr;
 }
 
-QueryPlanPtr NebulaSQLQueryPlanCreator::getQueryPlan() const
+QueryPlanPtr AntlrSQLQueryPlanCreator::getQueryPlan() const
 {
     /// Todo: support multiple sinks
     return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
-Windowing::TimeMeasure NebulaSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase)
+Windowing::TimeMeasure AntlrSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase)
 {
     if (timebase == "MS")
         return Milliseconds(size);
@@ -58,25 +58,25 @@ Windowing::TimeMeasure NebulaSQLQueryPlanCreator::buildTimeMeasure(int size, con
     return Milliseconds(0);
 }
 
-void NebulaSQLQueryPlanCreator::poppush(NebulaSQLHelper helper)
+void AntlrSQLQueryPlanCreator::poppush(AntlrSQLHelper helper)
 {
     helpers.pop();
     helpers.push(helper);
 }
 
-void NebulaSQLQueryPlanCreator::enterSelectClause(NebulaSQLParser::SelectClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     helpers.top().isSelect = true;
-    NebulaSQLBaseListener::enterSelectClause(context);
+    AntlrSQLBaseListener::enterSelectClause(context);
 }
 
-void NebulaSQLQueryPlanCreator::enterFromClause(NebulaSQLParser::FromClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterFromClause(AntlrSQLParser::FromClauseContext* context)
 {
     helpers.top().isFrom = true;
-    NebulaSQLBaseListener::enterFromClause(context);
+    AntlrSQLBaseListener::enterFromClause(context);
 }
 
-void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterSinkClause(AntlrSQLParser::SinkClauseContext* context)
 {
     if (context->sink().empty())
         throw InvalidQuerySyntax("INTO must be followed by at least one sink-identifier.");
@@ -89,17 +89,17 @@ void NebulaSQLQueryPlanCreator::enterSinkClause(NebulaSQLParser::SinkClauseConte
 }
 
 
-void NebulaSQLQueryPlanCreator::enterNamedExpressionSeq(NebulaSQLParser::NamedExpressionSeqContext* context)
+void AntlrSQLQueryPlanCreator::enterNamedExpressionSeq(AntlrSQLParser::NamedExpressionSeqContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.expressionBuilder.clear();
     poppush(helper);
-    NebulaSQLBaseListener::enterNamedExpressionSeq(context);
+    AntlrSQLBaseListener::enterNamedExpressionSeq(context);
 }
 
-void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinaryContext* context)
+void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     std::shared_ptr<NES::NodeFunction> expression;
 
     auto rightExpression = helper.expressionBuilder.back();
@@ -117,14 +117,18 @@ void NebulaSQLQueryPlanCreator::exitLogicalBinary(NebulaSQLParser::LogicalBinary
     {
         expression = NES::NodeFunctionOr::create(leftExpression, rightExpression);
     }
+    else
+    {
+        throw InvalidQuerySyntax("Unknown binary function in SQL query: {}", context->getText());
+    }
 
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
 }
-void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     NodeFunctionPtr expressionNode;
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     for (const NodeFunctionPtr& selectExpression : helper.expressionBuilder)
     {
         helper.addProjectionField(selectExpression);
@@ -132,24 +136,24 @@ void NebulaSQLQueryPlanCreator::exitSelectClause(NebulaSQLParser::SelectClauseCo
     helper.expressionBuilder.clear();
     poppush(helper);
     helpers.top().isSelect = false;
-    NebulaSQLBaseListener::exitSelectClause(context);
+    AntlrSQLBaseListener::exitSelectClause(context);
 }
-void NebulaSQLQueryPlanCreator::exitFromClause(NebulaSQLParser::FromClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitFromClause(AntlrSQLParser::FromClauseContext* context)
 {
     helpers.top().isFrom = false;
-    NebulaSQLBaseListener::exitFromClause(context);
+    AntlrSQLBaseListener::exitFromClause(context);
 }
-void NebulaSQLQueryPlanCreator::enterWhereClause(NebulaSQLParser::WhereClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterWhereClause(AntlrSQLParser::WhereClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     poppush(helper);
-    NebulaSQLBaseListener::enterWhereClause(context);
+    AntlrSQLBaseListener::enterWhereClause(context);
 }
-void NebulaSQLQueryPlanCreator::exitWhereClause(NebulaSQLParser::WhereClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContext* context)
 {
     helpers.top().isWhereOrHaving = false;
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     if (helper.expressionBuilder.size() != 1)
     {
         NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
@@ -157,20 +161,20 @@ void NebulaSQLQueryPlanCreator::exitWhereClause(NebulaSQLParser::WhereClauseCont
     helper.addWhereClause(helper.expressionBuilder.back());
     helper.expressionBuilder.clear();
     poppush(helper);
-    NebulaSQLBaseListener::exitWhereClause(context);
+    AntlrSQLBaseListener::exitWhereClause(context);
 }
-void NebulaSQLQueryPlanCreator::enterComparisonOperator(NebulaSQLParser::ComparisonOperatorContext* context)
+void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::ComparisonOperatorContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
 
     helper.opBoolean = context->getText();
     auto temp = context->getText();
     poppush(helper);
-    NebulaSQLBaseListener::enterComparisonOperator(context);
+    AntlrSQLBaseListener::enterComparisonOperator(context);
 }
-void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::ArithmeticBinaryContext* context)
+void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     NES::NodeFunctionPtr expression;
 
     auto rightExpression = helper.expressionBuilder.back();
@@ -206,9 +210,9 @@ void NebulaSQLQueryPlanCreator::exitArithmeticBinary(NebulaSQLParser::Arithmetic
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
 }
-void NebulaSQLQueryPlanCreator::exitArithmeticUnary(NebulaSQLParser::ArithmeticUnaryContext* context)
+void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     NES::NodeFunctionPtr expression;
 
     auto innerExpression = helper.expressionBuilder.back();
@@ -236,12 +240,12 @@ void NebulaSQLQueryPlanCreator::exitArithmeticUnary(NebulaSQLParser::ArithmeticU
     poppush(helper);
 }
 
-void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::UnquotedIdentifierContext* context)
+void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
 
     /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
     {
@@ -252,21 +256,21 @@ void NebulaSQLQueryPlanCreator::enterUnquotedIdentifier(NebulaSQLParser::Unquote
     {
         helper.newSourceName = context->getText();
     }
-    else if (helper.isJoinRelation && parentRuleIndex == NebulaSQLParser::RuleTableAlias)
+    else if (helper.isJoinRelation && parentRuleIndex == AntlrSQLParser::RuleTableAlias)
     {
         helper.joinSourceRenames.emplace_back(context->getText());
     }
     poppush(helper);
-    NebulaSQLBaseListener::enterUnquotedIdentifier(context);
+    AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
 
 
-void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierContext* context)
+void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
 
     /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
     {
@@ -277,17 +281,17 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
         NodeFunctionFieldAccessPtr key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
-    else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex)
+    else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the expression builder list
         helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
     }
-    else if (helper.isFrom && !helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isFrom && !helper.isJoinRelation && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
-        helper.addSource(context->getText());
+        helper.setSource(context->getText());
     }
-    else if (NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation)
+    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation)
     {
         /// handle renames of identifiers
         if (helper.isArithmeticBinary)
@@ -314,18 +318,18 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
             }
         }
     }
-    else if (helper.isFunctionCall && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isFunctionCall && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         auto aggFunc = helper.windowAggs.back();
         helper.windowAggs.pop_back();
         aggFunc = aggFunc->as(Attribute(context->getText()));
         helper.windowAggs.push_back(aggFunc);
     }
-    else if (helper.isJoinRelation && NebulaSQLParser::RulePrimaryExpression == parentRuleIndex)
+    else if (helper.isJoinRelation && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         helper.joinKeyRelationHelper.push_back(Attribute(context->getText()));
     }
-    else if (helper.isJoinRelation && NebulaSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isJoinRelation && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         helper.joinSources.push_back(context->getText());
     }
@@ -333,17 +337,17 @@ void NebulaSQLQueryPlanCreator::enterIdentifier(NebulaSQLParser::IdentifierConte
 }
 
 
-void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context)
+void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     if (!helpers.empty() && !helpers.top().isFrom && !helpers.top().isSetOperation)
     {
         NES_ERROR("Subqueries are only supported in FROM clauses");
     }
 
-    NebulaSQLHelper helper;
+    AntlrSQLHelper helper;
 
     /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<NebulaSQLParser::IdentifierContext*>(context->parent);
+    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
     size_t parentRuleIndex = -1;
     if (parentContext != nullptr)
     {
@@ -351,17 +355,17 @@ void NebulaSQLQueryPlanCreator::enterPrimaryQuery(NebulaSQLParser::PrimaryQueryC
     }
 
     /// PrimaryQuery is a queryterm too, but if it's a child of a queryterm we are in a union!
-    if (parentRuleIndex == NebulaSQLParser::RuleQueryTerm)
+    if (parentRuleIndex == AntlrSQLParser::RuleQueryTerm)
     {
         helper.isSetOperation = true;
     }
 
     helpers.push(helper);
-    NebulaSQLBaseListener::enterPrimaryQuery(context);
+    AntlrSQLBaseListener::enterPrimaryQuery(context);
 }
-void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryContext* context)
+void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     QueryPlanPtr queryPlan;
 
     if (!helper.queryPlans.empty())
@@ -408,68 +412,68 @@ void NebulaSQLQueryPlanCreator::exitPrimaryQuery(NebulaSQLParser::PrimaryQueryCo
     }
     else
     {
-        NebulaSQLHelper subQueryHelper = helpers.top();
+        AntlrSQLHelper subQueryHelper = helpers.top();
         subQueryHelper.queryPlans.push_back(queryPlan);
         poppush(subQueryHelper);
     }
-    NebulaSQLBaseListener::exitPrimaryQuery(context);
+    AntlrSQLBaseListener::exitPrimaryQuery(context);
 }
-void NebulaSQLQueryPlanCreator::enterWindowClause(NebulaSQLParser::WindowClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isWindow = true;
     poppush(helper);
-    NebulaSQLBaseListener::enterWindowClause(context);
+    AntlrSQLBaseListener::enterWindowClause(context);
 }
-void NebulaSQLQueryPlanCreator::exitWindowClause(NebulaSQLParser::WindowClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isWindow = false;
     poppush(helper);
 
-    NebulaSQLBaseListener::exitWindowClause(context);
+    AntlrSQLBaseListener::exitWindowClause(context);
 }
-void NebulaSQLQueryPlanCreator::enterTimeUnit(NebulaSQLParser::TimeUnitContext* context)
+void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.timeUnit = context->getText();
     poppush(helper);
 }
-void NebulaSQLQueryPlanCreator::exitSizeParameter(NebulaSQLParser::SizeParameterContext* context)
+void AntlrSQLQueryPlanCreator::exitSizeParameter(AntlrSQLParser::SizeParameterContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.size = std::stoi(context->children[1]->getText());
     poppush(helper);
 
-    NebulaSQLBaseListener::exitSizeParameter(context);
+    AntlrSQLBaseListener::exitSizeParameter(context);
 }
-void NebulaSQLQueryPlanCreator::exitTimestampParameter(NebulaSQLParser::TimestampParameterContext* context)
+void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.timestamp = context->getText();
     poppush(helper);
 }
 /// WINDOWS
-void NebulaSQLQueryPlanCreator::exitTumblingWindow(NebulaSQLParser::TumblingWindowContext* context)
+void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindowContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
     helper.windowType = Windowing::TumblingWindow::of(EventTime(Attribute(helper.timestamp)), timeMeasure);
     poppush(helper);
-    NebulaSQLBaseListener::exitTumblingWindow(context);
+    AntlrSQLBaseListener::exitTumblingWindow(context);
 }
-void NebulaSQLQueryPlanCreator::exitSlidingWindow(NebulaSQLParser::SlidingWindowContext* context)
+void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
     TimeMeasure slidingLength = buildTimeMeasure(1, helper.timeUnit);
     helper.windowType = Windowing::SlidingWindow::of(EventTime(Attribute(helper.timestamp)), timeMeasure, slidingLength);
     poppush(helper);
-    NebulaSQLBaseListener::exitSlidingWindow(context);
+    AntlrSQLBaseListener::exitSlidingWindow(context);
 }
-void NebulaSQLQueryPlanCreator::exitThresholdBasedWindow(NebulaSQLParser::ThresholdBasedWindowContext* context)
+void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     if (helper.minimumCount != -1)
     {
         helper.windowType = Windowing::ThresholdWindow::of(helper.expressionBuilder.back(), helper.minimumCount);
@@ -480,18 +484,18 @@ void NebulaSQLQueryPlanCreator::exitThresholdBasedWindow(NebulaSQLParser::Thresh
     }
     helper.isTimeBasedWindow = false;
     poppush(helper);
-    NebulaSQLBaseListener::exitThresholdBasedWindow(context);
+    AntlrSQLBaseListener::exitThresholdBasedWindow(context);
 }
-void NebulaSQLQueryPlanCreator::enterNamedExpression(NebulaSQLParser::NamedExpressionContext* context)
+void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.identCountHelper = 0;
     poppush(helper);
-    NebulaSQLBaseListener::enterNamedExpression(context);
+    AntlrSQLBaseListener::enterNamedExpression(context);
 }
-void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpressionContext* context)
+void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     /// handle implicit maps when no "AS" is supplied, but a rename is needed
     if (!helper.isFunctionCall && !helper.expressionBuilder.empty() && helper.isSelect && helper.identCountHelper > 1
         && context->children.size() == 1)
@@ -517,26 +521,26 @@ void NebulaSQLQueryPlanCreator::exitNamedExpression(NebulaSQLParser::NamedExpres
     helper.isFunctionCall = false;
     poppush(helper);
 
-    NebulaSQLBaseListener::exitNamedExpression(context);
+    AntlrSQLBaseListener::exitNamedExpression(context);
 }
-void NebulaSQLQueryPlanCreator::enterFunctionCall(NebulaSQLParser::FunctionCallContext* context)
+void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isFunctionCall = true;
     poppush(helper);
-    NebulaSQLBaseListener::enterFunctionCall(context);
+    AntlrSQLBaseListener::enterFunctionCall(context);
 }
-void NebulaSQLQueryPlanCreator::enterHavingClause(NebulaSQLParser::HavingClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     poppush(helper);
-    NebulaSQLBaseListener::enterHavingClause(context);
+    AntlrSQLBaseListener::enterHavingClause(context);
 }
-void NebulaSQLQueryPlanCreator::exitHavingClause(NebulaSQLParser::HavingClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = false;
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     if (helper.expressionBuilder.size() != 1)
     {
         NES_ERROR("Zuviele Expressions oder zuwenige,warum??");
@@ -544,12 +548,12 @@ void NebulaSQLQueryPlanCreator::exitHavingClause(NebulaSQLParser::HavingClauseCo
     helper.addHavingClause(helper.expressionBuilder.back());
     helper.expressionBuilder.clear();
     poppush(helper);
-    NebulaSQLBaseListener::exitHavingClause(context);
+    AntlrSQLBaseListener::exitHavingClause(context);
 }
 
-void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContext* context)
+void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     NES::NodeFunctionPtr expression;
     if (!helper.isJoinRelation)
     {
@@ -570,24 +574,24 @@ void NebulaSQLQueryPlanCreator::exitComparison(NebulaSQLParser::ComparisonContex
         }
         else
         {
-            throw InvalidQuerySyntax(fmt::format("Unknown Comparison Operator: {}", op));
+            throw InvalidQuerySyntax("Unknown Comparison Operator: {}", op);
         }
         helper.expressionBuilder.push_back(expression);
         poppush(helper);
     }
-    NebulaSQLBaseListener::enterComparison(context);
+    AntlrSQLBaseListener::enterComparison(context);
 }
-void NebulaSQLQueryPlanCreator::enterJoinRelation(NebulaSQLParser::JoinRelationContext* context)
+void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.joinKeyRelationHelper.clear();
     helper.isJoinRelation = true;
     poppush(helper);
-    NebulaSQLBaseListener::enterJoinRelation(context);
+    AntlrSQLBaseListener::enterJoinRelation(context);
 }
-void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContext* context)
+void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     NES::NodeFunctionPtr expression;
 
     auto innerExpression = helper.expressionBuilder.back();
@@ -596,63 +600,63 @@ void NebulaSQLQueryPlanCreator::exitLogicalNot(NebulaSQLParser::LogicalNotContex
     expression = !innerExpression;
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
-    NebulaSQLBaseListener::exitLogicalNot(context);
+    AntlrSQLBaseListener::exitLogicalNot(context);
 }
 
-void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDefaultContext* context)
+void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefaultContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     std::shared_ptr<DataType> dataType;
-    if (const auto valueAsNumeric = dynamic_cast<NebulaSQLParser::NumericLiteralContext*>(context->constant()))
+    if (const auto valueAsNumeric = dynamic_cast<AntlrSQLParser::NumericLiteralContext*>(context->constant()))
     {
         const auto concreteValue = valueAsNumeric->number();
         /// Signed Integers
-        if (dynamic_cast<NebulaSQLParser::TinyIntLiteralContext*>(concreteValue))
+        if (dynamic_cast<AntlrSQLParser::TinyIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt8();
         }
-        else if (dynamic_cast<NebulaSQLParser::SmallIntLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::SmallIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt16();
         }
-        else if (dynamic_cast<NebulaSQLParser::IntegerLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::IntegerLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt32();
         }
-        else if (dynamic_cast<NebulaSQLParser::BigIntLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::BigIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt64();
         }
 
         /// Unsigned Integers
-        else if (dynamic_cast<NebulaSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::UnsignedTinyIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt8();
         }
-        else if (dynamic_cast<NebulaSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::UnsignedSmallIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt16();
         }
-        else if (dynamic_cast<NebulaSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::UnsignedIntegerLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt32();
         }
-        else if (dynamic_cast<NebulaSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::UnsignedBigIntLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createInt64();
         }
 
         /// Floating Point
-        else if (dynamic_cast<NebulaSQLParser::DoubleLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::DoubleLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createDouble();
         }
-        else if (dynamic_cast<NebulaSQLParser::FloatLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::FloatLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createFloat();
         }
         /// We currently do not support decimals.
-        else if (dynamic_cast<NebulaSQLParser::DecimalLiteralContext*>(concreteValue))
+        else if (dynamic_cast<AntlrSQLParser::DecimalLiteralContext*>(concreteValue))
         {
             dataType = DataTypeFactory::createDouble();
         }
@@ -663,13 +667,13 @@ void NebulaSQLQueryPlanCreator::exitConstantDefault(NebulaSQLParser::ConstantDef
     poppush(helper);
 }
 
-void NebulaSQLQueryPlanCreator::exitRealIdent(NebulaSQLParser::RealIdentContext* context)
+void AntlrSQLQueryPlanCreator::exitRealIdent(AntlrSQLParser::RealIdentContext* context)
 {
-    NebulaSQLBaseListener::exitRealIdent(context);
+    AntlrSQLBaseListener::exitRealIdent(context);
 }
-void NebulaSQLQueryPlanCreator::exitFunctionCall(NebulaSQLParser::FunctionCallContext* context)
+void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     auto funcName = context->children[0]->getText();
     for (char& c : funcName)
     {
@@ -710,23 +714,23 @@ void NebulaSQLQueryPlanCreator::exitFunctionCall(NebulaSQLParser::FunctionCallCo
     }
     poppush(helper);
 }
-void NebulaSQLQueryPlanCreator::exitThresholdMinSizeParameter(NebulaSQLParser::ThresholdMinSizeParameterContext* context)
+void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.minimumCount = std::stoi(context->getText());
     poppush(helper);
 }
 
-void NebulaSQLQueryPlanCreator::enterValueExpressionDefault(NebulaSQLParser::ValueExpressionDefaultContext* context)
+void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::ValueExpressionDefaultContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.identCountHelper++;
     poppush(helper);
-    NebulaSQLBaseListener::enterValueExpressionDefault(context);
+    AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }
-void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationContext* context)
+void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isJoinRelation = false;
     if (helper.joinKeyRelationHelper.size() >= 2)
     {
@@ -741,10 +745,10 @@ void NebulaSQLQueryPlanCreator::exitJoinRelation(NebulaSQLParser::JoinRelationCo
         helper.joinSourceRenames.emplace_back("");
     }
     poppush(helper);
-    NebulaSQLBaseListener::exitJoinRelation(context);
+    AntlrSQLBaseListener::exitJoinRelation(context);
 }
 
-void NebulaSQLQueryPlanCreator::exitSetOperation(NebulaSQLParser::SetOperationContext* context)
+void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationContext* context)
 {
     if (queryPlans.size() < 2)
         NES_ERROR("Union does not have sufficient amount of QueryPlans for unifiying");
@@ -765,22 +769,22 @@ void NebulaSQLQueryPlanCreator::exitSetOperation(NebulaSQLParser::SetOperationCo
     {
         queryPlans.push(queryPlan);
     }
-    NebulaSQLBaseListener::exitSetOperation(context);
+    AntlrSQLBaseListener::exitSetOperation(context);
 }
 
-void NebulaSQLQueryPlanCreator::enterAggregationClause(NebulaSQLParser::AggregationClauseContext* context)
+void AntlrSQLQueryPlanCreator::enterAggregationClause(AntlrSQLParser::AggregationClauseContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isGroupBy = true;
     poppush(helper);
-    NebulaSQLBaseListener::enterAggregationClause(context);
+    AntlrSQLBaseListener::enterAggregationClause(context);
 }
-void NebulaSQLQueryPlanCreator::exitAggregationClause(NebulaSQLParser::AggregationClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitAggregationClause(AntlrSQLParser::AggregationClauseContext* context)
 {
-    NebulaSQLHelper helper = helpers.top();
+    AntlrSQLHelper helper = helpers.top();
     helper.isGroupBy = false;
     poppush(helper);
-    NebulaSQLBaseListener::exitAggregationClause(context);
+    AntlrSQLBaseListener::exitAggregationClause(context);
 }
 
 
