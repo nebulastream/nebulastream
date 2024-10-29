@@ -32,9 +32,22 @@ namespace NES
 LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
+    const auto functionTypeNotSupported = [](NodeFunctionPtr function) -> bool {
+        return not(
+            NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function));
+    };
+    bool allFunctionsAreSupported = true;
+    for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
+    {
+        NES_ERROR("The projection operator does not support the function: {}", function->toString());
+        allFunctionsAreSupported = false;
+    }
+    INVARIANT(
+        allFunctionsAreSupported,
+        "The Projection operator only supports NodeFunctionFieldAccess and NodeFunctionFieldAssignment functions.");
 }
 
-std::vector<NodeFunctionPtr> LogicalProjectionOperator::getFunctions() const
+const std::vector<NodeFunctionPtr>& LogicalProjectionOperator::getFunctions() const
 {
     return functions;
 }
@@ -66,6 +79,7 @@ std::string getFieldName(const NodeFunction& function)
 
 std::string LogicalProjectionOperator::toString() const
 {
+    PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
     std::stringstream ss;
     if (not outputSchema->getFieldNames().empty())
     {
@@ -90,21 +104,15 @@ bool LogicalProjectionOperator::inferSchema()
         ///Infer schema of the field function
         function->inferStamp(inputSchema);
 
-        /// Build the output schema
-        if (NES::Util::instanceOf<NodeFunctionFieldRename>(function))
-        {
-            auto fieldRename = NES::Util::as<NodeFunctionFieldRename>(function);
-            outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
-        }
-        else if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
+        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {
             auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
         {
-            auto fieldAccess = NES::Util::as<NodeFunctionFieldAssignment>(function);
-            outputSchema->addField(fieldAccess->getField()->getFieldName(), fieldAccess->getStamp());
+            auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
+            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getStamp());
         }
         else
         {
