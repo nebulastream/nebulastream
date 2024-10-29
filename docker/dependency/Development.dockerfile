@@ -24,6 +24,3 @@ RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \
     && cmake --install ClangBuildAnalyzer/build \
     && rm -rf ClangBuildAnalyzer \
     && ClangBuildAnalyzer --version
-
-USER ubuntu
-WORKDIR /home/ubuntu
