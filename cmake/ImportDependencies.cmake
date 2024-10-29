@@ -18,17 +18,16 @@ SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 option(USE_LOCAL_MLIR "Does not build llvm and mlir via vcpkg, rather uses a locally installed version" OFF)
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 
+if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
+    SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
+endif ()
+
 # Default Settings:
 # CMAKE_TOOLCHAIN_FILE    -> Local VCPKG Repository. Will build dependencies locally
 # NES_PREBUILT_VCPKG_ROOT -> Docker Environment with pre-built sdk.
 # VCPKG_ROOT              -> user-managed vcpkg install. Will build dependencies locally
 # NONE                    -> setup VCPKG Repository in project. Will build dependencies locally
-if (DEFINED CMAKE_TOOLCHAIN_FILE)
-    # If the user supplies a custom CMAKE_TOOLCHAIN_FILE we assume we are running in manifest
-    # mode and VCPKG will try to install or update dependencies based on the vcpkg.json
-    # manifest. This requires a fully setup vcpkg installation, not just a pre-built sdk.
-    message(STATUS "CMAKE_TOOLCHAIN_FILE was supplied: Assuming independent vcpkg-repository at ${CMAKE_TOOLCHAIN_FILE}")
-elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
+if ($CACHE{DOCKER_DEV_IMAGE})
     # If we detect the NES_PREBUILT_VCPKG_ROOT environment we assume we are running in an environment
     # where an exported vcpkg sdk was prepared. This means we will not run in manifest mode,
     # We check if the VCPKG_DEPENDENCY_HASH environment matches the current hash
@@ -55,6 +54,11 @@ elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
 
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
+    # If the user supplies a custom CMAKE_TOOLCHAIN_FILE we assume we are running in manifest
+    # mode and VCPKG will try to install or update dependencies based on the vcpkg.json
+    # manifest. This requires a fully setup vcpkg installation, not just a pre-built sdk.
+    message(STATUS "CMAKE_TOOLCHAIN_FILE was supplied: Assuming independent vcpkg-repository at ${CMAKE_TOOLCHAIN_FILE}")
 elseif (DEFINED ENV{VCPKG_ROOT})
     message(STATUS "VCPKG_ROOT Environment is set: Assuming user-managed vcpkg install at $ENV{VCPKG_ROOT}")
     SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
