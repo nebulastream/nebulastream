@@ -40,9 +40,9 @@ std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view 
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan->toString());
         return queryPlan;
     }
-    catch (std::exception invalidQuerySyntaxError)
+    catch (antlr4::RuntimeException antlrException)
     {
-        throw;
+        throw InvalidQuerySyntax("Antlr exception during parsing: {}", antlrException.what());
     }
 }
 
