@@ -69,10 +69,9 @@ jobs:
           fetch-depth: 0
       - name: Configure NebulaStream for Clang-Tidy
         run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      # As we only create the protobuf files, i.e., SerializableOperator.pb.h, once we build the nes-grpc target, we
-      # have to build it first before running clang-tidy.
-      - name: Build nes-grpc
-        run: cmake --build build -j --target nes-grpc -- -k 0
+      # We need to build the project, as some headers are only created during the build.
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
       - name: Create results directory
         run: mkdir clang-tidy-result
       - name: Analyze by running Clang-Tidy
