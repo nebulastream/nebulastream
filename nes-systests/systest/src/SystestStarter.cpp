@@ -237,42 +237,6 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 }
 }
 
-void removeFilesInDirectory(const std::filesystem::path& dirPath, const std::string& extension)
-{
-    if (is_directory(dirPath))
-    {
-        for (const auto& entry : std::filesystem::directory_iterator(dirPath))
-        {
-            if (entry.is_regular_file() && entry.path().extension() == extension)
-            {
-                std::filesystem::remove(entry.path());
-            }
-        }
-    }
-    else
-    {
-        std::cerr << "The specified path is not a directory.\n";
-    }
-}
-
-void removeFilesInDirectory(const std::filesystem::path& dirPath)
-{
-    if (is_directory(dirPath))
-    {
-        for (const auto& entry : std::filesystem::directory_iterator(dirPath))
-        {
-            if (entry.is_regular_file())
-            {
-                std::filesystem::remove(entry.path());
-            }
-        }
-    }
-    else
-    {
-        std::cerr << "The specified path is not a directory.\n";
-    }
-}
-
 void shuffleQueries(std::vector<NES::Systest::Query> queries)
 {
     std::random_device rd;
@@ -286,12 +250,24 @@ void setupLogging()
     char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
     std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&now_time_t));
 
-    const auto logFileName = fmt::format(PATH_TO_BINARY_DIR "/nes-systests/SystemTest_{}.log", timestamp);
+    const auto logFileName = fmt::format( "/nes-systests/SystemTest_{}.log", timestamp);
+    NES::Logger::setupLogging(std::format("{}{}",PATH_TO_BINARY_DIR , logFileName), NES::LogLevel::LOG_DEBUG, false);
 
-    NES::Logger::setupLogging(logFileName, NES::LogLevel::LOG_DEBUG, false);
-    const std::filesystem::path logPath = std::filesystem::current_path() / logFileName;
-    /// file:// to make the link clickable in the console
-    std::cout << "Find the log at: file://" << logPath.string() << std::endl;
+    const auto logPath = [](std::filesystem::path path){
+        /// file:// to make the link clickable in the console
+        std::cout << "Find the log at: file://" << path.string() << std::endl;
+    };
+
+    if (auto hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
+    {
+        /// Set the correct logging path when using docker
+        logPath(std::filesystem::path(hostLoggingPath + logFileName));
+    }
+    else
+    {
+        /// Set the correct logging path without docker
+        logPath(std::filesystem::current_path() / logFileName);
+    }
 }
 
 int main(int argc, const char** argv)
