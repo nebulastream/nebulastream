@@ -25,11 +25,11 @@
 namespace NES::AntlrSQLQueryParser
 {
 
-std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view query)
+std::shared_ptr<QueryPlan> createLogicalQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {
-        antlr4::ANTLRInputStream input(query.data(), query.length());
+        antlr4::ANTLRInputStream input(queryString.data(), queryString.length());
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);

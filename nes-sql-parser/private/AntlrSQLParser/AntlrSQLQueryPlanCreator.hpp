@@ -21,14 +21,13 @@
 
 namespace NES::Parsers
 {
+
 class AntlrSQLQueryPlanCreator : public AntlrSQLBaseListener
 {
-private:
     std::stack<AntlrSQLHelper> helpers;
     QueryPlanPtr completeQueryPlan;
     std::vector<std::string> sinkNames;
     std::stack<QueryPlanPtr> queryPlans;
-
 
 public:
     QueryPlanPtr getQueryPlan() const;
