@@ -44,6 +44,7 @@ Checks: [
   "-altera-*", # we don't do OpenCL
 
   # annyoing and useless
+  "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
@@ -248,7 +249,6 @@ WarningsAsErrors: '
   -performance-unnecessary-value-param,
   -llvm-header-guard,
   -readability-named-parameter,
-  -llvm-include-order,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -misc-non-private-member-variables-in-classes,
   -readability-redundant-inline-specifier,
