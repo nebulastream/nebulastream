@@ -183,17 +183,6 @@ bool checkResult(const Query& query)
         tryLogCurrentException();
         return false;
     }
-
-    /// spd logger cannot handle multiline prints with proper color and pattern. And as this is only for test runs we use stdout here.
-    std::cout << "==============================================================" << '\n';
-    std::cout << printMessages << '\n';
-    std::cout << "==============================================================" << std::endl;
-    if (!same)
-    {
-        std::cerr << errorMessages << "\nrerun with:\t" << "systest -t " << query.sqlLogicTestFile.c_str() << ":"
-                  << query.queryIdInFile.value() + 1 << "\n";
-    }
-
     return same;
 }
 

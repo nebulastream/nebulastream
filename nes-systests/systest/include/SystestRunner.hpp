@@ -21,9 +21,9 @@
 
 namespace NES::Systest
 {
-
 /// Forward refs to avoid cyclic deps with SystestState
 struct Query;
+struct RunningQuery;
 
 /// Load query plan objects by parsing a SLT file for queries and lowering it
 std::vector<DecomposedQueryPlanPtr>
@@ -31,13 +31,10 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect
-bool runQueriesAtLocalWorker(
-    std::vector<NES::Systest::Query> queries,
-    uint64_t numConcurrentQueries,
-    const NES::Configuration::SingleNodeWorkerConfiguration& configuration);
+std::vector<RunningQuery> runQueriesAtLocalWorker(
+    std::vector<Query> queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return false if one query result is incorrect
-bool runQueriesAtRemoteWorker(std::vector<NES::Systest::Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI);
-
+std::vector<RunningQuery> runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI);
 }

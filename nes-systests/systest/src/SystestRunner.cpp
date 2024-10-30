@@ -131,7 +131,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             config.query = query;
             try
             {
-                auto plan = CLI::createFullySpecifiedQueryPlan(config);
+                auto plan = createFullySpecifiedQueryPlan(config);
                 plans.emplace_back(plan);
             }
             catch (const std::exception& e)
@@ -152,16 +152,16 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     return plans;
 }
 
-bool runQueriesAtLocalWorker(
-    std::vector<Query> queries, uint64_t numConcurrentQueries, const NES::Configuration::SingleNodeWorkerConfiguration& configuration)
+std::vector<RunningQuery> runQueriesAtLocalWorker(
+    std::vector<Query> queries, const uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration)
 {
-    bool allTestSucceeded = true;
-
+    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
     folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
-    NES::SingleNodeWorker worker = NES::SingleNodeWorker(configuration);
+    SingleNodeWorker worker = SingleNodeWorker(configuration);
 
     std::atomic<size_t> queriesToResultCheck{0};
     std::atomic finishedProducing{false};
+    uint64_t finishedQueries = 0;
 
     std::thread producer(
         [&]()
@@ -178,7 +178,7 @@ bool runQueriesAtLocalWorker(
 
                 RunningQuery const runningQuery = {query, queryId};
 
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                 runningQueries.blockingWrite(std::move(runningQueryPtr));
                 queriesToResultCheck.fetch_add(1);
             }
@@ -189,31 +189,33 @@ bool runQueriesAtLocalWorker(
     {
         std::unique_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
-        while (worker.getQuerySummary(NES::QueryId(runningQuery->queryId))->currentStatus != NES::Runtime::Execution::QueryStatus::Stopped)
+        while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
-        worker.unregisterQuery(NES::QueryId(runningQuery->queryId));
+        worker.unregisterQuery(QueryId(runningQuery->queryId));
 
-        if (!checkResult(runningQuery->query))
+        if (not checkResult(runningQuery->query))
         {
-            allTestSucceeded = false;
+            failedQueries.wlock()->emplace_back(*runningQuery);
         }
         queriesToResultCheck.fetch_sub(1, std::memory_order_release);
+        std::cout << fmt::format("Queries run {}/{}", (++finishedQueries), queries.size()) << std::endl;
     }
     producer.join();
-    return allTestSucceeded;
+    return failedQueries.copy();
 }
 
-bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery>
+runQueriesAtRemoteWorker(std::vector<Query> queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
-    bool allTestSucceeded = true;
-
+    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
     folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
-    GRPCClient client(grpc::CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
+    GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
 
     std::atomic<size_t> runningQueryCount{0};
     std::atomic finishedProducing{false};
+    uint64_t finishedQueries = 0;
 
     std::thread producer(
         [&]()
@@ -227,9 +229,9 @@ bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrent
 
                 auto queryId = client.registerQuery(query.queryPlan);
                 client.start(queryId);
-                RunningQuery const runningQuery = {query, NES::QueryId(queryId)};
+                RunningQuery const runningQuery = {query, QueryId(queryId)};
 
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                 runningQueries.blockingWrite(std::move(runningQueryPtr));
                 runningQueryCount.fetch_add(1);
             }
@@ -246,14 +248,15 @@ bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrent
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
         client.unregister(runningQuery->queryId.getRawValue());
-        if (!checkResult(runningQuery->query))
+        if (not checkResult(runningQuery->query))
         {
-            allTestSucceeded = false;
+            failedQueries.wlock()->emplace_back(*runningQuery);
         }
         runningQueryCount.fetch_sub(1);
+        std::cout << fmt::format("Queries run {}/{}", (++finishedQueries), queries.size()) << std::endl;
     }
     producer.join();
-    return allTestSucceeded;
+    return failedQueries.copy();
 }
 
 }

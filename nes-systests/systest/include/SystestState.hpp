@@ -23,13 +23,15 @@
 #include <variant>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestConfiguration.hpp>
 #include <SystestRunner.hpp>
 
+
 namespace NES::Systest
 {
-
 using TestName = std::string;
 using TestGroup = std::string;
 
@@ -79,10 +81,25 @@ private:
 /// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<TestName, TestFile>;
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
+}
 
-/// laad test file map objects from files defined in systest config
+/// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
 
 /// returns a vector of queries to run derived for our testfilemap
 std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir);
 }
+template <>
+struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
+{
+    static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+    static auto format(const NES::Systest::RunningQuery& runningQuery, format_context& ctx) -> decltype(ctx.out())
+    {
+        return fmt::format_to(
+            ctx.out(),
+            "[{}, systest -t {}:{}]",
+            runningQuery.query.name,
+            runningQuery.query.sqlLogicTestFile,
+            runningQuery.query.queryNrInFile.value() + 1);
+    }
+};
