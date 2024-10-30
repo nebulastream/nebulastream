@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
