@@ -37,6 +37,7 @@ using namespace std::literals;
 
 namespace NES::Systest
 {
+
 Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
 {
     using namespace argparse;
@@ -215,11 +216,13 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         try
         {
             config.singleNodeWorkerConfig
-                = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
+                = NES::Configuration::loadConfiguration<Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
         }
         catch (const std::exception& e)
         {
             tryLogCurrentException();
+            std::cout << "Failed to load worker configuration." << std::endl;
+            std::exit(1);
         }
     }
 
@@ -245,136 +248,6 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     }
     return config;
 }
-}
-
-std::vector<NES::Systest::RunningQuery>
-runQueriesAtRemoteWorker(std::vector<NES::Systest::Query> queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
-{
-    folly::MPMCQueue<std::unique_ptr<NES::Systest::RunningQuery>> runningQueries(numConcurrentQueries);
-    const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
-
-    std::atomic<size_t> runningQueryCount{0};
-    std::atomic finishedProducing{false};
-    folly::Synchronized<std::vector<NES::Systest::RunningQuery>> failedQueries;
-
-    std::thread producer(
-        [&]()
-        {
-            for (auto& query : queries)
-            {
-                while (runningQueryCount.load() >= numConcurrentQueries)
-                {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                }
-
-                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
-                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
-                {
-                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
-                }
-                else
-                {
-                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
-                }
-
-                const auto queryId = client.registerQuery(decomposedQueryPlan);
-                client.start(queryId);
-                NES::Systest::RunningQuery runningQuery = {query, NES::QueryId(queryId)};
-
-                auto runningQueryPtr = std::make_unique<NES::Systest::RunningQuery>(query, NES::QueryId(queryId));
-                runningQueries.blockingWrite(std::move(runningQueryPtr));
-                runningQueryCount.fetch_add(1);
-            }
-            finishedProducing = true;
-        });
-
-    while (not finishedProducing)
-    {
-        std::unique_ptr<NES::Systest::RunningQuery> runningQuery;
-        runningQueries.blockingRead(runningQuery);
-        INVARIANT(runningQuery != nullptr, "query is not running");
-        while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        }
-        client.unregister(runningQuery->queryId.getRawValue());
-        if (not checkResult(runningQuery->query))
-        {
-            failedQueries.wlock()->emplace_back(*runningQuery);
-        }
-        runningQueryCount.fetch_sub(1);
-    }
-    producer.join();
-
-    return failedQueries.copy();
-}
-
-std::vector<NES::Systest::RunningQuery> runQueriesAtLocalWorker(
-    std::vector<NES::Systest::Query> queries,
-    const uint64_t numConcurrentQueries,
-    const NES::Configuration::SingleNodeWorkerConfiguration& configuration)
-{
-    folly::MPMCQueue<std::unique_ptr<NES::Systest::RunningQuery>> runningQueries(numConcurrentQueries);
-    NES::SingleNodeWorker worker = NES::SingleNodeWorker(configuration);
-
-    std::atomic<size_t> queriesToResultCheck{0};
-    std::atomic finishedProducing{false};
-    folly::Synchronized<std::vector<NES::Systest::RunningQuery>> failedQueries;
-
-    std::thread producer(
-        [&]()
-        {
-            for (auto& query : queries)
-            {
-                while (queriesToResultCheck.load() >= numConcurrentQueries)
-                {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                }
-
-                NES::DecomposedQueryPlanPtr decomposedQueryPlan;
-                if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(query.queryPlan))
-                {
-                    decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(query.queryPlan);
-                }
-                else
-                {
-                    decomposedQueryPlan = NES::DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-                        &std::get<NES::SerializableDecomposedQueryPlan>(query.queryPlan));
-                }
-
-                auto queryId = worker.registerQuery(decomposedQueryPlan);
-                worker.startQuery(queryId);
-
-                NES::Systest::RunningQuery runningQuery = {query, queryId};
-
-                auto runningQueryPtr = std::make_unique<NES::Systest::RunningQuery>(query, NES::QueryId(queryId));
-                runningQueries.blockingWrite(std::move(runningQueryPtr));
-                queriesToResultCheck.fetch_add(1);
-            }
-            finishedProducing = true;
-        });
-
-    while (not finishedProducing or queriesToResultCheck.load() > 0)
-    {
-        std::unique_ptr<NES::Systest::RunningQuery> runningQuery;
-        runningQueries.blockingRead(runningQuery);
-        while (worker.getQuerySummary(NES::QueryId(runningQuery->queryId))->currentStatus != NES::Runtime::Execution::QueryStatus::Stopped)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
-        }
-        worker.unregisterQuery(NES::QueryId(runningQuery->queryId));
-
-        if (not checkResult(runningQuery->query))
-        {
-            failedQueries.wlock()->emplace_back(*runningQuery);
-        }
-        queriesToResultCheck.fetch_sub(1, std::memory_order_release);
-    }
-    producer.join();
-
-    const auto failedQueriesCopy = failedQueries.copy();
-    return failedQueriesCopy;
 }
 
 void removeFilesInDirectory(const std::filesystem::path& dirPath, const std::string& extension)
@@ -417,39 +290,7 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
 {
     std::random_device rd;
     std::mt19937 g(rd());
-    std::ranges::shuffle(queries, g);
-}
-
-void setupLogging()
-{
-    for (std::size_t testnr = 0; const auto& plan : plans)
-    {
-        NES::SerializableDecomposedQueryPlan serialized;
-        if (std::holds_alternative<NES::DecomposedQueryPlanPtr>(plan.queryPlan))
-        {
-            auto decomposedQueryPlan = std::get<NES::DecomposedQueryPlanPtr>(plan.queryPlan);
-            NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, &serialized);
-        }
-        else
-        {
-            INVARIANT(false, "trying to cache already a cached query plan")
-        }
-
-        auto outfilename = fmt::format("{}/{}_{}.pb", savePath, plan.name, testnr);
-        std::ofstream file;
-        file = std::ofstream(outfilename);
-        if (!file)
-        {
-            NES_FATAL_ERROR("Could not open output file: {}", outfilename);
-            std::exit(1);
-        }
-        if (!serialized.SerializeToOstream(&file))
-        {
-            NES_FATAL_ERROR("Failed to write message to file.");
-            std::exit(1);
-        }
-        ++testnr;
-    }
+    std::shuffle(queries.begin(), queries.end(), g);
 }
 
 void setupLogging()
@@ -498,12 +339,7 @@ int main(int argc, const char** argv)
             auto singleNodeWorkerConfiguration = Configuration::SingleNodeWorkerConfiguration();
             if (not config.workerConfig.getValue().empty())
             {
-                singleNodeWorkerConfiguration = std::make_unique<Configuration::SingleNodeWorkerConfiguration>();
-            }
-
-            if (!config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration->workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
             }
 
             failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);

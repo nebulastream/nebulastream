@@ -63,8 +63,11 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p build
-          cmake -DCODE_COVERAGE=ON -B build
+          cmake -GNinja -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
+          # We have to run the system tests with the interpreter to get the correct code coverage
+          # We enable this with another PR, as the target systest_interpreter does not exist on the ref/main branch
+          # cmake --build build --target systest_interpreter 
           cmake --build build --target ccov-all-export
           mkdir -p /tmp/cache/ && cp build/ccov/coverage.lcov /tmp/cache/ref-coverage.lcov
       - name: Upload code coverage for ref branch

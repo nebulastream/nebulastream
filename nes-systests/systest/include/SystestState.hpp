@@ -81,7 +81,7 @@ private:
 /// intermediate representation storing all considered test files
 using TestFileMap = std::unordered_map<TestName, TestFile>;
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap);
-}
+
 
 /// load test file map objects from files defined in systest config
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config);
@@ -100,6 +100,6 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             "[{}, systest -t {}:{}]",
             runningQuery.query.name,
             runningQuery.query.sqlLogicTestFile,
-            runningQuery.query.queryNrInFile.value() + 1);
+            runningQuery.query.queryIdInFile.value() + 1);
     }
 };

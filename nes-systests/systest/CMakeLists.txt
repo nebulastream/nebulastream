@@ -28,6 +28,19 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
+# If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators
+# as the compiler traces all branches and operations.
+# As there is some problem if multiple queries get executed simultaneously, we have to run the tests sequentially.
+if (CODE_COVERAGE)
+    add_test(systest_interpreter systest --sequential -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
+    target_code_coverage(systest_interpreter PUBLIC AUTO ALL EXTERNAL OBJECTS nes nes-compiler nes-common)
+else ()
+    add_test(systest_interpreter systest --sequential -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
+    add_test(systest_compiler systest --sequential -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=COMPILER)
+endif (CODE_COVERAGE)
+
+
+
 function(add_nes_test_systest)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})

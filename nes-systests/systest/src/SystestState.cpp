@@ -53,24 +53,24 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir)
 {
     auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
-    uint64_t queryNrInFile = 0;
+    uint64_t queryIdInFile = 0;
     for (const auto& plan : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithId.empty())
         {
             for (const auto& testNumber : testfile.onlyEnableQueriesWithId)
             {
-                if (testNumber == queryNrInFile + 1)
+                if (testNumber == queryIdInFile + 1)
                 {
-                    testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryNrInFile);
+                    testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
                 }
             }
         }
         else
         {
-            testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryNrInFile);
+            testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
         }
-        queryNrInFile++;
+        queryIdInFile++;
     }
 }
 

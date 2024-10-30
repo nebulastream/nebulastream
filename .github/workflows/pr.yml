@@ -116,8 +116,8 @@ jobs:
         run: cmake -GNinja -B build
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
-      - name: Run Tests
-        run: ctest --test-dir build -j -E "^STGRP_" --output-on-failure --output-junit /junit.xml --timeout 20
+      - name: Run CTests
+        run: ctest --test-dir build -j  --output-on-failure --output-junit /junit.xml --timeout 2000
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() && !github.event.act }}
