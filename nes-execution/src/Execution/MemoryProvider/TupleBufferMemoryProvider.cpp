@@ -28,6 +28,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
@@ -45,7 +46,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
     {
         return Nautilus::VarVal::readVarValFromMemory(fieldReference, type);
     }
-    else if (type->isVariableSizedDataType())
+    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
         const auto textPtr = nautilus::invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
@@ -71,7 +72,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
         value.writeToMemory(fieldReference);
         return value;
     }
-    else if (type->isVariableSizedDataType())
+    else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<Nautilus::VariableSizedData>();
         const auto childIndex = nautilus::invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());

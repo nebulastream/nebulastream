@@ -34,6 +34,7 @@
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::IntegrationTestUtil
 {
@@ -231,7 +232,7 @@ void writeFieldValueToTupleBuffer(
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         }
-        else if (physicalType->isVariableSizedDataType())
+        else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
