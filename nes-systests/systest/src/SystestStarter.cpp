@@ -65,7 +65,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     /// single node worker config
     program.add_argument("--")
-        .help("Arguments passed to the worker config, e.g., `-- --workerConfiguration.numberOfWorkerThreads=10`")
+        .help("arguments passed to the worker config, e.g., `-- --workerConfiguration.numberOfWorkerThreads=10`")
         .default_value(std::vector<std::string>{})
         .remaining();
 
@@ -126,7 +126,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
         else
         {
-            NES_FATAL_ERROR("{} is not a file or directory.", testFilePath);
+            std::cerr << testFilePath << " is not a file or directory.\n";
             std::exit(1);
         }
     }
@@ -174,7 +174,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.workerConfig = program.get<std::string>("-w");
         if (not std::filesystem::is_regular_file(config.workerConfig.getValue()))
         {
-            NES_FATAL_ERROR("{} is not a file.", config.workerConfig.getValue());
+            std::cerr << config.workerConfig.getValue() << " is not a file.\n";
             std::exit(1);
         }
     }
@@ -184,7 +184,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.queryCompilerConfig = program.get<std::string>("-q");
         if (not std::filesystem::is_regular_file(config.queryCompilerConfig.getValue()))
         {
-            NES_FATAL_ERROR("{} is not a file.", config.queryCompilerConfig.getValue());
+            std::cerr << config.queryCompilerConfig.getValue() << " is not a file.\n";
             std::exit(1);
         }
     }
@@ -218,7 +218,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.resultDir = program.get<std::string>("--resultDir");
         if (not std::filesystem::is_directory(config.resultDir.getValue()))
         {
-            NES_FATAL_ERROR("{} is not a directory.", config.resultDir.getValue());
+            std::cerr <<  config.resultDir.getValue() << " is not a directory.\n";
             std::exit(1);
         }
     }
@@ -301,10 +301,10 @@ int main(int argc, const char** argv)
 
     try
     {
-        setupLogging();
-
         /// Read the configuration
         auto config = Systest::readConfiguration(argc, argv);
+
+        setupLogging();
 
         auto testMap = Systest::loadTestFileMap(config);
         auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
