@@ -295,3 +295,4 @@ CheckOptions:
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
+  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id'
