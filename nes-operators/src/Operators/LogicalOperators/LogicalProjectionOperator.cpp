@@ -29,10 +29,10 @@
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id)
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr<NodeFunction>> functions, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
-    const auto functionTypeNotSupported = [](NodeFunctionPtr function) -> bool {
+    const auto functionTypeNotSupported = [](const std::shared_ptr<NodeFunction>& function) -> bool {
         return not(
             NES::Util::instanceOf<NodeFunctionFieldAccess>(function) or NES::Util::instanceOf<NodeFunctionFieldAssignment>(function));
     };
@@ -47,17 +47,17 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr
         "The Projection operator only supports NodeFunctionFieldAccess and NodeFunctionFieldAssignment functions.");
 }
 
-const std::vector<NodeFunctionPtr>& LogicalProjectionOperator::getFunctions() const
+const std::vector<std::shared_ptr<NodeFunction>>& LogicalProjectionOperator::getFunctions() const
 {
     return functions;
 }
 
-bool LogicalProjectionOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalProjectionOperator::isIdentical(std::shared_ptr<Node> const& rhs) const
 {
     return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalProjectionOperator::equal(NodePtr const& rhs) const
+bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
 {
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
@@ -127,7 +127,7 @@ bool LogicalProjectionOperator::inferSchema()
 
 OperatorPtr LogicalProjectionOperator::copy()
 {
-    std::vector<NodeFunctionPtr> copyOfProjectionFunctions;
+    std::vector<std::shared_ptr<NodeFunction>> copyOfProjectionFunctions;
     for (const auto& originalFunction : functions)
     {
         copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
