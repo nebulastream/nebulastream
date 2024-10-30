@@ -14,6 +14,7 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::PhysicalTypes
@@ -81,7 +82,7 @@ bool isDouble(PhysicalTypePtr physicalType)
 
 bool isVariableSizedData(PhysicalTypePtr physicalType)
 {
-    return physicalType->isVariableSizedDataType();
+    return NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType);
 }
 
 }

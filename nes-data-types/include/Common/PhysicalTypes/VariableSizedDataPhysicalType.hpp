@@ -32,8 +32,6 @@ public:
 
     static inline PhysicalTypePtr create(const DataTypePtr& type) noexcept { return std::make_shared<VariableSizedDataPhysicalType>(type); }
 
-    [[nodiscard]] bool isVariableSizedDataType() const noexcept override { return true; }
-
     [[nodiscard]] uint64_t size() const override;
 
     std::string convertRawToString(void const* rawData) const noexcept override;
