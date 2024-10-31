@@ -26,16 +26,19 @@ std::optional<std::vector<std::string>> loadQueryResult(const Query& query)
         return std::nullopt;
     }
 
-    std::string line;
-    std::regex headerRegex(R"(.*\$.*:.*)");
-    while (std::getline(resultFile, line))
+    std::string firstLine;
+    if (!std::getline(resultFile, firstLine))
     {
-        /// Skip the header
-        if (std::regex_match(line, headerRegex))
-        {
-            continue;
-        }
-        resultData.push_back(line);
+        return resultData;
+    }
+    if (firstLine.find("$") == std::string::npos || firstLine.find(":") == std::string::npos)
+    {
+        resultData.push_back(firstLine);
+    }
+
+    while (std::getline(resultFile, firstLine))
+    {
+        resultData.push_back(firstLine);
     }
     return resultData;
 }
@@ -64,7 +67,7 @@ std::optional<std::string> checkResult(const Query& query)
                 const auto opt = loadQueryResult(query);
                 if (!opt)
                 {
-                    errorMessages << "Failed to load query result for query: " << query << "\n";
+                    errorMessages << "Failed to load query result for query: " << query.queryDefinition << "\n";
                     return;
                 }
                 auto queryResult = opt.value();
@@ -95,13 +98,6 @@ std::optional<std::string> checkResult(const Query& query)
                     errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
                     errorMessages << "Result size does not match: expected " << std::to_string(resultLines.size());
                     errorMessages << ", got " << std::to_string(queryResult.size()) << "\n";
-
-                    /// I would like to keep this additional information in for now. Locally, sometimes the systest fails randomly with this error message.
-                    /// And I would like to then have the chance to see the expected and the actual result to understand the issue.
-                    errorMessages << "Expected: " << std::accumulate(resultLines.begin(), resultLines.end(), std::string{});
-                    errorMessages << "\n";
-                    errorMessages << "Got: " << std::accumulate(queryResult.begin(), queryResult.end(), std::string{});
-                    errorMessages << "\n";
                 }
 
                 /// 5. Check if content match
@@ -153,11 +149,8 @@ std::optional<std::string> checkResult(const Query& query)
                         if (areDifferent || !printOnlyDifferences)
                         {
                             /// Align the expected string by padding it to the maximum width
-                            errorMessages << expectedStr;
-                            errorMessages << std::string(maxExpectedWidth - expectedStr.length(), ' ');
-                            errorMessages << " | ";
-                            errorMessages << gotStr;
-                            errorMessages << "\n";
+                            errorMessages << fmt::format(
+                                "{}{} | {}\n", expectedStr, std::string(maxExpectedWidth - expectedStr.length(), ' '), gotStr);
                         }
                     }
                 }
@@ -172,7 +165,7 @@ std::optional<std::string> checkResult(const Query& query)
     catch (const Exception&)
     {
         tryLogCurrentException();
-        return "Exception occured";
+        return "Exception occurred";
     }
 
     if (errorMessages.str().empty())

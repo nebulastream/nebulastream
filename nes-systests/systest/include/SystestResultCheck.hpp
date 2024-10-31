@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <SLTParser.hpp>
 #include <SystestState.hpp>
 

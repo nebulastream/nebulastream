@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <string>
 #include <unordered_map>
+#include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 

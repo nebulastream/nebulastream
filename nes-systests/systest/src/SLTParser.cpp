@@ -164,7 +164,7 @@ void SLTParser::parse()
         }
         else if (token.value() == TokenType::RESULT_DELIMITER)
         {
-            throw SLTUnexpectedToken("unexpected occurence of result delimiter `{}`", ResultDelimiter);
+            throw SLTUnexpectedToken("unexpected occurrence of result delimiter `{}`", ResultDelimiter);
         }
         else if (token.value() == TokenType::INVALID)
         {
@@ -195,7 +195,7 @@ void SLTParser::applySubstitutionRules(std::string& line)
 
 std::optional<TokenType> SLTParser::getTokenIfValid(std::string potentialToken)
 {
-    /// Query is a special case as it's idenfying token is not space seperated
+    /// Query is a special case as it's identifying token is not space seperated
     if (potentialToken.compare(0, QueryToken.size(), QueryToken) == 0)
     {
         return TokenType::QUERY;
@@ -285,19 +285,17 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        std::string fieldtype = arguments[i];
-        std::string fieldname = arguments[i + 1];
-        if (auto type = magic_enum::enum_cast<BasicType>(fieldtype))
+        if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]))
         {
-            source.fields.emplace_back(type.value(), fieldname);
+            source.fields.emplace_back(type.value(), arguments[i + 1]);
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
+            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
     }
 
-    /// After the source defintion line we expect result tuples
+    /// After the source definition line we expect result tuples
     source.tuples = expectTuples(true);
 
     return source;
@@ -308,7 +306,7 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
     CSVSource source;
-    auto& line = lines[currentLine];
+    const auto& line = lines[currentLine];
     std::istringstream stream(line);
 
     /// Read and discard the first word as it is always CSVSource

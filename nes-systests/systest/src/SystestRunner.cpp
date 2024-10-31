@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <atomic>
+#include <memory>
 #include <regex>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <grpc++/create_channel.h>
+#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SLTParser.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -29,10 +32,10 @@
 
 namespace NES::Systest
 {
-std::vector<DecomposedQueryPlanPtr>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
+std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
 {
-    std::vector<DecomposedQueryPlanPtr> plans{};
+    std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> plans{};
     CLI::QueryConfig config{};
     SLTParser::SLTParser parser{};
 
@@ -43,7 +46,20 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
              /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
              /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
              static size_t currentQueryNumber = 0;
-             const std::string sinkName = testname + "_" + std::to_string(currentQueryNumber++);
+             static std::string currentTestFileName = "";
+
+             /// We reset the current query number once we see a new test file
+             if (currentTestFileName != testFileName)
+             {
+                 currentTestFileName = testFileName;
+                 currentQueryNumber = 0;
+             }
+             else
+             {
+                 ++currentQueryNumber;
+             }
+
+             const std::string sinkName = testFileName + "_" + std::to_string(currentQueryNumber);
              const auto resultFile = resultDir / (sinkName + ".csv");
              auto sink = CLI::Sink{
                  sinkName,
@@ -102,13 +118,13 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
+                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
 
             /// Write the tuples to a tmp file
-            std::ofstream sourceFile(tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
+            std::ofstream sourceFile(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
             if (!sourceFile)
             {
-                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
+                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
                 return;
             }
 
@@ -127,12 +143,12 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             try
             {
                 auto plan = createFullySpecifiedQueryPlan(config);
-                plans.emplace_back(plan);
+                plans.emplace_back(plan, query);
             }
             catch (const std::exception& e)
             {
                 NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
-                std::exit(-1);
+                std::exit(1);
             }
         });
     try
@@ -148,118 +164,155 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 }
 
 std::vector<RunningQuery> runQueriesAtLocalWorker(
-    std::vector<Query> queries, const uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration)
+    const std::vector<Query>& queries,
+    const uint64_t numConcurrentQueries,
+    const Configuration::SingleNodeWorkerConfiguration& configuration)
 {
     folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
-    SingleNodeWorker worker = SingleNodeWorker(configuration);
+    folly::MPMCQueue<std::shared_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    SingleNodeWorker worker(configuration);
 
     std::atomic<size_t> queriesToResultCheck{0};
     std::atomic finishedProducing{false};
 
-    std::thread producer(
-        [&]()
+    std::mutex mtx;
+    std::condition_variable cv;
+
+    std::jthread producer(
+        [&queries, &queriesToResultCheck, &worker, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
+            std::stop_token stopToken)
         {
             for (auto& query : queries)
             {
-                while (queriesToResultCheck.load() >= numConcurrentQueries)
                 {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-                }
+                    std::unique_lock lock(mtx);
+                    cv.wait(
+                        lock,
+                        [&stopToken, &queriesToResultCheck, &numConcurrentQueries]
+                        { return stopToken.stop_requested() or queriesToResultCheck.load() < numConcurrentQueries; });
+                    if (stopToken.stop_requested())
+                    {
+                        finishedProducing = true;
+                        return;
+                    }
 
-                auto queryId = worker.registerQuery(query.queryPlan);
-                if (queryId == INVALID_QUERY_ID)
-                {
-                    throw QueryInvalid("Received an invalid query id from the worker");
-                }
-                worker.startQuery(queryId);
+                    auto queryId = worker.registerQuery(query.queryPlan);
+                    if (queryId == INVALID_QUERY_ID)
+                    {
+                        throw QueryInvalid("Received an invalid query id from the worker");
+                    }
+                    worker.startQuery(queryId);
 
-                const RunningQuery runningQuery = {query, queryId};
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                runningQueries.blockingWrite(std::move(runningQueryPtr));
-                queriesToResultCheck.fetch_add(1);
+                    const RunningQuery runningQuery = {query, queryId};
+                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
+                    runningQueries.blockingWrite(std::move(runningQueryPtr));
+                    queriesToResultCheck.fetch_add(1);
+                }
             }
             finishedProducing = true;
+            cv.notify_all();
         });
 
-    while (not finishedProducing or queriesToResultCheck.load() > 0)
+    while (not finishedProducing or queriesToResultCheck > 0)
     {
-        std::unique_ptr<RunningQuery> runningQuery;
+        std::shared_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
-        while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped)
+
+        if (runningQuery)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped
+                   and worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Failed)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            }
+            worker.unregisterQuery(QueryId(runningQuery->queryId));
+            auto errorMessage = checkResult(runningQuery->query);
+            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+            if (errorMessage.has_value())
+            {
+                failedQueries.wlock()->emplace_back(*runningQuery);
+            }
+            queriesToResultCheck.fetch_sub(1, std::memory_order_release);
+            cv.notify_one();
         }
-        worker.unregisterQuery(QueryId(runningQuery->queryId));
-        auto errorMessage = checkResult(runningQuery->query);
-        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
-        if (errorMessage.has_value())
-        {
-            failedQueries.wlock()->emplace_back(*runningQuery);
-        }
-        queriesToResultCheck.fetch_sub(1, std::memory_order_release);
     }
-    producer.join();
+
     return failedQueries.copy();
 }
 
 std::vector<RunningQuery>
-runQueriesAtRemoteWorker(std::vector<Query> queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
+runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
     folly::Synchronized<std::vector<RunningQuery>> failedQueries;
-    folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
+    folly::MPMCQueue<std::shared_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
     const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
 
     std::atomic<size_t> runningQueryCount{0};
     std::atomic finishedProducing{false};
 
-    std::thread producer(
-        [&]()
+    std::mutex mtx;
+    std::condition_variable cv;
+
+    std::jthread producer(
+        [&queries, &runningQueryCount, &client, &numConcurrentQueries, &runningQueries, &finishedProducing, &mtx, &cv](
+            std::stop_token stopToken)
         {
             for (auto& query : queries)
             {
-                while (runningQueryCount.load() >= numConcurrentQueries)
                 {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                    std::unique_lock lock(mtx);
+                    cv.wait(lock, [&] { return stopToken.stop_requested() or runningQueryCount.load() < numConcurrentQueries; });
+                    if (stopToken.stop_requested())
+                    {
+                        finishedProducing = true;
+                        return;
+                    }
+
+                    const auto queryId = client.registerQuery(*query.queryPlan);
+                    client.start(queryId);
+                    RunningQuery const runningQuery = {query, QueryId(queryId)};
+
+                    auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
+                    runningQueries.blockingWrite(std::move(runningQueryPtr));
+                    runningQueryCount.fetch_add(1);
                 }
-
-                const auto queryId = client.registerQuery(query.queryPlan);
-                client.start(queryId);
-                RunningQuery const runningQuery = {query, QueryId(queryId)};
-
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
-                runningQueries.blockingWrite(std::move(runningQueryPtr));
-                runningQueryCount.fetch_add(1);
             }
             finishedProducing = true;
+            cv.notify_all();
         });
 
-    while (not finishedProducing)
+    while (not finishedProducing and runningQueryCount > 0)
     {
-        std::unique_ptr<RunningQuery> runningQuery;
+        std::shared_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
-        INVARIANT(runningQuery != nullptr, "query is not running");
-        while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped)
+
+        if (runningQuery)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            INVARIANT(runningQuery != nullptr, "query is not running");
+            while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped
+                   and client.status(runningQuery->queryId.getRawValue()).status() != Failed)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            }
+            client.unregister(runningQuery->queryId.getRawValue());
+            auto errorMessage = checkResult(runningQuery->query);
+            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+            if (errorMessage.has_value())
+            {
+                failedQueries.wlock()->emplace_back(*runningQuery);
+            }
+            runningQueryCount.fetch_sub(1);
+            cv.notify_one();
         }
-        client.unregister(runningQuery->queryId.getRawValue());
-        auto errorMessage = checkResult(runningQuery->query);
-        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
-        if (errorMessage.has_value())
-        {
-            failedQueries.wlock()->emplace_back(*runningQuery);
-        }
-        runningQueryCount.fetch_sub(1);
     }
-    producer.join();
+
     return failedQueries.copy();
 }
 
 void printQueryResultToStdOut(const Query& query, const std::string& errorMessage)
 {
     const auto queryNameLength = query.name.size();
-    const auto queryNumberAsString = std::to_string(query.queryIdInFile.value() + 1);
+    const auto queryNumberAsString = std::to_string(query.queryIdInFile + 1);
     const auto queryNumberLength = queryNumberAsString.size();
 
     std::cout << query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
@@ -273,9 +326,11 @@ void printQueryResultToStdOut(const Query& query, const std::string& errorMessag
         std::cout << "FAILED" << std::endl;
         /// spd logger cannot handle multiline prints with proper color and pattern.
         /// And as this is only for test runs we use stdout here.
-        std::cout << "==============================================================" << '\n';
-        std::cout << errorMessage << '\n';
-        std::cout << "==============================================================" << std::endl;
+        std::cout << "===================================================================" << '\n';
+        std::cout << query.queryDefinition << std::endl;
+        std::cout << "===================================================================" << '\n';
+        std::cout << errorMessage;
+        std::cout << "===================================================================" << std::endl;
     }
 }
 }

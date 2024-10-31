@@ -14,8 +14,8 @@
 
 #include <iostream>
 #include <ostream>
+#include <ranges>
 #include <SystestState.hpp>
-
 
 namespace NES::Systest
 {
@@ -33,18 +33,15 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 
     std::string desiredExtension = fileExtension.has_value() ? toLowerCopy(*fileExtension) : "";
 
-    for (const auto& entry :
-         std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied))
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(path, std::filesystem::directory_options::skip_permission_denied)
+             | std::views::filter([](auto entry) { return entry.is_regular_file(); }))
     {
-        if (entry.is_regular_file())
-        {
-            std::string entryExt = toLowerCopy(entry.path().extension().string());
+        std::string entryExt = toLowerCopy(entry.path().extension().string());
 
-            if (!fileExtension || entryExt == desiredExtension)
-            {
-                TestFile testfile(entry.path());
-                testFiles.insert({entry.path().string(), testfile});
-            }
+        if (!fileExtension || entryExt == desiredExtension)
+        {
+            TestFile testfile(entry.path());
+            testFiles.insert({entry.path().string(), testfile});
         }
     }
     return testFiles;
@@ -56,28 +53,26 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& re
     uint64_t queryIdInFile = 0;
     for (const auto& plan : loadedPlans)
     {
-        if (not testfile.onlyEnableQueriesWithId.empty())
+        if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
-            for (const auto& testNumber : testfile.onlyEnableQueriesWithId)
+            for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
+                     | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
-                if (testNumber == queryIdInFile + 1)
-                {
-                    testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
-                }
+                testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile);
             }
         }
         else
         {
-            testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
+            testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile);
         }
         queryIdInFile++;
     }
 }
 
-std::vector<TestGroup> TestFile::readGroups()
+std::vector<TestGroup> readGroups(const TestFile& testfile)
 {
     std::vector<TestGroup> groups;
-    std::ifstream ifstream(this->file);
+    std::ifstream ifstream(testfile.file);
     std::string line;
     if (ifstream.is_open())
     {
@@ -103,13 +98,20 @@ std::vector<TestGroup> TestFile::readGroups()
     return groups;
 }
 
+TestFile::TestFile(std::filesystem::path file) : file(weakly_canonical(file)), groups(readGroups(*this)) {};
+
+TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber)
+    : file(weakly_canonical(file))
+    , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
+    , groups(readGroups(*this)) {};
+
 std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir)
 {
     std::vector<Query> queries;
 
     for (auto& [testname, testfile] : testmap)
     {
-        std::cout << "Loading queries from test file: " << testfile.file << std::endl << std::flush;
+        std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
         loadQueriesFromTestFile(testfile, resultDir);
         for (auto& query : testfile.queries)
         {
@@ -148,18 +150,18 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 
 TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 {
-    if (not config.directlySpecifiedTestsFiles.getValue().empty()) /// load specifc test file
+    if (not config.directlySpecifiedTestFiles.getValue().empty()) /// load specifc test file
     {
-        auto directlySpecifiedTestsFiles = config.directlySpecifiedTestsFiles.getValue();
+        auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
 
-        if (config.testNumbers.empty()) /// case: load all tests
+        if (config.testQueryNumbers.empty()) /// case: load all tests
         {
-            TestFile testfile = TestFile(directlySpecifiedTestsFiles);
+            TestFile testfile = TestFile(directlySpecifiedTestFiles);
             return TestFileMap{{testfile.name(), testfile}};
         }
         else
         { /// case: load a concrete set of tests
-            auto scalarTestNumbers = config.testNumbers.getValues();
+            auto scalarTestNumbers = config.testQueryNumbers.getValues();
             std::vector<uint64_t> testNumbers;
             testNumbers.reserve(scalarTestNumbers.size());
             for (const auto& scalarOption : scalarTestNumbers)
@@ -167,7 +169,7 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
                 testNumbers.push_back(scalarOption.getValue());
             }
 
-            TestFile testfile = TestFile(directlySpecifiedTestsFiles, testNumbers);
+            TestFile testfile = TestFile(directlySpecifiedTestFiles, testNumbers);
             return TestFileMap{{testfile.name(), testfile}};
         }
     }
@@ -184,12 +186,9 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
 
         for (const auto& [testname, testfile] : testMap)
         {
-            for (const auto& groups : testfile.groups)
+            for (const auto& groups : testfile.groups | std::views::filter([&groupname](auto& groups) { return groups == groupname; }))
             {
-                if (groups == groupname)
-                {
-                    resultMap.emplace(testname, testfile);
-                }
+                resultMap.emplace(testname, testfile);
             }
         }
         return resultMap;

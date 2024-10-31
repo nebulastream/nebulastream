@@ -111,12 +111,12 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
                     int end = std::stoi(item.substr(dashPos + 1));
                     for (int i = start; i <= end; ++i)
                     {
-                        config.testNumbers.add(i);
+                        config.testQueryNumbers.add(i);
                     }
                 }
                 else
                 {
-                    config.testNumbers.add(std::stoi(item));
+                    config.testQueryNumbers.add(std::stoi(item));
                 }
             }
         }
@@ -131,7 +131,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
         else if (std::filesystem::is_regular_file(testFilePath))
         {
-            config.directlySpecifiedTestsFiles = testFilePath;
+            config.directlySpecifiedTestFiles = testFilePath;
         }
         else
         {
@@ -260,23 +260,17 @@ void setupLogging()
     std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&nowTimeT));
 
     const auto logFileName = fmt::format("/nes-systests/SystemTest_{}.log", timestamp);
-    NES::Logger::setupLogging(std::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
+    NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
 
-    const auto logPath = [](std::filesystem::path path)
-    {
-        /// file:// to make the link clickable in the console
-        std::cout << "Find the log at: file://" << path.string() << std::endl;
-    };
-
-    if (auto hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
+    if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))
     {
         /// Set the correct logging path when using docker
-        logPath(std::filesystem::path(hostLoggingPath + logFileName));
+        std::cout << "Find the log at: file://" << std::filesystem::path(hostLoggingPath).string() + logFileName << std::endl;
     }
     else
     {
         /// Set the correct logging path without docker
-        logPath(std::filesystem::current_path() / logFileName);
+        std::cout << "Find the log at: file://" << PATH_TO_BINARY_DIR + logFileName << std::endl;
     }
 }
 
