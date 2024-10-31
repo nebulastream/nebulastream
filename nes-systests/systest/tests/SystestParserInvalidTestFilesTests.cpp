@@ -16,30 +16,30 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <SLTParser.hpp>
+#include <SystestParser.hpp>
 
-namespace NES::SLTParser
+namespace NES::Systest
 {
 /// Tests if SLT Parser rejects invalid .test files correctly
-class SLTParserInvalidTestFilesTest : public Testing::BaseUnitTest
+class SystestParserInvalidTestFilesTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("SLTParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup SLTParserInvalidTestFilesTest test class.");
+        Logger::setupLogging("SystestParserInvalidTestFilesTest.log", LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup SystestParserInvalidTestFilesTest test class.");
     }
 
-    static void TearDownTestSuite() { NES_DEBUG("Tear down SLTParserInvalidTestFilesTest test class."); }
+    static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserInvalidTestFilesTest test class."); }
 };
 
-TEST_F(SLTParserInvalidTestFilesTest, InvalidTestFile)
+TEST_F(SystestParserInvalidTestFilesTest, InvalidTestFile)
 {
     std::string const filename = TEST_DATA_DIR "invalid.dummy";
 
-    SLTParser parser{};
+    SystestParser parser{};
     parser.registerOnCSVSourceCallback(
-        [&](SLTParser::CSVSource&&)
+        [&](SystestParser::CSVSource&&)
         {
             /// nop, ensure parsing of CSVSource token
         });
