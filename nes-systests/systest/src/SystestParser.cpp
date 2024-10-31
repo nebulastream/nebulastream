@@ -26,10 +26,10 @@
 #include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <SLTParser.hpp>
+#include <SystestParser.hpp>
 #include <magic_enum.hpp>
 
-namespace NES::SLTParser
+namespace NES::Systest
 {
 static std::string CSVSourceToken = "SourceCSV";
 static std::string SLTSourceToken = "Source";
@@ -49,7 +49,7 @@ bool emptyOrComment(const std::string& line)
         || line.starts_with('#'); /// slt comment
 }
 
-void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
+void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
     auto found = std::find_if(
         substitutionRules.begin(), substitutionRules.end(), [&rule](const SubstitutionRule& r) { return r.keyword == rule.keyword; });
@@ -61,7 +61,7 @@ void SLTParser::registerSubstitutionRule(const SubstitutionRule& rule)
 }
 
 /// We do not load the file in a constructor, as we want to be able to handle errors
-bool SLTParser::loadFile(const std::filesystem::path& filePath)
+bool SystestParser::loadFile(const std::filesystem::path& filePath)
 {
     std::ifstream infile(filePath);
     if (!infile.is_open() || infile.bad())
@@ -73,7 +73,7 @@ bool SLTParser::loadFile(const std::filesystem::path& filePath)
     return loadString(buffer.str());
 }
 
-bool SLTParser::loadString(const std::string& str)
+bool SystestParser::loadString(const std::string& str)
 {
     currentLine = 0;
     lines.clear();
@@ -99,29 +99,29 @@ bool SLTParser::loadString(const std::string& str)
     return true;
 }
 
-void SLTParser::registerOnQueryCallback(QueryCallback callback)
+void SystestParser::registerOnQueryCallback(QueryCallback callback)
 {
     this->onQueryCallback = std::move(callback);
 }
 
-void SLTParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
+void SystestParser::registerOnResultTuplesCallback(ResultTuplesCallback callback)
 {
     this->onResultTuplesCallback = std::move(callback);
 }
 
-void SLTParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
+void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
 {
     this->onSLTSourceCallback = std::move(callback);
 }
 
-void SLTParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
+void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 {
     this->onCSVSourceCallback = std::move(callback);
 }
 
 /// Here we model the structure of the test file by what we `expect` to see.
 /// If we encounter something unexpected, we return false.
-void SLTParser::parse()
+void SystestParser::parse()
 {
     while (auto token = nextToken())
     {
@@ -173,7 +173,7 @@ void SLTParser::parse()
     }
 }
 
-void SLTParser::applySubstitutionRules(std::string& line)
+void SystestParser::applySubstitutionRules(std::string& line)
 {
     for (const auto& rule : substitutionRules)
     {
@@ -193,7 +193,7 @@ void SLTParser::applySubstitutionRules(std::string& line)
     }
 }
 
-std::optional<TokenType> SLTParser::getTokenIfValid(std::string potentialToken)
+std::optional<TokenType> SystestParser::getTokenIfValid(std::string potentialToken)
 {
     /// Query is a special case as it's identifying token is not space seperated
     if (potentialToken.compare(0, QueryToken.size(), QueryToken) == 0)
@@ -210,7 +210,7 @@ std::optional<TokenType> SLTParser::getTokenIfValid(std::string potentialToken)
     return std::nullopt;
 }
 
-bool SLTParser::moveToNextToken()
+bool SystestParser::moveToNextToken()
 {
     /// Do not move to next token if its the first
     if (firstToken)
@@ -233,7 +233,7 @@ bool SLTParser::moveToNextToken()
 }
 
 
-std::optional<TokenType> SLTParser::nextToken()
+std::optional<TokenType> SystestParser::nextToken()
 {
     if (!moveToNextToken())
     {
@@ -249,7 +249,7 @@ std::optional<TokenType> SLTParser::nextToken()
     return getTokenIfValid(potentialToken);
 }
 
-SLTParser::SLTSource SLTParser::expectSLTSource()
+SystestParser::SLTSource SystestParser::expectSLTSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
 
@@ -302,7 +302,7 @@ SLTParser::SLTSource SLTParser::expectSLTSource()
 }
 
 
-SLTParser::CSVSource SLTParser::expectCSVSource() const
+SystestParser::CSVSource SystestParser::expectCSVSource() const
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
     CSVSource source;
@@ -354,7 +354,7 @@ SLTParser::CSVSource SLTParser::expectCSVSource() const
     return source;
 }
 
-SLTParser::ResultTuples SLTParser::expectTuples(bool ignoreFirst)
+SystestParser::ResultTuples SystestParser::expectTuples(bool ignoreFirst)
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::vector<std::string> tuples;
@@ -372,7 +372,7 @@ SLTParser::ResultTuples SLTParser::expectTuples(bool ignoreFirst)
     return tuples;
 }
 
-SLTParser::Query SLTParser::expectQuery()
+SystestParser::Query SystestParser::expectQuery()
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::string query;

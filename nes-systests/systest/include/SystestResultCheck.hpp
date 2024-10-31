@@ -15,7 +15,7 @@
 #pragma once
 
 #include <optional>
-#include <SLTParser.hpp>
+#include <SystestParser.hpp>
 #include <SystestState.hpp>
 
 namespace NES::Systest

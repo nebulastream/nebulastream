@@ -46,7 +46,7 @@ std::optional<std::vector<std::string>> loadQueryResult(const Query& query)
 /// TODO #373: refactor result checking to be type save
 std::optional<std::string> checkResult(const Query& query)
 {
-    NES::SLTParser::SLTParser parser{};
+    SystestParser parser{};
     if (!parser.loadFile(query.sqlLogicTestFile))
     {
         NES_FATAL_ERROR("Failed to parse test file: {}", query.sqlLogicTestFile);
@@ -58,7 +58,7 @@ std::optional<std::string> checkResult(const Query& query)
 
     constexpr bool printOnlyDifferences = true;
     parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, &query](SLTParser::SLTParser::ResultTuples&& resultLines)
+        [&seenResultTupleSections, &errorMessages, &query](SystestParser::SystestParser::ResultTuples&& resultLines)
         {
             /// Result section matches with query --> we found the expected result to check for
             if (seenResultTupleSections == query.queryIdInFile)

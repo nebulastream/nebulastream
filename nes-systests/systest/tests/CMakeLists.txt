@@ -11,9 +11,9 @@
 # limitations under the License.
 
 add_nes_test_systest(slt-parser-test
-        "SLTParserTests.cpp"
-        "SLTParserInvalidTestFilesTests.cpp"
-        "SLTParserValidTestFilesTests.cpp")
+        "SystestParserTests.cpp"
+        "SystestParserInvalidTestFilesTests.cpp"
+        "SystestParserValidTestFilesTests.cpp")
 
 target_compile_definitions(slt-parser-test PRIVATE TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
 
