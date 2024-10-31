@@ -16,105 +16,46 @@
 
 #include <cstdint>
 #include <type_traits>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::PhysicalTypes
 {
 
-/**
- * @brief Function to check if the physical type is a char
- * @param physicalType
- * @return true if the physical type is a char
- */
-bool isChar(PhysicalTypePtr physicalType);
+bool isSpecificBasicType(const PhysicalType& physicalType, BasicPhysicalType::NativeType specificBasicType);
 
+bool isChar(const PhysicalType& physicalType);
 
 bool isVariableSizedData(PhysicalTypePtr physicalType);
 
-/**
- * @brief Function to check if the physical type is a bool
- * @param physicalType
- * @return true if the physical type is a bool
- */
-bool isBool(PhysicalTypePtr physicalType);
+bool isBool(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a unsigned int 8
- * @param physicalType
- * @return true if the physical type is a unsigned int 8
- */
-bool isUInt8(PhysicalTypePtr physicalType);
+bool isUInt8(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a unsigned int 16
- * @param physicalType
- * @return true if the physical type is a unsigned int 16
- */
-bool isUInt16(PhysicalTypePtr physicalType);
+bool isUInt16(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a unsigned int 32
- * @param physicalType
- * @return true if the physical type is a unsigned int 32
- */
-bool isUInt32(PhysicalTypePtr physicalType);
+bool isUInt32(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a unsigned int 64
- * @param physicalType
- * @return true if the physical type is a unsigned int 64
- */
-bool isUInt64(PhysicalTypePtr physicalType);
+bool isUInt64(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a int 8
- * @param physicalType
- * @return true if the physical type is a int 8
- */
-bool isInt8(PhysicalTypePtr physicalType);
+bool isInt8(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a int 16
- * @param physicalType
- * @return true if the physical type is a int 16
- */
-bool isInt16(PhysicalTypePtr physicalType);
+bool isInt16(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a int 32
- * @param physicalType
- * @return true if the physical type is a int 32
- */
-bool isInt32(PhysicalTypePtr physicalType);
+bool isInt32(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a int 64
- * @param physicalType
- * @return true if the physical type is a int 64
- */
-bool isInt64(PhysicalTypePtr physicalType);
+bool isInt64(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a float
- * @param physicalType
- * @return true if the physical type is a float
- */
-bool isFloat(PhysicalTypePtr physicalType);
+bool isFloat(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check if the physical type is a double
- * @param physicalType
- * @return true if the physical type is a double
- */
-bool isDouble(PhysicalTypePtr physicalType);
+bool isDouble(const PhysicalType& physicalType);
 
-/**
- * @brief Function to check that a compile-time type is the same as a particular physical type.
- * Depending on the compile-time type parameter, this method selects the suitable type check on the physical type at runtime.
- * @tparam Type parameter
- * @param physicalType the physical type at runtime
- * @return returns true if the type is correct.
- */
+
+/// Function to check that a compile-time type is the same as a particular physical type.
+/// Depending on the compile-time type parameter, this method selects the suitable type check on the physical type at runtime.
+/// @tparam Type parameter
+/// @param physicalType the physical type at runtime
+/// @return returns true if the type is correct.
 template <class Type>
 bool isSamePhysicalType(PhysicalTypePtr physicalType)
 {
@@ -124,51 +65,51 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType)
     }
     if constexpr (std::is_same_v<std::remove_cvref_t<Type>, char>)
     {
-        return isChar(std::move(physicalType));
+        return isChar(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint8_t>)
     {
-        return isUInt8(std::move(physicalType));
+        return isUInt8(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, bool>)
     {
-        return isBool(std::move(physicalType));
+        return isBool(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint16_t>)
     {
-        return isUInt16(std::move(physicalType));
+        return isUInt16(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint32_t>)
     {
-        return isUInt32(std::move(physicalType));
+        return isUInt32(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::uint64_t>)
     {
-        return isUInt64(std::move(physicalType));
+        return isUInt64(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int8_t>)
     {
-        return isInt8(std::move(physicalType));
+        return isInt8(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int16_t>)
     {
-        return isInt16(std::move(physicalType));
+        return isInt16(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int32_t>)
     {
-        return isInt32(std::move(physicalType));
+        return isInt32(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, std::int64_t>)
     {
-        return isInt64(std::move(physicalType));
+        return isInt64(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, float>)
     {
-        return isFloat(std::move(physicalType));
+        return isFloat(*physicalType);
     }
     else if constexpr (std::is_same_v<std::remove_cvref_t<Type>, double>)
     {
-        return isDouble(std::move(physicalType));
+        return isDouble(*physicalType);
     }
     return false;
 }
