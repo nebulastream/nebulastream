@@ -49,6 +49,8 @@ Checks: [
   "-readability-named-parameter",
   # we can not overload the operator() anywhere
   "-fuchsia-overloaded-operator",
+  # header guards are not needed as we use pragma once
+  "-llvm-header-guard",
 
   # annyoing and useless
   "-llvm-include-order", # conflicts with the order of includes forced by our formatter
@@ -245,7 +247,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -readability-else-after-return,
-  -fuchsia-overloaded-operator,
   -modernize-use-nodiscard,
   -cert-err58-cpp,
   -google-readability-casting,
@@ -254,10 +255,7 @@ WarningsAsErrors: '
   -readability-implicit-bool-conversion,
   -readability-qualified-auto,
   -performance-unnecessary-value-param,
-  -llvm-header-guard,
-  -readability-named-parameter,
   -cppcoreguidelines-pro-type-reinterpret-cast,
-  -misc-non-private-member-variables-in-classes,
   -readability-redundant-inline-specifier,
   -misc-const-correctness,
   -llvm-namespace-comment,
