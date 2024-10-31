@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <ostream>
 #include <SystestState.hpp>
+
 
 namespace NES::Systest
 {
@@ -50,24 +53,24 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
 void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir)
 {
     auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
-    uint64_t queryNrInFile = 0;
+    uint64_t queryIdInFile = 0;
     for (const auto& plan : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithId.empty())
         {
             for (const auto& testNumber : testfile.onlyEnableQueriesWithId)
             {
-                if (testNumber == queryNrInFile + 1)
+                if (testNumber == queryIdInFile + 1)
                 {
-                    testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryNrInFile);
+                    testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
                 }
             }
         }
         else
         {
-            testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryNrInFile);
+            testfile.queries.emplace_back(testfile.name(), testfile.file, plan, queryIdInFile);
         }
-        queryNrInFile++;
+        queryIdInFile++;
     }
 }
 
@@ -83,13 +86,13 @@ std::vector<TestGroup> TestFile::readGroups()
             if (line.starts_with("# groups:"))
             {
                 std::string groupsStr = line.substr(9);
-                groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), '['), groupsStr.end());
-                groupsStr.erase(std::remove(groupsStr.begin(), groupsStr.end(), ']'), groupsStr.end());
+                groupsStr.erase(std::ranges::remove(groupsStr, '[').begin(), groupsStr.end());
+                groupsStr.erase(std::ranges::remove(groupsStr, ']').begin(), groupsStr.end());
                 std::istringstream iss(groupsStr);
                 std::string group;
                 while (std::getline(iss, group, ','))
                 {
-                    group.erase(std::remove_if(group.begin(), group.end(), ::isspace), group.end());
+                    std::erase_if(group, ::isspace);
                     groups.emplace_back(group);
                 }
                 break;
@@ -106,6 +109,7 @@ std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::pat
 
     for (auto& [testname, testfile] : testmap)
     {
+        std::cout << "Loading queries from test file: " << testfile.file << std::endl << std::flush;
         loadQueriesFromTestFile(testfile, resultDir);
         for (auto& query : testfile.queries)
         {
@@ -215,10 +219,10 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
         if (not testGroups.empty())
         {
             os << "\nDiscovered Test Groups:\n";
-            for (const auto& testGroup : testGroups)
+            for (const auto& [name, files] : testGroups)
             {
-                os << "\t" << testGroup.name << "\n";
-                for (const auto& filename : testGroup.files)
+                os << "\t" << name << "\n";
+                for (const auto& filename : files)
                 {
                     os << "\t\tfile://" << filename.c_str() << "\n";
                 }

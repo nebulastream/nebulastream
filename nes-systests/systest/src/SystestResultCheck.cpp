@@ -41,40 +41,37 @@ std::optional<std::vector<std::string>> loadQueryResult(const Query& query)
 }
 
 /// TODO #373: refactor result checking to be type save
-bool checkResult(const Query& query)
+std::optional<std::string> checkResult(const Query& query)
 {
     NES::SLTParser::SLTParser parser{};
     if (!parser.loadFile(query.sqlLogicTestFile))
     {
         NES_FATAL_ERROR("Failed to parse test file: {}", query.sqlLogicTestFile);
-        return false;
+        return "Failed to parse test file: " + query.sqlLogicTestFile.string() + "\n";
     }
 
-    bool same = true;
-    std::string printMessages;
-    std::string errorMessages;
+    std::stringstream errorMessages;
     uint64_t seenResultTupleSections = 0;
-    uint64_t seenQuerySections = 0;
 
     constexpr bool printOnlyDifferences = true;
     parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, &query, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
+        [&seenResultTupleSections, &errorMessages, &query](SLTParser::SLTParser::ResultTuples&& resultLines)
         {
             /// Result section matches with query --> we found the expected result to check for
             if (seenResultTupleSections == query.queryIdInFile)
             {
                 /// 1. Get query result
-                auto opt = loadQueryResult(query);
+                const auto opt = loadQueryResult(query);
                 if (!opt)
                 {
-                    same = false;
+                    errorMessages << "Failed to load query result for query: " << query << "\n";
                     return;
                 }
                 auto queryResult = opt.value();
 
                 /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both
-                std::for_each(queryResult.begin(), queryResult.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
-                std::for_each(resultLines.begin(), resultLines.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
+                std::ranges::for_each(queryResult, [](std::string& s) { std::ranges::replace(s, ',', ' '); });
+                std::ranges::for_each(resultLines, [](std::string& s) { std::ranges::replace(s, ',', ' '); });
 
                 /// 3. Store lines with line ids
                 std::vector<std::pair<int, std::string>> originalResultLines;
@@ -95,31 +92,37 @@ bool checkResult(const Query& query)
                 /// 4. Check if line sizes match
                 if (queryResult.size() != resultLines.size())
                 {
-                    errorMessages += "Result does not match for query: " + std::to_string(seenResultTupleSections) + "\n";
-                    errorMessages += "Result size does not match: expected " + std::to_string(resultLines.size()) + ", got "
-                        + std::to_string(queryResult.size()) + "\n";
-                    same = false;
+                    errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+                    errorMessages << "Result size does not match: expected " << std::to_string(resultLines.size());
+                    errorMessages << ", got " << std::to_string(queryResult.size()) << "\n";
+
+                    /// I would like to keep this additional information in for now. Locally, sometimes the systest fails randomly with this error message.
+                    /// And I would like to then have the chance to see the expected and the actual result to understand the issue.
+                    errorMessages << "Expected: " << std::accumulate(resultLines.begin(), resultLines.end(), std::string{});
+                    errorMessages << "\n";
+                    errorMessages << "Got: " << std::accumulate(queryResult.begin(), queryResult.end(), std::string{});
+                    errorMessages << "\n";
                 }
 
                 /// 5. Check if content match
-                std::sort(queryResult.begin(), queryResult.end());
-                std::sort(resultLines.begin(), resultLines.end());
+                std::ranges::sort(queryResult);
+                std::ranges::sort(resultLines);
 
                 if (!std::equal(queryResult.begin(), queryResult.end(), resultLines.begin()))
                 {
                     /// 6. Build error message
-                    errorMessages += "Result does not match for query " + std::to_string(seenResultTupleSections) + ":\n";
-                    errorMessages += "[#Line: Expected Result | #Line: Query Result]\n";
+                    errorMessages << "Result does not match for query " << std::to_string(seenResultTupleSections) << ":\n";
+                    errorMessages << "[#Line: Expected Result | #Line: Query Result]\n";
 
                     /// Maximum width of "Expected (Line #)"
                     size_t maxExpectedWidth = 0;
-                    for (const auto& line : originalResultLines)
+                    for (const auto&[lineNumber, line] : originalResultLines)
                     {
-                        size_t currentWidth = std::to_string(line.first).length() + 2 + line.second.length();
+                        size_t currentWidth = std::to_string(lineNumber).length() + 2 + line.length();
                         maxExpectedWidth = std::max(currentWidth, maxExpectedWidth);
                     }
 
-                    auto maxSize = std::max(originalResultLines.size(), originalQueryResult.size());
+                    const auto maxSize = std::max(originalResultLines.size(), originalQueryResult.size());
                     for (size_t i = 0; i < maxSize; ++i)
                     {
                         std::string expectedStr;
@@ -150,28 +153,16 @@ bool checkResult(const Query& query)
                         if (areDifferent || !printOnlyDifferences)
                         {
                             /// Align the expected string by padding it to the maximum width
-                            errorMessages += expectedStr;
-                            errorMessages += std::string(maxExpectedWidth - expectedStr.length(), ' ');
-                            errorMessages += " | ";
-                            errorMessages += gotStr;
-                            errorMessages += "\n";
+                            errorMessages << expectedStr;
+                            errorMessages << std::string(maxExpectedWidth - expectedStr.length(), ' ');
+                            errorMessages << " | ";
+                            errorMessages << gotStr;
+                            errorMessages << "\n";
                         }
                     }
-
-                    same = false;
                 }
             }
             seenResultTupleSections++;
-        });
-
-    parser.registerOnQueryCallback(
-        [&seenQuerySections, &query, &printMessages](const std::string& queryStr)
-        {
-            if (seenQuerySections == query.queryIdInFile)
-            {
-                printMessages = queryStr;
-            }
-            seenQuerySections++;
         });
 
     try
@@ -181,20 +172,14 @@ bool checkResult(const Query& query)
     catch (const Exception&)
     {
         tryLogCurrentException();
-        return false;
+        return "Exception occured";
     }
 
-    /// spd logger cannot handle multiline prints with proper color and pattern. And as this is only for test runs we use stdout here.
-    std::cout << "==============================================================" << '\n';
-    std::cout << printMessages << '\n';
-    std::cout << "==============================================================" << std::endl;
-    if (!same)
+    if (errorMessages.str().empty())
     {
-        std::cerr << errorMessages << "\nrerun with:\t" << "systest -t " << query.sqlLogicTestFile.c_str() << ":"
-                  << query.queryIdInFile.value() + 1 << "\n";
+        return std::nullopt;
     }
-
-    return same;
+    return errorMessages.str();
 }
 
 }

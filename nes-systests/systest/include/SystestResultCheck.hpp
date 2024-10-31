@@ -24,5 +24,5 @@ namespace NES::Systest
 std::optional<std::vector<std::string>> loadQueryResult(const Query& query);
 
 /// TODO #373: refactor result checking to be type save
-bool checkResult(const Query& query);
+std::optional<std::string> checkResult(const Query& query);
 }

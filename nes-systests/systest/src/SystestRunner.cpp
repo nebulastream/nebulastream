@@ -29,7 +29,6 @@
 
 namespace NES::Systest
 {
-
 std::vector<DecomposedQueryPlanPtr>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname)
 {
@@ -131,7 +130,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             config.query = query;
             try
             {
-                auto plan = CLI::createFullySpecifiedQueryPlan(config);
+                auto plan = createFullySpecifiedQueryPlan(config);
                 plans.emplace_back(plan);
             }
             catch (const std::exception& e)
@@ -152,13 +151,12 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     return plans;
 }
 
-bool runQueriesAtLocalWorker(
-    std::vector<Query> queries, uint64_t numConcurrentQueries, const NES::Configuration::SingleNodeWorkerConfiguration& configuration)
+std::vector<RunningQuery> runQueriesAtLocalWorker(
+    std::vector<Query> queries, const uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration)
 {
-    bool allTestSucceeded = true;
-
+    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
     folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
-    NES::SingleNodeWorker worker = NES::SingleNodeWorker(configuration);
+    SingleNodeWorker worker = SingleNodeWorker(configuration);
 
     std::atomic<size_t> queriesToResultCheck{0};
     std::atomic finishedProducing{false};
@@ -174,11 +172,13 @@ bool runQueriesAtLocalWorker(
                 }
 
                 auto queryId = worker.registerQuery(query.queryPlan);
+                if (queryId == INVALID_QUERY_ID) {
+                    throw QueryInvalid("Received an invalid query id from the worker");
+                }
                 worker.startQuery(queryId);
 
-                RunningQuery const runningQuery = {query, queryId};
-
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                const RunningQuery runningQuery = {query, queryId};
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                 runningQueries.blockingWrite(std::move(runningQueryPtr));
                 queriesToResultCheck.fetch_add(1);
             }
@@ -189,28 +189,29 @@ bool runQueriesAtLocalWorker(
     {
         std::unique_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
-        while (worker.getQuerySummary(NES::QueryId(runningQuery->queryId))->currentStatus != NES::Runtime::Execution::QueryStatus::Stopped)
+        while (worker.getQuerySummary(QueryId(runningQuery->queryId))->currentStatus != Runtime::Execution::QueryStatus::Stopped)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
-        worker.unregisterQuery(NES::QueryId(runningQuery->queryId));
-
-        if (!checkResult(runningQuery->query))
+        worker.unregisterQuery(QueryId(runningQuery->queryId));
+        auto errorMessage = checkResult(runningQuery->query);
+        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+        if (errorMessage.has_value())
         {
-            allTestSucceeded = false;
+            failedQueries.wlock()->emplace_back(*runningQuery);
         }
         queriesToResultCheck.fetch_sub(1, std::memory_order_release);
     }
     producer.join();
-    return allTestSucceeded;
+    return failedQueries.copy();
 }
 
-bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI)
+std::vector<RunningQuery>
+runQueriesAtRemoteWorker(std::vector<Query> queries, const uint64_t numConcurrentQueries, const std::string& serverURI)
 {
-    bool allTestSucceeded = true;
-
+    folly::Synchronized<std::vector<RunningQuery>> failedQueries;
     folly::MPMCQueue<std::unique_ptr<RunningQuery>> runningQueries(numConcurrentQueries);
-    GRPCClient client(grpc::CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
+    const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
 
     std::atomic<size_t> runningQueryCount{0};
     std::atomic finishedProducing{false};
@@ -225,11 +226,11 @@ bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrent
                     std::this_thread::sleep_for(std::chrono::milliseconds(25));
                 }
 
-                auto queryId = client.registerQuery(query.queryPlan);
+                const auto queryId = client.registerQuery(query.queryPlan);
                 client.start(queryId);
-                RunningQuery const runningQuery = {query, NES::QueryId(queryId)};
+                RunningQuery const runningQuery = {query, QueryId(queryId)};
 
-                auto runningQueryPtr = std::make_unique<RunningQuery>(query, NES::QueryId(queryId));
+                auto runningQueryPtr = std::make_unique<RunningQuery>(query, QueryId(queryId));
                 runningQueries.blockingWrite(std::move(runningQueryPtr));
                 runningQueryCount.fetch_add(1);
             }
@@ -241,19 +242,43 @@ bool runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrent
         std::unique_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
         INVARIANT(runningQuery != nullptr, "query is not running");
-        while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped)
+        while (client.status(runningQuery->queryId.getRawValue()).status() != ::QueryStatus::Stopped)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }
         client.unregister(runningQuery->queryId.getRawValue());
-        if (!checkResult(runningQuery->query))
+        auto errorMessage = checkResult(runningQuery->query);
+        printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+        if (errorMessage.has_value())
         {
-            allTestSucceeded = false;
+            failedQueries.wlock()->emplace_back(*runningQuery);
         }
         runningQueryCount.fetch_sub(1);
     }
     producer.join();
-    return allTestSucceeded;
+    return failedQueries.copy();
 }
 
+void printQueryResultToStdOut(const Query& query, const std::string& errorMessage)
+{
+    const auto queryNameLength = query.name.size();
+    const auto queryNumberAsString = std::to_string(query.queryIdInFile.value() + 1);
+    const auto queryNumberLength = queryNumberAsString.size();
+
+    std::cout << query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
+    std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
+    if (errorMessage.empty())
+    {
+        std::cout << "PASSED" << std::endl;
+    }
+    else
+    {
+        std::cout << "FAILED" << std::endl;
+        /// spd logger cannot handle multiline prints with proper color and pattern.
+        /// And as this is only for test runs we use stdout here.
+        std::cout << "==============================================================" << '\n';
+        std::cout << errorMessage << '\n';
+        std::cout << "==============================================================" << std::endl;
+    }
+}
 }
