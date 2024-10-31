@@ -46,7 +46,7 @@ DecomposedQueryPlanPtr LowerLogicalToPhysicalOperators::apply(DecomposedQueryPla
             Util::instanceOf<PhysicalOperators::PhysicalOperator>(node) or Util::instanceOf<SourceDescriptorLogicalOperator>(node)
             or Util::instanceOf<SinkLogicalOperator>(node));
     };
-    const std::vector<NodePtr> nodes = PlanIterator(decomposedQueryPlan).snapshot();
+    const std::vector<NodePtr> nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     for (const auto& node : nodes | std::views::filter(isAlreadyLowered))
     {
         provider->lower(decomposedQueryPlan, NES::Util::as<LogicalOperator>(node));

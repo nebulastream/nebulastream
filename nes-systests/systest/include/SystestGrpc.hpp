@@ -25,7 +25,7 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel);
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const std::shared_ptr<NES::DecomposedQueryPlan> plan) const;
+    size_t registerQuery(const NES::DecomposedQueryPlan& queryPlan) const;
     void start(size_t queryId) const;
     QuerySummaryReply status(size_t queryId) const;
     void unregister(size_t queryId) const;

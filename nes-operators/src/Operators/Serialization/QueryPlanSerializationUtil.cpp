@@ -25,10 +25,10 @@ namespace NES
 {
 
 void QueryPlanSerializationUtil::serializeQueryPlan(
-    const QueryPlanPtr& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
+    const QueryPlan& queryPlan, SerializableQueryPlan* serializableQueryPlan, bool isClientOriginated)
 {
-    NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan->toString());
-    std::vector<OperatorPtr> rootOperators = queryPlan->getRootOperators();
+    NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", queryPlan.toString());
+    std::vector<OperatorPtr> rootOperators = queryPlan.getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
     ///Serialize Query Plan operators
@@ -58,7 +58,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     {
         ///Serialize the sub query plan and query plan id
         NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-        serializableQueryPlan->set_queryid(queryPlan->getQueryId().getRawValue());
+        serializableQueryPlan->set_queryid(queryPlan.getQueryId().getRawValue());
     }
 }
 

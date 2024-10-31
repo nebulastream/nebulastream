@@ -117,7 +117,7 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayo
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties)
 {
     /// count the number of operators in the query
-    auto queryPlanIterator = PlanIterator(queryPlan);
+    auto queryPlanIterator = PlanIterator(*queryPlan);
     size_t numOperators = queryPlanIterator.snapshot().size();
     ;
 

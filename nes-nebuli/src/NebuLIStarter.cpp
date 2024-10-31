@@ -24,10 +24,6 @@
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
-namespace NES
-{
-class SourceTCPType;
-}
 using namespace std::literals;
 
 
@@ -37,7 +33,7 @@ public:
     explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
     std::unique_ptr<WorkerRPCService::Stub> stub;
 
-    size_t registerQuery(const std::shared_ptr<NES::DecomposedQueryPlan> plan) const
+    size_t registerQuery(const NES::DecomposedQueryPlan& plan) const
     {
         grpc::ClientContext context;
         RegisterQueryReply reply;
@@ -242,7 +238,7 @@ int main(int argc, char** argv)
 
     std::string output;
     SerializableDecomposedQueryPlan serialized;
-    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, &serialized);
+    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(*decomposedQueryPlan, &serialized);
     google::protobuf::TextFormat::PrintToString(serialized, &output);
     NES_INFO("GRPC QueryPlan: {}", output);
     if (program.is_subcommand_used("dump"))
@@ -280,7 +276,7 @@ int main(int argc, char** argv)
     {
         auto& registerArgs = program.at<ArgumentParser>("register");
         GRPCClient client(grpc::CreateChannel(registerArgs.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
-        auto queryId = client.registerQuery(decomposedQueryPlan);
+        auto queryId = client.registerQuery(*decomposedQueryPlan);
         if (registerArgs.is_used("-x"))
         {
             client.start(queryId);

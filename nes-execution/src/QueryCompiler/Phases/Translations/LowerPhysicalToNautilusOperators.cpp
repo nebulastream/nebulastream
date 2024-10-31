@@ -67,7 +67,7 @@ PipelineQueryPlanPtr LowerPhysicalToNautilusOperators::apply(PipelineQueryPlanPt
 OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr operatorPipeline, size_t bufferSize)
 {
     auto decomposedQueryPlan = operatorPipeline->getDecomposedQueryPlan();
-    auto nodes = PlanIterator(decomposedQueryPlan).snapshot();
+    auto nodes = PlanIterator(*decomposedQueryPlan).snapshot();
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
