@@ -176,12 +176,9 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     return true;
 }
 
-std::string DynamicField::toString()
+std::string DynamicField::toString() const
 {
-    std::stringstream ss;
-    std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
-    ss << currentFieldContentAsString;
-    return ss.str();
+    return this->physicalType->convertRawToString(this->address);
 }
 
 bool DynamicField::equal(const DynamicField& rhs) const
