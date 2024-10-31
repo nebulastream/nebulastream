@@ -12,10 +12,20 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cctype>
+#include <chrono>
+#include <cstdint>
 #include <fstream>
 #include <future>
 #include <regex>
+#include <vector>
+#include <unistd.h>
+#include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <folly/MPMCQueue.h>
 #include <google/protobuf/text_format.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
@@ -27,7 +37,6 @@ using namespace std::literals;
 
 namespace NES::Systest
 {
-
 Configuration::SystestConfiguration readConfiguration(int argc, const char** argv)
 {
     using namespace argparse;
@@ -113,7 +122,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         }
         else
         {
-            testFilePath = testFileDefinition;
+            testFilePath = std::filesystem::path(testFileDefinition);
         }
 
         if (std::filesystem::is_directory(testFilePath))
@@ -136,7 +145,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         auto testMap = loadTestFileMap(config);
 
         auto expectedGroup = program.get<std::string>("-g");
-        expectedGroup.erase(std::remove_if(expectedGroup.begin(), expectedGroup.end(), ::isspace), expectedGroup.end());
+        expectedGroup.erase(std::remove_if(expectedGroup.begin(), expectedGroup.end(), isspace), expectedGroup.end());
 
         auto found = std::any_of(
             testMap.begin(),
@@ -205,7 +214,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         try
         {
             config.singleNodeWorkerConfig
-                = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
+                = NES::Configurations::loadConfiguration<Configuration::SingleNodeWorkerConfiguration>(argc_, argv_.data());
         }
         catch (const std::exception& e)
         {
@@ -246,9 +255,9 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
 
 void setupLogging()
 {
-    std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    const std::time_t nowTimeT = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
-    std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&now_time_t));
+    std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&nowTimeT));
 
     const auto logFileName = fmt::format( "/nes-systests/SystemTest_{}.log", timestamp);
     NES::Logger::setupLogging(std::format("{}{}",PATH_TO_BINARY_DIR , logFileName), NES::LogLevel::LOG_DEBUG, false);
@@ -283,7 +292,8 @@ int main(int argc, const char** argv)
         setupLogging();
 
         auto testMap = Systest::loadTestFileMap(config);
-        auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
+        const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
+        std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
 
         std::filesystem::remove_all(config.resultDir.getValue());
         std::filesystem::create_directory(config.resultDir.getValue());
@@ -293,37 +303,38 @@ int main(int argc, const char** argv)
             shuffleQueries(queries);
         }
 
-        auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-        auto grpcURI = config.grpcAddressUri.getValue();
-        if (not grpcURI.empty())
+        const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+        std::vector<Systest::RunningQuery> failedQueries;
+        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
         {
-            returnCode = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI) ? 0 : 1;
+            failedQueries = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI);
         }
         else
         {
-            std::unique_ptr<Configuration::SingleNodeWorkerConfiguration> singleNodeWorkerConfiguration;
-
-            if (config.singleNodeWorkerConfig.has_value())
+            auto singleNodeWorkerConfiguration = Configuration::SingleNodeWorkerConfiguration();
+            if (not config.workerConfig.getValue().empty())
             {
-                singleNodeWorkerConfiguration
-                    = std::make_unique<Configuration::SingleNodeWorkerConfiguration>(config.singleNodeWorkerConfig.value());
-            }
-            else
-            {
-                singleNodeWorkerConfiguration = std::make_unique<Configuration::SingleNodeWorkerConfiguration>();
+                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
             }
 
-            if (!config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration->workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-            }
+            failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
+        }
 
-            if (!config.queryCompilerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration->queryCompilerConfiguration.overwriteConfigWithYAMLFileInput(config.queryCompilerConfig);
-            }
-
-            returnCode = runQueriesAtLocalWorker(queries, numberConcurrentQueries, *singleNodeWorkerConfiguration) ? 0 : 1;
+        if (failedQueries.empty())
+        {
+            std::stringstream outputMessage;
+            outputMessage << std::endl << "All queries passed.";
+            NES_INFO("{}", outputMessage.str());
+            std::cout << outputMessage.str() << std::endl;
+            std::exit(0);
+        }
+        else
+        {
+            std::stringstream outputMessage;
+            outputMessage << fmt::format("The following queries failed:\n[Name, Command]\n- {}", fmt::join(failedQueries, "\n- "));
+            NES_ERROR("{}", outputMessage.str());
+            std::cout << std::endl << outputMessage.str() << std::endl;
+            std::exit(1);
         }
     }
     catch (...)
