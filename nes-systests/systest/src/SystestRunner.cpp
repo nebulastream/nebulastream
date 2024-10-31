@@ -22,10 +22,10 @@
 #include <grpc++/create_channel.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
-#include <SLTParser.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
+#include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
@@ -37,7 +37,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 {
     std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> plans{};
     CLI::QueryConfig config{};
-    SLTParser::SLTParser parser{};
+    SystestParser parser{};
 
     parser.registerSubstitutionRule(
         {"SINK",
@@ -80,7 +80,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
-        [&](SLTParser::SLTParser::CSVSource&& source)
+        [&](SystestParser::SystestParser::CSVSource&& source)
         {
             config.logical.emplace_back(CLI::LogicalSource{
                 .name = source.name,
@@ -100,7 +100,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
     parser.registerOnSLTSourceCallback(
-        [&](SLTParser::SLTParser::SLTSource&& source)
+        [&](SystestParser::SystestParser::SLTSource&& source)
         {
             static uint64_t sourceIndex = 0;
 
@@ -137,7 +137,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](SLTParser::SLTParser::Query&& query)
+        [&](SystestParser::SystestParser::Query&& query)
         {
             config.query = query;
             try

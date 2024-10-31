@@ -16,35 +16,35 @@
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
-#include <SLTParser.hpp>
+#include <SystestParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES::SLTParser
+namespace NES::Systest
 {
 /// Tests if SLT Parser accepts ands parses valid .test files correctly
-class SLTParserValidTestFileTest : public Testing::BaseUnitTest
+class SystestParserValidTestFileTest : public Testing::BaseUnitTest
 {
 public:
     static std::string testFileName;
 
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("SLTParserValidTestFileTest.log", LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup SLTParserValidTestFileTest test class.");
+        Logger::setupLogging("SystestParserValidTestFileTest.log", LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup SystestParserValidTestFileTest test class.");
     }
 
-    static void TearDownTestSuite() { NES_DEBUG("Tear down SLTParserValidTestFileTest test class."); }
+    static void TearDownTestSuite() { NES_DEBUG("Tear down SystestParserValidTestFileTest test class."); }
 };
 
-TEST_F(SLTParserValidTestFileTest, ValidTestFile)
+TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 {
     const auto* const filename = TEST_DATA_DIR "valid.dummy";
 
     const auto* const expectQuery1 = R"(Query::from("e123").filter(Attribute("i") >= 10).SINK;)";
     const auto* const expectQuery2 = "Query::from(\"e124\")\n    .filter(Attribute(\"i\") >= 10)\n    .SINK;";
     std::vector<std::string> const expectResult = {{"1,1,1"}, {"1,1,1"}, {"1,1,1"}};
-    SLTParser::SLTSource expextedSLTSource = {.name = "e123", .fields = {{BasicType::UINT32, "id"}}, .tuples = {"1", "1", "1", "1"}};
-    SLTParser::CSVSource expextedCSVSource
+    SystestParser::SLTSource expextedSLTSource = {.name = "e123", .fields = {{BasicType::UINT32, "id"}}, .tuples = {"1", "1", "1", "1"}};
+    SystestParser::CSVSource expextedCSVSource
         = {.name = "e124",
            .fields
            = {{BasicType::INT8, "i"},
@@ -61,21 +61,21 @@ TEST_F(SLTParserValidTestFileTest, ValidTestFile)
               {BasicType::CHAR, "i"}},
            .csvFilePath = "xyz.txt"};
 
-    SLTParser parser{};
-    parser.registerOnQueryCallback([&](SLTParser::Query&& query) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
-    parser.registerOnResultTuplesCallback([&](SLTParser::ResultTuples&& result) { ASSERT_EQ(expectResult, result); });
-    parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&& source) { ASSERT_EQ(source, expextedSLTSource); });
-    parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&& source) { ASSERT_EQ(source, expextedCSVSource); });
+    SystestParser parser{};
+    parser.registerOnQueryCallback([&](SystestParser::Query&& query) { ASSERT_TRUE(query == expectQuery1 || query == expectQuery2); });
+    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&& result) { ASSERT_EQ(expectResult, result); });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&& source) { ASSERT_EQ(source, expextedSLTSource); });
+    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&& source) { ASSERT_EQ(source, expextedCSVSource); });
 
     ASSERT_TRUE(parser.loadFile(filename));
     EXPECT_NO_THROW(parser.parse());
 }
 
-TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
+TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
 {
     const auto* const filename = TEST_DATA_DIR "comments.dummy";
 
-    SLTParser::SLTSource expectedSLTSource;
+    SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields = {{BasicType::UINT64, "id"}, {BasicType::UINT64, "value"}, {BasicType::UINT64, "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
@@ -102,9 +102,9 @@ TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
 
     size_t queryCounter = 0;
 
-    SLTParser parser{};
+    SystestParser parser{};
     parser.registerOnSLTSourceCallback(
-        [&](SLTParser::SLTSource&& source)
+        [&](SystestParser::SLTSource&& source)
         {
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
@@ -112,14 +112,14 @@ TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SLTParser::Query&& query)
+        [&](SystestParser::Query&& query)
         {
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
     parser.registerOnResultTuplesCallback(
-        [&](SLTParser::ResultTuples&& result)
+        [&](SystestParser::ResultTuples&& result)
         {
             ASSERT_LT(queryCounter, expectedResults.size());
             ASSERT_EQ(result, expectedResults[queryCounter]);
@@ -130,11 +130,11 @@ TEST_F(SLTParserValidTestFileTest, Comments1TestFile)
     EXPECT_NO_THROW(parser.parse());
 }
 
-TEST_F(SLTParserValidTestFileTest, FilterTestFile)
+TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 {
     const auto* const filename = TEST_DATA_DIR "filter.dummy";
 
-    SLTParser::SLTSource expectedSLTSource;
+    SystestParser::SLTSource expectedSLTSource;
     expectedSLTSource.name = "window";
     expectedSLTSource.fields = {{BasicType::UINT64, "id"}, {BasicType::UINT64, "value"}, {BasicType::UINT64, "timestamp"}};
     expectedSLTSource.tuples = {"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
@@ -209,9 +209,9 @@ TEST_F(SLTParserValidTestFileTest, FilterTestFile)
 
     size_t queryCounter = 0;
 
-    SLTParser parser{};
+    SystestParser parser{};
     parser.registerOnSLTSourceCallback(
-        [&](SLTParser::SLTSource&& source)
+        [&](SystestParser::SLTSource&& source)
         {
             ASSERT_EQ(source.name, expectedSLTSource.name);
             ASSERT_EQ(source.fields, expectedSLTSource.fields);
@@ -219,14 +219,14 @@ TEST_F(SLTParserValidTestFileTest, FilterTestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&](SLTParser::Query&& query)
+        [&](SystestParser::Query&& query)
         {
             ASSERT_LT(queryCounter, expectedQueries.size());
             ASSERT_EQ(query, expectedQueries[queryCounter]);
         });
 
     parser.registerOnResultTuplesCallback(
-        [&](SLTParser::ResultTuples&& result)
+        [&](SystestParser::ResultTuples&& result)
         {
             ASSERT_LT(queryCounter, expectedResults.size());
             ASSERT_EQ(result, expectedResults[queryCounter]);

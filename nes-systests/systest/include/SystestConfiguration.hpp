@@ -25,6 +25,8 @@ namespace NES::Configuration
 class SystestConfiguration final : public Configurations::BaseConfiguration
 {
 public:
+    SystestConfiguration() = default;
+
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
     Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
@@ -66,8 +68,5 @@ protected:
             &testGroup,
             &grpcAddressUri};
     }
-
-public:
-    SystestConfiguration() = default;
 };
 }

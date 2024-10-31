@@ -23,7 +23,7 @@
 #include <vector>
 #include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES::SLTParser
+namespace NES::Systest
 {
 using namespace std::literals;
 
@@ -42,7 +42,7 @@ enum class TokenType : uint8_t
 ///
 /// NOTE: register substitution rules before calling `loadFile`
 /// NOTE: register callbacks before calling `parse`
-class SLTParser
+class SystestParser
 {
 public:
     struct SubstitutionRule

@@ -18,36 +18,36 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <SLTParser.hpp>
+#include <SystestParser.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES::SLTParser
+namespace NES::Systest
 {
 
-class SLTParserTest : public Testing::BaseUnitTest
+class SystestParserTest : public Testing::BaseUnitTest
 {
 public:
     static void SetUpTestCase()
     {
-        Logger::setupLogging("SLTParserTest.log", LogLevel::LOG_DEBUG);
-        NES_DEBUG("Setup SLTParserTest test class.");
+        Logger::setupLogging("SystestParserTest.log", LogLevel::LOG_DEBUG);
+        NES_DEBUG("Setup SystestParserTest test class.");
     }
 
-    static void TearDownTestCase() { NES_DEBUG("Tear down SLTParserTest test class."); }
+    static void TearDownTestCase() { NES_DEBUG("Tear down SystestParserTest test class."); }
 };
 
-TEST_F(SLTParserTest, testEmptyFile)
+TEST_F(SystestParserTest, testEmptyFile)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string str = "";
 
     ASSERT_EQ(true, parser.loadString(str));
     parser.parse();
 }
 
-TEST_F(SLTParserTest, testEmptyLinesAndCommasFile)
+TEST_F(SystestParserTest, testEmptyLinesAndCommasFile)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     /// Comment, new line in Unix/Linux, Windows, Older Mac systems
     const std::string str = std::string("#\n") + "\n" + "\r\n" + "\r";
 
@@ -55,20 +55,20 @@ TEST_F(SLTParserTest, testEmptyLinesAndCommasFile)
     EXPECT_NO_THROW(parser.parse());
 }
 
-TEST_F(SLTParserTest, testCallbackSourceCSV)
+TEST_F(SystestParserTest, testCallbackSourceCSV)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string sourceIn = "SourceCSV window UINT64 id UINT64 value UINT64 timestamp window.csv";
 
     bool callbackCalled = false;
 
     const std::string str = sourceIn + "\n";
 
-    parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
-    parser.registerOnResultTuplesCallback([&](SLTParser::ResultTuples&&) { FAIL(); });
-    parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&&) { FAIL(); });
+    parser.registerOnQueryCallback([&](SystestParser::Query&&) { FAIL(); });
+    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
     parser.registerOnCSVSourceCallback(
-        [&](SLTParser::CSVSource&& sourceOut)
+        [&](SystestParser::CSVSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, BasicType::UINT64);
@@ -86,9 +86,9 @@ TEST_F(SLTParserTest, testCallbackSourceCSV)
     ASSERT_TRUE(callbackCalled);
 }
 
-TEST_F(SLTParserTest, testCallbackQuery)
+TEST_F(SystestParserTest, testCallbackQuery)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
@@ -100,20 +100,20 @@ TEST_F(SLTParserTest, testCallbackQuery)
     const std::string str = queryIn + "\n" + delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
     parser.registerOnQueryCallback(
-        [&](SLTParser::Query&& queryOut)
+        [&](SystestParser::Query&& queryOut)
         {
             ASSERT_EQ(queryIn, queryOut);
             queryCallbackCalled = true;
         });
     parser.registerOnResultTuplesCallback(
-        [&](SLTParser::ResultTuples&& result)
+        [&](SystestParser::ResultTuples&& result)
         {
             ASSERT_EQ(result[0], tpl1);
             ASSERT_EQ(result[1], tpl2);
             resultCallbackCalled = true;
         });
-    parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
@@ -121,9 +121,9 @@ TEST_F(SLTParserTest, testCallbackQuery)
     ASSERT_TRUE(resultCallbackCalled);
 }
 
-TEST_F(SLTParserTest, testCallbackSLTSource)
+TEST_F(SystestParserTest, testCallbackSLTSource)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string sourceIn = "Source window UINT64 id UINT64 value UINT64 timestamp";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
@@ -132,10 +132,10 @@ TEST_F(SLTParserTest, testCallbackSLTSource)
 
     const std::string str = sourceIn + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
-    parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
-    parser.registerOnResultTuplesCallback([&](SLTParser::ResultTuples&&) { FAIL(); });
+    parser.registerOnQueryCallback([&](SystestParser::Query&&) { FAIL(); });
+    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { FAIL(); });
     parser.registerOnSLTSourceCallback(
-        [&](SLTParser::SLTSource&& sourceOut)
+        [&](SystestParser::SLTSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
             ASSERT_EQ(sourceOut.fields[0].type, BasicType::UINT64);
@@ -148,38 +148,38 @@ TEST_F(SLTParserTest, testCallbackSLTSource)
             ASSERT_EQ(sourceOut.tuples[1], tpl2);
             callbackCalled = true;
         });
-    parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     EXPECT_NO_THROW(parser.parse());
     ASSERT_TRUE(callbackCalled);
 }
 
-TEST_F(SLTParserTest, testResultTuplesWithoutQuery)
+TEST_F(SystestParserTest, testResultTuplesWithoutQuery)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string delimiter = "----";
     const std::string tpl1 = "1,1,1";
     const std::string tpl2 = "2,2,2";
 
     const std::string str = delimiter + "\n" + tpl1 + "\n" + tpl2 + "\n";
 
-    parser.registerOnQueryCallback([&](SLTParser::Query&&) { FAIL(); });
+    parser.registerOnQueryCallback([&](SystestParser::Query&&) { FAIL(); });
     parser.registerOnResultTuplesCallback(
-        [&](SLTParser::ResultTuples&&)
+        [&](SystestParser::ResultTuples&&)
         {
             /// nop
         });
-    parser.registerOnSLTSourceCallback([&](SLTParser::SLTSource&&) { FAIL(); });
-    parser.registerOnCSVSourceCallback([&](SLTParser::CSVSource&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnCSVSourceCallback([&](SystestParser::CSVSource&&) { FAIL(); });
 
     ASSERT_TRUE(parser.loadString(str));
     ASSERT_EXCEPTION_ERRORCODE({ parser.parse(); }, ErrorCode::SLTUnexpectedToken)
 }
 
-TEST_F(SLTParserTest, testSubstitutionRule)
+TEST_F(SystestParserTest, testSubstitutionRule)
 {
-    SLTParser parser{};
+    SystestParser parser{};
     const std::string queryIn = "SELECT id, value, timestamp FROM window WHERE value == 1 INTO SINK";
     std::string const delim = "----";
     std::string const result = "1 1 1";
@@ -190,10 +190,10 @@ TEST_F(SLTParserTest, testSubstitutionRule)
 
     const std::string str = queryIn + "\n" + delim + "\n" + result + "\n";
 
-    SLTParser::SubstitutionRule const rule{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
+    SystestParser::SubstitutionRule const rule{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
     parser.registerSubstitutionRule(rule);
 
-    SLTParser::QueryCallback const callback = [&queryExpect, &callbackCalled](std::string query)
+    SystestParser::QueryCallback const callback = [&queryExpect, &callbackCalled](std::string query)
     {
         ASSERT_EQ(queryExpect, query);
         callbackCalled = true;
@@ -205,12 +205,12 @@ TEST_F(SLTParserTest, testSubstitutionRule)
     ASSERT_TRUE(callbackCalled);
 }
 
-TEST_F(SLTParserTest, testRegisterSubstitutionKeywordTwoTimes)
+TEST_F(SystestParserTest, testRegisterSubstitutionKeywordTwoTimes)
 {
-    SLTParser::SubstitutionRule const rule1{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
-    SLTParser::SubstitutionRule const rule2{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "AnotherTestSink()"; }};
+    SystestParser::SubstitutionRule const rule1{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "TestSink()"; }};
+    SystestParser::SubstitutionRule const rule2{.keyword = "SINK", .ruleFunction = [](std::string& in) { in = "AnotherTestSink()"; }};
 
-    SLTParser parser{};
+    SystestParser parser{};
     parser.registerSubstitutionRule(rule1);
     ASSERT_EXCEPTION_ERRORCODE({ parser.registerSubstitutionRule(rule2); }, ErrorCode::PreconditionViolated)
 }
