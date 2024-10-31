@@ -27,6 +27,14 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
+# If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
+add_test(systest_interpreter systest --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
+if (NOT CODE_COVERAGE)
+    add_test(systest_compiler systest --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=COMPILER)
+endif (NOT CODE_COVERAGE)
+
+
+
 function(add_nes_test_systest)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})

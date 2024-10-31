@@ -227,9 +227,10 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.resultDir = program.get<std::string>("--resultDir");
         if (not std::filesystem::is_directory(config.resultDir.getValue()))
         {
-            std::cerr << config.resultDir.getValue() << " is not a directory.\n";
-            std::exit(1);
+            std::filesystem::create_directory(config.resultDir.getValue());
+            std::cout << "Created result directory: " << config.resultDir.getValue() << std::endl;
         }
+
     }
 
     if (program.is_used("--list"))
