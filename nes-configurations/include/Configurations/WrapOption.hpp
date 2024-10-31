@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <string>
+#include <unordered_map>
 #include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations

@@ -139,7 +139,7 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
     {
         throw UnknownSinkType(
             "Sinkname {} not specified in the configuration {}",
-            query.getSinkOperators().at(0)->sinkName,
+            query.getSinkOperators().front()->sinkName,
             fmt::join(std::views::keys(config.sinks), ","));
     }
 }

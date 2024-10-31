@@ -30,14 +30,14 @@ PlanIterator::PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan)
     rootOperators = decomposedQueryPlan->getRootOperators();
 }
 
-PlanIterator::iterator PlanIterator::begin()
+PlanIterator::Iterator PlanIterator::begin()
 {
-    return iterator(rootOperators);
+    return Iterator(rootOperators);
 }
 
-PlanIterator::iterator PlanIterator::end()
+PlanIterator::Iterator PlanIterator::end()
 {
-    return iterator();
+    return Iterator();
 }
 
 std::vector<NodePtr> PlanIterator::snapshot()
@@ -50,7 +50,7 @@ std::vector<NodePtr> PlanIterator::snapshot()
     return nodes;
 }
 
-PlanIterator::iterator::iterator(const std::vector<OperatorPtr>& rootOperators)
+PlanIterator::Iterator::Iterator(const std::vector<OperatorPtr>& rootOperators)
 {
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--)
     {
@@ -58,9 +58,9 @@ PlanIterator::iterator::iterator(const std::vector<OperatorPtr>& rootOperators)
     }
 }
 
-PlanIterator::iterator::iterator() = default;
+PlanIterator::Iterator::Iterator() = default;
 
-bool PlanIterator::iterator::operator!=(const iterator& other) const
+bool PlanIterator::Iterator::operator!=(const Iterator& other) const
 {
     if (workStack.empty() && other.workStack.empty())
     {
@@ -69,16 +69,16 @@ bool PlanIterator::iterator::operator!=(const iterator& other) const
     return true;
 };
 
-NodePtr PlanIterator::iterator::operator*()
+NodePtr PlanIterator::Iterator::operator*()
 {
     return workStack.empty() ? nullptr : workStack.top();
 }
 
-PlanIterator::iterator& PlanIterator::iterator::operator++()
+PlanIterator::Iterator& PlanIterator::Iterator::operator++()
 {
     if (workStack.empty())
     {
-        NES_DEBUG("Iterator: we reached the end of this iterator and will not do anything.");
+        NES_DEBUG("Iterator: we reached the end of this Iterator and will not do anything.");
     }
     else
     {
