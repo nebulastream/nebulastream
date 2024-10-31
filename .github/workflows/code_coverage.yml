@@ -63,7 +63,7 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: |
           mkdir -p build
-          cmake -DCODE_COVERAGE=ON -B build
+          cmake -GNinja -DCODE_COVERAGE=ON -B build
           cmake --build build -j -- -k 0
           cmake --build build --target ccov-all-export
           mkdir -p /tmp/cache/ && cp build/ccov/coverage.lcov /tmp/cache/ref-coverage.lcov
