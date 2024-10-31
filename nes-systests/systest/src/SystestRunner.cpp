@@ -40,21 +40,17 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
         {"SINK",
          [&](std::string& substitute)
          {
-             /// While parsing we keep track of the query nr to derrive the correct result parse for the query
-             static uint64_t queryNr = 0;
-             static std::string lastTestname = "";
-             if (testname == lastTestname)
-             {
-                 queryNr++;
-             }
-             else
-             {
-                 lastTestname = testname;
-                 queryNr = 0;
-             }
-
-             auto resultFile = fmt::format("{}/{}{}.csv", resultDir.string(), testname, queryNr);
-             substitute = fmt::format(R"(sink(FileSinkDescriptor::create("{}", "CSV_FORMAT", "OVERWRITE"));)", resultFile);
+             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
+             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
+             static size_t currentQueryNumber = 0;
+             const std::string sinkName = testname + "_" + std::to_string(currentQueryNumber++);
+             const auto resultFile = resultDir / (sinkName + ".csv");
+             auto sink = CLI::Sink{
+                 sinkName,
+                 "File",
+                 {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
+             config.sinks.emplace(sinkName, std::move(sink));
+             substitute = sinkName;
          }});
 
     parser.registerSubstitutionRule(
@@ -172,7 +168,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 }
 
                 auto queryId = worker.registerQuery(query.queryPlan);
-                if (queryId == INVALID_QUERY_ID) {
+                if (queryId == INVALID_QUERY_ID)
+                {
                     throw QueryInvalid("Received an invalid query id from the worker");
                 }
                 worker.startQuery(queryId);
@@ -242,7 +239,7 @@ runQueriesAtRemoteWorker(std::vector<Query> queries, const uint64_t numConcurren
         std::unique_ptr<RunningQuery> runningQuery;
         runningQueries.blockingRead(runningQuery);
         INVARIANT(runningQuery != nullptr, "query is not running");
-        while (client.status(runningQuery->queryId.getRawValue()).status() != ::QueryStatus::Stopped)
+        while (client.status(runningQuery->queryId.getRawValue()).status() != Stopped)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(25));
         }

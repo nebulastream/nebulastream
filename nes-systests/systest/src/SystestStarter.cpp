@@ -21,6 +21,7 @@
 #include <regex>
 #include <vector>
 #include <unistd.h>
+#include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
@@ -31,7 +32,6 @@
 #include <SingleNodeWorker.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
-#include <Configurations/Util.hpp>
 
 using namespace std::literals;
 
@@ -227,7 +227,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         config.resultDir = program.get<std::string>("--resultDir");
         if (not std::filesystem::is_directory(config.resultDir.getValue()))
         {
-            std::cerr <<  config.resultDir.getValue() << " is not a directory.\n";
+            std::cerr << config.resultDir.getValue() << " is not a directory.\n";
             std::exit(1);
         }
     }
@@ -259,10 +259,11 @@ void setupLogging()
     char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
     std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&nowTimeT));
 
-    const auto logFileName = fmt::format( "/nes-systests/SystemTest_{}.log", timestamp);
-    NES::Logger::setupLogging(std::format("{}{}",PATH_TO_BINARY_DIR , logFileName), NES::LogLevel::LOG_DEBUG, false);
+    const auto logFileName = fmt::format("/nes-systests/SystemTest_{}.log", timestamp);
+    NES::Logger::setupLogging(std::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
 
-    const auto logPath = [](std::filesystem::path path){
+    const auto logPath = [](std::filesystem::path path)
+    {
         /// file:// to make the link clickable in the console
         std::cout << "Find the log at: file://" << path.string() << std::endl;
     };

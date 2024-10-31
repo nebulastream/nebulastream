@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <ranges>
 #include <regex>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -32,6 +33,7 @@
 #include <Sources/SourceProvider.hpp>
 #include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
@@ -126,11 +128,19 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
         query.getSinkOperators().size() == 1,
         fmt::format(
             "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
+    PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
     if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
         auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
         query.getSinkOperators().at(0)->sinkDescriptor
             = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
+    }
+    else
+    {
+        throw UnknownSinkType(
+            "Sinkname {} not specified in the configuration {}",
+            query.getSinkOperators().at(0)->sinkName,
+            fmt::join(std::views::keys(config.sinks), ","));
     }
 }
 

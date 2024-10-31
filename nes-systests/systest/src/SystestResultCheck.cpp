@@ -116,7 +116,7 @@ std::optional<std::string> checkResult(const Query& query)
 
                     /// Maximum width of "Expected (Line #)"
                     size_t maxExpectedWidth = 0;
-                    for (const auto&[lineNumber, line] : originalResultLines)
+                    for (const auto& [lineNumber, line] : originalResultLines)
                     {
                         size_t currentWidth = std::to_string(lineNumber).length() + 2 + line.length();
                         maxExpectedWidth = std::max(currentWidth, maxExpectedWidth);
