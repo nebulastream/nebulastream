@@ -20,14 +20,14 @@
 namespace NES
 {
 
-PlanIterator::PlanIterator(QueryPlanPtr queryPlan)
+PlanIterator::PlanIterator(const QueryPlan& queryPlan)
 {
-    rootOperators = queryPlan->getRootOperators();
+    rootOperators = queryPlan.getRootOperators();
 };
 
-PlanIterator::PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan)
+PlanIterator::PlanIterator(const DecomposedQueryPlan& decomposedQueryPlan)
 {
-    rootOperators = decomposedQueryPlan->getRootOperators();
+    rootOperators = decomposedQueryPlan.getRootOperators();
 }
 
 PlanIterator::Iterator PlanIterator::begin()
