@@ -38,23 +38,28 @@ using TestGroup = std::string;
 struct Query
 {
     Query() = default;
-    explicit Query(TestName name, std::filesystem::path sqlLogicTestFile, DecomposedQueryPlanPtr queryPlan, uint64_t queryIdInFile)
-        : name(std::move(name)), sqlLogicTestFile(std::move(sqlLogicTestFile)), queryPlan(queryPlan), queryIdInFile(queryIdInFile) {};
+    explicit Query(
+        TestName name,
+        std::string queryDefinition,
+        std::filesystem::path sqlLogicTestFile,
+        DecomposedQueryPlanPtr queryPlan,
+        uint64_t queryIdInFile)
+        : name(std::move(name))
+        , queryDefinition(std::move(queryDefinition))
+        , sqlLogicTestFile(std::move(sqlLogicTestFile))
+        , queryPlan(queryPlan)
+        , queryIdInFile(queryIdInFile) {};
 
     [[nodiscard]] inline std::filesystem::path resultFile() const
     {
-        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}_{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile.value()));
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Query& query)
-    {
-        return os << "Query: " << query.name << " " << query.sqlLogicTestFile << " " << query.queryIdInFile.value();
+        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}_{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile));
     }
 
     TestName name;
+    std::string queryDefinition;
     std::filesystem::path sqlLogicTestFile;
     DecomposedQueryPlanPtr queryPlan;
-    std::optional<uint64_t> queryIdInFile;
+    uint64_t queryIdInFile;
 };
 
 struct RunningQuery
@@ -63,24 +68,20 @@ struct RunningQuery
     QueryId queryId;
 };
 
-class TestFile
+struct TestFile
 {
-public:
-    explicit TestFile(std::filesystem::path file) : file(std::move(file)), groups(readGroups()) {};
-    /// Load a testfile but consider only queries with a specific id (location in test file)
-    explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithId)
-        : file(std::move(file)), onlyEnableQueriesWithId(std::move(onlyEnableQueriesWithId)), groups(readGroups()) {};
+    explicit TestFile(std::filesystem::path file);
+
+    /// Load a testfile but consider only queries with a specific query number (location in test file)
+    explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
 
     [[nodiscard]] TestName name() { return file.stem().string(); }
 
     const std::filesystem::path file;
-    const std::vector<uint64_t> onlyEnableQueriesWithId{};
+    const std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber{};
     const std::vector<TestGroup> groups;
 
     std::vector<Query> queries;
-
-private:
-    std::vector<TestGroup> readGroups();
 };
 
 /// intermediate representation storing all considered test files
@@ -105,6 +106,6 @@ struct fmt::formatter<NES::Systest::RunningQuery> : formatter<std::string>
             "[{}, systest -t {}:{}]",
             runningQuery.query.name,
             runningQuery.query.sqlLogicTestFile,
-            runningQuery.query.queryIdInFile.value() + 1);
+            runningQuery.query.queryIdInFile + 1);
     }
 };

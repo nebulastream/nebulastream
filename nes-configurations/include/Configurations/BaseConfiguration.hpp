@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <map>
 #include <string>
+#include <unordered_map>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <Identifiers/Identifiers.hpp>

@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <string>
+#include <utility>
+#include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
@@ -30,18 +33,19 @@ static constexpr auto padSizeSuccess = 60;
 /// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries
 static constexpr auto padSizeQueryNumber = 2;
 
-/// Load query plan objects by parsing a SLT file for queries and lowering it
-std::vector<DecomposedQueryPlanPtr>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testname);
+/// Load query plan objects by parsing an SLT file for queries and lowering it
+[[nodiscard]] std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
+loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect
-std::vector<RunningQuery> runQueriesAtLocalWorker(
-    std::vector<Query> queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration);
+[[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
+    const std::vector<Query>& queries, uint64_t numConcurrentQueries, const Configuration::SingleNodeWorkerConfiguration& configuration);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return false if one query result is incorrect
-std::vector<RunningQuery> runQueriesAtRemoteWorker(std::vector<Query> queries, uint64_t numConcurrentQueries, const std::string& serverURI);
+[[nodiscard]] std::vector<RunningQuery>
+runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurrentQueries, const std::string& serverURI);
 
 /// Prints the error message, if the query has failed/passed and the expected and result tuples, like below
 /// function/arithmetical/FunctionDiv:4..................................Passed

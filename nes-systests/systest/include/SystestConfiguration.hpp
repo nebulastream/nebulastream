@@ -25,14 +25,15 @@ namespace NES::Configuration
 class SystestConfiguration final : public Configurations::BaseConfiguration
 {
 public:
+    /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
     Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
-    Configurations::StringOption directlySpecifiedTestsFiles
-        = {"directlySpecifiedTestsFiles",
+    Configurations::StringOption directlySpecifiedTestFiles
+        = {"directlySpecifiedTestFiles",
            "",
            "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
-    Configurations::SequenceOption<Configurations::UIntOption> testNumbers
-        = {"testNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
+    Configurations::SequenceOption<Configurations::UIntOption> testQueryNumbers
+        = {"testQueryNumbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     Configurations::StringOption testFileExtension
         = {"testFileExtension", ".test", "File extension to find test files for. Default: .test"};
     Configurations::StringOption resultDir = {"resultDir", PATH_TO_BINARY_DIR "/nes-systests/result/", "Directory for query results"};
@@ -50,14 +51,14 @@ please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
 
-    std::optional<Configuration::SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
+    std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
 
 protected:
     std::vector<BaseOption*> getOptions() override
     {
         return {
             &testsDiscoverDir,
-            &directlySpecifiedTestsFiles,
+            &directlySpecifiedTestFiles,
             &testFileExtension,
             &resultDir,
             &randomQueryOrder,
