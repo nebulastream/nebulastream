@@ -35,10 +35,8 @@ namespace NES::Memory::MemoryLayouts
 template <class Type>
 concept IsNesType = std::is_fundamental_v<Type> || std::is_fundamental_v<std::remove_pointer_t<Type>>;
 
-/**
- * @brief This concept checks via tuple unpacking if Types contains at least one string.
- * @tparam Types
- */
+
+/// This concept checks via tuple unpacking if Types contains at least one string.
 template <class... Types>
 concept ContainsString = requires { requires(std::is_same_v<std::string, Types> || ...); };
 
@@ -48,30 +46,21 @@ concept IsString = std::is_same_v<std::remove_cvref_t<Type>, std::string>;
 class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
-/**
- * @brief The DynamicField allows to read and write a field at a
- * specific address and a specific data type.
- * For all field accesses we check that the template type is the same as the selected physical field type.
- * If the type is not compatible accesses result in a BufferAccessException.
- */
+/// The DynamicField allows to read and write a field at a
+/// specific address and a specific data type.
+/// For all field accesses we check that the template type is the same as the selected physical field type.
+/// If the type is not compatible accesses result in a BufferAccessException.
 class DynamicField
 {
 public:
-    /**
-     * @brief Constructor to create a DynamicField
-     * @param address for the field
-     */
     explicit DynamicField(const uint8_t* address, PhysicalTypePtr physicalType);
 
-    /**
-     * @brief Read a pointer type and return the value as a pointer.
-     * @tparam Type of the field requires to be a NesType and a pointer type.
-     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
-     * @return Pointer type
-     */
+    /// Read a pointer type and return the value as a pointer.
+    /// @tparam Type of the field requires to be a NesType.
+    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires IsNesType<Type> && std::is_pointer<Type>::value
-    inline Type read() const
+    [[nodiscard]] Type read() const
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
@@ -81,15 +70,13 @@ public:
         return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
     };
 
-    /**
-     * @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
-     * @tparam Type of the field requires to be a NesType.
-     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
-     * @return Value of the field.
-     */
+    /// Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
+    /// @tparam Type of the field requires to be a NesType.
+    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @return Value of the field.
     template <class Type>
     requires(IsNesType<Type> && not std::is_pointer<Type>::value)
-    inline Type& read() const
+    [[nodiscard]] Type& read() const
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
@@ -99,12 +86,11 @@ public:
         return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
     };
 
-    /**
-     * @brief Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
-     * @tparam Type of the field requires to be a NesType.
-     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
-     * @return Value of the field.
-     */
+
+    /// Reads a field with a value Type. Checks if the passed Type is the same as the physical field type.
+    /// @tparam Type of the field requires to be a NesType.
+    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
+    /// @return Value of the field.
     template <class Type>
     requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
     inline Type read() const
@@ -117,15 +103,13 @@ public:
         return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
     };
 
-    /**
-     * @brief Writes a value to a specific field address.
-     * @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
-     * @param value of the field.
-     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
-     */
+    /// Writes a value to a specific field address (address is a member variable).
+    /// @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
+    /// @param value of the field.
+    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires(IsNesType<Type>)
-    inline void write(Type value)
+    void write(Type value)
     {
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
@@ -135,15 +119,13 @@ public:
         *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
     };
 
-    /**
-     * @brief Writes a value to a specific field address.
-     * @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
-     * @param value of the field.
-     * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
-     */
+    /// Writes a value to a specific field address (address is a member variable).
+    /// @tparam Type of the field. Type has to be a NesType and to be compatible with the physical type of this field.
+    /// @param value of the field.
+    /// @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
     template <class Type>
     requires(NESIdentifier<Type>)
-    inline void write(Type value)
+    void write(Type value)
     {
         if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
         {
@@ -153,43 +135,16 @@ public:
         *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
     };
 
-    /**
-     * @brief get a string representation of this dynamic tuple
-     * @return a string
-     */
-    std::string toString();
+    [[nodiscard]] std::string toString() const;
 
-    /**
-     * @brief Compares the two DynamicFields if there underlying memory is equal
-     * @param rhs
-     * @return True if equal otherwise false
-     */
     [[nodiscard]] bool equal(const DynamicField& rhs) const;
 
-    /**
-     * @brief Checks if the DynamicField is equal
-     * @param rhs
-     * @return True if both fields are equal
-     */
     bool operator==(const DynamicField& rhs) const;
 
-    /**
-     * @brief Checks if the DynamicField are not equal
-     * @param rhs
-     * @return True if both fields are equal
-     */
     bool operator!=(const DynamicField& rhs) const;
 
-    /**
-     * @brief Getter for the physical type
-     * @return Physical type
-     */
     [[nodiscard]] const PhysicalTypePtr& getPhysicalType() const;
 
-    /**
-     * @brief Getter for the address
-     * @return uint8_t
-     */
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 
 private:
@@ -197,64 +152,30 @@ private:
     const PhysicalTypePtr physicalType;
 };
 
-/**
- * @brief The DynamicRecords allows to read individual fields of a tuple.
- * Field accesses are safe in the sense that if is checked the field exists.
- */
+/// The DynamicRecords allows to read individual fields of a tuple.
+/// Field accesses are safe in the sense that if is checked the field exists.
 class DynamicTuple
 {
 public:
-    /**
-     * @brief Constructor for the DynamicTuple.
-     * Each tuple contains the index, to the memory layout and to the tuple buffer.
-     * @param tupleIndex
-     * @param memoryLayout
-     * @param buffer
-     */
+    /// Each tuple contains the index, to the memory layout and to the tuple buffer.
     DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
-    /**
-     * @brief Accesses an individual field in the tuple by index.
-     * @param fieldIndex
-     * @throws BufferAccessException if field index is invalid
-     * @return DynamicField
-     */
+
+    /// @throws BufferAccessException if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
 
-    /**
-    * @brief Accesses an individual field in the tuple by name.
-    * @param field name
-    * @throws BufferAccessException if field index is invalid
-    * @return DynamicField
-    */
+
+    /// @throws BufferAccessException if field index is invalid
     DynamicField operator[](std::string fieldName) const;
 
-    /**
-     * @brief Writes the variable sized value to this tuple at the fieldIndex
-     * @param field: Can be either an index or the fieldName
-     * @param value
-     * @param bufferProvider
-     */
     void
     writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider);
 
-    /**
-     * @brief Reads variable sized data and returns it as a string
-     * @param field
-     * @return VarSizedData as a string
-     */
     std::string readVarSized(std::variant<const uint64_t, const std::string> field);
 
-    /**
-     * @brief get a string representation of this dynamic tuple
-     * @return a string
-     */
     std::string toString(const SchemaPtr& schema);
 
-    /**
-     * @brief Compares if the values of both tuples are equal. This means that the underlying memory layout CAN BE different
-     * @param other
-     * @return True, if equal otherwise false
-     */
+    /// Compares if the values of both tuples are equal.
+    /// @note This means that the underlying memory layout CAN BE different
     bool operator==(const DynamicTuple& other) const;
     bool operator!=(const DynamicTuple& other) const;
 
@@ -305,50 +226,22 @@ private:
 class TestTupleBuffer
 {
 public:
-    /**
-     * @brief Constructor for TestTupleBuffer
-     * @param memoryLayout memory layout to calculate field offset
-     * @param tupleBuffer buffer that we want to access
-     */
     explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
 
-    /**
-     * @brief Creates a TestTupleBuffer from the TupleBuffer and the schema
-     * @param buffer
-     * @param schema
-     * @return TestTupleBuffer
-     */
     static TestTupleBuffer createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema);
 
-    /**
-    * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.
-    * @return number of tuples a tuple buffer can occupy.
-    */
+    /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
 
-    /**
-     * @brief Gets the current number of tuples that are currently stored in the underling tuple buffer
-     * @return Number of tuples that are in the associated buffer
-     */
+    /// Gets the current number of tuples that are currently stored in the underling tuple buffer
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
-    /**
-     * @brief Set the number of records to the underling tuple buffer.
-     */
     void setNumberOfTuples(uint64_t value);
 
-    /**
-     * @brief Accesses an individual tuple in the buffer.
-     * @param tupleIndex the index of the record.
-     * @throws BufferAccessException if index is larger then buffer capacity
-     * @return DynamicRecord
-     */
+
+    /// @throws BufferAccessException if index is larger then buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    /**
-     * @brief Gets the underling tuple buffer.
-     * @return TupleBuffer
-     */
     Memory::TupleBuffer getBuffer();
 
     /**
@@ -370,23 +263,10 @@ public:
                               >
     {
     public:
-        /**
-         * @brief Constructor to create a new TupleIterator
-         * @param buffer the TestTupleBuffer that we want to process
-         */
         explicit TupleIterator(const TestTupleBuffer& buffer);
 
-        /**
-         * @brief Constructor to create a new RecordIterator
-         * @param buffer the TestTupleBuffer that we want to process
-         * @param currentIndex the index of the current record
-         */
         explicit TupleIterator(const TestTupleBuffer& buffer, const uint64_t currentIndex);
 
-        /**
-         * @brief Copy Constructor
-         * @param other
-         */
         TupleIterator(const TupleIterator& other);
 
         TupleIterator& operator++();
@@ -400,30 +280,14 @@ public:
         uint64_t currentIndex;
     };
 
-    /**
-     * @brief Start of the iterator at index 0.
-     * @return TupleIterator
-     */
+    /// Start of the iterator at index 0.
     TupleIterator begin() const;
 
-    /**
-     * @brief End of the iterator at index getNumberOfTuples().
-     * @return TupleIterator
-     */
+    /// End of the iterator at index getNumberOfTuples().
     TupleIterator end() const;
 
-    /**
-     * @brief Outputs the content of a tuple buffer to a output stream.
-     * @param os output stream
-     * @param buffer dynamic tupleBuffer
-     * @return result stream
-     */
     friend std::ostream& operator<<(std::ostream& os, const TestTupleBuffer& buffer);
 
-    /**
-     * @brief Creates a string representation of the dynamic tuple buffer
-     * @return a string representation
-     */
     std::string toString(const SchemaPtr& schema, bool showHeader = true);
 
     /**
@@ -525,17 +389,8 @@ public:
         return retTuple;
     }
 
-    /**
-     * @brief Returns the number of occurrences of the tuple in this buffer
-     * @param tuple
-     * @return Count of occurrences
-     */
     uint64_t countOccurrences(DynamicTuple& tuple) const;
 
-    /**
-     * @brief Gets the memoryLayout.
-     * @return MemoryLayoutPtr
-     */
     std::shared_ptr<MemoryLayout> getMemoryLayout() const;
 
 private:
