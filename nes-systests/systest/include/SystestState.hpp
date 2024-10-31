@@ -43,7 +43,7 @@ struct Query
 
     [[nodiscard]] inline std::filesystem::path resultFile() const
     {
-        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile.value()));
+        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}_{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile.value()));
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Query& query)

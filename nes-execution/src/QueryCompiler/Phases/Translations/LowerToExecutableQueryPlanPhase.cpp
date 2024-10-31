@@ -119,10 +119,11 @@ void LowerToExecutableQueryPlanPhase::processSource(
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
     const OperatorPipelinePtr& pipeline, std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks, QueryId queryId)
 {
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
     /// Todo #34 (ls-1801 & alepping): As soon as the QueryManager stores sinks as pipelines that become tasks, we can return unique_ptrs.
-    /// Right new we store a shared_ptr to use the sink as a task, and to later call sink->open() in QueryManagerLifecycle::registerQuery
+    /// Right now, we store a shared_ptr to use the sink as a task, and to later call sink->open() in QueryManagerLifecycle::registerQuery
+    sinkOperator->sinkDescriptor->schema = sinkOperator->getOutputSchema();
     auto sinkSharedPtr = Sinks::SinkProvider::lower(queryId, sinkOperator->getSinkDescriptorRef());
     sinks.emplace(sinkSharedPtr);
     return sinkSharedPtr;
@@ -137,8 +138,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
@@ -177,7 +178,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
-    auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+    const auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
         pipeline->getPipelineId(),
         pipelineQueryPlan->getQueryId(),
         queryManager->getBufferManager(),
