@@ -13,8 +13,15 @@ RUN apt-get update && \
         apt-get install -y software-properties-common && \
         add-apt-repository ppa:deadsnakes/ppa && \
         apt-get update && \
-        apt-get install -y default-jre python3.11 python3.11-dev python3.11-distutils pipx -y && \
-        PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin PIPX_MAN_DIR=/usr/local/share/man pipx install antlr4-tools && antlr4
+        apt-get install -y default-jre python3.11 python3.11-dev python3.11-distutils pipx -y
+
+# Had to install antlr4-tools via pipx as the antlr4-tools package is not available in the apt repository
+# Additionally, we had to change the homedir in the antlr4_tool_runner.py file to /opt as the Path.home() function
+# Otherwise, we would need to downoad the antlr4.jar during the building of the project
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin PIPX_MAN_DIR=/usr/local/share/man pipx install antlr4-tools  && \
+    sed -i "s|homedir = Path.home()|homedir = '/opt'|" /opt/pipx/venvs/antlr4-tools/lib/python3.12/site-packages/antlr4_tool_runner.py && \
+    antlr4
+
 
 RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
