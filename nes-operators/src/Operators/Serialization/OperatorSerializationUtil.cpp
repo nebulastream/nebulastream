@@ -88,7 +88,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     {
         /// serialize union operator
         NES_TRACE("OperatorSerializationUtil:: serialize to LogicalUnionOperator");
-        auto unionDetails = SerializableOperator_UnionDetails();
+        const auto unionDetails = SerializableOperator_UnionDetails();
         serializedOperator.mutable_details()->PackFrom(unionDetails);
     }
     else if (NES::Util::instanceOf<LogicalMapOperator>(operatorNode))
@@ -157,7 +157,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     /// serialize and append origin id
     if (NES::Util::instanceOf<BinaryOperator>(operatorNode))
     {
-        auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
         for (const auto& originId : binaryOperator->getLeftInputOriginIds())
         {
             serializedOperator.add_leftoriginids(originId.getRawValue());
@@ -169,7 +169,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     }
     else
     {
-        auto unaryOperator = NES::Util::as<UnaryOperator>(operatorNode);
+        const auto unaryOperator = NES::Util::as<UnaryOperator>(operatorNode);
         for (const auto& originId : unaryOperator->getInputOriginIds())
         {
             serializedOperator.add_originids(originId.getRawValue());
@@ -372,7 +372,7 @@ void OperatorSerializationUtil::serializeSinkOperator(const SinkLogicalOperator&
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SinkLogicalOperator");
     auto sinkDetails = SerializableOperator_SinkLogicalOperator();
-    auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
+    const auto sinkDescriptor = sinkOperator.getSinkDescriptorRef();
     serializeSinkDescriptor(sinkOperator.getOutputSchema(), sinkDescriptor, sinkDetails);
     serializedOperator.mutable_details()->PackFrom(sinkDetails);
 }
@@ -398,7 +398,7 @@ void OperatorSerializationUtil::serializeFilterOperator(
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeFilterOperator(const SerializableOperator_FilterDetails& filterDetails)
 {
-    auto filterFunction = FunctionSerializationUtil::deserializeFunction(filterDetails.predicate());
+    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(filterDetails.predicate());
     return LogicalOperatorFactory::createFilterOperator(filterFunction, getNextOperatorId());
 }
 
@@ -440,7 +440,7 @@ void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& m
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
 {
-    auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
+    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
     return LogicalOperatorFactory::createMapOperator(
         NES::Util::as<NodeFunctionFieldAssignment>(fieldAssignmentFunction), getNextOperatorId());
 }
@@ -685,13 +685,13 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to LogicalJoinOperator");
     auto joinDetails = SerializableOperator_JoinDetails();
-    auto joinDefinition = joinOperator.getJoinDefinition();
+    const auto joinDefinition = joinOperator.getJoinDefinition();
 
     FunctionSerializationUtil::serializeFunction(joinDefinition->getJoinFunction(), joinDetails.mutable_joinfunction());
 
-    auto windowType = joinDefinition->getWindowType();
-    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
-    auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
+    const auto windowType = joinDefinition->getWindowType();
+    const auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
+    const auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
     auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
     timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier());
     if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
@@ -709,7 +709,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     }
     if (Util::instanceOf<Windowing::TumblingWindow>(windowType))
     {
-        auto tumblingWindow = Util::as<Windowing::TumblingWindow>(windowType);
+        const auto tumblingWindow = Util::as<Windowing::TumblingWindow>(windowType);
         auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
         tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
@@ -717,7 +717,7 @@ void OperatorSerializationUtil::serializeJoinOperator(const LogicalJoinOperator&
     }
     else if (Util::instanceOf<Windowing::SlidingWindow>(windowType))
     {
-        auto slidingWindow = Util::as<Windowing::SlidingWindow>(windowType);
+        const auto slidingWindow = Util::as<Windowing::SlidingWindow>(windowType);
         auto slidingWindowDetails = SerializableOperator_SlidingWindow();
         slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
         slidingWindowDetails.set_size(slidingWindow->getSize().getTime());
@@ -767,10 +767,10 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
         auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
         serializedWindowType.UnpackTo(&serializedTumblingWindow);
         const auto& serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
-        auto multiplier = serializedTimeCharacteristic.multiplier();
+        const auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            const auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::TumblingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedTumblingWindow.size()));
@@ -792,10 +792,10 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
         auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
         serializedWindowType.UnpackTo(&serializedSlidingWindow);
         const auto& serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
-        auto multiplier = serializedTimeCharacteristic.multiplier();
+        const auto multiplier = serializedTimeCharacteristic.multiplier();
         if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
         {
-            auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
+            const auto field = NodeFunctionFieldAccess::create(serializedTimeCharacteristic.field());
             window = Windowing::SlidingWindow::of(
                 Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier)),
                 Windowing::TimeMeasure(serializedSlidingWindow.size()),
@@ -821,10 +821,10 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
     }
 
     LogicalOperatorPtr ptr;
-    auto serializedJoinFunction = joinDetails.joinfunction();
-    auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
+    const auto serializedJoinFunction = joinDetails.joinfunction();
+    const auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
-    auto joinDefinition = Join::LogicalJoinDescriptor::create(
+    const auto joinDefinition = Join::LogicalJoinDescriptor::create(
         joinFunction, window, joinDetails.numberofinputedgesleft(), joinDetails.numberofinputedgesright(), joinType);
     auto joinOperator = NES::Util::as<LogicalJoinOperator>(LogicalOperatorFactory::createJoinOperator(joinDefinition, operatorId));
     joinOperator->setWindowStartEndKeyFieldName(joinDetails.windowstartfieldname(), joinDetails.windowendfieldname());
@@ -838,7 +838,7 @@ void OperatorSerializationUtil::serializeBatchJoinOperator(
     NES_TRACE("OperatorSerializationUtil:: serialize to LogicalBatchJoinOperator");
 
     auto joinDetails = SerializableOperator_BatchJoinDetails();
-    auto joinDefinition = joinOperator.getBatchJoinDefinition();
+    const auto joinDefinition = joinOperator.getBatchJoinDefinition();
 
     FunctionSerializationUtil::serializeFunction(joinDefinition->getBuildJoinKey(), joinDetails.mutable_onbuildkey());
     FunctionSerializationUtil::serializeFunction(joinDefinition->getProbeJoinKey(), joinDetails.mutable_onprobekey());
@@ -852,11 +852,11 @@ void OperatorSerializationUtil::serializeBatchJoinOperator(
 Experimental::LogicalBatchJoinOperatorPtr
 OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId)
 {
-    auto buildKeyAccessFunction
+    const auto buildKeyAccessFunction
         = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onbuildkey()));
-    auto probeKeyAccessFunction
+    const auto probeKeyAccessFunction
         = NES::Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(joinDetails.onprobekey()));
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(
+    const auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(
         buildKeyAccessFunction, probeKeyAccessFunction, joinDetails.numberofinputedgesprobe(), joinDetails.numberofinputedgesbuild());
     auto retValue = NES::Util::as<Experimental::LogicalBatchJoinOperator>(
         LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId));
@@ -900,7 +900,7 @@ SerializableVariantDescriptor descriptorConfigTypeToProto(const Configurations::
 void OperatorSerializationUtil::serializeSourceDescriptor(
     const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails)
 {
-    auto serializedSourceDescriptor
+    const auto serializedSourceDescriptor
         = SerializableOperator_SourceDescriptorLogicalOperator_SourceDescriptor().New(); /// cleaned up by protobuf
 
     SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
@@ -983,7 +983,8 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
 void OperatorSerializationUtil::serializeSinkDescriptor(
     std::shared_ptr<Schema> schema, const Sinks::SinkDescriptor& sinkDescriptor, SerializableOperator_SinkLogicalOperator& sinkDetails)
 {
-    auto serializedSinkDescriptor = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf
+    const auto serializedSinkDescriptor
+        = SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor().New(); /// cleaned up by protobuf
     SchemaSerializationUtil::serializeSchema(std::move(schema), serializedSinkDescriptor->mutable_sinkschema());
     serializedSinkDescriptor->set_sinktype(sinkDescriptor.sinkType);
     serializedSinkDescriptor->set_addtimestamp(sinkDescriptor.addTimestamp);
@@ -1038,7 +1039,7 @@ void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
     NES_TRACE("OperatorSerializationUtil:: serialize watermark assigner operator ");
 
     auto watermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
-    auto watermarkStrategyDescriptor = watermarkAssignerOperator.getWatermarkStrategyDescriptor();
+    const auto watermarkStrategyDescriptor = watermarkAssignerOperator.getWatermarkStrategyDescriptor();
     serializeWatermarkStrategyDescriptor(*watermarkStrategyDescriptor, watermarkStrategyDetails);
     serializedOperator.mutable_details()->PackFrom(watermarkStrategyDetails);
 }
@@ -1046,7 +1047,7 @@ void OperatorSerializationUtil::serializeWatermarkAssignerOperator(
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeWatermarkAssignerOperator(
     const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
 {
-    auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
+    const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, getNextOperatorId());
 }
 
@@ -1058,7 +1059,7 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
 
     if (Util::instanceOf<const Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor))
     {
-        auto eventTimeWatermarkStrategyDescriptor
+        const auto eventTimeWatermarkStrategyDescriptor
             = Util::as<const Windowing::EventTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor);
         auto serializedWatermarkStrategyDescriptor
             = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
@@ -1071,7 +1072,7 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
     }
     else if (Util::instanceOf<const Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor))
     {
-        auto serializedWatermarkStrategyDescriptor
+        const auto serializedWatermarkStrategyDescriptor
             = SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor();
         watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
     }
@@ -1096,7 +1097,7 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
             = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         deserializedWatermarkStrategyDescriptor.UnpackTo(&serializedEventTimeWatermarkStrategyDescriptor);
 
-        auto onField = Util::as<NodeFunctionFieldAccess>(
+        const auto onField = Util::as<NodeFunctionFieldAccess>(
             FunctionSerializationUtil::deserializeFunction(serializedEventTimeWatermarkStrategyDescriptor.onfield()));
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -1127,7 +1128,7 @@ void OperatorSerializationUtil::serializeInputSchema(const OperatorPtr& operator
     }
     else
     {
-        auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
         SchemaSerializationUtil::serializeSchema(binaryOperator->getLeftInputSchema(), serializedOperator.mutable_leftinputschema());
         SchemaSerializationUtil::serializeSchema(binaryOperator->getRightInputSchema(), serializedOperator.mutable_rightinputschema());
     }
@@ -1143,7 +1144,7 @@ void OperatorSerializationUtil::deserializeInputSchema(LogicalOperatorPtr operat
     }
     else
     {
-        auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
+        const auto binaryOperator = NES::Util::as<BinaryOperator>(operatorNode);
         binaryOperator->setLeftInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.leftinputschema()));
         binaryOperator->setRightInputSchema(SchemaSerializationUtil::deserializeSchema(serializedOperator.rightinputschema()));
     }
