@@ -181,23 +181,18 @@ std::string DynamicField::toString() const
     return this->physicalType->convertRawToString(this->address);
 }
 
-bool DynamicField::equal(const DynamicField& rhs) const
+bool DynamicField::operator==(const DynamicField& rhs) const
 {
     NES_ASSERT(
         *physicalType == *rhs.physicalType,
         "Physical types have to be the same but are " + physicalType->toString() + " and " + rhs.physicalType->toString());
 
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
-}
-
-bool DynamicField::operator==(const DynamicField& rhs) const
-{
-    return equal(rhs);
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
 {
-    return !equal(rhs);
+    return not(*this == rhs);
 }
 
 const PhysicalTypePtr& DynamicField::getPhysicalType() const

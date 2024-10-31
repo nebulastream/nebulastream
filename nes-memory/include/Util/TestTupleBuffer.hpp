@@ -137,8 +137,6 @@ public:
 
     [[nodiscard]] std::string toString() const;
 
-    [[nodiscard]] bool equal(const DynamicField& rhs) const;
-
     bool operator==(const DynamicField& rhs) const;
 
     bool operator!=(const DynamicField& rhs) const;
