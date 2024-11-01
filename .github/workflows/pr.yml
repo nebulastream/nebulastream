@@ -59,7 +59,11 @@ jobs:
     container:
       image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
       options: --user root
+      volumes:
+        - ccache:/ccache
       env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
         GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout Branch
