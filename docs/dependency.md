@@ -35,8 +35,10 @@ overrides
 defaults set by vcpkg. A CMake Toolchain file allows us to inject flags or choose a specific compiler toolchain or
 linker.
 
-More concretely [x64-linux-none-libcxx.cmake](../vcpkg/custom-triplets/x64-linux-none-libcxx.cmake), is a custom triplet which includes
-the [libcxx-toolchain.cmake](../vcpkg/custom-triplets/libcxx-toolchain.cmake) toolchain file. The triplet file can modify specific
+More concretely [x64-linux-none-libcxx.cmake](../vcpkg/custom-triplets/x64-linux-none-libcxx.cmake), is a custom triplet
+which includes
+the [libcxx-toolchain.cmake](../vcpkg/custom-triplets/libcxx-toolchain.cmake) toolchain file. The triplet file can
+modify specific
 dependencies (vcpkg calls them ports), whereas the toolchain file is a general set of compiler options, i.e., it enables
 building with the libc++ standard library. For example, we use the triplet file to enable building with different
 sanitizers.
@@ -50,7 +52,8 @@ initially resolved via vcpkg-managed dependencies. Running the initial CMake con
 options for how NebulaStream detects the dependencies.
 The developer passes a vcpkg toolchain file directly via
 `-DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`
-The developer configures the CMake build in the developer container with the NES_PREBUILT_VCPKG_ROOT environment variable prepared.
+The developer configures the CMake build in the developer container with the NES_PREBUILT_VCPKG_ROOT environment
+variable prepared.
 If the developer does not specify a toolchain file and no environment is set, the build system will clone a new
 vcpkg-repository into the current working directory and set the toolchain file automatically.
 
@@ -108,3 +111,31 @@ tag). After all matrix jobs have finished, a final image job combines the manife
 
 All jobs requiring a CMake configuration use either the `branch-specific` development image or the `latest` development
 image to run the build or all our checks.
+
+# Current State of Dependencies
+
+The current state of dependencies can be observed via the vcpkg.json. Additional dependencies or patches which are
+currently
+not available via vcpkg are maintained in the `vcpkg/vcpkg-registry/ports` directory.
+
+## Custom Ports
+
+### Folly
+
+We are using a stripped down version of the folly library. We are only using the `MPMCQueues` and `Synchronized`, the
+patch throws all transient dependencies which would otherwise be introduced via folly.
+
+### LLVM
+
+Based on the current vcpkg version. The LLVM patch simply disables all default features. This is not possible via
+`vcpkg.json` because llvm is included via
+nautilus.
+
+### Nautilus
+
+Nautilus is not currently on vcpkg.
+
+### gRPC
+
+Based on the current vcpkg version. The version of gRPC on vcpkg does not compile with C++23, therefor we introduced
+additional patches to fix compilation error.
