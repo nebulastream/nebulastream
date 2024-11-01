@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <API/Schema.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -22,7 +21,7 @@
 namespace NES::Sources
 {
 
-using SourceRegistrySignature = RegistrySignature<std::string, Source, const Schema&, const SourceDescriptor&>;
+using SourceRegistrySignature = RegistrySignature<std::string, Source, const SourceDescriptor&>;
 class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
 {
 };

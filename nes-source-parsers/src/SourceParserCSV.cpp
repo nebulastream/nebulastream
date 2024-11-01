@@ -29,8 +29,11 @@ namespace NES::SourceParsers
 {
 using namespace std::string_literals;
 
-SourceParserCSV::SourceParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
-    : numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)), delimiter(std::move(delimiter))
+SourceParserCSV::SourceParserCSV(SchemaPtr schema, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
+    : schema(std::move(schema))
+    , numberOfSchemaFields(this->schema->getSize())
+    , physicalTypes(std::move(physicalTypes))
+    , delimiter(std::move(delimiter))
 {
 }
 
@@ -147,8 +150,7 @@ bool SourceParserCSV::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
     NES::Memory::TupleBuffer& tupleBuffer,
-    const Schema& schema,
-    NES::Memory::AbstractBufferProvider& bufferProvider)
+    NES::Memory::AbstractBufferProvider& bufferProvider) const
 {
     NES_TRACE("Current TupleCount:  {}", tupleCount);
 
@@ -162,26 +164,26 @@ bool SourceParserCSV::writeInputTupleToTupleBuffer(
         throw CSVParsingError(fmt::format("An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
     }
 
-    if (values.size() != schema.getSize())
+    if (values.size() != schema->getSize())
     {
         throw CSVParsingError(fmt::format(
             "The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
-            std::to_string(schema.getSize()),
+            std::to_string(schema->getSize()),
             std::to_string(values.size()),
-            schema.toString(),
+            schema->toString(),
             csvInputLine));
     }
     /// iterate over fields of schema and cast string values to correct type
-    size_t currentOffset = tupleCount * schema.getSchemaSizeInBytes();
+    size_t currentOffset = tupleCount * schema->getSchemaSizeInBytes();
     for (uint64_t j = 0; j < numberOfSchemaFields; j++)
     {
         auto field = physicalTypes[j];
         std::string_view currentVal = values[j];
         NES_TRACE("Current value is:  {}", currentVal);
 
-        const auto dataType = schema.fields[j]->getDataType();
+        const auto dataType = schema->fields[j]->getDataType();
         const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         int8_t* fieldPointer = tupleBuffer.getBuffer() + currentOffset;
         if (const auto basicPhysicalType = std::dynamic_pointer_cast<const BasicPhysicalType>(physicalType))
@@ -213,6 +215,10 @@ bool SourceParserCSV::writeInputTupleToTupleBuffer(
         currentOffset += field->size();
     }
     return true;
+}
+size_t ParserCSV::getSizeOfSchemaInBytes() const
+{
+    return schema->getSchemaSizeInBytes();
 }
 
 }
