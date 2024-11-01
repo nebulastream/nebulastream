@@ -20,9 +20,7 @@
 namespace NES
 {
 
-/**
- * @brief The VariableSizedDataType physical type, which represent VariableSizedDataType and FixedChar types in NES.
- */
+/// The VariableSizedDataType physical type, which represent VariableSizedDataType and FixedChar types in NES.
 class VariableSizedDataPhysicalType final : public PhysicalType
 {
 public:
