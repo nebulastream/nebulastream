@@ -42,9 +42,8 @@
 namespace NES::Sources
 {
 
-SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
-    : tupleSize(schema.getSchemaSizeInBytes())
-    , circularBuffer(getpagesize() * 2)
+SourceTCP::SourceTCP(const SourceDescriptor& sourceDescriptor)
+    : circularBuffer(getpagesize() * 2)
     , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
     , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
@@ -60,33 +59,12 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
     std::vector<std::string> schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
-    /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
-    /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (const auto& field : schema.fields)
-    {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-        auto fieldName = field->getName();
-        NES_TRACE("SOURCETCP:: Schema keys are:  {}", fieldName);
-        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
-    }
-
-    switch (inputFormat)
-    {
-        case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<SourceParsers::SourceParserCSV>(schema.getSize(), physicalTypes, ",");
-            break;
-        default:
-            throw NotImplemented("InputFormat not supported.");
-    }
-
     NES_TRACE("SourceTCP::SourceTCP: Init SourceTCP.");
 }
 
 std::ostream& SourceTCP::toString(std::ostream& str) const
 {
     str << "\nSourceTcp(";
-    str << "\n  tuplesize:" << this->tupleSize;
     str << "\n  generated tuples: " << this->generatedTuples;
     str << "\n  generated buffers: " << this->generatedBuffers;
     str << "\n  connection: " << this->connection;
@@ -159,7 +137,7 @@ void SourceTCP::open()
 }
 
 bool SourceTCP::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
+    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV)
 {
     std::stringstream ss;
     ss << this;
@@ -167,7 +145,7 @@ bool SourceTCP::fillTupleBuffer(
     NES_DEBUG("SourceTCP buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager, schema))
+        while (fillBuffer(tupleBuffer, bufferManager, parserCSV))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -208,9 +186,10 @@ size_t SourceTCP::parseBufferSize(const std::span<const char> data) const
 }
 
 bool SourceTCP::fillBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
+    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV)
 {
     /// determine how many tuples fit into the buffer
+    const auto tupleSize = parserCSV.getSizeOfSchemaInBytes();
     const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
     NES_DEBUG("SourceTCP::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     /// init tuple count for buffer
@@ -321,7 +300,7 @@ bool SourceTCP::fillBuffer(
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
                 NES_TRACE("SOURCETCP::fillBuffer: Client consume message: '{}'.", buf);
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
+                parserCSV.writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, bufferManager);
                 tupleCount++;
             }
         }
@@ -366,9 +345,9 @@ SourceGeneratedRegistrarValidation::RegisterSourceValidationTCP(std::unordered_m
     return SourceTCP::validateAndFormat(std::move(sourceConfig));
 }
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceTCP(const SourceDescriptor& sourceDescriptor)
 {
-    return std::make_unique<SourceTCP>(schema, sourceDescriptor);
+    return std::make_unique<SourceTCP>(sourceDescriptor);
 }
 
 }

@@ -31,19 +31,18 @@ namespace NES::Sources
 
 SourceThread::SourceThread(
     OriginId originId,
-    SchemaPtr schema,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::unique_ptr<ParserCSV> csvParser)
     : originId(originId)
-    , schema(schema)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
+    , csvParser(std::move(csvParser))
 {
-    NES_DEBUG("SourceThread  {} : Init Data Source with schema  {}", originId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
 
@@ -212,8 +211,7 @@ void SourceThread::runningRoutine()
         {
             auto tupleBuffer = bufferProvider->getBufferBlocking();
             /// filling the TupleBuffer might block.
-            /// passing schema by value to create a new TestTupleBuffer in the Parser, will be improved in Todo: #72.
-            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, schema);
+            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, *csvParser);
             NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuples: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
             ///this checks we received a valid output buffer
