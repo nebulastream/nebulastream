@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <SourceParsers/ParserCSV.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceThread.hpp>
 #include <fmt/format.h>
@@ -33,11 +34,11 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SchemaPtr schema,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::unique_ptr<ParserCSV> csvParser);
 
     ~SourceHandle() = default;
 

@@ -156,11 +156,11 @@ class SourceTCP : public Source
 public:
     static inline const std::string NAME = "TCP";
 
-    explicit SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    explicit SourceTCP(const SourceDescriptor& sourceDescriptor);
     ~SourceTCP() override = default;
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
+        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV) override;
 
     /// Open TCP connection.
     void open() override;
@@ -173,21 +173,16 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool
-    fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema);
+    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV);
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
     [[nodiscard]] size_t parseBufferSize(std::span<const char> data) const;
 
-    std::vector<std::shared_ptr<NES::PhysicalType>> physicalTypes;
-    std::shared_ptr<SourceParsers::SourceParser> inputParser;
     int connection = -1;
-    uint64_t tupleSize;
     int sockfd = -1;
     MMapCircularBuffer circularBuffer;
 
-    SchemaPtr schema;
     Configurations::InputFormat inputFormat;
     std::string socketHost;
     std::string socketPort;

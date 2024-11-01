@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <SourceParsers/ParserCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 
@@ -40,7 +41,7 @@ public:
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
         /// passing schema by value to create a new TestTupleBuffer in the Parser.
         NES::Memory::AbstractBufferProvider& bufferManager,
-        std::shared_ptr<Schema> schema)
+        const ParserCSV& parserCSV)
         = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.

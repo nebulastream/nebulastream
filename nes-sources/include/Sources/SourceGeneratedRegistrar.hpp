@@ -21,7 +21,6 @@
 
 #include <memory>
 #include <string>
-#include <API/Schema.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -29,8 +28,8 @@
 namespace NES::Sources::SourceGeneratedRegistrar
 {
 
-std::unique_ptr<Source> RegisterSourceCSV(const Schema&, const SourceDescriptor&);
-std::unique_ptr<Source> RegisterSourceTCP(const Schema&, const SourceDescriptor&);
+std::unique_ptr<Source> RegisterSourceCSV(const SourceDescriptor&);
+std::unique_ptr<Source> RegisterSourceTCP(const SourceDescriptor&);
 
 }
 
