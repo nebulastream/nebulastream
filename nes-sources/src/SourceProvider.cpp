@@ -13,10 +13,15 @@
 */
 
 #include <memory>
+
+#include <API/AttributeField.hpp>
+#include <SourceParsers/ParserCSV.hpp>
+#include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
 {
@@ -33,15 +38,25 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     SourceReturnType::EmitFunction&& emitFunction)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor.schema, sourceDescriptor))
+    std::vector<PhysicalTypePtr> physicalTypes;
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr& field : sourceDescriptor.schema->fields)
+    {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
+    auto sourceParser = std::make_unique<ParserCSV>(
+        sourceDescriptor.schema, physicalTypes, sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER));
+
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
     {
         return std::make_unique<SourceHandle>(
             std::move(originId),
-            std::move(sourceDescriptor.schema),
             std::move(bufferPool),
             std::move(emitFunction),
             NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(source.value()));
+            std::move(source.value()),
+            std::move(sourceParser));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

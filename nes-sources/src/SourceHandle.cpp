@@ -23,19 +23,19 @@ namespace NES::Sources
 {
 SourceHandle::SourceHandle(
     OriginId originId,
-    SchemaPtr schema,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::unique_ptr<ParserCSV> csvParser)
 {
     this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId),
-        std::move(schema),
         std::move(bufferPool),
         std::move(emitFunction),
         numSourceLocalBuffers,
-        std::move(sourceImplementation));
+        std::move(sourceImplementation),
+        std::move(csvParser));
 }
 
 bool SourceHandle::start() const

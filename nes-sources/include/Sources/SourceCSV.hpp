@@ -20,10 +20,9 @@
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
 {
@@ -33,11 +32,11 @@ class SourceCSV final : public Source
 public:
     static inline const std::string NAME = "CSV";
 
-    explicit SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    explicit SourceCSV(const SourceDescriptor& sourceDescriptor);
     ~SourceCSV() override = default;
 
     bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
+        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV) override;
 
     /// Open file socket.
     void open() override;
@@ -54,13 +53,10 @@ private:
     std::ifstream input;
     bool fileEnded;
     std::string filePath;
-    uint64_t tupleSize;
     std::string delimiter;
     uint64_t currentPositionInFile{0};
-    std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
-    std::shared_ptr<SourceParsers::SourceParser> inputParser;
 
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};

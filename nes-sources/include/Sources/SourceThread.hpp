@@ -21,6 +21,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <SourceParsers/ParserCSV.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -39,11 +40,11 @@ class SourceThread
 public:
     explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SchemaPtr schema,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::unique_ptr<ParserCSV> csvParser);
 
     SourceThread() = delete;
 
@@ -65,7 +66,6 @@ public:
 
 protected:
     OriginId originId;
-    SchemaPtr schema;
     std::shared_ptr<NES::Memory::AbstractPoolProvider> localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider{nullptr};
@@ -76,6 +76,7 @@ protected:
     std::promise<bool> completedPromise;
     uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
+    std::unique_ptr<ParserCSV> csvParser;
     mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
     std::unique_ptr<std::thread> thread{nullptr};

@@ -42,8 +42,7 @@ public:
         std::string_view inputString,
         uint64_t tupleCount,
         NES::Memory::TupleBuffer& tupleBuffer,
-        const Schema& schema,
-        NES::Memory::AbstractBufferProvider& bufferManager)
+        NES::Memory::AbstractBufferProvider& bufferManager) const
         = 0;
 };
 
