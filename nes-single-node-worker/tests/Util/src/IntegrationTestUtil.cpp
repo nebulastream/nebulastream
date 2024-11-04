@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -143,9 +144,8 @@ void writeFieldValueToTupleBuffer(
     /// TODO #371 replace with csv parsing library
     try
     {
-        if (NES::Util::instanceOf<BasicPhysicalType>(physicalType))
+        if (auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
-            auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
             switch (basicPhysicalType->nativeType)
             {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
