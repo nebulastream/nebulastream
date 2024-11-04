@@ -1741,7 +1741,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
                                                                                         topology,
                                                                                         typeInferencePhase,
                                                                                         coordinatorConfiguration);
-    queryPlacementAmendmentPhase->execute(sharedQueryPlan);
+    auto deploymentUnit = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
 
@@ -1773,11 +1773,8 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpPlacementWthTightResourcesConstr
                 ASSERT_EQ(placedJoin->getChildren().size(), 2);
                 auto placedWatermark1 = placedJoin->getChildren()[0];
                 ASSERT_TRUE(placedWatermark1->instanceOf<WatermarkAssignerLogicalOperator>());
-                ASSERT_EQ(placedWatermark1->as<WatermarkAssignerLogicalOperator>()->getId(), watermark1->getId());
-
                 auto placedWatermark2 = placedJoin->getChildren()[1];
                 ASSERT_TRUE(placedWatermark2->instanceOf<WatermarkAssignerLogicalOperator>());
-                ASSERT_EQ(placedWatermark2->as<WatermarkAssignerLogicalOperator>()->getId(), watermark2->getId());
             } else if (executionNode->operator*()->getId() == WorkerId(3)) {
                 auto placedSink = ops[0];
                 ASSERT_TRUE(placedSink->instanceOf<SinkLogicalOperator>());

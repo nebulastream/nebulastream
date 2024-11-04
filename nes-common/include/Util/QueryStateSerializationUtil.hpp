@@ -12,20 +12,21 @@
     limitations under the License.
 */
 
-#ifndef NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
-#define NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
+#ifndef NES_COMMON_INCLUDE_UTIL_QUERYSTATESERIALIZATIONUTIL_HPP_
+#define NES_COMMON_INCLUDE_UTIL_QUERYSTATESERIALIZATIONUTIL_HPP_
 
-#include <Identifiers/Identifiers.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
+#include <Util/QueryState.hpp>
 
-namespace NES::Optimizer {
+namespace NES {
 
-/**
- * @brief Struct to store sub plan id and worker id that stores a sys generated query plan
- */
-struct SysPlanMetaData {
-    DecomposedQueryId decomposedQueryId;
-    WorkerId workerId;
+class QueryStateSerializationUtil {
+
+  public:
+    static NES::QueryState deserializeQueryState(SerializableQueryState serializedQueryState);
+
+    static SerializableQueryState serializeQueryState(QueryState queryState);
 };
-}// namespace NES::Optimizer
+}// namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_QUERYSTATESERIALIZATIONUTIL_HPP_

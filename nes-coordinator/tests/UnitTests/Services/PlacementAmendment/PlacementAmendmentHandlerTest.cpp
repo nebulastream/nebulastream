@@ -91,6 +91,12 @@ class MockedDeploymentPhase : public DeploymentPhase {
     MockedDeploymentPhase(Catalogs::Query::QueryCatalogPtr queryCatalog)
         : DeploymentPhase(queryCatalog), queryCatalog(queryCatalog){};
 
+    MOCK_METHOD(void,
+                execute,
+                (const std::set<Optimizer::ReconfigurationMarkerUnit>& reconfigurationMarkerUnits,
+                 const NES::ReconfigurationMarkerPtr& reconfigurationMarker),
+                (override));
+
     void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType) override {
         if (!deploymentContexts.empty()) {
             QueryState sharedQueryState = QueryState::REGISTERED;
@@ -1538,15 +1544,25 @@ TEST_F(PlacementAmendmentHandlerTest,
     auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, 4, properties);
     WorkerId nodeId5(5);
     auto addNodeEvent5 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId5, "localhost", 4000, 4002, 4, properties);
+    WorkerId nodeId6(6);
+    auto addNodeEvent6 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId6, "localhost", 4000, 4002, 4, properties);
+    WorkerId nodeId7(7);
+    auto addNodeEvent7 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId7, "localhost", 4000, 4002, 4, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpRemoveLink15 = ISQPRemoveLinkEvent::create(nodeId1, nodeId5);
+    auto isqpRemoveLink16 = ISQPRemoveLinkEvent::create(nodeId1, nodeId6);
+    auto isqpRemoveLink17 = ISQPRemoveLinkEvent::create(nodeId1, nodeId7);
     auto isqpAddLink24 = ISQPAddLinkEvent::create(nodeId2, nodeId4);
     auto isqpAddLink25 = ISQPAddLinkEvent::create(nodeId2, nodeId5);
-    auto isqpAddLinkProperty24 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId4, 1, 1);
-    auto isqpAddLinkProperty25 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId5, 1, 1);
+    auto isqpAddLink46 = ISQPAddLinkEvent::create(nodeId4, nodeId6);
+    auto isqpAddLink57 = ISQPAddLinkEvent::create(nodeId5, nodeId7);
     auto isqpAddLinkProperty12 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId2, 1, 1);
     auto isqpAddLinkProperty13 = ISQPAddLinkPropertyEvent::create(nodeId1, nodeId3, 1, 1);
+    auto isqpAddLinkProperty24 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId4, 1, 1);
+    auto isqpAddLinkProperty25 = ISQPAddLinkPropertyEvent::create(nodeId2, nodeId5, 1, 1);
+    auto isqpAddLinkProperty46 = ISQPAddLinkPropertyEvent::create(nodeId4, nodeId6, 1, 1);
+    auto isqpAddLinkProperty57 = ISQPAddLinkPropertyEvent::create(nodeId5, nodeId7, 1, 1);
 
     std::vector<ISQPEventPtr> isqpEventsForRequest1;
     isqpEventsForRequest1.emplace_back(addNodeEvent1);
@@ -1554,14 +1570,22 @@ TEST_F(PlacementAmendmentHandlerTest,
     isqpEventsForRequest1.emplace_back(addNodeEvent3);
     isqpEventsForRequest1.emplace_back(addNodeEvent4);
     isqpEventsForRequest1.emplace_back(addNodeEvent5);
+    isqpEventsForRequest1.emplace_back(addNodeEvent6);
+    isqpEventsForRequest1.emplace_back(addNodeEvent7);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink14);
     isqpEventsForRequest1.emplace_back(isqpRemoveLink15);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink16);
+    isqpEventsForRequest1.emplace_back(isqpRemoveLink17);
     isqpEventsForRequest1.emplace_back(isqpAddLink24);
     isqpEventsForRequest1.emplace_back(isqpAddLink25);
-    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty24);
-    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty25);
+    isqpEventsForRequest1.emplace_back(isqpAddLink46);
+    isqpEventsForRequest1.emplace_back(isqpAddLink57);
     isqpEventsForRequest1.emplace_back(isqpAddLinkProperty12);
     isqpEventsForRequest1.emplace_back(isqpAddLinkProperty13);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty24);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty25);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty46);
+    isqpEventsForRequest1.emplace_back(isqpAddLinkProperty57);
     executeMockISQPRequest(isqpEventsForRequest1, storageHandler, mockedPlacementAmendmentHandler);
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(nodeId4)));
 
@@ -1571,12 +1595,12 @@ TEST_F(PlacementAmendmentHandlerTest,
     auto defaultSourceType1 = DefaultSourceType::create(logicalSourceName1, "pTest1");
     auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
     auto logicalSource1 = LogicalSource::create(logicalSourceName1, schema);
-    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, nodeId5);
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1, logicalSource1, nodeId6);
     std::string logicalSourceName2 = "test2";
     auto defaultSourceType2 = DefaultSourceType::create(logicalSourceName2, "pTest2");
     auto physicalSource2 = PhysicalSource::create(defaultSourceType2);
     auto logicalSource2 = LogicalSource::create(logicalSourceName2, schema);
-    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, nodeId4);
+    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, nodeId7);
     sourceCatalog->addLogicalSource(logicalSource1->getLogicalSourceName(), logicalSource1->getSchema());
     sourceCatalog->addLogicalSource(logicalSource2->getLogicalSourceName(), logicalSource2->getSchema());
     sourceCatalog->addPhysicalSource(logicalSourceName1, sce1);
@@ -1605,11 +1629,15 @@ TEST_F(PlacementAmendmentHandlerTest,
     topology->print();
 
     // Prepare
-    auto addLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
-    auto removeLink24 = ISQPRemoveLinkEvent::create(nodeId2, nodeId4);
+    auto addLink36 = ISQPAddLinkEvent::create(nodeId3, nodeId6);
+    auto addLink37 = ISQPAddLinkEvent::create(nodeId3, nodeId7);
+    auto removeLink46 = ISQPRemoveLinkEvent::create(nodeId4, nodeId6);
+    auto removeLink57 = ISQPRemoveLinkEvent::create(nodeId5, nodeId7);
     std::vector<ISQPEventPtr> isqpEventsForRequest3;
-    isqpEventsForRequest3.emplace_back(addLink34);
-    isqpEventsForRequest3.emplace_back(removeLink24);
+    isqpEventsForRequest3.emplace_back(addLink36);
+    isqpEventsForRequest3.emplace_back(addLink37);
+    isqpEventsForRequest3.emplace_back(removeLink46);
+    isqpEventsForRequest3.emplace_back(removeLink57);
     executeMockISQPRequest(isqpEventsForRequest3, storageHandler, mockedPlacementAmendmentHandler);
 
     performPlacementAmendment(placementAmendmentHandler);

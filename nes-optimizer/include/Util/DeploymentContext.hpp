@@ -32,11 +32,9 @@ using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 class DeploymentContext {
 
   public:
-    static DeploymentContextPtr
-    create(const std::string& ipAddress, uint32_t grpcPort, const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    static DeploymentContextPtr create(const std::string& grpcAddress, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
-    DeploymentContext(const std::string& ipAddress,
-                      uint32_t grpcPort,
+    DeploymentContext(const std::string& grpcAddress,
                       SharedQueryId sharedQueryId,
                       DecomposedQueryId decomposedQueryId,
                       DecomposedQueryPlanVersion decomposedQueryPlanVersion,
@@ -87,8 +85,7 @@ class DeploymentContext {
     std::string getGrpcAddress() const;
 
   private:
-    std::string ipAddress;
-    uint32_t grpcPort;
+    std::string grpcAddress;
     SharedQueryId sharedQueryId;
     DecomposedQueryId decomposedQueryId;
     DecomposedQueryPlanVersion decomposedQueryPlanVersion;

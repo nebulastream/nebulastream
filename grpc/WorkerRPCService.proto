@@ -13,93 +13,107 @@
 */
 
 syntax = "proto3";
+
 import "SerializableExpression.proto";
+import "SerializableReconfigurationMarker.proto";
 import "SerializableDecomposedQueryPlan.proto";
 import "WorkerLocation.proto";
 
 service WorkerRPCService {
-  rpc DeployDecomposedQuery (DeployDecomposedQueryRequest) returns (DeployDecomposedQueryReply) {}
-  rpc UndeployDecomposedQuery (UndeployDecomposedQueryRequest) returns (UndeployDecomposedQueryReply) {}
+    rpc DeployDecomposedQuery (DeployDecomposedQueryRequest) returns (DeployDecomposedQueryReply) {}
+    rpc UndeployDecomposedQuery (UndeployDecomposedQueryRequest) returns (UndeployDecomposedQueryReply) {}
 
-  rpc RegisterDecomposedQuery (RegisterDecomposedQueryRequest) returns (RegisterDecomposedQueryReply) {}
-  rpc UnregisterDecomposedQuery (UnregisterDecomposedQueryRequest) returns (UnregisterDecomposedQueryReply) {}
+    rpc RegisterDecomposedQuery (RegisterDecomposedQueryRequest) returns (RegisterDecomposedQueryReply) {}
+    rpc UnregisterDecomposedQuery (UnregisterDecomposedQueryRequest) returns (UnregisterDecomposedQueryReply) {}
 
-  rpc StartDecomposedQuery (StartDecomposedQueryRequest) returns (StartDecomposedQueryReply) {}
-  rpc StopDecomposedQuery (StopDecomposedQueryRequest) returns (StopDecomposedQueryReply) {}
+    rpc StartDecomposedQuery (StartDecomposedQueryRequest) returns (StartDecomposedQueryReply) {}
+    rpc StopDecomposedQuery (StopDecomposedQueryRequest) returns (StopDecomposedQueryReply) {}
 
-  rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
-  rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+    rpc AddReconfigurationMarker (ReconfigurationMarkerRequest) returns (ReconfigurationMarkerReply) {}
 
-  rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
+    rpc RegisterMonitoringPlan (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
+    rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
-  rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+    rpc InjectEpochBarrier (EpochBarrierNotification) returns (EpochBarrierReply) {}
 
-  rpc UpdateNetworkSink(UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply){}
+    rpc BeginBuffer (BufferRequest) returns (BufferReply) {}
 
-  rpc GetLocation(GetLocationRequest) returns (GetLocationReply) {}
+    rpc UpdateNetworkSink (UpdateNetworkSinkRequest) returns (UpdateNetworkSinkReply) {}
 
-  rpc UploadMlModel(MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
-  rpc UploadMlModelClientStream(stream MlModelFileUploadRequest) returns(MlModelFileUploadResponse) {}
-  rpc UploadMlModelServerStream(MlModelFileUploadRequest) returns(stream MlModelFileUploadResponse) {}
+    rpc GetLocation (GetLocationRequest) returns (GetLocationReply) {}
 
-  rpc ProbeStatistics (ProbeStatisticsRequest) returns(ProbeStatisticsReply) {}
+    rpc UploadMlModel (MlModelFileUploadRequest) returns (MlModelFileUploadResponse) {}
+    rpc UploadMlModelClientStream (stream MlModelFileUploadRequest) returns (MlModelFileUploadResponse) {}
+    rpc UploadMlModelServerStream (MlModelFileUploadRequest) returns (stream MlModelFileUploadResponse) {}
+
+    rpc ProbeStatistics (ProbeStatisticsRequest) returns (ProbeStatisticsReply) {}
 }
 
 message DeployDecomposedQueryRequest {
-  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+    NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 }
 
 message DeployDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message UndeployDecomposedQueryRequest {
-  uint64 sharedQueryId = 1;
-  uint64 decomposedQueryId = 2;
+    uint64 sharedQueryId = 1;
+    uint64 decomposedQueryId = 2;
 }
 
 message UndeployDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message RegisterDecomposedQueryRequest {
-  NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
+    NES.SerializableDecomposedQueryPlan decomposedQueryPlan = 1;
 }
 
 message RegisterDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message UnregisterDecomposedQueryRequest {
-  uint64 sharedQueryId = 1;
-  uint64 decomposedQueryId = 2;
+    uint64 sharedQueryId = 1;
+    uint64 decomposedQueryId = 2;
 }
 
 message UnregisterDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message StartDecomposedQueryRequest {
-  uint64 sharedQueryId = 1;
-  uint64 decomposedQueryId = 2;
+    uint64 sharedQueryId = 1;
+    uint64 decomposedQueryId = 2;
 }
 
 message StartDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message StopDecomposedQueryRequest {
-  uint64 sharedQueryId = 1;
-  uint64 decomposedQueryId = 2;
-  uint64 queryTerminationType = 3;
+    uint64 sharedQueryId = 1;
+    uint64 decomposedQueryId = 2;
+    uint64 queryTerminationType = 3;
 }
 
 message StopDecomposedQueryReply {
-  bool success = 1;
+    bool success = 1;
+}
+
+message ReconfigurationMarkerRequest {
+    uint64 sharedQueryId = 1;
+    uint64 decomposedQueryId = 2;
+    NES.SerializableReconfigurationMarker serializableReconfigurationMarker = 3;
+}
+
+message ReconfigurationMarkerReply {
+    bool success = 1;
 }
 
 message MonitoringRegistrationRequest {
-  repeated uint32 metricTypes = 1;
+    repeated uint32 metricTypes = 1;
 }
 
 message MonitoringRegistrationReply {
@@ -110,88 +124,88 @@ message MonitoringDataRequest {
 }
 
 message MonitoringDataReply {
-  string metricsAsJson = 1;
+    string metricsAsJson = 1;
 }
 
-message EpochBarrierNotification{
-  uint64 timestamp = 1;
-  uint64 sharedQueryId = 2;
+message EpochBarrierNotification {
+    uint64 timestamp = 1;
+    uint64 sharedQueryId = 2;
 }
 
-message EpochBarrierReply{
-  bool success = 1;
+message EpochBarrierReply {
+    bool success = 1;
 }
 
-message UpdateNetworkSinkRequest{
-  uint64 newNodeId = 1;
-  string newHostname = 2;
-  uint32 newPort = 3;
-  uint64 decomposedQueryId = 4;
-  uint64 uniqueNetworkSinkDescriptorId = 5;
+message UpdateNetworkSinkRequest {
+    uint64 newNodeId = 1;
+    string newHostname = 2;
+    uint32 newPort = 3;
+    uint64 decomposedQueryId = 4;
+    uint64 uniqueNetworkSinkDescriptorId = 5;
 }
 
 message UpdateNetworkSinkReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message BufferRequest {
-  uint64 decomposedQueryId = 1;
-  uint64 uniqueNetworkSinkDescriptorId = 2;
+    uint64 decomposedQueryId = 1;
+    uint64 uniqueNetworkSinkDescriptorId = 2;
 }
 
 message BufferReply {
-  bool success = 1;
+    bool success = 1;
 }
 
 message GetLocationRequest {
 }
 
 message GetLocationReply {
-  NES.Spatial.Protobuf.Waypoint waypoint = 1;
+    NES.Spatial.Protobuf.Waypoint waypoint = 1;
 }
 
 message GetReconnectScheduleRequest {
-  uint64 id = 1;
+    uint64 id = 1;
 }
 
 message GetReconnectScheduleReply {
-  NES.Spatial.Protobuf.ReconnectSchedule schedule = 1;
+    NES.Spatial.Protobuf.ReconnectSchedule schedule = 1;
 }
 
 enum MlModelFileUploadStatus {
-  PENDING = 0;
-  IN_PROGRESS = 1;
-  SUCCESS = 2;
-  FAILED = 3;
+    PENDING = 0;
+    IN_PROGRESS = 1;
+    SUCCESS = 2;
+    FAILED = 3;
 }
 
 message MlModelFileUploadRequest {
-  oneof request {
-    string filename = 1;
-    string filetype = 2;
-    bytes content = 3;
-  }
+    oneof request {
+        string filename = 1;
+        string filetype = 2;
+        bytes content = 3;
+    }
 }
 
 message MlModelFileUploadResponse {
-  string filename = 1;
-  MlModelFileUploadStatus status = 2;
+    string filename = 1;
+    MlModelFileUploadStatus status = 2;
 }
 
 message ProbeStatisticsRequest {
-  uint64 statisticHash = 1;
-  uint64 startTs = 2;
-  uint64 endTs = 3;
-  uint64 granularity = 4;
-  NES.SerializableExpression expression = 5;
+    uint64 statisticHash = 1;
+    uint64 startTs = 2;
+    uint64 endTs = 3;
+    uint64 granularity = 4;
+    NES.SerializableExpression expression = 5;
 }
 
 message StatisticReply {
-  double statisticValue = 1;
-  uint64 startTs = 2;
-  uint64 endTs = 3;
+    double statisticValue = 1;
+    uint64 startTs = 2;
+    uint64 endTs = 3;
 }
 
 message ProbeStatisticsReply {
-  repeated StatisticReply statistics = 1;
+    repeated StatisticReply statistics = 1;
 }

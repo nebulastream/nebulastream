@@ -11,3 +11,5 @@
 # limitations under the License.
 
 add_subdirectory(Util)
+
+add_nes_unit_test(reconfiguration-marker-serialization-tests "Reconfiguration/ReconfigurationMarkerSerializationUtilTest.cpp")

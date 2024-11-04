@@ -21,6 +21,8 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
+#include <Reconfiguration/ReconfigurationMarkerSerializationUtil.hpp>
 #include <Statistics/StatisticValue.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
@@ -332,6 +334,41 @@ void WorkerRPCClient::stopDecomposedQueryAsync(const std::string& address,
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
     call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+}
+
+void WorkerRPCClient::addReconfigurationMarker(const std::string& address,
+                                               const NES::SharedQueryId& sharedQueryId,
+                                               const NES::DecomposedQueryId& decomposedQueryId,
+                                               const NES::ReconfigurationMarkerPtr& reconfigurationMarker,
+                                               const NES::CompletionQueuePtr& cq) {
+
+    ReconfigurationMarkerRequest request;
+    request.set_decomposedqueryid(decomposedQueryId.getRawValue());
+    request.set_sharedqueryid(sharedQueryId.getRawValue());
+    auto serializableReconfigurationMarker = request.mutable_serializablereconfigurationmarker();
+    ReconfigurationMarkerSerializationUtil::serialize(reconfigurationMarker, *serializableReconfigurationMarker);
+
+    ClientContext context;
+    // Call object to store rpc data
+    auto* call = new AsyncClientCall<ReconfigurationMarkerReply>;
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+
+    // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
+    // an instance to store in "call" but does not actually start the RPC
+    // Because we are using the asynchronous API, we need to hold on to
+    // the "call" instance in order to get updates on the ongoing RPC.
+    call->responseReader = workerStub->PrepareAsyncAddReconfigurationMarker(&call->context, request, cq.get());
+
+    // StartCall initiates the RPC call
+    call->responseReader->StartCall();
+
+    // Request that, upon completion of the RPC, "reply" be updated with the
+    // server's response; "status" with the indication of whether the operation
+    // was successful. Tag the request with the memory address of the call object.
+    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+    delete call;
 }
 
 bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {

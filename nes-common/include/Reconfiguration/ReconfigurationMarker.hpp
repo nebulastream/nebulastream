@@ -24,15 +24,48 @@ namespace NES {
 
 class ReconfigurationMarker;
 using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+
 /**
- * @brief This class contains the information about different state
+ * @brief This class represents a reconfiguration marker that passes through currently deployed versions of decomposed query plans
+ * and transforms them. To this end, a reconfiguration marker contains a collection of instructions for different decomposed
+ * query plans to allow the transformation. This information is wrapped together in a map.
+ *
+ * The following information is provided within a reconfiguration marker:
+ *
+ * Key (Who): represents identity of the decomposed query plan that needs to react upon receiving the reconfiguration marker.
+ *            The key is composed of WorkerId, SharedQueryId, and DecomposedQueryId.
+ *
+ * State (What): represents what need to be done upon receiving the reconfiguration marker. Currently we support: (1.) Draining
+ * a decomposed plan (terminate a plan), (2.) Updating a decomposed plan (plan mutation), and (3.) Updating and then draining a
+ * decomposed plan (plan termination post state migration).
+ *
+ * Reconfiguration Metadata (How): represent necessary information on how to perform the reconfiguration.
+ *
+ * The "What" and "How" are represented together as ReconfigurationMarkerEvent.
  */
 class ReconfigurationMarker {
   public:
     static ReconfigurationMarkerPtr create();
     ReconfigurationMarker() = default;
+
+    /**
+     * @brief Get the reconfiguration marker event
+     * @param key : the id for which the reconfiguration marker needs to be defined
+     * @return optional immutable reconfiguration marker event
+     */
     std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(const std::string& key);
-    void addReconfigurationEvent(const std::string& key, const ReconfigurationMarkerEventPtr& reconfigurationEvent);
+
+    /**
+     * @brief Add a reconfiguration marker event
+     * @param key : key identifying the decomposed query plan
+     * @param reconfigurationEvent : the reconfiguration marker event
+     */
+    void addReconfigurationEvent(const std::string& key, ReconfigurationMarkerEventPtr reconfigurationEvent);
+
+    /**
+     * @brief Get all reconfiguration marker events defined in the reconfiguration marker
+     */
+    const std::unordered_map<std::string, ReconfigurationMarkerEventPtr>& getAllReconfigurationMarkerEvents() const;
 
   private:
     std::unordered_map<std::string, ReconfigurationMarkerEventPtr> reconfigurationEvents;

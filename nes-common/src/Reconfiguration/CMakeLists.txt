@@ -13,4 +13,5 @@
 add_source_files(nes-common
         ReconfigurationMarker.cpp
         ReconfigurationMarkerEvent.cpp
+        ReconfigurationMarkerSerializationUtil.cpp
 )

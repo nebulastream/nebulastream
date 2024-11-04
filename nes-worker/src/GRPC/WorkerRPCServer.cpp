@@ -20,11 +20,12 @@
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
+#include <Reconfiguration/ReconfigurationMarkerSerializationUtil.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <nlohmann/json.hpp>
-
 #include <utility>
 
 namespace NES {
@@ -121,6 +122,21 @@ WorkerRPCServer::StopDecomposedQuery(ServerContext*, const StopDecomposedQueryRe
     NES_ERROR("WorkerRPCServer::StopQuery: failed");
     reply->set_success(false);
     return Status::CANCELLED;
+}
+
+Status WorkerRPCServer::AddReconfigurationMarker(ServerContext*,
+                                                 const ReconfigurationMarkerRequest* request,
+                                                 ReconfigurationMarkerReply*) {
+
+    auto reconfigurationMarker = ReconfigurationMarker::create();
+    auto sharedQueryId = SharedQueryId(request->sharedqueryid());
+    auto decomposedQueryId = DecomposedQueryId(request->decomposedqueryid());
+    auto serializableReconfigurationMarker = request->serializablereconfigurationmarker();
+    ReconfigurationMarkerSerializationUtil::deserialize(serializableReconfigurationMarker, reconfigurationMarker);
+    NES_INFO("Received reconfiguration marker");
+    auto status = nodeEngine->addReconfigureMarker(sharedQueryId, decomposedQueryId, reconfigurationMarker) ? Status::OK
+                                                                                                            : Status::CANCELLED;
+    return status;
 }
 
 Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
@@ -235,5 +251,4 @@ Status WorkerRPCServer::ProbeStatistics(ServerContext*, const ProbeStatisticsReq
 
     return Status::OK;
 }
-
 }// namespace NES

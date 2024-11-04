@@ -44,10 +44,6 @@ class DecomposedQueryPlanSerializationUtil {
      */
     static DecomposedQueryPlanPtr
     deserializeDecomposedQueryPlan(const SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
-
-    static NES::QueryState deserializeQueryState(NES::SerializableQueryState serializedQueryState);
-
-    static SerializableQueryState serializeQueryState(QueryState queryState);
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_DECOMPOSEDQUERYPLANSERIALIZATIONUTIL_HPP_

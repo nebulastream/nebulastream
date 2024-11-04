@@ -732,4 +732,9 @@ const OpenCLManagerPtr NodeEngine::getOpenCLManager() const { return openCLManag
 
 const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const { return statisticManager; }
 
+bool NodeEngine::addReconfigureMarker(SharedQueryId, DecomposedQueryId, ReconfigurationMarkerPtr&) {
+    NES_WARNING("NOT IMPLEMENTED")
+    return false;
+}
+
 }// namespace NES::Runtime

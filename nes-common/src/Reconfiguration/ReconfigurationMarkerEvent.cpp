@@ -17,12 +17,12 @@
 namespace NES {
 
 ReconfigurationMarkerEventPtr ReconfigurationMarkerEvent::create(const QueryState queryState,
-                                                                 const ReconfigurationMetadatatPtr& reconfigurationMetadata) {
+                                                                 ReconfigurationMetadatatPtr reconfigurationMetadata) {
     return std::make_shared<ReconfigurationMarkerEvent>(queryState, reconfigurationMetadata);
 }
 
 ReconfigurationMarkerEvent::ReconfigurationMarkerEvent(const QueryState queryState,
-                                                       const ReconfigurationMetadatatPtr& reconfigurationMetadata)
-    : queryState(queryState), reconfigurationMetadata(std::move(reconfigurationMetadata)) {}
+                                                       ReconfigurationMetadatatPtr reconfigurationMetadata)
+    : queryState(queryState), reconfigurationMetadata(reconfigurationMetadata) {}
 
 }// namespace NES

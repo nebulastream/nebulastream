@@ -27,8 +27,13 @@ std::optional<ReconfigurationMarkerEventPtr> ReconfigurationMarker::getReconfigu
     return std::nullopt;
 }
 
-void ReconfigurationMarker::addReconfigurationEvent(const std::string& key,
-                                                    const ReconfigurationMarkerEventPtr& reconfigurationEvent) {
-    reconfigurationEvents.insert({key, std::move(reconfigurationEvent)});
+void ReconfigurationMarker::addReconfigurationEvent(const std::string& key, ReconfigurationMarkerEventPtr reconfigurationEvent) {
+    reconfigurationEvents.insert({key, reconfigurationEvent});
 }
+
+const std::unordered_map<std::string, ReconfigurationMarkerEventPtr>&
+ReconfigurationMarker::getAllReconfigurationMarkerEvents() const {
+    return reconfigurationEvents;
+}
+
 }// namespace NES

@@ -22,17 +22,23 @@
 
 namespace NES {
 class ReconfigurationMarkerEvent;
-using ReconfigurationMarkerEventPtr = std::shared_ptr<ReconfigurationMarkerEvent>;
+using ReconfigurationMarkerEventPtr = std::shared_ptr<const ReconfigurationMarkerEvent>;
 
+/**
+ * @brief Reconfiguration marker event represents a single reconfiguration instruction that defines what is to be done as part of
+ * the reconfiguration and how to do so.
+ *
+ * The what is represented by the query state. We currently support Marker_For_Migration and Marked_For_Redeployment.
+ * How the reconfiguration is to be done is defined by the reconfiguration metadata.
+ */
 class ReconfigurationMarkerEvent {
   public:
-    static ReconfigurationMarkerEventPtr create(const QueryState queryState,
-                                                const ReconfigurationMetadatatPtr& reconfigurationMetadata);
+    static ReconfigurationMarkerEventPtr create(QueryState queryState, ReconfigurationMetadatatPtr reconfigurationMetadata);
 
-    ReconfigurationMarkerEvent(const QueryState queryState, const ReconfigurationMetadatatPtr& reconfigurationMetadata);
+    ReconfigurationMarkerEvent(QueryState queryState, ReconfigurationMetadatatPtr reconfigurationMetadata);
 
     const QueryState queryState;
-    const ReconfigurationMetadatatPtr& reconfigurationMetadata;
+    const ReconfigurationMetadatatPtr reconfigurationMetadata;
 };
 }// namespace NES
 #endif// NES_COMMON_INCLUDE_RECONFIGURATION_RECONFIGURATIONMARKEREVENT_HPP_

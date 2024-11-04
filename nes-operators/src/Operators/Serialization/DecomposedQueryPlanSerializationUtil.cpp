@@ -22,6 +22,7 @@
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <Util/CompilerConstants.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryStateSerializationUtil.hpp>
 
 namespace NES {
 
@@ -56,7 +57,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializableDecomposedQueryPlan->set_decomposedqueryid(decomposedQueryPlan->getDecomposedQueryId().getRawValue());
     serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId().getRawValue());
-    serializableDecomposedQueryPlan->set_state(serializeQueryState(decomposedQueryPlan->getState()));
+    serializableDecomposedQueryPlan->set_state(QueryStateSerializationUtil::serializeQueryState(decomposedQueryPlan->getState()));
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
@@ -96,61 +97,9 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     auto decomposedQueryPlan =
         DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
     if (serializableDecomposedQueryPlan->has_state()) {
-        auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());
+        auto state = QueryStateSerializationUtil::deserializeQueryState(serializableDecomposedQueryPlan->state());
         decomposedQueryPlan->setState(state);
     }
     return decomposedQueryPlan;
-}
-
-QueryState DecomposedQueryPlanSerializationUtil::deserializeQueryState(SerializableQueryState serializedQueryState) {
-    using enum QueryState;
-    switch (serializedQueryState) {
-        case QUERY_STATE_REGISTERED: return REGISTERED;
-        case QUERY_STATE_OPTIMIZING: return OPTIMIZING;
-        case QUERY_STATE_DEPLOYED: return DEPLOYED;
-        case QUERY_STATE_RUNNING: return RUNNING;
-        case QUERY_STATE_MARKED_FOR_HARD_STOP: return MARKED_FOR_HARD_STOP;
-        case QUERY_STATE_MARKED_FOR_SOFT_STOP: return MARKED_FOR_SOFT_STOP;
-        case QUERY_STATE_SOFT_STOP_TRIGGERED: return SOFT_STOP_TRIGGERED;
-        case QUERY_STATE_SOFT_STOP_COMPLETED: return SOFT_STOP_COMPLETED;
-        case QUERY_STATE_STOPPED: return STOPPED;
-        case QUERY_STATE_MARKED_FOR_FAILURE: return MARKED_FOR_FAILURE;
-        case QUERY_STATE_FAILED: return FAILED;
-        case QUERY_STATE_RESTARTING: return RESTARTING;
-        case QUERY_STATE_MIGRATING: return MIGRATING;
-        case QUERY_STATE_MIGRATION_COMPLETED: return MIGRATION_COMPLETED;
-        case QUERY_STATE_EXPLAINED: return EXPLAINED;
-        case QUERY_STATE_REDEPLOYED: return REDEPLOYED;
-        case QUERY_STATE_MARKED_FOR_DEPLOYMENT: return MARKED_FOR_DEPLOYMENT;
-        case QUERY_STATE_MARKED_FOR_REDEPLOYMENT: return MARKED_FOR_REDEPLOYMENT;
-        case QUERY_STATE_MARKED_FOR_MIGRATION: return MARKED_FOR_MIGRATION;
-        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: return REGISTERED;
-        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: return REGISTERED;
-    }
-}
-
-SerializableQueryState DecomposedQueryPlanSerializationUtil::serializeQueryState(QueryState queryState) {
-    using enum QueryState;
-    switch (queryState) {
-        case REGISTERED: return QUERY_STATE_REGISTERED;
-        case OPTIMIZING: return QUERY_STATE_OPTIMIZING;
-        case DEPLOYED: return QUERY_STATE_DEPLOYED;
-        case RUNNING: return QUERY_STATE_RUNNING;
-        case MARKED_FOR_HARD_STOP: return QUERY_STATE_MARKED_FOR_HARD_STOP;
-        case MARKED_FOR_SOFT_STOP: return QUERY_STATE_MARKED_FOR_SOFT_STOP;
-        case SOFT_STOP_TRIGGERED: return QUERY_STATE_SOFT_STOP_TRIGGERED;
-        case SOFT_STOP_COMPLETED: return QUERY_STATE_SOFT_STOP_COMPLETED;
-        case STOPPED: return QUERY_STATE_STOPPED;
-        case MARKED_FOR_FAILURE: return QUERY_STATE_MARKED_FOR_FAILURE;
-        case FAILED: return QUERY_STATE_FAILED;
-        case RESTARTING: return QUERY_STATE_RESTARTING;
-        case MIGRATING: return QUERY_STATE_MIGRATING;
-        case MIGRATION_COMPLETED: return QUERY_STATE_MIGRATION_COMPLETED;
-        case EXPLAINED: return QUERY_STATE_EXPLAINED;
-        case REDEPLOYED: return QUERY_STATE_REDEPLOYED;
-        case MARKED_FOR_DEPLOYMENT: return QUERY_STATE_MARKED_FOR_DEPLOYMENT;
-        case MARKED_FOR_REDEPLOYMENT: return QUERY_STATE_MARKED_FOR_REDEPLOYMENT;
-        case MARKED_FOR_MIGRATION: return QUERY_STATE_MARKED_FOR_MIGRATION;
-    }
 }
 }// namespace NES

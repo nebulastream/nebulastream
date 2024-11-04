@@ -104,11 +104,11 @@ class PlacementAmendmentInstance {
 
   private:
     /**
-     * @brief Compute reconfiguration marker for reconfiguring the plan
+     * @brief Update reconfiguration marker based on the deployment units
      * @param deploymentUnit: the deployment unit using which the marker needs to be computed
-     * @return pointer to the ReconfigurationMarker
+     * @param reconfigurationMarker the reconfiguration marker
      */
-    ReconfigurationMarkerPtr computeReconfigurationMarker(DeploymentUnit& deploymentUnit);
+    void updateReconfigurationMarker(DeploymentUnit& deploymentUnit, ReconfigurationMarkerPtr reconfigurationMarker);
 
     SharedQueryPlanPtr sharedQueryPlan;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;

@@ -69,6 +69,10 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
                                const StopDecomposedQueryRequest* request,
                                StopDecomposedQueryReply* reply) override;
 
+    Status AddReconfigurationMarker(::grpc::ServerContext* context,
+                                    const ::ReconfigurationMarkerRequest* request,
+                                    ::ReconfigurationMarkerReply* response) override;
+
     Status
     RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
 

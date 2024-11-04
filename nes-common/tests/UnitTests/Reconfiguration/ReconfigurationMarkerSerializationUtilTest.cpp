@@ -1,0 +1,123 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <BaseUnitTest.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
+#include <Reconfiguration/ReconfigurationMarkerSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <WorkerRPCService.grpc.pb.h>
+#include <WorkerRPCService.pb.h>
+#include <gtest/gtest.h>
+#include <iostream>
+
+using namespace NES;
+
+class ReconfigurationMarkerSerializationUtilTest : public Testing::BaseUnitTest {
+
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        NES::Logger::setupLogging("ReconfigurationMarkerSerilizationUtilTest.log", NES::LogLevel::LOG_DEBUG);
+        NES_INFO("Setup ReconfigurationMarkerSerilizationUtilTest test class.");
+    }
+};
+
+TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerialization) {
+
+    auto originalReconfigurationMarker = ReconfigurationMarker::create();
+
+    // reconfiguration metadata 1
+    auto reconfigurationMetaData1 = std::make_shared<UpdateQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1);
+    auto reconfigurationMarkerEvent1 =
+        ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_REDEPLOYMENT, reconfigurationMetaData1);
+    auto key1 = "k1";
+    originalReconfigurationMarker->addReconfigurationEvent(key1, reconfigurationMarkerEvent1);
+
+    // reconfiguration metadata 2
+    auto reconfigurationMetaData2 = std::make_shared<DrainQueryMetadata>(1);
+    auto reconfigurationMarkerEvent2 =
+        ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_MIGRATION, reconfigurationMetaData2);
+    auto key2 = "k2";
+    originalReconfigurationMarker->addReconfigurationEvent(key2, reconfigurationMarkerEvent2);
+
+    // reconfiguration metadata 3
+    auto reconfigurationMetaData3 =
+        std::make_shared<UpdateAndDrainQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1, 1);
+    auto reconfigurationMarkerEvent3 =
+        ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_MIGRATION, reconfigurationMetaData3);
+    auto key3 = "k3";
+    originalReconfigurationMarker->addReconfigurationEvent(key3, reconfigurationMarkerEvent3);
+
+    // serialize and deserialize reconfiguration marker
+    ReconfigurationMarkerRequest request;
+    auto serializableReconfigurationMarker = request.mutable_serializablereconfigurationmarker();
+    ReconfigurationMarkerSerializationUtil::serialize(originalReconfigurationMarker, *serializableReconfigurationMarker);
+    auto deserializedReconfigurationMarker = ReconfigurationMarker::create();
+    ReconfigurationMarkerSerializationUtil::deserialize(*serializableReconfigurationMarker, deserializedReconfigurationMarker);
+
+    // Validate if same number of reconfiguration marker events exists post serialization
+    ASSERT_EQ(originalReconfigurationMarker->getAllReconfigurationMarkerEvents().size(),
+              serializableReconfigurationMarker->reconfigurationmarkerevents().size());
+
+    // Validate if same number of reconfiguration marker events exists post deserialization
+    ASSERT_EQ(serializableReconfigurationMarker->reconfigurationmarkerevents().size(),
+              deserializedReconfigurationMarker->getAllReconfigurationMarkerEvents().size());
+
+    for (const auto& [originalKey, originalReconfigurationMarkerEvent] :
+         originalReconfigurationMarker->getAllReconfigurationMarkerEvents()) {
+        const auto& deserializedReconfigurationEvent = deserializedReconfigurationMarker->getReconfigurationEvent(originalKey);
+        EXPECT_TRUE(deserializedReconfigurationEvent.has_value());
+    }
+
+    // Validate if reconfiguration event for key 1 got properly serialized and deserialized
+    const auto& deserializedReconfigurationEvent1Optional1 = deserializedReconfigurationMarker->getReconfigurationEvent(key1);
+    const auto& deserializedReconfigurationMetadata1 = deserializedReconfigurationEvent1Optional1.value();
+    EXPECT_EQ(reconfigurationMarkerEvent1->queryState, deserializedReconfigurationMetadata1->queryState);
+    EXPECT_EQ(reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->workerId,
+              deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->workerId);
+    EXPECT_EQ(reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->sharedQueryId,
+              deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->sharedQueryId);
+    EXPECT_EQ(reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryId,
+              deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryId);
+    EXPECT_EQ(
+        reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryPlanVersion,
+        deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryPlanVersion);
+
+    // Validate if reconfiguration event for key 2 got properly serialized and deserialized
+    const auto& deserializedReconfigurationEvent1Optional2 = deserializedReconfigurationMarker->getReconfigurationEvent(key2);
+    const auto& deserializedReconfigurationMetadata2 = deserializedReconfigurationEvent1Optional2.value();
+    EXPECT_EQ(reconfigurationMarkerEvent2->queryState, deserializedReconfigurationMetadata2->queryState);
+    EXPECT_EQ(reconfigurationMarkerEvent2->reconfigurationMetadata->as<DrainQueryMetadata>()->numberOfSources,
+              deserializedReconfigurationMetadata2->reconfigurationMetadata->as<DrainQueryMetadata>()->numberOfSources);
+
+    // Validate if reconfiguration event for key 3 got properly serialized and deserialized
+    const auto& deserializedReconfigurationEvent1Optional3 = deserializedReconfigurationMarker->getReconfigurationEvent(key3);
+    const auto& deserializedReconfigurationMetadata3 = deserializedReconfigurationEvent1Optional3.value();
+    EXPECT_EQ(reconfigurationMarkerEvent3->queryState, deserializedReconfigurationMetadata3->queryState);
+    EXPECT_EQ(reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->workerId,
+              deserializedReconfigurationMetadata3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->workerId);
+    EXPECT_EQ(reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->sharedQueryId,
+              deserializedReconfigurationMetadata3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->sharedQueryId);
+    EXPECT_EQ(
+        reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->decomposedQueryId,
+        deserializedReconfigurationMetadata3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->decomposedQueryId);
+    EXPECT_EQ(reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->decomposedQueryPlanVersion,
+              deserializedReconfigurationMetadata3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()
+                  ->decomposedQueryPlanVersion);
+    EXPECT_EQ(reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->numberOfSources,
+              deserializedReconfigurationMetadata3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->numberOfSources);
+}

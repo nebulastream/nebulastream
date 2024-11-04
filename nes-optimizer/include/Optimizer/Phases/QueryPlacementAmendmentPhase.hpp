@@ -73,17 +73,38 @@ class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 
 /**
- * @brief This struct holds the placement removal and addition deployment contexts. This is necessary as after a placement
- * amendment we might want to restart a running query by first removing the existing placements and then adding new one.
+ * @brief This struct wraps around the information about the reconfiguration marker units that are
+ */
+struct ReconfigurationMarkerUnit {
+  public:
+    ReconfigurationMarkerUnit(const std::string& address,
+                              WorkerId workerId,
+                              SharedQueryId sharedQueryId,
+                              DecomposedQueryId decomposedQueryId)
+        : address(address), workerId(workerId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId){};
+
+    bool operator<(ReconfigurationMarkerUnit otherReconfigurationMarkerUnit) const {
+        return decomposedQueryId < otherReconfigurationMarkerUnit.decomposedQueryId;
+    }
+
+    const std::string address;
+    const WorkerId workerId;
+    const SharedQueryId sharedQueryId;
+    const DecomposedQueryId decomposedQueryId;
+};
+
+/**
+ * @brief This struct holds the placement removal and addition deployment contexts. In addition a set of reconfigurationMarkerUnits need to be sent.
+ * This is necessary as after a placement amendment we might want to restart a running query by first removing the existing placements, then adding new one, and
+ * using reconfiguration markers to terminate plans that are marked for removal and starting newly deployed or updated plans.
  */
 struct DeploymentUnit {
-
-    std::set<DeploymentContextPtr> deploymentRemovalContexts;
-    std::set<DeploymentContextPtr> deploymentAdditionContexts;
-
+  public:
     DeploymentUnit(std::set<DeploymentContextPtr> deploymentRemovalContexts,
-                   std::set<DeploymentContextPtr> deploymentAdditionContexts)
-        : deploymentRemovalContexts(deploymentRemovalContexts), deploymentAdditionContexts(deploymentAdditionContexts){};
+                   std::set<DeploymentContextPtr> deploymentAdditionContexts,
+                   std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnits)
+        : deploymentRemovalContexts(deploymentRemovalContexts), deploymentAdditionContexts(deploymentAdditionContexts),
+          reconfigurationMarkerUnits(reconfigurationMarkerUnits){};
 
     bool containsDeploymentContext() { return !deploymentAdditionContexts.empty() || !deploymentRemovalContexts.empty(); }
 
@@ -93,6 +114,10 @@ struct DeploymentUnit {
         combinedDeploymentContexts.insert(deploymentAdditionContexts.begin(), deploymentAdditionContexts.end());
         return combinedDeploymentContexts;
     }
+
+    const std::set<DeploymentContextPtr> deploymentRemovalContexts;
+    const std::set<DeploymentContextPtr> deploymentAdditionContexts;
+    const std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnits;
 };
 
 static std::atomic_uint64_t counter{0};
@@ -194,6 +219,17 @@ class QueryPlacementAmendmentPhase {
                                  const std::set<LogicalOperatorPtr>& downstreamOperators,
                                  DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
                                  std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
+
+    /**
+     * @brief Method to identify the location where reconfiguration marker needs to be pushed.
+     * @param sharedQueryId: the id of the shared query plan
+     * @param changeLogEntry : the change log entry
+     * @param reconfigurationMarkerUnitComparator : the collection of reconfiguration makers
+     */
+    void
+    computeReconfigurationMarkerDeploymentUnit(SharedQueryId& sharedQueryId,
+                                               const ChangeLogEntryPtr& changeLogEntry,
+                                               std::set<ReconfigurationMarkerUnit>& reconfigurationMarkerUnitComparator) const;
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

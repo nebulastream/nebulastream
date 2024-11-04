@@ -44,6 +44,8 @@ TopologyNodePtr TopologyNode::create(WorkerId workerId,
 
 WorkerId TopologyNode::getId() const { return workerId; }
 
+std::string TopologyNode::getGrpcAddress() const { return ipAddress + ":" + std::to_string(grpcPort); }
+
 uint32_t TopologyNode::getGrpcPort() const { return grpcPort; }
 
 uint32_t TopologyNode::getDataPort() const { return dataPort; }

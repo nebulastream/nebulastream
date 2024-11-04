@@ -21,8 +21,9 @@
 namespace NES {
 
 /**
- * @brief Metadata defining the information about the new decomposed plan that needs to be started before terminating it. This
- * metadata can be used for doing state transmission before terminating the decomposed query.
+ * @brief Metadata defining the information about the new decomposed plan that needs to be started and immediately terminated.
+ * This metadata can be used for state migration using adhoc queries that are merged into the currently running decomposed query.
+ * Therefore, first the current plan needs to be updated to perform state migration before terminating it
  */
 class UpdateAndDrainQueryMetadata : public ReconfigurationMetadata {
   public:
@@ -31,7 +32,8 @@ class UpdateAndDrainQueryMetadata : public ReconfigurationMetadata {
                                 DecomposedQueryId decomposedQueryId,
                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion,
                                 uint16_t numberOfSources)
-        : workerId(workerId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
+        : ReconfigurationMetadata(ReconfigurationMetadataType::UpdateAndDrainQuery), workerId(workerId),
+          sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
           decomposedQueryPlanVersion(decomposedQueryPlanVersion), numberOfSources(numberOfSources){};
 
     const WorkerId workerId;

@@ -29,7 +29,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/SysPlanMetaData.hpp>
+#include <Util/SysPlanMetadata.hpp>
 #include <algorithm>
 #include <thread>
 #include <unordered_set>
@@ -598,7 +598,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     auto networkSourceOperatorId = getNextOperatorId();
 
                     // compute a vector of sub plan id and worker node id where the system generated plans are placed
-                    std::vector<SysPlanMetaData> connectedSysDecomposedPlanDetails{};
+                    std::vector<SysPlanMetadata> connectedSysDecomposedPlanDetails{};
                     OperatorPtr operatorToConnectInMatchedPlan;
                     // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
@@ -651,7 +651,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                 }
                             }
 
-                            connectedSysDecomposedPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
+                            connectedSysDecomposedPlanDetails.emplace_back(SysPlanMetadata(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
@@ -696,7 +696,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
                             // 19. Record information about the query plan and worker id
                             connectedSysDecomposedPlanDetails.emplace_back(
-                                SysPlanMetaData(newDecomposedQueryPlan->getDecomposedQueryId(), currentWorkerId));
+                                SysPlanMetadata(newDecomposedQueryPlan->getDecomposedQueryId(), currentWorkerId));
 
                             // 20. add the new query plan
                             if (computedDecomposedQueryPlans.contains(currentWorkerId)) {
@@ -709,11 +709,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                         }
                     }
 
-                    std::map<OperatorId, std::vector<SysPlanMetaData>> downStreamOperatorToConnectedSysPlansMetaDataMap;
+                    std::map<OperatorId, std::vector<SysPlanMetadata>> downStreamOperatorToConnectedSysPlansMetaDataMap;
                     // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
                     if (operatorToConnectInMatchedPlan->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
                         downStreamOperatorToConnectedSysPlansMetaDataMap =
-                            std::any_cast<std::map<OperatorId, std::vector<SysPlanMetaData>>>(
+                            std::any_cast<std::map<OperatorId, std::vector<SysPlanMetadata>>>(
                                 operatorToConnectInMatchedPlan->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
                     }
                     downStreamOperatorToConnectedSysPlansMetaDataMap[downStreamNonSystemOperatorId] =
@@ -736,8 +736,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
         // Used for computing the deployment context
         auto copiedTopologyNode = workerIdToTopologyNodeMap[workerNodeId];
-        const std::string& ipAddress = copiedTopologyNode->getIpAddress();
-        uint32_t grpcPort = copiedTopologyNode->getGrpcPort();
+        const std::string& grpcAddress = copiedTopologyNode->getGrpcAddress();
 
         try {
             // 1. If using optimistic strategy then, directly use the topology node with the workerId and perform the "validation" before continuing.
@@ -893,7 +892,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
                         deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryId()] =
-                            DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
+                            DeploymentContext::create(grpcAddress, updatedDecomposedQueryPlan->copy());
                     } else if (containPinnedDownstreamOperator) {
 
                         // Record all placed query decomposed query plans that host pinned leaf operators
@@ -985,7 +984,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
                         deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryId()] =
-                            DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
+                            DeploymentContext::create(grpcAddress, updatedDecomposedQueryPlan->copy());
                     } else {
                         NES_ERROR("A decomposed query plan {} with invalid decomposed query plan id that has no pinned upstream "
                                   "or downstream operator.",
@@ -1002,7 +1001,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.7. Compute deployment context
                     deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryId()] =
-                        DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
+                        DeploymentContext::create(grpcAddress, updatedDecomposedQueryPlan->copy());
                 }
             }
         } catch (std::exception& ex) {

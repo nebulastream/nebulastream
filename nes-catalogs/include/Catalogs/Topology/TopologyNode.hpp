@@ -70,6 +70,12 @@ class TopologyNode : public Node {
     WorkerId getId() const;
 
     /**
+     * @brief get grpc address of the topology node
+     * @return ip address
+     */
+    std::string getGrpcAddress() const;
+
+    /**
      * @brief method to get the overall cpu capacity of the node
      * @return uint64_t cpu capacity
      */

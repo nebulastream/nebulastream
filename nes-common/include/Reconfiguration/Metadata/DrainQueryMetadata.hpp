@@ -24,8 +24,9 @@ namespace NES {
  */
 class DrainQueryMetadata : public ReconfigurationMetadata {
   public:
-    DrainQueryMetadata(uint16_t numberOfSources) : numberOfSources(numberOfSources){};
-    const uint16_t numberOfSources;
+    DrainQueryMetadata(uint64_t numberOfSources)
+        : ReconfigurationMetadata(ReconfigurationMetadataType::DrainQuery), numberOfSources(numberOfSources){};
+    const uint64_t numberOfSources;
 };
 }// namespace NES
 

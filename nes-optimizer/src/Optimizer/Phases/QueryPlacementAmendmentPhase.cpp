@@ -32,6 +32,7 @@
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/SysPlanMetadata.hpp>
 #include <algorithm>
 #include <set>
 #include <utility>
@@ -82,6 +83,7 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
     std::set<DeploymentContextPtr> computedDeploymentRemovalContexts;
     std::set<DeploymentContextPtr> computedDeploymentAdditionContexts;
+    std::set<ReconfigurationMarkerUnit> reconfigurationMarkerUnitComparator;
 
     if (enableIncrementalPlacement) {
 
@@ -90,15 +92,17 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         std::vector<ChangeLogEntryPtr> failedChangelogEntries;
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
+                // P0: Identify workers where reconfiguration markers need to be sent
+                computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 
-                //P1: Compute placement removal
+                // P1: Compute placement removal
                 handlePlacementRemoval(sharedQueryId,
                                        changeLogEntry->upstreamOperators,
                                        changeLogEntry->downstreamOperators,
                                        nextDecomposedQueryPlanVersion,
                                        deploymentContexts);
 
-                //P2: Compute placement addition
+                // P2: Compute placement addition
                 handlePlacementAddition(placementStrategy,
                                         sharedQueryId,
                                         changeLogEntry->upstreamOperators,
@@ -186,7 +190,82 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
     }
 
     NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
-    return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts};
+    return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator};
+}
+
+void QueryPlacementAmendmentPhase::computeReconfigurationMarkerDeploymentUnit(
+    SharedQueryId& sharedQueryId,
+    const ChangeLogEntryPtr& changeLogEntry,
+    std::set<ReconfigurationMarkerUnit>& reconfigurationMarkerUnitComparator) const {
+
+    // Iterate over the upstream operators to identify workers where reconfiguration markers need to be sent.
+    // This algorithm considers the following workers:
+    // Cond-1:
+    // All nodes where upstream operators of the changeLogEntry are placed.
+    // Cond-2:
+    // If the connected logical downstream node is placed on a different node and the state is either placed or ToBeReplaced
+    // then all nodes where connected "downstream decomposed plan" is placed by checking the CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS
+    // property of the upstream operator.
+    for (const auto& upstreamOperator : changeLogEntry->upstreamOperators) {
+        // Check if the operator is in the state PLACED or TO_BE_REMOVED
+        if (upstreamOperator->getOperatorState() == OperatorState::PLACED
+            || upstreamOperator->getOperatorState() == OperatorState::TO_BE_REMOVED) {
+            // To fulfill Cond-1:
+            // Find the pinned worker and decomposed plan Id of the pinned upstream operator
+            auto upstreamLogicalOperatorPinnedWorkerId = std::any_cast<WorkerId>(upstreamOperator->getProperty(PINNED_WORKER_ID));
+            auto upstreamWorkerAddress = topology->getGrpcAddress(upstreamLogicalOperatorPinnedWorkerId);
+            if (!upstreamWorkerAddress.has_value()) {
+                NES_ERROR("Unable to find the grpc address for the upstream worker {} ", upstreamLogicalOperatorPinnedWorkerId)
+                throw std::runtime_error("Unable to find the grpc address for the upstream worker "
+                                         + upstreamLogicalOperatorPinnedWorkerId.toString());
+            }
+            auto upstreamPlacedDecomposedId =
+                std::any_cast<DecomposedQueryId>(upstreamOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+            reconfigurationMarkerUnitComparator.emplace(ReconfigurationMarkerUnit(upstreamWorkerAddress.value(),
+                                                                                  upstreamLogicalOperatorPinnedWorkerId,
+                                                                                  sharedQueryId,
+                                                                                  upstreamPlacedDecomposedId));
+
+            // To fulfill Cond-2:
+            // Iterate over the upstream operators and identify the operators in the state Placed or ToBeRemoved
+            for (const auto& node : upstreamOperator->getParents()) {
+                auto downstreamOperator = node->as<LogicalOperator>();
+
+                // Check the operator states
+                if (downstreamOperator->getOperatorState() == OperatorState::PLACED
+                    || downstreamOperator->getOperatorState() == OperatorState::TO_BE_REMOVED) {
+
+                    // Fetch the worker id where downstream logical operator is placed
+                    const auto& downstreamLogicalOperatorPinnedWorkerID =
+                        std::any_cast<WorkerId>(downstreamOperator->getProperty(PINNED_WORKER_ID));
+
+                    // If the worker ids are not same then identify where connected "decomposed query plan" is placed.
+                    if (downstreamLogicalOperatorPinnedWorkerID != upstreamLogicalOperatorPinnedWorkerId) {
+
+                        // Find the downstream worker where the connected "downstream decomposed query plan" is located.
+                        auto sysPlanMetaDataMap = std::any_cast<std::map<OperatorId, std::vector<SysPlanMetadata>>>(
+                            upstreamOperator->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
+                        for (auto [operatorId, sysPlanMetadataVec] : sysPlanMetaDataMap) {
+                            auto downstreamWorkerId = sysPlanMetadataVec.begin()->workerId;
+                            auto downstreamGrpcAddress = topology->getGrpcAddress(downstreamWorkerId);
+                            if (!downstreamGrpcAddress.has_value()) {
+                                NES_ERROR("Unable to find the grpc address for the downstream worker {} ", downstreamWorkerId)
+                                throw std::runtime_error("Unable to find the grpc address for the downstream worker "
+                                                         + downstreamWorkerId.toString());
+                            }
+                            auto downstreamDecomposedQueryId = sysPlanMetadataVec.begin()->decomposedQueryId;
+                            reconfigurationMarkerUnitComparator.emplace(ReconfigurationMarkerUnit(downstreamGrpcAddress.value(),
+                                                                                                  downstreamWorkerId,
+                                                                                                  sharedQueryId,
+                                                                                                  downstreamDecomposedQueryId));
+                        }
+                        // FIXME: we should update this logic to check if a path between the node where next downstream decomposed
+                        //  query plan is placed and the pinned downstream operators exists.
+                    }
+                }
+            }
+        }
+    }
 }
 
 void QueryPlacementAmendmentPhase::handlePlacementRemoval(NES::SharedQueryId sharedQueryId,

@@ -29,7 +29,7 @@
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
-#include <Util/SysPlanMetaData.hpp>
+#include <Util/SysPlanMetadata.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <queue>
 
@@ -212,7 +212,7 @@ void PlacementRemovalStrategy::performPathSelection(const std::set<LogicalOperat
             if (operatorState != OperatorState::TO_BE_PLACED && !downStreamInToBePlacedState) {
                 if (operatorToProcess->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
                     auto downStreamOperatorToConnectedSysPlansMetaDataMap =
-                        std::any_cast<std::map<OperatorId, std::vector<SysPlanMetaData>>>(
+                        std::any_cast<std::map<OperatorId, std::vector<SysPlanMetadata>>>(
                             operatorToProcess->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
 
                     //Fetch data only for the operators listed for processing
@@ -530,12 +530,11 @@ PlacementRemovalStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
             }
 
             auto topologyNode = workerIdToTopologyNodeMap[workerId];
-            const std::string& ipAddress = topologyNode->getIpAddress();
-            uint32_t grpcPort = topologyNode->getGrpcPort();
+            const std::string& grpcAddress = topologyNode->getGrpcAddress();
             // 6. compute deployment context
             for (const auto& decomposedQueryPlan : updatedDecomposedQueryPlans) {
                 deploymentContexts[decomposedQueryPlan->getDecomposedQueryId()] =
-                    DeploymentContext::create(ipAddress, grpcPort, decomposedQueryPlan->copy());
+                    DeploymentContext::create(grpcAddress, decomposedQueryPlan->copy());
             }
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator removal {}.", ex.what());

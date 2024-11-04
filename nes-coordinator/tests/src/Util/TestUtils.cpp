@@ -108,22 +108,16 @@ namespace TestUtils {
 
 [[nodiscard]] std::string restPort(uint64_t restPort) { return "--restPort=" + std::to_string(restPort); }
 
-[[nodiscard]] std::string TestUtils::tcpSocketHost(std::string host) {
-    return "--physicalSources." + SOCKET_HOST_CONFIG + "=" + host;
-}
-[[nodiscard]] std::string TestUtils::tcpSocketPort(std::string port) {
-    return "--physicalSources." + SOCKET_PORT_CONFIG + "=" + port;
-}
-[[nodiscard]] std::string TestUtils::inputFormat(std::string format) {
-    return "--physicalSources." + INPUT_FORMAT_CONFIG + "=" + format;
-}
-[[nodiscard]] std::string TestUtils::tcpSocketPersistentSource(std::string source) {
+[[nodiscard]] std::string tcpSocketHost(std::string host) { return "--physicalSources." + SOCKET_HOST_CONFIG + "=" + host; }
+[[nodiscard]] std::string tcpSocketPort(std::string port) { return "--physicalSources." + SOCKET_PORT_CONFIG + "=" + port; }
+[[nodiscard]] std::string inputFormat(std::string format) { return "--physicalSources." + INPUT_FORMAT_CONFIG + "=" + format; }
+[[nodiscard]] std::string tcpSocketPersistentSource(std::string source) {
     return "--physicalSources." + PERSISTENT_TCP_SOURCE + "=" + source;
 }
-[[nodiscard]] std::string TestUtils::tcpSocketDecidedMessageSize(std::string decidedSize) {
+[[nodiscard]] std::string tcpSocketDecidedMessageSize(std::string decidedSize) {
     return "--physicalSources." + DECIDE_MESSAGE_SIZE_CONFIG + "=" + decidedSize;
 }
-[[nodiscard]] std::string TestUtils::tcpSocketBufferSize(std::string bufferSize) {
+[[nodiscard]] std::string tcpSocketBufferSize(std::string bufferSize) {
     return "--physicalSources." + SOCKET_BUFFER_SIZE_CONFIG + "=" + bufferSize;
 }
 

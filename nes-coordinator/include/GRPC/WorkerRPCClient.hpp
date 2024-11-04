@@ -34,15 +34,10 @@ using grpc::CompletionQueue;
 using grpc::Status;
 namespace NES {
 
-class Operator;
-using OperatorPtr = std::shared_ptr<Operator>;
-
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 
 namespace Monitoring {
-class MonitoringPlan;
-
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 }// namespace Monitoring
@@ -53,16 +48,10 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
 namespace Spatial::DataTypes::Experimental {
-class GeoLocation;
 class Waypoint;
 }// namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
-class ReconnectSchedule;
-using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
-}// namespace Spatial::Mobility::Experimental
-
-enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop };
+enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop, Reconfiguration };
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -178,6 +167,20 @@ class WorkerRPCClient {
                                   SharedQueryId sharedQueryId,
                                   DecomposedQueryId decomposedQueryId,
                                   Runtime::QueryTerminationType terminationType,
+                                  const CompletionQueuePtr& cq);
+
+    /**
+     * @brief method to send reconfiguration marker to the worker for specific decomposed query plan
+     * @param address: address of the worker
+     * @param sharedQueryId: the shared query id
+     * @param decomposedQueryId: the decomposed query id
+     * @param reconfigurationMarker: the reconfiguration marker
+     * @param cq: the completion queue of grpc server
+     */
+    void addReconfigurationMarker(const std::string& address,
+                                  const SharedQueryId& sharedQueryId,
+                                  const DecomposedQueryId& decomposedQueryId,
+                                  const ReconfigurationMarkerPtr& reconfigurationMarker,
                                   const CompletionQueuePtr& cq);
 
     /**

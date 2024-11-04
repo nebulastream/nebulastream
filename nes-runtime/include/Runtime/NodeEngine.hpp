@@ -33,6 +33,9 @@
 
 namespace NES {
 
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
@@ -316,7 +319,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     const Statistic::StatisticManagerPtr getStatisticManager() const;
 
     /**
-     * @return applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
+     * @brief applies reconfigurations to the sources or sinks of a sub plan. Reconfigured sources will start expecting
      * connections from a new upstream sink. Reconfigured sinks will scheduled a pending change of the downstream source
      * to which they send their data.
      * @param reconfiguredDecomposedQueryPlan A query plan containing source or sink descriptors which contain the updated
@@ -325,6 +328,17 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * plan did not match any running sub query
      */
     bool reconfigureSubPlan(DecomposedQueryPlanPtr& reconfiguredDecomposedQueryPlan);
+
+    /**
+     * @brief add reconfiguration marker to the decomposed query plan
+     * @param sharedQueryId shared query id
+     * @param decomposedQueryId Decomposed query id
+     * @param reconfigurationMarker reconfiguration marker containing information about how to reconfigure decomposed query plans
+     * @return true if successful else false.
+     */
+    bool addReconfigureMarker(SharedQueryId sharedQueryId,
+                              DecomposedQueryId decomposedQueryId,
+                              ReconfigurationMarkerPtr& reconfigurationMarker);
 
   public:
     /**

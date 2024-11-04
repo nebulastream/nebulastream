@@ -240,6 +240,14 @@ TopologyNodePtr Topology::getCopyOfTopologyNodeWithId(WorkerId workerId) const {
     return nullptr;
 }
 
+std::optional<std::string> Topology::getGrpcAddress(WorkerId workerId) const {
+    if (workerIdToTopologyNode.contains(workerId)) {
+        NES_DEBUG("Found a physical node with id {}", workerId);
+        return (*workerIdToTopologyNode.at(workerId).rlock())->getGrpcAddress();
+    }
+    return std::nullopt;
+}
+
 bool Topology::nodeWithWorkerIdExists(WorkerId workerId) { return workerIdToTopologyNode.contains(workerId); }
 
 bool Topology::setForMaintenance(WorkerId workerId, bool state) {

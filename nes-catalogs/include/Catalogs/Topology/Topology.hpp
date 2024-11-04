@@ -178,6 +178,13 @@ class Topology {
     TopologyNodePtr getCopyOfTopologyNodeWithId(WorkerId workerId) const;
 
     /**
+     * @brief Get grpc address
+     * @param workerId: the id of the topology node
+     * @return address
+     */
+    std::optional<std::string> getGrpcAddress(WorkerId workerId) const;
+
+    /**
      * @brief checks if a topology node with workerId exists
      * @param workerId: workerId of the node
      * @return true if exists, false otherwise

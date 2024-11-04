@@ -31,8 +31,8 @@ class UpdateQueryMetadata : public ReconfigurationMetadata {
                         SharedQueryId sharedQueryId,
                         DecomposedQueryId decomposedQueryId,
                         DecomposedQueryPlanVersion decomposedQueryPlanVersion)
-        : workerId(workerId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
-          decomposedQueryPlanVersion(decomposedQueryPlanVersion){};
+        : ReconfigurationMetadata(ReconfigurationMetadataType::UpdateQuery), workerId(workerId), sharedQueryId(sharedQueryId),
+          decomposedQueryId(decomposedQueryId), decomposedQueryPlanVersion(decomposedQueryPlanVersion){};
 
     const WorkerId workerId;
     const SharedQueryId sharedQueryId;

@@ -15,9 +15,40 @@
 #ifndef NES_COMMON_INCLUDE_RECONFIGURATION_METADATA_RECONFIGURATIONMETADATA_HPP_
 #define NES_COMMON_INCLUDE_RECONFIGURATION_METADATA_RECONFIGURATIONMETADATA_HPP_
 
+#include <iostream>
+#include <memory>
+
 namespace NES {
 
-class ReconfigurationMetadata {};
+enum class ReconfigurationMetadataType : uint8_t { DrainQuery = 1, UpdateAndDrainQuery = 2, UpdateQuery = 3 };
+
+class ReconfigurationMetadata : public std::enable_shared_from_this<ReconfigurationMetadata> {
+
+  public:
+    explicit ReconfigurationMetadata(ReconfigurationMetadataType reconfigurationMetaDataType)
+        : reconfigurationMetadataType(reconfigurationMetaDataType) {}
+
+    virtual ~ReconfigurationMetadata() = default;
+
+    template<class T>
+    bool instanceOf() const {
+        if (dynamic_cast<const T*>(this)) {
+            return true;
+        }
+        return false;
+    };
+
+    template<class T>
+    std::shared_ptr<const T> as() const {
+        if (instanceOf<T>()) {
+            return std::dynamic_pointer_cast<const T>(this->shared_from_this());
+        }
+        throw std::logic_error(std::string("We performed an invalid cast of reconfiguration metadata to type ")
+                               + typeid(T).name());
+    }
+
+    const ReconfigurationMetadataType reconfigurationMetadataType;
+};
 using ReconfigurationMetadatatPtr = std::shared_ptr<ReconfigurationMetadata>;
 }// namespace NES
 #endif// NES_COMMON_INCLUDE_RECONFIGURATION_METADATA_RECONFIGURATIONMETADATA_HPP_

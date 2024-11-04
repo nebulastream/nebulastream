@@ -23,9 +23,14 @@
 
 namespace NES {
 
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+
 namespace Optimizer {
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
+
+struct ReconfigurationMarkerUnit;
 }// namespace Optimizer
 
 namespace Configurations {
@@ -67,6 +72,14 @@ class DeploymentPhase {
      * @throws ExecutionNodeNotFoundException: Unable to find ExecutionNodes where the query {sharedQueryId} is deployed
      */
     virtual void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
+
+    /**
+     * @brief method for deploying reconfiguration markers
+     * @param reconfigurationMarkerUnits: set of reconfiguration marker unit
+     * @param reconfigurationMarker
+     */
+    virtual void execute(const std::set<Optimizer::ReconfigurationMarkerUnit>& reconfigurationMarkerUnits,
+                         const ReconfigurationMarkerPtr& reconfigurationMarker);
 
     virtual ~DeploymentPhase() = default;
 

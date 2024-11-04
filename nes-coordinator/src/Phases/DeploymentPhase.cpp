@@ -15,6 +15,7 @@
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -37,6 +38,23 @@ void DeploymentPhase::execute(const std::set<Optimizer::DeploymentContextPtr>& d
 
         NES_INFO("Start or stop {} decomposed queries.", deploymentContexts.size());
         startOrUnregisterDecomposedQueryPlan(deploymentContexts, requestType);
+    }
+}
+
+void DeploymentPhase::execute(const std::set<Optimizer::ReconfigurationMarkerUnit>& reconfigurationMarkerUnits,
+                              const ReconfigurationMarkerPtr& reconfigurationMarker) {
+    if (!reconfigurationMarkerUnits.empty()) {
+        std::vector<RpcAsyncRequest> asyncRequests;
+        for (const auto& reconfigurationMarkerUnit : reconfigurationMarkerUnits) {
+            auto queueForReconfigurationMarker = std::make_shared<CompletionQueue>();
+            workerRPCClient->addReconfigurationMarker(reconfigurationMarkerUnit.address,
+                                                      reconfigurationMarkerUnit.sharedQueryId,
+                                                      reconfigurationMarkerUnit.decomposedQueryId,
+                                                      reconfigurationMarker,
+                                                      queueForReconfigurationMarker);
+            asyncRequests.emplace_back(RpcAsyncRequest{queueForReconfigurationMarker, RpcClientMode::Reconfiguration});
+        }
+        workerRPCClient->checkAsyncResult(asyncRequests);
     }
 }
 
