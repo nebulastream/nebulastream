@@ -100,6 +100,7 @@ Checks: [
   "-hicpp-vararg",
   "-llvm-else-after-return",
   "-llvm-qualified-auto",
+  "-llvm-header-guard",
 ]
 
 # We try to be as strict as possible.
@@ -300,4 +301,5 @@ CheckOptions:
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
-  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id'
+  readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs"
+  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs'
