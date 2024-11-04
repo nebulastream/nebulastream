@@ -1,37 +1,41 @@
 # The Problem
-**P1**: Currently, each source that is started consumes an individual thread. 
+NebulaStream promises to be able to cope with millions of heterogenous sources as one of its main selling points.
+
+Currently, each source that is started runs in an individual thread. 
 That is, starting 1000 sources means starting 1000 threads just for the sources. 
-Given that each thread allocates (and consumes) state, this approach does not scale with an increasing number of sources.
+Since the threads are running permanently, this leads to a massive oversubscription of the CPU and causes large overhead due to context switching.
+Given that each thread allocates state (a private stack of several MBs), this is expensive. 
+Therefore, this approach does not scale with an increasing number of sources (**P1**).
 
-**P2**: Currently, each source gets a fixed number of buffers. 
-Since the number of buffers NebulaStream can allocate is limited by the amount of memory available, starting too many source could lead to the occupation all available buffers.
-For example, say NebulaStream has enough memory for 100 buffers. 
-Each source takes 5 buffers. 
-If we start 20 sources, all 100 buffers are taken by the sources.
-Therefore, NebulaStream can not allocate any buffers for data processing, leading to a deadlock (no progress possible). 
-
-**P3**: Currently, sources read external data into the system while additionally parsing that data to conform to the schema of the logical source.
+**P2**: Currently, sources read external data into the system while additionally parsing that data to conform to the schema of the logical source.
 This leads to harder-to-understand code and implementation and violates basic OOP principles like separation of concerns.
 
 # Goals
-**G1**:
-**G2**:
-**G3**:
-**G4**:
+Redesign data ingestion for NES, such that the following goals are reached.
 
+- A single node worker should be able to handle thousands of concurrent sources without becoming a bottleneck (**G1**, scalability).
+- The registration, starting, stopping and unregistration of sources at runtime should be possible (**G2**, dynamicity).
+- The implementation should conform to the ongoing efforts refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md), and their [interaction with the query manager]().
+- **G3**: errors should be handled transparently as described in this [DD](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240711_error_handling.md)
+- **G4 (Maintainability)**: the implementation of new sources is as easy as possible by providing a small, concise interface.
+- **G5 (Compatibility)**: sources can still be implemented with the current threading model as a fallback/baseline.
+
+G1 and G2 address P1
 - describe goals/requirements that the proposed solution must fulfill
 - enumerate goals as G1, G2, ...
 - describe how the goals G1, G2, ... address the problems P1, P2, ...
 
 # Non-Goals
-- list what is out of scope and why
-- enumerate non-goals as NG1, NG2, ...
+- **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance.
+- **NG2**: a complete vision or implementation on how to handle parsing tuples out of the bytes that the source emits.
+- **NG3**: a complete vision or implementation on how to handle source sharing.
+- **NG4**: a complete vision or implementation on how to handle data ingestion via internal sources (e.g., when intermediate data is shuffled around between nodes).
 
-# (Optional) Solution Background
-Most software systems depend on external data in some way.
-- Web servers: Clients connect via network and issue requests 
-- Database Systems: Large volumes of historical data are scanned from disk or network, originating from potentially multiples queries
-- Stream Processing Engines: Sources continuously ingest data (think thousands of sources, potentially from thousands of different queries)
+# Solution Background
+Most software systems depend on external data in some way:
+- Web servers - clients connect via network and issue requests 
+- DBMSs - large volumes of historical data are scanned from disk or network, originating from potentially multiples queries
+- SPEs - sources continuously ingest data (think thousands of sources, potentially from thousands of different queries)
 All of them need some way to map compute resources (threads) to these concurrently running I/O operations.
 
 ## Threads
@@ -41,6 +45,7 @@ There are two naive threading models to manage data ingestion:
 
 The former leads to serial execution, limiting throughput. 
 The latter leads to a lot of overhead in the case of very large numbers of connections/queries and therefore to a term called *oversubscription* of the CPU.
+
 From "C++11 - Concurrency in Action": *"When you have an application that needs to handle a lot of network connections, it’s often tempting to handle each connection on a separate thread, because this can make the network communication easier to think about and easier to program.
 This works well for low numbers of connections (and thus low numbers of threads).
 Unfortunately, as the number of connections rises, this becomes less suitable; the large numbers of threads consequently consume large numbers of operating system resources and potentially cause a lot of context switching (when the number of threads exceeds the available hardware concurrency), impacting performance.
@@ -112,22 +117,34 @@ In summary, systems using async I/O get the following benefits:
 
 # Our Proposed Solution
 The proposed solution depends on four design decisions:
-1. To handle a large number of concurrently running sources on relatively few threads, we redesign sources to make asynchronous calls inside coroutines.
-2. To orchestrate the concurrent execution and handle errors, we introduce a centralized `SourceServer` that encapsulates running sources on a thread pool.
-3. I/O components receive buffers from a separate buffer pool to prevent deadlocks.
-4. Sources do not deal with parsing to separate CPU-bound and I/O-bound workloads.
+1. We redesign sources to make asynchronous calls inside coroutines to allow efficient ingestion on relatively few threads.
+2. We remove parsing from the sources to separate CPU-bound and I/O-bound workloads.
+3. We introduce a centralized `SourceServer` that orchestrates the execution of all sources on a thread pool, the handling of errors, and the adding and removal of sources.
+4. We propose to have sources receive buffers from a separate buffer pool to prevent deadlocks (to be discussed in the DD for the buffer manager).
 
-## 1) Async I/O
+## 1) Sources
 From "C++11 - Concurrency in Action": *"If your thread is blocked waiting for external input, it can't proceed [...] It's therefore undesirable to block on external input from a thread that also performs tasks that other threads may be waiting for."*
-We need asynchronous I/O requests because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls on these few threads.
-To put 1) into practice, we employ a `SourceServer` that orchestrates all registered physical sources on a single worker node.
+We need asynchronous I/O requests and the removal of parsing logic because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls or do CPU-intensive work on these few threads.
+On a high level, the source should perform the following tasks:
+- Connect to an external system (Kafka, MQTT, etc.), device (disk, memory, network), or handle a protocol (TCP, UDP, etc.)
+- Read data from there into a `TupleBuffer` (which should be called `ByteBuffer` or `ReadBuffer` at this point as we do not deal with tuples on a logical level yet?)
+- Resolve errors as specified from the outside by retrying and recovering, dropping data, escalating the error to the outside
+- Disconnect and close the link to the external system or device
+
 Each source defines how to read data into `TupleBuffer`s asynchronously by utilizing `boost::asio` I/O objects or similar.
+From the docs of ClickHouse: *For byte-oriented input/output, there are ReadBuffer and WriteBuffer abstract classes [...] Read/WriteBuffers only deal with bytes.*
+Instead, parsing should be done as the first part of a pipeline.
+Furthermore, pushing certain operations to parsing will be possible, like filtering unparsed data, etc.
+Other components need to handle parsing from now on, which results in a set of new challenges: writing raw data into buffers leads to additional complexity for downstream components.
+Buffers are not self-contained and have tuples potentially spanning over subsequent buffers, which leads to problems when picking up these buffers from multiple threads.
+
+
+
+To put 1) into practice, we employ a `SourceServer` that orchestrates all registered physical sources on a single worker node.
 The server runs an event loop provided by `boost::asio::io_context` and schedules coroutines onto threads of its fixed-size thread pool.
 It deals with the addition and removal of sources, propagation of errors to the `QueryManager` and thread synchronization when writing results downstream.
 
-## 2) I/O and compute separation
-From the docs of ClickHouse: *The main purpose of IO thread pool is to avoid exhaustion of the global pool with IO jobs, which could prevent queries from fully utilizing CPU.*
-For 2), we create the threads internally in the `SourceServer`, as it runs the event loop and knows when and how to schedule threads for execution.
+## 4) Buffer Management
 We do not concern the `SourceServer` directly with the management of buffers, as this is the task of the `BufferManager`. 
 Still, the `BufferManager` has to be aware of the sources and their buffer usage.
 
@@ -168,15 +185,6 @@ Implementation-wise, it could either draw from a global pool for I/O but keep a 
 The previous necessitate the assumption/invariant that more buffers exist than the number of sources registered.
 When a source wants to be registered and this would violate the requirement, performance will degrade.
 
-## 3) Move parsing out of the sources
-From the docs of ClickHouse: *For byte-oriented input/output, there are ReadBuffer and WriteBuffer abstract classes [...] Read/WriteBuffers only deal with bytes.*
-Having parsers inside the sources mixes logic and code for retrieving external data (I/O) with the interpretation of the raw bytes ingested (compute).
-Instead, parsing should be done as the first part of a pipeline.
-This enables the sources to concern themselves with the single simple task of reading data into `TupleBuffer`s and handing them out to consumers.
-Furthermore, pushing certain operations to parsing will be possible, like filtering unparsed data, etc.
-To implement this, we simply remove all parsing-related code from the sources.
-Other components need to handle it from now on, which results in a set of new challenges: writing raw data into buffers leads to additional complexity for downstream components.
-Buffers are not self-contained and have tuples potentially spanning over subsequent buffers, which leads to problems when picking up these buffers from multiple threads.
 
 - start with a high-level overview of the solution
 - explain the interface and interaction with other system components
