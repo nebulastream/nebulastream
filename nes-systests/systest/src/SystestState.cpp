@@ -58,24 +58,23 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& re
             for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
                      | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
-                testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile);
+                testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile, resultDir);
             }
         }
         else
         {
-            testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile);
+            testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile, resultDir);
         }
-        queryIdInFile++;
+        ++queryIdInFile;
     }
 }
 
 std::vector<TestGroup> readGroups(const TestFile& testfile)
 {
     std::vector<TestGroup> groups;
-    std::ifstream ifstream(testfile.file);
-    std::string line;
-    if (ifstream.is_open())
+    if (std::ifstream ifstream(testfile.file); ifstream.is_open())
     {
+        std::string line;
         while (std::getline(ifstream, line))
         {
             if (line.starts_with("# groups:"))
