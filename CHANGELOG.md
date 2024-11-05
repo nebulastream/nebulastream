@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.189](https://github.com/nebulastream/nebulastream/tree/v0.6.189) (2024-11-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.188...v0.6.189)
+
+**Implemented enhancements:**
+
+- \[TASK\] Propogate Reconfiguration Messages to Workers [\#5098](https://github.com/nebulastream/nebulastream/issues/5098)
+- \[TASK\] Add window/slice cache [\#5054](https://github.com/nebulastream/nebulastream/issues/5054)
+
 ## [v0.6.188](https://github.com/nebulastream/nebulastream/tree/v0.6.188) (2024-10-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.187...v0.6.188)
