@@ -69,8 +69,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
              substitute = sinkName;
          }});
 
-    parser.registerSubstitutionRule(
-        {"TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/test/testdata"; }});
+    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
 
     if (!parser.loadFile(testFilePath))
     {
@@ -95,7 +94,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 }()});
 
             config.physical.emplace_back(
-                CLI::PhysicalSource{.logical = source.name, .config = {{"type", "CSV_SOURCE"}, {"filePath", source.csvFilePath}}});
+                CLI::PhysicalSource{.logical = source.name, .config = {{"type", "CSV"}, {"filePath", source.csvFilePath}}});
         });
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
