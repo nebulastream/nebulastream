@@ -15,9 +15,10 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
-#include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <future>
+#include <iostream>
 #include <regex>
 #include <vector>
 #include <unistd.h>
@@ -228,9 +229,8 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         if (not std::filesystem::is_directory(config.resultDir.getValue()))
         {
             std::filesystem::create_directory(config.resultDir.getValue());
-            std::cout << "Created result directory: " << config.resultDir.getValue() << std::endl;
+            std::cout << "Created result directory: " << config.resultDir.getValue() << "\n";
         }
-
     }
 
     if (program.is_used("--list"))

@@ -20,7 +20,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <variant>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <fmt/base.h>
@@ -43,16 +42,18 @@ struct Query
         std::string queryDefinition,
         std::filesystem::path sqlLogicTestFile,
         DecomposedQueryPlanPtr queryPlan,
-        uint64_t queryIdInFile)
+        const uint64_t queryIdInFile,
+        std::filesystem::path resultFileBaseDir)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
         , queryPlan(queryPlan)
-        , queryIdInFile(queryIdInFile) {};
+        , queryIdInFile(queryIdInFile)
+        , resultFileBaseDir(std::move(resultFileBaseDir)) {};
 
     [[nodiscard]] inline std::filesystem::path resultFile() const
     {
-        return std::filesystem::path(fmt::format("{}/nes-systests/result/{}_{}.csv", PATH_TO_BINARY_DIR, name, queryIdInFile));
+        return resultFileBaseDir / std::filesystem::path(fmt::format("{}_{}.csv", name, queryIdInFile));
     }
 
     TestName name;
@@ -60,6 +61,7 @@ struct Query
     std::filesystem::path sqlLogicTestFile;
     DecomposedQueryPlanPtr queryPlan;
     uint64_t queryIdInFile;
+    std::filesystem::path resultFileBaseDir;
 };
 
 struct RunningQuery
@@ -75,7 +77,7 @@ struct TestFile
     /// Load a testfile but consider only queries with a specific query number (location in test file)
     explicit TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber);
 
-    [[nodiscard]] TestName name() { return file.stem().string(); }
+    [[nodiscard]] TestName name() const { return file.stem().string(); }
 
     const std::filesystem::path file;
     const std::vector<uint64_t> onlyEnableQueriesWithTestQueryNumber{};
