@@ -144,20 +144,20 @@ public:
      * @param fieldName
      * @return AttributeField
      */
-    AttributeFieldPtr get(const std::string& fieldName) const;
+    AttributeFieldPtr getFieldByName(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema
      * @param index
      * @return AttributeField
      */
-    AttributeFieldPtr get(uint32_t index);
+    AttributeFieldPtr getFieldByIndex(size_t index);
 
     /**
      * @brief Returns the number of fields in the schema.
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t getSize() const;
+    [[nodiscard]] size_t getFieldCount() const;
 
     /**
      * @brief Returns the number of bytes all fields in this schema occupy.
