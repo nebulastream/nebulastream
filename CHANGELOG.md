@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.6.191](https://github.com/nebulastream/nebulastream/tree/v0.6.191) (2024-11-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.190...v0.6.191)
+
+**Implemented enhancements:**
+
+- \[TASK\] windowing strategy slices - calculate slice edges for shared joins [\#5052](https://github.com/nebulastream/nebulastream/issues/5052)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Release Image cannot be created [\#5129](https://github.com/nebulastream/nebulastream/issues/5129)
+
+## [v0.6.190](https://github.com/nebulastream/nebulastream/tree/v0.6.190) (2024-11-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.189...v0.6.190)
+
 ## [v0.6.189](https://github.com/nebulastream/nebulastream/tree/v0.6.189) (2024-11-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.188...v0.6.189)
