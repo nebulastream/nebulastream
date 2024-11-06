@@ -67,7 +67,7 @@ bool LogicalUnionOperator::inferSchema()
         rightInputSchema->copyFields(distinctSchemas[1]);
     }
 
-    if (!leftInputSchema->hasEqualTypes(rightInputSchema))
+    if (!(leftInputSchema==rightInputSchema))
     {
         throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
@@ -110,7 +110,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
         auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
-        return leftInputSchema->equals(rhsUnion->getLeftInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
+        return (leftInputSchema==rhsUnion->getLeftInputSchema()) && (outputSchema==rhsUnion->getOutputSchema());
     }
     return false;
 }

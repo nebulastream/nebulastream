@@ -121,7 +121,7 @@ const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
 
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
-    return bufferSize == rhs.bufferSize && schema->equals(rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
+    return bufferSize == rhs.bufferSize && (schema==rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
         && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap;
 }
 

@@ -168,10 +168,9 @@ public:
     /**
      * @brief Checks if two Schemas are equal to each other.
      * @param schema
-     * @param considerOrder takes into account if the order of fields in a schema matter.
      * @return boolean
      */
-    bool equals(const SchemaPtr& schema, bool considerOrder = true);
+    bool operator==(const Schema& other) const;
 
     /**
      * @brief Checks if two schemas have same datatypes at same index location
