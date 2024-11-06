@@ -40,6 +40,7 @@ SerializableQueryState QueryStateSerializationUtil::serializeQueryState(QuerySta
         case MARKED_FOR_DEPLOYMENT: return QUERY_STATE_MARKED_FOR_DEPLOYMENT;
         case MARKED_FOR_REDEPLOYMENT: return QUERY_STATE_MARKED_FOR_REDEPLOYMENT;
         case MARKED_FOR_MIGRATION: return QUERY_STATE_MARKED_FOR_MIGRATION;
+        case MARKED_FOR_UPDATE_AND_DRAIN: return QUERY_STATE_MARKED_FOR_UPDATE_AND_DRAIN;
     }
 }
 
@@ -65,6 +66,7 @@ QueryState QueryStateSerializationUtil::deserializeQueryState(SerializableQueryS
         case QUERY_STATE_MARKED_FOR_DEPLOYMENT: return MARKED_FOR_DEPLOYMENT;
         case QUERY_STATE_MARKED_FOR_REDEPLOYMENT: return MARKED_FOR_REDEPLOYMENT;
         case QUERY_STATE_MARKED_FOR_MIGRATION: return MARKED_FOR_MIGRATION;
+        case QUERY_STATE_MARKED_FOR_UPDATE_AND_DRAIN: return MARKED_FOR_UPDATE_AND_DRAIN;
         case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_:
         case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: {
             NES_WARNING("Warning invalid query state {}. Returning registered as default query state.",

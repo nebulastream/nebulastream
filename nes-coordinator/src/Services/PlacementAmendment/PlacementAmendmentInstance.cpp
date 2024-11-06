@@ -20,6 +20,7 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
 #include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Services/PlacementAmendment/PlacementAmendmentInstance.hpp>
@@ -210,6 +211,28 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
                 break;
             }
+            case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
+                const auto& workerId = deploymentAdditionContext->getWorkerId();
+                const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
+                const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
+                const auto& decomposedQueryVersion = deploymentAdditionContext->getDecomposedQueryPlanVersion();
+                auto key = workerId.toString() + "-" + sharedQueryId.toString() + "-" + decomposedQueryId.toString();
+                // Fetch already deployed decomposed query plan from the execution plan to count number of sources the plan to be
+                // terminated has. This will allow us to compute the number of reconfiguration markers to be received before
+                // terminating the decomposed query.
+                auto deployedDecomposedQueryPlan =
+                    globalExecutionPlan->getCopyOfDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryId);
+                auto numOfSourceOperators = deployedDecomposedQueryPlan->getSourceOperators().size();
+                auto reConfMetaData = std::make_shared<UpdateAndDrainQueryMetadata>(workerId,
+                                                                                    sharedQueryId,
+                                                                                    decomposedQueryId,
+                                                                                    decomposedQueryVersion,
+                                                                                    numOfSourceOperators);
+                auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
+                reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+                break;
+            }
+
             default: NES_DEBUG("Skip recording decomposed query plan in state {}", magic_enum::enum_name(queryState));
         }
     }
