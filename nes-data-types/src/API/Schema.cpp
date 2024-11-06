@@ -144,26 +144,15 @@ AttributeFieldPtr Schema::getFieldByIndex(size_t index)
     throw FieldNotFound("field {}  does not exist", std::to_string(index));
 }
 
-bool Schema::equals(const SchemaPtr& schema, bool considerOrder)
+bool Schema::operator==(const Schema& other) const
 {
-    if (schema->fields.size() != fields.size())
+    if (other.fields.size() != fields.size())
     {
         return false;
     }
-    if (considerOrder)
-    {
-        for (auto i = static_cast<decltype(fields)::size_type>(0); i < fields.size(); ++i)
-        {
-            if (!(fields.at(i)->isEqual((schema->fields).at(i))))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
     for (auto const& fieldAttribute : fields)
     {
-        auto otherFieldAttribute = schema->getField(fieldAttribute->getName());
+        auto otherFieldAttribute = other.getField(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute)))
         {
             return false;

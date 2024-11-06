@@ -112,7 +112,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     ///Check that both left and right schema should be different
-    if (rightInputSchema->equals(leftInputSchema, false))
+    if (*rightInputSchema == *leftInputSchema)
     {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
         throw CannotInferSchema("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
