@@ -114,7 +114,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
 std::string DynamicTuple::toString(const SchemaPtr& schema)
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema->getSize(); ++i)
+    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
     {
         const auto dataType = schema->getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
@@ -144,8 +144,9 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         return false;
     }
 
-    for (const auto& field : this->memoryLayout->getSchema()->fields)
+    for (uint64_t i = 0; i < this->memoryLayout->getSchema()->getFieldCount(); i++)
     {
+        auto field = this->memoryLayout->getSchema()->getFieldByIndex(i);
         if (!other.memoryLayout->getSchema()->getField(field->getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
@@ -263,7 +264,7 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint32_t i = 0; i < schema->getSize(); ++i)
+    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
     {
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType());
         physicalSizes.push_back(physicalType->size());
@@ -280,10 +281,10 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        for (uint32_t i = 0; i < schema->getSize(); ++i)
+        for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
         {
-            str << schema->getFieldByIndex(i)->getName() << ":" << physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType())->toString()
-                << "|";
+            str << schema->getFieldByIndex(i)->getName() << ":"
+                << physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType())->toString() << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;

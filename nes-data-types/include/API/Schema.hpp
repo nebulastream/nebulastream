@@ -151,7 +151,7 @@ public:
      * @param index
      * @return AttributeField
      */
-    AttributeFieldPtr getFieldByIndex(size_t index);
+    AttributeFieldPtr getFieldByIndex(size_t index) const;
 
     /**
      * @brief Returns the number of fields in the schema.
@@ -249,9 +249,8 @@ public:
      */
     std::vector<std::string> getFieldNames() const;
 
-    std::vector<AttributeFieldPtr> fields;
-
 private:
+    std::vector<AttributeFieldPtr> fields;
     MemoryLayoutType layoutType;
 };
 

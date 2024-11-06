@@ -62,9 +62,9 @@ namespace NES::IntegrationTestUtil
     {
         std::vector<PhysicalTypePtr> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (const auto& field : schema->fields)
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
         {
-            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema->getFieldByIndex(j)->getDataType());
             retVector.push_back(physicalField);
         }
 
@@ -74,7 +74,7 @@ namespace NES::IntegrationTestUtil
     const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema->getSchemaSizeInBytes();
     auto tupleCount = 0UL;
     auto tupleBuffer = bufferProvider.getBufferBlocking();
-    const auto numberOfSchemaFields = schema->fields.size();
+    const auto numberOfSchemaFields = schema->getFieldCount();
     const auto physicalTypes = getPhysicalTypes(schema);
 
     uint64_t sequenceNumber = 0;
@@ -131,8 +131,7 @@ void writeFieldValueToTupleBuffer(
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto fields = schema->fields;
-    auto dataType = fields[schemaFieldIndex]->getDataType();
+    auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
     if (inputString.empty())

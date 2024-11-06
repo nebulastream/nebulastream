@@ -64,9 +64,9 @@ const std::vector<uint64_t>& MemoryLayout::getFieldSizes() const
 MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0)
 {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); fieldIndex++)
+    for (size_t fieldIndex = 0; fieldIndex < schema->getFieldCount(); fieldIndex++)
     {
-        auto field = schema->fields[fieldIndex];
+        auto field = schema->getFieldByIndex(fieldIndex);
         auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalFieldSizes.emplace_back(physicalFieldSize->size());
         physicalTypes.emplace_back(physicalFieldSize);
