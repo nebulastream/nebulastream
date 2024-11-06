@@ -39,7 +39,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
         auto rightInputSchema = unionOperator->getRightInputSchema();
         auto leftInputSchema = unionOperator->getLeftInputSchema();
         /// Only apply the rule when right side and left side schema are different
-        if (!rightInputSchema->equals(leftInputSchema, false))
+        if (!(*rightInputSchema == *leftInputSchema))
         {
             /// Construct project operator for mapping rightInputSource To leftInputSource
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
@@ -48,7 +48,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
             {
                 auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
                 /// Find the child that matches the right schema and inset the project operator there
-                if (rightInputSchema->equals(childOutputSchema, false))
+                if (*rightInputSchema == *childOutputSchema)
                 {
                     child->insertBetweenThisAndParentNodes(projectOperator);
                     break;
