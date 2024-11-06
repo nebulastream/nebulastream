@@ -141,8 +141,8 @@ NodeFunctionPtr LogicalJoinDescriptor::getJoinFunction()
 
 bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const
 {
-    return (leftSourceType==other.leftSourceType) && (rightSourceType==other.rightSourceType)
-        && (outputSchema==other.outputSchema) && windowType->equal(other.windowType) && joinFunction->equal(other.joinFunction)
+    return (leftSourceType == other.leftSourceType) && (rightSourceType == other.rightSourceType) && (outputSchema == other.outputSchema)
+        && windowType->equal(other.windowType) && joinFunction->equal(other.joinFunction)
         && numberOfInputEdgesLeft == other.numberOfInputEdgesLeft && numberOfInputEdgesRight == other.numberOfInputEdgesRight
         && joinType == other.joinType && originId == other.originId;
 }

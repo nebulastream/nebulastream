@@ -51,8 +51,9 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
 
     std::vector<NodeFunctionPtr> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
-    for (const auto& field : inputSchema->fields)
+    for (uint64_t i = 0; i < inputSchema->getFieldCount(); i++)
     {
+        auto field = inputSchema->getFieldByIndex(i);
         /// compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
         /// Compute new name without field qualifier

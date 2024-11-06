@@ -45,13 +45,13 @@ SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescrip
     /// Determine the physical types and create the inputParser
     /// Todo #72: remove
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : schema.fields)
+    for (uint64_t j = 0; j < schema.getFieldCount(); j++)
     {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema.getFieldByIndex(j)->getDataType());
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<ParserCSV>(schema.getSize(), physicalTypes, delimiter);
+    this->inputParser = std::make_shared<ParserCSV>(schema.getFieldCount(), physicalTypes, delimiter);
 }
 
 void SourceCSV::open()
