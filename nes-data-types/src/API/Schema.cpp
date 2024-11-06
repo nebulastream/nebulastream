@@ -71,7 +71,7 @@ SchemaPtr Schema::copyFields(const SchemaPtr& otherSchema)
 {
     for (const AttributeFieldPtr& attribute : otherSchema->fields)
     {
-        fields.push_back(attribute->copy());
+        fields.push_back(attribute->deepCopy());
     }
     return copy();
 }
@@ -80,7 +80,7 @@ SchemaPtr Schema::addField(const AttributeFieldPtr& attribute)
 {
     if (attribute)
     {
-        fields.push_back(attribute->copy());
+        fields.push_back(attribute->deepCopy());
     }
     return copy();
 }
