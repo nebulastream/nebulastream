@@ -116,7 +116,7 @@ std::string DynamicTuple::toString(const SchemaPtr& schema)
     std::stringstream ss;
     for (uint32_t i = 0; i < schema->getSize(); ++i)
     {
-        const auto dataType = schema->get(i)->getDataType();
+        const auto dataType = schema->getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
         if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {
@@ -265,13 +265,13 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint32_t i = 0; i < schema->getSize(); ++i)
     {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType());
         physicalSizes.push_back(physicalType->size());
         types.push_back(physicalType);
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
-            schema->get(i)->toString(),
+            schema->getFieldByIndex(i)->toString(),
             std::string(": "),
             std::to_string(physicalType->size()));
     }
@@ -282,7 +282,7 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
         str << "|";
         for (uint32_t i = 0; i < schema->getSize(); ++i)
         {
-            str << schema->get(i)->getName() << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString()
+            str << schema->getFieldByIndex(i)->getName() << ":" << physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType())->toString()
                 << "|";
         }
         str << std::endl;

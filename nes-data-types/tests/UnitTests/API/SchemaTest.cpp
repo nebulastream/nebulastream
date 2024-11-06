@@ -117,8 +117,8 @@ TEST_F(SchemaTest, addFieldTest)
         {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName())->isEqual(curField));
         }
     }
 }
@@ -138,8 +138,8 @@ TEST_F(SchemaTest, removeFieldsTest)
     {
         const auto& curField = rndFields[fieldCnt];
         EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByName(curField->getName())->isEqual(curField));
     }
 
     /// Removing fields while we still have one field
@@ -148,7 +148,7 @@ TEST_F(SchemaTest, removeFieldsTest)
         const auto rndPos = rand() % testSchema->getSize();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
-        EXPECT_ANY_THROW(testSchema->get(fieldToRemove->getName()));
+        EXPECT_ANY_THROW(testSchema->getFieldByName(fieldToRemove->getName()));
 
         rndFields.erase(rndFields.begin() + rndPos);
     }
@@ -190,8 +190,8 @@ TEST_F(SchemaTest, replaceFieldTest)
         {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName())->isEqual(curField));
         }
 
         /// Replacing multiple fields with new data types
@@ -205,8 +205,8 @@ TEST_F(SchemaTest, replaceFieldTest)
         {
             const auto& curField = replacingFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName())->isEqual(curField));
         }
     }
 }
@@ -298,10 +298,10 @@ TEST_F(SchemaTest, copyTest)
     /// Comparing fields
     for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt)
     {
-        const auto& curField = testSchemaCopy->get(fieldCnt);
+        const auto& curField = testSchemaCopy->getFieldByIndex(fieldCnt);
         EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByName(curField->getName())->isEqual(curField));
     }
 }
 

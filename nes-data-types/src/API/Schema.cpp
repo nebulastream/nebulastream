@@ -38,7 +38,7 @@ SchemaPtr Schema::create(MemoryLayoutType layoutType)
     return std::make_shared<Schema>(layoutType);
 }
 
-uint64_t Schema::getSize() const
+size_t Schema::getFieldCount() const
 {
     return fields.size();
 }
@@ -112,7 +112,7 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
     }
 }
 
-AttributeFieldPtr Schema::get(const std::string& fieldName) const
+AttributeFieldPtr Schema::getFieldByName(const std::string& fieldName) const
 {
     /// This does not work for fields with the same name but different qualifiers
     /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
@@ -134,9 +134,9 @@ AttributeFieldPtr Schema::get(const std::string& fieldName) const
     throw FieldNotFound("field {}  does not exist", fieldName);
 }
 
-AttributeFieldPtr Schema::get(uint32_t index)
+AttributeFieldPtr Schema::getFieldByIndex(size_t index)
 {
-    if (index < (uint32_t)fields.size())
+    if (index < fields.size())
     {
         return fields[index];
     }

@@ -48,7 +48,7 @@ uint64_t PhysicalSchema::getFieldOffset(uint64_t fieldIndex)
     auto physicalDataFactory = DefaultPhysicalTypeFactory();
     for (uint64_t index = 0; index < fieldIndex; index++)
     {
-        offset += physicalDataFactory.getPhysicalType(schema->get(index)->getDataType())->size();
+        offset += physicalDataFactory.getPhysicalType(schema->getFieldByIndex(index)->getDataType())->size();
     }
     return offset;
 }
