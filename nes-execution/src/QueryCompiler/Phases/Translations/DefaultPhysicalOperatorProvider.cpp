@@ -176,7 +176,7 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPt
     auto unionOperator = NES::Util::as<LogicalUnionOperator>(operatorNode);
     /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
     PRECONDITION(
-        unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()),
+        unionOperator->getLeftInputSchema()==unionOperator->getRightInputSchema(),
         "The input schemas of a union operators children should be equal");
 
     auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());

@@ -53,7 +53,7 @@ bool LogicalBinaryOperator::inferSchema()
         auto found = std::find_if(
             distinctSchemas.begin(),
             distinctSchemas.end(),
-            [&](const SchemaPtr& distinctSchema) { return childOutputSchema->equals(distinctSchema, false); });
+            [&](const SchemaPtr& distinctSchema) { return (childOutputSchema==distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);
@@ -72,7 +72,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
     for (const auto& child : getChildren())
     {
         auto childOperator = NES::Util::as<Operator>(child);
-        if (childOperator->getOutputSchema()->equals(schema, false))
+        if (childOperator->getOutputSchema()==schema)
         {
             operators.emplace_back(childOperator);
         }
