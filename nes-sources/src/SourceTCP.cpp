@@ -62,11 +62,11 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
 
     /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (const auto& field : schema.fields)
+    for (uint64_t j = 0; j < schema.getFieldCount(); j++)
     {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema.getFieldByIndex(j)->getDataType());
         physicalTypes.push_back(physicalField);
-        auto fieldName = field->getName();
+        auto fieldName = schema.getFieldByIndex(j)->getName();
         NES_TRACE("SOURCETCP:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
@@ -74,7 +74,7 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
     switch (inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<ParserCSV>(schema.getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<ParserCSV>(schema.getFieldCount(), physicalTypes, ",");
             break;
         default:
             throw NotImplemented("InputFormat not supported.");

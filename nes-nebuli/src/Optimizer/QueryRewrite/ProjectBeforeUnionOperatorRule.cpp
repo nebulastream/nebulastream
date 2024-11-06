@@ -39,7 +39,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
         auto rightInputSchema = unionOperator->getRightInputSchema();
         auto leftInputSchema = unionOperator->getLeftInputSchema();
         /// Only apply the rule when right side and left side schema are different
-        if (!(rightInputSchema==leftInputSchema))
+        if (!(rightInputSchema == leftInputSchema))
         {
             /// Construct project operator for mapping rightInputSource To leftInputSource
             auto projectOperator = constructProjectOperator(rightInputSchema, leftInputSchema);
@@ -48,7 +48,7 @@ QueryPlanPtr ProjectBeforeUnionOperatorRule::apply(QueryPlanPtr queryPlan)
             {
                 auto childOutputSchema = NES::Util::as<LogicalOperator>(child)->getOutputSchema();
                 /// Find the child that matches the right schema and inset the project operator there
-                if (rightInputSchema==childOutputSchema)
+                if (rightInputSchema == childOutputSchema)
                 {
                     child->insertBetweenThisAndParentNodes(projectOperator);
                     break;
@@ -68,14 +68,14 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
         sourceSchema->toString(),
         destinationSchema->toString());
     /// Fetch source and destination schema fields
-    auto sourceFields = sourceSchema->fields;
-    auto destinationFields = destinationSchema->fields;
+    auto sourceFields = sourceSchema;
+    auto destinationFields = destinationSchema;
     std::vector<NodeFunctionPtr> projectFunctions;
     /// Compute projection functions
-    for (uint64_t i = 0; i < sourceSchema->getSize(); i++)
+    for (uint64_t i = 0; i < sourceSchema->getFieldCount(); i++)
     {
-        auto field = sourceFields[i];
-        auto updatedFieldName = destinationFields[i]->getName();
+        auto field = sourceFields->getFieldByIndex(i);
+        auto updatedFieldName = destinationFields->getFieldByIndex(i)->getName();
         /// Compute field access and field rename function
         auto originalField = NodeFunctionFieldAccess::create(field->getDataType(), field->getName());
         auto fieldRenameFunction = NodeFunctionFieldRename::create(NES::Util::as<NodeFunctionFieldAccess>(originalField), updatedFieldName);

@@ -176,7 +176,7 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPt
     auto unionOperator = NES::Util::as<LogicalUnionOperator>(operatorNode);
     /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
     PRECONDITION(
-        unionOperator->getLeftInputSchema()==unionOperator->getRightInputSchema(),
+        unionOperator->getLeftInputSchema() == unionOperator->getRightInputSchema(),
         "The input schemas of a union operators children should be equal");
 
     auto physicalUnionOperator = PhysicalOperators::PhysicalUnionOperator::create(unionOperator->getLeftInputSchema());
@@ -251,8 +251,9 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         /// Lambda function for extracting the timestamp from a schema
         auto findTimeStampFieldName = [&](const SchemaPtr& schema)
         {
-            for (const auto& field : schema->fields)
+            for (uint64_t i = 0; i < schema->getFieldCount(); i++)
             {
+                auto field = schema->getFieldByIndex(i);
                 if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
                 {
                     return field->getName();

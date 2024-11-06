@@ -53,13 +53,13 @@ bool ParserCSV::writeInputTupleToTupleBuffer(
             "ParserCSV::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
     }
 
-    if (values.size() != schema.getSize())
+    if (values.size() != schema.getFieldCount())
     {
         throw CSVParsingError(fmt::format(
             "ParserCSV: The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
-            std::to_string(schema.getSize()),
+            std::to_string(schema.getFieldCount()),
             std::to_string(values.size()),
             schema.toString(),
             csvInputLine));
@@ -70,7 +70,7 @@ bool ParserCSV::writeInputTupleToTupleBuffer(
         auto field = physicalTypes[j];
         NES_TRACE("Current value is:  {}", values[j]);
 
-        const auto dataType = schema.fields[j]->getDataType();
+        const auto dataType = schema.getFieldByIndex(j)->getDataType();
         const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         auto testTupleBufferDynamicField = testTupleBuffer[tupleCount][j];
         if (physicalType->isBasicType())

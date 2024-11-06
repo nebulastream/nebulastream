@@ -49,16 +49,16 @@ Record RowTupleBufferMemoryProvider::readRecord(
     const auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     const auto bufferAddress = recordBuffer.getBuffer();
     const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
     {
-        auto& fieldName = schema->fields[i]->getName();
+        auto& fieldName = schema->getFieldByIndex(i)->getName();
         if (!includesField(projections, fieldName))
         {
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         auto value = loadValue(rowMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress);
-        record.write(rowMemoryLayoutPtr->getSchema()->fields[i]->getName(), value);
+        record.write(rowMemoryLayoutPtr->getSchema()->getFieldByIndex(i)->getName(), value);
     }
     return record;
 }
@@ -74,7 +74,7 @@ void RowTupleBufferMemoryProvider::writeRecord(
     for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
-        const auto& value = rec.read(schema->fields[i]->getName());
+        const auto& value = rec.read(schema->getFieldByIndex(i)->getName());
         storeValue(rowMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress, value);
     }
 }
