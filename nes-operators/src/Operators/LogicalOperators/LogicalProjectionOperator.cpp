@@ -63,7 +63,7 @@ bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
         auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return (outputSchema==projection->outputSchema);
+        return (outputSchema == projection->outputSchema);
     }
     return false;
 };
@@ -160,9 +160,9 @@ void LogicalProjectionOperator::inferStringSignature()
     }
     std::stringstream signatureStream;
     std::vector<std::string> fields;
-    for (const auto& field : outputSchema->fields)
+    for (uint64_t i = 0; i < outputSchema->getFieldCount(); i++)
     {
-        fields.push_back(field->getName());
+        fields.push_back(outputSchema->getFieldByIndex(i)->getName());
     }
     std::sort(fields.begin(), fields.end());
     signatureStream << "PROJECTION(";

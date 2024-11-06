@@ -51,9 +51,9 @@ Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(
     /// read all fields
     const auto bufferAddress = recordBuffer.getBuffer();
     Nautilus::Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema->getSize(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
     {
-        auto& fieldName = schema->fields[i]->getName();
+        const auto& fieldName = schema->getFieldByIndex(i)->getName();
         if (!includesField(projections, fieldName))
         {
             continue;
@@ -74,7 +74,7 @@ void ColumnTupleBufferMemoryProvider::writeRecord(
     for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); ++i)
     {
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto& value = rec.read(schema->fields[i]->getName());
+        const auto& value = rec.read(schema->getFieldByIndex(i)->getName());
         storeValue(columnMemoryLayoutPtr->getPhysicalTypes()[i], recordBuffer, fieldAddress, value);
     }
 }

@@ -34,11 +34,12 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema
 {
 }
 
-std::string CSVFormat::getFormattedSchema() const
+std::string CSVFormat::getFormattedSchema() const ///TODO: #386 check for use of Schema->toString()
 {
     std::stringstream formattedSchema;
-    for (auto& attributeField : schema->fields)
+    for (uint64_t i = 0; i < schema->getFieldCount(); i++)
     {
+        auto attributeField = schema->getFieldByIndex(i);
         formattedSchema << attributeField->toString() << ", ";
     }
     formattedSchema.seekp(-1, std::ios_base::end);
@@ -99,7 +100,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
     for (uint64_t i = 0; i < numberOfTuples; i++)
     {
         uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++)
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
         {
             auto field = schema->getFieldByIndex(j);
             auto dataType = field->getDataType();
@@ -123,7 +124,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
             }
 
             ss << str;
-            if (j < schema->getSize() - 1)
+            if (j < schema->getFieldCount() - 1)
             {
                 ss << ",";
             }

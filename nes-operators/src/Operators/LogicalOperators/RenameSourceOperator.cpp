@@ -58,8 +58,9 @@ bool RenameSourceOperator::inferSchema()
     }
     ///Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (const auto& field : outputSchema->fields)
+    for (uint64_t j = 0; j < outputSchema->getFieldCount(); j++)
     {
+        auto field = outputSchema->getFieldByIndex(j);
         ///Extract field name without qualifier
         auto fieldName = field->getName();
         ///Add new qualifier name to the field and update the field name

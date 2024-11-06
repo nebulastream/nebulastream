@@ -134,7 +134,7 @@ AttributeFieldPtr Schema::getFieldByName(const std::string& fieldName) const
     throw FieldNotFound("field {}  does not exist", fieldName);
 }
 
-AttributeFieldPtr Schema::getFieldByIndex(size_t index)
+AttributeFieldPtr Schema::getFieldByIndex(size_t index) const
 {
     if (index < fields.size())
     {
