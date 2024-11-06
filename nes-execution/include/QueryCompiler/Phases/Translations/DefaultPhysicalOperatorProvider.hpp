@@ -13,6 +13,11 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
+#include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
@@ -196,6 +201,9 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
   private:
+    // temporary solution to preserve state when recompiling shared query that is supposed to keep joinHandler of one of the queries before.
+    // in the end we would like to reuse the joinHandler but the logic which operators or pipelines to keep needs to have a better place.
+    std::shared_ptr<Runtime::Execution::Operators::NLJOperatorHandlerSlicing> nljOpHandlerSlicing = nullptr;
     /**
      * @brief replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
      * @param windowOperatorProperties

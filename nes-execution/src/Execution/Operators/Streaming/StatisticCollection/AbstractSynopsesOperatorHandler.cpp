@@ -186,7 +186,7 @@ AbstractSynopsesOperatorHandler::AbstractSynopsesOperatorHandler(const uint64_t 
                                                                  const Statistic::SendingPolicyPtr& sendingPolicy,
                                                                  const Statistic::StatisticFormatPtr& statisticFormat,
                                                                  const std::vector<OriginId>& inputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sendingPolicy(sendingPolicy), statisticFormat(statisticFormat),
+    : sliceAssigner(windowSize, windowSlide, {0}), sendingPolicy(sendingPolicy), statisticFormat(statisticFormat),
       watermarkProcessor(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)) {}
 
 }// namespace NES::Runtime::Execution::Operators

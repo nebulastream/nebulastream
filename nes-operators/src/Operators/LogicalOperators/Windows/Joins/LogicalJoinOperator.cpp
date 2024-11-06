@@ -219,6 +219,18 @@ void LogicalJoinOperator::setWindowStartEndKeyFieldName(std::string_view windowS
     this->windowStartFieldName = windowStartFieldName;
     this->windowEndFieldName = windowEndFieldName;
 }
+void LogicalJoinOperator::setDeployAgainAtTime(QueryId queryId, uint64_t deploymentTime) {
+    if (getDeploymentTimes().contains(queryId)) {
+        NES_ERROR("This query was already deployed at a different time");
+    }
+    deploymentTimes[queryId] = deploymentTime;
+}
+
+void LogicalJoinOperator::setFlagKeepOperator(bool val) { deployAgain = val; }
+
+bool LogicalJoinOperator::getFlagKeepOperator() { return deployAgain; }
+
+std::map<QueryId, uint64_t> LogicalJoinOperator::getDeploymentTimes() { return deploymentTimes; }
 
 bool LogicalJoinOperator::findSchemaInDistinctSchemas(FieldAccessExpressionNode& joinKey, const SchemaPtr& inputSchema) {
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();) {

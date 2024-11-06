@@ -1013,6 +1013,86 @@ std::vector<Runtime::TupleBuffer> TestUtils::createExpectedBufferFromStream(std:
     return allBuffers;
 }
 
+//to emulate changes in the query plan while the query is running. we only play some tuples before reconfiguring and some tuples afterward.
+std::vector<Runtime::TupleBuffer>
+TestUtils::createExpectedBuffersFromCsvSpecificLines(const string& csvFileName,
+                                                     const SchemaPtr& schema,
+                                                     const Runtime::BufferManagerPtr& bufferManager,
+                                                     const int fromLine,
+                                                     const int toLine,
+                                                     bool skipHeader,
+                                                     uint64_t numTuplesPerBuffer,
+                                                     const string& delimiter) {
+
+    std::vector<Runtime::TupleBuffer> allBuffers;
+
+    auto fullPath = std::filesystem::path(TEST_DATA_DIRECTORY) / csvFileName;
+    NES_DEBUG("read file={}", fullPath.string());
+    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(fullPath)), "File " << fullPath << " does not exist!!!");
+    std::ifstream inputFile(fullPath);
+    return createExpectedBufferFromStreamSpecificLines(inputFile,
+                                                       schema,
+                                                       bufferManager,
+                                                       fromLine,
+                                                       toLine,
+                                                       skipHeader,
+                                                       numTuplesPerBuffer,
+                                                       delimiter);
+}
+
+std::vector<Runtime::TupleBuffer>
+TestUtils::createExpectedBufferFromStreamSpecificLines(std::istream& istream,
+                                                       const SchemaPtr& schema,
+                                                       const Runtime::BufferManagerPtr& bufferManager,
+                                                       const int fromLine,
+                                                       const int toLine,
+                                                       bool skipHeader,
+                                                       uint64_t numTuplesPerBuffer,
+                                                       const std::string& delimiter) {
+
+    std::vector<Runtime::TupleBuffer> allBuffers;
+    auto tupleCount = 0_u64;
+    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto maxTuplePerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    numTuplesPerBuffer = (numTuplesPerBuffer == 0) ? maxTuplePerBuffer : numTuplesPerBuffer;
+
+    // Setting the position indicator to the beginning and clearing potential any error flags
+    istream.clear();
+    istream.seekg(0, std::ios::beg);
+
+    std::string line;
+    if (skipHeader) {
+        std::getline(istream, line);
+        NES_DEBUG("Skipping first line!");
+    }
+    int cnt = 0;
+    while (std::getline(istream, line)) {
+        if (cnt < fromLine || cnt > toLine) {
+            cnt++;
+            continue;
+        }
+        cnt++;
+        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testBuffer, schema, bufferManager);
+        tupleCount++;
+        if (tupleCount >= numTuplesPerBuffer) {
+            tupleBuffer.setNumberOfTuples(tupleCount);
+            allBuffers.emplace_back(tupleBuffer);
+            tupleCount = 0;
+
+            tupleBuffer = bufferManager->getBufferBlocking();
+        }
+    }
+
+    if (tupleCount > 0) {
+        tupleBuffer.setNumberOfTuples(tupleCount);
+        allBuffers.emplace_back(tupleBuffer);
+    }
+
+    return allBuffers;
+}
+
 CSVSourceTypePtr TestUtils::createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfigCSV) {
     CSVSourceTypePtr sourceType =
         CSVSourceType::create(sourceTypeConfigCSV.logicalSourceName, sourceTypeConfigCSV.physicalSourceName);

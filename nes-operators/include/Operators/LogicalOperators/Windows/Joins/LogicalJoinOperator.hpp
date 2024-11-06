@@ -72,6 +72,15 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
      */
     void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
 
+    void setDeployAgainAtTime(QueryId queryId, uint64_t deploymentTime);
+
+    std::map<QueryId, uint64_t> getDeploymentTimes();
+
+    //temporary functions in order to be able to reuse the join operator handler that is created with this LogicalJoinOperator (#5052)
+    void setFlagKeepOperator(bool val);
+
+    bool getFlagKeepOperator();
+
     /**
      * @brief Sets the window start, end, and key field name during the serialization of the operator
      * @param joinKey a FieldAccessExpressionNode to find in the schemas
@@ -83,6 +92,8 @@ class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignm
     const Join::LogicalJoinDescriptorPtr joinDefinition;
     std::string windowStartFieldName;
     std::string windowEndFieldName;
+    std::map<QueryId, uint64_t> deploymentTimes = {{QueryId(0), 0}};// at first creation it is deployed at time 0
+    bool deployAgain = false;
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_

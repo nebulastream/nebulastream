@@ -76,8 +76,9 @@ NLJOperatorHandler::NLJOperatorHandler(const std::vector<OriginId>& inputOrigins
                                        const SchemaPtr& leftSchema,
                                        const SchemaPtr& rightSchema,
                                        const uint64_t pageSizeLeft,
-                                       const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+                                       const uint64_t pageSizeRight,
+                                       std::map<QueryId, uint64_t> deploymentTimes)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema, deploymentTimes),
       pageSizeLeft(pageSizeLeft), pageSizeRight(pageSizeRight) {}
 
 void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {

@@ -810,6 +810,24 @@ std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(std::istream& i
                                                                  uint64_t numTuplesPerBuffer = 0,
                                                                  const std::string& delimiter = ",");
 
+std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsvSpecificLines(const std::string& csvFileName,
+                                                                            const SchemaPtr& schema,
+                                                                            const Runtime::BufferManagerPtr& bufferManager,
+                                                                            const int fromLine,
+                                                                            const int toLine,
+                                                                            bool skipHeader = false,
+                                                                            uint64_t numTuplesPerBuffer = 0,
+                                                                            const std::string& delimiter = ",");
+
+std::vector<Runtime::TupleBuffer> createExpectedBufferFromStreamSpecificLines(std::istream& istream,
+                                                                              const SchemaPtr& schema,
+                                                                              const Runtime::BufferManagerPtr& bufferManager,
+                                                                              const int fromLine,
+                                                                              const int toLine,
+                                                                              bool skipHeader = false,
+                                                                              uint64_t numTuplesPerBuffer = 0,
+                                                                              const std::string& delimiter = ",");
+
 /**
  * @brief Fills the buffer from a stream
  * @param str

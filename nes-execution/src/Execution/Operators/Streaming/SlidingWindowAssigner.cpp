@@ -16,9 +16,20 @@
 #include <Util/Logger/Logger.hpp>
 namespace NES::Runtime::Execution::Operators {
 
-SliceAssigner::SliceAssigner(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide) {
+SliceAssigner::SliceAssigner(uint64_t windowSize, uint64_t windowSlide, std::vector<uint64_t> deploymentTimes)
+    : windowSize(windowSize), windowSlide(windowSlide), windowsDeploymentTime{deploymentTimes} {
     NES_ASSERT(windowSize >= windowSlide,
                "Currently the window assigner dose not support windows with a larger slide then the window size.");
+}
+void SliceAssigner::addWindowDeploymentTime(uint64_t deploymentTime) {
+    if (std::find(windowsDeploymentTime.begin(), windowsDeploymentTime.end(), deploymentTime) == windowsDeploymentTime.end()) {
+        windowsDeploymentTime.push_back(deploymentTime);
+    }
+}
+
+void SliceAssigner::removeWindowDeploymentTime(uint64_t deploymentTime) {
+    auto it = std::remove(windowsDeploymentTime.begin(), windowsDeploymentTime.end(), deploymentTime);
+    windowsDeploymentTime.erase(it, windowsDeploymentTime.end());
 }
 
 }// namespace NES::Runtime::Execution::Operators

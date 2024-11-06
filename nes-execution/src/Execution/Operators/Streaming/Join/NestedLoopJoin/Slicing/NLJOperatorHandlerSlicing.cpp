@@ -22,8 +22,9 @@ NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>
                                                      const SchemaPtr& leftSchema,
                                                      const SchemaPtr& rightSchema,
                                                      const uint64_t pageSizeLeft,
-                                                     const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+                                                     const uint64_t pageSizeRight,
+                                                     std::map<QueryId, uint64_t> deploymentTimes)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema, deploymentTimes),
       NLJOperatorHandler(inputOrigins,
                          outputOriginId,
                          windowSize,
@@ -31,7 +32,8 @@ NLJOperatorHandlerSlicing::NLJOperatorHandlerSlicing(const std::vector<OriginId>
                          leftSchema,
                          rightSchema,
                          pageSizeLeft,
-                         pageSizeRight) {}
+                         pageSizeRight,
+                         deploymentTimes) {}
 NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<OriginId>& inputOrigins,
                                                         const OriginId outputOriginId,
                                                         const uint64_t windowSize,
@@ -39,7 +41,8 @@ NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<Origin
                                                         const SchemaPtr& leftSchema,
                                                         const SchemaPtr& rightSchema,
                                                         const uint64_t pageSizeLeft,
-                                                        const uint64_t pageSizeRight) {
+                                                        const uint64_t pageSizeRight,
+                                                        std::map<QueryId, uint64_t> deploymentTimes) {
     return std::make_shared<NLJOperatorHandlerSlicing>(inputOrigins,
                                                        outputOriginId,
                                                        windowSize,
@@ -47,6 +50,8 @@ NLJOperatorHandlerPtr NLJOperatorHandlerSlicing::create(const std::vector<Origin
                                                        leftSchema,
                                                        rightSchema,
                                                        pageSizeLeft,
-                                                       pageSizeRight);
+                                                       pageSizeRight,
+                                                       deploymentTimes);
 }
+
 }// namespace NES::Runtime::Execution::Operators

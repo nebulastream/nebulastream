@@ -174,14 +174,16 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(1);
-        auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(originIds,
-                                                                               outputOriginId,
-                                                                               windowSize,
-                                                                               windowSize,
-                                                                               leftSchema,
-                                                                               rightSchema,
-                                                                               leftPageSize,
-                                                                               rightPageSize);
+        auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
+            originIds,
+            outputOriginId,
+            windowSize,
+            windowSize,
+            leftSchema,
+            rightSchema,
+            leftPageSize,
+            rightPageSize,
+            std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
 
         // Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();

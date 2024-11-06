@@ -92,7 +92,13 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                         const SchemaPtr& rightSchema,
                                         const uint64_t pageSizeLeft,
                                         const uint64_t pageSizeRight)
-        : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+        : StreamJoinOperatorHandler(inputOrigins,
+                                    outputOriginId,
+                                    windowSize,
+                                    windowSlide,
+                                    leftSchema,
+                                    rightSchema,
+                                    std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
           NLJOperatorHandlerSlicing(inputOrigins,
                                     outputOriginId,
                                     windowSize,
@@ -100,7 +106,8 @@ class ComparableNLJOperatorHandlerSlicing : public Operators::NLJOperatorHandler
                                     leftSchema,
                                     rightSchema,
                                     pageSizeLeft,
-                                    pageSizeRight){
+                                    pageSizeRight,
+                                    std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}){
 
           };
     // create function is the same as in NLJOperatorHandlerSlicing

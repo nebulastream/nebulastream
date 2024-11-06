@@ -24,6 +24,8 @@ uint64_t StreamSlice::getSliceStart() const { return sliceStart; }
 
 uint64_t StreamSlice::getSliceEnd() const { return sliceEnd; }
 
+void StreamSlice::setSliceEnd(uint64_t newSliceEnd) { sliceEnd = newSliceEnd; }
+
 StreamSlice::StreamSlice(uint64_t sliceStart, uint64_t sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd) {}
 
 bool StreamSlice::operator==(const StreamSlice& rhs) const { return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd); }

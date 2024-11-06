@@ -41,7 +41,8 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                        const SchemaPtr& leftSchema,
                        const SchemaPtr& rightSchema,
                        const uint64_t pageSizeLeft,
-                       const uint64_t pageSizeRight);
+                       const uint64_t pageSizeRight,
+                       std::map<QueryId, uint64_t> deploymentTimes);
 
     ~NLJOperatorHandler() override = default;
 

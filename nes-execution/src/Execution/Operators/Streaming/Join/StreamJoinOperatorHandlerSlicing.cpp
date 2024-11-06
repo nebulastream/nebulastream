@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -56,19 +58,46 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
 
     const auto sliceStart = slice.getSliceStart();
     const auto sliceEnd = slice.getSliceEnd();
+
+    NES_INFO("calculating windows for slice: sliceStart {}, sliceEnd {}", sliceStart, sliceEnd)
+
     /**
+     * We might have multiple deployment times of the same join shared in this handler. Each of these times defines the starting
+     * point for the tumbling/sliding windows for this join with this definition. For each of these definitions we calculate all
+     * windows for which this slice is included. All calculated windows of all definitions get returned as one vector.
+     * For each definition do:
      * To get all windows, we start with the window (firstWindow) that the current slice is the last slice in it.
      * Or in other words: The sliceEnd is equal to the windowEnd.
      * We then add all windows with a slide until we reach the window (lastWindow) that that current slice is the first slice.
      * Or in other words: The sliceStart is equal to the windowStart;
      */
-    const auto firstWindowEnd = sliceEnd;
-    const auto lastWindowEnd = sliceStart + windowSize;
-    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide) {
-        // For now, we expect the windowEnd to be the windowId
-        allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
-    }
 
+    for (auto [_, deploymentTime] : deploymentTimes) {
+        // The end of the first window will be calculated in the same way as in sliceAssigner (explanation is there). There we calculate the
+        // nextWindowEndAfterTs which is essentially the first window that contains this slice. (ts = sliceStart)
+        // if (ts < windowDeploymentTime + windowSize){ nextWindowEndAfterTs = windowDeploymentTime + windowSize; }
+        // else { nextWindowEndAfterTs = ts - ((ts - windowDeploymentTime - windowSize) % windowSlide) + windowSlide; }
+        auto firstWindowEnd = sliceStart - ((sliceStart - windowSize - deploymentTime) % windowSlide) + windowSlide;
+        if (sliceStart < deploymentTime + windowSize) {
+            firstWindowEnd = deploymentTime + windowSize;
+        }
+
+        // The end of the last window will be calculated in a similar way as in sliceAssigner. There we calculate the
+        // lastWindowStartBeforeTs which is the last window that will contain this slice and to calculate its end we add windowSize.
+        // ts - ((ts - windowDeploymentTime) % windowSlide); //ts = sliceStart
+        auto lastWindowEnd = sliceStart - ((sliceStart - deploymentTime) % windowSlide) + windowSize;
+
+        for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide) {
+            // For now, we expect the windowEnd to be the windowId
+            allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
+        }
+
+        NES_INFO("Adding calculated windows for deployment time {}, fWEnd {}, lWEnd {}, total number of calculated windows {}",
+                 deploymentTime,
+                 firstWindowEnd,
+                 lastWindowEnd,
+                 allWindows.size());
+    }
     return allWindows;
 }
 }// namespace NES::Runtime::Execution::Operators

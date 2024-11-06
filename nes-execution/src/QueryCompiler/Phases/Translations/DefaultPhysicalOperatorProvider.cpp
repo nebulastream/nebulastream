@@ -373,7 +373,29 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
             joinOperatorHandler = lowerStreamingHashJoin(streamJoinOperators, streamJoinConfig);
             break;
         case StreamJoinStrategy::NESTED_LOOP_JOIN:
+            if (nljOpHandlerSlicing != nullptr && options->getWindowingStrategy() == WindowingStrategy::SLICING) {
+                NES_INFO("Reusing join operator Handler. Keeping state but window definitions will be of new LJOp");
+                joinOperatorHandler = nljOpHandlerSlicing;
+
+                // old op handler had its own deployment times. For each deployment time that it did not have it adds the new time
+                // and updates the slices. (atm only one test that has the same time once and one extra time)
+                auto queriesAndDeploymentTimes = joinOperatorHandler->getQueriesAndDeploymentTimes();
+                for (auto queryAndTime : streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getDeploymentTimes()) {
+                    if (!queriesAndDeploymentTimes.contains(queryAndTime.first)) {
+                        joinOperatorHandler->addQueryToSharedJoin(queryAndTime.first, queryAndTime.second);
+                        //dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())->updateSlicesNewDefinition(queryAndTime.second);
+                    }
+                }
+                joinOperatorHandler->setThisForReuse(
+                    streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getFlagKeepOperator());
+                break;
+            }
             joinOperatorHandler = lowerStreamingNestedLoopJoin(streamJoinOperators, streamJoinConfig);
+
+            if (streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getFlagKeepOperator()) {
+                joinOperatorHandler->setThisForReuse(true);
+                nljOpHandlerSlicing = joinOperatorHandler->as<NLJOperatorHandlerSlicing>();
+            }
             break;
     }
 
@@ -433,7 +455,8 @@ DefaultPhysicalOperatorProvider::lowerStreamingNestedLoopJoin(const StreamJoinOp
                                                             joinOperator->getLeftInputSchema(),
                                                             joinOperator->getRightInputSchema(),
                                                             Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
-                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
+                                                            Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                            joinOperator->getDeploymentTimes());
     } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
         return Operators::NLJOperatorHandlerBucketing::create(joinOperator->getAllInputOriginIds(),
                                                               joinOperator->getOutputOriginIds()[0],

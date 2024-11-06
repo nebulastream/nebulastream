@@ -42,7 +42,7 @@ class SliceAssignerTest : public Testing::BaseUnitTest {
  */
 TEST_F(SliceAssignerTest, assignTumblingWindow) {
     // note we model tumbling windows as sliding windows with same size and slide.
-    auto windowAssigner = SliceAssigner(100, 100);
+    auto windowAssigner = SliceAssigner(100, 100, {0});
 
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(0), 100);
@@ -75,7 +75,7 @@ TEST_F(SliceAssignerTest, assignTumblingWindow) {
  */
 TEST_F(SliceAssignerTest, assignRegularSlidingWindow) {
     // note we model tumbling windows as sliding windows with same size and slide.
-    auto windowAssigner = SliceAssigner(100, 50);
+    auto windowAssigner = SliceAssigner(100, 50, {0});
 
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(0), 50);
@@ -113,7 +113,7 @@ TEST_F(SliceAssignerTest, assignRegularSlidingWindow) {
  */
 TEST_F(SliceAssignerTest, assignIrRegularSlidingWindow) {
     // note we model tumbling windows as sliding windows with same size and slide.
-    auto windowAssigner = SliceAssigner(100, 30);
+    auto windowAssigner = SliceAssigner(100, 30, {0});
 
     // Slice 1
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);

@@ -130,7 +130,13 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                      uint64_t preAllocPageSizeCnt,
                                      uint64_t pageSize,
                                      uint64_t numPartitions)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+    : StreamJoinOperatorHandler(inputOrigins,
+                                outputOriginId,
+                                windowSize,
+                                windowSlide,
+                                leftSchema,
+                                rightSchema,
+                                std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
       joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
       preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
 

@@ -106,6 +106,8 @@ class StreamSlice : public StreamSliceInterface {
      */
     virtual ~StreamSlice() = default;
 
+    void setSliceEnd(uint64_t newSliceEnd);
+
   protected:
     uint64_t sliceStart;
     uint64_t sliceEnd;

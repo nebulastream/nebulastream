@@ -15,6 +15,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_THREADLOCALSLICESTORE_HPP_
 
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
@@ -36,7 +37,8 @@ template<class SliceType>
 class ThreadLocalSliceStore {
   public:
     using SliceTypePtr = std::unique_ptr<SliceType>;
-    explicit ThreadLocalSliceStore(uint64_t windowSize, uint64_t windowSlide) : windowAssigner(windowSize, windowSlide){};
+    explicit ThreadLocalSliceStore(uint64_t windowSize, uint64_t windowSlide)
+        : windowAssigner(windowSize, windowSlide, {Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}){};
     virtual ~ThreadLocalSliceStore() = default;
 
     /**

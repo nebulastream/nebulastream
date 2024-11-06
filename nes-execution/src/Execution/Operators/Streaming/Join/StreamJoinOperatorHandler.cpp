@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fstream>
+#include <map>
 
 namespace NES::Runtime::Execution::Operators {
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, uint32_t) {
@@ -26,6 +30,9 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, u
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx) {
     NES_INFO("Stopped StreamJoinOperatorHandler with {}!", magic_enum::enum_name(queryTerminationType));
+    if (setForReuse) {
+        return;
+    }
     if (queryTerminationType == QueryTerminationType::Graceful) {
         triggerAllSlices(pipelineCtx.get());
     }
@@ -386,6 +393,9 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
 
 void StreamJoinOperatorHandler::deleteAllSlices() {
     {
+        if (setForReuse) {
+            return;
+        }
         auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
         slicesLocked->clear();
         windowToSlicesLocked->clear();
@@ -425,6 +435,10 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
     uint64_t newGlobalWaterMarkProbe =
         watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWaterMarkProbe {} bufferMetaData {}", newGlobalWaterMarkProbe, bufferMetaData.toString());
+
+    if (setForReuse) {
+        return;
+    }
 
     auto slicesLocked = slices.wlock();
     for (auto it = slicesLocked->begin(); it != slicesLocked->end(); ++it) {
@@ -491,16 +505,51 @@ void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManag
     this->bufferManager = bufManager;
 }
 
+void StreamJoinOperatorHandler::addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime) {
+    deploymentTimes.emplace(queryId, deploymentTime);
+    sliceAssigner.addWindowDeploymentTime(deploymentTime);
+
+    NES_INFO("Add new query that uses same joinOperatorHandler. QueryId {}, deployment time {}, number of queries handler was "
+             "handling before {}",
+             queryId,
+             deploymentTime,
+             deploymentTimes.size())
+
+    for (auto slice : *slices.wlock()) {
+        if (slice->getSliceEnd() >= deploymentTime) {
+            slice->setSliceEnd(sliceAssigner.getSliceEndTs(slice->getSliceStart()));
+        }
+    }
+}
+
+void StreamJoinOperatorHandler::removeQueryFromSharedJoin(QueryId queryId) {
+    auto deploymentTime = deploymentTimes.at(queryId);
+    sliceAssigner.removeWindowDeploymentTime(deploymentTime);
+    deploymentTimes.erase(queryId);
+}
+
+std::map<QueryId, uint64_t> StreamJoinOperatorHandler::getQueriesAndDeploymentTimes() { return deploymentTimes; }
+
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,
                                                      const uint64_t windowSize,
                                                      const uint64_t windowSlide,
                                                      const SchemaPtr& leftSchema,
-                                                     const SchemaPtr& rightSchema)
-    : numberOfWorkerThreads(1), sliceAssigner(windowSize, windowSlide), windowSize(windowSize), windowSlide(windowSlide),
+                                                     const SchemaPtr& rightSchema,
+                                                     std::map<QueryId, uint64_t> deploymentTimes)
+    : numberOfWorkerThreads(1), windowSize(windowSize), windowSlide(windowSlide),
       watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins)),
       watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector<OriginId>(1, outputOriginId))),
       outputOriginId(outputOriginId), sequenceNumber(1), sizeOfRecordLeft(leftSchema->getSchemaSizeInBytes()),
-      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema) {}
+      sizeOfRecordRight(rightSchema->getSchemaSizeInBytes()), leftSchema(leftSchema), rightSchema(rightSchema),
+      deploymentTimes(deploymentTimes),
+      //sliceAssigner looks ugly. However, I would like to have a vector in slice assigner as it needs to make calculations for every tuple and it will be faster to iterate over a vector instead of a map. And I would like to keep deploymentTime connected to the queryId in the handler. It could be done with two vectors and updating them simultaneously, but a map is more explicit. Maybe some other data structure would work well here, or in sliceAssigner.
+      sliceAssigner(windowSize, windowSlide, [&deploymentTimes]() {
+          std::vector<uint64_t> deploymentTimesVec;
+          for (const auto& p : deploymentTimes) {
+              deploymentTimesVec.push_back(p.second);
+          }
+          return deploymentTimesVec;
+      }()) {}
 
 }// namespace NES::Runtime::Execution::Operators

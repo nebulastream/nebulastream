@@ -15,10 +15,12 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_
 #include <API/Schema.hpp>
+#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
@@ -38,6 +40,7 @@ using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr
  */
 class StreamJoinOperatorHandler : public virtual OperatorHandler {
   public:
+    static constexpr uint64_t DEFAULT_JOIN_DEPLOYMENT_TIME = 0;
     /**
      * @brief Constructor for a StreamJoinOperatorHandler
      * @param inputOrigins
@@ -52,7 +55,8 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
                               const uint64_t windowSize,
                               const uint64_t windowSlide,
                               const SchemaPtr& leftSchema,
-                              const SchemaPtr& rightSchema);
+                              const SchemaPtr& rightSchema,
+                              std::map<QueryId, uint64_t> deploymentTimes);
 
     ~StreamJoinOperatorHandler() override = default;
 
@@ -233,6 +237,32 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
 
     void setBufferManager(const BufferManagerPtr& bufManager);
 
+    /**
+     * adds a query id and the time it was deployed to this handler.
+     * @note This updates slices start and end times, however it does not
+     * change tuples inside slices. As this is also necessary the corresponding method in StreamOpHandlerSlicing needs to be called
+     * afterwards
+     * @param queryId
+     * @param deploymentTime
+     */
+    void addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime);
+
+    /**
+     * removes a query deployment time from this handler.
+     * @note slices do not get updated (to span bigger times). Shifting tuples to different slices might be expensive and all
+     * windows can still be calculated with smaller than necessary slices.
+     * @param queryId
+     */
+    void removeQueryFromSharedJoin(QueryId queryId);
+
+    std::map<QueryId, uint64_t> getQueriesAndDeploymentTimes();
+
+    /**
+     * later this handler should be adjusted while a query is running (or paused) so we would not need to store it anymore and would remove this flag
+     * @param reuse true if we want to reuse this opHandler, false otherwise
+     */
+    void setThisForReuse(bool reuse) { setForReuse = reuse; }
+
   private:
     /**
      * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
@@ -245,7 +275,6 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
     uint64_t lastMigratedSeqNumber = 0;
-    SliceAssigner sliceAssigner;
     uint64_t windowSize;
     uint64_t windowSlide;
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windowToSlices;
@@ -261,6 +290,11 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
     BufferManagerPtr bufferManager;
+    std::map<QueryId, uint64_t>
+        deploymentTimes;//just one entry with "queryId and time" == 0  iff this streamJoinOperatorHandler is not shared among multiple queries. Otherwise, we store the time each query is deployed, so their windows will start from the time they are deployed.
+    SliceAssigner sliceAssigner;
+
+    bool setForReuse = false;
 };
 }// namespace NES::Runtime::Execution::Operators
 

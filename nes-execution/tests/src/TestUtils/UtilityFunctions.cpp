@@ -111,7 +111,7 @@ void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer
 
     // 2. For each tuple in the buffer, we get the corresponding count min statistic and then update it accordingly
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
-    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide, {0});
     for (auto tuple : testTupleBuffer) {
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();
@@ -154,7 +154,7 @@ void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuf
     // For each tuple in the buffer, we get the corresponding hyperloglog statistic and then update it accordingly
     std::unique_ptr<Nautilus::Interface::HashFunction> murmurHash = std::make_unique<Nautilus::Interface::MurMur3HashFunction>();
     auto statisticId = testTupleBuffer.getBuffer().getStatisticId();
-    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide);
+    Operators::SliceAssigner sliceAssigner(windowSize, windowSlide, {0});
     for (auto tuple : testTupleBuffer) {
         auto statisticHash = Statistic::StatisticKey::combineStatisticIdWithMetricHash(metricHash, statisticId);
         auto ts = tuple[timestampFieldName].read<uint64_t>();

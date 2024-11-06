@@ -39,7 +39,8 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
                               const SchemaPtr& leftSchema,
                               const SchemaPtr& rightSchema,
                               const uint64_t pageSizeLeft,
-                              const uint64_t pageSizeRight);
+                              const uint64_t pageSizeRight,
+                              std::map<QueryId, uint64_t> deploymentTimes);
 
     /**
      * @brief Creates a NLJOperatorHandlerSlicing
@@ -60,7 +61,8 @@ class NLJOperatorHandlerSlicing : public NLJOperatorHandler, public StreamJoinOp
                                         const SchemaPtr& leftSchema,
                                         const SchemaPtr& rightSchema,
                                         const uint64_t pageSizeLeft,
-                                        const uint64_t pageSizeRight);
+                                        const uint64_t pageSizeRight,
+                                        std::map<QueryId, uint64_t> deploymentTimes);
 
     ~NLJOperatorHandlerSlicing() override = default;
 };

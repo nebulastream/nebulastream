@@ -23,7 +23,13 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                                                          const SchemaPtr& rightSchema,
                                                          const uint64_t pageSizeLeft,
                                                          const uint64_t pageSizeRight)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema),
+    : StreamJoinOperatorHandler(inputOrigins,
+                                outputOriginId,
+                                windowSize,
+                                windowSlide,
+                                leftSchema,
+                                rightSchema,
+                                std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}),
       NLJOperatorHandler(inputOrigins,
                          outputOriginId,
                          windowSize,
@@ -31,7 +37,8 @@ NLJOperatorHandlerBucketing::NLJOperatorHandlerBucketing(const std::vector<Origi
                          leftSchema,
                          rightSchema,
                          pageSizeLeft,
-                         pageSizeRight) {}
+                         pageSizeRight,
+                         std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, DEFAULT_JOIN_DEPLOYMENT_TIME}}) {}
 
 NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(const std::vector<OriginId>& inputOrigins,
                                                           const OriginId outputOriginId,

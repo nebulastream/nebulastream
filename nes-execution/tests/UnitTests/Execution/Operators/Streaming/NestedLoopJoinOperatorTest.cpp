@@ -123,14 +123,16 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         timestampFieldNameLeft = leftSchema->get(2)->getName();
         timestampFieldNameRight = rightSchema->get(2)->getName();
 
-        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
-                                                                          OriginId(1),
-                                                                          windowSize,
-                                                                          windowSize,
-                                                                          leftSchema,
-                                                                          rightSchema,
-                                                                          leftPageSize,
-                                                                          rightPageSize);
+        nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
+            {INVALID_ORIGIN_ID},
+            OriginId(1),
+            windowSize,
+            windowSize,
+            leftSchema,
+            rightSchema,
+            leftPageSize,
+            rightPageSize,
+            std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
         bm = std::make_shared<BufferManager>(8196, 5000);
         nljOperatorHandler->setBufferManager(bm);
     }
@@ -671,14 +673,16 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
     auto numberOfRecordsLeft = 200;
     auto numberOfRecordsRight = 200;
     windowSize = 10;
-    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
-                                                                      OriginId(1),
-                                                                      windowSize,
-                                                                      windowSize,
-                                                                      leftSchema,
-                                                                      rightSchema,
-                                                                      leftPageSize,
-                                                                      rightPageSize);
+    nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
+        {INVALID_ORIGIN_ID},
+        OriginId(1),
+        windowSize,
+        windowSize,
+        leftSchema,
+        rightSchema,
+        leftPageSize,
+        rightPageSize,
+        std::map<QueryId, uint64_t>{{INVALID_QUERY_ID, Operators::StreamJoinOperatorHandler::DEFAULT_JOIN_DEPLOYMENT_TIME}});
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
