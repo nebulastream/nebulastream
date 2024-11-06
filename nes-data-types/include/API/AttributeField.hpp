@@ -59,7 +59,7 @@ public:
      * @brief Make copy of this attribute
      * @return shared pointer
      */
-    AttributeFieldPtr copy() const;
+    AttributeFieldPtr deepCopy() const;
 
 private:
     std::string name;

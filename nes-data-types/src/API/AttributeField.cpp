@@ -71,7 +71,7 @@ uint64_t AttributeField::hash() const
     return hashValue;
 }
 
-AttributeFieldPtr AttributeField::copy() const
+AttributeFieldPtr AttributeField::deepCopy() const
 {
     return create(name, dataType);
 }
