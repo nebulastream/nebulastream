@@ -101,7 +101,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
         uint64_t offset = 0;
         for (uint64_t j = 0; j < schema->getSize(); j++)
         {
-            auto field = schema->get(j);
+            auto field = schema->getFieldByIndex(j);
             auto dataType = field->getDataType();
             auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
             auto fieldSize = physicalType->size();
