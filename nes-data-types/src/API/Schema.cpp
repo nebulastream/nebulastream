@@ -97,16 +97,7 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data)
 
 void Schema::removeField(const AttributeFieldPtr& field)
 {
-    auto it = fields.begin();
-    while (it != fields.end())
-    {
-        if (it->get()->getName() == field->getName())
-        {
-            fields.erase(it);
-            break;
-        }
-        it++;
-    }
+    std::erase_if(fields, [&](const AttributeFieldPtr& f) { return f->getName() == field->getName(); });
 }
 
 void Schema::replaceField(const std::string& name, const DataTypePtr& type)
