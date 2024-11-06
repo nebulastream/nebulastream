@@ -54,7 +54,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
     for (uint64_t i = 0; i < numberOfTuples; i++)
     {
         uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++)
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
         {
             auto field = schema->getFieldByIndex(j);
             auto dataType = field->getDataType();
@@ -79,7 +79,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
             }
 
             ss << str;
-            if (j < schema->getSize() - 1)
+            if (j < schema->getFieldCount() - 1)
             {
                 ss << ",";
             }
@@ -90,11 +90,12 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
     return ss.str();
 }
 
-std::string Util::toCSVString(const SchemaPtr& schema)
+std::string Util::toCSVString(const SchemaPtr& schema) ///TODO: #386 check for use of schema->toString()
 {
     std::stringstream ss;
-    for (auto& f : schema->fields)
+    for (uint64_t i = 0; i < schema->getFieldCount(); i++)
     {
+        auto f = schema->getFieldByIndex(i);
         ss << f->toString() << ",";
     }
     ss.seekp(-1, std::ios_base::end);
@@ -152,9 +153,9 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
     std::vector<PhysicalTypePtr> retVector;
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : schema->fields)
+    for (uint64_t j = 0; j < schema->getFieldCount(); j++)
     {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema->getFieldByIndex(j)->getDataType());
         retVector.push_back(physicalField);
     }
     return retVector;

@@ -126,13 +126,15 @@ bool LogicalBatchJoinOperator::inferSchema()
     outputSchema->clear();
 
     /// create dynamic fields to store all fields from left and right streams
-    for (const auto& field : leftInputSchema->fields)
+    for (uint64_t j = 0; j < leftInputSchema->getFieldCount(); j++)
     {
+        auto field = leftInputSchema->getFieldByIndex(j);
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    for (const auto& field : rightInputSchema->fields)
+    for (uint64_t j = 0; j < rightInputSchema->getFieldCount(); j++)
     {
+        auto field = rightInputSchema->getFieldByIndex(j);
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
