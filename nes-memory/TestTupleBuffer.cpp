@@ -138,7 +138,7 @@ bool DynamicTuple::operator!=(const DynamicTuple& other) const
 }
 bool DynamicTuple::operator==(const DynamicTuple& other) const
 {
-    if (!this->memoryLayout->getSchema()->equals(other.memoryLayout->getSchema()))
+    if (!(*this->memoryLayout->getSchema() == *other.memoryLayout->getSchema()))
     {
         NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
         return false;
