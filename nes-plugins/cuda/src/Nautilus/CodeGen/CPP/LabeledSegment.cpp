@@ -12,14 +12,24 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/CPP/CPPLoweringContext.hpp>
-#include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
+#include <Nautilus/CodeGen/CPP/LabeledSegment.hpp>
 
-namespace NES::Nautilus::Backends::CPP {
+#include <set>
+#include <sstream>
+#include <utility>
 
-std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
-    auto ctx = CPPLoweringContext(std::move(ir));
-    return ctx.process().str();
+namespace NES::Nautilus::CodeGen::CPP {
+
+LabeledSegment::LabeledSegment(std::string label) : label(std::move(label)) {}
+
+std::string LabeledSegment::toString() const {
+    std::stringstream code;
+    code << label << ":"
+         << "\n";
+    code << Segment::toString();
+    return code.str();
 }
 
-}// namespace NES::Nautilus::Backends::CPP
+const std::string& LabeledSegment::getLabel() const { return label; }
+
+}// namespace NES::Nautilus::CodeGen::CPP

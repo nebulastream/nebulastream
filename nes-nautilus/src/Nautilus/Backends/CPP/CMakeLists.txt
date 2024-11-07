@@ -14,4 +14,5 @@ add_source_files(nes-nautilus
         CPPCompilationBackend.cpp
         CPPExecutable.cpp
         CPPLoweringProvider.cpp
+        CPPLoweringContext.cpp
         )

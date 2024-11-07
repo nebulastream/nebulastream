@@ -12,14 +12,12 @@
     limitations under the License.
 */
 
-#include <Nautilus/Backends/CPP/CPPLoweringContext.hpp>
-#include <Nautilus/Backends/CPP/CPPLoweringProvider.hpp>
+#include <Nautilus/CodeGen/CPP/Statement.hpp>
 
-namespace NES::Nautilus::Backends::CPP {
+namespace NES::Nautilus::CodeGen::CPP {
 
-std::string CPPLoweringProvider::lower(std::shared_ptr<IR::IRGraph> ir) {
-    auto ctx = CPPLoweringContext(std::move(ir));
-    return ctx.process().str();
-}
+Statement::Statement(std::string statement) : statement(std::move(statement)) {}
 
-}// namespace NES::Nautilus::Backends::CPP
+std::string Statement::toString() const { return statement + ";\n"; }
+
+}// namespace NES::Nautilus::CodeGen::CPP

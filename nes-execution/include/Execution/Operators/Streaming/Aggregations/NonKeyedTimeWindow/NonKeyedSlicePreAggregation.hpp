@@ -37,6 +37,8 @@ class NonKeyedSlicePreAggregation : public ExecutableOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
+    const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& getAggregationFunctions() const;
+
   private:
     const uint64_t operatorHandlerIndex;
     const TimeFunctionPtr timeFunction;
