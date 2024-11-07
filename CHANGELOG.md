@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.192](https://github.com/nebulastream/nebulastream/tree/v0.6.192) (2024-11-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.191...v0.6.192)
+
+**Implemented enhancements:**
+
+- \[TASK\] Kernel generation and compilation [\#4879](https://github.com/nebulastream/nebulastream/issues/4879)
+
 ## [v0.6.191](https://github.com/nebulastream/nebulastream/tree/v0.6.191) (2024-11-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.190...v0.6.191)
