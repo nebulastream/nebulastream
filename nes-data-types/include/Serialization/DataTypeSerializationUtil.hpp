@@ -51,20 +51,5 @@ public:
     * @return DataTypePtr
     */
     static DataTypePtr deserializeDataType(const SerializableDataType& serializedDataType);
-
-    /**
-     * @brief Serializes a value type and all its children to a SerializableDataValue object.
-     * @param valueType The data value type.
-     * @param serializedDataValue The corresponding protobuff object, which is used to capture the state of the object.
-     * @return the modified serializedDataValue
-     */
-    static SerializableDataValue* serializeBasicValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
-
-    /**
-    * @brief De-serializes the SerializableDataValue and all its children to a ValueTypePtr
-    * @param serializedDataValue the serialized data value type.
-    * @return ValueTypePtr
-    */
-    static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
 }

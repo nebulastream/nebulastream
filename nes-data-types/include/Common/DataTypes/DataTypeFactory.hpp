@@ -154,36 +154,6 @@ public:
     static DataTypePtr createChar();
 
     /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param type the data type of this value
-     * @param value the value as a string
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param type the data type as a BasicType
-     * @param value the value as a string
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(BasicType type, std::string value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param value the value as a uint64_t
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(uint64_t value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param value the value as a int64_t
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(int64_t value);
-
-    /**
      * @brief Create a data type from a BasicType, this many is used to support the old type system API.
      * @deprecated This function may be removed in the future.
      * @param type

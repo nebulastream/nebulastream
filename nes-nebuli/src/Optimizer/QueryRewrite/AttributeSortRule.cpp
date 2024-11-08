@@ -134,9 +134,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NES::NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -145,9 +143,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -243,9 +239,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -254,9 +248,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -358,9 +350,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -369,9 +359,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -456,9 +444,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -467,9 +453,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -670,13 +654,7 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctio
     {
         return Util::as<NodeFunctionFieldAccess>(startPoint)->getFieldName();
     }
-    const ValueTypePtr& constantValue = Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
-    if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
-    {
-        return basicValueType->value;
-    }
-
-    NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
+    return Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
 }
 
 }
