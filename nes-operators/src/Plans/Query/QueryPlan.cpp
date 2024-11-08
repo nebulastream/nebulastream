@@ -155,7 +155,7 @@ std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() const
     return visitedOperators;
 }
 
-bool QueryPlan::hasOperatorWithId(OperatorId operatorId)
+bool QueryPlan::hasOperatorWithId(OperatorId operatorId) const
 {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     if (getOperatorWithOperatorId(operatorId))
@@ -351,13 +351,15 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
     return operatorsBetween;
 }
 
-bool QueryPlan::compare(const QueryPlanPtr& otherPlan)
+bool QueryPlan::compare(const QueryPlanPtr& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
     auto rightRootOperators = otherPlan->getRootOperators();
 
     if (leftRootOperators.size() != rightRootOperators.size())
+    {
         return false;
+    }
 
     /// add all root-operators to stack
     std::stack<std::pair<OperatorPtr, OperatorPtr>> stack;
@@ -391,7 +393,9 @@ bool QueryPlan::compare(const QueryPlanPtr& otherPlan)
 
         /// comparison of both operators
         if (!leftOperator->equal(rightOperator))
+        {
             return false;
+        }
     }
     return true;
 }

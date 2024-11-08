@@ -93,7 +93,7 @@ public:
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
         NodeFunctionPtr joinFunction,
-        const Windowing::WindowTypePtr& windowType,
+        Windowing::WindowTypePtr windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
     /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
@@ -109,7 +109,7 @@ public:
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, Windowing::WindowTypePtr windowType);
 
 private:
     /**
@@ -118,7 +118,7 @@ private:
      * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
      * @return nodeFunction as NodeFunctionFieldAccess
      */
-    static std::shared_ptr<NodeFunctionFieldAccess> checkFunction(NodeFunctionPtr function, std::string side);
+    static std::shared_ptr<NodeFunctionFieldAccess> asIfNodeFunctionFieldAccess(NodeFunctionPtr function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources

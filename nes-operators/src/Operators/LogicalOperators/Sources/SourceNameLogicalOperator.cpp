@@ -51,10 +51,7 @@ bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
 
 std::string SourceNameLogicalOperator::toString() const
 {
-    std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ")";
-
-    return ss.str();
+    return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
 }
 
 bool SourceNameLogicalOperator::inferSchema()

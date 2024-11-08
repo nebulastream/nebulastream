@@ -43,9 +43,11 @@ bool LogicalJoinOperator::isIdentical(NodePtr const& rhs) const
 
 std::string LogicalJoinOperator::toString() const
 {
-    std::stringstream ss;
-    ss << "Join(" << id << ")";
-    return ss.str();
+    return fmt::format(
+        "Join({}, windowType = {}, joinFunction = {})",
+        id,
+        joinDefinition->getWindowType()->toString(),
+        joinDefinition->getJoinFunction()->toString());
 }
 
 Join::LogicalJoinDescriptorPtr LogicalJoinOperator::getJoinDefinition() const
@@ -213,7 +215,7 @@ bool LogicalJoinOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<LogicalJoinOperator>(rhs))
     {
-        auto rhsJoin = NES::Util::as<LogicalJoinOperator>(rhs);
+        const auto rhsJoin = NES::Util::as<LogicalJoinOperator>(rhs);
         return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
             && joinDefinition->getJoinFunction()->equal(rhsJoin->joinDefinition->getJoinFunction())
             && joinDefinition->getOutputSchema()->equals(rhsJoin->joinDefinition->getOutputSchema())
