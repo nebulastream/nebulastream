@@ -1,0 +1,67 @@
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      head_sha:
+        type: string
+        required: true
+        description: "commit sha of head"
+      base_sha:
+        type: string
+        required: true
+        description: "commit sha of base"
+      number_of_commits:
+        type: number
+        required: false
+        default: 0
+
+jobs:
+  check-clang-tidy:
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
+      options: --user root
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+        GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.number_of_commits }}
+      - name: Configure NebulaStream for Clang-Tidy
+        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      # We need to build the project, as some headers are only created during the build.
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Create results directory
+        run: mkdir clang-tidy-result
+      - name: Clang-Tidy Precheck
+        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -config-file .clang-tidy-pre-check -j $(nproc)
+      - name: Analyze by running Clang-Tidy
+        run: git diff -U0 ${{ inputs.base_sha }} -- ':!*.inc' | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -config-file .clang-tidy -j $(nproc)
+      - name: Upload Clang-Tidy Results
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: warn
+          name: clang-tidy-result
+          path: clang-tidy-result
+      - name: Run clang-tidy-pr-comments action
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: platisd/clang-tidy-pr-comments@v1
+        with:
+          github_token: ${{ github.token }}
+          clang_tidy_fixes: clang-tidy-result/fixes.yml
+          request_changes: false
+          # Optionally set the number of comments per review to avoid GitHub API timeouts for heavily loaded pull requests
+          suggestions_per_comment: 100
+          # As we are running it in a docker, we need to set the repo path prefix to /__w
+          # This is mentioned in https://github.com/platisd/clang-tidy-pr-comments/blob/master/action.yml
+          repo_path_prefix: /__w
