@@ -15,9 +15,13 @@
 #pragma once
 
 #include <list>
-#include <map>
+#include <memory>
 #include <string>
-#include <API/QueryAPI.hpp>
+#include <utility>
+#include <vector>
+#include <API/Query.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES::Parsers
@@ -26,7 +30,7 @@ namespace NES::Parsers
 
 /// This class represents the results from parsing the ANTLR AST tree
 /// Attributes of this class represent the different clauses and a merge into a query after parsing the AST
-enum AntlrSQLWindowType
+enum class AntlrSQLWindowType
 {
     NO_WINDOW,
     WINDOW_SLIDING,
@@ -35,10 +39,9 @@ enum AntlrSQLWindowType
 };
 class AntlrSQLHelper
 {
-private:
-    std::vector<std::shared_ptr<NES::NodeFunction>> projectionFields;
-    std::list<std::shared_ptr<NES::NodeFunction>> whereClauses;
-    std::list<std::shared_ptr<NES::NodeFunction>> havingClauses;
+    std::vector<std::shared_ptr<NodeFunction>> projectionFields;
+    std::list<std::shared_ptr<NodeFunction>> whereClauses;
+    std::list<std::shared_ptr<NodeFunction>> havingClauses;
     std::string source;
 
 public:
@@ -64,41 +67,44 @@ public:
 
     /// Containers that hold state of specific objects that we create during parsing.
     std::shared_ptr<Windowing::WindowType> windowType;
-    std::vector<WindowAggregationDescriptorPtr> windowAggs;
-    std::vector<std::shared_ptr<NES::NodeFunction>> projections;
+    std::vector<Windowing::WindowAggregationDescriptorPtr> windowAggs;
+    std::vector<std::shared_ptr<NodeFunction>> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
-    std::vector<std::shared_ptr<NES::NodeFunction>> expressionBuilder;
-    std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> mapBuilder;
-    std::vector<std::shared_ptr<NES::NodeFunctionFieldAccess>> groupByFields;
-    std::vector<std::pair<std::shared_ptr<NES::NodeFunction>, std::shared_ptr<NES::NodeFunction>>> joinKeys;
+    std::vector<std::shared_ptr<NodeFunction>> expressionBuilder;
+    std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
+    std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;
     std::vector<std::string> joinSources;
-    std::vector<std::shared_ptr<NES::NodeFunction>> joinKeyRelationHelper;
+    std::shared_ptr<NodeFunction> joinFunction;
+    std::vector<std::shared_ptr<NodeFunction>> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
+    Join::LogicalJoinDescriptor::JoinType joinType;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     std::string opBoolean;
     std::string opValue;
     std::string newSourceName;
-    std::string timestamp = "timestamp";
+    std::string timestamp;
 
     /// Utility variables used to keep track of the parsing state.
-    int size = -1;
+    int size;
+    int advanceBy;
     std::string timeUnit;
+    std::string timeUnitAdvanceBy;
     int minimumCount = -1;
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
-    const std::list<std::shared_ptr<NES::NodeFunction>>& getWhereClauses() const;
-    const std::list<std::shared_ptr<NES::NodeFunction>>& getHavingClauses() const;
-    const std::vector<std::shared_ptr<NES::NodeFunction>>& getProjectionFields() const;
-    void addWhereClause(std::shared_ptr<NES::NodeFunction> expressionNode);
-    void addHavingClause(std::shared_ptr<NES::NodeFunction> expressionNode);
-    void addProjectionField(std::shared_ptr<NES::NodeFunction> expressionNode);
-    const NES::Windowing::WindowTypePtr getWindowType() const;
+    const std::list<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
+    const std::list<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
+    const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
+    void addWhereClause(std::shared_ptr<NodeFunction> expressionNode);
+    void addHavingClause(std::shared_ptr<NodeFunction> expressionNode);
+    void addProjectionField(std::shared_ptr<NodeFunction> expressionNode);
+    const Windowing::WindowTypePtr getWindowType() const;
     void setSource(std::string sourceName);
     const std::string getSource() const;
-    void addMapExpression(std::shared_ptr<NES::NodeFunctionFieldAssignment> expressionNode);
-    std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> getMapExpressions() const;
-    void setMapExpressions(std::vector<std::shared_ptr<NES::NodeFunctionFieldAssignment>> expressions);
+    void addMapExpression(std::shared_ptr<NodeFunctionFieldAssignment> expressionNode);
+    std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> getMapExpressions() const;
+    void setMapExpressions(std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> expressions);
 };
 }
