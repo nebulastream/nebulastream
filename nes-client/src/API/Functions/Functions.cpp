@@ -30,61 +30,57 @@ namespace NES
 {
 
 FunctionItem::FunctionItem(int8_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint8_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt8(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int16_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt16(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt16(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint16_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int32_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt32(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint32_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt32(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt32(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(int64_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createInt64(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(uint64_t value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createUInt64(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(float value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createFloat(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createFloat(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(double value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createDouble(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createDouble(), std::to_string(value)))
 {
 }
 
 FunctionItem::FunctionItem(bool value)
-    : FunctionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createBoolean(), std::to_string(value)))
-{
-}
-
-FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(NodeFunctionConstantValue::create(std::move(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createBoolean(), std::to_string(value)))
 {
 }
 

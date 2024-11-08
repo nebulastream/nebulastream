@@ -18,11 +18,11 @@
 
 namespace NES
 {
-NodeFunctionConstantValue::NodeFunctionConstantValue(ValueTypePtr const& constantValue)
-    : NodeFunction(constantValue->dataType, "ConstantValue"), constantValue(constantValue) {};
+NodeFunctionConstantValue::NodeFunctionConstantValue(const DataTypePtr& type, std::string&& value)
+    : NodeFunction(type, "ConstantValue"), constantValue(std::move(value)) {}
 
 NodeFunctionConstantValue::NodeFunctionConstantValue(const NodeFunctionConstantValue* other)
-    : NodeFunction(other->constantValue->dataType, "ConstantValue"), constantValue(other->constantValue)
+    : NodeFunction(other->getStamp(), "ConstantValue"), constantValue(other->constantValue)
 {
 }
 
@@ -31,22 +31,22 @@ bool NodeFunctionConstantValue::equal(NodePtr const& rhs) const
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {
         auto otherConstantValueNode = Util::as<NodeFunctionConstantValue>(rhs);
-        return otherConstantValueNode->constantValue->isEquals(constantValue);
+        return otherConstantValueNode->stamp->equals(stamp) && constantValue == otherConstantValueNode->constantValue;
     }
     return false;
 }
 
 std::string NodeFunctionConstantValue::toString() const
 {
-    return "ConstantValue(" + constantValue->toString() + ")";
+    return "ConstantValue(" + constantValue + ")";
 }
 
-NodeFunctionPtr NodeFunctionConstantValue::create(ValueTypePtr const& constantValue)
+NodeFunctionPtr NodeFunctionConstantValue::create(const DataTypePtr& type, std::string&& value)
 {
-    return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(constantValue));
+    return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
 }
 
-ValueTypePtr NodeFunctionConstantValue::getConstantValue() const
+std::string NodeFunctionConstantValue::getConstantValue() const
 {
     return constantValue;
 }

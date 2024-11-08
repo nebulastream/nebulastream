@@ -53,7 +53,6 @@ public:
     FunctionItem(float value); ///NOLINT(google-explicit-constructor)
     FunctionItem(double value); ///NOLINT(google-explicit-constructor)
     FunctionItem(bool value); ///NOLINT(google-explicit-constructor)
-    FunctionItem(ValueTypePtr value); ///NOLINT(google-explicit-constructor)
     FunctionItem(NodeFunctionPtr exp);
 
     FunctionItem(FunctionItem const&) = default;

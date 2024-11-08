@@ -132,39 +132,4 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
                             "Deserialization is not possible");
 }
 
-SerializableDataValue*
-DataTypeSerializationUtil::serializeBasicValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue)
-{
-    /// serialize all information for basic value types
-    /// 1. cast to BasicValueType
-    auto const basicValueType = std::dynamic_pointer_cast<BasicValue>(valueType);
-    PRECONDITION(basicValueType, "valueType argument must be a BasicValue");
-    /// 2. create basic value details
-    auto serializedBasicValue = SerializableDataValue_BasicValue();
-    /// 3. copy value
-    serializedBasicValue.set_value(basicValueType->value);
-    serializeDataType(basicValueType->dataType, serializedBasicValue.mutable_type());
-    /// 4. serialize basic type
-    serializedDataValue->mutable_value()->PackFrom(serializedBasicValue);
-    NES_TRACE("DataTypeSerializationUtil:: serialized {} as {} ", valueType->toString(), serializedDataValue->DebugString());
-    return serializedDataValue;
-}
-
-ValueTypePtr DataTypeSerializationUtil::deserializeDataValue(const SerializableDataValue& serializedDataValue)
-{
-    /// de-serialize data value
-    NES_TRACE("DataTypeSerializationUtil:: de-serialized {}", serializedDataValue.DebugString());
-    const auto& dataValue = serializedDataValue.value();
-    if (dataValue.Is<SerializableDataValue_BasicValue>())
-    {
-        auto serializedBasicValue = SerializableDataValue_BasicValue();
-        dataValue.UnpackTo(&serializedBasicValue);
-
-        auto const dataTypePtr = deserializeDataType(serializedBasicValue.type());
-        return DataTypeFactory::createBasicValue(dataTypePtr, serializedBasicValue.value());
-    }
-    NES_THROW_RUNTIME_ERROR(
-        "DataTypeSerializationUtil: deserialization of value type is not possible: " << serializedDataValue.DebugString());
-}
-
 }

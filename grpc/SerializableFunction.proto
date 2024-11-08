@@ -31,7 +31,7 @@ The serializable wrapper definition for function nodes
  */
  message SerializableFunction {
    message FunctionConstantValue{
-    SerializableDataValue value = 1;
+    string value = 1;
   }
    message FunctionFieldAccess{
     string fieldName = 1;
