@@ -13,6 +13,7 @@
 */
 
 #include <iostream>
+#include <memory>
 #include <utility>
 
 #include <API/AttributeField.hpp>
@@ -109,7 +110,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     QueryPlanPtr leftQueryPlan,
     QueryPlanPtr rightQueryPlan,
     NodeFunctionPtr joinFunction,
-    Windowing::WindowTypePtr windowType,
+    const std::shared_ptr<Windowing::WindowType>& windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
     NES_DEBUG("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
@@ -135,7 +136,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
                     if (NES::Util::instanceOf<NodeFunctionConstantValue>(onLeftKey)
                         || NES::Util::instanceOf<NodeFunctionConstantValue>(onRightKey))
                     {
-                        throw Exceptions::RuntimeException("use .filter() for your expression.");
+                        throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
                     }
                     auto leftKeyFieldAccess = asNodeFunctionFieldAccess(onLeftKey, "leftSide");
                     auto rightQueryPlanKeyFieldAccess = asNodeFunctionFieldAccess(onRightKey, "rightSide");
@@ -236,7 +237,7 @@ QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, Que
     return leftQueryPlan;
 }
 
-std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::asNodeFunctionFieldAccess(NodeFunctionPtr function, std::string side)
+std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::asNodeFunctionFieldAccess(const NodeFunctionPtr& function, std::string side)
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
     {
