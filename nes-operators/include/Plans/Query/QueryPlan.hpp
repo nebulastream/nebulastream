@@ -113,7 +113,7 @@ public:
 
     /// @note: This method only check if there exists another operator with same Id or not.
     /// @note: The system generated operators are ignored from this check.
-    bool hasOperatorWithId(OperatorId operatorId);
+    [[nodiscard]] bool hasOperatorWithId(OperatorId operatorId) const;
 
     OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
@@ -146,12 +146,12 @@ public:
 
     /// Comparison to another plan and its children nodes by tree traversal.
     /// @return true, if this and other plan are equal in their structure and operators, false else
-    bool compare(const QueryPlanPtr& otherPlan);
+    [[nodiscard]] bool compare(const QueryPlanPtr& otherPlan) const;
 
 private:
     /// Find operators between source and target operators
     /// @return empty or operators between source and target operators
-    std::set<OperatorPtr>
+    static std::set<OperatorPtr>
     findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator, const std::set<OperatorPtr>& targetOperators);
 
     std::vector<OperatorPtr> rootOperators{};
