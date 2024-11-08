@@ -1,6 +1,5 @@
 name: Compile Time Regression
 
-# This workflow is triggered every night at 3:30 AM UTC.
 # We measure the compile time of a clean uncached rebuild of NebulaStream and apply Clang Build Analyzer to collect
 # statistics on the heavy hitter.
 # The workflow can be manually dispatched on demand for any branch, while the nightly version always builds the main
@@ -8,24 +7,20 @@ name: Compile Time Regression
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        default: "main"
-        description: "which branch to use"
-  schedule:
-    - cron: '30 3 * * *' # gets executed every night at 2:30 AM UTC
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        required: true
+        description: "target commit"
+        type: string
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ inputs.branch || 'main' }}
-
   compile-time-regression:
-    needs: [ get-dev-images ]
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     env:
@@ -37,10 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch || 'main' }}
+          ref: ${{ inputs.ref }}
       - name: analyze-build
         run: |
-          echo "# Compile Time Summary for branch ${{ inputs.branch || 'main' }}" >> $GITHUB_STEP_SUMMARY
+          echo "# Compile Time Summary for branch ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
           echo '## CMake Configuration Time' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -B build" 2>> $GITHUB_STEP_SUMMARY

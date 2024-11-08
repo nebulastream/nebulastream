@@ -1,33 +1,28 @@
 name: Clang-Tidy
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      branch:
-        default: "main"
-        description: "Target Branch"
-        required: false
-  schedule:
-    - cron: '30 4 * * *' # gets executed every night at 6:30 AM CEST
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        required: true
+        description: "target commit"
+        type: string
 
 jobs:
-  get-dev-images:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ inputs.branch || 'main' }}
-
   clang-tidy-full:
-    needs: [ get-dev-images ]
     runs-on: [ self-hosted, linux, Build ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch || 'main' }}
+          ref: ${{ inputs.ref }}
       - name: Configure CMake
         run: cmake -B build
       - name: Generate grpc headers

@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image of the head commit"
+      head_sha:
+        type: string
+        required: true
+        description: "commit sha of head"
+      base_sha:
+        type: string
+        required: true
+        description: "commit sha of base"
+      number_of_commits:
+        type: number
+        required: false
+        default: 0
+
+jobs:
+  check-format:
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BASE_REF: ${{ inputs.base_sha }}
+    permissions:
+      issues: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.number_of_commits }}
+      - name: Check Format
+        run: ./scripts/format.sh

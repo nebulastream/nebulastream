@@ -11,24 +11,31 @@ on:
   # We are expecting the tag of the docker image to be passed as an output from the previous job.
   workflow_call:
     inputs:
-      tag_pr:
+      base_dev_image_tag:
         required: true
         type: string
-
+        description: "Docker image tag of the development image of the base branch"
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image of the head commit"
+      head_sha:
+        required: true
+        type: string
+        description: "Commit sha of head"
+      base_sha:
+        required: true
+        type: string
+        description: "Commit sha of base"
+      number_of_commits:
+        required: false
+        default: 0
+        type: number
 jobs:
 
-  # We are getting the image tag from the previous job, as this workflow is triggered by another workflow call
-  # But we still need the image tag for the ref branch, so we call get-dev-images here.
-  get-dev-images-ref:
-    uses: ./.github/workflows/get_dev_images.yml
-    secrets: inherit
-    with:
-      ref: ${{ github.event.pull_request.base.sha }}
-
   build-code-coverage-ref:
-    needs: [ get-dev-images-ref ]
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images-ref.outputs.image-tag }}
+      image: nebulastream/nes-development:${{ inputs.base_dev_image_tag }}
       volumes:
         - ccache:/ccache
       env:
@@ -50,7 +57,7 @@ jobs:
           cache-name: ref-cov-cache
         with:
           path: /tmp/cache/ref-coverage.lcov
-          key: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}
+          key: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}
       - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses:
           AutoModality/action-clean@v1
@@ -58,7 +65,7 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.base_ref }}
+          ref: ${{ inputs.base_sha }}
       - name: Build base coverage if not in cache
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: |
@@ -70,13 +77,12 @@ jobs:
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}.info
+          name: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}.info
           path: /tmp/cache/ref-coverage.lcov
 
   build-code-coverage-pr-branch:
     container:
-      # We get the tag from the previous job, as this workflow is triggered by another workflow call
-      image: nebulastream/nes-development:${{ inputs.tag_pr }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       volumes:
         - ccache:/ccache
       env:
@@ -97,13 +103,12 @@ jobs:
           cache-name: pr-cov-cache
         with:
           path: /tmp/cache/pr-coverage.lcov
-          key: ${{ matrix.platform }}-pr-cov-${{ github.sha }}
-      - if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
-        uses:
-          AutoModality/action-clean@v1
+          key: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}
       - name: Checkout PR Branch
         if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.number_of_commits }}
       - name: Build coverage and export as lcov if not in cache
         if: ${{ steps.pr-cov-cache.outputs.cache-hit != 'true' }}
         run: |
@@ -156,17 +161,15 @@ jobs:
         if: ${{ !cancelled() && !failure() && !github.event.act }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.platform }}-pr-cov-${{ github.sha }}.info
+          name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
           path: /tmp/cache/pr-coverage.lcov
-  
   
 
   # For now, we build the code coverage for x64 only
   build-code-coverage:
     needs: [ build-code-coverage-ref, build-code-coverage-pr-branch ]
     container:
-      # We get the tag from the previous job, as this workflow is triggered by another workflow call
-      image: nebulastream/nes-development:${{ inputs.tag_pr }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
@@ -179,11 +182,11 @@ jobs:
       - name: Downloading code coverage for ref branch
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.platform }}-ref-cov-${{ github.event.pull_request.base.sha }}.info
+          name: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}.info
       - name: Downloading code coverage for pr branch
         uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.platform }}-pr-cov-${{ github.sha }}.info
+          name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
       # Comparing the code coverage from the current branch with the base branch
       - name: Generate Code Coverage Report
         id: code-coverage
@@ -198,9 +201,9 @@ jobs:
 
   create_sticky_note:
     needs: [ build-code-coverage-ref, build-code-coverage-pr-branch ]
+    if: ${{ github.event_type == 'pull_request' }}
     container:
-      # We get the tag from the previous job, as this workflow is triggered by another workflow call
-      image: nebulastream/nes-development:${{ inputs.tag_pr }}
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
