@@ -12,8 +12,23 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <ranges>
 #include <regex>
+#include <string>
 
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+
+#include <AntlrSQLParser.h>
+#include <API/Functions/ArithmeticalFunctions.hpp>
+#include <API/Functions/Functions.hpp>
+#include <API/Functions/LogicalFunctions.hpp>
+#include <API/Query.hpp>
+#include <API/Windowing.hpp>
+#include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
@@ -21,18 +36,29 @@
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/ThresholdWindow.hpp>
+#include <Types/TumblingWindow.hpp>
+#include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+#include <ParserRuleContext.h>
 
 namespace NES::Parsers
 {
-std::string queryPlanToString(const QueryPlanPtr queryPlan)
+std::string queryPlanToString(const QueryPlanPtr& queryPlan)
 {
-    std::regex r2("[0-9]");
-    std::regex r1("  ");
+    const std::regex r2("[0-9]");
+    const std::regex r1("  ");
     std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
     queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
     return queryPlanStr;
@@ -43,22 +69,85 @@ QueryPlanPtr AntlrSQLQueryPlanCreator::getQueryPlan() const
     /// Todo #421: support multiple sinks
     return QueryPlanBuilder::addSink(std::move(sinkNames.front()), queryPlans.top());
 }
-Windowing::TimeMeasure AntlrSQLQueryPlanCreator::buildTimeMeasure(int size, const std::string& timebase)
-{
-    if (timebase == "MS")
-        return Milliseconds(size);
-    if (timebase == "SEC")
-        return Seconds(size);
-    if (timebase == "MIN")
-        return Minutes(size);
-    if (timebase == "HOUR")
-        return Hours(size);
 
-    /// default: return milliseconds
-    return Milliseconds(0);
+Windowing::TimeMeasure buildTimeMeasure(const int size, const std::string& timebase)
+{
+    if (timebase == "MS" || timebase == "ms")
+    {
+        return API::Milliseconds(size);
+    }
+    if (timebase == "SEC" || timebase == "sec")
+    {
+        return API::Seconds(size);
+    }
+    if (timebase == "MIN" || timebase == "min")
+    {
+        return API::Minutes(size);
+    }
+    if (timebase == "HOUR" || timebase == "hour" || timebase == "HOURS" || timebase == "hours")
+    {
+        return API::Hours(size);
+    }
+    if (timebase == "DAY" || timebase == "day" || timebase == "DAYS" || timebase == "days")
+    {
+        return API::Days(size);
+    }
+
+    throw InvalidQuerySyntax("Unknown time unit: {}", timebase);
 }
 
-void AntlrSQLQueryPlanCreator::poppush(AntlrSQLHelper helper)
+std::shared_ptr<NodeFunction> createFunctionFromOpBoolean(
+    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const std::string& opStr)
+{
+    if (opStr == "==" || opStr == "=")
+    {
+        return NodeFunctionEquals::create(leftFunction, rightFunction);
+    }
+    if (opStr == "!=")
+    {
+        const auto equalsExpression = NodeFunctionEquals::create(leftFunction, rightFunction);
+        return NodeFunctionNegate::create(equalsExpression);
+    }
+    if (opStr == "<")
+    {
+        return NodeFunctionLess::create(leftFunction, rightFunction);
+    }
+    if (opStr == ">")
+    {
+        return NodeFunctionGreater::create(leftFunction, rightFunction);
+    }
+    if (opStr == ">=")
+    {
+        return NodeFunctionGreaterEquals::create(leftFunction, rightFunction);
+    }
+    if (opStr == "<=")
+    {
+        return NodeFunctionLessEquals::create(leftFunction, rightFunction);
+    }
+
+    throw InvalidQuerySyntax("Unknown Comparison Operator: {}", opStr);
+}
+
+std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
+    const std::shared_ptr<NodeFunction>& leftFunction, const std::shared_ptr<NodeFunction>& rightFunction, const std::string& opStr)
+{
+    if (opStr == "AND" or opStr == "and")
+    {
+        return NodeFunctionAnd::create(leftFunction, rightFunction);
+    }
+    if (opStr == "OR" or opStr == "or")
+    {
+        return NodeFunctionOr::create(leftFunction, rightFunction);
+    }
+
+    throw InvalidQuerySyntax(
+        "Unknown binary function in SQL query for op {} and left {} and right {}",
+        opStr,
+        leftFunction->toString(),
+        rightFunction->toString());
+}
+
+void AntlrSQLQueryPlanCreator::poppush(const AntlrSQLHelper& helper)
 {
     helpers.pop();
     helpers.push(helper);
@@ -100,31 +189,34 @@ void AntlrSQLQueryPlanCreator::enterNamedExpressionSeq(AntlrSQLParser::NamedExpr
 void AntlrSQLQueryPlanCreator::exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    std::shared_ptr<NES::NodeFunction> expression;
 
-    auto rightExpression = helper.expressionBuilder.back();
-    helper.expressionBuilder.pop_back();
-    auto leftExpression = helper.expressionBuilder.back();
-    helper.expressionBuilder.pop_back();
-
-    std::string opText = context->op->getText();
-
-    if (opText == "AND")
+    if (not helper.isJoinRelation)
     {
-        expression = NES::NodeFunctionAnd::create(leftExpression, rightExpression);
-    }
-    else if (opText == "OR")
-    {
-        expression = NES::NodeFunctionOr::create(leftExpression, rightExpression);
+        const auto rightExpression = helper.expressionBuilder.back();
+        helper.expressionBuilder.pop_back();
+        const auto leftExpression = helper.expressionBuilder.back();
+        helper.expressionBuilder.pop_back();
+
+        const std::string opText = context->op->getText();
+        const auto function = createLogicalBinaryFunction(leftExpression, rightExpression, opText);
+        helper.expressionBuilder.push_back(function);
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown binary function in SQL query: {}", context->getText());
+        const auto rightExpression = helper.joinKeyRelationHelper.back();
+        helper.joinKeyRelationHelper.pop_back();
+        const auto leftExpression = helper.joinKeyRelationHelper.back();
+        helper.joinKeyRelationHelper.pop_back();
+
+        const std::string opText = context->op->getText();
+        const auto function = createLogicalBinaryFunction(leftExpression, rightExpression, opText);
+        helper.joinKeyRelationHelper.push_back(function);
+        helper.joinFunction = function;
     }
 
-    helper.expressionBuilder.push_back(expression);
     poppush(helper);
 }
+
 void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseContext* context)
 {
     NodeFunctionPtr expressionNode;
@@ -138,18 +230,21 @@ void AntlrSQLQueryPlanCreator::exitSelectClause(AntlrSQLParser::SelectClauseCont
     helpers.top().isSelect = false;
     AntlrSQLBaseListener::exitSelectClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitFromClause(AntlrSQLParser::FromClauseContext* context)
 {
     helpers.top().isFrom = false;
     AntlrSQLBaseListener::exitFromClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterWhereClause(AntlrSQLParser::WhereClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
-    AntlrSQLHelper helper = helpers.top();
+    const AntlrSQLHelper helper = helpers.top();
     poppush(helper);
     AntlrSQLBaseListener::enterWhereClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContext* context)
 {
     helpers.top().isWhereOrHaving = false;
@@ -163,23 +258,22 @@ void AntlrSQLQueryPlanCreator::exitWhereClause(AntlrSQLParser::WhereClauseContex
     poppush(helper);
     AntlrSQLBaseListener::exitWhereClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterComparisonOperator(AntlrSQLParser::ComparisonOperatorContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-
     helper.opBoolean = context->getText();
-    auto temp = context->getText();
     poppush(helper);
     AntlrSQLBaseListener::enterComparisonOperator(context);
 }
 void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBinaryContext* context)
 {
-    AntlrSQLHelper helper = helpers.top();
-    NES::NodeFunctionPtr expression;
+    auto helper = helpers.top();
+    NodeFunctionPtr expression;
 
-    auto rightExpression = helper.expressionBuilder.back();
+    const auto rightExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
-    auto leftExpression = helper.expressionBuilder.back();
+    const auto leftExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
 
     if (const std::string opText = context->op->getText(); opText == "*")
@@ -209,12 +303,13 @@ void AntlrSQLQueryPlanCreator::exitArithmeticBinary(AntlrSQLParser::ArithmeticBi
     helper.expressionBuilder.push_back(expression);
     poppush(helper);
 }
+
 void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUnaryContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    NES::NodeFunctionPtr expression;
+    NodeFunctionPtr expression;
 
-    auto innerExpression = helper.expressionBuilder.back();
+    const auto innerExpression = helper.expressionBuilder.back();
     helper.expressionBuilder.pop_back();
 
     if (const std::string opText = context->op->getText(); opText == "+")
@@ -237,9 +332,9 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
 {
     AntlrSQLHelper helper = helpers.top();
 
-    /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
-    size_t parentRuleIndex = -1;
+    /// Get Index of Parent Rule to check type of parent rule in conditions
+    const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
+    std::optional<size_t> parentRuleIndex;
     if (parentContext != nullptr)
     {
         parentRuleIndex = parentContext->getRuleIndex();
@@ -262,29 +357,28 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
 {
     AntlrSQLHelper helper = helpers.top();
 
-    /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
-    size_t parentRuleIndex = -1;
-    if (parentContext != nullptr)
+    /// Get Index of Parent Rule to check type of parent rule in conditions
+    std::optional<size_t> parentRuleIndex;
+    if (const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
     {
         parentRuleIndex = parentContext->getRuleIndex();
     }
     if (helper.isGroupBy)
     {
-        NodeFunctionFieldAccessPtr key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
+        const auto key = Util::as<NodeFunctionFieldAccess>(NodeFunctionFieldAccess::create(context->getText()));
         helper.groupByFields.push_back(key);
     }
     else if ((helper.isWhereOrHaving || helper.isSelect || helper.isWindow) && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         /// add identifiers in select, window, where and having clauses to the expression builder list
-        helper.expressionBuilder.push_back(NES::Attribute(context->getText()));
+        helper.expressionBuilder.push_back(Attribute(context->getText()));
     }
-    else if (helper.isFrom && !helper.isJoinRelation && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isFrom and not helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helper.setSource(context->getText());
     }
-    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex && !helper.isFunctionCall && !helper.isJoinRelation)
+    else if (AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex and not helper.isFunctionCall and not helper.isJoinRelation)
     {
         /// handle renames of identifiers
         if (helper.isArithmeticBinary)
@@ -293,12 +387,12 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
         }
         if ((helper.isWhereOrHaving || helper.isSelect))
         {
-            NodeFunctionPtr attr = helper.expressionBuilder.back();
+            const NodeFunctionPtr attr = helper.expressionBuilder.back();
             helper.expressionBuilder.pop_back();
             if (helper.identCountHelper == 1)
             {
                 /// rename of a single attribute
-                FunctionItem cattr = static_cast<FunctionItem>(attr);
+                auto cattr = static_cast<FunctionItem>(attr);
                 cattr = cattr.as(context->getText());
                 helper.expressionBuilder.push_back(cattr);
             }
@@ -311,24 +405,27 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             }
         }
     }
-    else if (helper.isFunctionCall && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isFunctionCall and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         auto aggFunc = helper.windowAggs.back();
         helper.windowAggs.pop_back();
         aggFunc = aggFunc->as(Attribute(context->getText()));
         helper.windowAggs.push_back(aggFunc);
     }
-    else if (helper.isJoinRelation && AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
+    else if (helper.isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
     {
         helper.joinKeyRelationHelper.push_back(Attribute(context->getText()));
     }
-    else if (helper.isJoinRelation && AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (helper.isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         helper.joinSources.push_back(context->getText());
     }
+    else if (helper.isJoinRelation and AntlrSQLParser::RuleTableAlias == parentRuleIndex)
+    {
+        helper.joinSourceRenames.push_back(context->getText());
+    }
     poppush(helper);
 }
-
 
 void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
@@ -340,8 +437,8 @@ void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryCon
     AntlrSQLHelper helper;
 
     /// Get Index of  Parent Rule to check type of parent rule in conditions
-    auto parentContext = static_cast<AntlrSQLParser::IdentifierContext*>(context->parent);
-    size_t parentRuleIndex = -1;
+    const auto parentContext = static_cast<antlr4::ParserRuleContext*>(context->parent);
+    std::optional<size_t> parentRuleIndex;
     if (parentContext != nullptr)
     {
         parentRuleIndex = parentContext->getRuleIndex();
@@ -426,12 +523,29 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
 
     AntlrSQLBaseListener::exitWindowClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterTimeUnit(AntlrSQLParser::TimeUnitContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    helper.timeUnit = context->getText();
+    /// Get Index of Parent Rule to check type of parent rule in conditions
+    std::optional<size_t> parentRuleIndex;
+    if (const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)
+    {
+        parentRuleIndex = parentContext->getRuleIndex();
+    }
+
+    if (parentRuleIndex == AntlrSQLParser::RuleAdvancebyParameter)
+    {
+        helper.timeUnitAdvanceBy = context->getText();
+    }
+    else
+    {
+        helper.timeUnit = context->getText();
+    }
+
     poppush(helper);
 }
+
 void AntlrSQLQueryPlanCreator::exitSizeParameter(AntlrSQLParser::SizeParameterContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -440,30 +554,58 @@ void AntlrSQLQueryPlanCreator::exitSizeParameter(AntlrSQLParser::SizeParameterCo
 
     AntlrSQLBaseListener::exitSizeParameter(context);
 }
+
+void AntlrSQLQueryPlanCreator::exitAdvancebyParameter(AntlrSQLParser::AdvancebyParameterContext* context)
+{
+    AntlrSQLHelper helper = helpers.top();
+    helper.advanceBy = std::stoi(context->children[2]->getText());
+    poppush(helper);
+    AntlrSQLBaseListener::exitAdvancebyParameter(context);
+}
+
 void AntlrSQLQueryPlanCreator::exitTimestampParameter(AntlrSQLParser::TimestampParameterContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
     helper.timestamp = context->getText();
     poppush(helper);
 }
+
 /// WINDOWS
 void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindowContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
-    helper.windowType = Windowing::TumblingWindow::of(EventTime(Attribute(helper.timestamp)), timeMeasure);
+    const Windowing::TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
+    /// We use the ingestion time if no timestamp is specified
+    if (helper.timestamp.empty())
+    {
+        helper.windowType = Windowing::TumblingWindow::of(API::IngestionTime(), timeMeasure);
+    }
+    else
+    {
+        helper.windowType = Windowing::TumblingWindow::of(API::EventTime(Attribute(helper.timestamp)), timeMeasure);
+    }
     poppush(helper);
     AntlrSQLBaseListener::exitTumblingWindow(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitSlidingWindow(AntlrSQLParser::SlidingWindowContext* context)
 {
-    AntlrSQLHelper helper = helpers.top();
-    TimeMeasure timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
-    TimeMeasure slidingLength = buildTimeMeasure(1, helper.timeUnit);
-    helper.windowType = Windowing::SlidingWindow::of(EventTime(Attribute(helper.timestamp)), timeMeasure, slidingLength);
+    auto helper = helpers.top();
+    const auto timeMeasure = buildTimeMeasure(helper.size, helper.timeUnit);
+    const auto slidingLength = buildTimeMeasure(helper.advanceBy, helper.timeUnitAdvanceBy);
+    /// We use the ingestion time if no timestamp is specified
+    if (helper.timestamp.empty())
+    {
+        helper.windowType = Windowing::SlidingWindow::of(API::IngestionTime(), timeMeasure, slidingLength);
+    }
+    else
+    {
+        helper.windowType = Windowing::SlidingWindow::of(API::EventTime(Attribute(helper.timestamp)), timeMeasure, slidingLength);
+    }
     poppush(helper);
     AntlrSQLBaseListener::exitSlidingWindow(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::ThresholdBasedWindowContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -479,6 +621,7 @@ void AntlrSQLQueryPlanCreator::exitThresholdBasedWindow(AntlrSQLParser::Threshol
     poppush(helper);
     AntlrSQLBaseListener::exitThresholdBasedWindow(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -486,6 +629,7 @@ void AntlrSQLQueryPlanCreator::enterNamedExpression(AntlrSQLParser::NamedExpress
     poppush(helper);
     AntlrSQLBaseListener::enterNamedExpression(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressionContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -516,6 +660,7 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 
     AntlrSQLBaseListener::exitNamedExpression(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -523,20 +668,22 @@ void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallCon
     poppush(helper);
     AntlrSQLBaseListener::enterFunctionCall(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = true;
-    AntlrSQLHelper helper = helpers.top();
+    const AntlrSQLHelper helper = helpers.top();
     poppush(helper);
     AntlrSQLBaseListener::enterHavingClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseContext* context)
 {
     helpers.top().isWhereOrHaving = false;
     AntlrSQLHelper helper = helpers.top();
     if (helper.expressionBuilder.size() != 1)
     {
-        throw InvalidQuerySyntax("There were more than 1 functions in the expressionBuilder in exitWhereClause.");
+        throw InvalidQuerySyntax("There was more than one function in the expressionBuilder in exitWhereClause.");
     }
     helper.addHavingClause(helper.expressionBuilder.back());
     helper.expressionBuilder.clear();
@@ -546,52 +693,128 @@ void AntlrSQLQueryPlanCreator::exitHavingClause(AntlrSQLParser::HavingClauseCont
 
 void AntlrSQLQueryPlanCreator::exitComparison(AntlrSQLParser::ComparisonContext* context)
 {
-    AntlrSQLHelper helper = helpers.top();
-    NES::NodeFunctionPtr expression;
-    if (!helper.isJoinRelation)
+    if (auto helper = helpers.top(); not helper.isJoinRelation)
     {
         INVARIANT(helper.expressionBuilder.size() >= 2, "Requires two expressions")
-        auto rightExpression = helper.expressionBuilder.back();
+        const auto rightExpression = helper.expressionBuilder.back();
         helper.expressionBuilder.pop_back();
-        auto leftExpression = helper.expressionBuilder.back();
+        const auto leftExpression = helper.expressionBuilder.back();
         helper.expressionBuilder.pop_back();
-        std::string op = context->children.at(1)->getText();
-        if (op == "==" || op == "=")
-        {
-            expression = NES::NodeFunctionEquals::create(leftExpression, rightExpression);
-        }
-        else if (op == "!=")
-        {
-            const auto equalsExpression = NES::NodeFunctionEquals::create(leftExpression, rightExpression);
-            expression = NES::NodeFunctionNegate::create(equalsExpression);
-        }
-        else
-        {
-            throw InvalidQuerySyntax("Unknown Comparison Operator: {}", op);
-        }
-        helper.expressionBuilder.push_back(expression);
+
+        const auto function = createFunctionFromOpBoolean(leftExpression, rightExpression, helper.opBoolean);
+        helper.expressionBuilder.push_back(function);
         poppush(helper);
     }
-    AntlrSQLBaseListener::enterComparison(context);
+    else
+    {
+        INVARIANT(helper.joinKeyRelationHelper.size() >= 2, "Requires two expressions but got {}", helper.joinKeyRelationHelper.size());
+        const auto rightExpression = helper.joinKeyRelationHelper.back();
+        helper.joinKeyRelationHelper.pop_back();
+        const auto leftExpression = helper.joinKeyRelationHelper.back();
+        helper.joinKeyRelationHelper.pop_back();
+        const auto function = createFunctionFromOpBoolean(leftExpression, rightExpression, helper.opBoolean);
+        helper.joinKeyRelationHelper.push_back(function);
+        helper.joinFunction = function;
+        poppush(helper);
+    }
+    AntlrSQLBaseListener::exitComparison(context);
 }
+
 void AntlrSQLQueryPlanCreator::enterJoinRelation(AntlrSQLParser::JoinRelationContext* context)
 {
-    AntlrSQLHelper helper = helpers.top();
+    auto helper = helpers.top();
     helper.joinKeyRelationHelper.clear();
     helper.isJoinRelation = true;
     poppush(helper);
     AntlrSQLBaseListener::enterJoinRelation(context);
 }
+
+void AntlrSQLQueryPlanCreator::enterJoinCriteria(AntlrSQLParser::JoinCriteriaContext* context)
+{
+    if (const auto helper = helpers.top(); not helper.isJoinRelation)
+    {
+        throw InvalidQuerySyntax("Join type must be inside a join relation.");
+    }
+    AntlrSQLBaseListener::enterJoinCriteria(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterJoinType(AntlrSQLParser::JoinTypeContext* context)
+{
+    if (const auto helper = helpers.top(); not helper.isJoinRelation)
+    {
+        throw InvalidQuerySyntax("Join type must be inside a join relation.");
+    }
+    AntlrSQLBaseListener::enterJoinType(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* context)
+{
+    auto helper = helpers.top();
+    if (const auto joinType = context->getText(); joinType == "INNER" || joinType == "inner" || joinType.empty())
+    {
+        helper.joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
+    }
+    else
+    {
+        throw InvalidQuerySyntax("Unknown join type: {}", joinType);
+    }
+    poppush(helper);
+    AntlrSQLBaseListener::exitJoinType(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
+{
+    auto helper = helpers.top();
+    helper.isJoinRelation = false;
+    if (helper.joinSources.size() == helper.joinSourceRenames.size() + 1)
+    {
+        helper.joinSourceRenames.emplace_back("");
+    }
+
+    /// we assume that the left query plan is the first element in the queryPlans vector and the right query plan is the second element
+    INVARIANT(helper.queryPlans.size() == 2, "Join relation requires exactly two subqueries, but got {}", helper.queryPlans.size());
+    const auto leftQueryPlan = helper.queryPlans[0];
+    const auto rightQueryPlan = helper.queryPlans[1];
+    helper.queryPlans.clear();
+
+    const auto queryPlan
+        = QueryPlanBuilder::addJoin(leftQueryPlan, rightQueryPlan, helper.joinFunction, helper.windowType, helper.joinType);
+    if (!helpers.empty())
+    {
+        /// we are in a subquery
+        helper.queryPlans.push_back(queryPlan);
+        poppush(helper);
+    }
+    else
+    {
+        /// for now, we will never enter this branch, because we always have a subquery
+        /// as we require the join relations to always be a sub-query
+        queryPlans.push(queryPlan);
+    }
+
+    poppush(helper);
+    AntlrSQLBaseListener::exitJoinRelation(context);
+}
+
 void AntlrSQLQueryPlanCreator::exitLogicalNot(AntlrSQLParser::LogicalNotContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    NES::NodeFunctionPtr expression;
 
-    auto innerExpression = helper.expressionBuilder.back();
-    helper.expressionBuilder.pop_back();
-
-    expression = !innerExpression;
-    helper.expressionBuilder.push_back(expression);
+    if (not helper.isJoinRelation)
+    {
+        const auto innerExpression = helper.expressionBuilder.back();
+        helper.expressionBuilder.pop_back();
+        const auto expression = !innerExpression;
+        helper.expressionBuilder.push_back(expression);
+    }
+    else
+    {
+        const auto innerFunction = helper.joinKeyRelationHelper.back();
+        helper.joinKeyRelationHelper.pop_back();
+        const auto negatedFunction = !helper.joinFunction;
+        helper.joinKeyRelationHelper.push_back(negatedFunction);
+        helper.joinFunction = negatedFunction;
+    }
     poppush(helper);
     AntlrSQLBaseListener::exitLogicalNot(context);
 }
@@ -654,15 +877,11 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         }
     }
     const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
-    auto constFunctionItem = FunctionItem(NES::NodeFunctionConstantValue::create(valueType));
+    auto constFunctionItem = FunctionItem(NodeFunctionConstantValue::create(valueType));
     helper.expressionBuilder.push_back(constFunctionItem);
     poppush(helper);
 }
 
-void AntlrSQLQueryPlanCreator::exitRealIdent(AntlrSQLParser::RealIdentContext* context)
-{
-    AntlrSQLBaseListener::exitRealIdent(context);
-}
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -706,6 +925,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     }
     poppush(helper);
 }
+
 void AntlrSQLQueryPlanCreator::exitThresholdMinSizeParameter(AntlrSQLParser::ThresholdMinSizeParameterContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -720,25 +940,6 @@ void AntlrSQLQueryPlanCreator::enterValueExpressionDefault(AntlrSQLParser::Value
     poppush(helper);
     AntlrSQLBaseListener::enterValueExpressionDefault(context);
 }
-void AntlrSQLQueryPlanCreator::exitJoinRelation(AntlrSQLParser::JoinRelationContext* context)
-{
-    AntlrSQLHelper helper = helpers.top();
-    helper.isJoinRelation = false;
-    if (helper.joinKeyRelationHelper.size() >= 2)
-    {
-        helper.joinKeys.emplace_back(helper.joinKeyRelationHelper[0], helper.joinKeyRelationHelper[1]);
-    }
-    else
-    {
-        throw InvalidQuerySyntax("Join keys must be specified explicitly.");
-    }
-    if (helper.joinSources.size() == helper.joinSourceRenames.size() + 1)
-    {
-        helper.joinSourceRenames.emplace_back("");
-    }
-    poppush(helper);
-    AntlrSQLBaseListener::exitJoinRelation(context);
-}
 
 void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationContext* context)
 {
@@ -747,11 +948,11 @@ void AntlrSQLQueryPlanCreator::exitSetOperation(AntlrSQLParser::SetOperationCont
         throw InvalidQuerySyntax("Union does not have sufficient amount of QueryPlans for unifying.");
     }
 
-    auto rightQuery = queryPlans.top();
+    const auto rightQuery = queryPlans.top();
     queryPlans.pop();
-    auto leftQuery = queryPlans.top();
+    const auto leftQuery = queryPlans.top();
     queryPlans.pop();
-    auto queryPlan = QueryPlanBuilder::addUnion(leftQuery, rightQuery);
+    const auto queryPlan = QueryPlanBuilder::addUnion(leftQuery, rightQuery);
     if (!helpers.empty())
     {
         /// we are in a subquery
@@ -773,6 +974,7 @@ void AntlrSQLQueryPlanCreator::enterAggregationClause(AntlrSQLParser::Aggregatio
     poppush(helper);
     AntlrSQLBaseListener::enterAggregationClause(context);
 }
+
 void AntlrSQLQueryPlanCreator::exitAggregationClause(AntlrSQLParser::AggregationClauseContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
@@ -780,6 +982,4 @@ void AntlrSQLQueryPlanCreator::exitAggregationClause(AntlrSQLParser::Aggregation
     poppush(helper);
     AntlrSQLBaseListener::exitAggregationClause(context);
 }
-
-
 }
