@@ -102,26 +102,22 @@ NodeFunctionPtr FLOOR(const NodeFunctionPtr& exp)
 
 NodeFunctionPtr operator++(NodeFunctionPtr functionLeft)
 {
-    return std::move(functionLeft)
-        + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
 NodeFunctionPtr operator--(NodeFunctionPtr functionLeft)
 {
-    return std::move(functionLeft)
-        - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
 NodeFunctionPtr operator++(NodeFunctionPtr functionLeft, int)
 {
-    return std::move(functionLeft)
-        + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) + NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
 NodeFunctionPtr operator--(NodeFunctionPtr functionLeft, int)
 {
-    return std::move(functionLeft)
-        - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
+    return std::move(functionLeft) - NodeFunctionConstantValue::create(DataTypeFactory::createUInt16(), "1");
 }
 
 /// calls of Binary operators with one or two FunctionItems

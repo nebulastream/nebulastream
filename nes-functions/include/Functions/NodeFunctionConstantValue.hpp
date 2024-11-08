@@ -27,7 +27,7 @@ class NodeFunctionConstantValue : public NodeFunction
 {
 public:
     ///Factory method to create a NodeFunctionConstantValue.
-    static NodeFunctionPtr create(const DataTypePtr& type, std::string&& value);
+    static NodeFunctionPtr create(const DataTypePtr& type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
     std::string getConstantValue() const;

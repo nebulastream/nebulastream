@@ -22,9 +22,7 @@
 namespace NES
 {
 
-/**
- * @brief This file contains the user facing api to create function nodes in a fluent and easy way.
- */
+/// This file contains the user facing api to create function nodes in a fluent and easy way.
 
 class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
@@ -35,10 +33,8 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 class NodeFunctionFieldAssignment;
 using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 
-/**
- * @brief A function item represents the leaf in an function tree.
- * It is converted to an constant value function or a field access function.
- */
+/// A function item represents the leaf in an function tree.
+/// It is converted to an constant value function or a field access function.
 class FunctionItem
 {
 public:
@@ -61,58 +57,46 @@ public:
     NodeFunctionFieldAssignmentPtr operator=(FunctionItem assignItem);
     NodeFunctionFieldAssignmentPtr operator=(NodeFunctionPtr assignFunction);
 
-    /**
-     * @brief Gets the function node of this function item.
-     */
+    /// Gets the function node of this function item.
     [[nodiscard]] NodeFunctionPtr getNodeFunction() const;
     operator NodeFunctionPtr();
 
-    /**
-     * @brief Rename the function item
-     * @param name : the new name
-     * @return the updated function item
-     */
+    /// Rename the function item
+    /// @param name : the new name
+    /// @return the updated function item
     FunctionItem as(std::string name);
 
 private:
     NodeFunctionPtr function;
 };
 
-/**
- * @brief Attribute(name) allows the user to reference a field in his function.
- * Attribute("f1") < 10
- * todo rename to field if conflict with legacy code is resolved.
- * @param fieldName
- */
+/// Attribute(name) allows the user to reference a field in his function.
+/// Attribute("f1") < 10
+/// todo rename to field if conflict with legacy code is resolved.
+/// @param fieldName
 FunctionItem Attribute(std::string name);
 
-/**
- * @brief Attribute(name, type) allows the user to reference a field, with a specific type in his function.
- * Field("f1", Int) < 10.
- * todo remove this case if we added type inference at Runtime from the operator tree.
- * todo rename to field if conflict with legacy code is resolved.
- * @param fieldName, type
- */
+/// Attribute(name, type) allows the user to reference a field, with a specific type in his function.
+/// Field("f1", Int) < 10.
+/// todo remove this case if we added type inference at Runtime from the operator tree.
+/// todo rename to field if conflict with legacy code is resolved.
+/// @param fieldName, type
 FunctionItem Attribute(std::string name, BasicType type);
 
-/**
- * @brief WHEN(condition,value) can only be used as part of the left vector in a CASE() function.
- * Allows to only return the value function if condition is met.
- * @param conditionExp : a logical condition which will be evaluated.
- * @param valueExp : the value to return if the condition is the first true one.
- */
+/// WHEN(condition,value) can only be used as part of the left vector in a CASE() function.
+/// Allows to only return the value function if condition is met.
+/// @param conditionExp : a logical condition which will be evaluated.
+/// @param valueExp : the value to return if the condition is the first true one.
 NodeFunctionPtr WHEN(const NodeFunctionPtr& conditionExp, const NodeFunctionPtr& valueExp);
 NodeFunctionPtr WHEN(FunctionItem conditionExp, NodeFunctionPtr valueExp);
 NodeFunctionPtr WHEN(NodeFunctionPtr conditionExp, FunctionItem valueExp);
 NodeFunctionPtr WHEN(FunctionItem conditionExp, FunctionItem valueExp);
 
-/**
- * @brief CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
- * WHEN functions from the vector list and only return the first one where the condition evaluated to true, or the value of the default function.
- * The CASE({WHEN()},default) is evaluated as a concatenated ternary operator in C++.
- * @param whenFunctions : a vector of at least one WHEN function to evaluate.
- * @param defaultValueExp : an function which will be returned if no WHEN condition evaluated to true.
- */
+/// CASE({WHEN(condition,value),WHEN(condition, value)} , value) allows to evaluate all
+/// WHEN functions from the vector list and only return the first one where the condition evaluated to true, or the value of the default function.
+/// The CASE({WHEN()},default) is evaluated as a concatenated ternary operator in C++.
+/// @param whenFunctions : a vector of at least one WHEN function to evaluate.
+/// @param defaultValueExp : an function which will be returned if no WHEN condition evaluated to true.
 NodeFunctionPtr CASE(const std::vector<NodeFunctionPtr>& whenFunctions, NodeFunctionPtr defaultValueExp);
 NodeFunctionPtr CASE(std::vector<NodeFunctionPtr> whenFunctions, FunctionItem defaultValueExp);
 
