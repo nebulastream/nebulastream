@@ -14,11 +14,11 @@
 #include <iostream>
 #include <sstream>
 #include <ANTLRInputStream.h>
+#include <AntlrSQLLexer.h>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
 #include <AntlrSQLParser/AntlrSQLQueryPlanCreator.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
