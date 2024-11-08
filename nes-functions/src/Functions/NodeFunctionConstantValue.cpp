@@ -19,7 +19,9 @@
 namespace NES
 {
 NodeFunctionConstantValue::NodeFunctionConstantValue(const DataTypePtr& type, std::string&& value)
-    : NodeFunction(type, "ConstantValue"), constantValue(std::move(value)) {}
+    : NodeFunction(type, "ConstantValue"), constantValue(std::move(value))
+{
+}
 
 NodeFunctionConstantValue::NodeFunctionConstantValue(const NodeFunctionConstantValue* other)
     : NodeFunction(other->getStamp(), "ConstantValue"), constantValue(other->constantValue)
@@ -41,7 +43,7 @@ std::string NodeFunctionConstantValue::toString() const
     return "ConstantValue(" + constantValue + ")";
 }
 
-NodeFunctionPtr NodeFunctionConstantValue::create(const DataTypePtr& type, std::string&& value)
+NodeFunctionPtr NodeFunctionConstantValue::create(const DataTypePtr& type, std::string value)
 {
     return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
 }
