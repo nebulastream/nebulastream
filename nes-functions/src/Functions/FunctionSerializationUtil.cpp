@@ -70,9 +70,8 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
         NES_TRACE("FunctionSerializationUtil:: serialize constant value function node.");
         auto constantValueFunction = Util::as<NodeFunctionConstantValue>(function);
         auto value = constantValueFunction->getConstantValue();
-        /// serialize value
         auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
-        DataTypeSerializationUtil::serializeBasicValue(value, serializedConstantValue.mutable_value());
+        serializedConstantValue.set_value(value);
         serializedFunction->mutable_details()->PackFrom(serializedConstantValue);
     }
     else if (Util::instanceOf<NodeFunctionFieldAccess>(function))
@@ -161,8 +160,9 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             NES_TRACE("FunctionSerializationUtil:: de-serialize function as Constant Value function node.");
             auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
             serializedFunction.details().UnpackTo(&serializedConstantValue);
-            auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedConstantValue.value());
-            nodeFunctionPtr = NodeFunctionConstantValue::create(valueType);
+            /// The data type stored in the function's stamp is equal to the datatype of the value
+            auto valueDataType = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
+            nodeFunctionPtr = NodeFunctionConstantValue::create(valueDataType, serializedConstantValue.value());
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
         {
