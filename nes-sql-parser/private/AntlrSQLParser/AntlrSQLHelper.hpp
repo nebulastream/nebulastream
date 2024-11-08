@@ -14,10 +14,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 #include <API/Query.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
@@ -30,7 +30,7 @@ namespace NES::Parsers
 
 /// This class represents the results from parsing the ANTLR AST tree
 /// Attributes of this class represent the different clauses and a merge into a query after parsing the AST
-enum class AntlrSQLWindowType
+enum class AntlrSQLWindowType : uint8_t
 {
     NO_WINDOW,
     WINDOW_SLIDING,
@@ -70,7 +70,7 @@ public:
     std::vector<Windowing::WindowAggregationDescriptorPtr> windowAggs;
     std::vector<std::shared_ptr<NodeFunction>> projections;
     std::vector<std::shared_ptr<Sinks::SinkDescriptor>> sinkDescriptor;
-    std::vector<std::shared_ptr<NodeFunction>> expressionBuilder;
+    std::vector<std::shared_ptr<NodeFunction>> functionBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> mapBuilder;
     std::vector<std::shared_ptr<NodeFunctionFieldAccess>> groupByFields;
     std::vector<std::string> joinSources;
@@ -94,17 +94,17 @@ public:
     int identCountHelper = 0;
     int implicitMapCountHelper = 0;
 
-    const std::list<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
-    const std::list<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
-    const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
+    [[nodiscard]] const std::list<std::shared_ptr<NodeFunction>>& getWhereClauses() const;
+    [[nodiscard]] const std::list<std::shared_ptr<NodeFunction>>& getHavingClauses() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<NodeFunction>>& getProjectionFields() const;
     void addWhereClause(std::shared_ptr<NodeFunction> expressionNode);
     void addHavingClause(std::shared_ptr<NodeFunction> expressionNode);
     void addProjectionField(std::shared_ptr<NodeFunction> expressionNode);
-    const Windowing::WindowTypePtr getWindowType() const;
+    [[nodiscard]] const Windowing::WindowTypePtr getWindowType() const;
     void setSource(std::string sourceName);
     const std::string getSource() const;
     void addMapExpression(std::shared_ptr<NodeFunctionFieldAssignment> expressionNode);
-    std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> getMapExpressions() const;
+    [[nodiscard]] std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> getMapExpressions() const;
     void setMapExpressions(std::vector<std::shared_ptr<NodeFunctionFieldAssignment>> expressions);
 };
 }
