@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {
@@ -93,7 +98,7 @@ public:
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
         NodeFunctionPtr joinFunction,
-        Windowing::WindowTypePtr windowType,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
     /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
@@ -105,7 +110,7 @@ public:
 
     /// Create watermark assigner operator and adds it to the queryPlan
     static QueryPlanPtr
-    assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    assignWatermark(QueryPlanPtr queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
@@ -118,7 +123,7 @@ private:
      * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
      * @return nodeFunction as NodeFunctionFieldAccess
      */
-    static std::shared_ptr<NodeFunctionFieldAccess> asIfNodeFunctionFieldAccess(NodeFunctionPtr function, std::string side);
+    static std::shared_ptr<NodeFunctionFieldAccess> asNodeFunctionFieldAccess(const NodeFunctionPtr& function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources
