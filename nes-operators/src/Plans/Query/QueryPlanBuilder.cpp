@@ -14,8 +14,10 @@
 
 #include <iostream>
 #include <utility>
+
 #include <API/AttributeField.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -26,6 +28,7 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -106,32 +109,37 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     QueryPlanPtr leftQueryPlan,
     QueryPlanPtr rightQueryPlan,
     NodeFunctionPtr joinFunction,
-    const Windowing::WindowTypePtr& windowType,
+    Windowing::WindowTypePtr windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
     NES_DEBUG("QueryPlanBuilder: joinWith the subQuery to current query");
 
     NES_DEBUG("QueryPlanBuilder: Iterate over all NodeFunction to check join field.");
-    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
+    NES_DEBUG("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
+    std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedExpressions;
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr))
+        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr)
+            and !NES::Util::instanceOf<NodeFunctionBinary>(NES::Util::as<NodeFunctionBinary>(*itr)->getLeft()))
         {
             auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
-            if (visitedFunctions.contains(visitingOp))
+            if (not visitedExpressions.contains(visitingOp))
             {
-                /// skip rest of the steps as the node found in already visited node list
-                continue;
-            }
-            else
-            {
-                visitedFunctions.insert(visitingOp);
+                visitedExpressions.insert(visitingOp);
                 auto onLeftKey = NES::Util::as<NodeFunctionBinary>(*itr)->getLeft();
                 auto onRightKey = NES::Util::as<NodeFunctionBinary>(*itr)->getRight();
-                NES_DEBUG("QueryPlanBuilder: Check if Functions are FieldFunctions.");
-                auto leftKeyFieldAccess = checkFunction(onLeftKey, "leftSide");
-                auto rightQueryPlanKeyFieldAccess = checkFunction(onRightKey, "rightSide");
+                // ensure that the child nodes are not binary
+                if (!NES::Util::instanceOf<NodeFunctionBinary>(onLeftKey) && !NES::Util::instanceOf<NodeFunctionBinary>(onRightKey))
+                {
+                    if (NES::Util::instanceOf<NodeFunctionConstantValue>(onLeftKey)
+                        || NES::Util::instanceOf<NodeFunctionConstantValue>(onRightKey))
+                    {
+                        NES_THROW_RUNTIME_ERROR("use .filter() for your expression.");
+                    }
+                    auto leftKeyFieldAccess = asIfNodeFunctionFieldAccess(onLeftKey, "leftSide");
+                    auto rightQueryPlanKeyFieldAccess = asIfNodeFunctionFieldAccess(onRightKey, "rightSide");
+                }
             }
         }
     }
@@ -151,6 +159,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
+    NES_INFO("Created join {}", op->toString(), Util::as<LogicalJoinOperator>(op)->getJoinDefinition()->getWindowType()->toString());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }
@@ -159,8 +168,8 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(
     QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey)
 {
     NES_DEBUG("Query: joinWith the subQuery to current query");
-    auto probeKeyFieldAccess = checkFunction(onProbeKey, "onProbeKey");
-    auto buildKeyFieldAccess = checkFunction(onBuildKey, "onBuildKey");
+    auto probeKeyFieldAccess = asIfNodeFunctionFieldAccess(onProbeKey, "onProbeKey");
+    auto buildKeyFieldAccess = asIfNodeFunctionFieldAccess(onBuildKey, "onBuildKey");
 
     NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
@@ -227,7 +236,7 @@ QueryPlanBuilder::addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, Que
     return leftQueryPlan;
 }
 
-std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::checkFunction(NodeFunctionPtr function, std::string side)
+std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::asIfNodeFunctionFieldAccess(NodeFunctionPtr function, std::string side)
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
     {
