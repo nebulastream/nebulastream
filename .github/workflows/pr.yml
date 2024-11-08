@@ -6,9 +6,7 @@ name: NES PR CI
 # Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
 on:
   pull_request:
-    # The ready_for_review event is used when a draft pr is changed into a non-draft version. If we did
-    # not use the ready_for_review the ci would not be triggered and appear to have passed.
-    types: [ ready_for_review, synchronize, opened, reopened ]
+    types: [ synchronize, opened, reopened ]
 
 # cancel previous runs of same PR / branch.
 concurrency:
@@ -29,7 +27,7 @@ jobs:
       ref: ${{ github.event.pull_request.head.sha }}
 
   check-format:
-    needs:  [get-dev-images]
+    needs: [ get-dev-images ]
     name: "Run build and test"
     uses: ./.github/workflows/format.yml
     with:
@@ -39,7 +37,7 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits }}
 
   build-and-test:
-    needs:  [get-dev-images]
+    needs: [ get-dev-images ]
     name: "Run build and test"
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -47,7 +45,7 @@ jobs:
       ref: ${{ github.event.pull_request.head.ref }}
 
   clang-tidy-report:
-    needs:  [get-dev-images]
+    needs: [ get-dev-images ]
     name: "Run clang tidy report"
     uses: ./.github/workflows/clang_tidy_diff.yml
     with:
@@ -57,7 +55,7 @@ jobs:
       number_of_commits: ${{ github.event.pull_request.commits }}
 
   run_code_coverage:
-    needs:  [get-dev-images, get-dev-images-for-base-branch]
+    needs: [ get-dev-images, get-dev-images-for-base-branch ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
     with:
