@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <fstream>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -44,11 +45,13 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Registry/LogicalOperatorRegistry.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
+#include <fmt/format.h>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
@@ -165,12 +168,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     return serializedOperator;
 }
 
-LogicalUnaryOperatorPtr deserializeSelectionOperator(const SerializableOperator_SelectionDetails& selectionDetails)
-{
-    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
-    return std::make_shared<LogicalSelectionOperator>(filterFunction, getNextOperatorId());
-}
-
 LogicalUnaryOperatorPtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails)
 {
     /// serialize and append children if the node has any
@@ -263,12 +260,6 @@ LogicalUnaryOperatorPtr deserializeWatermarkAssignerOperator(const SerializableO
 {
     const auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(watermarkStrategyDetails);
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, getNextOperatorId());
-}
-
-LogicalUnaryOperatorPtr deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails)
-{
-    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(mapDetails.function());
-    return std::make_shared<LogicalMapOperator>(NES::Util::as<NodeFunctionFieldAssignment>(fieldAssignmentFunction), getNextOperatorId());
 }
 
 LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails, OperatorId operatorId)
@@ -496,14 +487,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedSinkLogicalOperator);
         operatorNode = deserializeSinkOperator(serializedSinkLogicalOperator);
     }
-    else if (details.Is<SerializableOperator_SelectionDetails>())
-    {
-        /// de-serialize filter operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to SelectionLogicalOperator");
-        auto serializedSelectionOperator = SerializableOperator_SelectionDetails();
-        details.UnpackTo(&serializedSelectionOperator);
-        operatorNode = deserializeSelectionOperator(serializedSelectionOperator);
-    }
     else if (details.Is<SerializableOperator_ProjectionDetails>())
     {
         /// de-serialize projection operator
@@ -519,14 +502,6 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedUnionDescriptor);
         operatorNode = std::make_shared<LogicalUnionOperator>(getNextOperatorId());
-    }
-    else if (details.Is<SerializableOperator_MapDetails>())
-    {
-        /// de-serialize map operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
-        auto serializedMapOperator = SerializableOperator_MapDetails();
-        details.UnpackTo(&serializedMapOperator);
-        operatorNode = deserializeMapOperator(serializedMapOperator);
     }
     else if (details.Is<SerializableOperator_InferModelDetails>())
     {
@@ -569,10 +544,13 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&renameDetails);
         operatorNode = std::make_shared<RenameSourceOperator>(renameDetails.newsourcename(), getNextOperatorId());
     }
+    else if (auto logicalOperator = LogicalOperatorRegistry::instance().create(serializedOperator.operatortype(), serializedOperator))
+    {
+        operatorNode = std::move(logicalOperator.value());
+    }
     else
     {
-        throw CannotDeserialize(
-            fmt::format("OperatorSerializationUtil: could not de-serialize this serialized operator: {}", details.DebugString()));
+        throw CannotDeserialize("could not de-serialize this serialized operator: {}", details.DebugString());
     }
 
     /// de-serialize operator output schema
@@ -662,6 +640,7 @@ void OperatorSerializationUtil::serializeSelectionOperator(
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to LogicalSelectionOperator");
     auto selectionDetails = SerializableOperator_SelectionDetails();
+    serializedOperator.set_operatortype("Selection");
     FunctionSerializationUtil::serializeFunction(filterOperator.getPredicate(), selectionDetails.mutable_predicate());
     serializedOperator.mutable_details()->PackFrom(selectionDetails);
 }
@@ -684,6 +663,7 @@ void OperatorSerializationUtil::serializeMapOperator(const LogicalMapOperator& m
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to LogicalMapOperator");
     auto mapDetails = SerializableOperator_MapDetails();
+    serializedOperator.set_operatortype("Map");
     FunctionSerializationUtil::serializeFunction(mapOperator.getMapFunction(), mapDetails.mutable_function());
     serializedOperator.mutable_details()->PackFrom(mapDetails);
 }

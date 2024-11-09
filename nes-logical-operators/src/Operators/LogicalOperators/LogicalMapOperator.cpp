@@ -16,10 +16,13 @@
 #include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Registry/LogicalOperatorRegistry.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -116,6 +119,16 @@ void LogicalMapOperator::inferStringSignature()
     ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
+}
+
+std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeMap(const SerializableOperator& serializableOperator)
+{
+    auto details = serializableOperator.details();
+    LogicalOperatorPtr operatorNode;
+    auto serializedMapOperator = SerializableOperator_MapDetails();
+    details.UnpackTo(&serializedMapOperator);
+    const auto fieldAssignmentFunction = FunctionSerializationUtil::deserializeFunction(serializedMapOperator.function());
+    return std::make_unique<LogicalMapOperator>(Util::as<NodeFunctionFieldAssignment>(fieldAssignmentFunction), getNextOperatorId());
 }
 
 }

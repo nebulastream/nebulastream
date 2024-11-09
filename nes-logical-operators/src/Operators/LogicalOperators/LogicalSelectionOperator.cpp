@@ -21,8 +21,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Registry/LogicalOperatorRegistry.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -144,6 +146,16 @@ std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPred
     }
 
     return fieldsInPredicate;
+}
+
+std::unique_ptr<LogicalOperator> LogicalOperatorGeneratedRegistrar::deserializeSelection(const SerializableOperator& serializableOperator)
+{
+    auto details = serializableOperator.details();
+    LogicalOperatorPtr operatorNode;
+    auto selectionDetails = SerializableOperator_SelectionDetails();
+    details.UnpackTo(&selectionDetails);
+    const auto filterFunction = FunctionSerializationUtil::deserializeFunction(selectionDetails.predicate());
+    return std::make_unique<LogicalSelectionOperator>(filterFunction, getNextOperatorId());
 }
 
 }
