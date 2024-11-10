@@ -165,13 +165,6 @@ public:
     bool operator==(const Schema& other) const;
 
     /**
-     * @brief Checks if two schemas have same datatypes at same index location
-     * @param otherSchema: the other schema to compare agains
-     * @return ture if they are equal else false
-     */
-    bool hasEqualTypes(const SchemaPtr& otherSchema);
-
-    /**
      * @brief Checks if the field exists in the schema
      * @param schema
      * @return boolean
