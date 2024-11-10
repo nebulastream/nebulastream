@@ -230,26 +230,6 @@ bool Schema::contains(const std::string& fieldName) const
     return false;
 }
 
-uint64_t Schema::getIndex(const std::string& fieldName) const
-{
-    int i = 0;
-    bool found = false;
-    for (const auto& field : this->fields)
-    {
-        if (field->getName().starts_with(fieldName))
-        {
-            found = true;
-            break;
-        }
-        i++;
-    }
-    if (found)
-    {
-        return i;
-    }
-    return -1;
-}
-
 AttributeFieldPtr Schema::getField(const std::string& fieldName) const
 {
     ///Check if the field name is with fully qualified name
