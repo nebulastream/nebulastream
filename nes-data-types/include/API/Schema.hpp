@@ -132,14 +132,6 @@ public:
     AttributeFieldPtr getField(const std::string& fieldName) const;
 
     /**
-     * @brief Checks if attribute field name is defined in the schema and returns its index.
-     * If item not in the list, then the return value is equal to fields.size().
-     * @param fieldName
-     * @return the index
-     */
-    uint64_t getIndex(const std::string& fieldName) const;
-
-    /**
      * @brief Finds a attribute field by name in the schema
      * @param fieldName
      * @return AttributeField
@@ -194,13 +186,6 @@ public:
      * @return schema as string
      */
     [[nodiscard]] std::string toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
-
-    /**
-     * @brief returns the string representation of layout
-     * @param layout
-     * @return
-     */
-    [[nodiscard]] std::string getLayoutTypeAsString() const;
 
     /**
      * @brief Method to return the source name qualifier, thus everything that is before $
