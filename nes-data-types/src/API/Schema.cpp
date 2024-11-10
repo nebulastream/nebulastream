@@ -85,6 +85,7 @@ SchemaPtr Schema::addField(const AttributeFieldPtr& attribute)
     return copy();
 }
 
+///TODO #473: investigate if we can remove this method
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type)
 {
     return addField(name, DataTypeFactory::createType(type));
@@ -154,28 +155,6 @@ bool Schema::operator==(const Schema& other) const
     {
         auto otherFieldAttribute = other.getField(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute)))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Schema::hasEqualTypes(const SchemaPtr& otherSchema)
-{
-    auto otherFields = otherSchema->fields;
-    /// Check if the number of fields is same or not
-    if (otherFields.size() != fields.size())
-    {
-        return false;
-    }
-
-    ///Iterate over all fields and check in both schemas the same index that they have is the same attribute type
-    for (uint32_t i = 0; i < fields.size(); i++)
-    {
-        auto thisField = fields.at(i);
-        auto otherField = otherFields.at(i);
-        if (!thisField->getDataType()->equals(otherField->getDataType()))
         {
             return false;
         }
@@ -319,16 +298,6 @@ void Schema::clear()
     fields.clear();
 }
 
-std::string Schema::getLayoutTypeAsString() const
-{
-    switch (this->layoutType)
-    {
-        case Schema::MemoryLayoutType::ROW_LAYOUT:
-            return "ROW_LAYOUT";
-        case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
-            return "COL_LAYOUT";
-    }
-}
 Schema::MemoryLayoutType Schema::getLayoutType() const
 {
     return layoutType;
