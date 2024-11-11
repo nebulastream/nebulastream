@@ -16,13 +16,10 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/format.h>
-#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -57,7 +54,6 @@ SchemaPtr Schema::copy() const
 uint64_t Schema::getSchemaSizeInBytes() const
 {
     uint64_t size = 0;
-    /// TODO #386 if we introduce a physical schema.
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields)
     {
@@ -141,8 +137,7 @@ AttributeFieldPtr Schema::getFieldByIndex(size_t index) const
     {
         return fields[index];
     }
-    NES_FATAL_ERROR("Schema: No field in the schema with the id {}", index);
-    throw FieldNotFound("field {}  does not exist", std::to_string(index));
+    throw FieldNotFound("field with index {}  does not exist", std::to_string(index));
 }
 
 bool Schema::operator==(const Schema& other) const
@@ -254,10 +249,7 @@ std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) 
     {
         return matchedFields[0];
     }
-    if (matchedFields.size() > 1)
-    {
-        NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
-    }
+    INVARIANT(matchedFields.size() > 1,  "Schema: Found ambiguous field with name {}", fieldName);
     return {};
 }
 
@@ -279,7 +271,8 @@ void Schema::setLayoutType(Schema::MemoryLayoutType layoutType)
 std::vector<std::string> Schema::getFieldNames() const
 {
     std::vector<std::string> fieldNames;
-    ///TODO #386 size can be corrupted if schema gets corrupted (18446741141687656808 fields) #4049
+    /// Check if the size of the fields vector is within a reasonable range
+    INVARIANT(fields.size() < (2 ^ 32), "Schema is corrupted: unreasonable number of fields.");
     for (const auto& attribute : fields)
     {
         fieldNames.emplace_back(attribute->getName());
