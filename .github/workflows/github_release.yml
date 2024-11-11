@@ -96,7 +96,7 @@ jobs:
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           DEB_NAME=NebulaStream-$nes_version-${{ matrix.osversion}}-Linux.${{ matrix.arch }}
-          mv ${{ env.build_dir }}/*deb ${{ env.build_dir }}/$DEB_NAME.deb
+          mv ${{ env.build_dir }}/*.deb ${{ env.build_dir }}/$DEB_NAME.deb
           echo "DEB_FILE=${{ env.build_dir }}/$DEB_NAME.deb" >> $GITHUB_ENV
       - name: "Perform Release for nebulastream-dev-builds Repository"
         uses: softprops/action-gh-release@v0.1.14
