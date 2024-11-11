@@ -154,7 +154,7 @@ bool Schema::operator==(const Schema& other) const
     for (auto const& fieldAttribute : fields)
     {
         auto otherFieldAttribute = other.getField(fieldAttribute->getName());
-        if (!(otherFieldAttribute && otherFieldAttribute->isEqual(fieldAttribute)))
+        if (!(otherFieldAttribute && otherFieldAttribute.has_value() && fieldAttribute->isEqual(otherFieldAttribute.value())))
         {
             return false;
         }
@@ -220,7 +220,7 @@ bool Schema::contains(const std::string& fieldName) const
     return false;
 }
 
-AttributeFieldPtr Schema::getField(const std::string& fieldName) const
+std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) const
 {
     ///Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
@@ -256,11 +256,9 @@ AttributeFieldPtr Schema::getField(const std::string& fieldName) const
     }
     if (matchedFields.size() > 1)
     {
-        ///        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
-        ///TODO #386 workaround we choose the first one to join we will replace this in issue #1543
-        return matchedFields[0];
+        NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
     }
-    return nullptr;
+    return {};
 }
 
 void Schema::clear()

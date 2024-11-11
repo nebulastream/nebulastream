@@ -89,7 +89,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     auto existingField = schema->getField(fieldName);
     if (existingField)
     {
-        fieldAccessFunction->updateFieldName(existingField->getName());
+        fieldAccessFunction->updateFieldName(existingField.value()->getName());
         return true;
     }
     else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)

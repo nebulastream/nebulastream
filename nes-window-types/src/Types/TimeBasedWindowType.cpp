@@ -34,14 +34,14 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->getField(fieldName);
-        if (!NES::Util::instanceOf<Integer>(existingField->getDataType()))
+        if (existingField)
+        {
+            timeCharacteristic->getField()->setName(existingField.value()->getName());
+            return true;
+        }
+        else if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
         {
             throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
-        }
-        else if (existingField)
-        {
-            timeCharacteristic->getField()->setName(existingField->getName());
-            return true;
         }
         else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
         {
