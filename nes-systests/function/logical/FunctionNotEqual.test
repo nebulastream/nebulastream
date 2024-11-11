@@ -2,7 +2,7 @@
 # description: Simple function NotEqual tests
 # groups: [Function, FunctionNotEqual]
 
-Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,13,42.42
 
 # Since equals is commutative, e.g., 'val_i8 != val_f32' equals 'val_f32 != val_i8', so we check only one direction.
@@ -20,7 +20,7 @@ SELECT
 
     val_f32 != 42.42_F AS val_f32,
     val_f64 != 42.42_D AS val_f64
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 1,1,1,1,0,1,1,1,1,0
 
@@ -49,7 +49,7 @@ SELECT
     val_i8 != val_f32 + 1_F AS val_i8_f32_plus_1,
     val_i8 != val_f64 AS val_i8_f64,
     val_i8 != val_f64 + 1_D AS val_i8_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -78,7 +78,7 @@ SELECT
     val_i16 != val_f32 + 1_F AS val_i16_f32_plus_1,
     val_i16 != val_f64 AS val_i16_f64,
     val_i16 != val_f64 + 1_D AS val_i16_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -107,7 +107,7 @@ SELECT
     val_i32 != val_f32 + 1_F AS val_i32_f32_plus_1,
     val_i32 != val_f64 AS val_i32_f64,
     val_i32 != val_f64 + 1_D AS val_i32_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
@@ -136,6 +136,6 @@ SELECT
     val_i64 != val_f32 + 1_F AS val_i64_f32_plus_1,
     val_i64 != val_f64 AS val_i64_f64,
     val_i64 != val_f64 + 1_D AS val_i64_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1

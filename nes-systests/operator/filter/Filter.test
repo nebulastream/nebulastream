@@ -2,7 +2,7 @@
 # description: Simple filter tests
 # groups: [Filter]
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 12,1,1001
 4,1,1002
@@ -33,14 +33,14 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 1,21,21000
 
 # Filter equal
-SELECT * FROM window WHERE value == 1 INTO SINK
+SELECT * FROM stream WHERE value == 1 INTO SINK
 ----
 1,1,1000
 12,1,1001
 4,1,1002
 
 # Filter not equal
-SELECT * FROM window WHERE value != 1 INTO SINK
+SELECT * FROM stream WHERE value != 1 INTO SINK
 ----
 1,2,2000
 11,2,2001

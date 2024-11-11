@@ -2,7 +2,7 @@
 # description: Simple function sub tests
 # groups: [Function, FunctionSub]
 
-Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
 # Todo #442: the below system level tests currently perform downcasts.
@@ -20,7 +20,7 @@ SELECT
 
     val_f32 - 42.0_F AS val_f32,
     val_f64 - 42.0_D AS val_f64
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -84,-171,-32811,-2147483691,0,214,65494,4294967254,-19.000000,-19.000000
 
@@ -49,7 +49,7 @@ SELECT
     val_i8 - val_f32 + 1_F AS val_i8_f32_plus_1,
     val_i8 - val_f64 AS val_i8_f64,
     val_i8 - val_f64 + 1_D AS val_i8_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 0 1 87 88 -41 -40 -41 -40 -84 -83 -42 -41 -42 -41 -42 -41 0 0 0 0
 
@@ -78,7 +78,7 @@ SELECT
     val_i16 - val_f32 + 1_F AS val_i16_f32_plus_1,
     val_i16 - val_f64 AS val_i16_f64,
     val_i16 - val_f64 + 1_D AS val_i16_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -87 -86 0 1 32640 32641 -128 -127 -171 -170 385 386 -129 -128 -129 -128 0 0 0 0
 
@@ -107,7 +107,7 @@ SELECT
     val_i32 - val_f32 + 1_F AS val_i32_f32_plus_1,
     val_i32 - val_f64 AS val_i32_f64,
     val_i32 - val_f64 + 1_D AS val_i32_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -32727 -32726 -32640 -32639 0 1 2147450880 2147450881 -32811 -32810 -33025 -33024 -98305 -98304 -32769 -32768 -956295168 -956295424 0 0
 
@@ -136,7 +136,7 @@ SELECT
     val_i64 - val_f32 + 1_F AS val_i64_f32_plus_1,
     val_i64 - val_f64 AS val_i64_f64,
     val_i64 - val_f64 + 1_D AS val_i64_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -2147483607 -2147483606 -2147483520 -2147483519 -2147450880 -2147450879 0 1 -2147483691 -2147483690 -2147483905 -2147483904 -2147549185 -2147549184 -6442450945 -6442450944 3472883712 3472883712 -4476578029555941376 -4476578029558038528
 
@@ -166,7 +166,7 @@ SELECT
     val_u8 - val_f32 + 1_F AS val_u8_f32_plus_1,
     val_u8 - val_f64 AS val_u8_f64,
     val_u8 - val_f64 + 1_D AS val_u8_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 84 85 171 172 43 44 43 44 0 1 42 43 42 43 42 43 0 0 0 0
 
@@ -195,7 +195,7 @@ SELECT
     val_u16 - val_f32 + 1_F AS val_u16_f32_plus_1,
     val_u16 - val_f64 AS val_u16_f64,
     val_u16 - val_f64 + 1_D AS val_u16_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 298 299 385 386 33025 33026 257 258 214 215 385 386 256 257 256 257 0 0 0 0
 
@@ -224,7 +224,7 @@ SELECT
     val_u32 - val_f32 + 1_F AS val_u32_f32_plus_1,
     val_u32 - val_f64 AS val_u32_f64,
     val_u32 - val_f64 + 1_D AS val_u32_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 65578 65579 65665 65666 98305 98306 2147549185 2147549186 65494 65495 65280 65281 0 1 65536 65537 1199565056 1199565312 0 0
 
@@ -253,6 +253,6 @@ SELECT
     val_i64 - val_f32 + 1_F AS val_u64_f32_plus_1,
     val_i64 - val_f64 AS val_u64_f64,
     val_i64 - val_f64 + 1_D AS val_u64_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -2147483607 -2147483606 -2147483520 -2147483519 -2147450880 -2147450879 0 1 -2147483691 -2147483690 -2147483905 -2147483904 -2147549185 -2147549184 -6442450945 -6442450944 3472883712 3472883712 -4476578029555941376 -4476578029558038528

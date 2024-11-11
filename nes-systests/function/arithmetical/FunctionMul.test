@@ -2,7 +2,7 @@
 # description: Simple function mul tests
 # groups: [Function, FunctionMul]
 
-Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
 # Todo #442: the below system level tests currently perform downcasts.
@@ -22,7 +22,7 @@ SELECT
 
     val_f32 * 42_U AS val_f32,
     val_f64 * 42_U AS val_f64
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -1764 -5418 -1376298 -90194313258 1764 10752 2752512 180388626432 966.000000 966.000000
 
@@ -51,7 +51,7 @@ SELECT
     val_i8 * (val_f32 + 1_F) AS val_i8_f32_plus_1,
     val_i8 * val_f64 AS val_i8_f64,
     val_i8 * (val_f64 + 1_D) AS val_i8_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 -28 -70 42 0 42 0 42 0 28 -14 0 -42 0 -42 0 -42 0 0 0 0
 
@@ -80,7 +80,7 @@ SELECT
     val_i16 * (val_f32 + 1_F) AS val_i16_f32_plus_1,
     val_i16 * val_f64 AS val_i16_f64,
     val_i16 * (val_f64 + 1_D) AS val_i16_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 5418 5289 16641 16512 -32639 -32768 129 0 -5418 -5547 32512 32383 0 -129 0 -129 28672 -32768 0 0
 
@@ -109,7 +109,7 @@ SELECT
     val_i32 * (val_f32 + 1_F) AS val_i32_f32_plus_1,
     val_i32 * val_f64 AS val_i32_f64,
     val_i32 * (val_f64 + 1_D) AS val_i32_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 1376298 1343529 4227201 4194432 1073807361 1073774592 -2147450879 -2147483648 -1376298 -1409067 -8388864 -8421633 2147418112 2147385343 0 -32769 -919076496 -918552192 0 0
 
@@ -138,6 +138,6 @@ SELECT
     val_i64 * (val_f32 + 1_F) AS val_i64_f32_plus_1,
     val_i64 * val_f64 AS val_i64_f64,
     val_i64 * (val_f64 + 1_D) AS val_i64_f64_plus_1
-FROM window INTO SINK
+FROM stream INTO SINK
 ----
 90194313258 88046829609 277025390721 274877907072 70370891694081 70368744210432 4611686022722355201 4611686020574871552 -90194313258 -92341796907 -549755814144 -551903297793 -140737488420864 -140739635904513 9223372032559808512 9223372030412324863 3510108160 3510632448 -4456593306256801792 -4456311831279960064
