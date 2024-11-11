@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Projection]
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 2,1,1001
 3,1,1002
@@ -12,7 +12,7 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 7,21,21000
 
 # 0: [id]
-SELECT id FROM window INTO SINK
+SELECT id FROM stream INTO SINK
 ----
 1
 2
@@ -24,7 +24,7 @@ SELECT id FROM window INTO SINK
 
 
 # 1: [value]
-SELECT value FROM window INTO SINK
+SELECT value FROM stream INTO SINK
 ----
 1
 1
@@ -35,7 +35,7 @@ SELECT value FROM window INTO SINK
 21
 
 # 2: [timestamp]
-SELECT timestamp FROM window INTO SINK
+SELECT timestamp FROM stream INTO SINK
 ----
 1000
 1001
@@ -46,7 +46,7 @@ SELECT timestamp FROM window INTO SINK
 21000
 
 # 3: [id, value]
-SELECT id, value FROM window INTO SINK
+SELECT id, value FROM stream INTO SINK
 ----
 1,1
 2,1
@@ -57,7 +57,7 @@ SELECT id, value FROM window INTO SINK
 7,21
 
 # 4: [id, timestamp]
-SELECT id, timestamp FROM window INTO SINK
+SELECT id, timestamp FROM stream INTO SINK
 ----
 1,1000
 2,1001
@@ -68,7 +68,7 @@ SELECT id, timestamp FROM window INTO SINK
 7,21000
 
 # 5: [value, timestamp]
-SELECT value, timestamp FROM window INTO SINK
+SELECT value, timestamp FROM stream INTO SINK
 ----
 1,1000
 1,1001
@@ -79,7 +79,7 @@ SELECT value, timestamp FROM window INTO SINK
 21,21000
 
 # 6: [id, value, timestamp]
-SELECT id, value, timestamp FROM window INTO SINK
+SELECT id, value, timestamp FROM stream INTO SINK
 ----
 1,1,1000
 2,1,1001
@@ -90,7 +90,7 @@ SELECT id, value, timestamp FROM window INTO SINK
 7,21,21000
 
 # 7: [id, timestamp, value]
-SELECT id, timestamp, value FROM window INTO SINK
+SELECT id, timestamp, value FROM stream INTO SINK
 ----
 1,1000,1
 2,1001,1
@@ -101,7 +101,7 @@ SELECT id, timestamp, value FROM window INTO SINK
 7,21000,21
 
 # 8: [value, id, timestamp]
-SELECT value, id, timestamp FROM window INTO SINK
+SELECT value, id, timestamp FROM stream INTO SINK
 ----
 1,1,1000
 1,2,1001
@@ -112,7 +112,7 @@ SELECT value, id, timestamp FROM window INTO SINK
 21,7,21000
 
 # 8: [value, timestamp, id]
-SELECT value, timestamp, id FROM window INTO SINK
+SELECT value, timestamp, id FROM stream INTO SINK
 ----
 1,1000,1
 1,1001,2
@@ -123,7 +123,7 @@ SELECT value, timestamp, id FROM window INTO SINK
 21,21000,7
 
 # 9: [timestamp, id, value]
-SELECT timestamp, id, value FROM window INTO SINK
+SELECT timestamp, id, value FROM stream INTO SINK
 ----
 1000,1,1
 1001,2,1
@@ -134,7 +134,7 @@ SELECT timestamp, id, value FROM window INTO SINK
 21000,7,21
 
 # 10: [timestamp, value, id]
-SELECT timestamp, value, id FROM window INTO SINK
+SELECT timestamp, value, id FROM stream INTO SINK
 ----
 1000,1,1
 1001,1,2
@@ -145,7 +145,7 @@ SELECT timestamp, value, id FROM window INTO SINK
 21000,21,7
 
 # 11: [id, id -> new_field]
-SELECT id, id AS new_field FROM window INTO SINK
+SELECT id, id AS new_field FROM stream INTO SINK
 ----
 1,1
 2,2
@@ -156,8 +156,7 @@ SELECT id, id AS new_field FROM window INTO SINK
 7,7
 
 # 12: [id, value, id -> new_field]
-SELECT id, value, id AS new_field FROM window INTO SINK
-Query::from("window")
+SELECT id, value, id AS new_field FROM stream INTO SINK
 ----
 1,1,1
 2,1,2
@@ -168,7 +167,7 @@ Query::from("window")
 7,21,7
 
 ## 13: [id, value, timestamp, id -> new_field]
-SELECT id, value, timestamp, id AS new_field FROM window INTO SINK
+SELECT id, value, timestamp, id AS new_field FROM stream INTO SINK
 ----
 1,1,1000,1
 2,1,1001,2
@@ -179,7 +178,7 @@ SELECT id, value, timestamp, id AS new_field FROM window INTO SINK
 7,21,21000,7
 
 # 14: [id -> new_field, id, value, timestamp]
-SELECT id AS new_field, id, value, timestamp FROM window INTO SINK
+SELECT id AS new_field, id, value, timestamp FROM stream INTO SINK
 ----
 1,1,1,1000
 2,2,1,1001
@@ -190,7 +189,7 @@ SELECT id AS new_field, id, value, timestamp FROM window INTO SINK
 7,7,21,21000
 
 # 15: [timestamp -> new_field, timestamp -> new_field, id, value, timestamp]
-SELECT timestamp AS new_field, timestamp, id, value, timestamp FROM window INTO SINK
+SELECT timestamp AS new_field, timestamp, id, value, timestamp FROM stream INTO SINK
 ----
 1000,1000,1,1,1000
 1001,1001,2,1,1001
@@ -201,7 +200,7 @@ SELECT timestamp AS new_field, timestamp, id, value, timestamp FROM window INTO 
 21000,21000,7,21,21000
 
 ## 14: [id -> new_field_1, id, value -> new_field_2, value, timestamp -> new_field_3, timestamp]
-SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM window INTO SINK
+SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM stream INTO SINK
 ----
 1,1,1,1,1000,1000
 2,2,1,1,1001,1001

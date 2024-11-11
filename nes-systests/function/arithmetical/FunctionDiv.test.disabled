@@ -4,11 +4,11 @@
 
 # TODO #373 Currently, we perform string comparison of results vs. expected. This does not work for floating points, as the precision is not guaranteed.
 
-Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
 -42, -129,-32769,-2147483649,42, 256,65536,4294967296,23,23
 
 # Check if the values are multiplied correctly with a constant
-Query::from("window")
+Query::from("stream")
     .map(Attribute("val_i64") = Attribute("val_i64") / 42)
     .map(Attribute("val_i32") = Attribute("val_i32") / 42)
     .map(Attribute("val_i16") = Attribute("val_i16") / 42)
@@ -26,7 +26,7 @@ Query::from("window")
 -1,-3,-780,-51130563,1,6,1560,102261126,0.547619,0.547619
 
 # Div i8 value with all other data types
-Query::from("window")
+Query::from("stream")
     .map(Attribute("val_i8_i8") = Attribute("val_i8") / Attribute("val_i8"))
     .map(Attribute("val_i8_i8_plus_1") = Attribute("val_i8") / (Attribute("val_i8") + 1))
     .map(Attribute("val_i8_i16") = Attribute("val_i8") / Attribute("val_i16"))
@@ -56,7 +56,7 @@ Query::from("window")
 1,1,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,-1.826087,-1.750000,-1.826087,-1.750000
 
 # Div i16 value with all other data types
-Query::from("window")
+Query::from("stream")
     .map(Attribute("val_i16_i8") = Attribute("val_i16") / Attribute("val_i8"))
     .map(Attribute("val_i16_i8_plus_1") = Attribute("val_i16") / (Attribute("val_i8") + 1))
     .map(Attribute("val_i16_i16") = Attribute("val_i16") / Attribute("val_i16"))
@@ -86,7 +86,7 @@ Query::from("window")
 3,3,1,1,0,0,0,0,-3,-3,0,0,0,0,0,0,-5.608696,-5.375000,-5.608696,-5.375000
 
 # Div i32 value with all other data types
-Query::from("window")
+Query::from("stream")
     .map(Attribute("val_i32_i8") = Attribute("val_i32") / Attribute("val_i8"))
     .map(Attribute("val_i32_i8_plus_1") = Attribute("val_i32") / (Attribute("val_i8") + 1))
     .map(Attribute("val_i32_i16") = Attribute("val_i32") / Attribute("val_i16"))
