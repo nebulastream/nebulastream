@@ -2,24 +2,24 @@
 # description: Simple function sub tests
 # groups: [Function, FunctionSub]
 
-Source window INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
-SINK sinkConstant INT32 window$i8 INT32 window$i16 INT32 window$i32 INT64 window$i64 INT32 window$u8 INT32 window$u16 UINT32 window$u32 UINT64 window$u64 FLOAT32 window$f32 FLOAT64 window$f64
-SINK sinkI8 INT32 window$i8_i8 INT32 window$i8_i8_plus_1 INT32 window$i8_i16 INT32 window$i8_i16_plus_1 INT32 window$i8_i32 INT32 window$i8_i32_plus_1 INT64 window$i8_i64 INT64 window$i8_i64_plus_1 INT32 window$i8_u8 INT32 window$i8_u8_plus_1 INT32 window$i8_u16 INT32 window$i8_u16_plus_1 UINT32 window$i8_u32 UINT32 window$i8_u32_plus_1 UINT64 window$i8_u64 UINT64 window$i8_u64_plus_1 FLOAT32 window$i8_f32 FLOAT32 window$i8_f32_plus_1 FLOAT64 window$i8_f64 FLOAT64 window$i8_f64_plus_1
-SINK sinkI16 INT32 window$i16_i8 INT32 window$i16_i8_plus_1 INT32 window$i16_i16 INT32 window$i16_i16_plus_1 INT32 window$i16_i32 INT32 window$i16_i32_plus_1 INT64 window$i16_i64 INT64 window$i16_i64_plus_1 INT32 window$i16_u8 INT32 window$i16_u8_plus_1 INT32 window$i16_u16 INT32 window$i16_u16_plus_1 UINT32 window$i16_u32 UINT32 window$i16_u32_plus_1 UINT64 window$i16_u64 UINT64 window$i16_u64_plus_1 FLOAT32 window$i16_f32 FLOAT32 window$i16_f32_plus_1 FLOAT64 window$i16_f64 FLOAT64 window$i16_f64_plus_1
-SINK sinkI32 INT32 window$i32_i8 INT32 window$i32_i8_plus_1 INT32 window$i32_i16 INT32 window$i32_i16_plus_1 INT32 window$i32_i32 INT32 window$i32_i32_plus_1 INT64 window$i32_i64 INT64 window$i32_i64_plus_1 INT32 window$i32_u8 INT32 window$i32_u8_plus_1 INT32 window$i32_u16 INT32 window$i32_u16_plus_1 UINT32 window$i32_u32 UINT32 window$i32_u32_plus_1 UINT64 window$i32_u64 UINT64 window$i32_u64_plus_1 FLOAT32 window$i32_f32 FLOAT32 window$i32_f32_plus_1 FLOAT64 window$i32_f64 FLOAT64 window$i32_f64_plus_1
-SINK sinkI64 INT64 window$i64_i8 INT64 window$i64_i8_plus_1 INT64 window$i64_i16 INT64 window$i64_i16_plus_1 INT64 window$i64_i32 INT64 window$i64_i32_plus_1 INT64 window$i64_i64 INT64 window$i64_i64_plus_1 INT64 window$i64_u8 INT64 window$i64_u8_plus_1 INT64 window$i64_u16 INT64 window$i64_u16_plus_1 INT64 window$i64_u32 INT64 window$i64_u32_plus_1 UINT64 window$i64_u64 UINT64 window$i64_u64_plus_1 FLOAT32 window$i64_f32 FLOAT32 window$i64_f32_plus_1 FLOAT64 window$i64_f64 FLOAT64 window$i64_f64_plus_1
-SINK sinkU8 INT32 window$u8_i8 INT32 window$u8_i8_plus_1 INT32 window$u8_i16 INT32 window$u8_i16_plus_1 INT32 window$u8_i32 INT32 window$u8_i32_plus_1 INT64 window$u8_i64 INT64 window$u8_i64_plus_1 INT32 window$u8_u8 INT32 window$u8_u8_plus_1 INT32 window$u8_u16 INT32 window$u8_u16_plus_1 UINT32 window$u8_u32 UINT32 window$u8_u32_plus_1 UINT64 window$u8_u64 UINT64 window$u8_u64_plus_1 FLOAT32 window$u8_f32 FLOAT32 window$u8_f32_plus_1 FLOAT64 window$u8_f64 FLOAT64 window$u8_f64_plus_1
-SINK sinkU16 INT32 window$u16_i8 INT32 window$u16_i8_plus_1 INT32 window$u16_i16 INT32 window$u16_i16_plus_1 INT32 window$u16_i32 INT32 window$u16_i32_plus_1 INT64 window$u16_i64 INT64 window$u16_i64_plus_1 INT32 window$u16_u8 INT32 window$u16_u8_plus_1 INT32 window$u16_u16 INT32 window$u16_u16_plus_1 UINT32 window$u16_u32 UINT32 window$u16_u32_plus_1 UINT64 window$u16_u64 UINT64 window$u16_u64_plus_1 FLOAT32 window$u16_f32 FLOAT32 window$u16_f32_plus_1 FLOAT64 window$u16_f64 FLOAT64 window$u16_f64_plus_1
-SINK sinkU32 UINT32 window$u32_i8 UINT32 window$u32_i8_plus_1 UINT32 window$u32_i16 UINT32 window$u32_i16_plus_1 UINT32 window$u32_i32 UINT32 window$u32_i32_plus_1 INT64 window$u32_i64 INT64 window$u32_i64_plus_1 UINT32 window$u32_u8 UINT32 window$u32_u8_plus_1 UINT32 window$u32_u16 UINT32 window$u32_u16_plus_1 UINT32 window$u32_u32 UINT32 window$u32_u32_plus_1 UINT64 window$u32_u64 UINT64 window$u32_u64_plus_1 FLOAT32 window$u32_f32 FLOAT32 window$u32_f32_plus_1 FLOAT64 window$u32_f64 FLOAT64 window$u32_f64_plus_1
-SINK sinkU64 UINT64 window$u64_i8 UINT64 window$u64_i8_plus_1 UINT64 window$u64_i16 UINT64 window$u64_i16_plus_1 UINT64 window$u64_i32 UINT64 window$u64_i32_plus_1 UINT64 window$u64_i64 UINT64 window$u64_i64_plus_1 UINT64 window$u64_u8 UINT64 window$u64_u8_plus_1 UINT64 window$u64_u16 UINT64 window$u64_u16_plus_1 UINT64 window$u64_u32 UINT64 window$u64_u32_plus_1 UINT64 window$u64_u64 UINT64 window$u64_u64_plus_1 FLOAT32 window$u64_f32 FLOAT32 window$u64_f32_plus_1 FLOAT64 window$u64_f64 FLOAT64 window$u64_f64_plus_1
-SINK sinkF32 FLOAT32 window$f32_i8 FLOAT32 window$f32_i8_plus_1 FLOAT32 window$f32_i16 FLOAT32 window$f32_i16_plus_1 FLOAT32 window$f32_i32 FLOAT32 window$f32_i32_plus_1 FLOAT32 window$f32_i64 FLOAT32 window$f32_i64_plus_1 FLOAT32 window$f32_u8 FLOAT32 window$f32_u8_plus_1 FLOAT32 window$f32_u16 FLOAT32 window$f32_u16_plus_1 FLOAT32 window$f32_u32 FLOAT32 window$f32_u32_plus_1 FLOAT32 window$f32_u64 FLOAT32 window$f32_u64_plus_1 FLOAT32 window$f32_f32 FLOAT32 window$f32_f32_plus_1 FLOAT64 window$f32_f64 FLOAT64 window$f32_f64_plus_1
-SINK sinkF64 FLOAT64 window$f64_i8 FLOAT64 window$f64_i8_plus_1 FLOAT64 window$f64_i16 FLOAT64 window$f64_i16_plus_1 FLOAT64 window$f64_i32 FLOAT64 window$f64_i32_plus_1 FLOAT64 window$f64_i64 FLOAT64 window$f64_i64_plus_1 FLOAT64 window$f64_u8 FLOAT64 window$f64_u8_plus_1 FLOAT64 window$f64_u16 FLOAT64 window$f64_u16_plus_1 FLOAT64 window$f64_u32 FLOAT64 window$f64_u32_plus_1 FLOAT64 window$f64_u64 FLOAT64 window$f64_u64_plus_1 FLOAT64 window$f64_f32 FLOAT64 window$f64_f32_plus_1 FLOAT64 window$f64_f64 FLOAT64 window$f64_f64_plus_1
+SINK sinkConstant INT32 stream$i8 INT32 stream$i16 INT32 stream$i32 INT64 stream$i64 INT32 stream$u8 INT32 stream$u16 UINT32 stream$u32 UINT64 stream$u64 FLOAT32 stream$f32 FLOAT64 stream$f64
+SINK sinkI8 INT32 stream$i8_i8 INT32 stream$i8_i8_plus_1 INT32 stream$i8_i16 INT32 stream$i8_i16_plus_1 INT32 stream$i8_i32 INT32 stream$i8_i32_plus_1 INT64 stream$i8_i64 INT64 stream$i8_i64_plus_1 INT32 stream$i8_u8 INT32 stream$i8_u8_plus_1 INT32 stream$i8_u16 INT32 stream$i8_u16_plus_1 UINT32 stream$i8_u32 UINT32 stream$i8_u32_plus_1 UINT64 stream$i8_u64 UINT64 stream$i8_u64_plus_1 FLOAT32 stream$i8_f32 FLOAT32 stream$i8_f32_plus_1 FLOAT64 stream$i8_f64 FLOAT64 stream$i8_f64_plus_1
+SINK sinkI16 INT32 stream$i16_i8 INT32 stream$i16_i8_plus_1 INT32 stream$i16_i16 INT32 stream$i16_i16_plus_1 INT32 stream$i16_i32 INT32 stream$i16_i32_plus_1 INT64 stream$i16_i64 INT64 stream$i16_i64_plus_1 INT32 stream$i16_u8 INT32 stream$i16_u8_plus_1 INT32 stream$i16_u16 INT32 stream$i16_u16_plus_1 UINT32 stream$i16_u32 UINT32 stream$i16_u32_plus_1 UINT64 stream$i16_u64 UINT64 stream$i16_u64_plus_1 FLOAT32 stream$i16_f32 FLOAT32 stream$i16_f32_plus_1 FLOAT64 stream$i16_f64 FLOAT64 stream$i16_f64_plus_1
+SINK sinkI32 INT32 stream$i32_i8 INT32 stream$i32_i8_plus_1 INT32 stream$i32_i16 INT32 stream$i32_i16_plus_1 INT32 stream$i32_i32 INT32 stream$i32_i32_plus_1 INT64 stream$i32_i64 INT64 stream$i32_i64_plus_1 INT32 stream$i32_u8 INT32 stream$i32_u8_plus_1 INT32 stream$i32_u16 INT32 stream$i32_u16_plus_1 UINT32 stream$i32_u32 UINT32 stream$i32_u32_plus_1 UINT64 stream$i32_u64 UINT64 stream$i32_u64_plus_1 FLOAT32 stream$i32_f32 FLOAT32 stream$i32_f32_plus_1 FLOAT64 stream$i32_f64 FLOAT64 stream$i32_f64_plus_1
+SINK sinkI64 INT64 stream$i64_i8 INT64 stream$i64_i8_plus_1 INT64 stream$i64_i16 INT64 stream$i64_i16_plus_1 INT64 stream$i64_i32 INT64 stream$i64_i32_plus_1 INT64 stream$i64_i64 INT64 stream$i64_i64_plus_1 INT64 stream$i64_u8 INT64 stream$i64_u8_plus_1 INT64 stream$i64_u16 INT64 stream$i64_u16_plus_1 INT64 stream$i64_u32 INT64 stream$i64_u32_plus_1 UINT64 stream$i64_u64 UINT64 stream$i64_u64_plus_1 FLOAT32 stream$i64_f32 FLOAT32 stream$i64_f32_plus_1 FLOAT64 stream$i64_f64 FLOAT64 stream$i64_f64_plus_1
+SINK sinkU8 INT32 stream$u8_i8 INT32 stream$u8_i8_plus_1 INT32 stream$u8_i16 INT32 stream$u8_i16_plus_1 INT32 stream$u8_i32 INT32 stream$u8_i32_plus_1 INT64 stream$u8_i64 INT64 stream$u8_i64_plus_1 INT32 stream$u8_u8 INT32 stream$u8_u8_plus_1 INT32 stream$u8_u16 INT32 stream$u8_u16_plus_1 UINT32 stream$u8_u32 UINT32 stream$u8_u32_plus_1 UINT64 stream$u8_u64 UINT64 stream$u8_u64_plus_1 FLOAT32 stream$u8_f32 FLOAT32 stream$u8_f32_plus_1 FLOAT64 stream$u8_f64 FLOAT64 stream$u8_f64_plus_1
+SINK sinkU16 INT32 stream$u16_i8 INT32 stream$u16_i8_plus_1 INT32 stream$u16_i16 INT32 stream$u16_i16_plus_1 INT32 stream$u16_i32 INT32 stream$u16_i32_plus_1 INT64 stream$u16_i64 INT64 stream$u16_i64_plus_1 INT32 stream$u16_u8 INT32 stream$u16_u8_plus_1 INT32 stream$u16_u16 INT32 stream$u16_u16_plus_1 UINT32 stream$u16_u32 UINT32 stream$u16_u32_plus_1 UINT64 stream$u16_u64 UINT64 stream$u16_u64_plus_1 FLOAT32 stream$u16_f32 FLOAT32 stream$u16_f32_plus_1 FLOAT64 stream$u16_f64 FLOAT64 stream$u16_f64_plus_1
+SINK sinkU32 UINT32 stream$u32_i8 UINT32 stream$u32_i8_plus_1 UINT32 stream$u32_i16 UINT32 stream$u32_i16_plus_1 UINT32 stream$u32_i32 UINT32 stream$u32_i32_plus_1 INT64 stream$u32_i64 INT64 stream$u32_i64_plus_1 UINT32 stream$u32_u8 UINT32 stream$u32_u8_plus_1 UINT32 stream$u32_u16 UINT32 stream$u32_u16_plus_1 UINT32 stream$u32_u32 UINT32 stream$u32_u32_plus_1 UINT64 stream$u32_u64 UINT64 stream$u32_u64_plus_1 FLOAT32 stream$u32_f32 FLOAT32 stream$u32_f32_plus_1 FLOAT64 stream$u32_f64 FLOAT64 stream$u32_f64_plus_1
+SINK sinkU64 UINT64 stream$u64_i8 UINT64 stream$u64_i8_plus_1 UINT64 stream$u64_i16 UINT64 stream$u64_i16_plus_1 UINT64 stream$u64_i32 UINT64 stream$u64_i32_plus_1 UINT64 stream$u64_i64 UINT64 stream$u64_i64_plus_1 UINT64 stream$u64_u8 UINT64 stream$u64_u8_plus_1 UINT64 stream$u64_u16 UINT64 stream$u64_u16_plus_1 UINT64 stream$u64_u32 UINT64 stream$u64_u32_plus_1 UINT64 stream$u64_u64 UINT64 stream$u64_u64_plus_1 FLOAT32 stream$u64_f32 FLOAT32 stream$u64_f32_plus_1 FLOAT64 stream$u64_f64 FLOAT64 stream$u64_f64_plus_1
+SINK sinkF32 FLOAT32 stream$f32_i8 FLOAT32 stream$f32_i8_plus_1 FLOAT32 stream$f32_i16 FLOAT32 stream$f32_i16_plus_1 FLOAT32 stream$f32_i32 FLOAT32 stream$f32_i32_plus_1 FLOAT32 stream$f32_i64 FLOAT32 stream$f32_i64_plus_1 FLOAT32 stream$f32_u8 FLOAT32 stream$f32_u8_plus_1 FLOAT32 stream$f32_u16 FLOAT32 stream$f32_u16_plus_1 FLOAT32 stream$f32_u32 FLOAT32 stream$f32_u32_plus_1 FLOAT32 stream$f32_u64 FLOAT32 stream$f32_u64_plus_1 FLOAT32 stream$f32_f32 FLOAT32 stream$f32_f32_plus_1 FLOAT64 stream$f32_f64 FLOAT64 stream$f32_f64_plus_1
+SINK sinkF64 FLOAT64 stream$f64_i8 FLOAT64 stream$f64_i8_plus_1 FLOAT64 stream$f64_i16 FLOAT64 stream$f64_i16_plus_1 FLOAT64 stream$f64_i32 FLOAT64 stream$f64_i32_plus_1 FLOAT64 stream$f64_i64 FLOAT64 stream$f64_i64_plus_1 FLOAT64 stream$f64_u8 FLOAT64 stream$f64_u8_plus_1 FLOAT64 stream$f64_u16 FLOAT64 stream$f64_u16_plus_1 FLOAT64 stream$f64_u32 FLOAT64 stream$f64_u32_plus_1 FLOAT64 stream$f64_u64 FLOAT64 stream$f64_u64_plus_1 FLOAT64 stream$f64_f32 FLOAT64 stream$f64_f32_plus_1 FLOAT64 stream$f64_f64 FLOAT64 stream$f64_f64_plus_1
 
 
 # Todo #442: the below system level tests currently perform downcasts.
-# Check if different numeric types support the equals operation
+# Check if different numeric types support the sub operation
 SELECT
     i8 - 42 AS i8,
     i16 - 42 AS i16,
@@ -33,11 +33,11 @@ SELECT
 
     f32 - 42.0_F AS f32,
     f64 - 42.0_D AS f64
-FROM window INTO sinkConstant
+FROM stream INTO sinkConstant
 ----
 -84,-171,-32811,-2147483691,0,214,65494,4294967254,-19.000000,-19.000000
 
-# Equal i8 value with all other data types
+# Sub i8 value with all other data types
 SELECT
     # signed
     i8 - i8 AS i8_i8,
@@ -62,11 +62,11 @@ SELECT
     i8 - f32 + 1_F AS i8_f32_plus_1,
     i8 - f64 AS i8_f64,
     i8 - f64 + 1_D AS i8_f64_plus_1
-FROM window INTO sinkI8
+FROM stream INTO sinkI8
 ----
 0,1,87,88,32727,32728,2147483607,2147483608,-84,-83,-298,-297,4294901718,4294901719,18446744069414584278,18446744069414584279,-65.000000,-64.000000,-65.000000,-64.000000
 
-# Equal i16 value with all other data types
+# Sub i16 value with all other data types
 SELECT
     # signed
     i16 - i8 AS i16_i8,
@@ -91,11 +91,11 @@ SELECT
     i16 - f32 + 1_F AS i16_f32_plus_1,
     i16 - f64 AS i16_f64,
     i16 - f64 + 1_D AS i16_f64_plus_1
-FROM window INTO sinkI16
+FROM stream INTO sinkI16
 ----
 -87,-86,0,1,32640,32641,2147483520,2147483521,-171,-170,385,386,4294901631,4294901632,18446744069414584191,18446744069414584192,-152.000000,-151.000000,-152.000000,-151.000000
 
-# Equal i32 value with all other data types
+# Sub i32 value with all other data types
 SELECT
     # signed
     i32 - i8 AS i32_i8,
@@ -120,11 +120,11 @@ SELECT
     i32 - f32 + 1_F AS i32_f32_plus_1,
     i32 - f64 AS i32_f64,
     i32 - f64 + 1_D AS i32_f64_plus_1
-FROM window INTO sinkI32
+FROM stream INTO sinkI32
 ----
 -32727,-32726,-32640,-32639,0,1,2147450880,2147450881,-32811,-32810,-33025,-33024,4294868991,4294868992,18446744069414551551,18446744069414551552,-32792.000000,-32791.000000,-32792.000000,-32791.000000
 
-# Equal i64 value with all other data types
+# Sub i64 value with all other data types
 SELECT
     # signed
     i64 - i8 AS i64_i8,
@@ -149,12 +149,12 @@ SELECT
     i64 - f32 + 1_F AS i64_f32_plus_1,
     i64 - f64 AS i64_f64,
     i64 - f64 + 1_D AS i64_f64_plus_1
-FROM window INTO sinkI64
+FROM stream INTO sinkI64
 ----
 -2147483607,-2147483606,-2147483520,-2147483519,-2147450880,-2147450879,0,1,-2147483691,-2147483690,-2147483905,-2147483904,-2147549185,-2147549184,18446744067267100671,18446744067267100672,-2147483648.000000,-2147483648.000000,-2147483672.000000,-2147483671.000000
 
 
-# Equal u8 value with all other data types
+# Sub u8 value with all other data types
 SELECT
     # signed
     u8 - i8 AS u8_i8,
@@ -179,11 +179,11 @@ SELECT
     u8 - f32 + 1_F AS u8_f32_plus_1,
     u8 - f64 AS u8_f64,
     u8 - f64 + 1_D AS u8_f64_plus_1
-FROM window INTO sinkU8
+FROM stream INTO sinkU8
 ----
 84,85,171,172,32811,32812,2147483691,2147483692,0,1,-214,-213,4294901802,4294901803,18446744069414584362,18446744069414584363,19.000000,20.000000,19.000000,20.000000
 
-# Equal u16 value with all other data types
+# Sub u16 value with all other data types
 SELECT
     # signed
     u16 - i8 AS u16_i8,
@@ -208,11 +208,11 @@ SELECT
     u16 - f32 + 1_F AS u16_f32_plus_1,
     u16 - f64 AS u16_f64,
     u16 - f64 + 1_D AS u16_f64_plus_1
-FROM window INTO sinkU16
+FROM stream INTO sinkU16
 ----
 298,299,385,386,33025,33026,2147483905,2147483906,214,215,385,386,4294902016,4294902017,18446744069414584576,18446744069414584577,233.000000,234.000000,233.000000,234.000000
 
-# Equal u32 value with all other data types
+# Sub u32 value with all other data types
 SELECT
     # signed
     u32 - i8 AS u32_i8,
@@ -237,11 +237,11 @@ SELECT
     u32 - f32 + 1_F AS u32_f32_plus_1,
     u32 - f64 AS u32_f64,
     u32 - f64 + 1_D AS u32_f64_plus_1
-FROM window INTO sinkU32
+FROM stream INTO sinkU32
 ----
 65578,65579,65665,65666,98305,98306,2147549185,2147549186,65494,65495,65280,65281,0,1,18446744069414649856,18446744069414649857,65513.000000,65514.000000,65513.000000,65514.000000
 
-# Equal u64 value with all other data types
+# Sub u64 value with all other data types
 SELECT
     # signed
     u64 - i8 AS u64_i8,
@@ -266,7 +266,7 @@ SELECT
     u64 - f32 + 1_F AS u64_f32_plus_1,
     u64 - f64 AS u64_f64,
     u64 - f64 + 1_D AS u64_f64_plus_1
-FROM window INTO sinkU64
+FROM stream INTO sinkU64
 ----
 4294967338,4294967339,4294967425,4294967426,4295000065,4295000066,6442450945,6442450946,4294967254,4294967255,4294967040,4294967041,4294901760,4294901761,0,1,4294967296.000000,4294967296.000000,4294967273.000000,4294967274.000000
 
@@ -295,7 +295,7 @@ SELECT
     f32 - f32 + 1_F AS f32_f32_plus_1,
     f32 - f64 AS f32_f64,
     f32 - f64 + 1_D AS f32_f64_plus_1
-FROM window INTO sinkF32
+FROM stream INTO sinkF32
 ----
 65.000000,66.000000,152.000000,153.000000,32792.000000,32793.000000,2147483648.000000,2147483648.000000,-19.000000,-18.000000,-233.000000,-232.000000,-65513.000000,-65512.000000,-4294967296.000000,-4294967296.000000,0.000000,1.000000,0.000000,1.000000
 
@@ -325,7 +325,7 @@ SELECT
     f64 - f32 + 1_F AS f64_f32_plus_1,
     f64 - f64 AS f64_f64,
     f64 - f64 + 1_D AS f64_f64_plus_1
-FROM window INTO sinkF64
+FROM stream INTO sinkF64
 ----
 65.000000,66.000000,152.000000,153.000000,32792.000000,32793.000000,2147483648.000000,2147483648.000000,-19.000000,-18.000000,-233.000000,-232.000000,-65513.000000,-65512.000000,-4294967296.000000,-4294967296.000000,0.000000,1.000000,0.000000,1.000000
 

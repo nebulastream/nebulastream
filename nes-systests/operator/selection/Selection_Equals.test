@@ -2,7 +2,7 @@
 # description: Simple selection tests
 # groups: [Selection]
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 12,1,1001
 4,1,1002
@@ -32,25 +32,25 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 1,20,20000
 1,21,21000
 
-SINK sinkWindow UINT64 window$id UINT64 window$value UINT64 window$timestamp
-SINK sinkId UINT64 window$id
+SINK sinkWindow UINT64 stream$id UINT64 stream$value UINT64 stream$timestamp
+SINK sinkId UINT64 stream$id
 
 # Filter equal
-SELECT id FROM window WHERE value == 1 INTO sinkId
+SELECT id FROM stream WHERE value == 1 INTO sinkId
 ----
 1
 12
 4
 
 # Filter equal with non-existing value
-SELECT * FROM window WHERE value == 1234 INTO sinkWindow
+SELECT * FROM stream WHERE value == 1234 INTO sinkWindow
 ----
 
 # Two filters after each other
-SELECT * FROM window WHERE value == 1 AND id == 12 INTO sinkWindow
+SELECT * FROM stream WHERE value == 1 AND id == 12 INTO sinkWindow
 ----
 12,1,1001
 
 # Two filters after each other with no results
-SELECT * FROM window WHERE value == 1 AND id == 1234 INTO sinkWindow
+SELECT * FROM stream WHERE value == 1 AND id == 1234 INTO sinkWindow
 ----

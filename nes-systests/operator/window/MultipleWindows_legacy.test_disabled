@@ -3,7 +3,7 @@
 # groups: [Legacy]
 
 # Source definitions
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 12,1,1001
 4,1,1002

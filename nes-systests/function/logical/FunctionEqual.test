@@ -2,11 +2,11 @@
 # description: Simple function Equal tests
 # groups: [Function, FunctionEqual]
 
-Source window INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23.3,42.42
 
-SINK sink10Booleans BOOLEAN window$bool1 BOOLEAN window$bool2 BOOLEAN window$bool3 BOOLEAN window$bool4 BOOLEAN window$bool5 BOOLEAN window$bool6 BOOLEAN window$bool7 BOOLEAN window$bool8 BOOLEAN window$bool9 BOOLEAN window$bool10
-SINK sink20Booleans BOOLEAN window$bool1 BOOLEAN window$bool2 BOOLEAN window$bool3 BOOLEAN window$bool4 BOOLEAN window$bool5 BOOLEAN window$bool6 BOOLEAN window$bool7 BOOLEAN window$bool8 BOOLEAN window$bool9 BOOLEAN window$bool10 BOOLEAN window$bool11 BOOLEAN window$bool12 BOOLEAN window$bool13 BOOLEAN window$bool14 BOOLEAN window$bool15 BOOLEAN window$bool16 BOOLEAN window$bool17 BOOLEAN window$bool18 BOOLEAN window$bool19 BOOLEAN window$bool20
+SINK sink10Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$bool3 BOOLEAN stream$bool4 BOOLEAN stream$bool5 BOOLEAN stream$bool6 BOOLEAN stream$bool7 BOOLEAN stream$bool8 BOOLEAN stream$bool9 BOOLEAN stream$bool10
+SINK sink20Booleans BOOLEAN stream$bool1 BOOLEAN stream$bool2 BOOLEAN stream$bool3 BOOLEAN stream$bool4 BOOLEAN stream$bool5 BOOLEAN stream$bool6 BOOLEAN stream$bool7 BOOLEAN stream$bool8 BOOLEAN stream$bool9 BOOLEAN stream$bool10 BOOLEAN stream$bool11 BOOLEAN stream$bool12 BOOLEAN stream$bool13 BOOLEAN stream$bool14 BOOLEAN stream$bool15 BOOLEAN stream$bool16 BOOLEAN stream$bool17 BOOLEAN stream$bool18 BOOLEAN stream$bool19 BOOLEAN stream$bool20
 
 
 # Since equals is commutative, e.g., 'i8 == f32' equals 'f32 == i8', so we check only one direction.
@@ -24,7 +24,7 @@ SELECT
 
     f32 == 42.42_F AS bool9,
     f64 == 42.42_D AS bool10
-FROM window INTO sink10Booleans
+FROM stream INTO sink10Booleans
 ----
 0,0,0,0,1,0,0,0,0,1
 
@@ -53,7 +53,7 @@ SELECT
     i8 == f32 + 1_F AS bool18,
     i8 == f64 AS bool19,
     i8 == f64 + 1_D AS bool20
-FROM window INTO sink20Booleans
+FROM stream INTO sink20Booleans
 ----
 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
@@ -82,7 +82,7 @@ SELECT
     i16 == f32 + 1_F AS bool18,
     i16 == f64 AS bool19,
     i16 == f64 + 1_D AS bool20
-FROM window INTO sink20Booleans
+FROM stream INTO sink20Booleans
 ----
 0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
@@ -111,7 +111,7 @@ SELECT
     i32 == f32 + 1_F AS bool18,
     i32 == f64 AS bool19,
     i32 == f64 + 1_D AS bool20
-FROM window INTO sink20Booleans
+FROM stream INTO sink20Booleans
 ----
 0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
@@ -140,6 +140,6 @@ SELECT
     i64 == f32 + 1_F AS bool18,
     i64 == f64 AS bool19,
     i64 == f64 + 1_D AS bool20
-FROM window INTO sink20Booleans
+FROM stream INTO sink20Booleans
 ----
 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0
