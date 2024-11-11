@@ -21,7 +21,6 @@
 
 namespace NES {
 using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
 }// namespace NES
 

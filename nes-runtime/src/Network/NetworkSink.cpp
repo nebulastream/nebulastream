@@ -220,8 +220,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
-            NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", sharedQueryId, timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, sharedQueryId);
+            NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", decomposedQueryId, timestamp);
+            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }

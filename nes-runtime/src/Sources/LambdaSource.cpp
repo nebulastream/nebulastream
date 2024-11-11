@@ -81,7 +81,7 @@ std::optional<Runtime::TupleBuffer> LambdaSource::receiveData() {
 
     auto rawBuffer = buffer.getBuffer();
     generationFunction(rawBuffer, numberOfTuplesToProduce);
-    buffer.setCreationTimestamp(value.count());
+    buffer.setCreationTimestampInMS(value.count());
     buffer.setNumberOfTuples(numberOfTuplesToProduce);
     now = std::chrono::system_clock::now();
     now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);

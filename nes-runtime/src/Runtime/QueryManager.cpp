@@ -351,7 +351,7 @@ bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, OperatorId 
         for (const auto& qep : qeps->second) {
             for (auto sink : qep->getSinks()) {
                 if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
-                    NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId={} punctuation={} ", epochBarrier);
+                    NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId={} punctuation={} ", epochBarrier, epochBarrier);
                     auto newReconf = ReconfigurationMessage(qep->getSharedQueryId(),
                                                             qep->getDecomposedQueryId(),
                                                             Runtime::ReconfigurationType::PropagateEpoch,

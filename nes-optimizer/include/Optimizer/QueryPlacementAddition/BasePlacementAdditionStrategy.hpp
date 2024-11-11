@@ -15,6 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 
+#include "../../../../nes-runtime/include/Util/FaultToleranceType.hpp"
+
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Operators/Operator.hpp>
@@ -121,7 +123,7 @@ class BasePlacementAdditionStrategy {
     virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
+                                                              DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE) = 0;
 
   protected:
     /**
@@ -154,11 +156,12 @@ class BasePlacementAdditionStrategy {
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
      * @param decomposedQueryPlanVersion: the version of the query sub plan
+     * @param faultToleranceType: fault tolerance type
      * @return vector of deployment contexts
      */
     PlacementAdditionResult updateExecutionNodes(SharedQueryId sharedQueryId,
                                                  ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion);
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion, FaultToleranceType faultToleranceType);
 
     /**
      * @brief Get the Topology node with the input id

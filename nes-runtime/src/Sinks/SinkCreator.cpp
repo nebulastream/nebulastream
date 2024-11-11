@@ -40,6 +40,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               const std::string& filePath,
                               bool append,
                               bool addTimestamp,
+                              FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager(), addTimestamp);
     return std::make_shared<FileSink>(format,
@@ -50,6 +51,7 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                       sharedQueryId,
                                       decomposedQueryId,
                                       decomposedQueryVersion,
+                                      faultToleranceType,
                                       numberOfOrigins);
 }
 
@@ -61,6 +63,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                     uint32_t activeProducers,
                                     const std::string& filePath,
                                     bool append,
+                                    FaultToleranceType faultToleranceType,
                                     uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format,
@@ -71,6 +74,7 @@ DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                       sharedQueryId,
                                       decomposedQueryId,
                                       decomposedQueryVersion,
+                                      faultToleranceType,
                                       numberOfOrigins);
 }
 
@@ -81,6 +85,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                uint32_t activeProducers,
                                const std::string& filePath,
                                bool append,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<FileSink>(format,
@@ -90,6 +95,7 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                       append,
                                       sharedQueryId,
                                       decomposedQueryId,
+                                      faultToleranceType,
                                       numberOfOrigins);
 }
 
@@ -100,6 +106,7 @@ DataSinkPtr createMigrateFileSink(SharedQueryId sharedQueryId,
                                   uint32_t numOfProducers,
                                   const std::string& filePath,
                                   bool append,
+                                  FaultToleranceType faultToleranceType,
                                   uint64_t numberOfOrigins) {
     return std::make_shared<RawBufferSink>(nodeEngine,
                                            numOfProducers,
@@ -108,6 +115,7 @@ DataSinkPtr createMigrateFileSink(SharedQueryId sharedQueryId,
                                            sharedQueryId,
                                            decomposedQueryId,
                                            decomposedQueryVersion,
+                                           faultToleranceType,
                                            numberOfOrigins);
 }
 
@@ -119,6 +127,7 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
                              uint32_t activeProducers,
                              const std::string& host,
                              uint16_t port,
+                             FaultToleranceType faultToleranceType,
                              uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format,
@@ -130,6 +139,7 @@ DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,
                                      sharedQueryId,
                                      decomposedQueryId,
                                      decomposedQueryVersion,
+                                     faultToleranceType,
                                      numberOfOrigins);
 }
 
@@ -141,6 +151,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                              uint32_t activeProducers,
                              const std::string& host,
                              uint16_t port,
+                             FaultToleranceType faultToleranceType,
                              uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format,
@@ -152,6 +163,7 @@ DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                                      sharedQueryId,
                                      decomposedQueryId,
                                      decomposedQueryVersion,
+                                     faultToleranceType,
                                      numberOfOrigins);
 }
 
@@ -164,6 +176,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                 const std::string& host,
                                 uint16_t port,
                                 bool internal,
+                                FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format,
@@ -175,6 +188,7 @@ DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                      sharedQueryId,
                                      decomposedQueryId,
                                      decomposedQueryVersion,
+                                     faultToleranceType,
                                      numberOfOrigins);
 }
 
@@ -185,6 +199,7 @@ DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format,
@@ -194,6 +209,7 @@ DataSinkPtr createCsvPrintSink(const SchemaPtr& schema,
                                        decomposedQueryId,
                                        decomposedQueryVersion,
                                        out,
+                                       faultToleranceType,
                                        numberOfOrigins);
 }
 
@@ -202,12 +218,14 @@ DataSinkPtr createNullOutputSink(SharedQueryId sharedQueryId,
                                  DecomposedQueryPlanVersion decomposedQueryVersion,
                                  const Runtime::NodeEnginePtr& nodeEngine,
                                  uint32_t activeProducers,
+                                 FaultToleranceType faultToleranceType,
                                  uint64_t numberOfOrigins) {
     return std::make_shared<NullOutputSink>(nodeEngine,
                                             activeProducers,
                                             sharedQueryId,
                                             decomposedQueryId,
                                             decomposedQueryVersion,
+                                            faultToleranceType,
                                             numberOfOrigins);
 }
 
@@ -218,6 +236,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                const Runtime::NodeEnginePtr& nodeEngine,
                                uint32_t activeProducers,
                                std::ostream& out,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format,
@@ -227,6 +246,7 @@ DataSinkPtr createCSVPrintSink(const SchemaPtr& schema,
                                        decomposedQueryId,
                                        decomposedQueryVersion,
                                        out,
+                                       faultToleranceType,
                                        numberOfOrigins);
 }
 
@@ -264,6 +284,7 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                 SharedQueryId sharedQueryId,
                                 DecomposedQueryId decomposedQueryId,
                                 DecomposedQueryPlanVersion decomposedQueryVersion,
+                                FaultToleranceType faultToleranceType,
                                 uint64_t numberOfOrigins,
                                 Statistic::StatisticSynopsisType sinkFormatType,
                                 Statistic::StatisticDataCodec sinkDataCodec) {
@@ -283,6 +304,7 @@ DataSinkPtr createStatisticSink(const SchemaPtr& schema,
                                                       sharedQueryId,
                                                       decomposedQueryId,
                                                       decomposedQueryVersion,
+                                                      faultToleranceType,
                                                       numberOfOrigins,
                                                       nodeEngine->getStatisticManager()->getStatisticStore(),
                                                       statisticSinkFormat);
@@ -296,6 +318,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                  SharedQueryId sharedQueryId,
                                  DecomposedQueryId decomposedQueryId,
                                  DecomposedQueryPlanVersion decomposedQueryVersion,
+                                 FaultToleranceType faultToleranceType,
                                  uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MonitoringSink>(format,
@@ -306,6 +329,7 @@ DataSinkPtr createMonitoringSink(Monitoring::MetricStorePtr metricStore,
                                             sharedQueryId,
                                             decomposedQueryId,
                                             decomposedQueryVersion,
+                                            faultToleranceType,
                                             numberOfOrigins);
 }
 
@@ -374,6 +398,7 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                            uint64_t msgDelay,
                            MQTTSinkDescriptor::ServiceQualities qualityOfService,
                            bool asynchronousClient,
+                           FaultToleranceType faultToleranceType,
                            uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MQTTSink>(format,
@@ -391,6 +416,7 @@ DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                                       msgDelay,
                                       qualityOfService,
                                       asynchronousClient,
+                                      faultToleranceType,
                                       numberOfOrigins);
 }
 #endif

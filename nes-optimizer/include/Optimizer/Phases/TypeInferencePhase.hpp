@@ -76,8 +76,9 @@ class TypeInferencePhase {
      * 2. Propagate the input and output schemas from source operators to the sink operators.
      * 3. If a operator contains expression, we infer the result stamp of this operators.
      * @param queryPlan the query plan
+     * @param faultToleranceType fault tolerance type
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    QueryPlanPtr execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType);
 
     /**
      * @brief Performs type inference on the given decomposed query plan.
@@ -95,6 +96,7 @@ class TypeInferencePhase {
      * @param planId: the id of the plan
      * @param sourceOperators : the source operators
      * @param sinkOperators : the sink operators
+     * @param faultToleranceType fault tolerance type
      * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
      * @return QueryPlanPtr
      * @throws TypeInferenceException if inferring the data types into the query failed
@@ -102,7 +104,7 @@ class TypeInferencePhase {
      */
     void performTypeInference(QueryId planId,
                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
-                              std::vector<SinkLogicalOperatorPtr> sinkOperators);
+                              std::vector<SinkLogicalOperatorPtr> sinkOperators, FaultToleranceType faultToleranceType);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

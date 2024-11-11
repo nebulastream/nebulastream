@@ -30,18 +30,18 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId) {
     std::unique_lock lock(watermarkLatch);
     // insert new local watermark processor if the id is not present in the map
-    if (localWatermarkProcessor.find(originId) == localWatermarkProcessor.end()) {
-        localWatermarkProcessor[originId] = std::make_unique<WatermarkProcessor>();
+    if (localWatermarkProcessor.find(originId.getRawValue()) == localWatermarkProcessor.end()) {
+        localWatermarkProcessor[originId.getRawValue()] = std::make_unique<WatermarkProcessor>();
     }
     NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
                     "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
                                                                          << " origins but we only expected  " << numberOfOrigins);
-    localWatermarkProcessor[originId]->updateWatermark(ts, sequenceNumber);
+    localWatermarkProcessor[originId.getRawValue()]->updateWatermark(ts, sequenceNumber);
 }
 
 bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const {
     std::unique_lock lock(watermarkLatch);
-    auto iter = localWatermarkProcessor.find(originId);
+    auto iter = localWatermarkProcessor.find(originId.getRawValue());
     if (iter != localWatermarkProcessor.end()) {
         return iter->second->isWatermarkSynchronized();
     }

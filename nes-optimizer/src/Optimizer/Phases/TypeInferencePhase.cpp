@@ -55,7 +55,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan) {
+DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType) {
 
     if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
@@ -69,7 +69,7 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
                                      "Found no source or sink operators");
     }
 
-    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId),
+    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId, faultToleranceType),
                          sourceOperators,
                          sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
@@ -78,7 +78,8 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
 
 void TypeInferencePhase::performTypeInference(QueryId planId,
                                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
-                                              std::vector<SinkLogicalOperatorPtr> sinkOperators) {
+                                              std::vector<SinkLogicalOperatorPtr> sinkOperators,
+                                              FaultToleranceType faultToleranceType) {
 
     // first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators) {
@@ -114,6 +115,9 @@ void TypeInferencePhase::performTypeInference(QueryId planId,
     // now we have to infer the input and output schemas for the whole query.
     // to this end we call at each sink the infer method to propagate the schemata across the whole query.
     for (auto& sink : sinkOperators) {
+        auto sinkDescriptor = sink->getSinkDescriptor()->as<SinkDescriptor>();
+        sinkDescriptor->setFaultToleranceType(faultToleranceType);
+        sink->setSinkDescriptor(sinkDescriptor);
         if (!sink->inferSchema()) {
             NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
             throw TypeInferenceException(planId, "TypeInferencePhase: Failed!");

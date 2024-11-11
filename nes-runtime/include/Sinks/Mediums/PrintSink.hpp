@@ -41,6 +41,7 @@ class PrintSink : public SinkMedium {
               DecomposedQueryId decomposedQueryId,
               DecomposedQueryPlanVersion decomposedQueryVersion,
               std::ostream& pOutputStream = std::cout,
+              FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
               uint64_t numberOfOrigins = 1);
 
     /**

@@ -57,6 +57,7 @@ StatisticSink::StatisticSink(const SinkFormatPtr& sinkFormat,
                              SharedQueryId sharedQueryId,
                              DecomposedQueryId decomposedQueryId,
                              DecomposedQueryPlanVersion decomposedQueryVersion,
+                             FaultToleranceType faultToleranceType,
                              uint64_t numberOfOrigins,
                              StatisticStorePtr statisticStore,
                              StatisticFormatPtr statisticSinkFormat)
@@ -66,6 +67,7 @@ StatisticSink::StatisticSink(const SinkFormatPtr& sinkFormat,
                  sharedQueryId,
                  decomposedQueryId,
                  decomposedQueryVersion,
+                 faultToleranceType,
                  numberOfOrigins),
       statisticStore(std::move(statisticStore)), statisticSinkFormat(std::move(statisticSinkFormat)) {}
 }// namespace NES::Statistic

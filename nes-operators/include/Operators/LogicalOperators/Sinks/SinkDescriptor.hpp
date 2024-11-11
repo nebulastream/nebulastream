@@ -18,6 +18,7 @@
 #include <memory>
 
 namespace NES {
+enum class FaultToleranceType : int8_t;
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;

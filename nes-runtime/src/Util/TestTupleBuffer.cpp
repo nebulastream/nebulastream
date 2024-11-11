@@ -23,6 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <utility>
+#include <zmq.hpp>
 
 namespace NES::Runtime::MemoryLayouts {
 
@@ -158,6 +159,10 @@ const PhysicalTypePtr& DynamicField::getPhysicalType() const { return physicalTy
 const uint8_t* DynamicField::getAddressPointer() const { return address; }
 
 uint64_t TestTupleBuffer::getCapacity() const { return memoryLayout->getCapacity(); }
+
+void TestTupleBuffer::setCreationTimestampInMS(uint64_t value) const { buffer.setCreationTimestampInMS(value); }
+
+void TestTupleBuffer::setWatermark(uint64_t value) const { buffer.setWatermark(value); }
 
 uint64_t TestTupleBuffer::getNumberOfTuples() const { return buffer.getNumberOfTuples(); }
 

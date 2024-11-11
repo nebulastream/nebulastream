@@ -210,7 +210,6 @@ const std::string ADD_INGESTION_TIME = "addIngestionTime";
 //Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
-const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 // Logical source configurations

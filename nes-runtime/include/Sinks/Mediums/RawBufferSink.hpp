@@ -46,6 +46,7 @@ class RawBufferSink : public SinkMedium {
                            SharedQueryId sharedQueryId,
                            DecomposedQueryId decomposedQueryId,
                            DecomposedQueryPlanVersion decomposedQueryVersion,
+                           FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                            uint64_t numberOfOrigins = 1);
 
     ~RawBufferSink() override;

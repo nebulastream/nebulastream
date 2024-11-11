@@ -15,6 +15,8 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_DECOMPOSEDQUERYPLAN_DECOMPOSEDQUERYPLAN_HPP_
 
+#include "../../../../nes-runtime/include/Util/FaultToleranceType.hpp"
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
@@ -55,7 +57,7 @@ class DecomposedQueryPlan {
      * @param workerId: the worker id
      * @return instance of Decomposed query plan
      */
-    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId);
+    static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -63,20 +65,23 @@ class DecomposedQueryPlan {
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      * @param rootOperators: the root operators
+     * @param faultToleranceType fault tolerance type
      * @return instance of Decomposed query plan
      */
     static DecomposedQueryPlanPtr create(DecomposedQueryId decomposedQueryId,
                                          SharedQueryId sharedQueryId,
                                          WorkerId workerId,
-                                         std::vector<OperatorPtr> rootOperators);
+                                         std::vector<OperatorPtr> rootOperators,
+                                         FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
      * @param decomposedQueryId: the decomposed query plan id
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
+     * @param faultToleranceType fault tolerance type
      */
-    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId);
+    explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId, SharedQueryId sharedQueryId, WorkerId workerId, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
@@ -84,11 +89,13 @@ class DecomposedQueryPlan {
      * @param sharedQueryId: the shared query id
      * @param workerId: the worker id
      * @param rootOperators: the root operators
+     * @param faultToleranceType: fault tolerance type
      */
     explicit DecomposedQueryPlan(DecomposedQueryId decomposedQueryId,
                                  SharedQueryId sharedQueryId,
                                  WorkerId workerId,
-                                 std::vector<OperatorPtr> rootOperators);
+                                 std::vector<OperatorPtr> rootOperators,
+                                 FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Add the operator as new root operator
@@ -102,6 +109,12 @@ class DecomposedQueryPlan {
      * @return true if success else false
      */
     bool removeAsRootOperator(OperatorId rootOperatorId);
+
+ /**
+ * @brief Sets fault tolerance type
+ * @param faultToleranceType fault tolerance type
+ */
+ void setFaultToleranceType(FaultToleranceType faultToleranceType);
 
     /**
      * replaces a particular root operator with a new one.
@@ -272,6 +285,7 @@ class DecomposedQueryPlan {
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;
+ FaultToleranceType faultToleranceType;
 };
 }// namespace NES
 

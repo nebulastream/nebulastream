@@ -15,13 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MULTIORIGINWATERMARKPROCESSOR_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MULTIORIGINWATERMARKPROCESSOR_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 
 namespace NES {
 using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
 }// namespace NES
 
@@ -72,13 +72,6 @@ class MultiOriginWatermarkProcessor {
      * @return WatermarkTs
      */
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
-
-    /**
-     * @brief Returns success if there are no tuples with smaller sequence number that haven't arrived yet than the last tuple seen
-     * @param originId origin id
-     * @return Success
-     */
-    bool isWatermarkSynchronized(OriginId originId) const;
 
   private:
     mutable std::mutex watermarkLatch;
