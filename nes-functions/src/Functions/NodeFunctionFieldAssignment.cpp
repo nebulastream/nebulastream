@@ -80,7 +80,7 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
     if (existingField)
     {
         const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
-        field->updateFieldName(existingField->getName());
+        field->updateFieldName(existingField.value()->getName());
         field->setStamp(stamp);
     }
     else
