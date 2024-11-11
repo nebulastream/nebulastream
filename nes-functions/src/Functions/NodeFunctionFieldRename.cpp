@@ -89,7 +89,7 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
         }
     }
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute->getDataType();
+    stamp = fieldAttribute.value()->getDataType();
 }
 
 NodeFunctionPtr NodeFunctionFieldRename::deepCopy()
