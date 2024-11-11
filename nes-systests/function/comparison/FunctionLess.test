@@ -2,142 +2,154 @@
 # description: Simple function less tests
 # groups: [Function,FunctionLess]
 
-Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
 -42,-129,-32769,-2147483649,41,156,65536,4294967296,13.3,42.42
+
+SINK sinkConstant BOOLEAN stream$i8 BOOLEAN stream$i16 BOOLEAN stream$i32 BOOLEAN stream$i64 BOOLEAN stream$u8 BOOLEAN stream$u16 BOOLEAN stream$u32 BOOLEAN stream$u64 BOOLEAN stream$f32 BOOLEAN stream$f64
+SINK sinkI8 BOOLEAN stream$i8_i8 BOOLEAN stream$i8_i8_plus_1 BOOLEAN stream$i8_i16 BOOLEAN stream$i8_i16_plus_1 BOOLEAN stream$i8_i32 BOOLEAN stream$i8_i32_plus_1 BOOLEAN stream$i8_i64 BOOLEAN stream$i8_i64_plus_1 BOOLEAN stream$i8_u8 BOOLEAN stream$i8_u8_plus_1 BOOLEAN stream$i8_u16 BOOLEAN stream$i8_u16_plus_1 BOOLEAN stream$i8_u32 BOOLEAN stream$i8_u32_plus_1 BOOLEAN stream$i8_u64 BOOLEAN stream$i8_u64_plus_1 BOOLEAN stream$i8_f32 BOOLEAN stream$i8_f32_plus_1 BOOLEAN stream$i8_f64 BOOLEAN stream$i8_f64_plus_1
+SINK sinkI16 BOOLEAN stream$i16_i8 BOOLEAN stream$i16_i8_plus_1 BOOLEAN stream$i16_i16 BOOLEAN stream$i16_i16_plus_1 BOOLEAN stream$i16_i32 BOOLEAN stream$i16_i32_plus_1 BOOLEAN stream$i16_i64 BOOLEAN stream$i16_i64_plus_1 BOOLEAN stream$i16_u8 BOOLEAN stream$i16_u8_plus_1 BOOLEAN stream$i16_u16 BOOLEAN stream$i16_u16_plus_1 BOOLEAN stream$i16_u32 BOOLEAN stream$i16_u32_plus_1 BOOLEAN stream$i16_u64 BOOLEAN stream$i16_u64_plus_1 BOOLEAN stream$i16_f32 BOOLEAN stream$i16_f32_plus_1 BOOLEAN stream$i16_f64 BOOLEAN stream$i16_f64_plus_1
+SINK sinkI32 BOOLEAN stream$i32_i8 BOOLEAN stream$i32_i8_plus_1 BOOLEAN stream$i32_i16 BOOLEAN stream$i32_i16_plus_1 BOOLEAN stream$i32_i32 BOOLEAN stream$i32_i32_plus_1 BOOLEAN stream$i32_i64 BOOLEAN stream$i32_i64_plus_1 BOOLEAN stream$i32_u8 BOOLEAN stream$i32_u8_plus_1 BOOLEAN stream$i32_u16 BOOLEAN stream$i32_u16_plus_1 BOOLEAN stream$i32_u32 BOOLEAN stream$i32_u32_plus_1 BOOLEAN stream$i32_u64 BOOLEAN stream$i32_u64_plus_1 BOOLEAN stream$i32_f32 BOOLEAN stream$i32_f32_plus_1 BOOLEAN stream$i32_f64 BOOLEAN stream$i32_f64_plus_1
+SINK sinkI64 BOOLEAN stream$i64_i8 BOOLEAN stream$i64_i8_plus_1 BOOLEAN stream$i64_i16 BOOLEAN stream$i64_i16_plus_1 BOOLEAN stream$i64_i32 BOOLEAN stream$i64_i32_plus_1 BOOLEAN stream$i64_i64 BOOLEAN stream$i64_i64_plus_1 BOOLEAN stream$i64_u8 BOOLEAN stream$i64_u8_plus_1 BOOLEAN stream$i64_u16 BOOLEAN stream$i64_u16_plus_1 BOOLEAN stream$i64_u32 BOOLEAN stream$i64_u32_plus_1 BOOLEAN stream$i64_u64 BOOLEAN stream$i64_u64_plus_1 BOOLEAN stream$i64_f32 BOOLEAN stream$i64_f32_plus_1 BOOLEAN stream$i64_f64 BOOLEAN stream$i64_f64_plus_1
+SINK sinkU8 BOOLEAN stream$u8_i8 BOOLEAN stream$u8_i8_plus_1 BOOLEAN stream$u8_i16 BOOLEAN stream$u8_i16_plus_1 BOOLEAN stream$u8_i32 BOOLEAN stream$u8_i32_plus_1 BOOLEAN stream$u8_i64 BOOLEAN stream$u8_i64_plus_1 BOOLEAN stream$u8_u8 BOOLEAN stream$u8_u8_plus_1 BOOLEAN stream$u8_u16 BOOLEAN stream$u8_u16_plus_1 BOOLEAN stream$u8_u32 BOOLEAN stream$u8_u32_plus_1 BOOLEAN stream$u8_u64 BOOLEAN stream$u8_u64_plus_1 BOOLEAN stream$u8_f32 BOOLEAN stream$u8_f32_plus_1 BOOLEAN stream$u8_f64 BOOLEAN stream$u8_f64_plus_1
+SINK sinkU16 BOOLEAN stream$u16_i8 BOOLEAN stream$u16_i8_plus_1 BOOLEAN stream$u16_i16 BOOLEAN stream$u16_i16_plus_1 BOOLEAN stream$u16_i32 BOOLEAN stream$u16_i32_plus_1 BOOLEAN stream$u16_i64 BOOLEAN stream$u16_i64_plus_1 BOOLEAN stream$u16_u8 BOOLEAN stream$u16_u8_plus_1 BOOLEAN stream$u16_u16 BOOLEAN stream$u16_u16_plus_1 BOOLEAN stream$u16_u32 BOOLEAN stream$u16_u32_plus_1 BOOLEAN stream$u16_u64 BOOLEAN stream$u16_u64_plus_1 BOOLEAN stream$u16_f32 BOOLEAN stream$u16_f32_plus_1 BOOLEAN stream$u16_f64 BOOLEAN stream$u16_f64_plus_1
+SINK sinkU32 BOOLEAN stream$u32_i8 BOOLEAN stream$u32_i8_plus_1 BOOLEAN stream$u32_i16 BOOLEAN stream$u32_i16_plus_1 BOOLEAN stream$u32_i32 BOOLEAN stream$u32_i32_plus_1 BOOLEAN stream$u32_i64 BOOLEAN stream$u32_i64_plus_1 BOOLEAN stream$u32_u8 BOOLEAN stream$u32_u8_plus_1 BOOLEAN stream$u32_u16 BOOLEAN stream$u32_u16_plus_1 BOOLEAN stream$u32_u32 BOOLEAN stream$u32_u32_plus_1 BOOLEAN stream$u32_u64 BOOLEAN stream$u32_u64_plus_1 BOOLEAN stream$u32_f32 BOOLEAN stream$u32_f32_plus_1 BOOLEAN stream$u32_f64 BOOLEAN stream$u32_f64_plus_1
+SINK sinkU64 BOOLEAN stream$u64_i8 BOOLEAN stream$u64_i8_plus_1 BOOLEAN stream$u64_i16 BOOLEAN stream$u64_i16_plus_1 BOOLEAN stream$u64_i32 BOOLEAN stream$u64_i32_plus_1 BOOLEAN stream$u64_i64 BOOLEAN stream$u64_i64_plus_1 BOOLEAN stream$u64_u8 BOOLEAN stream$u64_u8_plus_1 BOOLEAN stream$u64_u16 BOOLEAN stream$u64_u16_plus_1 BOOLEAN stream$u64_u32 BOOLEAN stream$u64_u32_plus_1 BOOLEAN stream$u64_u64 BOOLEAN stream$u64_u64_plus_1 BOOLEAN stream$u64_f32 BOOLEAN stream$u64_f32_plus_1 BOOLEAN stream$u64_f64 BOOLEAN stream$u64_f64_plus_1
+SINK sinkF32 BOOLEAN stream$f32_i8 BOOLEAN stream$f32_i8_plus_1 BOOLEAN stream$f32_i16 BOOLEAN stream$f32_i16_plus_1 BOOLEAN stream$f32_i32 BOOLEAN stream$f32_i32_plus_1 BOOLEAN stream$f32_i64 BOOLEAN stream$f32_i64_plus_1 BOOLEAN stream$f32_u8 BOOLEAN stream$f32_u8_plus_1 BOOLEAN stream$f32_u16 BOOLEAN stream$f32_u16_plus_1 BOOLEAN stream$f32_u32 BOOLEAN stream$f32_u32_plus_1 BOOLEAN stream$f32_u64 BOOLEAN stream$f32_u64_plus_1 BOOLEAN stream$f32_f32 BOOLEAN stream$f32_f32_plus_1 BOOLEAN stream$f32_f64 BOOLEAN stream$f32_f64_plus_1
+SINK sinkF64 BOOLEAN stream$f64_i8 BOOLEAN stream$f64_i8_plus_1 BOOLEAN stream$f64_i16 BOOLEAN stream$f64_i16_plus_1 BOOLEAN stream$f64_i32 BOOLEAN stream$f64_i32_plus_1 BOOLEAN stream$f64_i64 BOOLEAN stream$f64_i64_plus_1 BOOLEAN stream$f64_u8 BOOLEAN stream$f64_u8_plus_1 BOOLEAN stream$f64_u16 BOOLEAN stream$f64_u16_plus_1 BOOLEAN stream$f64_u32 BOOLEAN stream$f64_u32_plus_1 BOOLEAN stream$f64_u64 BOOLEAN stream$f64_u64_plus_1 BOOLEAN stream$f64_f32 BOOLEAN stream$f64_f32_plus_1 BOOLEAN stream$f64_f64 BOOLEAN stream$f64_f64_plus_1
 
 
 # Todo #442: the below system level tests currently perform downcasts.
 # Check if different numeric types support the Less operation
 SELECT
-    val_i8 < 42 AS val_i8,
-    val_i16 < 42 AS val_i16,
-    val_i32 < 42 AS val_i32,
-    val_i64 < 42 AS val_i64,
+    i8 < 42 AS i8,
+    i16 < 42 AS i16,
+    i32 < 42 AS i32,
+    i64 < 42 AS i64,
 
-    val_u8 < 42_U AS val_u8,
-    val_u16 < 42_U AS val_u16,
-    val_u32 < 42_U AS val_u32,
-    val_u64 < 42_U AS val_u64,
+    u8 < 42_U AS u8,
+    u16 < 42_U AS u16,
+    u32 < 42_U AS u32,
+    u64 < 42_U AS u64,
 
-    val_f32 < 42.0_F AS val_f32,
-    val_f64 < 42.0_D AS val_f64
-FROM stream INTO SINK
+    f32 < 42.0_F AS f32,
+    f64 < 42.0_D AS f64
+FROM stream INTO sinkConstant
 ----
 1,1,1,1,1,0,0,0,1,0
 
 # Less i8 value with all other data types
 SELECT
     # signed
-    val_i8 < val_i8 AS val_i8_i8,
-    val_i8 < val_i8 + 1 AS val_i8_i8_plus_1,
-    val_i8 < val_i16 AS val_i8_i16,
-    val_i8 < val_i16 + 1 AS val_i8_i16_plus_1,
-    val_i8 < val_i32 AS val_i8_i32,
-    val_i8 < val_i32 + 1 AS val_i8_i32_plus_1,
-    val_i8 < val_i64 AS val_i8_i64,
-    val_i8 < val_i64 + 1 AS val_i8_i64_plus_1,
+    i8 < i8 AS i8_i8,
+    i8 < i8 + 1 AS i8_i8_plus_1,
+    i8 < i16 AS i8_i16,
+    i8 < i16 + 1 AS i8_i16_plus_1,
+    i8 < i32 AS i8_i32,
+    i8 < i32 + 1 AS i8_i32_plus_1,
+    i8 < i64 AS i8_i64,
+    i8 < i64 + 1 AS i8_i64_plus_1,
     # unsigned
-    val_i8 < val_u8  AS val_i8_u8,
-    val_i8 < val_u8 + 1_UY AS val_i8_u8_plus_1,
-    val_i8 < val_u16 AS val_i8_u16,
-    val_i8 < val_u16 + 1_US AS val_i8_u16_plus_1,
-    val_i8 < val_u32 AS val_i8_u32,
-    val_i8 < val_u32 + 1_U AS val_i8_u32_plus_1,
-    val_i8 < val_u64 AS val_i8_u64,
-    val_i8 < val_u64 + 1_UL AS val_i8_u64_plus_1,
+    i8 < u8  AS i8_u8,
+    i8 < u8 + 1_UY AS i8_u8_plus_1,
+    i8 < u16 AS i8_u16,
+    i8 < u16 + 1_US AS i8_u16_plus_1,
+    i8 < u32 AS i8_u32,
+    i8 < u32 + 1_U AS i8_u32_plus_1,
+    i8 < u64 AS i8_u64,
+    i8 < u64 + 1_UL AS i8_u64_plus_1,
     # float
-    val_i8 < val_f32 AS val_i8_f32_,
-    val_i8 < val_f32 + 1_F AS val_i8_f32_plus_1,
-    val_i8 < val_f64 AS val_i8_f64,
-    val_i8 < val_f64 + 1_D AS val_i8_f64_plus_1
-FROM stream INTO SINK
+    i8 < f32 AS i8_f32,
+    i8 < f32 + 1_F AS i8_f32_plus_1,
+    i8 < f64 AS i8_f64,
+    i8 < f64 + 1_D AS i8_f64_plus_1
+FROM stream INTO sinkI8
 ----
 0,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1
 
 # Less i16 value with all other data types
 SELECT
     # signed
-    val_i16 < val_i8 AS val_i16_i8,
-    val_i16 < val_i8 + 1 AS val_i16_i8_plus_1,
-    val_i16 < val_i16 AS val_i16_i16,
-    val_i16 < val_i16 + 1 AS val_i16_i16_plus_1,
-    val_i16 < val_i32 AS val_i16_i32,
-    val_i16 < val_i32 + 1 AS val_i16_i32_plus_1,
-    val_i16 < val_i64 AS val_i16_i64,
-    val_i16 < val_i64 + 1 AS val_i16_i64_plus_1,
+    i16 < i8 AS i16_i8,
+    i16 < i8 + 1 AS i16_i8_plus_1,
+    i16 < i16 AS i16_i16,
+    i16 < i16 + 1 AS i16_i16_plus_1,
+    i16 < i32 AS i16_i32,
+    i16 < i32 + 1 AS i16_i32_plus_1,
+    i16 < i64 AS i16_i64,
+    i16 < i64 + 1 AS i16_i64_plus_1,
     # unsigned
-    val_i16 < val_u8 AS val_i16_u8,
-    val_i16 < val_u8 + 1_U AS val_i16_u8_plus_1,
-    val_u16 < val_i16 AS val_i16_u16,
-    val_u16 < val_i16 + 1_U AS val_i16_u16_plus_1,
-    val_i16 < val_u32 AS val_i16_u32,
-    val_i16 < val_u32 + 1_U AS val_i16_u32_plus_1,
-    val_i16 < val_u64 AS val_i16_u64,
-    val_i16 < val_u64 + 1_U AS val_i16_u64_plus_1,
+    i16 < u8 AS i16_u8,
+    i16 < u8 + 1_U AS i16_u8_plus_1,
+    u16 < i16 AS i16_u16,
+    u16 < i16 + 1_U AS i16_u16_plus_1,
+    i16 < u32 AS i16_u32,
+    i16 < u32 + 1_U AS i16_u32_plus_1,
+    i16 < u64 AS i16_u64,
+    i16 < u64 + 1_U AS i16_u64_plus_1,
     # float
-    val_i16 < val_f32 AS val_i16_f32,
-    val_i16 < val_f32 + 1_F AS val_i16_f32_plus_1,
-    val_i16 < val_f64 AS val_i16_f64,
-    val_i16 < val_f64 + 1_D AS val_i16_f64_plus_1
-FROM stream INTO SINK
+    i16 < f32 AS i16_f32,
+    i16 < f32 + 1_F AS i16_f32_plus_1,
+    i16 < f64 AS i16_f64,
+    i16 < f64 + 1_D AS i16_f64_plus_1
+FROM stream INTO sinkI16
 ----
 1,1,0,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,1,1
 
 # Less i32 value with all other data types
 SELECT
     # signed
-    val_i32 < val_i8 AS val_i32_i8,
-    val_i32 < val_i8 + 1 AS val_i32_i8_plus_1,
-    val_i32 < val_i16 AS val_i32_i16,
-    val_i32 < val_i16 + 1 AS val_i32_i16_plus_1,
-    val_i32 < val_i32 AS val_i32_i32,
-    val_i32 < val_i32 + 1 AS val_i32_i32_plus_1,
-    val_i32 < val_i64 AS val_i32_i64,
-    val_i32 < val_i64 + 1 AS val_i32_i64_plus_1,
+    i32 < i8 AS i32_i8,
+    i32 < i8 + 1 AS i32_i8_plus_1,
+    i32 < i16 AS i32_i16,
+    i32 < i16 + 1 AS i32_i16_plus_1,
+    i32 < i32 AS i32_i32,
+    i32 < i32 + 1 AS i32_i32_plus_1,
+    i32 < i64 AS i32_i64,
+    i32 < i64 + 1 AS i32_i64_plus_1,
     # unsigned
-    val_i32 < val_u8 AS val_i32_u8,
-    val_i32 < val_u8 + 1_U AS val_i32_u8_plus_1,
-    val_i32 < val_u16 AS val_i32_u16,
-    val_i32 < val_u16 + 1_U AS val_i32_u16_plus_1,
-    val_i32 < val_u32 AS val_i32_u32,
-    val_i32 < val_u32 + 1_U AS val_i32_u32_plus_1,
-    val_i32 < val_u64 AS val_i32_u64,
-    val_i32 < val_u64 + 1_U AS val_i32_u64_plus_1,
+    i32 < u8 AS i32_u8,
+    i32 < u8 + 1_U AS i32_u8_plus_1,
+    i32 < u16 AS i32_u16,
+    i32 < u16 + 1_U AS i32_u16_plus_1,
+    i32 < u32 AS i32_u32,
+    i32 < u32 + 1_U AS i32_u32_plus_1,
+    i32 < u64 AS i32_u64,
+    i32 < u64 + 1_U AS i32_u64_plus_1,
     # float
-    val_i32 < val_f32 AS val_i32_f32,
-    val_i32 < val_f32 + 1_F AS val_i32_f32_plus_1,
-    val_i32 < val_f64 AS val_i32_f64,
-    val_i32 < val_f64 + 1_D AS val_i32_f64_plus_1
-FROM stream INTO SINK
+    i32 < f32 AS i32_f32,
+    i32 < f32 + 1_F AS i32_f32_plus_1,
+    i32 < f64 AS i32_f64,
+    i32 < f64 + 1_D AS i32_f64_plus_1
+FROM stream INTO sinkI32
 ----
 1,1,1,1,0,1,0,0,1,1,1,1,0,0,0,0,1,1,1,1
 
 # Less i64 value with all other data types
 SELECT
     # signed
-    val_i64 < val_i8 AS val_i64_i8,
-    val_i64 < val_i8 + 1 AS val_i64_i8_plus_1,
-    val_i64 < val_i16 AS val_i64_i16,
-    val_i64 < val_i16 + 1 AS val_i64_i16_plus_1,
-    val_i64 < val_i32 AS val_i64_i32,
-    val_i64 < val_i32 + 1 AS val_i64_i32_plus_1,
-    val_i64 < val_i64 AS val_i64_i64,
-    val_i64 < val_i64 + 1 AS val_i64_i64_plus_1,
+    i64 < i8 AS i64_i8,
+    i64 < i8 + 1 AS i64_i8_plus_1,
+    i64 < i16 AS i64_i16,
+    i64 < i16 + 1 AS i64_i16_plus_1,
+    i64 < i32 AS i64_i32,
+    i64 < i32 + 1 AS i64_i32_plus_1,
+    i64 < i64 AS i64_i64,
+    i64 < i64 + 1 AS i64_i64_plus_1,
     # unsigned
-    val_i64 < val_u8 AS val_i64_u8,
-    val_i64 < val_u8 + 1_U AS val_i64_u8_plus_1,
-    val_i64 < val_u16 AS val_i64_u16,
-    val_i64 < val_u16 + 1_U AS val_i64_u16_plus_1,
-    val_i64 < val_u32 AS val_i64_u32,
-    val_i64 < val_u32 + 1_U AS val_i64_u32_plus_1,
-    val_i64 < val_u64 AS val_i64_u64,
-    val_i64 < val_u64 + 1_U AS val_i64_u64_plus_1,
+    i64 < u8 AS i64_u8,
+    i64 < u8 + 1_U AS i64_u8_plus_1,
+    i64 < u16 AS i64_u16,
+    i64 < u16 + 1_U AS i64_u16_plus_1,
+    i64 < u32 AS i64_u32,
+    i64 < u32 + 1_U AS i64_u32_plus_1,
+    i64 < u64 AS i64_u64,
+    i64 < u64 + 1_U AS i64_u64_plus_1,
     # float
-    val_i64 < val_f32 AS val_i64_f32,
-    val_i64 < val_f32 + 1_F AS val_i64_f32_plus_1,
-    val_i64 < val_f64 AS val_i64_f64,
-    val_i64 < val_f64 + 1_D AS val_i64_f64_plus_1
-FROM stream INTO SINK
+    i64 < f32 AS i64_f32,
+    i64 < f32 + 1_F AS i64_f32_plus_1,
+    i64 < f64 AS i64_f64,
+    i64 < f64 + 1_D AS i64_f64_plus_1
+FROM stream INTO sinkI64
 ----
 1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,1,1
 
@@ -145,115 +157,115 @@ FROM stream INTO SINK
 # Less u8 value with all other data types
 SELECT
     # signed
-    val_u8 < val_i8 AS val_u8_i8,
-    val_u8 < val_i8 + 1 AS val_u8_i8_plus_1,
-    val_u8 < val_i16 AS val_u8_i16,
-    val_u8 < val_i16 + 1 AS val_u8_i16_plus_1,
-    val_u8 < val_i32 AS val_u8_i32,
-    val_u8 < val_i32 + 1 AS val_u8_i32_plus_1,
-    val_u8 < val_i64 AS val_u8_i64,
-    val_u8 < val_i64 + 1 AS val_u8_i64_plus_1,
+    u8 < i8 AS u8_i8,
+    u8 < i8 + 1 AS u8_i8_plus_1,
+    u8 < i16 AS u8_i16,
+    u8 < i16 + 1 AS u8_i16_plus_1,
+    u8 < i32 AS u8_i32,
+    u8 < i32 + 1 AS u8_i32_plus_1,
+    u8 < i64 AS u8_i64,
+    u8 < i64 + 1 AS u8_i64_plus_1,
     # unsigned
-    val_u8 < val_u8  AS val_u8_u8,
-    val_u8 < val_u8 + 1_UY AS val_u8_u8_plus_1,
-    val_u8 < val_u16 AS val_u8_u16,
-    val_u8 < val_u16 + 1_US AS val_u8_u16_plus_1,
-    val_u8 < val_u32 AS val_u8_u32,
-    val_u8 < val_u32 + 1_U AS val_u8_u32_plus_1,
-    val_u8 < val_u64 AS val_u8_u64,
-    val_u8 < val_u64 + 1_UL AS val_u8_u64_plus_1,
+    u8 < u8  AS u8_u8,
+    u8 < u8 + 1_UY AS u8_u8_plus_1,
+    u8 < u16 AS u8_u16,
+    u8 < u16 + 1_US AS u8_u16_plus_1,
+    u8 < u32 AS u8_u32,
+    u8 < u32 + 1_U AS u8_u32_plus_1,
+    u8 < u64 AS u8_u64,
+    u8 < u64 + 1_UL AS u8_u64_plus_1,
     # float
-    val_u8 < val_f32 AS val_u8_f32_,
-    val_u8 < val_f32 + 1_F AS val_u8_f32_plus_1,
-    val_u8 < val_f64 AS val_u8_f64,
-    val_u8 < val_f64 + 1_D AS val_u8_f64_plus_1
-FROM stream INTO SINK
+    u8 < f32 AS u8_f32,
+    u8 < f32 + 1_F AS u8_f32_plus_1,
+    u8 < f64 AS u8_f64,
+    u8 < f64 + 1_D AS u8_f64_plus_1
+FROM stream INTO sinkU8
 ----
 0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,1,1
 
 # Less u16 value with all other data types
 SELECT
     # signed
-    val_u16 < val_i8 AS val_u16_i8,
-    val_u16 < val_i8 + 1 AS val_u16_i8_plus_1,
-    val_u16 < val_i16 AS val_u16_i16,
-    val_u16 < val_i16 + 1 AS val_u16_i16_plus_1,
-    val_u16 < val_i32 AS val_u16_i32,
-    val_u16 < val_i32 + 1 AS val_u16_i32_plus_1,
-    val_u16 < val_i64 AS val_u16_i64,
-    val_u16 < val_i64 + 1 AS val_u16_i64_plus_1,
+    u16 < i8 AS u16_i8,
+    u16 < i8 + 1 AS u16_i8_plus_1,
+    u16 < i16 AS u16_i16,
+    u16 < i16 + 1 AS u16_i16_plus_1,
+    u16 < i32 AS u16_i32,
+    u16 < i32 + 1 AS u16_i32_plus_1,
+    u16 < i64 AS u16_i64,
+    u16 < i64 + 1 AS u16_i64_plus_1,
     # unsigned
-    val_u16 < val_u8 AS val_u16_u8,
-    val_u16 < val_u8 + 1_U AS val_u16_u8_plus_1,
-    val_u16 < val_i16 AS val_u16_u16,
-    val_u16 < val_i16 + 1_U AS val_u16_u16_plus_1,
-    val_u16 < val_u32 AS val_u16_u32,
-    val_u16 < val_u32 + 1_U AS val_u16_u32_plus_1,
-    val_u16 < val_u64 AS val_u16_u64,
-    val_u16 < val_u64 + 1_U AS val_u16_u64_plus_1,
+    u16 < u8 AS u16_u8,
+    u16 < u8 + 1_U AS u16_u8_plus_1,
+    u16 < i16 AS u16_u16,
+    u16 < i16 + 1_U AS u16_u16_plus_1,
+    u16 < u32 AS u16_u32,
+    u16 < u32 + 1_U AS u16_u32_plus_1,
+    u16 < u64 AS u16_u64,
+    u16 < u64 + 1_U AS u16_u64_plus_1,
     # float
-    val_u16 < val_f32 AS val_u16_f32,
-    val_u16 < val_f32 + 1_F AS val_u16_f32_plus_1,
-    val_u16 < val_f64 AS val_u16_f64,
-    val_u16 < val_f64 + 1_D AS val_u16_f64_plus_1
-FROM stream INTO SINK
+    u16 < f32 AS u16_f32,
+    u16 < f32 + 1_F AS u16_f32_plus_1,
+    u16 < f64 AS u16_f64,
+    u16 < f64 + 1_D AS u16_f64_plus_1
+FROM stream INTO sinkU16
 ----
 0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0
 
 # Less u32 value with all other data types
 SELECT
     # signed
-    val_u32 < val_i8 AS val_u32_i8,
-    val_u32 < val_i8 + 1 AS val_u32_i8_plus_1,
-    val_u32 < val_i16 AS val_u32_i16,
-    val_u32 < val_i16 + 1 AS val_u32_i16_plus_1,
-    val_u32 < val_i32 AS val_u32_i32,
-    val_u32 < val_i32 + 1 AS val_u32_i32_plus_1,
-    val_u32 < val_i64 AS val_u32_i64,
-    val_u32 < val_i64 + 1 AS val_u32_i64_plus_1,
+    u32 < i8 AS u32_i8,
+    u32 < i8 + 1 AS u32_i8_plus_1,
+    u32 < i16 AS u32_i16,
+    u32 < i16 + 1 AS u32_i16_plus_1,
+    u32 < i32 AS u32_i32,
+    u32 < i32 + 1 AS u32_i32_plus_1,
+    u32 < i64 AS u32_i64,
+    u32 < i64 + 1 AS u32_i64_plus_1,
     # unsigned
-    val_u32 < val_u8 AS val_u32_u8,
-    val_u32 < val_u8 + 1_U AS val_u32_u8_plus_1,
-    val_u32 < val_u16 AS val_u32_u16,
-    val_u32 < val_u16 + 1_U AS val_u32_u16_plus_1,
-    val_u32 < val_u32 AS val_u32_u32,
-    val_u32 < val_u32 + 1_U AS val_u32_u32_plus_1,
-    val_u32 < val_u64 AS val_u32_u64,
-    val_u32 < val_u64 + 1_U AS val_u32_u64_plus_1,
+    u32 < u8 AS u32_u8,
+    u32 < u8 + 1_U AS u32_u8_plus_1,
+    u32 < u16 AS u32_u16,
+    u32 < u16 + 1_U AS u32_u16_plus_1,
+    u32 < u32 AS u32_u32,
+    u32 < u32 + 1_U AS u32_u32_plus_1,
+    u32 < u64 AS u32_u64,
+    u32 < u64 + 1_U AS u32_u64_plus_1,
     # float
-    val_u32 < val_f32 AS val_u32_f32,
-    val_u32 < val_f32 + 1_F AS val_u32_f32_plus_1,
-    val_u32 < val_f64 AS val_u32_f64,
-    val_u32 < val_f64 + 1_D AS val_u32_f64_plus_1
-FROM stream INTO SINK
+    u32 < f32 AS u32_f32,
+    u32 < f32 + 1_F AS u32_f32_plus_1,
+    u32 < f64 AS u32_f64,
+    u32 < f64 + 1_D AS u32_f64_plus_1
+FROM stream INTO sinkU32
 ----
 1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0
 
 # Less u64 value with all other data types
 SELECT
     # signed
-    val_i64 < val_i8 AS val_u64_i8,
-    val_i64 < val_i8 + 1 AS val_u64_i8_plus_1,
-    val_i64 < val_i16 AS val_u64_i16,
-    val_i64 < val_i16 + 1 AS val_u64_i16_plus_1,
-    val_i64 < val_i32 AS val_u64_i32,
-    val_i64 < val_i32 + 1 AS val_u64_i32_plus_1,
-    val_i64 < val_i64 AS val_u64_i64,
-    val_i64 < val_i64 + 1 AS val_u64_i64_plus_1,
+    u64 < i8 AS u64_i8,
+    u64 < i8 + 1 AS u64_i8_plus_1,
+    u64 < i16 AS u64_i16,
+    u64 < i16 + 1 AS u64_i16_plus_1,
+    u64 < i32 AS u64_i32,
+    u64 < i32 + 1 AS u64_i32_plus_1,
+    u64 < i64 AS u64_i64,
+    u64 < i64 + 1 AS u64_i64_plus_1,
     # unsigned
-    val_i64 < val_u8 AS val_u64_u8,
-    val_i64 < val_u8 + 1_U AS val_u64_u8_plus_1,
-    val_i64 < val_u16 AS val_u64_u16,
-    val_i64 < val_u16 + 1_U AS val_u64_u16_plus_1,
-    val_i64 < val_u32 AS val_u64_u32,
-    val_i64 < val_u32 + 1_U AS val_u64_u32_plus_1,
-    val_i64 < val_u64 AS val_u64_u64,
-    val_i64 < val_u64 + 1_U AS val_u64_u64_plus_1,
+    u64 < u8 AS u64_u8,
+    u64 < u8 + 1_U AS u64_u8_plus_1,
+    u64 < u16 AS u64_u16,
+    u64 < u16 + 1_U AS u64_u16_plus_1,
+    u64 < u32 AS u64_u32,
+    u64 < u32 + 1_U AS u64_u32_plus_1,
+    u64 < u64 AS u64_u64,
+    u64 < u64 + 1_U AS u64_u64_plus_1,
     # float
-    val_i64 < val_f32 AS val_u64_f32,
-    val_i64 < val_f32 + 1_F AS val_u64_f32_plus_1,
-    val_i64 < val_f64 AS val_u64_f64,
-    val_i64 < val_f64 + 1_D AS val_u64_f64_plus_1
-FROM stream INTO SINK
+    u64 < f32 AS u64_f32,
+    u64 < f32 + 1_F AS u64_f32_plus_1,
+    u64 < f64 AS u64_f64,
+    u64 < f64 + 1_D AS u64_f64_plus_1
+FROM stream INTO sinkU64
 ----
-1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,1,1
+1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0
