@@ -800,6 +800,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                                                             {networkSinkOperator},
                                                             faultTolerance);
 
+
                             // 19. Record information about the query plan and worker id
                             connectedSysDecomposedPlanDetails.emplace_back(
                                 SysPlanMetadata(newDecomposedQueryPlan->getDecomposedQueryId(), currentWorkerId));
@@ -835,7 +836,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 PlacementAdditionResult
 BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
+                                                    DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                                                    FaultToleranceType faultToleranceType) {
 
     std::unordered_map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
     for (const auto& path : pathsFound) {

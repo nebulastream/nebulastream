@@ -252,6 +252,9 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartition, uint64_t tim
     }
 }
 
+void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES::Runtime::TupleBuffer buffer) {
+    reconnectBufferStorage[operatorId].push(std::move(buffer));
+}
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::peekBufferFromReconnectBufferStorage(OperatorId operatorId) {
     auto iteratorAtOperatorId = reconnectBufferStorage.find(operatorId);
