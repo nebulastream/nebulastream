@@ -14,6 +14,9 @@ import com.intellij.ui.content.ContentFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.project.Project;
+
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,13 +33,17 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
     @Nullable
     @Override
     public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
-        // no-op to satisfy interface requirement
         return null;
     }
 
+
+    /// The Plugin affects all files of type '.test', as defined in the plugin.xml
+    /// This searches the currently open file for queries and adds an interactable Gutter Icon
+    /// that can run the corresponding system test
     @Override
     public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
                                        @NotNull Collection<? super LineMarkerInfo<?>> result) {
+
         if (elements.isEmpty()) return;
 
         PsiFile file = elements.get(0).getContainingFile();
@@ -44,111 +51,102 @@ public class SysTestLineMarkerProvider implements LineMarkerProvider  {
             return;
         }
 
-        // pattern match all occurrences of a test using "----", which indicates the end of the system test query
+        /// pattern match all occurrences of a test using "----", which indicates the end of the system test query
         String fileText = file.getText();
         Pattern pattern = Pattern.compile("----");
         Matcher matcher = pattern.matcher(fileText);
 
-        // index to determine test count, later inserted into console command
         int systestIndex = 1;
 
-        // loop through each match of the pattern
         while (matcher.find()) {
 
             int startOffset = matcher.start();
 
-            // calculate line start and end offsets manually
+            /// calculate line start and end offsets manually
             int lineStartOffset = fileText.lastIndexOf('\n', startOffset - 1) + 1;
             int lineEndOffset = fileText.indexOf('\n', startOffset);
-            if (lineEndOffset == -1) { // Handle last line without newline
+            if (lineEndOffset == -1) {
                 lineEndOffset = fileText.length();
             }
 
-            // find the element that corresponds to the start of the line
+            /// find the element that corresponds to the start of the line
             PsiElement lineElement = file.findElementAt(lineStartOffset);
-            if (lineElement == null) continue; // Ensure the element is not null
+            if (lineElement == null) continue;
 
-            // create the text range for the entire line
             TextRange lineTextRange = new TextRange(lineStartOffset, lineEndOffset);
 
-            // add interactable gutter icon
-            if (lineElement != null) {
-                // create the LineMarkerInfo for the gutter icon
-                int currentSystestIndex = systestIndex;
-                LineMarkerInfo<PsiElement> lineMarkerInfo = new LineMarkerInfo<>(
-                        lineElement,                                        // target line element
-                        lineTextRange,                                      // icon position
-                        AllIcons.Actions.Execute,                           // icon sprite
-                        psiElement -> "Run SysTest " + currentSystestIndex, // tooltip
-                        (e, elt) -> {                                       // clickable function
-                            try {
-                                executeCustomCommand(elt.getProject(), file.getName() + ":" + currentSystestIndex);
-                            } catch (Exception ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        },
-                        GutterIconRenderer.Alignment.CENTER                 // icon alignment
-                );
-                result.add(lineMarkerInfo);
-                systestIndex++;
-            }
+            /// create the LineMarkerInfo for the gutter icon
+            int currentSystestIndex = systestIndex;
+            String testPath = file.getVirtualFile().getPath() + ":" + String.format("%02d", currentSystestIndex);
+            LineMarkerInfo<PsiElement> lineMarkerInfo = new LineMarkerInfo<>(
+                    lineElement,
+                    lineTextRange,
+                    AllIcons.Actions.Execute,
+                    psiElement -> "Run System Test " + currentSystestIndex,
+                    (e, elt) -> { runSysTest(elt.getProject(), testPath); },
+                    GutterIconRenderer.Alignment.CENTER
+            );
+            result.add(lineMarkerInfo);
+            systestIndex++;
         }
     }
 
-    public static void executeCustomCommand(Project project, String fileName) throws ExecutionException, InterruptedException {
+    /// This function is called when the systest Gutter Icon is clicked.
+    /// It opens a new console "Nes-Systest-Runner" and adds it to the toolWindow,
+    /// runs the systest command and prints the output
+    public static void runSysTest(Project project, String testPath) {
 
-        String cmd_systest = "systest -t " + fileName;
+        /// TODO: make the path to the build folder configurable using the project settings tab in CLion
 
+        File workingDir = Paths.get(System.getProperty("user.home"),
+                "nebulastream-public", "build", "nes-systests", "systest").toFile();
 
-        String cmd = "ping";
+        GeneralCommandLine commandLine = new GeneralCommandLine("./systest")
+                .withParameters("-t", testPath)
+                .withWorkDirectory(workingDir);
 
-        // synthesize command string and create
-        GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
-
-        // TODO: determine location of systest and from where it should be called called, i.e. the build folder
-        // commandLine.setExePath("/path/to/systest");
-        // commandLine.setWorkDirectory("/path/to/working/directory");
-
-        // create process
-        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
-
-        // create console view
         ConsoleView consoleView = new ConsoleViewImpl(project, false);
 
-        // create Nes-Systest-Runner window or reuse existing one to show console output
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project)
-                .getToolWindow("NES-Systest-Runner");
+        /// create Nes-Systest-Runner window or reuse existing one to show console output
+        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("NES-Systest-Runner");
         if (toolWindow == null) {
-            toolWindow = ToolWindowManager.getInstance(project)
-                    .registerToolWindow("NES-Systest-Runner", true, ToolWindowAnchor.BOTTOM);
+            toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
+                    "NES-Systest-Runner",
+                    true,
+                    ToolWindowAnchor.BOTTOM);
         }
 
-        // add console to the tool window content
+        /// add console to the tool window content
         var contentFactory = ContentFactory.getInstance();
         var content = contentFactory.createContent(consoleView.getComponent(), "Command Output", false);
         toolWindow.getContentManager().addContent(content);
         toolWindow.activate(null);
 
-        // attach process to console
-        processHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void onTextAvailable(ProcessEvent event, Key outputType) {
-                // forward process output to console
-                ConsoleViewContentType contentType = outputType == ProcessOutputTypes.STDOUT
-                        ? ConsoleViewContentType.NORMAL_OUTPUT
-                        : ConsoleViewContentType.ERROR_OUTPUT;
-                consoleView.print(event.getText(), contentType);
-            }
+        try{
+            /// run process
+            OSProcessHandler processHandler = new OSProcessHandler(commandLine);
 
-            @Override
-            public void processTerminated(ProcessEvent event) {
-                consoleView.print("Process finished with exit code " + event.getExitCode() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-                // TODO: remove once finding systest is implemented
-                consoleView.print("This is a WIP and would normally run '" + cmd_systest + "' instead.\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-            }
-        });
+            /// forward process output to console
+            processHandler.addProcessListener(new ProcessAdapter() {
+                @Override
+                public void onTextAvailable(ProcessEvent event, Key outputType) {
+                    consoleView.print(event.getText(), ConsoleViewContentType.NORMAL_OUTPUT);
+                }
 
-        // run and output process
-        processHandler.startNotify();
+                @Override
+                public void processTerminated(ProcessEvent event) {
+                    consoleView.print("Process finished with exit code " + event.getExitCode() + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+                }
+            });
+
+            processHandler.startNotify();
+        }
+        catch(ExecutionException | RuntimeException e) {
+            consoleView.print("Error: " + e.getMessage() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+            for (StackTraceElement element : e.getStackTrace()) {
+                consoleView.print(element.toString() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+            }
+            toolWindow.show(null);
+        }
     }
 }
