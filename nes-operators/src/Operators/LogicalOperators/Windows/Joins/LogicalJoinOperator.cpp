@@ -170,8 +170,8 @@ bool LogicalJoinOperator::inferSchema()
 
     windowStartFieldName = newQualifierForSystemField + "$start";
     windowEndFieldName = newQualifierForSystemField + "$end";
-    outputSchema->addField(createField(windowStartFieldName, BasicType::UINT64));
-    outputSchema->addField(createField(windowEndFieldName, BasicType::UINT64));
+    outputSchema->addField(windowStartFieldName, BasicType::UINT64);
+    outputSchema->addField(windowEndFieldName, BasicType::UINT64);
 
     /// create dynamic fields to store all fields from left and right sources
     for (uint64_t j = 0; j < leftInputSchema->getFieldCount(); j++)
