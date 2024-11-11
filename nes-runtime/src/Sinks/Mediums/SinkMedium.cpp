@@ -18,6 +18,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -28,8 +29,10 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        uint32_t numOfProducers,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryId decomposedQueryId,
-                       DecomposedQueryPlanVersion decomposedQueryVersion)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, 1) {}
+                       DecomposedQueryPlanVersion decomposedQueryVersion
+                       FaultToleranceType faultToleranceType,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryId, decomposedQueryVersion, faultToleranceType, 1, watermarkProcessor) {}
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        Runtime::NodeEnginePtr nodeEngine,
@@ -37,13 +40,24 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        SharedQueryId sharedQueryId,
                        DecomposedQueryId decomposedQueryId,
                        DecomposedQueryPlanVersion decomposedQueryVersion,
-                       uint64_t numberOfOrigins)
+                       FaultToleranceType faultToleranceType,
+                       uint64_t numberOfOrigins,
+                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
       sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
-      numberOfOrigins(numberOfOrigins) {
+      numberOfOrigins(numberOfOrigins), faultToleranceType(faultToleranceType), watermarkProcessor(std::move(watermarkProcessor)) {
     schemaWritten = false;
     NES_ASSERT2_FMT(numOfProducers > 0, "Invalid num of producers on Sink");
     NES_ASSERT2_FMT(this->nodeEngine, "Invalid node engine");
+    bufferCount = 0;
+    buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
+    currentTimestamp = 0;
+    isWaiting = false;
+    if (faultToleranceType == FaultToleranceType::UB) {
+        notifyEpochCallback = [this](uint64_t timestamp) {
+            notifyEpochTermination(timestamp);
+        };
+    }
 }
 
 OperatorId SinkMedium::getOperatorId() const { return INVALID_OPERATOR_ID; }
@@ -51,6 +65,29 @@ OperatorId SinkMedium::getOperatorId() const { return INVALID_OPERATOR_ID; }
 uint64_t SinkMedium::getNumberOfWrittenOutBuffers() {
     std::unique_lock lock(writeMutex);
     return sentBuffer;
+}
+
+void SinkMedium::updateWatermark(Runtime::TupleBuffer& inputBuffer) {
+    std::unique_lock lock(writeMutex);
+    NES_ASSERT(watermarkProcessor != nullptr, "SinkMedium::updateWatermark watermark processor is null");
+    watermarkProcessor->updateWatermark(inputBuffer.getWatermark(), inputBuffer.getSequenceNumber(), inputBuffer.getOriginId());
+    bool isSync = watermarkProcessor->isWatermarkSynchronized(inputBuffer.getOriginId());
+    if ((!(bufferCount % buffersPerEpoch) && bufferCount != 0) || isWaiting) {
+        auto timestamp = watermarkProcessor->getCurrentWatermark();
+        if (isSync && timestamp) {
+            //            auto t1 = std::chrono::high_resolution_clock::now();
+            notifyEpochCallback(timestamp);
+            isWaiting = false;
+            //            auto t2 = std::chrono::high_resolution_clock::now();
+            //            auto ts = std::chrono::system_clock::now();
+            //            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            //            statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ",";
+            //            statisticsFile << duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
+        } else {
+            isWaiting = true;
+        }
+    }
+    bufferCount++;
 }
 
 uint64_t SinkMedium::getNumberOfWrittenOutTuples() {
@@ -118,6 +155,14 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }
+}
+
+bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
+    auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryId);
+    if (nodeEngine->getQueryManager()->propagateEpochBackwards(decomposedQueryId, epochBarrier)) {
+        return true;
+    }
+    return false;
 }
 
 void SinkMedium::setMigrationFlag() { migration = true; }

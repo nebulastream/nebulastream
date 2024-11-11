@@ -66,6 +66,18 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     bool getAddTimestamp() const;
 
     /**
+ * @brief getter for fault-tolerance type
+ * @return fault tolerance type
+ */
+    FaultToleranceType getFaultToleranceType() const;
+
+    /**
+     * @brief setter for fault-tolerance type
+     * @param fault tolerance type
+     */
+    void setFaultToleranceType(FaultToleranceType faultToleranceType);
+
+    /**
     * @brief Dynamically casts the node to a NodeType
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
@@ -93,6 +105,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
   protected:
     uint64_t numberOfOrigins;
     bool addTimestamp;
+    FaultToleranceType faultToleranceType;
 };
 
 }// namespace NES

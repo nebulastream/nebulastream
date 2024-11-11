@@ -44,6 +44,11 @@ add_nes_integration_test(location-controller-integration-tests "REST/Controller/
 ### Statistics Integration Test
 add_nes_integration_test(statistics-integration-test "StatisticsIntegrationTest.cpp")
 
+### Upstream backup  Test
+add_nes_integration_test(upstream-backup-test "UpstreamBackupTest.cpp")
+
+### Active Standby  Test
+add_nes_integration_test(active-standby-test "ActiveStandbyTest.cpp")
 
 ### Filter Push Down Test ###
 #add_nes_integration_test(filter-push-down-test "Optimizer/FilterPushDownTest.cpp")

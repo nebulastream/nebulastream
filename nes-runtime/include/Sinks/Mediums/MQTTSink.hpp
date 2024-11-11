@@ -58,6 +58,7 @@ class MQTTSink : public SinkMedium {
                       uint64_t messageDelay,
                       MQTTSinkDescriptor::ServiceQualities qualityOfService,
                       bool asynchronousClient,
+                      FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
                       uint64_t numberOfOrigins = 1);
     ~MQTTSink() NES_NOEXCEPT(false) override;
 

@@ -46,7 +46,8 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         DecomposedQueryPlanVersion version)
+                         DecomposedQueryPlanVersion version,
+                         FaultToleranceType faultToleranceType)
     : SinkMedium(
         std::make_shared<NesFormat>(schema, NES::Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()),
         nodeEngine,
@@ -54,6 +55,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
         sharedQueryId,
         decomposedQueryId,
         decomposedQueryVersion,
+faultToleranceType,
         numberOfOrigins),
       uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId), nodeEngine(nodeEngine),
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
@@ -62,6 +64,15 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
       messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
+    if (faultToleranceType == FaultToleranceType::UB || faultToleranceType == FaultToleranceType::CH) {
+        insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
+            workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
+        };
+    } else {
+        insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
+        };
+    }
+    bufferCount = 0;
 }
 
 SinkMediumTypes NetworkSink::getSinkMediumType() { return SinkMediumTypes::NETWORK_SINK; }
@@ -114,6 +125,8 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
 
     NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
+    insertIntoStorageCallback(inputBuffer, workerContext);
+    bufferCount++;
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
 
@@ -201,6 +214,15 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
         }
         case Runtime::ReconfigurationType::FailEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Failure;
+            break;
+        }
+        case Runtime::ReconfigurationType::PropagateEpoch: {
+            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
+            //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
+            auto timestamp = task.getUserData<uint64_t>();
+            NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", sharedQueryId, timestamp);
+            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp, sharedQueryId);
+            workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
         case Runtime::ReconfigurationType::ConnectToNewReceiver: {
@@ -409,8 +431,21 @@ void NetworkSink::onEvent(Runtime::BaseEvent& event) {
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
               this->uniqueNetworkSinkDescriptorId);
-    // this function currently has no usage
-    onEvent(event);
+    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, epochBarrier);
+        if (success) {
+            success = queryManager->propagateEpochBackwards(decomposedQueryId, epochBarrier);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
+            } else {
+                NES_INFO("NetworkSink::onEvent end of propagation: epoch {} queryId {}", epochBarrier, decomposedQueryId);
+            }
+        } else {
+            NES_ERROR("NetworkSink::onEvent:: could not trim : epoch {} queryId {}", epochBarrier, decomposedQueryId);
+        }
+    }
 }
 
 OperatorId NetworkSink::getUniqueNetworkSinkDescriptorId() const { return uniqueNetworkSinkDescriptorId; }

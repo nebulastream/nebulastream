@@ -65,6 +65,8 @@ class MultiOriginWatermarkProcessor {
      */
     void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
 
+ bool isWatermarkSynchronized(OriginId originId) const;
+
     /**
      * @brief Returns the visible watermark across all origins.
      * @return WatermarkTs

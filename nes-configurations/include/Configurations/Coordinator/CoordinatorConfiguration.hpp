@@ -49,6 +49,11 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     StringOption coordinatorHost = {COORDINATOR_HOST_CONFIG, "127.0.0.1", "RPC IP address or hostname of NES Coordinator."};
 
+ /**
+     * @brief Number of buffers per epoch
+     */
+ UIntOption numberOfBuffersPerEpoch = {NUMBER_OF_BUFFERS_PER_EPOCH, "100", "Number of tuple buffers allowed in one epoch."};
+
     /**
      * @brief Port for the RPC server of the Coordinator.
      * This is used to receive control messages.
@@ -160,6 +165,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
                 &enableMonitoring,
                 &configPath,
                 &worker,
+         &numberOfBuffersPerEpoch,
                 &workerConfigPath,
                 &optimizer,
                 &logicalSourceTypes,

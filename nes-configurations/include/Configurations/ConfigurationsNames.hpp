@@ -49,6 +49,7 @@ const std::string NUMBER_OF_BUFFERS_IN_GLOBAL_BUFFER_MANAGER_CONFIG = "numberOfB
 const std::string NUMBER_OF_BUFFERS_PER_WORKER_CONFIG = "numberOfBuffersPerWorker";
 const std::string NUMBER_OF_BUFFERS_IN_SOURCE_LOCAL_BUFFER_POOL_CONFIG = "numberOfBuffersInSourceLocalBufferPool";
 const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
+const std::string LAMBDA_SOURCE_CONFIG = "lambdaSource";
 const std::string ENABLE_MONITORING_CONFIG = "enableMonitoring";
 const std::string MONITORING_WAIT_TIME = "monitoringWaitTime";
 const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
@@ -58,6 +59,7 @@ const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
+const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string WORKER_CONFIG = "worker";

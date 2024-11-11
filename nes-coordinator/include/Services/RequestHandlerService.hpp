@@ -19,6 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <Statistics/StatisticKey.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <future>
 #include <nlohmann/json.hpp>
@@ -137,7 +138,7 @@ class RequestHandlerService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
-    QueryId validateAndQueueAddQueryRequest(const std::string& queryString, const Optimizer::PlacementStrategy placementStrategy);
+    QueryId validateAndQueueAddQueryRequest(const std::string& queryString, const Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -145,7 +146,7 @@ class RequestHandlerService {
      * @param placementStrategy : Name of the placement strategy
      * @return query id
      */
-    QueryId validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan, const Optimizer::PlacementStrategy placementStrategy);
+    QueryId validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan, const Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -156,7 +157,7 @@ class RequestHandlerService {
      * @return query id
      */
     nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
-                                                       const Optimizer::PlacementStrategy placementStrategy);
+                                                       const Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.

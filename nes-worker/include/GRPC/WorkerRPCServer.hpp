@@ -69,6 +69,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
                                const StopDecomposedQueryRequest* request,
                                StopDecomposedQueryReply* reply) override;
 
+  Status InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) override;
+
     Status AddReconfigurationMarker(::grpc::ServerContext* context,
                                     const ::ReconfigurationMarkerRequest* request,
                                     ::ReconfigurationMarkerReply* response) override;

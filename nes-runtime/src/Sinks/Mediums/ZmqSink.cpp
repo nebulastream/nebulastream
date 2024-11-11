@@ -17,6 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <cstdint>
 
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -36,14 +37,14 @@ ZmqSink::ZmqSink(SinkFormatPtr format,
                  SharedQueryId sharedQueryId,
                  DecomposedQueryId decomposedQueryId,
                  DecomposedQueryPlanVersion decomposedQueryVersion,
+                 FaultToleranceType faultToleranceType,
                  uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  sharedQueryId,
                  decomposedQueryId,
-                 decomposedQueryVersion,
-                 numberOfOrigins),
+                 decomposedQueryVersion, faultToleranceType, numberOfOrigins, std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       host(host.substr(0, host.find(':'))), port(port), internal(internal), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink: Init ZMQ Sink to {}:{}", host, port);
@@ -153,6 +154,9 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
         if (ex.num() != ETERM) {
             NES_ERROR("ZmqSink:  {}", ex.what());
         }
+    }
+    if (faultToleranceType == FaultToleranceType::UB) {
+        updateWatermark(inputBuffer);
     }
     return true;
 }

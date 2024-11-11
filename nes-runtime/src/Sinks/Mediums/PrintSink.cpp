@@ -13,6 +13,7 @@
 */
 
 #include <Runtime/QueryManager.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
@@ -27,14 +28,15 @@ PrintSink::PrintSink(SinkFormatPtr format,
                      DecomposedQueryId decomposedQueryId,
                      DecomposedQueryPlanVersion decomposedQueryVersion,
                      std::ostream& pOutputStream,
+                     FaultToleranceType faultToleranceType,
                      uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
                  numOfProducers,
                  sharedQueryId,
                  decomposedQueryId,
-                 decomposedQueryVersion,
-                 numberOfOrigins),
+                 decomposedQueryVersion, faultToleranceType,
+                 numberOfOrigins, std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       outputStream(pOutputStream) {}
 
 PrintSink::~PrintSink() = default;
@@ -50,6 +52,9 @@ bool PrintSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCont
     auto buffer = sinkFormat->getFormattedBuffer(inputBuffer);
     NES_TRACE("PrintSink::getData: write buffer of size  {}", buffer.size());
     outputStream << buffer << std::endl;
+    if (faultToleranceType == FaultToleranceType::UB) {
+        updateWatermark(inputBuffer);
+    }
     return true;
 }
 

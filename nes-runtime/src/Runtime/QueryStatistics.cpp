@@ -90,18 +90,16 @@ folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>>& QueryStatistics:
 
 std::string QueryStatistics::getQueryStatisticsAsString() {
     std::stringstream ss;
-    ss << "queryId=" << queryId.load();
-    ss << " subPlanId=" << subQueryId.load();
-    ss << " processedTasks=" << processedTasks.load();
-    ss << " processedTuple=" << processedTuple.load();
-    ss << " processedBuffers=" << processedBuffers.load();
-    ss << " processedWatermarks=" << processedWatermarks.load();
-    ss << " latencyAVG=" << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " queueSizeAVG=" << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableGlobalBufferAVG="
-       << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
-    ss << " availableFixedBufferAVG="
-       << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load());
+    ss << queryId.load() << ",";
+    ss << subQueryId.load() << ",";
+    ss << processedTasks.load() << ",";
+    ss << processedTuple.load() << ",";
+    ss << processedBuffers.load() << ",";
+    ss << processedWatermarks.load() << ",";
+    ss << latencySum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
+    ss << queueSizeSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
+    ss << availableGlobalBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
+    ss << availableFixedBufferSum.load() / (processedBuffers.load() == 0 ? 1 : processedBuffers.load()) << ",";
     return ss.str();
 }
 

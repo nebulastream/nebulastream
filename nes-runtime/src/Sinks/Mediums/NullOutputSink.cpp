@@ -13,6 +13,8 @@
 */
 
 #include <Runtime/QueryManager.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sstream>
@@ -24,6 +26,7 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                                SharedQueryId sharedQueryId,
                                DecomposedQueryId decomposedQueryId,
                                DecomposedQueryPlanVersion decomposedQueryVersion,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins)
     : SinkMedium(nullptr,
                  std::move(nodeEngine),
@@ -31,13 +34,24 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  sharedQueryId,
                  decomposedQueryId,
                  decomposedQueryVersion,
-                 numberOfOrigins) {}
+                 faultToleranceType,
+                 numberOfOrigins) {
+    if (faultToleranceType == FaultToleranceType::UB) {
+        updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
+            updateWatermark(inputBuffer);
+        };
+    }
+                 }
 
 NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return SinkMediumTypes::NULL_SINK; }
 
-bool NullOutputSink::writeData(Runtime::TupleBuffer&, Runtime::WorkerContextRef) { return true; }
+bool NullOutputSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef workerContext) {
+    workerContext.printStatistics(inputBuffer);
+    updateWatermarkCallback(inputBuffer);
+    return true;
+}
 
 std::string NullOutputSink::toString() const {
     std::stringstream ss;

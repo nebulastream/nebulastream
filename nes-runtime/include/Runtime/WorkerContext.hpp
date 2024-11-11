@@ -21,6 +21,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
+#include <fstream>
+#include <iomanip>
 #include <folly/ThreadLocal.h>
 #include <future>
 #include <memory>
@@ -35,6 +37,10 @@ using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 }// namespace NES
 
 namespace NES::Runtime {
+
+struct BufferOrdering : public std::greater<TupleBuffer> {
+ bool operator()(const TupleBuffer& lhs, const TupleBuffer& rhs) { return lhs.getWatermark() > rhs.getWatermark(); }
+};
 
 class AbstractBufferProvider;
 class BufferStorage;
@@ -71,8 +77,13 @@ class WorkerContext {
     WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
     std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+ ///queue of tuple buffers that were processed by the thread
+ std::unordered_map<Network::NesPartition, std::priority_queue<TupleBuffer, std::vector<TupleBuffer>, BufferOrdering>> storage;
+ std::ofstream statisticsFile;
+ std::ofstream storageFile;
+ uint64_t currentEpoch;
+
 
   public:
     explicit WorkerContext(WorkerThreadId workerId,
@@ -137,6 +148,21 @@ class WorkerContext {
 
     bool containsNetworkChannel(OperatorId id);
 
+ void printStatistics(TupleBuffer& inputBuffer);
+
+ /**
+     * @brief This method creates a network storage for a thread
+     * @param nesPartitionId partition id
+     */
+ void createStorage(Network::NesPartition nesPartitionId);
+
+
+ /**
+  * @brief This method serializes buffers
+  * @param buffer buffer to serialize
+  */
+ std::vector<char> serializeBuffer(const NES::Runtime::TupleBuffer& buffer);
+
     /**
      * @brief This stores a future for network channel creation and a promise which can be used to abort the creation
      * @param id of the operator that we want to store the output channel
@@ -148,12 +174,6 @@ class WorkerContext {
                                    std::pair<std::future<Network::NetworkChannelPtr>, std::promise<bool>>&& channelFuture);
 
     bool containsNetworkChannelFuture(OperatorId id);
-
-    /**
-      * @brief This method creates a network storage for a thread
-      * @param nesPartitionId partition
-      */
-    void createStorage(Network::NesPartition nesPartition);
 
     /**
       * @brief This method inserts a tuple buffer into the storage
@@ -168,7 +188,7 @@ class WorkerContext {
       * @param timestamp timestamp
       * @return success in the case something was trimmed
       */
-    bool trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
 
     /**
      * @brief get the oldest buffered tuple for the specified partition
@@ -310,6 +330,12 @@ class WorkerContext {
      * @return a pointer to the event channel or nullptr if the connection timed out
      */
     Network::EventOnlyNetworkChannelPtr waitForAsyncConnectionEventChannel(OperatorId operatorId);
+
+ /**
+     * @brief This method reutrn buffer storage size
+     * @return size
+     */
+ size_t getStorageSize(Network::NesPartition nesPartitionId);
 
     /**
      * @brief check if a network channel exists for the operator in question

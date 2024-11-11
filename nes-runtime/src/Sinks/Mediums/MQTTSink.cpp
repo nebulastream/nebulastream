@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #ifdef ENABLE_MQTT_BUILD
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -52,6 +53,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
+                   FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat),
                  nodeEngine,
@@ -59,6 +61,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                  sharedQueryId,
                  decomposedQueryId,
                  decomposedQueryVersion,
+                 faultToleranceType,
                  numberOfOrigins),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMessages(maxBufferedMessages),
       timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient),
@@ -125,6 +128,9 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     } catch (const mqtt::exception& ex) {
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: {}", ex.what());
         return false;
+    }
+    if (faultToleranceType == FaultToleranceType::UB) {
+        updateWatermark(inputBuffer);
     }
     return true;
 }

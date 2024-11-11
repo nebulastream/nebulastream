@@ -166,6 +166,18 @@ class NetworkSource : public DataSource {
      */
     OperatorId getUniqueId() const;
 
+ /**
+    * @brief This method returns nes partition
+    * @return nesPartition
+    */
+ NesPartition getNesPartition() const;
+
+ /**
+     * @brief This method is called once an event is triggered for the current source
+     * @param event
+     */
+ void onEvent(Runtime::BaseEvent& event) override;
+
     /**
      * @brief set a new source descriptor to be applied once startNewVersion() is called
      * @param networkSourceDescriptor the new descriptor

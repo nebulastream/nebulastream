@@ -228,6 +228,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
       */
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
+ uint64_t getNumberOfBuffersPerEpoch() const { return numberOfBuffersPerEpoch; }
     /**
      * get the class containing all location info on this worker if it is a field node and the functionality to
      * query the current position if it is a field node
@@ -262,6 +263,18 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool waitForConnect() const;
 
+ /**
+     * @brief Method to get numberOfBuffersPerEpoch
+     * @return numberOfBuffersPerEpoch
+     */
+ uint64_t getNumberOfBuffersPerEpoch();
+
+ /**
+  * @brief Method to get replicationLevel
+  * @return replicationLevel
+  */
+ uint64_t getReplicationLevel();
+
     void handleRpcs(WorkerRPCServer& service);
 
     const Configurations::WorkerConfigurationPtr workerConfig;
@@ -286,6 +299,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
     WorkerId parentId;
     NES::Configurations::Spatial::Mobility::Experimental::WorkerMobilityConfigurationPtr mobilityConfig;
     Util::PluginLoader pluginLoader = Util::PluginLoader();
+ uint64_t numberOfBuffersPerEpoch;
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 

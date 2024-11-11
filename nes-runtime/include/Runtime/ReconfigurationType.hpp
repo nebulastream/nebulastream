@@ -40,6 +40,8 @@ enum class ReconfigurationType : uint8_t {
     UpdateVersion,
     /// reconfiguration marker
     ReconfigurationMarker,
+    /// use PropagateEpoch to pass epoch barrier to all network sinks
+    PropagateEpoch
 };
 
 QueryTerminationType reconfigurationTypeToTerminationType(ReconfigurationType reconfigurationType);

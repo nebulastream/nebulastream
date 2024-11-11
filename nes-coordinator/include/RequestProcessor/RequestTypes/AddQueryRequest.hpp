@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
+#include <Util/FaultToleranceType.hpp>
 
 namespace z3 {
 class context;
@@ -129,7 +130,8 @@ class AddQueryRequest : public AbstractUniRequest {
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context,
                     const QueryParsingServicePtr& queryParsingService,
-                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
+                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                                               FaultToleranceType faultTolerance);
 
     /**
      * @brief Constructor
@@ -143,7 +145,8 @@ class AddQueryRequest : public AbstractUniRequest {
                     const Optimizer::PlacementStrategy queryPlacementStrategy,
                     const uint8_t maxRetries,
                     const z3::ContextPtr& z3Context,
-                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
+                    const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                                               FaultToleranceType faultTolerance);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -157,7 +160,8 @@ class AddQueryRequest : public AbstractUniRequest {
                                      const Optimizer::PlacementStrategy queryPlacementStrategy,
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context,
-                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
+                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                                               FaultToleranceType faultTolerance);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -173,7 +177,8 @@ class AddQueryRequest : public AbstractUniRequest {
                                      const uint8_t maxRetries,
                                      const z3::ContextPtr& z3Context,
                                      const QueryParsingServicePtr& queryParsingService,
-                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
+                                     const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                                               FaultToleranceType faultTolerance);
 
   protected:
     /**
@@ -220,6 +225,7 @@ class AddQueryRequest : public AbstractUniRequest {
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
+ FaultToleranceType faultTolerance;
 
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);

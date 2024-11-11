@@ -17,6 +17,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
+#include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <filesystem>
@@ -36,6 +37,7 @@ FileSink::FileSink(SinkFormatPtr format,
                    SharedQueryId sharedQueryId,
                    DecomposedQueryId decomposedQueryId,
                    DecomposedQueryPlanVersion decomposedQueryVersion,
+                   FaultToleranceType faultToleranceType,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(format),
                  std::move(nodeEngine),
@@ -43,6 +45,7 @@ FileSink::FileSink(SinkFormatPtr format,
                  sharedQueryId,
                  decomposedQueryId,
                  decomposedQueryVersion,
+                 faultToleranceType,
                  numberOfOrigins),
       filePath(filePath), append(append) {}
 
@@ -130,6 +133,9 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
               fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
+    if (faultToleranceType == FaultToleranceType::UB) {
+        updateWatermark(inputBuffer);
+    }
     return true;
 }
 

@@ -22,6 +22,10 @@ SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(number
 SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp)
     : numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp) {}
 
+FaultToleranceType SinkDescriptor::getFaultToleranceType() const { return faultToleranceType; }
+
+void SinkDescriptor::setFaultToleranceType(FaultToleranceType faultTolerance) { faultToleranceType = faultTolerance; }
+
 uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
 
 bool SinkDescriptor::getAddTimestamp() const { return addTimestamp; }

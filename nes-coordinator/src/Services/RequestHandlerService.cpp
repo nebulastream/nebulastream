@@ -47,6 +47,7 @@
 #include <StatisticCollection/StatisticRegistry/StatisticInfo.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Core.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <llvm/Support/MathExtras.h>
@@ -75,34 +76,39 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string& queryString,
-                                                               const Optimizer::PlacementStrategy placementStrategy) {
+                                                               const Optimizer::PlacementStrategy placementStrategy,
+                                                               FaultToleranceType faultTolerance) {
 
     auto addRequest = RequestProcessor::AddQueryRequest::create(queryString,
                                                                 placementStrategy,
                                                                 RequestProcessor::DEFAULT_RETRIES,
                                                                 z3Context,
                                                                 queryParsingService,
-                                                                placementAmendmentHandler);
+                                                                placementAmendmentHandler,
+                                                                faultTolerance);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan,
-                                                               const Optimizer::PlacementStrategy placementStrategy) {
+const Optimizer::PlacementStrategy placementStrategy,
+FaultToleranceType faultTolerance) {
 
     auto addRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
                                                                 placementStrategy,
                                                                 RequestProcessor::DEFAULT_RETRIES,
                                                                 z3Context,
-                                                                placementAmendmentHandler);
+                                                                placementAmendmentHandler,
+                                                                faultTolerance);
     asyncRequestExecutor->runAsync(addRequest);
     auto future = addRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::AddQueryResponse>(future.get())->queryId;
 }
 
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
-                                                                          const Optimizer::PlacementStrategy placementStrategy) {
+const Optimizer::PlacementStrategy placementStrategy,
+FaultToleranceType faultTolerance) {
 
     auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
     asyncRequestExecutor->runAsync(explainRequest);

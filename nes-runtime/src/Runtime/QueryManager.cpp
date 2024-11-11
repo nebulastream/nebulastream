@@ -343,4 +343,28 @@ std::unordered_set<DecomposedQueryIdWithVersion> AbstractQueryManager::getExecut
     return ids;
 }
 
+bool AbstractQueryManager::injectEpochBarrier(uint64_t epochBarrier, OperatorId sourceOperatorId) {
+    std::unique_lock lock(queryMutex);
+    auto qeps = sourceToQEPMapping.find(sourceOperatorId);
+    if (qeps != sourceToQEPMapping.end()) {
+        //post reconfiguration message to the executable query plan with an epoch barrier to trim buffer storages
+        for (const auto& qep : qeps->second) {
+            for (auto sink : qep->getSinks()) {
+                if (sink->getSinkMediumType() == SinkMediumTypes::NETWORK_SINK) {
+                    NES_DEBUG("AbstractQueryManager::injectEpochBarrier queryId={} punctuation={} ", epochBarrier);
+                    auto newReconf = ReconfigurationMessage(qep->getSharedQueryId(),
+                                                            qep->getDecomposedQueryId(),
+                                                            Runtime::ReconfigurationType::PropagateEpoch,
+                                                            sink,
+                                                            std::make_any<uint64_t>(epochBarrier));
+                    addReconfigurationMessage(qep->getSharedQueryId(), qep->getDecomposedQueryId(), newReconf);
+                }
+            }
+        }
+        return true;
+    }
+    NES_THROW_RUNTIME_ERROR("AbstractQueryManager: no source was found");
+    return false;
+}
+
 }// namespace NES::Runtime

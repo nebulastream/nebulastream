@@ -92,6 +92,17 @@ class StartSourceEvent : public BaseEvent {
     uint8_t* data() override { return nullptr; }
 };
 
+struct PropagateEpochEvent {
+ explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
+
+ Runtime::EventType getEventType() const { return type; }
+
+ uint64_t timestampValue() const { return timestamp; }
+
+ Runtime::EventType type;
+ uint64_t timestamp;
+};
+
 }// namespace NES::Runtime
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
