@@ -144,9 +144,9 @@ class SinkMedium : public Runtime::Reconfigurable {
     virtual SinkMediumTypes getSinkMediumType() = 0;
 
     /**
-  * @brief method to notify epoch termination
-  * @return success
-  */
+     * @brief method to notify epoch termination
+     * @return success
+     */
     bool notifyEpochTermination(uint64_t epochBarrier) const;
 
     /**
@@ -200,10 +200,10 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t bufferCount;
 
     std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
- std::function<bool(Runtime::TupleBuffer&)> duplicateDetectionCallback;
+    std::function<bool(Runtime::TupleBuffer&)> duplicateDetectionCallback;
     std::function<void(uint64_t)> notifyEpochCallback;
- FaultToleranceType faultToleranceType;
- uint64_t numberOfOrigins;
+    FaultToleranceType faultToleranceType;
+    uint64_t numberOfOrigins;
     Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
     uint64_t buffersPerEpoch;
     bool isWaiting;
