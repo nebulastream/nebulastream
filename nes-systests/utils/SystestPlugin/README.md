@@ -15,5 +15,8 @@ Adds interactable gutter icons for each System-Level Test .test file, that will 
 - within the code gutter, a green, clickable arrow icon will appear beside each line 
 that contains the end of a test query "----"
 - hovering above it will display a tooltip like this: "Run Systest 'TestNumber'" 
-- click the icon to run "systest -t 'FileName':'TestNumber'", which runs the system level test,
+- click the icon to run "./systest -t 'PathToFile'/'FileName':'TestNumber'", which runs the system level test,
 and display the output in a new console
+
+- NOTE: the path to ./systest itself is currently hardcoded to: "home/user/nebulastream-public/build/nes-systests/systest/systest"
+We will add a configurable path in the project settings soon.
