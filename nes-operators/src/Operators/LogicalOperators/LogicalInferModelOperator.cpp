@@ -81,7 +81,7 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(NodeFunctionFiel
     auto existingField = schema->getField(fieldName);
     if (existingField)
     {
-        field->updateFieldName(existingField->getName());
+        field->updateFieldName(existingField.value()->getName());
     }
     else
     {

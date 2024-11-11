@@ -84,7 +84,7 @@ bool LogicalJoinOperator::inferSchema()
             }
             else
             {
-                fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
+                fieldExistsInSchema = ((*itr)->getField(joinKeyName).has_value());
             }
 
             if (fieldExistsInSchema)
@@ -151,7 +151,7 @@ bool LogicalJoinOperator::inferSchema()
     {
         throw CannotInferSchema("right schema is empty");
     }
-    if (rightInputSchema==leftInputSchema)
+    if (rightInputSchema == leftInputSchema)
     {
         throw CannotInferSchema("found both left and right input schema to be same.");
     }
@@ -218,9 +218,9 @@ bool LogicalJoinOperator::equal(NodePtr const& rhs) const
         auto rhsJoin = NES::Util::as<LogicalJoinOperator>(rhs);
         return joinDefinition->getWindowType()->equal(rhsJoin->joinDefinition->getWindowType())
             && joinDefinition->getJoinFunction()->equal(rhsJoin->joinDefinition->getJoinFunction())
-            && (joinDefinition->getOutputSchema()==rhsJoin->joinDefinition->getOutputSchema())
-            && (joinDefinition->getRightSourceType()==rhsJoin->joinDefinition->getRightSourceType())
-            && (joinDefinition->getLeftSourceType()==rhsJoin->joinDefinition->getLeftSourceType());
+            && (joinDefinition->getOutputSchema() == rhsJoin->joinDefinition->getOutputSchema())
+            && (joinDefinition->getRightSourceType() == rhsJoin->joinDefinition->getRightSourceType())
+            && (joinDefinition->getLeftSourceType() == rhsJoin->joinDefinition->getLeftSourceType());
     }
     return false;
 }
