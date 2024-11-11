@@ -232,8 +232,4 @@ private:
     MemoryLayoutType layoutType;
 };
 
-AttributeFieldPtr createField(const std::string& name, BasicType type);
-
-AttributeFieldPtr createField(const std::string& name, DataTypePtr type);
-
 }

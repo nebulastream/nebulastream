@@ -109,9 +109,8 @@ bool LogicalWindowOperator::inferSchema()
             return false;
         }
         outputSchema
-            = outputSchema
-                  ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64))
-                  ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64));
+            = outputSchema->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64)
+                  ->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
