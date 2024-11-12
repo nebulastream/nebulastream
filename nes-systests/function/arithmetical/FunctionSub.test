@@ -6,7 +6,7 @@ Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
 # Todo #442: the below system level tests currently perform downcasts.
-# Check if different numeric types support the equals operation
+# Check if different numeric types support the sub operation
 SELECT
     val_i8 - 42 AS val_i8,
     val_i16 - 42 AS val_i16,
@@ -24,7 +24,7 @@ FROM stream INTO SINK
 ----
 -84,-171,-32811,-2147483691,0,214,65494,4294967254,-19.000000,-19.000000
 
-# Equal i8 value with all other data types
+# Sub i8 value with all other data types
 SELECT
     # signed
     val_i8 - val_i8 AS val_i8_i8,
@@ -53,7 +53,7 @@ FROM stream INTO SINK
 ----
 0 1 87 88 -41 -40 -41 -40 -84 -83 -42 -41 -42 -41 -42 -41 0 0 0 0
 
-# Equal i16 value with all other data types
+# Sub i16 value with all other data types
 SELECT
     # signed
     val_i16 - val_i8 AS val_i16_i8,
@@ -82,7 +82,7 @@ FROM stream INTO SINK
 ----
 -87 -86 0 1 32640 32641 -128 -127 -171 -170 385 386 -129 -128 -129 -128 0 0 0 0
 
-# Equal i32 value with all other data types
+# Sub i32 value with all other data types
 SELECT
     # signed
     val_i32 - val_i8 AS val_i32_i8,
@@ -111,7 +111,7 @@ FROM stream INTO SINK
 ----
 -32727 -32726 -32640 -32639 0 1 2147450880 2147450881 -32811 -32810 -33025 -33024 -98305 -98304 -32769 -32768 -956295168 -956295424 0 0
 
-# Equal i64 value with all other data types
+# Sub i64 value with all other data types
 SELECT
     # signed
     val_i64 - val_i8 AS val_i64_i8,
@@ -141,7 +141,7 @@ FROM stream INTO SINK
 -2147483607 -2147483606 -2147483520 -2147483519 -2147450880 -2147450879 0 1 -2147483691 -2147483690 -2147483905 -2147483904 -2147549185 -2147549184 -6442450945 -6442450944 3472883712 3472883712 -4476578029555941376 -4476578029558038528
 
 
-# Equal u8 value with all other data types
+# Sub u8 value with all other data types
 SELECT
     # signed
     val_u8 - val_i8 AS val_u8_i8,
@@ -170,7 +170,7 @@ FROM stream INTO SINK
 ----
 84 85 171 172 43 44 43 44 0 1 42 43 42 43 42 43 0 0 0 0
 
-# Equal u16 value with all other data types
+# Sub u16 value with all other data types
 SELECT
     # signed
     val_u16 - val_i8 AS val_u16_i8,
@@ -199,7 +199,7 @@ FROM stream INTO SINK
 ----
 298 299 385 386 33025 33026 257 258 214 215 385 386 256 257 256 257 0 0 0 0
 
-# Equal u32 value with all other data types
+# Sub u32 value with all other data types
 SELECT
     # signed
     val_u32 - val_i8 AS val_u32_i8,
@@ -228,7 +228,7 @@ FROM stream INTO SINK
 ----
 65578 65579 65665 65666 98305 98306 2147549185 2147549186 65494 65495 65280 65281 0 1 65536 65537 1199565056 1199565312 0 0
 
-# Equal u64 value with all other data types
+# Sub u64 value with all other data types
 SELECT
     # signed
     val_i64 - val_i8 AS val_u64_i8,
