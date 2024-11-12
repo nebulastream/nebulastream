@@ -39,9 +39,11 @@ public:
 private:
     SchemaPtr schema;
     std::string fieldDelimiter;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::unique_ptr<ProgressTracker> progressTracker;
     std::vector<size_t> fieldSizes;
+    using CastFunctionSignature
+        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
+    std::vector<CastFunctionSignature> fieldParseFunctions;
 
     /// Splits the string-tuple into string-fields, parsing each string-field, converting it to the internal representation.
     /// Assumptions: input is a string that contains either:

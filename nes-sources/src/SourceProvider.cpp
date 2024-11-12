@@ -16,7 +16,6 @@
 #include <magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceFile.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
