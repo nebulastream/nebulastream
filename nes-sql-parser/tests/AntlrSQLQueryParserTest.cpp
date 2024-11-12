@@ -24,7 +24,6 @@
 #include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
@@ -71,6 +70,43 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     ///     const auto internalLogicalQuery = Query::from("window").map(Attribute("id") = Attribute("id") * 3).sink("File");
     ///     EXPECT_TRUE(parseAndCompareQueryPlans(antlrQueryString, internalLogicalQuery));
     /// }
+}
+
+TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
+{
+    {
+        const auto inputQuery = "SELECT "
+                                "(i8 == 1) and ((i16 == 1) and (i32 == 1)) AS a, "
+                                "(i32 == 1) and ((i64 == 1) and (u8 == 2)) AS b, "
+                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS c, "
+                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS d, "
+                                "(i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e, "
+                                "(i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f, "
+                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g, "
+                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS h "
+                                "FROM stream INTO Print"s;
+        const auto internalLogicalQuery
+            = Query::from("stream")
+                  .map(Attribute("a") = Attribute("i8") == 1 && ((Attribute("i16") == 1) && (Attribute("i32") == 1)))
+                  .map(Attribute("b") = Attribute("i32") == 1 && ((Attribute("i64") == 1) && (Attribute("u8") == 2)))
+                  .map(Attribute("c") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                  .map(Attribute("d") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                  .map(Attribute("e") = Attribute("i8") == 1 && !(Attribute("i16") == 1 && Attribute("i32") == 1))
+                  .map(Attribute("f") = Attribute("i32") == 1 && !(Attribute("i64") == 1 && Attribute("u8") == 2))
+                  .map(Attribute("g") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                  .map(Attribute("h") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                  .project(
+                      Attribute("a"),
+                      Attribute("b"),
+                      Attribute("c"),
+                      Attribute("d"),
+                      Attribute("e"),
+                      Attribute("f"),
+                      Attribute("g"),
+                      Attribute("h"))
+                  .sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
 }
 
 TEST_F(AntlrSQLQueryParserTest, selectionTest)
