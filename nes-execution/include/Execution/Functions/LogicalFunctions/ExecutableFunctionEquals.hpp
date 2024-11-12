@@ -22,11 +22,11 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionEquals final : public Function
 {
 public:
-    ExecutableFunctionEquals(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const std::unique_ptr<Function> leftExecutableFunctionSub;
-    const std::unique_ptr<Function> rightExecutableFunctionSub;
+    const std::unique_ptr<Function> leftExecutableFunction;
+    const std::unique_ptr<Function> rightExecutableFunction;
 };
 }

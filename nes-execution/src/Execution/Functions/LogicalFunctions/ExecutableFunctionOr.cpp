@@ -33,8 +33,8 @@ VarVal ExecutableFunctionOr::execute(Record& record) const
 }
 
 ExecutableFunctionOr::ExecutableFunctionOr(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunction(std::move(leftExecutableFunctionSub)), rightExecutableFunction(std::move(rightExecutableFunctionSub))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 

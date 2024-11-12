@@ -26,14 +26,14 @@ namespace NES::Runtime::Execution::Functions
 
 VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record);
-    const auto rightValue = rightExecutableFunctionSub->execute(record);
+    const auto leftValue = leftExecutableFunction->execute(record);
+    const auto rightValue = rightExecutableFunction->execute(record);
     return leftValue == rightValue;
 }
 
 ExecutableFunctionEquals::ExecutableFunctionEquals(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
