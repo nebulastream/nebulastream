@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/LogLevel.hpp>
@@ -26,14 +28,14 @@ namespace NES::Runtime::Execution::Functions
 
 VarVal ExecutableFunctionEquals::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record);
-    const auto rightValue = rightExecutableFunctionSub->execute(record);
+    const auto leftValue = leftExecutableFunction->execute(record);
+    const auto rightValue = rightExecutableFunction->execute(record);
     return leftValue == rightValue;
 }
 
 ExecutableFunctionEquals::ExecutableFunctionEquals(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
