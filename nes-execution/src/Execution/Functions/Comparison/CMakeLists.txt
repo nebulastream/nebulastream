@@ -11,8 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        ExecutableFunctionEquals.cpp
-        ExecutableFunctionNegate.cpp
-        ExecutableFunctionAnd.cpp
-        ExecutableFunctionOr.cpp
+        ExecutableFunctionGreater.cpp
+        ExecutableFunctionGreaterEquals.cpp
+        ExecutableFunctionLess.cpp
+        ExecutableFunctionLessEquals.cpp
         )
