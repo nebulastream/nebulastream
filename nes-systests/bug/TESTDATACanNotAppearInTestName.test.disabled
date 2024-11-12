@@ -1,7 +1,10 @@
-# name: sources/FiveTuples.test
+# name: sources/TESTDATACanNotAppearInTestName.test
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
+# Todo #501
+# This test works if it does not contain 'TESTDATA' in its file name.
+# This might be true for other keywords too. 'Source' seems to be fine though.
 Source fiveTuples UINT64 field_1
 1
 2

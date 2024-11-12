@@ -1,7 +1,8 @@
-# name: buffersize/OneToMultipleBuffers.test
+# name: buffersize/TwoSourcesOneEmtpy.test
 # description: Simple source/buffer tests
 # groups: [Sources]
 
+# Todo #503: Two sources do not work. Is this a special case that is different from 'TwoSources.test'?
 Source noTuple UINT64 field_1
 
 Source oneTuple UINT64 field_1 # Probably triggers a parser bug (parser still looks for tuples)
