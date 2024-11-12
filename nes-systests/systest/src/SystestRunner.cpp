@@ -177,6 +177,8 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SingleNodeWorker worker(configuration);
 
     std::atomic<size_t> queriesToResultCheck{0};
+    std::atomic<size_t> queryFinishedCounter{0};
+    const auto totalQueries = queries.size();
     std::atomic finishedProducing{false};
 
     std::mutex mtx;
@@ -231,7 +233,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
             }
             worker.unregisterQuery(QueryId(runningQuery->queryId));
             auto errorMessage = checkResult(runningQuery->query);
-            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
             if (errorMessage.has_value())
             {
                 failedQueries.wlock()->emplace_back(*runningQuery);
@@ -252,6 +254,8 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
     const GRPCClient client(CreateChannel(serverURI, grpc::InsecureChannelCredentials()));
 
     std::atomic<size_t> runningQueryCount{0};
+    std::atomic<size_t> queryFinishedCounter{0};
+    const auto totalQueries = queries.size();
     std::atomic finishedProducing{false};
 
     std::mutex mtx;
@@ -300,7 +304,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
             }
             client.unregister(runningQuery->queryId.getRawValue());
             auto errorMessage = checkResult(runningQuery->query);
-            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
+            printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""), queryFinishedCounter.fetch_add(1), totalQueries);
             if (errorMessage.has_value())
             {
                 failedQueries.wlock()->emplace_back(*runningQuery);
@@ -313,12 +317,15 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
     return failedQueries.copy();
 }
 
-void printQueryResultToStdOut(const Query& query, const std::string& errorMessage)
+void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, const size_t queryCounter, const size_t totalQueries)
 {
     const auto queryNameLength = query.name.size();
     const auto queryNumberAsString = std::to_string(query.queryIdInFile + 1);
     const auto queryNumberLength = queryNumberAsString.size();
+    const auto queryCounterAsString = std::to_string(queryCounter + 1);
 
+    std::cout << std::string(padSizeQueryCounter - queryCounterAsString.size(), ' ');
+    std::cout << queryCounterAsString << "/" << totalQueries << " ";
     std::cout << query.name << ":" << std::string(padSizeQueryNumber - queryNumberLength, '0') << queryNumberAsString;
     std::cout << std::string(padSizeSuccess - (queryNameLength + padSizeQueryNumber), '.');
     if (errorMessage.empty())
