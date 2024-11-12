@@ -19,16 +19,16 @@
 namespace NES::Runtime::Execution::Functions
 {
 
-/// Performs leftExecutableFunctionSub / rightExecutableFunctionSub
+/// Performs leftExecutableFunction / rightExecutableFunction
 class ExecutableFunctionDiv : public Function
 {
 public:
-    ExecutableFunctionDiv(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionDiv(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const std::unique_ptr<Function> leftExecutableFunctionSub;
-    const std::unique_ptr<Function> rightExecutableFunctionSub;
+    const std::unique_ptr<Function> leftExecutableFunction;
+    const std::unique_ptr<Function> rightExecutableFunction;
 };
 
 }

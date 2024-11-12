@@ -22,8 +22,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionGreaterEquals final : public Function
 {
 public:
-    ExecutableFunctionGreaterEquals(
-        std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionGreaterEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:

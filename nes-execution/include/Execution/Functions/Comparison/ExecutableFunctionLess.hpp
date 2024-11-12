@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionLess final : public Function
 {
 public:
-    ExecutableFunctionLess(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionLess(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:
