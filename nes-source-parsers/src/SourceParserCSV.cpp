@@ -26,6 +26,8 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <boost/token_functions.hpp>
+#include <boost/tokenizer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -321,18 +323,11 @@ bool SourceParserCSV::parseTupleBufferRaw(
 void SourceParserCSV::parseStringTupleToTBFormatted(
     const std::string_view inputString, NES::Memory::AbstractBufferProvider& bufferProvider) const
 {
-    std::vector<std::string> values;
-    try
-    {
-        values = NES::Util::splitWithStringDelimiter<std::string>(inputString, fieldDelimiter);
-    }
-    catch (std::exception e)
-    {
-        throw CSVParsingError(fmt::format("An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
-    }
+    const boost::char_separator sep{this->fieldDelimiter.c_str()};
+    const boost::tokenizer tupleTokenizer{inputString, sep};
 
     /// Iterate over all (potentially except the first) fields, parse the string values and write the formatted data into the TBF.
-    for (size_t currentFieldNumber = 0; const auto& currentVal : values)
+    for (size_t currentFieldNumber = 0; const auto& currentVal : tupleTokenizer)
     {
         if (auto basicType = dynamic_pointer_cast<BasicPhysicalType>(physicalTypes.at(currentFieldNumber)))
         {
