@@ -41,15 +41,17 @@ public:
 private:
     SchemaPtr schema;
     std::string fieldDelimiter;
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
     std::unique_ptr<ProgressTracker> progressTracker;
     std::vector<size_t> fieldSizes;
+    using CastFunctionSignature
+        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
+    std::vector<CastFunctionSignature> fieldParseFunctions;
 
     /// Splits the string-tuple into string-fields, parsing each string-field, converting it to the internal representation.
     /// Assumptions: input is a string that contains either:
     /// - one complete tuple
     /// - a string containing a partial tuple (potentially with a partial field) and another string that contains the rest of the tuple.
-    void parseStringTupleToTBFormatted(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const;
+    void parseStringIntoTupleBuffer(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const;
 };
 
 }

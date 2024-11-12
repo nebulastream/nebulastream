@@ -78,6 +78,9 @@ EXCEPTION(CannotStartQueryManager, 3003, "cannot start query manager")
 EXCEPTION(CannotStopQueryManager, 3004, "cannot stop query manager")
 EXCEPTION(QueryNotRegistered, 3005, "query not registered")
 EXCEPTION(CannotStartQuery, 3006, "cannot start query")
+/// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
+/// MUST be used as the central exception to report malformed string values.
+EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
