@@ -1,5 +1,5 @@
-# name: tuples/TuplesDontFitIntoOneBuffer.test
-# description: Simple tuple/buffer tests
+# name: sources/TuplesDontFitIntoOneBuffer.test
+# description: Simple source/buffer tests
 # groups: [Tuples]
 
 SourceCSV multiBuffer UINT64 field_1 UINT64 field_2 UINT64 field_3 UINT64 field_4 UINT64 field_5 UINT64 field_6 UINT64 field_7 UINT64 field_8 TESTDATA/200x8-rows-fields.csv

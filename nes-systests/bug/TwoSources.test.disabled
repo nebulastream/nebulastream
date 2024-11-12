@@ -1,0 +1,39 @@
+# name: sources/TESTDATACanNotAppearInTestName.test
+# description: Simple source/buffer tests
+# groups: [Tuples]
+
+# Todo #503
+# Both queries below should pass, but the first fails.
+Source fiveTuples UINT64 field_1
+1
+2
+3
+4
+5
+
+Source sixTuples UINT64 field_1
+1
+2
+3
+4
+5
+6
+
+# Description: simply reads in five tuples with a single value and produces the same tuples
+SELECT field_1 FROM fiveTuples INTO SINK
+----
+1
+2
+3
+4
+5
+
+# Description: simply reads in six tuples with a single value and produces the same tuples
+SELECT field_1 FROM sixTuples INTO SINK
+----
+1
+2
+3
+4
+5
+6
