@@ -1,0 +1,259 @@
+# name: function/comparison/FunctionLessEquals.test
+# description: Simple function less equals tests
+# groups: [Function,FunctionLessEquals]
+
+Source stream INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
+-42,-129,-32769,-2147483649,41,156,65536,4294967296,13.3,42.42
+
+
+# Todo #442: the below system level tests currently perform downcasts.
+# Check if different numeric types support the Less Equals operation
+SELECT
+    val_i8 <= 42 AS val_i8,
+    val_i16 <= 42 AS val_i16,
+    val_i32 <= 42 AS val_i32,
+    val_i64 <= 42 AS val_i64,
+
+    val_u8 <= 42_U AS val_u8,
+    val_u16 <= 42_U AS val_u16,
+    val_u32 <= 42_U AS val_u32,
+    val_u64 <= 42_U AS val_u64,
+
+    val_f32 <= 42.0_F AS val_f32,
+    val_f64 <= 42.0_D AS val_f64
+FROM stream INTO SINK
+----
+1,1,1,1,1,0,0,0,1,0
+
+# Less Equals i8 value with all other data types
+SELECT
+    # signed
+    val_i8 <= val_i8 AS val_i8_i8,
+    val_i8 <= val_i8 + 1 AS val_i8_i8_plus_1,
+    val_i8 <= val_i16 AS val_i8_i16,
+    val_i8 <= val_i16 + 1 AS val_i8_i16_plus_1,
+    val_i8 <= val_i32 AS val_i8_i32,
+    val_i8 <= val_i32 + 1 AS val_i8_i32_plus_1,
+    val_i8 <= val_i64 AS val_i8_i64,
+    val_i8 <= val_i64 + 1 AS val_i8_i64_plus_1,
+    # unsigned
+    val_i8 <= val_u8  AS val_i8_u8,
+    val_i8 <= val_u8 + 1_UY AS val_i8_u8_plus_1,
+    val_i8 <= val_u16 AS val_i8_u16,
+    val_i8 <= val_u16 + 1_US AS val_i8_u16_plus_1,
+    val_i8 <= val_u32 AS val_i8_u32,
+    val_i8 <= val_u32 + 1_U AS val_i8_u32_plus_1,
+    val_i8 <= val_u64 AS val_i8_u64,
+    val_i8 <= val_u64 + 1_UL AS val_i8_u64_plus_1,
+    # float
+    val_i8 <= val_f32 AS val_i8_f32_,
+    val_i8 <= val_f32 + 1_F AS val_i8_f32_plus_1,
+    val_i8 <= val_f64 AS val_i8_f64,
+    val_i8 <= val_f64 + 1_D AS val_i8_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1
+
+# Less Equals i16 value with all other data types
+SELECT
+    # signed
+    val_i16 <= val_i8 AS val_i16_i8,
+    val_i16 <= val_i8 + 1 AS val_i16_i8_plus_1,
+    val_i16 <= val_i16 AS val_i16_i16,
+    val_i16 <= val_i16 + 1 AS val_i16_i16_plus_1,
+    val_i16 <= val_i32 AS val_i16_i32,
+    val_i16 <= val_i32 + 1 AS val_i16_i32_plus_1,
+    val_i16 <= val_i64 AS val_i16_i64,
+    val_i16 <= val_i64 + 1 AS val_i16_i64_plus_1,
+    # unsigned
+    val_i16 <= val_u8 AS val_i16_u8,
+    val_i16 <= val_u8 + 1_U AS val_i16_u8_plus_1,
+    val_u16 <= val_i16 AS val_i16_u16,
+    val_u16 <= val_i16 + 1_U AS val_i16_u16_plus_1,
+    val_i16 <= val_u32 AS val_i16_u32,
+    val_i16 <= val_u32 + 1_U AS val_i16_u32_plus_1,
+    val_i16 <= val_u64 AS val_i16_u64,
+    val_i16 <= val_u64 + 1_U AS val_i16_u64_plus_1,
+    # float
+    val_i16 <= val_f32 AS val_i16_f32,
+    val_i16 <= val_f32 + 1_F AS val_i16_f32_plus_1,
+    val_i16 <= val_f64 AS val_i16_f64,
+    val_i16 <= val_f64 + 1_D AS val_i16_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,1,1
+
+# Less Equals i32 value with all other data types
+SELECT
+    # signed
+    val_i32 <= val_i8 AS val_i32_i8,
+    val_i32 <= val_i8 + 1 AS val_i32_i8_plus_1,
+    val_i32 <= val_i16 AS val_i32_i16,
+    val_i32 <= val_i16 + 1 AS val_i32_i16_plus_1,
+    val_i32 <= val_i32 AS val_i32_i32,
+    val_i32 <= val_i32 + 1 AS val_i32_i32_plus_1,
+    val_i32 <= val_i64 AS val_i32_i64,
+    val_i32 <= val_i64 + 1 AS val_i32_i64_plus_1,
+    # unsigned
+    val_i32 <= val_u8 AS val_i32_u8,
+    val_i32 <= val_u8 + 1_U AS val_i32_u8_plus_1,
+    val_i32 <= val_u16 AS val_i32_u16,
+    val_i32 <= val_u16 + 1_U AS val_i32_u16_plus_1,
+    val_i32 <= val_u32 AS val_i32_u32,
+    val_i32 <= val_u32 + 1_U AS val_i32_u32_plus_1,
+    val_i32 <= val_u64 AS val_i32_u64,
+    val_i32 <= val_u64 + 1_U AS val_i32_u64_plus_1,
+    # float
+    val_i32 <= val_f32 AS val_i32_f32,
+    val_i32 <= val_f32 + 1_F AS val_i32_f32_plus_1,
+    val_i32 <= val_f64 AS val_i32_f64,
+    val_i32 <= val_f64 + 1_D AS val_i32_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,1,1,1,1,0,0,1,1,1,1,0,0,0,0,1,1,1,1
+
+# Less Equals i64 value with all other data types
+SELECT
+    # signed
+    val_i64 <= val_i8 AS val_i64_i8,
+    val_i64 <= val_i8 + 1 AS val_i64_i8_plus_1,
+    val_i64 <= val_i16 AS val_i64_i16,
+    val_i64 <= val_i16 + 1 AS val_i64_i16_plus_1,
+    val_i64 <= val_i32 AS val_i64_i32,
+    val_i64 <= val_i32 + 1 AS val_i64_i32_plus_1,
+    val_i64 <= val_i64 AS val_i64_i64,
+    val_i64 <= val_i64 + 1 AS val_i64_i64_plus_1,
+    # unsigned
+    val_i64 <= val_u8 AS val_i64_u8,
+    val_i64 <= val_u8 + 1_U AS val_i64_u8_plus_1,
+    val_i64 <= val_u16 AS val_i64_u16,
+    val_i64 <= val_u16 + 1_U AS val_i64_u16_plus_1,
+    val_i64 <= val_u32 AS val_i64_u32,
+    val_i64 <= val_u32 + 1_U AS val_i64_u32_plus_1,
+    val_i64 <= val_u64 AS val_i64_u64,
+    val_i64 <= val_u64 + 1_U AS val_i64_u64_plus_1,
+    # float
+    val_i64 <= val_f32 AS val_i64_f32,
+    val_i64 <= val_f32 + 1_F AS val_i64_f32_plus_1,
+    val_i64 <= val_f64 AS val_i64_f64,
+    val_i64 <= val_f64 + 1_D AS val_i64_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1
+
+
+# Less Equals u8 value with all other data types
+SELECT
+    # signed
+    val_u8 <= val_i8 AS val_u8_i8,
+    val_u8 <= val_i8 + 1 AS val_u8_i8_plus_1,
+    val_u8 <= val_i16 AS val_u8_i16,
+    val_u8 <= val_i16 + 1 AS val_u8_i16_plus_1,
+    val_u8 <= val_i32 AS val_u8_i32,
+    val_u8 <= val_i32 + 1 AS val_u8_i32_plus_1,
+    val_u8 <= val_i64 AS val_u8_i64,
+    val_u8 <= val_i64 + 1 AS val_u8_i64_plus_1,
+    # unsigned
+    val_u8 <= val_u8  AS val_u8_u8,
+    val_u8 <= val_u8 + 1_UY AS val_u8_u8_plus_1,
+    val_u8 <= val_u16 AS val_u8_u16,
+    val_u8 <= val_u16 + 1_US AS val_u8_u16_plus_1,
+    val_u8 <= val_u32 AS val_u8_u32,
+    val_u8 <= val_u32 + 1_U AS val_u8_u32_plus_1,
+    val_u8 <= val_u64 AS val_u8_u64,
+    val_u8 <= val_u64 + 1_UL AS val_u8_u64_plus_1,
+    # float
+    val_u8 <= val_f32 AS val_u8_f32_,
+    val_u8 <= val_f32 + 1_F AS val_u8_f32_plus_1,
+    val_u8 <= val_f64 AS val_u8_f64,
+    val_u8 <= val_f64 + 1_D AS val_u8_f64_plus_1
+FROM stream INTO SINK
+----
+0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1
+
+# Less Equals u16 value with all other data types
+SELECT
+    # signed
+    val_u16 <= val_i8 AS val_u16_i8,
+    val_u16 <= val_i8 + 1 AS val_u16_i8_plus_1,
+    val_u16 <= val_i16 AS val_u16_i16,
+    val_u16 <= val_i16 + 1 AS val_u16_i16_plus_1,
+    val_u16 <= val_i32 AS val_u16_i32,
+    val_u16 <= val_i32 + 1 AS val_u16_i32_plus_1,
+    val_u16 <= val_i64 AS val_u16_i64,
+    val_u16 <= val_i64 + 1 AS val_u16_i64_plus_1,
+    # unsigned
+    val_u16 <= val_u8 AS val_u16_u8,
+    val_u16 <= val_u8 + 1_U AS val_u16_u8_plus_1,
+    val_u16 <= val_i16 AS val_u16_u16,
+    val_u16 <= val_i16 + 1_U AS val_u16_u16_plus_1,
+    val_u16 <= val_u32 AS val_u16_u32,
+    val_u16 <= val_u32 + 1_U AS val_u16_u32_plus_1,
+    val_u16 <= val_u64 AS val_u16_u64,
+    val_u16 <= val_u64 + 1_U AS val_u16_u64_plus_1,
+    # float
+    val_u16 <= val_f32 AS val_u16_f32,
+    val_u16 <= val_f32 + 1_F AS val_u16_f32_plus_1,
+    val_u16 <= val_f64 AS val_u16_f64,
+    val_u16 <= val_f64 + 1_D AS val_u16_f64_plus_1
+FROM stream INTO SINK
+----
+0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0
+
+# Less Equals u32 value with all other data types
+SELECT
+    # signed
+    val_u32 <= val_i8 AS val_u32_i8,
+    val_u32 <= val_i8 + 1 AS val_u32_i8_plus_1,
+    val_u32 <= val_i16 AS val_u32_i16,
+    val_u32 <= val_i16 + 1 AS val_u32_i16_plus_1,
+    val_u32 <= val_i32 AS val_u32_i32,
+    val_u32 <= val_i32 + 1 AS val_u32_i32_plus_1,
+    val_u32 <= val_i64 AS val_u32_i64,
+    val_u32 <= val_i64 + 1 AS val_u32_i64_plus_1,
+    # unsigned
+    val_u32 <= val_u8 AS val_u32_u8,
+    val_u32 <= val_u8 + 1_U AS val_u32_u8_plus_1,
+    val_u32 <= val_u16 AS val_u32_u16,
+    val_u32 <= val_u16 + 1_U AS val_u32_u16_plus_1,
+    val_u32 <= val_u32 AS val_u32_u32,
+    val_u32 <= val_u32 + 1_U AS val_u32_u32_plus_1,
+    val_u32 <= val_u64 AS val_u32_u64,
+    val_u32 <= val_u64 + 1_U AS val_u32_u64_plus_1,
+    # float
+    val_u32 <= val_f32 AS val_u32_f32,
+    val_u32 <= val_f32 + 1_F AS val_u32_f32_plus_1,
+    val_u32 <= val_f64 AS val_u32_f64,
+    val_u32 <= val_f64 + 1_D AS val_u32_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0
+
+# Less Equals u64 value with all other data types
+SELECT
+    # signed
+    val_i64 <= val_i8 AS val_u64_i8,
+    val_i64 <= val_i8 + 1 AS val_u64_i8_plus_1,
+    val_i64 <= val_i16 AS val_u64_i16,
+    val_i64 <= val_i16 + 1 AS val_u64_i16_plus_1,
+    val_i64 <= val_i32 AS val_u64_i32,
+    val_i64 <= val_i32 + 1 AS val_u64_i32_plus_1,
+    val_i64 <= val_i64 AS val_u64_i64,
+    val_i64 <= val_i64 + 1 AS val_u64_i64_plus_1,
+    # unsigned
+    val_i64 <= val_u8 AS val_u64_u8,
+    val_i64 <= val_u8 + 1_U AS val_u64_u8_plus_1,
+    val_i64 <= val_u16 AS val_u64_u16,
+    val_i64 <= val_u16 + 1_U AS val_u64_u16_plus_1,
+    val_i64 <= val_u32 AS val_u64_u32,
+    val_i64 <= val_u32 + 1_U AS val_u64_u32_plus_1,
+    val_i64 <= val_u64 AS val_u64_u64,
+    val_i64 <= val_u64 + 1_U AS val_u64_u64_plus_1,
+    # float
+    val_i64 <= val_f32 AS val_u64_f32,
+    val_i64 <= val_f32 + 1_F AS val_u64_f32_plus_1,
+    val_i64 <= val_f64 AS val_u64_f64,
+    val_i64 <= val_f64 + 1_D AS val_u64_f64_plus_1
+FROM stream INTO SINK
+----
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1
