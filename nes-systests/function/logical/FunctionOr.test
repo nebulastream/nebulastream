@@ -1,0 +1,54 @@
+# name: function/logical/FunctionOr.test
+# description: Simple function or tests
+# groups: [Function, FunctionOr]
+
+
+# We define a source that has for all signed data types the 1, for all unsigned data types the 2, and for all float data types the 3.
+Source stream INT8 i8 INT16 i16 INT32 i32 INT64 i64 UINT8 u8 UINT16 u16 UINT32 u32 UINT64 u64 FLOAT32 f32 FLOAT64 f64
+1,1,1,1,2,2,2,2,3,3
+
+# Check if the or operator works for no nested functions
+SELECT
+    (i8 == 2) or (i16 == 2) AS a,
+    (i32 == 2) or (i64 == 1) AS b,
+    (u8 == 2) or (i64 == 2) AS c,
+    (u8 == 2) or (u16 == 2) AS d
+FROM stream INTO SINK
+----
+0,1,1,1
+
+
+# Check if the or operator works for simple nested functions
+SELECT
+    (i8 == 2) or ((i16 == 2) or (u32 == 1)) AS a,
+    (i32 == 2) or ((i64 == 2) or (u8 == 2)) AS b,
+    (u8 == 2) or ((u16 == 1) or (u32 == 1)) AS c,
+    (u8 == 2) or ((u16 == 1) or (u32 == 1)) AS d,
+    (i8 == 1) or not ((i16 == 2) or (i32 == 1)) AS e
+FROM stream INTO SINK
+----
+0,1,1,1,1
+
+
+# Check if the or operator works together with comparison functions
+SELECT
+    (i8 == 2) or (i16 < 0) AS a,
+    (i32 == 2) or (i64 > 0) AS b,
+    (u8 == 2) or (u16 <= 2) AS c,
+    (u8 == 2) or (u16 >= 2) AS d,
+    (i8 == 1) or not (i16 == 2) AS e
+FROM stream INTO SINK
+----
+0,1,1,1,1
+
+
+# Check if the or operator works together with comparison functions and nested functions
+SELECT
+    (i8 == 2) or ((i16 < 0) or (i32 == 2)) AS a,
+    (i32 == 2) or ((i64 > 0) or (u8 == 2)) AS b,
+    (u8 == 2) or ((u16 <= 2) or (u32 == 1)) AS c,
+    (u8 == 2) or ((u16 >= 2) or (u32 == 1)) AS d,
+    (i8 == 1) or not ((i16 == 2) or (i32 == 1)) AS e
+FROM stream INTO SINK
+----
+0,1,1,1,1
