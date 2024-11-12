@@ -25,7 +25,7 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkFile.hpp>
-#include <Sources/SourceCSV.hpp>
+#include <Sources/SourceFile.hpp>
 #include <Sources/SourceTCP.hpp>
 #include <Util/Common.hpp>
 #include <fmt/core.h>
@@ -476,7 +476,7 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
+            if (sourceDescriptor.sourceType == Sources::SourceFile::NAME)
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
                 Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;

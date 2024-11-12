@@ -27,13 +27,13 @@
 namespace NES::Sources
 {
 
-class SourceCSV final : public Source
+class SourceFile final : public Source
 {
 public:
     static inline const std::string NAME = "CSV";
 
-    explicit SourceCSV(const SourceDescriptor& sourceDescriptor);
-    ~SourceCSV() override = default;
+    explicit SourceFile(const SourceDescriptor& sourceDescriptor);
+    ~SourceFile() override = default;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
 
