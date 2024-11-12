@@ -158,10 +158,6 @@ public:
 private:
     bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
-    /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
-    /// takes 'data', which is a data memory segment which contains the buffersize
-    [[nodiscard]] size_t parseBufferSize(std::span<const char> data) const;
-
     int connection = -1;
     int sockfd = -1;
 
