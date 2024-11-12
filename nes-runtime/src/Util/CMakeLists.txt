@@ -15,7 +15,6 @@ add_source_files(nes-runtime
         MMapCircularBuffer.cpp
         Core.cpp
         TestTupleBuffer.cpp
-        FaultToleranceType.cpp
 )
 
 if (NES_USE_MQTT)

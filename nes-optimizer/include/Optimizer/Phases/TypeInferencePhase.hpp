@@ -16,6 +16,7 @@
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 
 #include <memory>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 

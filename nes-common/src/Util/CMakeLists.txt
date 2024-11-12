@@ -23,6 +23,7 @@ add_source_files(nes-common
         TimeMeasurement.cpp
         QueryStateHistory.cpp
         TopologyLinkInformation.cpp
+        FaultToleranceType.cpp
         QueryStateSerializationUtil.cpp
 )
 add_subdirectory(Logger)
