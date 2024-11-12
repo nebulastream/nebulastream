@@ -17,20 +17,29 @@ get_source(nes-systest-lib SLT_SOURCE_FILES)
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
 target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-lib nes-single-node-worker-lib)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
-target_compile_definitions(nes-systest-lib PUBLIC PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}")
-target_compile_definitions(nes-systest-lib PUBLIC TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../")
+target_compile_definitions(nes-systest-lib PRIVATE
+        PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
+        TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
+        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+)
+
 
 find_package(argparse CONFIG REQUIRED)
 
 add_executable(systest src/SystestStarter.cpp)
+target_compile_definitions(systest PRIVATE
+        PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
+        TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
+        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+)
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-add_test(systest_interpreter systest --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
+add_test(systest_interpreter systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
 if (NOT CODE_COVERAGE)
-    add_test(systest_compiler systest --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=COMPILER)
+    add_test(systest_compiler systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=COMPILER)
 endif (NOT CODE_COVERAGE)
 
 

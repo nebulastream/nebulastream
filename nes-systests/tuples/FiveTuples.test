@@ -1,5 +1,5 @@
-# name: tuples/FiveTuples.test
-# description: Simple tuple/buffer tests
+# name: sources/FiveTuples.test
+# description: Simple source/buffer tests
 # groups: [Tuples]
 
 Source fiveTuples UINT64 field_1
@@ -9,7 +9,7 @@ Source fiveTuples UINT64 field_1
 4
 5
 
-# Description: check if we can process more than one tuple
+# Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO SINK
 ----
 1
