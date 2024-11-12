@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -38,9 +39,11 @@ struct LoadedQueryPlan
 };
 
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
-static constexpr auto padSizeSuccess = 60;
-/// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries
+static constexpr auto padSizeSuccess = 120;
+/// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries per file
 static constexpr auto padSizeQueryNumber = 2;
+/// We pad to a maximum of 4 digits ---> maximum value that is correctly padded is 999 queries in total
+static constexpr auto padSizeQueryCounter = 3;
 
 /// Load query plan objects by parsing an SLT file for queries and lowering it
 /// Returns a triplet of the lowered query plan, the query name and the schema of the sink
@@ -62,6 +65,6 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, uint64_t numConcurre
 /// function/arithmetical/FunctionMul:5..................................Failed
 /// SELECT * FROM s....
 /// Expected ............ | Actual 1, 2,3
-void printQueryResultToStdOut(const Query& query, const std::string& errorMessage);
+void printQueryResultToStdOut(const Query& query, const std::string& errorMessage, size_t queryCounter, size_t totalQueries);
 
 }
