@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -22,7 +24,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionLessEquals final : public Function
 {
 public:
-    ExecutableFunctionLessEquals(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionLessEquals(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:
