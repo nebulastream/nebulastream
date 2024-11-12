@@ -486,7 +486,7 @@ LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
 MERGE: 'MERGE' | 'merge';
 NATURAL: 'NATURAL';
-NOT: 'NOT' | '!';
+NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';
 NULLS: 'NULLS';
 OF: 'OF';
