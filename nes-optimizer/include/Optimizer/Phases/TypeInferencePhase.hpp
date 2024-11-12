@@ -17,6 +17,7 @@
 
 #include <Util/FaultToleranceType.hpp>
 #include <memory>
+#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
