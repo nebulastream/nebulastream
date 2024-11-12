@@ -18,8 +18,6 @@
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionAnd.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Util/Execution.hpp>
-#include <Util/Logger/LogLevel.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -34,8 +32,8 @@ VarVal ExecutableFunctionAnd::execute(Record& record) const
 }
 
 ExecutableFunctionAnd::ExecutableFunctionAnd(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunction(std::move(leftExecutableFunctionSub)), rightExecutableFunction(std::move(rightExecutableFunctionSub))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 

@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
@@ -22,7 +24,7 @@ namespace NES::Runtime::Execution::Functions
 class ExecutableFunctionAnd final : public Function
 {
 public:
-    ExecutableFunctionAnd(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionAnd(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:

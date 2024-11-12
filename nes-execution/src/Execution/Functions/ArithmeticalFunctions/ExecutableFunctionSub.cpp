@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <utility>
 #include <Execution/Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
 #include <ErrorHandling.hpp>
 
@@ -19,14 +21,14 @@ namespace NES::Runtime::Execution::Functions
 
 VarVal ExecutableFunctionSub::execute(Record& record) const
 {
-    const auto leftValue = leftExecutableFunctionSub->execute(record);
-    const auto rightValue = rightExecutableFunctionSub->execute(record);
+    const auto leftValue = leftExecutableFunction->execute(record);
+    const auto rightValue = rightExecutableFunction->execute(record);
     return leftValue - rightValue;
 }
 
 ExecutableFunctionSub::ExecutableFunctionSub(
-    std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub)
-    : leftExecutableFunctionSub(std::move(leftExecutableFunctionSub)), rightExecutableFunctionSub(std::move(rightExecutableFunctionSub))
+    std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction)
+    : leftExecutableFunction(std::move(leftExecutableFunction)), rightExecutableFunction(std::move(rightExecutableFunction))
 {
 }
 
