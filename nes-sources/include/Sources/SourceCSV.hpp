@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Parsers/Parser.hpp>
+#include <SourceParsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>

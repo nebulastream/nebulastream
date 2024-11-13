@@ -18,7 +18,7 @@
 #include <memory>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Parsers/Parser.hpp>
+#include <SourceParsers/Parser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SourcesUtils/MMapCircularBuffer.hpp>

@@ -10,13 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-sources
-        SourceCSV.cpp
-        SourceThread.cpp
-        SourceDescriptor.cpp
-        Source.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
-        SourceTCP.cpp
-)
-add_subdirectory(SourcesUtils)
+#add_nes_test_source_parsers()
