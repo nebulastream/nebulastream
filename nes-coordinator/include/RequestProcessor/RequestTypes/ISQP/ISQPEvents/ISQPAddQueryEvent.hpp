@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 
 namespace NES {
@@ -44,17 +45,19 @@ using ISQPAddQueryEventPtr = std::shared_ptr<ISQPAddQueryEvent>;
 class ISQPAddQueryEvent : public ISQPEvent {
 
   public:
-    static ISQPEventPtr create(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
+    static ISQPEventPtr create(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
-    ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
+    ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance);
 
     const QueryPlanPtr& getQueryPlan() const;
 
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
+    FaultToleranceType getFaultTolerance() const;
   private:
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy placementStrategy;
+    FaultToleranceType faultToleranceType;
 };
 }// namespace RequestProcessor
 }// namespace NES

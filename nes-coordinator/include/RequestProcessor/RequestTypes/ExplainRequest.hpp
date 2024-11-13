@@ -123,6 +123,7 @@ class ExplainRequest : public AbstractUniRequest {
      */
     ExplainRequest(const QueryPlanPtr& queryPlan,
                    const Optimizer::PlacementStrategy queryPlacementStrategy,
+                   const FaultToleranceType faultToleranceType,
                    const uint8_t maxRetries,
                    const z3::ContextPtr& z3Context);
 
@@ -135,6 +136,7 @@ class ExplainRequest : public AbstractUniRequest {
      */
     static ExplainRequestPtr create(const QueryPlanPtr& queryPlan,
                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                    const FaultToleranceType faultToleranceType,
                                     const uint8_t maxRetries,
                                     const z3::ContextPtr& z3Context);
 
@@ -210,6 +212,7 @@ class ExplainRequest : public AbstractUniRequest {
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
+ FaultToleranceType faultToleranceType;
 
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
 

@@ -60,6 +60,7 @@ namespace NES::RequestProcessor {
 
 ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                                const Optimizer::PlacementStrategy queryPlacementStrategy,
+                               FaultToleranceType faultToleranceType,
                                const uint8_t maxRetries,
                                const z3::ContextPtr& z3Context)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
@@ -72,13 +73,14 @@ ExplainRequest::ExplainRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(nullptr) {}
+      z3Context(z3Context), queryParsingService(nullptr), faultToleranceType(faultToleranceType) {}
 
 ExplainRequestPtr ExplainRequest::create(const QueryPlanPtr& queryPlan,
                                          const Optimizer::PlacementStrategy queryPlacementStrategy,
+                                         FaultToleranceType faultToleranceType,
                                          const uint8_t maxRetries,
                                          const z3::ContextPtr& z3Context) {
-    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context);
+    return std::make_shared<ExplainRequest>(queryPlan, queryPlacementStrategy, faultToleranceType, maxRetries, z3Context);
 }
 
 void ExplainRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
@@ -140,6 +142,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryId = PlanIdGenerator::getNextQueryId();
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
+        queryPlan->setFaultTolerance(faultToleranceType);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);
@@ -155,7 +158,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultToleranceType);
 
         //4. Set memory layout of each logical operator
         NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
@@ -169,7 +172,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultToleranceType);
 
         //8. Generate sample code for elegant planner
         queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
@@ -184,7 +187,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
         //12. Perform type inference over re-written query plan
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultToleranceType);
 
         //13. Identify the number of origins and their ids for all logical operators
         queryPlan = originIdInferencePhase->execute(queryPlan);

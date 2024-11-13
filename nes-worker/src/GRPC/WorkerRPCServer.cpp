@@ -155,6 +155,19 @@ Status WorkerRPCServer::RegisterMonitoringPlan(ServerContext*,
     return Status::CANCELLED;
 }
 
+Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
+    try {
+        NES_DEBUG("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp {}", request->timestamp());
+        reply->set_success(true);
+        auto sharedQueryId = SharedQueryId(request->sharedqueryid());
+        nodeEngine->injectEpochBarrier(request->timestamp(), sharedQueryId);
+        return Status::OK;
+    } catch (std::exception& ex) {
+        NES_ERROR("WorkerRPCServer: received a broken punctuation message: {}", ex.what());
+        return Status::CANCELLED;
+    }
+}
+
 Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRequest*, MonitoringDataReply* reply) {
     try {
         NES_DEBUG("WorkerRPCServer: GetMonitoringData request received");

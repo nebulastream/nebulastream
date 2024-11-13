@@ -79,7 +79,7 @@ class TypeInferencePhase {
      * @param queryPlan the query plan
      * @param faultToleranceType fault tolerance type
      */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType);
+    QueryPlanPtr execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Performs type inference on the given decomposed query plan.
@@ -90,7 +90,7 @@ class TypeInferencePhase {
      * @param decomposedQueryPlan the decomposed query plan
      * @param faultToleranceType fault tolerance type
      */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType);
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
   private:
     /**

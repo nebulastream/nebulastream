@@ -16,15 +16,16 @@
 
 namespace NES::RequestProcessor {
 
-ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy)
-    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy) {}
+ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance)
+    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy), faultToleranceType(faultTolerance) {}
 
-ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy) {
-    return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy);
+ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance) {
+    return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy, faultTolerance);
 }
 
 const QueryPlanPtr& ISQPAddQueryEvent::getQueryPlan() const { return queryPlan; }
 
 Optimizer::PlacementStrategy ISQPAddQueryEvent::getPlacementStrategy() const { return placementStrategy; }
 
+FaultToleranceType ISQPAddQueryEvent::getFaultTolerance() const { return faultToleranceType; }
 }// namespace NES::RequestProcessor

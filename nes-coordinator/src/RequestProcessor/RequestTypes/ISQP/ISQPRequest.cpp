@@ -334,11 +334,13 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
 
     auto queryPlan = addQueryEvent->getQueryPlan();
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
+auto faultTolerance = addQueryEvent->getFaultTolerance();
 
     // Set unique identifier and additional properties to the query
     auto queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     queryPlan->setPlacementStrategy(queryPlacementStrategy);
+    queryPlan->setFaultTolerance(faultTolerance);
 
     // Create a new entry in the query catalog
     queryCatalog->createQueryCatalogEntry("", queryPlan, queryPlacementStrategy, QueryState::REGISTERED);
@@ -362,7 +364,7 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
 
     //3. Execute type inference phase
     NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
-    queryPlan = typeInferencePhase->execute(queryPlan);
+    queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
     //5. Perform query re-write
     NES_DEBUG("Performing Query rewrite phase for query:  {}", queryId);
@@ -372,19 +374,19 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
     queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
     //7. Execute type inference phase on rewritten query plan
-    queryPlan = typeInferencePhase->execute(queryPlan);
+    queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
     //9. Perform signature inference phase for sharing identification among query plans
     signatureInferencePhase->execute(queryPlan);
 
-    //10. Perform topology specific rewrites to the query plan
+    //10. Perform topology specific rewrites to the query plan9
     queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
 
     //11. Add the updated query plan to the query catalog
     queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
     //12. Perform type inference over re-written query plan
-    queryPlan = typeInferencePhase->execute(queryPlan);
+    queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
     //15. Add the updated query plan to the query catalog
     queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", queryPlan);

@@ -196,6 +196,11 @@ bool DataSource::fail() {
     return false;
 }
 
+bool DataSource::injectEpochBarrier(uint64_t epochBarrier) const {
+    NES_DEBUG("DataSource::injectEpochBarrier received timestamp {}" , epochBarrier);
+    return queryManager->injectEpochBarrier(epochBarrier, this->operatorId);
+}
+
 namespace detail {
 template<typename R, typename P>
 bool waitForFuture(std::future<bool>&& future, std::chrono::duration<R, P>&& deadline) {

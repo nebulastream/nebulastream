@@ -221,6 +221,7 @@ TEST_P(StatisticSinkTest, testCountMin) {
                                              SharedQueryId(1),
                                              DecomposedQueryId(1),
                                              DecomposedQueryPlanVersion(0),
+                                             FaultToleranceType::NONE,
                                              1,// numberOfOrigins
                                              Statistic::StatisticSynopsisType::COUNT_MIN,
                                              statisticDataCodec);
@@ -258,6 +259,7 @@ TEST_P(StatisticSinkTest, testHyperLogLog) {
                                              SharedQueryId(1),
                                              DecomposedQueryId(1),
                                              DecomposedQueryPlanVersion(0),
+                                             FaultToleranceType::NONE,
                                              1,// numberOfOrigins
                                              Statistic::StatisticSynopsisType::HLL,
                                              statisticDataCodec);

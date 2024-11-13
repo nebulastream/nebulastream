@@ -94,6 +94,8 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual void open();
 
+ bool injectEpochBarrier(uint64_t epochBarrier) const;
+
     /**
      * @brief This method cleans up thread-local state for the source.
      */

@@ -267,7 +267,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //3. Execute type inference phase
         NES_DEBUG("Performing Query type inference phase for query:  {}", queryId);
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
         //4. Set memory layout of each logical operator
         NES_DEBUG("Performing query choose memory layout phase:  {}", queryId);
@@ -281,7 +281,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryCatalog->addUpdatedQueryPlan(queryId, "Query Rewrite Phase", queryPlan);
 
         //7. Execute type inference phase on rewritten query plan
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
         //8. Generate sample code for elegant planner
         if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
@@ -303,7 +303,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryCatalog->addUpdatedQueryPlan(queryId, "Topology Specific Query Rewrite Phase", queryPlan);
 
         //13. Perform type inference over re-written query plan
-        queryPlan = typeInferencePhase->execute(queryPlan);
+        queryPlan = typeInferencePhase->execute(queryPlan, faultTolerance);
 
         //14. Identify the number of origins and their ids for all logical operators
         queryPlan = originIdInferencePhase->execute(queryPlan);

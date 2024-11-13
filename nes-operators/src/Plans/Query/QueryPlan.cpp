@@ -286,6 +286,12 @@ void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrat
     this->placementStrategy = placementStrategy;
 }
 
+void QueryPlan::setFaultTolerance(FaultToleranceType faultTolerance) {
+    this->faultTolerance = faultTolerance;
+}
+
+FaultToleranceType QueryPlan::getFaultTolerance() const { return faultTolerance; }
+
 std::set<OperatorPtr> QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperators,
                                                          const std::set<OperatorPtr>& upstreamOperators) {
 

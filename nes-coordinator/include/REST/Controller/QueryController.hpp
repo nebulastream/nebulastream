@@ -349,7 +349,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
         return std::nullopt;
     }
 
-    bool QueryController::validateFaultToleranceType(const std::string& faultToleranceString) {
+    bool validateFaultToleranceType(const std::string& faultToleranceString) {
         auto faultToleranceMode = stringToFaultToleranceTypeMap(faultToleranceString);
         return faultToleranceMode == FaultToleranceType::INVALID;
     }

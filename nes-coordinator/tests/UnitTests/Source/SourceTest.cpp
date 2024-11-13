@@ -877,7 +877,8 @@ TEST_F(SourceTest, testDataSourceGatheringIntervalRoutineBufWithValue) {
                                   this->nodeEngine,
                                   1,
                                   "source-test-freq-routine.csv",
-                                  false);
+                                  false,
+                                  FaultToleranceType::NONE);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream
@@ -928,7 +929,8 @@ TEST_F(SourceTest, testDataSourceIngestionRoutineBufWithValue) {
                                   this->nodeEngine,
                                   1,
                                   "source-test-ingest-routine.csv",
-                                  false);
+                                  false,
+                                  FaultToleranceType::NONE);
     // get mocked pipeline to add to source
     auto pipeline = this->createExecutablePipeline(executableStage, sink);
     // mock query manager for passing addEndOfStream

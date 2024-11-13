@@ -58,7 +58,7 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
 
     try {
         auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        typeInferencePhase->execute(queryPlan);
+        typeInferencePhase->execute(queryPlan, queryPlan->getFaultTolerance());
     } catch (std::exception& e) {
         std::string errorMessage = e.what();
         // Handling nonexistend field

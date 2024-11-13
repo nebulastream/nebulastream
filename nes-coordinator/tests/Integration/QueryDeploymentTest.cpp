@@ -998,7 +998,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     wrkConf1->coordinatorPort = (port);
     auto defaultSource1 = DefaultSourceType::create("default_logical", "x1");
     wrkConf1->physicalSourceTypes.add(defaultSource1);
-    wrkConf1->enableStatisticOuput = true;
+    wrkConf1->enableStatisticOutput = true;
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(wrkConf1));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);

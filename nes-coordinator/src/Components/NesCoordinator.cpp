@@ -39,6 +39,7 @@
 #include <RequestProcessor/AsyncRequestProcessor.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <Runtime/QueryStatistics.hpp>
 #include <Services/CoordinatorHealthCheckService.hpp>
 #include <Services/MonitoringService.hpp>
 #include <Services/PlacementAmendment/PlacementAmendmentHandler.hpp>
@@ -52,6 +53,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <csignal>
+#include <fstream>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server_builder.h>

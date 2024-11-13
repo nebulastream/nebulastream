@@ -204,6 +204,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     BufferManagerPtr getBufferManager(uint32_t bufferManagerIndex = 0) const;
 
+ void injectEpochBarrier(uint64_t timestamp, SharedQueryId queryId) const;
+
     /**
     * @brief getter of node id
     * @return WorkerId

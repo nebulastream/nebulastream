@@ -939,7 +939,6 @@ class DummyQueryListener : public AbstractQueryStatusListener {
     bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryId, Runtime::Execution::ExecutableQueryPlanStatus) override {
         return true;
     }
-    bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
 };
 
 /**

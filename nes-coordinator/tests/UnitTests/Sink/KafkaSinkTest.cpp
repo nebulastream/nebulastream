@@ -119,6 +119,7 @@ TEST_F(KafkaSinkTest, KafkaSinkInit) {
                                         brokers,
                                         topic,
                                         1,
+                                        FaultToleranceType::NONE
                                         1);
 }
 
@@ -135,6 +136,7 @@ TEST_F(KafkaSinkTest, KafkaSourcePrint) {
                                         brokers,
                                         topic,
                                         1,
+                                        FaultToleranceType::NONE
                                         1);
 
     std::string expected = "KAFKA_SINK(BROKER(localhost:9092), TOPIC(sinkTest).";

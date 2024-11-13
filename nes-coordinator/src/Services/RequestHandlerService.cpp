@@ -110,7 +110,7 @@ nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const 
 const Optimizer::PlacementStrategy placementStrategy,
 FaultToleranceType faultTolerance) {
 
-    auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, 1, z3Context);
+    auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, faultTolerance, 1, z3Context);
     asyncRequestExecutor->runAsync(explainRequest);
     auto future = explainRequest->getFuture();
     return std::static_pointer_cast<RequestProcessor::ExplainResponse>(future.get())->jsonResponse;

@@ -566,6 +566,22 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
     }
 }
 
+void NodeEngine::injectEpochBarrier(uint64_t timestamp, SharedQueryId queryId) const {
+    std::unique_lock lock(engineMutex);
+    auto subQueryPlanIds = sharedQueryIdToDecomposedQueryPlanIds.find(queryId)->second;
+    for (auto& subQueryPlanId : subQueryPlanIds) {
+        NES_DEBUG("NodeEngine: Find sources for subQueryPlanId {}", subQueryPlanId);
+        auto sources = deployedExecutableQueryPlans.find(subQueryPlanId)->second->getSources();
+        for (auto& source : sources) {
+            if (source->injectEpochBarrier(timestamp)) {
+                NES_DEBUG("NodeEngine: Inject epoch barrier {} to the query {}", timestamp, queryId);
+            } else {
+                NES_ERROR("NodeEngine: Couldn't inject epoch barrier to the query {}", queryId);
+            }
+        }
+    }
+}
+
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     switch (err.getErrorType()) {
         case Network::Messages::ErrorType::PartitionNotRegisteredError: {

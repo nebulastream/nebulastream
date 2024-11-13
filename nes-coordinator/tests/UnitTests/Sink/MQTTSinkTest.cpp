@@ -192,7 +192,7 @@ TEST_F(MQTTSinkTest, testMQTTClientCreation) {
                                    timeUnit,
                                    msgDelay,
                                    qualityOfService,
-                                   asynchronousClient);
+                                   asynchronousClient, FaultToleranceType::NONE);
     NES_INFO("{}", mqttSink->toString());
     ASSERT_FALSE(mqttSink->toString().empty());
 }
@@ -308,7 +308,8 @@ TEST_F(MQTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
                                    timeUnit,
                                    msgDelay,
                                    qualityOfService,
-                                   asynchronousClient);
+                                   asynchronousClient,
+                                   FaultToleranceType::NONE);
     auto* testSink = dynamic_cast<MQTTSink*>(mqttSink.get());
 
     bool connectedToBroker = testSink->connect();
