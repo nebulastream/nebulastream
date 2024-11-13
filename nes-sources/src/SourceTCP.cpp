@@ -62,11 +62,11 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
 
     /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (uint64_t j = 0; j < schema.getFieldCount(); j++)
+    for (const auto& field : schema)
     {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema.getFieldByIndex(j)->getDataType());
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
-        auto fieldName = schema.getFieldByIndex(j)->getName();
+        auto fieldName = field->getName();
         NES_TRACE("SOURCETCP:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }

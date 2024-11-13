@@ -65,9 +65,9 @@ namespace NES::IntegrationTestUtil
     {
         std::vector<PhysicalTypePtr> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
+        for (const auto& field : *schema)
         {
-            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema->getFieldByIndex(j)->getDataType());
+            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
             retVector.push_back(physicalField);
         }
 
