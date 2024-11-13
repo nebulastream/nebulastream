@@ -64,9 +64,7 @@ SourceFile::validateAndFormat(std::unordered_map<std::string, std::string>&& con
 
 std::ostream& SourceFile::toString(std::ostream& str) const
 {
-    str << "\nSourceFile(";
-    str << "\n  Filepath:" << this->filePath;
-    str << ")\n";
+    str << std::format("\nSourceFile(filepath: {})", this->filePath);
     return str;
 }
 

@@ -19,7 +19,7 @@
 namespace NES::SourceParsers
 {
 
-/// Base class for all input data parsers in NES
+/// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
 class SourceParser
 {
 public:
@@ -32,6 +32,12 @@ public:
         const size_t numBytesInTBRaw,
         const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
         = 0;
+
+    friend std::ostream& operator<<(std::ostream& out, const SourceParser& sourceParser) { return sourceParser.toString(out); }
+
+protected:
+    /// Implemented by children of SourceParser. Called by '<<'. Allows to use '<<' on abstract SourceParser.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 
 }

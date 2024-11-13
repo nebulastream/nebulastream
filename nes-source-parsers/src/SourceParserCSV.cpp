@@ -108,6 +108,7 @@ public:
     uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+    const std::string& getTupleSeparator() { return this->tupleSeparator; }
 
     size_t currentTupleStartTBRaw{0};
     size_t currentTupleEndTBRaw{0};
@@ -145,8 +146,11 @@ auto parseNumericString(std::optional<std::function<bool(const std::string&)>> t
 SourceParserCSV::SourceParserCSV(SchemaPtr schema, std::string tupleSeparator, std::string delimiter)
     : schema(std::move(schema))
     , fieldDelimiter(std::move(delimiter))
-    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleSeparator), this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
+    , progressTracker(
+          std::make_unique<ProgressTracker>(std::move(tupleSeparator), this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
 {
+    PRECONDITION(this->schema, "A csv parser must have a valid schema.");
+
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : this->schema->fields)
@@ -376,8 +380,18 @@ void SourceParserCSV::parseStringTupleToTBFormatted(
     }
 }
 
-std::unique_ptr<SourceParser>
-SourceParserGeneratedRegistrar::RegisterSourceParserCSV(std::shared_ptr<Schema> schema, std::string tupleSeparator, std::string fieldDelimiter)
+std::ostream& SourceParserCSV::toString(std::ostream& str) const
+{
+    str << std::format(
+        "\nSourceParserCSV(tupleSeparator: {}, fieldDelimiter: {}, schema: {})",
+        this->progressTracker->getTupleSeparator(),
+        this->fieldDelimiter,
+        this->schema->toString());
+    return str;
+}
+
+std::unique_ptr<SourceParser> SourceParserGeneratedRegistrar::RegisterSourceParserCSV(
+    std::shared_ptr<Schema> schema, std::string tupleSeparator, std::string fieldDelimiter)
 {
     return std::make_unique<SourceParserCSV>(std::move(schema), std::move(tupleSeparator), std::move(fieldDelimiter));
 }
