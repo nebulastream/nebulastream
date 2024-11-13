@@ -170,15 +170,15 @@ In summary, systems using async I/O get the following benefits:
 - I/O operations can be interleaved with other I/O operations 
 - I/O operations can be interleaved with computation (CPU-bound tasks)
 
-# Our proposed solution
-the proposed solution depends on these key design decisions:
-1. we redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads.
-2. we remove parsing from the sources to separate cpu-bound and i/o-bound workloads.
-3. we introduce a centralized `asyncsourceexecutor` that drives the execution of all asynchronous sources on a thread pool.
-4. we allow synchronous sources to still exist and run on separate detached threads as a fallback.
-both synchronous and asynchronous sources expose the same interface to the `queryengine`, so it does not need to deal with the different execution models.
-5. we have sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
-6. we allow the `queryengine` to request partially filled buffers in source implementations when its `taskqueue` is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
+# Our Proposed Solution
+The proposed solution depends on these key design decisions:
+1. We redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads.
+2. We remove parsing from the sources to separate cpu-bound and i/o-bound workloads.
+3. We introduce a centralized `asyncsourceexecutor` that drives the execution of all asynchronous sources on a thread pool.
+4. We allow synchronous sources to still exist and run on separate detached threads as a fallback.
+Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not need to deal with the different execution models.
+5. We have sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
+6. We allow the `QueryEngine` to request partially filled buffers in source implementations when its task queue is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
 
 ## Source Implementations
 We need asynchronous i/o requests and the removal of parsing logic because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls or do CPU-intensive work on these few threads.
