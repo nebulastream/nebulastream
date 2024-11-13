@@ -318,7 +318,7 @@ In order to prevent sources that are under high load from stealing all resources
 To facilitate fairness here, I propose the simple algorithm:
 - Sources ask for buffers, by putting their id in a FIFO queue 
 - A source can only ask for one buffer at a time. After a source received a buffer, it can only ask for another buffer, after it finished processing the current one and sees that it needs more.
-- Slower sources are guaranteed to move up in the FIFO queue everytime a faster source takes a buffer.
+- Slower sources are guaranteed to move up in the FIFO queue everytime a faster source takes a buffer
 
 The previous necessitate the assumption/invariant that more buffers exist than the number of sources registered.
 When a source wants to be registered and this would violate the requirement, performance will degrade.
