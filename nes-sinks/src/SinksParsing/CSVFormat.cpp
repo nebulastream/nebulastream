@@ -34,23 +34,13 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema
 {
 }
 
-std::string CSVFormat::getFormattedSchema() const ///TODO: #386 check for use of Schema->toString()
+std::string CSVFormat::getFormattedSchema() const
 {
-    std::stringstream formattedSchema;
-    for (uint64_t i = 0; i < schema->getFieldCount(); i++)
-    {
-        auto attributeField = schema->getFieldByIndex(i);
-        formattedSchema << attributeField->toString() << ", ";
-    }
-    formattedSchema.seekp(-1, std::ios_base::end);
-    formattedSchema << std::endl;
-
     if (addTimestamp)
     {
-        formattedSchema << Util::trimWhiteSpaces(formattedSchema.str());
-        formattedSchema << ", timestamp\n";
+        return schema->toString("", ", ", ", timestamp\n");
     }
-    return formattedSchema.str();
+    return schema->toString("", ", ", "\n");
 }
 
 constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement)

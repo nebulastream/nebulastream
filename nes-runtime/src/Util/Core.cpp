@@ -90,17 +90,9 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
     return ss.str();
 }
 
-std::string Util::toCSVString(const SchemaPtr& schema) ///TODO: #386 check for use of schema->toString()
+std::string Util::toCSVString(const SchemaPtr& schema)
 {
-    std::stringstream ss;
-    for (uint64_t i = 0; i < schema->getFieldCount(); i++)
-    {
-        auto f = schema->getFieldByIndex(i);
-        ss << f->toString() << ",";
-    }
-    ss.seekp(-1, std::ios_base::end);
-    ss << std::endl;
-    return ss.str();
+    return schema->toString("", ",", "\n");
 }
 
 std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
