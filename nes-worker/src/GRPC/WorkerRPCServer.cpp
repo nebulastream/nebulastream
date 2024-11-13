@@ -72,19 +72,6 @@ Status WorkerRPCServer::RegisterDecomposedQuery(ServerContext*,
     return Status::CANCELLED;
 }
 
-Status WorkerRPCServer::InjectEpochBarrier(ServerContext*, const EpochBarrierNotification* request, EpochBarrierReply* reply) {
-    try {
-        NES_DEBUG("WorkerRPCServer::propagatePunctuation received a punctuation with the timestamp "
-                  << request->timestamp() << " and a queryId " << request->queryid());
-        reply->set_success(true);
-        nodeEngine->injectEpochBarrier(request->timestamp(), request->queryid());
-        return Status::OK;
-    } catch (std::exception& ex) {
-        NES_ERROR("WorkerRPCServer: received a broken punctuation message: " << ex.what());
-        return Status::CANCELLED;
-    }
-}
-
 Status WorkerRPCServer::UnregisterDecomposedQuery(ServerContext*,
                                                   const UnregisterDecomposedQueryRequest* request,
                                                   UnregisterDecomposedQueryReply* reply) {

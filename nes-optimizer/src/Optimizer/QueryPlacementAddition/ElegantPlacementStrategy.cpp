@@ -25,8 +25,10 @@
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
+#include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/ElegantPayloadKeys.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpp-base64/base64.h>
 #include <cpr/api.h>

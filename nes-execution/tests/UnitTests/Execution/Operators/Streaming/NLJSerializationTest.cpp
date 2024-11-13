@@ -250,7 +250,7 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                                .build();
         // create sink, which is used to write buffers to the file
         auto rawBufferSink =
-            RawBufferSink(nodeEngine, 1, fileName, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
+            RawBufferSink(nodeEngine, 1, fileName, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID);
         rawBufferSink.setup();
 
         // mocked context

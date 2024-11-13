@@ -33,13 +33,15 @@ KafkaSink::KafkaSink(SinkFormatPtr format,
                      DecomposedQueryId decomposedQueryId,
                      DecomposedQueryPlanVersion decomposedQueryVersion,
                      const uint64_t kafkaProducerTimeout,
-                     uint64_t numberOfOrigins)
+                     uint64_t numberOfOrigins,
+                     FaultToleranceType faultToleranceType)
     : SinkMedium(format,
                  std::move(nodeEngine),
                  numOfProducers,
                  sharedQueryId,
                  decomposedQueryId,
                  decomposedQueryVersion,
+                 faultToleranceType,
                  numberOfOrigins),
       brokers(brokers), topic(topic), kafkaProducerTimeout(std::chrono::milliseconds(kafkaProducerTimeout)) {
 

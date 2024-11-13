@@ -36,6 +36,7 @@
 #include <Util/CompilerConstants.hpp>
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/SysPlanMetadata.hpp>
 #include <algorithm>

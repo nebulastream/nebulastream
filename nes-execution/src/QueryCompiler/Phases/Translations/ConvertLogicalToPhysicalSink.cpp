@@ -51,6 +51,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                   nodeEngine,
                                   numOfProducers,
                                   std::cout,
+                                  printSinkDescriptor->getFaultToleranceType(),
                                   printSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         const NullOutputSinkDescriptorPtr nullOutputSinkDescriptor = sinkDescriptor->as<NullOutputSinkDescriptor>();
@@ -60,6 +61,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     pipelineQueryPlan->getQuerySubPlanVersion(),
                                     nodeEngine,
                                     numOfProducers,
+                                    nullOutputSinkDescriptor->getFaultToleranceType(),
                                     nullOutputSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
@@ -73,6 +75,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    zmqSinkDescriptor->getHost(),
                                    zmqSinkDescriptor->getPort(),
                                    zmqSinkDescriptor->isInternal(),
+                                   zmqSinkDescriptor->getFaultToleranceType(),
                                    zmqSinkDescriptor->getNumberOfOrigins());
     } else if (sinkDescriptor->instanceOf<MonitoringSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating Monitoring sink");
@@ -85,6 +88,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                     pipelineQueryPlan->getQueryId(),
                                     pipelineQueryPlan->getQuerySubPlanId(),
                                     pipelineQueryPlan->getQuerySubPlanVersion(),
+                                    monitoringSinkDescriptor->getFaultToleranceType(),
                                     monitoringSinkDescriptor->getNumberOfOrigins());
     }
 #ifdef ENABLE_KAFKA_BUILD
@@ -102,6 +106,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                       kafkaSinkDescriptor->getBrokers(),
                                       kafkaSinkDescriptor->getTopic(),
                                       kafkaSinkDescriptor->getTimeout(),
+                                      kafkaSinkDescriptor->getFaultToleranceType(),
                                       kafkaSinkDescriptor->getNumberOfOrigins());
         } else {
             NES_THROW_RUNTIME_ERROR("Sinkformat " << kafkaSinkDescriptor->getSinkFormatAsString()
@@ -146,6 +151,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                               mqttSinkDescriptor->getMsgDelay(),
                               mqttSinkDescriptor->getQualityOfService(),
                               mqttSinkDescriptor->getAsynchronousClient(),
+                              mqttSinkDescriptor->getFaultToleranceType(),
                               mqttSinkDescriptor->getNumberOfOrigins());
     }
 #endif
@@ -161,6 +167,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                      numOfProducers,
                                      fileSinkDescriptor->getFileName(),
                                      fileSinkDescriptor->getAppend(),
+                                     fileSinkDescriptor->getFaultToleranceType(),
                                      fileSinkDescriptor->getAddTimestamp(),
                                      fileSinkDescriptor->getNumberOfOrigins());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT") {
@@ -172,6 +179,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                            numOfProducers,
                                            fileSinkDescriptor->getFileName(),
                                            fileSinkDescriptor->getAppend(),
+                                           fileSinkDescriptor->getFaultToleranceType(),
                                            fileSinkDescriptor->getNumberOfOrigins());
         } else if (fileSinkDescriptor->getSinkFormatAsString() == "MIGRATION_FORMAT") {
             return createMigrateFileSink(pipelineQueryPlan->getQueryId(),
@@ -200,6 +208,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                  numOfProducers,
                                  networkSinkDescriptor->getWaitTime(),
                                  networkSinkDescriptor->getVersion(),
+                                 networkSinkDescriptor->getFaultToleranceType(),
                                  networkSinkDescriptor->getNumberOfOrigins(),
                                  networkSinkDescriptor->getRetryTimes());
     } else if (sinkDescriptor->instanceOf<Statistic::StatisticSinkDescriptor>()) {
@@ -210,6 +219,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId,
                                    pipelineQueryPlan->getQueryId(),
                                    pipelineQueryPlan->getQuerySubPlanId(),
                                    pipelineQueryPlan->getQuerySubPlanVersion(),
+                                   statisticSinkDescriptor->getFaultToleranceType(),
                                    statisticSinkDescriptor->getNumberOfOrigins(),
                                    statisticSinkDescriptor->getSinkFormatType(),
                                    statisticSinkDescriptor->getSinkDataCodec());

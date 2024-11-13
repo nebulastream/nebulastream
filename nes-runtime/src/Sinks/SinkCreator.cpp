@@ -39,8 +39,8 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint32_t activeProducers,
                               const std::string& filePath,
                               bool append,
-                              bool addTimestamp,
                               FaultToleranceType faultToleranceType,
+                              bool addTimestamp,
                               uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager(), addTimestamp);
     return std::make_shared<FileSink>(format,
@@ -261,6 +261,7 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                               size_t numOfProducers,
                               std::chrono::milliseconds waitTime,
                               DecomposedQueryPlanVersion version,
+                              FaultToleranceType faultToleranceType,
                               uint64_t numberOfOrigins,
                               uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
@@ -275,7 +276,8 @@ DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                                   waitTime,
                                                   retryTimes,
                                                   numberOfOrigins,
-                                                  version);
+                                                  version,
+                                                  faultToleranceType);
 }
 
 DataSinkPtr createStatisticSink(const SchemaPtr& schema,
@@ -343,6 +345,7 @@ DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
                                const std::string& brokers,
                                const std::string& topic,
                                uint64_t kafkaProducerTimeout,
+                               FaultToleranceType faultToleranceType,
                                uint64_t numberOfOrigins) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
 
@@ -355,7 +358,8 @@ DataSinkPtr createCsvKafkaSink(SchemaPtr schema,
                                        decomposedQueryId,
                                        decomposedQueryVersion,
                                        kafkaProducerTimeout,
-                                       numberOfOrigins);
+                                       numberOfOrigins,
+                                       faultToleranceType);
 }
 #endif
 #ifdef ENABLE_OPC_BUILD

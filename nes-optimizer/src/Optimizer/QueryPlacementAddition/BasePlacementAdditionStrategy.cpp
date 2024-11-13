@@ -886,7 +886,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
 
                         //As we are updating an existing query sub plan we mark the plan for re-deployment
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
-                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
+                        updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan, faultToleranceType);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         //Add decomposed query plan to the global execution plan
                         globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
@@ -1010,7 +1010,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                            "pinned upstream or downstream operator.");
                     }
                 } else {
-                    auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
+                    auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan, faultToleranceType);
                     updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                     globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);

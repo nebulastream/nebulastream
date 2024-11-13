@@ -29,7 +29,9 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {

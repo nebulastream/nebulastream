@@ -37,7 +37,7 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog), std::move(udfCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
+QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan, FaultToleranceType faultToleranceType) {
 
     if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
@@ -50,7 +50,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
         throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
     }
 
-    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
+    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators, faultToleranceType);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return queryPlan;
 }
@@ -69,9 +69,10 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
                                      "Found no source or sink operators");
     }
 
-    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId, faultToleranceType),
+    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryId(), QueryId),
                          sourceOperators,
-                         sinkOperators);
+                         sinkOperators,
+                         faultToleranceType);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return decomposedQueryPlan;
 }

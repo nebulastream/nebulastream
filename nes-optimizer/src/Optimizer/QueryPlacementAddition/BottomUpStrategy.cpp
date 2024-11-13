@@ -23,7 +23,9 @@
 #include <Optimizer/QueryPlacementAddition/BottomUpStrategy.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Util/CopiedPinnedOperators.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Placement/PlacementConstants.hpp>
 
 namespace NES::Optimizer {
 
@@ -43,8 +45,7 @@ BottomUpStrategy::BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecution
 PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                     const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                                     const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                                    DecomposedQueryPlanVersion querySubPlanVersion,
-                                                                    FaultToleranceType faultToleranceType) {
+                                                                    DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
 
@@ -66,7 +67,7 @@ PlacementAdditionResult BottomUpStrategy::updateGlobalExecutionPlan(SharedQueryI
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion, faultToleranceType);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
         NES_ERROR("Exception occurred during bottom up placement: {}", ex.what());
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());

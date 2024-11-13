@@ -15,18 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 
-#include "../../../../nes-runtime/include/Util/FaultToleranceType.hpp"
-
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Util/CopiedPinnedOperators.hpp>
-#include <Util/Placement/PlacementConstants.hpp>
 #include <chrono>
 #include <folly/Synchronized.h>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -123,7 +117,7 @@ class BasePlacementAdditionStrategy {
     virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                              DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE) = 0;
+                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
     /**
@@ -152,16 +146,16 @@ class BasePlacementAdditionStrategy {
     void addNetworkOperators(ComputedDecomposedQueryPlans& computedDecomposedQueryPlans);
 
     /**
-     * @brief Add the computed query sub plans tot he global execution plan
+     * @brief Add the computed query sub plans to the global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param computedSubQueryPlans: the computed query sub plans
      * @param decomposedQueryPlanVersion: the version of the query sub plan
-     * @param faultToleranceType: fault tolerance type
+     * @param faultToleranceType fault tolerance type
      * @return vector of deployment contexts
      */
     PlacementAdditionResult updateExecutionNodes(SharedQueryId sharedQueryId,
                                                  ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion, FaultToleranceType faultToleranceType);
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
     /**
      * @brief Get the Topology node with the input id

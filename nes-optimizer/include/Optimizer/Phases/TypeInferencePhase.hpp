@@ -88,8 +88,9 @@ class TypeInferencePhase {
      * 2. Propagate the input and output schemas from source operators to the sink operators.
      * 3. If a operator contains expression, we infer the result stamp of this operators.
      * @param decomposedQueryPlan the decomposed query plan
+     * @param faultToleranceType fault tolerance type
      */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType);
 
   private:
     /**
