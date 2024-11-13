@@ -24,7 +24,7 @@ Of course, devices like the disk or network card are limited in the bandwidth th
 (**G1, scalability**, addresses P1).
 
 The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
-Sources will still be able to setup, execute a running routine, and clean up after themselves.
+Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
 Sources will be free of parsing logic, enabling clear separation of concerns regarding I/O and compute.
 Their only task should be to ingest raw bytes into buffers as fast as possible.
 After the redesign, a source should be easy to digest and contain only the state necessary to manage the connection to an external system/device.
@@ -157,9 +157,9 @@ Note that you cannot plug every possible function into a `co_await`, but only "a
 By using any of the coroutine keywords, you implicitly make a coroutine from the current function.
 To make it run, we would use a call like the following:
 ```cpp
-boost::asio::post(io_context, []()
+boost::asio::post(io_context, [socket]()
     {
-        co_spawn(io_context, handleConnection(), boost::asio::detached);
+        co_spawn(io_context, handleConnection(std::move(socket)), boost::asio::detached);
     }
 );
 ```
