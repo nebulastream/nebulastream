@@ -36,6 +36,7 @@ public:
 
     virtual ~PhysicalType() = default;
 
+    /// Returns physical size of type in bytes.
     [[nodiscard]] virtual uint64_t size() const = 0;
 
     virtual std::string convertRawToString(void const* rawData) const noexcept = 0;

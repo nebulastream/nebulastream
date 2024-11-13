@@ -27,8 +27,8 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Parsers/Parser.hpp>
-#include <Sources/Parsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParser.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <Sources/SourceTCP.hpp>
@@ -74,7 +74,7 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
     switch (inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<ParserCSV>(schema.getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<SourceParsers::SourceParserCSV>(schema.getSize(), physicalTypes, ",");
             break;
         default:
             throw NotImplemented("InputFormat not supported.");
@@ -222,10 +222,6 @@ bool SourceTCP::fillBuffer(
     /// receive data until tupleBuffer capacity reached or flushIntervalPassed
     bool isEoS = false;
 
-    /// Todo #72: remove TestTupleBuffer creation.
-    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
-    /// TestTupleBuffer for the same TupleBuffer.
-    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
     while (tupleCount < tuplesThisPass && !flushIntervalPassed)
     {
         /// if circular buffer is not full obtain data from socket
@@ -325,7 +321,7 @@ bool SourceTCP::fillBuffer(
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
                 NES_TRACE("SOURCETCP::fillBuffer: Client consume message: '{}'.", buf);
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, testTupleBuffer, schema, bufferManager);
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
                 tupleCount++;
             }
         }
@@ -340,11 +336,11 @@ bool SourceTCP::fillBuffer(
             flushIntervalPassed = true;
         }
     }
-    testTupleBuffer.setNumberOfTuples(tupleCount);
+    tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
     /// Return false, if there are tuples in the buffer, or the EoS was reached.
-    return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
+    return tupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
