@@ -36,6 +36,8 @@ public:
         size_t numBytesInTBRaw,
         const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
 
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
 private:
     SchemaPtr schema;
     std::string fieldDelimiter;

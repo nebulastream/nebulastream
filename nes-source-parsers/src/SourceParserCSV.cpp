@@ -100,10 +100,27 @@ public:
         }
     }
 
+    friend std::ostream& operator<<(std::ostream& out, const ProgressTracker& progressTracker)
+    {
+        return out << fmt::format(
+                   "tupleSeparator: {}, size of tuples in bytes: {}, number of fields in schema: {}, tbRaw(total number of bytes: {}, "
+                   "start of "
+                   "current tuple: {}, end of current tuple: {}), tbFormatted(number of tuples: {}, current field offset: {})",
+                   (progressTracker.tupleSeparator == "\n") ? "\\n" : progressTracker.tupleSeparator,
+                   progressTracker.tupleSizeInBytes,
+                   progressTracker.numSchemaFields,
+                   progressTracker.numTotalBytesInTBRaw,
+                   progressTracker.currentTupleStartTBRaw,
+                   progressTracker.currentTupleEndTBRaw,
+                   progressTracker.numTuplesInTBFormatted,
+                   progressTracker.currentFieldOffsetTBFormatted);
+    }
+
     /// Getter & Setter
     uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+    const std::string& getTupleSeparator() { return this->tupleSeparator; }
 
     size_t currentTupleStartTBRaw{0};
     size_t currentTupleEndTBRaw{0};
