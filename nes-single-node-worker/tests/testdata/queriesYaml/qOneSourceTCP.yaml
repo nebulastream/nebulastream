@@ -1,6 +1,5 @@
 query: |
-  Query::from("tcp_source")
-    .sink("csv_sink");
+  SELECT * FROM tcp_source INTO csv_sink
 sink:
   name: csv_sink
   type: File
@@ -23,5 +22,4 @@ physical:
       socketHost: localhost
       inputFormat: CSV
       socketBufferSize: 2
-      decideMessageSize: TUPLE_SEPARATOR
       flushIntervalMS: 100

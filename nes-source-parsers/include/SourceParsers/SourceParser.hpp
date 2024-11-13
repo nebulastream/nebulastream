@@ -13,19 +13,8 @@
 */
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-
-namespace NES
-{
-class PhysicalType;
-using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::SourceParsers
 {
@@ -37,12 +26,11 @@ public:
     SourceParser() = default;
     virtual ~SourceParser() = default;
 
-    /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
-    virtual bool writeInputTupleToTupleBuffer(
-        std::string_view inputString,
-        uint64_t tupleCount,
-        NES::Memory::TupleBuffer& tupleBuffer,
-        NES::Memory::AbstractBufferProvider& bufferManager) const
+    virtual bool parseTupleBufferRaw(
+        const NES::Memory::TupleBuffer& tbRaw,
+        NES::Memory::AbstractBufferProvider& bufferManager,
+        const size_t numBytesInTBRaw,
+        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
         = 0;
 };
 

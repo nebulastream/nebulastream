@@ -26,21 +26,6 @@ enum class InputFormat : uint8_t
     CSV
 };
 
-/**
- * NOTE: this is not related to the network stack at all. Do not mix it up.
- * @brief Decide how a message size is obtained:
- * TUPLE_SEPARATOR: TCP messages are send with a char acting as tuple separator between them, tupleSeperator needs to be set
- * USER_SPECIFIED_BUFFER_SIZE: User specifies the buffer size beforehand, socketBufferSize needs to be set
- * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
- * bytesUsedForSocketBufferSizeTransfer needs to be set
- */
-enum class TCPDecideMessageSize : uint8_t
-{
-    TUPLE_SEPARATOR,
-    USER_SPECIFIED_BUFFER_SIZE,
-    BUFFER_SIZE_FROM_SOCKET
-};
-
 ///Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
 const std::string RPC_PORT_CONFIG = "rpcPort"; ///used to be coordinator port, renamed to uniform naming
@@ -172,7 +157,6 @@ const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
 const std::string SOCKET_TYPE_CONFIG = "socketType";
-const std::string DECIDE_MESSAGE_SIZE_CONFIG = "decideMessageSize";
 const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";

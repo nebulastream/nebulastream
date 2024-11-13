@@ -44,9 +44,16 @@ QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQuery
 
 void NodeEngine::startQuery(QueryId queryId)
 {
-    if (!queryManager->startQuery(registeredQueries[queryId]))
+    if (const auto query = registeredQueries.find(queryId); query != registeredQueries.end() and query->second)
     {
-        NES_THROW_RUNTIME_ERROR("Could not start the query");
+        if (!queryManager->startQuery(query->second))
+        {
+            throw CannotStartQuery("Cannot start query{}.", queryId);
+        }
+    }
+    else
+    {
+        throw CannotFindQuery("Cannot find query {} in registered queries.", queryId);
     }
 }
 

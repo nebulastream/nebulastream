@@ -35,7 +35,7 @@ SourceThread::SourceThread(
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<ParserCSV> csvParser)
+    std::unique_ptr<SourceParsers::SourceParserCSV> csvParser)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
@@ -206,38 +206,33 @@ void SourceThread::runningRoutine()
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
         sourceImplementation->open();
 
-        uint64_t numberOfBuffersProduced = 0;
         while (running)
         {
             auto tupleBuffer = bufferProvider->getBufferBlocking();
             /// filling the TupleBuffer might block.
-            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, *csvParser);
-            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuples: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
-
-            ///this checks we received a valid output buffer
-            if (isReceivedData)
+            auto numReadBytes = sourceImplementation->fillTupleBuffer(tupleBuffer);
+            if (numReadBytes != 0)
             {
-                NES_TRACE(
-                    "SourceThread produced buffer {}, Num filled tuples: {}, SourceThread: {}",
-                    numberOfBuffersProduced,
-                    tupleBuffer.getNumberOfTuples(),
-                    fmt::streamed(*this));
+                auto emitBufferLambda
+                    = [this](Memory::TupleBuffer& buffer, bool addBufferMetaData) { emitWork(buffer, addBufferMetaData); };
 
-                emitWork(tupleBuffer);
-                ++numberOfBuffersProduced;
+                bool isReceivedData = csvParser->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
+                if (not isReceivedData)
+                {
+                    NES_DEBUG("SourceThread {}: stopping cause of invalid buffer", originId);
+                    running = false;
+                }
             }
             else
             {
-                NES_DEBUG("SourceThread {}: stopping cause of invalid buffer", originId);
                 running = false;
-                NES_DEBUG("SourceThread {}: Thread going to terminating with graceful exit.", originId);
+                break;
             }
             if (!running)
             { /// necessary if source stops while receiveData is called due to stricter shutdown logic
                 NES_DEBUG("Source is not running anymore.")
                 break;
             }
-            NES_TRACE("SourceThread {} : Data Source finished processing iteration {}", originId, numberOfBuffersProduced);
         }
         NES_DEBUG("SourceThread {} call close", originId);
         close();

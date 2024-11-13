@@ -1,0 +1,19 @@
+# name: tuples/FiveTuples.test
+# description: Simple tuple/buffer tests
+# groups: [Tuples]
+
+Source fiveTuples UINT64 field_1
+1
+2
+3
+4
+5
+
+# Description: check if we can process more than one tuple
+SELECT field_1 FROM fiveTuples INTO SINK
+----
+1
+2
+3
+4
+5

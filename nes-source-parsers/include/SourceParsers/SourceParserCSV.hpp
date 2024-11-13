@@ -14,30 +14,40 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <SourceParsers/SourceParser.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::SourceParsers
 {
 
+/// Defined in implementation of ParserCSV
+class ProgressTracker;
+
 class SourceParserCSV : public SourceParser
 {
 public:
-    SourceParserCSV(SchemaPtr schema, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
+    SourceParserCSV(SchemaPtr schema, const std::vector<NES::PhysicalTypePtr>& physicalTypes, std::string fieldDelimiter);
+    ~SourceParserCSV() override;
 
-    /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
-    bool writeInputTupleToTupleBuffer(
-        std::string_view inputString,
-        uint64_t tupleCount,
-        NES::Memory::TupleBuffer& tupleBuffer,
-        NES::Memory::AbstractBufferProvider& bufferManager) const override;
-
-    size_t getSizeOfSchemaInBytes() const;
+    bool parseTupleBufferRaw(
+        const Memory::TupleBuffer& tbRaw,
+        Memory::AbstractBufferProvider& bufferManager,
+        size_t numBytesInTBRaw,
+        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction) override;
 
 private:
     SchemaPtr schema;
-    uint64_t numberOfSchemaFields;
+    std::string fieldDelimiter;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
-    std::string delimiter;
+    std::unique_ptr<ProgressTracker> progressTracker;
+    std::vector<size_t> fieldSizes;
+
+    /// Splits the string-tuple into string-fields, parsing each string-field, converting it to the internal representation.
+    /// Assumptions: input is a string that contains either:
+    /// - one complete tuple
+    /// - a string containing a partial tuple (potentially with a partial field) and another string that contains the rest of the tuple.
+    void parseStringTupleToTBFormatted(std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const;
 };
 
 }

@@ -134,6 +134,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
 
     /// Register the query and start it.
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
+    ASSERT_NE(queryId.getRawValue(), QueryId::INVALID);
     IntegrationTestUtil::startQuery(queryId, uut);
 
     /// Start all SyncedMockTcpServers and wait until every sever sent all tuples.

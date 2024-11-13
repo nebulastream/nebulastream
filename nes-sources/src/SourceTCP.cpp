@@ -23,12 +23,10 @@
 #include <errno.h> /// For socket error
 #include <netdb.h>
 #include <unistd.h> /// For read
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SourceParsers/SourceParser.hpp>
-#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <Sources/SourceTCP.hpp>
@@ -43,13 +41,11 @@ namespace NES::Sources
 {
 
 SourceTCP::SourceTCP(const SourceDescriptor& sourceDescriptor)
-    : circularBuffer(getpagesize() * 2)
-    , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
+    : inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
     , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , decideMessageSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
     , tupleSeparator(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
     , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
     , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
@@ -74,7 +70,6 @@ std::ostream& SourceTCP::toString(std::ostream& str) const
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
     str << "\n  socketDomain: " << socketDomain;
-    str << "\n  decideMessageSize: " << magic_enum::enum_name(decideMessageSize);
     str << "\n  tupleSeparator: " << tupleSeparator;
     str << "\n  socketBufferSize: " << socketBufferSize;
     str << "\n  bytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
@@ -136,20 +131,16 @@ void SourceTCP::open()
     NES_TRACE("SourceTCP::open: Connected to server.");
 }
 
-bool SourceTCP::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV)
+size_t SourceTCP::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
 {
-    std::stringstream ss;
-    ss << this;
-    NES_DEBUG("SourceTCP  {}: receiveData ", ss.str());
-    NES_DEBUG("SourceTCP buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager, parserCSV))
+        size_t numReceivedBytes = 0;
+        while (fillBuffer(tupleBuffer, numReceivedBytes))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
-        return tupleBuffer.getNumberOfTuples() > 0;
+        return numReceivedBytes;
     }
     catch (const std::exception& e)
     {
@@ -158,40 +149,8 @@ bool SourceTCP::fillTupleBuffer(
     }
 }
 
-std::pair<bool, size_t> sizeUntilSearchToken(std::span<const char> data, char token)
+bool SourceTCP::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
 {
-    auto result = std::find_if(data.begin(), data.end(), [token](auto& c) { return c == token; });
-
-    return {result != data.end(), std::distance(data.begin(), result)};
-}
-
-size_t asciiBufferSize(const std::span<const char> data)
-{
-    return std::stoll(std::string(data.begin(), data.end()));
-}
-
-size_t binaryBufferSize(std::span<const char> data)
-{
-    static_assert(std::endian::native == std::endian::little, "Only implemented for little endian");
-    NES_ASSERT(data.size() <= sizeof(size_t), "Not implemented for " << data.size() << "socket buffer size");
-
-    size_t result = 0;
-    std::copy(data.begin(), data.end(), reinterpret_cast<char*>(&result));
-    return result;
-}
-
-size_t SourceTCP::parseBufferSize(const std::span<const char> data) const
-{
-    return asciiBufferSize(data);
-}
-
-bool SourceTCP::fillBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV)
-{
-    /// determine how many tuples fit into the buffer
-    const auto tupleSize = parserCSV.getSizeOfSchemaInBytes();
-    const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
-    NES_DEBUG("SourceTCP::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     /// init tuple count for buffer
     uint64_t tupleCount = 0;
     /// init timer for flush interval
@@ -201,107 +160,26 @@ bool SourceTCP::fillBuffer(
     /// receive data until tupleBuffer capacity reached or flushIntervalPassed
     bool isEoS = false;
 
-    while (tupleCount < tuplesThisPass && !flushIntervalPassed)
+    const size_t tbRawSize = tupleBuffer.getBufferSize();
+    while (!flushIntervalPassed && numReceivedBytes < tbRawSize)
     {
-        /// if circular buffer is not full obtain data from socket
-        if (!circularBuffer.full())
+        const ssize_t bufferSizeReceived = read(sockfd, tupleBuffer.getBuffer() + numReceivedBytes, tbRawSize - numReceivedBytes);
+        numReceivedBytes += bufferSizeReceived;
+        if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {
-            auto writer = circularBuffer.write();
-
-            auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
-            if (bufferSizeReceived == -1)
-            {
-                /// if read method returned -1 an error occurred during read.
-                NES_ERROR("SourceTCP::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
-                isEoS = true;
-                break;
-            }
-            if (bufferSizeReceived == 0)
-            {
-                NES_TRACE("SourceTCP::fillBuffer: No data received from {}:{}.", socketHost, socketPort);
-            }
-
-            writer.consume(bufferSizeReceived);
-            if (bufferSizeReceived == 0 && circularBuffer.empty())
+            /// if read method returned -1 an error occurred during read.
+            NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
+            isEoS = true;
+            break;
+        }
+        if (bufferSizeReceived == 0)
+        {
+            NES_TRACE("No data received from {}:{}.", socketHost, socketPort);
+            if (numReceivedBytes == 0)
             {
                 NES_INFO("TCP Source detected EoS");
                 isEoS = true;
                 break;
-            }
-        }
-
-        if (!circularBuffer.empty())
-        {
-            auto reader = circularBuffer.read();
-            auto tupleData = std::span<const char>{};
-            NES_ASSERT(tupleData.empty(), "not empty");
-            /// Every protocol returns a view into the tuple (or Buffer for Binary) memory in tupleData;
-            /// switch case depends on the message receiving that was chosen when creating the source. Three choices are available:
-            switch (decideMessageSize)
-            {
-                /// The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
-                /// tuple seperator and assume that all data until then belongs to the current tuple
-                case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR: {
-                    /// search the circularBuffer until Tuple seperator is found to obtain size of tuple
-                    auto [foundSeparator, inputTupleSize] = sizeUntilSearchToken(reader, tupleSeparator);
-
-                    if (!foundSeparator)
-                    {
-                        NES_TRACE("Separator not found");
-                        break;
-                    }
-
-                    tupleData = reader.consume(inputTupleSize);
-                    reader.consume(sizeof(tupleSeparator));
-                    break;
-                }
-                /// The user inputted a fixed buffer size.
-                case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE: {
-                    auto inputTupleSize = socketBufferSize;
-
-                    if (reader.size() < inputTupleSize)
-                    {
-                        break;
-                    }
-
-                    tupleData = reader.consume(inputTupleSize);
-                    break;
-                }
-                /// Before each message, the server uses a fixed number of bytes (bytesUsedForSocketBufferSizeTransfer)
-                /// to indicate the size of the next tuple.
-                case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET: {
-                    /// Tuple (or Buffer for Binary) Size preceds the actual data.
-                    /// Peek BytesUserForSocketBufferSize so if the buffer contains not enough bytes the next iteration does not
-                    /// loose the tuple size information.
-                    auto bufferSizeSize = bytesUsedForSocketBufferSizeTransfer;
-                    if (reader.size() < bufferSizeSize)
-                    {
-                        break;
-                    }
-
-                    auto bufferSizeMemory = std::span<const char>(reader).subspan(0, bufferSizeSize);
-                    auto size = parseBufferSize(bufferSizeMemory);
-                    NES_TRACE("tuple size from socket: {}", size);
-                    if (reader.size() < bufferSizeSize + size)
-                    {
-                        NES_TRACE("Waiting for data current {}", reader.size() - bufferSizeSize);
-                        break;
-                    }
-
-                    /// Consume the size and data iff a complete tuple (or Buffer) is available.
-                    reader.consume(bufferSizeSize);
-                    tupleData = reader.consume(size);
-                    break;
-                }
-            }
-
-            /// if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
-            if (!tupleData.empty())
-            {
-                std::string_view buf(tupleData.data(), tupleData.size());
-                NES_TRACE("SOURCETCP::fillBuffer: Client consume message: '{}'.", buf);
-                parserCSV.writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, bufferManager);
-                tupleCount++;
             }
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
@@ -315,11 +193,9 @@ bool SourceTCP::fillBuffer(
             flushIntervalPassed = true;
         }
     }
-    tupleBuffer.setNumberOfTuples(tupleCount);
-    generatedTuples += tupleCount;
-    generatedBuffers++;
-    /// Return false, if there are tuples in the buffer, or the EoS was reached.
-    return tupleBuffer.getNumberOfTuples() == 0 && !isEoS;
+    ++generatedBuffers;
+
+    return numReceivedBytes == 0 and !isEoS;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>

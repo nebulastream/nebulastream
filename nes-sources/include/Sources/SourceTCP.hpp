@@ -18,12 +18,9 @@
 #include <memory>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <SourcesUtils/MMapCircularBuffer.hpp>
 #include <sys/socket.h> /// For socket functions
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
 {
@@ -119,13 +116,6 @@ struct ConfigParametersTCP
         "flushIntervalMS", 0, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
         }};
-    static inline const Configurations::DescriptorConfig::
-        ConfigParameter<NES::Configurations::EnumWrapper, Configurations::TCPDecideMessageSize>
-            DECIDED_MESSAGE_SIZE{
-                "decideMessageSize",
-                NES::Configurations::EnumWrapper(Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR),
-                [](const std::unordered_map<std::string, std::string>& config)
-                { return Configurations::DescriptorConfig::tryGet(DECIDED_MESSAGE_SIZE, config); }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
         "socketBufferSize", 1024, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config);
@@ -137,21 +127,13 @@ struct ConfigParametersTCP
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            INPUT_FORMAT,
-            HOST,
-            PORT,
-            DOMAIN,
-            TYPE,
-            SEPARATOR,
-            FLUSH_INTERVAL_MS,
-            DECIDED_MESSAGE_SIZE,
-            SOCKET_BUFFER_SIZE,
-            SOCKET_BUFFER_TRANSFER_SIZE);
+            INPUT_FORMAT, HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
 };
 
 class SourceTCP : public Source
 {
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
+    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
 
 public:
     static inline const std::string NAME = "TCP";
@@ -159,8 +141,7 @@ public:
     explicit SourceTCP(const SourceDescriptor& sourceDescriptor);
     ~SourceTCP() override = default;
 
-    bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV) override;
+    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
 
     /// Open TCP connection.
     void open() override;
@@ -173,7 +154,7 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV);
+    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
@@ -181,14 +162,12 @@ private:
 
     int connection = -1;
     int sockfd = -1;
-    MMapCircularBuffer circularBuffer;
 
     Configurations::InputFormat inputFormat;
     std::string socketHost;
     std::string socketPort;
     int socketType;
     int socketDomain;
-    Configurations::TCPDecideMessageSize decideMessageSize;
     char tupleSeparator;
     size_t socketBufferSize;
     size_t bytesUsedForSocketBufferSizeTransfer;

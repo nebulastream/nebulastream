@@ -15,12 +15,13 @@
 #include <memory>
 
 #include <API/AttributeField.hpp>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
+#include <Sources/SourceTCP.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Sources
@@ -45,8 +46,16 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
-    auto sourceParser = std::make_unique<ParserCSV>(
-        sourceDescriptor.schema, physicalTypes, sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER));
+    // Todo: sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER) fails silently/very badly, if the parameter does not exist
+    // -> should use tryGetFromConfig
+    std::string delimiter = ",";
+    if(sourceDescriptor.sourceType == "CSV")
+    {
+        delimiter = sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER);
+    }
+
+    // Todo: remove hardcoded
+    auto sourceParser = std::make_unique<SourceParsers::SourceParserCSV>(sourceDescriptor.schema, physicalTypes, delimiter);
 
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
     {

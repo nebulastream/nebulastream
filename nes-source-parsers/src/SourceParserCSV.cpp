@@ -13,7 +13,10 @@
 */
 
 #include <memory>
+#include <ranges>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -27,15 +30,107 @@
 
 namespace NES::SourceParsers
 {
-using namespace std::string_literals;
 
-SourceParserCSV::SourceParserCSV(SchemaPtr schema, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
+struct PartialTuple
+{
+    uint64_t offsetInBuffer;
+    Memory::TupleBuffer tbRaw;
+
+    std::string_view getStringView() const
+    {
+        return std::string_view(tbRaw.getBuffer<const char>() + offsetInBuffer, tbRaw.getBufferSize() - offsetInBuffer);
+    }
+};
+
+class ProgressTracker
+{
+    static constexpr char TUPLE_SEPARATOR = '\n';
+
+public:
+    ProgressTracker(const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
+        : tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
+
+    ~ProgressTracker() = default;
+
+    void resetForNewTBRaw(const size_t sizeOfNewTupleBufferRawInBytes, const char* newTupleBufferRaw)
+    {
+        this->numTotalBytesInTBRaw = sizeOfNewTupleBufferRawInBytes;
+        this->currentTupleStartTBRaw = 0;
+        this->currentFieldOffsetTBFormatted = 0;
+        this->tupleBufferRawSV = std::string_view(newTupleBufferRaw, numTotalBytesInTBRaw);
+        this->currentTupleEndTBRaw = tupleBufferRawSV.find(TUPLE_SEPARATOR, currentTupleStartTBRaw);
+        this->numTuplesInTBFormatted = 0;
+    }
+
+    int8_t* getCurrentFieldPointer() const { return rawBufferFieldPointer + currentFieldOffsetTBFormatted; }
+
+    bool hasOneMoreTupleInTBRaw() const { return this->currentTupleEndTBRaw != std::string::npos; }
+
+    size_t sizeOfCurrentTuple() const { return this->currentTupleEndTBRaw - this->currentTupleStartTBRaw; }
+
+    void progressOneTuple()
+    {
+        ++numTuplesInTBFormatted;
+        currentTupleStartTBRaw = currentTupleEndTBRaw + 1;
+        currentTupleEndTBRaw = findIndexOfNextTuple();
+    }
+
+    bool hasSpaceForTupleInTBFormatted() const
+    {
+        return tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted >= tupleSizeInBytes;
+    }
+
+    bool hasPartialTuple() const { return not stagingAreaTBRaw.empty(); }
+
+    std::string_view getNextTuple() const { return this->tupleBufferRawSV.substr(currentTupleStartTBRaw, sizeOfCurrentTuple()); }
+
+    void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
+    {
+        this->tupleBufferFormatted = std::move(tupleBufferFormatted);
+        this->rawBufferFieldPointer = this->tupleBufferFormatted.getBuffer();
+    }
+
+    void handleResidualBytes(NES::Memory::TupleBuffer tbRawEndingInPartialTuple)
+    {
+        if (currentTupleStartTBRaw < numTotalBytesInTBRaw)
+        {
+            /// write TBR to staging area
+            stagingAreaTBRaw.emplace_back(
+                PartialTuple{.offsetInBuffer = currentTupleStartTBRaw, .tbRaw = std::move(tbRawEndingInPartialTuple)});
+        }
+    }
+
+    /// Getter & Setter
+    uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
+    NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
+    void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
+
+    size_t currentTupleStartTBRaw{0};
+    size_t currentTupleEndTBRaw{0};
+    uint64_t numTotalBytesInTBRaw{0};
+    std::vector<PartialTuple> stagingAreaTBRaw;
+    size_t numTuplesInTBFormatted{0};
+    size_t currentFieldOffsetTBFormatted{0};
+
+private:
+    size_t tupleSizeInBytes{0};
+    uint64_t numSchemaFields{0};
+    std::string_view tupleBufferRawSV;
+    int8_t* rawBufferFieldPointer{nullptr}; /// owned by TBRaw, reset during each call of 'parseTupleBufferRaw()'
+    NES::Memory::TupleBuffer tupleBufferFormatted;
+
+    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(TUPLE_SEPARATOR, currentTupleStartTBRaw); }
+};
+
+
+SourceParserCSV::SourceParserCSV(SchemaPtr schema, const std::vector<PhysicalTypePtr>& physicalTypes, std::string delimiter)
     : schema(std::move(schema))
-    , numberOfSchemaFields(this->schema->getSize())
+    , fieldDelimiter(std::move(delimiter))
     , physicalTypes(std::move(physicalTypes))
-    , delimiter(std::move(delimiter))
+    , progressTracker(std::make_unique<ProgressTracker>(this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
 {
 }
+SourceParserCSV::~SourceParserCSV() = default;
 
 void writeBasicTypeToTupleBuffer(std::string inputString, int8_t* fieldPointer, const BasicPhysicalType& basicPhysicalType)
 {
@@ -55,7 +150,7 @@ void writeBasicTypeToTupleBuffer(std::string inputString, int8_t* fieldPointer, 
             }
             case NES::BasicPhysicalType::NativeType::INT_16: {
                 const auto value = static_cast<int16_t>(std::stol(inputString));
-                auto int16Ptr = reinterpret_cast<int16_t*>(fieldPointer);
+                const auto int16Ptr = reinterpret_cast<int16_t*>(fieldPointer);
                 *int16Ptr = value;
                 break;
             }
@@ -146,18 +241,85 @@ void writeBasicTypeToTupleBuffer(std::string inputString, int8_t* fieldPointer, 
     }
 }
 
-bool SourceParserCSV::writeInputTupleToTupleBuffer(
-    std::string_view csvInputLine,
-    uint64_t tupleCount,
-    NES::Memory::TupleBuffer& tupleBuffer,
-    NES::Memory::AbstractBufferProvider& bufferProvider) const
+bool SourceParserCSV::parseTupleBufferRaw(
+    const NES::Memory::TupleBuffer& tbRaw,
+    NES::Memory::AbstractBufferProvider& bufferManager,
+    const size_t numBytesInTBRaw,
+    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
-    NES_TRACE("Current TupleCount:  {}", tupleCount);
+    PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
+    /// Reset all values that are tied to a specific tbRaw.
+    /// Also resets numTuplesInTBFormatted, because we always start with a new TBF when parsing a new TBR.
+    progressTracker->resetForNewTBRaw(numBytesInTBRaw, tbRaw.getBuffer<const char>());
 
+    /// Determine if the current TBR terminates at least one tuple.
+    if (not progressTracker->hasOneMoreTupleInTBRaw())
+    {
+        /// If there is not a single complete tuple in the buffer, write it to the staging area and wait for the next buffer(s).
+        progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
+        return true;
+    }
+    /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
+    progressTracker->setNewTupleBufferFormatted(bufferManager.getBufferBlocking());
+
+    /// A single partial tuple may have spanned over the prior N TBRs, ending in the current TBR. If so, construct the tuple using the prior TBRs.
+    /// The size of the partial tuple may reach from just the last byte of the prior TBR to all bytes of multiple prior TBRs.
+    if (progressTracker->hasPartialTuple())
+    {
+        /// Construct the full tuple from all prior tuple buffers that contain a part of the partial tuple.
+        std::stringstream completeTuple;
+        for (const auto& partialTuple : progressTracker->stagingAreaTBRaw)
+        {
+            completeTuple << partialTuple.getStringView();
+        }
+        /// Add the final part of the partial tuple from the current TBR to the partial tuple to complete it.
+        completeTuple << progressTracker->getNextTuple();
+        parseStringTupleToTBFormatted(completeTuple.str(), bufferManager);
+        /// Release all prior TBRs with partial tuples. Sources can now use these buffers again.
+        progressTracker->stagingAreaTBRaw.clear();
+        /// We parsed the first tuple terminated by the current TBR. If the current TBR does not terminate another tuple, we skip the below while loop.
+        progressTracker->progressOneTuple();
+    }
+
+    /// Parse the current TBR, while there is at least one more tuple in the tuple buffer (we use '\n' as a hardcoded separator for now).
+    /// We always parse at least one tuple if we enter the while loop.
+    while (progressTracker->hasOneMoreTupleInTBRaw())
+    {
+        /// If we parsed a (prior) partial tuple before, the TBF may not fit another tuple. We emit the single (prior) partial tuple.
+        /// Otherwise, the TBF is empty. Since we assume that a tuple is never bigger than a TBF, we can fit at least one more tuple.
+        if (not progressTracker->hasSpaceForTupleInTBFormatted())
+        {
+            /// Emit TBF and get new TBF
+            progressTracker->setNumberOfTuplesInTBFormatted();
+            NES_DEBUG("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
+            progressTracker->setNewTupleBufferFormatted(bufferManager.getBufferBlocking());
+            progressTracker->currentFieldOffsetTBFormatted = 0;
+            progressTracker->numTuplesInTBFormatted = 0;
+        }
+
+        const auto currentTuple = progressTracker->getNextTuple();
+        parseStringTupleToTBFormatted(currentTuple, bufferManager);
+
+        progressTracker->progressOneTuple();
+    }
+
+    progressTracker->setNumberOfTuplesInTBFormatted();
+    NES_DEBUG("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+
+    /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
+    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
+    progressTracker->handleResidualBytes(tbRaw);
+
+    return true;
+}
+
+void SourceParserCSV::parseStringTupleToTBFormatted(const std::string_view inputString, NES::Memory::AbstractBufferProvider& bufferProvider) const
+{
     std::vector<std::string> values;
     try
     {
-        values = NES::Util::splitWithStringDelimiter<std::string>(csvInputLine, delimiter);
+        values = NES::Util::splitWithStringDelimiter<std::string>(inputString, fieldDelimiter);
     }
     catch (std::exception e)
     {
@@ -165,61 +327,33 @@ bool SourceParserCSV::writeInputTupleToTupleBuffer(
             "An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
     }
 
-    if (values.size() != schema->getSize())
+    /// Iterate over all (potentially except the first) fields, parse the string values and write the formatted data into the TBF.
+    for (size_t currentFieldNumber = 0; const auto& currentVal : values)
     {
-        throw CSVParsingError(fmt::format(
-            "The input line does not contain the right number of delimited fields. Fields in schema: {}"
-            " Fields in line: {}"
-            " Schema: {} Line: {}",
-            std::to_string(schema->getSize()),
-            std::to_string(values.size()),
-            schema->toString(),
-            csvInputLine));
-    }
-    /// iterate over fields of schema and cast string values to correct type
-    size_t currentOffset = tupleCount * schema->getSchemaSizeInBytes();
-    for (uint64_t j = 0; j < numberOfSchemaFields; j++)
-    {
-        auto field = physicalTypes[j];
-        std::string_view currentVal = values[j];
-        NES_TRACE("Current value is:  {}", currentVal);
-
-        const auto dataType = schema->fields[j]->getDataType();
-        const auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
-        int8_t* fieldPointer = tupleBuffer.getBuffer() + currentOffset;
-        if (const auto basicPhysicalType = std::dynamic_pointer_cast<const BasicPhysicalType>(physicalType))
+        if (auto basicType = dynamic_pointer_cast<BasicPhysicalType>(physicalTypes.at(currentFieldNumber)))
         {
-            writeBasicTypeToTupleBuffer(currentVal.data(), fieldPointer, *basicPhysicalType);
+            writeBasicTypeToTupleBuffer(currentVal, progressTracker->getCurrentFieldPointer(), *basicType);
         }
         else
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
-                currentVal);
-            const auto valueLength = currentVal.length();
+                inputString);
+            const auto valueLength = inputString.length();
             auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
-            if (childBuffer.has_value())
-            {
-                auto& childBufferVal = childBuffer.value();
-                *childBufferVal.getBuffer<uint32_t>() = valueLength;
-                std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), currentVal.data(), valueLength);
-                const auto index = tupleBuffer.storeChildBuffer(childBufferVal);
-                auto childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
-                *childBufferIndexPointer = index;
-            }
-            else
-            {
-                NES_ERROR("Could not store string {}", currentVal);
-            }
+            INVARIANT(childBuffer.has_value(), "Could not store string, because allocated child buffer did not contain value");
+
+            auto& childBufferVal = childBuffer.value();
+            *childBufferVal.getBuffer<uint32_t>() = valueLength;
+            std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), inputString.data(), valueLength);
+            const auto index = progressTracker->getTupleBufferFormatted().storeChildBuffer(childBufferVal);
+            auto childBufferIndexPointer = reinterpret_cast<uint32_t*>(progressTracker->getCurrentFieldPointer());
+            *childBufferIndexPointer = index;
         }
-        currentOffset += field->size();
+        progressTracker->currentFieldOffsetTBFormatted += this->fieldSizes.at(currentFieldNumber);
+        ++currentFieldNumber;
     }
-    return true;
-}
-size_t ParserCSV::getSizeOfSchemaInBytes() const
-{
-    return schema->getSchemaSizeInBytes();
 }
 
 }

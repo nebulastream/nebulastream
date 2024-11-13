@@ -19,4 +19,3 @@ add_source_files(nes-sources
         SourceProvider.cpp
         SourceTCP.cpp
 )
-add_subdirectory(SourcesUtils)

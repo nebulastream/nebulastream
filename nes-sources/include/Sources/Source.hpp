@@ -15,13 +15,8 @@
 #pragma once
 
 #include <string>
-#include <type_traits>
-#include <unordered_map>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <SourceParsers/ParserCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
@@ -36,13 +31,7 @@ public:
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
-    virtual bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer,
-        /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
-        /// passing schema by value to create a new TestTupleBuffer in the Parser.
-        NES::Memory::AbstractBufferProvider& bufferManager,
-        const ParserCSV& parserCSV)
-        = 0;
+    virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open() = 0;
