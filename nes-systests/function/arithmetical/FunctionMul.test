@@ -3,7 +3,7 @@
 # groups: [Function, FunctionMul]
 
 Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8 UINT16 val_u16 UINT32 val_u32 UINT64 val_u64 FLOAT32 val_f32 FLOAT64 val_f64
--42, -129,-32769,-2147483649,42, 256,65536,4294967296,23,23
+-42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
 # Todo #442: the below system level tests currently perform downcasts.
 # Since equals is commutative, e.g., 'val_i8 * val_f32' equals 'val_f32 * val_i8', so we check only one direction.
