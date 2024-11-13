@@ -173,6 +173,45 @@ TEST_P(JoinDeploymentTest, testJoinWithDifferentSchemaNamesMultipleConditionsBut
 }
 
 /**
+ * Test deploying constant value expression in join
+ */
+TEST_P(JoinDeploymentTest, testConstantValueDifferentSchemaNamesButSameInputTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
+    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink9.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where((Attribute("id") == Attribute("id2")) && (Attribute("id") == 4))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+/**
+ * Test deploying two constant value expressions in join
+ */
+TEST_P(JoinDeploymentTest, testTwoConstantValueDifferentSchemaNamesButSameInputTumblingWindow) {
+    if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
+        && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+        GTEST_SKIP();
+    }
+    const auto leftSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")->updateSourceName("test1");
+    const auto rightSchema = TestSchemas::getSchemaTemplate("id2_val2_time_u64")->updateSourceName("test2");
+    TestUtils::JoinParams joinParams({leftSchema, rightSchema});
+    TestUtils::CsvFileParams csvFileParams("window.csv", "window.csv", "window_sink9.csv");
+    auto query = Query::from("test1")
+                     .joinWith(Query::from("test2"))
+                     .where((Attribute("id") == Attribute("id2")) && (Attribute("id") == 4) && (Attribute("value") == 1))
+                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
+
+    runAndValidateJoinQueryTwoLogicalStreams(query, csvFileParams, joinParams);
+}
+
+/**
  * Test deploying join with different sources
  */
 TEST_P(JoinDeploymentTest, testJoinWithDifferentSourceTumblingWindow) {

@@ -15,6 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
@@ -55,6 +56,53 @@ QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, Query
     auto op = LogicalOperatorFactory::createRenameSourceOperator(newSourceName);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
+}
+
+std::shared_ptr<ExpressionNode> QueryPlanBuilder::findFilter(ExpressionNodePtr joinExpression) {
+    auto filterExpression = joinExpression;
+    std::set<std::shared_ptr<BinaryExpressionNode>> expressionNodes;
+    auto firstItr = BreadthFirstNodeIterator(joinExpression);
+    std::set<std::shared_ptr<ExpressionNode>> filterExpressions;
+    for (auto curr = firstItr.begin(); curr != BreadthFirstNodeIterator::end(); ++curr) {
+        if ((*curr)->instanceOf<BinaryExpressionNode>()
+            && !(*curr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
+            auto visitedNode = (*curr)->as<BinaryExpressionNode>();
+            if (expressionNodes.contains(visitedNode)) {
+                continue;
+            } else {
+                auto left = (*curr)->as<BinaryExpressionNode>()->getLeft();
+                auto right = (*curr)->as<BinaryExpressionNode>()->getRight();
+
+                if (left->instanceOf<ConstantValueExpressionNode>() || right->instanceOf<ConstantValueExpressionNode>()) {
+                    filterExpression = (*curr)->as<BinaryExpressionNode>();
+                    filterExpressions.insert(filterExpression);
+                    continue;
+                }
+                expressionNodes.insert(visitedNode);
+            }
+        }
+    }
+    /*
+     * if we do not find an expression with a constant value,
+     * we return the original join expression and use it to check whether we
+     * need to append a filter to the query.
+     */
+    if (filterExpressions.empty()) {
+        return joinExpression;
+    }
+    if (filterExpressions.size() == 1) {
+        return filterExpression;
+    }
+    std::shared_ptr<ExpressionNode> combinedFilters = *filterExpressions.begin();
+    for (auto curr = filterExpressions.begin(); curr != filterExpressions.end(); ++curr) {
+        auto toCombine = (*curr)->as<BinaryExpressionNode>();
+        if (toCombine->equal(combinedFilters)) {
+            continue;
+        }
+        combinedFilters = AndExpressionNode::create(toCombine, combinedFilters);
+        return combinedFilters;
+    }
+    return filterExpression;
 }
 
 QueryPlanPtr QueryPlanBuilder::addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan) {
@@ -131,6 +179,33 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
 
     NES_DEBUG("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
+    std::set<std::shared_ptr<BinaryExpressionNode>> expressionNodes;
+    auto firstItr = BreadthFirstNodeIterator(joinExpression);
+    for (auto curr = firstItr.begin(); curr != BreadthFirstNodeIterator::end(); ++curr) {
+        if ((*curr)->instanceOf<BinaryExpressionNode>()
+            && !(*curr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()) {
+            auto visitedNode = (*curr)->as<BinaryExpressionNode>();
+            if (expressionNodes.contains(visitedNode)) {// check if we already visited that one
+                continue;
+            } else {
+                auto left = (*curr)->as<BinaryExpressionNode>()->getLeft();
+                auto right = (*curr)->as<BinaryExpressionNode>()->getRight();
+                if ((left->instanceOf<ConstantValueExpressionNode>() || right->instanceOf<ConstantValueExpressionNode>())) {
+                    continue;
+                }
+                expressionNodes.insert(visitedNode);
+            }
+        }
+    }
+    std::shared_ptr<ExpressionNode> newJoinExpression = *expressionNodes.begin();
+    for (auto curr = expressionNodes.begin(); curr != expressionNodes.end(); ++curr) {
+        auto toCombine = (*curr)->as<BinaryExpressionNode>();
+        if (toCombine->equal(newJoinExpression)) {
+            continue;
+        }
+        newJoinExpression = AndExpressionNode::create(toCombine, newJoinExpression);
+    }
+    joinExpression = newJoinExpression;
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
         if ((*itr)->instanceOf<BinaryExpressionNode>()
@@ -143,12 +218,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
                 visitedExpressions.insert(visitingOp);
                 auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
                 auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
-                // ensure that the child nodes are not binary
                 if (!onLeftKey->instanceOf<BinaryExpressionNode>() && !onRightKey->instanceOf<BinaryExpressionNode>()) {
-                    if (onLeftKey->instanceOf<ConstantValueExpressionNode>()
-                        || onRightKey->instanceOf<ConstantValueExpressionNode>()) {
-                        NES_THROW_RUNTIME_ERROR("use .filter() for your expression.");
-                    }
+                    NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
                     auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
                     auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
                 }

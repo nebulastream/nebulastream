@@ -60,6 +60,13 @@ class QueryPlanBuilder {
     static QueryPlanPtr addFilter(ExpressionNodePtr const& filterExpression, QueryPlanPtr queryPlan);
 
     /**
+    * @brief: this call finds and returns expressions from a join condition that should be added as a filter.
+    * @param joinExpression
+    * @return the new filter expression
+    */
+    static std::shared_ptr<ExpressionNode> findFilter(ExpressionNodePtr joinExpression);
+
+    /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
      * @param filterExpression as expression node containing the predicate
      * @param queryPlanPtr the queryPlan the filter node is added to

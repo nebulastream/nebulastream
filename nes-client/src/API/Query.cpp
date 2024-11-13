@@ -18,6 +18,7 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -267,6 +268,10 @@ Query& Query::unionWith(const Query& subQuery) {
 
 Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType) {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
+    auto newFilter = QueryPlanBuilder::findFilter(joinExpression);
+    if (newFilter->toString() != joinExpression->toString()) {
+        this->queryPlan = QueryPlanBuilder::addFilter(newFilter, this->queryPlan);
+    }
     this->queryPlan =
         QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
     return *this;
@@ -370,7 +375,6 @@ Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& w
 
 QueryPlanPtr Query::getQueryPlan() const { return queryPlan; }
 
-//
 Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr joinExpression) {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
