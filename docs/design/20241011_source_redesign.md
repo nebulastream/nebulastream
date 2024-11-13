@@ -180,21 +180,13 @@ both synchronous and asynchronous sources expose the same interface to the `quer
 5. we have sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
 6. we allow the `queryengine` to request partially filled buffers in source implementations when its `taskqueue` is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
 
-## source implementations
-we need asynchronous i/o requests and the removal of parsing logic because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls or do cpu-intensive work on these few threads.
-therefore, we strip the schema and all other parsing-related state and logic off the sources.
+## Source Implementations
+We need asynchronous i/o requests and the removal of parsing logic because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls or do CPU-intensive work on these few threads.
+Therefore, we strip the schema and all other parsing-related state and logic off the sources.
 
-regarding async i/o, the primary library for implementing async i/o in c++ is `boost::asio`, which is battle-tested and known to have only small overhead.
-it provides us with everything we need, from an async runtime to asynchronous i/o objects like sockets, file descriptors, serial port interfaces, etc.
-therefore, we choose `boost::asio` as the library to implement asynchronous sources.
-
-on a high level, the source should perform the following tasks:
-- connect to an external system (kafka, mqtt, etc.), device (disk, memory, network), or handle a protocol (tcp, udp, etc.)
-- read data from there into a `tuplebuffer` (which should be called `bytebuffer` or `readbuffer` at this point as we do not deal with tuples on a logical level yet?)
-- try to resolve errors that it can by retrying and recovering, dropping data, or escalating the error to the outside if it can not deal with it, signaling termination
-- disconnect and close the link to the external system or device
-
-each source defines how to read data into `tuplebuffer`s asynchronously by utilizing `boost::asio` i/o objects or similar.
+The primary library for implementing async I/O in C++ is `boost::asio`, which is battle-tested and known to have only small overhead.
+It provides us with everything we need, from an async runtime to asynchronous I/O objects like sockets, file descriptors, serial port interfaces, etc.
+Therefore, we choose `boost::asio` as the library to implement asynchronous sources.
 
 
 ```mermaid
