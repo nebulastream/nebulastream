@@ -27,30 +27,24 @@ class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 }
 
-namespace NES::Sources
+namespace NES::SourceParsers
 {
 
 /// Base class for all input data parsers in NES
-class Parser
+class SourceParser
 {
 public:
-    Parser() = default;
-    virtual ~Parser() = default;
+    SourceParser() = default;
+    virtual ~SourceParser() = default;
 
     /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
     virtual bool writeInputTupleToTupleBuffer(
         std::string_view inputString,
         uint64_t tupleCount,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+        NES::Memory::TupleBuffer& tupleBuffer,
         const Schema& schema,
-        NES::Memory::AbstractBufferProvider& bufferManager)
+        NES::Memory::AbstractBufferProvider& bufferProvider)
         = 0;
-
-    /// casts a value in string format to the correct type and writes it to the TupleBuffer
-    static void writeBasicTypeToTupleBuffer(
-        std::string inputString,
-        NES::Memory::MemoryLayouts::DynamicField& testTupleBufferDynamicField,
-        const BasicPhysicalType& basicPhysicalType);
 };
 
 }

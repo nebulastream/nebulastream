@@ -14,23 +14,23 @@
 
 #pragma once
 
-#include <Sources/Parsers/Parser.hpp>
+#include <SourceParsers/SourceParser.hpp>
 
-namespace NES::Sources
+namespace NES::SourceParsers
 {
 
-class ParserCSV : public Parser
+class SourceParserCSV : public SourceParser
 {
 public:
-    ParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
+    SourceParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
 
     /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
     bool writeInputTupleToTupleBuffer(
         std::string_view inputString,
         uint64_t tupleCount,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+        NES::Memory::TupleBuffer& tupleBuffer,
         const Schema& schema,
-        NES::Memory::AbstractBufferProvider& bufferManager) override;
+        NES::Memory::AbstractBufferProvider& bufferProvider) override;
 
 private:
     uint64_t numberOfSchemaFields;

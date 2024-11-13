@@ -21,13 +21,12 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Sources/Parsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -51,7 +50,7 @@ SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescrip
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<ParserCSV>(schema.getSize(), physicalTypes, delimiter);
+    this->inputParser = std::make_shared<SourceParsers::SourceParserCSV>(schema.getSize(), physicalTypes, delimiter);
 }
 
 void SourceCSV::open()
@@ -77,7 +76,7 @@ void SourceCSV::open()
     input.seekg(0, std::ifstream::end);
     if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1)
     {
-        throw CannotOpenSource(fmt::format("SourceCSV::SourceCSV File {} is corrupted", filePath));
+        throw CannotOpenSource("SourceCSV::SourceCSV File {} is corrupted", filePath);
     }
     else
     {
@@ -102,13 +101,8 @@ bool SourceCSV::fillTupleBuffer(
         return false;
     }
 
-    /// Todo #72: remove TestTupleBuffer creation.
-    /// We need to create a TestTupleBuffer here, because if we do it after calling 'writeInputTupleToTupleBuffer' we repeatedly create a
-    /// TestTupleBuffer for the same TupleBuffer.
-    NES_DEBUG("BUFFER SIZE IS REALLY: {}", tupleBuffer.getBufferSize());
-    auto testTupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
-    uint64_t generatedTuplesThisPass = testTupleBuffer.getCapacity();
-    NES_TRACE("SourceCSV::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
+    auto maxTuplesInBuffer = tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    NES_TRACE("SourceCSV::fillBuffer: fill buffer with #tuples={} of size={}", maxTuplesInBuffer, tupleSize);
 
     std::string line;
     uint64_t tupleCount = 0;
@@ -120,7 +114,7 @@ bool SourceCSV::fillTupleBuffer(
         std::getline(input, line);
         currentPositionInFile = input.tellg();
     }
-    while (tupleCount < generatedTuplesThisPass)
+    while (tupleCount < maxTuplesInBuffer)
     {
         ///Check if EOF has reached
         if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1)
@@ -134,12 +128,12 @@ bool SourceCSV::fillTupleBuffer(
         std::getline(input, line);
         NES_TRACE("SourceCSV line={} val={}", tupleCount, line);
         /// #72: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, *schema, bufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, tupleBuffer, *schema, bufferManager);
         tupleCount++;
     } ///end of while
 
     currentPositionInFile = input.tellg();
-    testTupleBuffer.setNumberOfTuples(tupleCount);
+    tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("SourceCSV::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
