@@ -100,7 +100,7 @@ std::optional<std::string> checkResult(const Query& query)
                     errorMessages << ", got " << std::to_string(queryResult.size()) << "\n";
                 }
 
-                /// 5. Check if content match
+                /// 5. Check if content matches
                 std::ranges::sort(queryResult);
                 std::ranges::sort(resultLines);
 
