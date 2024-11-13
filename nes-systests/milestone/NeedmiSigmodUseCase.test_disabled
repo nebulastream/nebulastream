@@ -1,3 +1,7 @@
+# name: milestone/NeedmiSigmodUseCase.test
+# description: Queries for the SIGMOD 2025 demo
+# groups: [milestone, benchmark]
+
 # Source definition for ABP
 Source windowABP UINT64 id FLOAT64 value UINT64 timestamp
 1,72.55899567834196,1729844451
