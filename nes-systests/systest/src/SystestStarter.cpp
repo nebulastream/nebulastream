@@ -308,6 +308,10 @@ int main(int argc, const char** argv)
             {
                 singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
             }
+            else if (config.singleNodeWorkerConfig.has_value())
+            {
+                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
+            }
 
             failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);
         }
