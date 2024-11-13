@@ -301,5 +301,6 @@ CheckOptions:
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
+  # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
   readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs"
   readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs'
