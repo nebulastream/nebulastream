@@ -67,10 +67,10 @@ std::string NodeFunctionFieldAccess::toString() const
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
 {
     /// check if the access field is defined in the schema.
-    if (const auto existingField = schema->getFieldByName(fieldName))
+    if (const auto existingField = schema->getField(fieldName))
     {
-        fieldName = existingField->getName();
-        stamp = existingField->getDataType();
+        fieldName = existingField.value()->getName();
+        stamp = existingField.value()->getDataType();
         return;
     }
     throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema->toString());
