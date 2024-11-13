@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -129,19 +130,13 @@ public:
      * @param fieldName: Name of the attribute field that should be returned.
      * @return Pointer to attribute field if present, otherwise `nullptr`.
      */
-    std::optional<AttributeFieldPtr> getField(const std::string& fieldName) const;
-
-    /**
-     * @brief Finds a attribute field by name in the schema
-     * @param fieldName
-     * @return AttributeField
-     */
-    AttributeFieldPtr getFieldByName(const std::string& fieldName) const;
+    std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema
      * @param index
      * @return AttributeField
+     * @throws FieldNotFound if the field does not exist
      */
     AttributeFieldPtr getFieldByIndex(size_t index) const;
 
@@ -226,6 +221,9 @@ public:
      * @return std::vector<std::string> fieldNames
      */
     std::vector<std::string> getFieldNames() const;
+
+    auto begin() const { return std::begin(fields); }
+    auto end() const { return std::end(fields); }
 
 private:
     std::vector<AttributeFieldPtr> fields;

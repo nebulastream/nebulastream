@@ -285,14 +285,14 @@ void addBasicTypeParseFunction(
 
 CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
     : fieldDelimiter(std::move(fieldDelimiter))
-    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getSize()))
+    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getFieldCount()))
 {
-    this->fieldSizes.reserve(schema.fields.size());
-    this->fieldParseFunctions.reserve(schema.fields.size());
+    this->fieldSizes.reserve(schema.getFieldCount());
+    this->fieldParseFunctions.reserve(schema.getFieldCount());
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    physicalTypes.reserve(schema.fields.size());
-    for (const AttributeFieldPtr& field : schema.fields)
+    physicalTypes.reserve(schema.getFieldCount());
+    for (const AttributeFieldPtr& field : schema)
     {
         physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
     }

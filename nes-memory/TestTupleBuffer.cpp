@@ -143,10 +143,8 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
         return false;
     }
-
-    for (uint64_t i = 0; i < this->memoryLayout->getSchema()->getFieldCount(); i++)
+    for (const auto& field : *this->memoryLayout->getSchema())
     {
-        auto field = this->memoryLayout->getSchema()->getFieldByIndex(i);
         if (!other.memoryLayout->getSchema()->getField(field->getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
@@ -264,15 +262,15 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
+    for (const auto& field : *schema)
     {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType());
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalSizes.push_back(physicalType->size());
         types.push_back(physicalType);
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
-            schema->getFieldByIndex(i)->toString(),
+            field->toString(),
             std::string(": "),
             std::to_string(physicalType->size()));
     }
@@ -281,10 +279,10 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
+        for (const auto& field : *schema)
         {
-            str << schema->getFieldByIndex(i)->getName() << ":"
-                << physicalDataTypeFactory.getPhysicalType(schema->getFieldByIndex(i)->getDataType())->toString() << "|";
+            str << field->getName() << ":"
+                << physicalDataTypeFactory.getPhysicalType(field->getDataType())->toString() << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;

@@ -251,9 +251,8 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
         /// Lambda function for extracting the timestamp from a schema
         auto findTimeStampFieldName = [&](const SchemaPtr& schema)
         {
-            for (uint64_t i = 0; i < schema->getFieldCount(); i++)
+            for (const auto& field : *schema)
             {
-                auto field = schema->getFieldByIndex(i);
                 if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos)
                 {
                     return field->getName();
