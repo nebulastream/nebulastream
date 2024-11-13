@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Parsers/Parser.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -60,7 +60,7 @@ private:
     std::vector<PhysicalTypePtr> physicalTypes;
     size_t fileSize;
     bool skipHeader;
-    std::shared_ptr<Parser> inputParser;
+    std::shared_ptr<SourceParsers::SourceParser> inputParser;
 
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
