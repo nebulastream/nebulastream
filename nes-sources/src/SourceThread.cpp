@@ -35,13 +35,13 @@ SourceThread::SourceThread(
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<SourceParsers::SourceParserCSV> csvParser)
+    std::unique_ptr<SourceParsers::SourceParser> sourceParser)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
-    , csvParser(std::move(csvParser))
+    , sourceParser(std::move(sourceParser))
 {
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
@@ -216,7 +216,7 @@ void SourceThread::runningRoutine()
                 auto emitBufferLambda
                     = [this](Memory::TupleBuffer& buffer, bool addBufferMetaData) { emitWork(buffer, addBufferMetaData); };
 
-                bool isReceivedData = csvParser->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
+                bool isReceivedData = sourceParser->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
                 if (not isReceivedData)
                 {
                     NES_DEBUG("SourceThread {}: stopping cause of invalid buffer", originId);

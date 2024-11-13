@@ -27,7 +27,7 @@ SourceHandle::SourceHandle(
     Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<SourceParsers::SourceParserCSV> csvParser)
+    std::unique_ptr<SourceParsers::SourceParser> sourceParser)
 {
     this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId),
@@ -35,7 +35,7 @@ SourceHandle::SourceHandle(
         std::move(emitFunction),
         numSourceLocalBuffers,
         std::move(sourceImplementation),
-        std::move(csvParser));
+        std::move(sourceParser));
 }
 
 bool SourceHandle::start() const
