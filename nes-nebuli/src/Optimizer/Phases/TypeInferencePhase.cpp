@@ -76,9 +76,8 @@ void TypeInferencePhase::performTypeInferenceSources(
         schema->setLayoutType(originalSchema->getLayoutType());
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
-        for (uint64_t i = 0; i < schema->getFieldCount(); i++)
+        for (const auto& field : *schema)
         {
-            auto field = schema->getFieldByIndex(i);
             if (!field->getName().starts_with(qualifierName))
             {
                 field->setName(qualifierName + field->getName());
