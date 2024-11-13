@@ -11,40 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <API/Schema.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <SourceParsers/SourceParser.hpp>
 
-namespace NES
-{
-class PhysicalType;
-using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}
-
-namespace NES::Sources
+namespace NES::SourceParsers
 {
 
-/// Base class for all input data parsers in NES
-class Parser
+class SourceParserCSV : public SourceParser
 {
 public:
-    Parser() = default;
-    virtual ~Parser() = default;
+    SourceParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
 
-    /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
-    virtual bool writeInputTupleToTupleBuffer(
+    /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
+    bool writeInputTupleToTupleBuffer(
         std::string_view inputString,
         uint64_t tupleCount,
         NES::Memory::TupleBuffer& tupleBuffer,
         const Schema& schema,
-        NES::Memory::AbstractBufferProvider& bufferManager)
-        = 0;
+        NES::Memory::AbstractBufferProvider& bufferManager) override;
+
+private:
+    uint64_t numberOfSchemaFields;
+    std::vector<NES::PhysicalTypePtr> physicalTypes;
+    std::string delimiter;
 };
 
 }

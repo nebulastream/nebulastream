@@ -17,19 +17,19 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <SourceParsers/Parser.hpp>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParser.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Sources
+namespace NES::SourceParsers
 {
 using namespace std::string_literals;
 
-ParserCSV::ParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
+SourceParserCSV::SourceParserCSV(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter)
     : numberOfSchemaFields(numberOfSchemaFields), physicalTypes(std::move(physicalTypes)), delimiter(std::move(delimiter))
 {
 }
@@ -143,14 +143,14 @@ void writeBasicTypeToTupleBuffer(std::string inputString, int8_t* fieldPointer, 
     }
 }
 
-bool ParserCSV::writeInputTupleToTupleBuffer(
+bool SourceParserCSV::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
     NES::Memory::TupleBuffer& tupleBuffer,
     const Schema& schema,
     NES::Memory::AbstractBufferProvider& bufferProvider)
 {
-    NES_TRACE("ParserCSV::parseCSVLine: Current TupleCount:  {}", tupleCount);
+    NES_TRACE("Current TupleCount:  {}", tupleCount);
 
     std::vector<std::string> values;
     try
@@ -160,13 +160,13 @@ bool ParserCSV::writeInputTupleToTupleBuffer(
     catch (std::exception e)
     {
         throw CSVParsingError(fmt::format(
-            "ParserCSV::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
+            "An error occurred while splitting delimiter. ERROR: {}", strerror(errno)));
     }
 
     if (values.size() != schema.getSize())
     {
         throw CSVParsingError(fmt::format(
-            "ParserCSV: The input line does not contain the right number of delimited fields. Fields in schema: {}"
+            "The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
             std::to_string(schema.getSize()),

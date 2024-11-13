@@ -27,8 +27,8 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/Parser.hpp>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParser.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <Sources/SourceTCP.hpp>
@@ -74,7 +74,7 @@ SourceTCP::SourceTCP(const Schema& schema, const SourceDescriptor& sourceDescrip
     switch (inputFormat)
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<ParserCSV>(schema.getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<SourceParsers::SourceParserCSV>(schema.getSize(), physicalTypes, ",");
             break;
         default:
             throw NotImplemented("InputFormat not supported.");

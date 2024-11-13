@@ -18,7 +18,7 @@
 #include <memory>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/Parser.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <SourcesUtils/MMapCircularBuffer.hpp>
@@ -181,7 +181,7 @@ private:
     [[nodiscard]] size_t parseBufferSize(std::span<const char> data) const;
 
     std::vector<std::shared_ptr<NES::PhysicalType>> physicalTypes;
-    std::shared_ptr<Sources::Parser> inputParser;
+    std::shared_ptr<SourceParsers::SourceParser> inputParser;
     int connection = -1;
     uint64_t tupleSize;
     int sockfd = -1;

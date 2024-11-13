@@ -21,7 +21,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceRegistry.hpp>
@@ -50,7 +50,7 @@ SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescrip
         physicalTypes.push_back(physicalField);
     }
 
-    this->inputParser = std::make_shared<ParserCSV>(schema.getSize(), physicalTypes, delimiter);
+    this->inputParser = std::make_shared<SourceParsers::SourceParserCSV>(schema.getSize(), physicalTypes, delimiter);
 }
 
 void SourceCSV::open()
