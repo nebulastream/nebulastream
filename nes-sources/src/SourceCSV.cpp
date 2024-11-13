@@ -45,9 +45,9 @@ SourceCSV::SourceCSV(const Schema& schema, const SourceDescriptor& sourceDescrip
     /// Determine the physical types and create the inputParser
     /// Todo #72: remove
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint64_t j = 0; j < schema.getFieldCount(); j++)
+    for (const auto& field : schema)
     {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(schema.getFieldByIndex(j)->getDataType());
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
 

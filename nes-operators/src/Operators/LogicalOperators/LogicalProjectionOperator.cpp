@@ -159,9 +159,9 @@ void LogicalProjectionOperator::inferStringSignature()
     }
     std::stringstream signatureStream;
     std::vector<std::string> fields;
-    for (uint64_t i = 0; i < outputSchema->getFieldCount(); i++)
+    for (const auto& field : *outputSchema)
     {
-        fields.push_back(outputSchema->getFieldByIndex(i)->getName());
+        fields.push_back(field->getName());
     }
     std::sort(fields.begin(), fields.end());
     signatureStream << "PROJECTION(";

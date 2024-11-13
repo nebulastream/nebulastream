@@ -27,9 +27,8 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
 {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
     /// serialize all field in schema
-    for (uint64_t i = 0; i < schema->getFieldCount(); i++)
+    for (const auto& field : *schema)
     {
-        auto field = schema->getFieldByIndex(i);
         auto* serializedField = serializedSchema->add_fields();
         serializedField->set_name(field->getName());
         /// serialize data type
