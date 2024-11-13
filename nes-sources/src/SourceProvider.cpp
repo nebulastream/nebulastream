@@ -18,7 +18,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/SourceRegistry.hpp>
+#include <SourceRegistry.hpp>
 #include <SourceParsers/SourceParserProvider.hpp>
 
 namespace NES::Sources

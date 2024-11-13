@@ -20,9 +20,9 @@
 #include <utility>
 #include <vector>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceFile.hpp>
-#include <Sources/SourceRegistry.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
+#include <SourceFile.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/std.h>
 #include <ErrorHandling.hpp>

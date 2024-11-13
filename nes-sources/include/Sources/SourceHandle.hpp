@@ -15,13 +15,17 @@
 #pragma once
 
 #include <memory>
+#include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceThread.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
 namespace NES::Sources
 {
+
+/// Hides SourceThread implementation.
+class SourceThread;
 
 /// Interface class to handle sources.
 /// Created from a source descriptor via the SourceProvider.
@@ -39,7 +43,7 @@ public:
         std::unique_ptr<Source> sourceImplementation,
         std::unique_ptr<SourceParsers::SourceParser> sourceParser);
 
-    ~SourceHandle() = default;
+    ~SourceHandle();
 
     bool start() const;
     bool stop() const;
