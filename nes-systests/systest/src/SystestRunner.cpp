@@ -112,6 +112,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
                 return;
             }
+            ++sourceIndex;
 
             /// Write tuples to csv file
             for (const auto& tuple : source.tuples)
