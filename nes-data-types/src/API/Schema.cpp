@@ -109,25 +109,42 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
     }
 }
 
-AttributeFieldPtr Schema::getFieldByName(const std::string& fieldName) const
+std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) const
 {
-    /// This does not work for fields with the same name but different qualifiers
-    /// The whole class is a little bit broken. There are several methods that have quite similar names and do similar things.
-    /// Additionally, it is not clear when and how to use what method to interact with the schema and the underlying attribute fields.
+    ///Check if the field name is with fully qualified name
+    auto stringToMatch = fieldName;
+    if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    {
+        ///Add only attribute name separator
+        ///caution: adding the fully qualified name may result in undesired behavior
+        ///E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
+        ///system should throw invalid field exception
+        stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
+    }
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
-    auto fieldNameToSearchFor = fieldName;
-    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
-        && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+
+    ///Iterate over all fields and look for field which fully qualified name
+    std::vector<AttributeFieldPtr> matchedFields;
+    for (auto& field : fields)
     {
-        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
+        auto fullyQualifiedFieldName = field->getName();
+        if (stringToMatch.length() <= fullyQualifiedFieldName.length())
+        {
+            ///Check if the field name ends with the input field name
+            auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
+            auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
+            if (found == 0)
+            {
+                matchedFields.push_back(field);
+            }
+        }
     }
-
-
-    if (auto fieldFound = std::ranges::find(fields, fieldNameToSearchFor, &AttributeField::getName); fieldFound != fields.end())
+    ///Check how many matching fields were found and raise appropriate exception
+    if (matchedFields.size() == 1)
     {
-        return *fieldFound;
+        return matchedFields[0];
     }
-
+    INVARIANT(matchedFields.size() > 1,  "Schema: Found ambiguous field with name {}", fieldName);
     throw FieldNotFound("field {}  does not exist", fieldName);
 }
 
@@ -213,44 +230,6 @@ bool Schema::contains(const std::string& fieldName) const
         }
     }
     return false;
-}
-
-std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) const
-{
-    ///Check if the field name is with fully qualified name
-    auto stringToMatch = fieldName;
-    if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        ///Add only attribute name separator
-        ///caution: adding the fully qualified name may result in undesired behavior
-        ///E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
-        ///system should throw invalid field exception
-        stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
-    }
-
-    ///Iterate over all fields and look for field which fully qualified name
-    std::vector<AttributeFieldPtr> matchedFields;
-    for (auto& field : fields)
-    {
-        auto fullyQualifiedFieldName = field->getName();
-        if (stringToMatch.length() <= fullyQualifiedFieldName.length())
-        {
-            ///Check if the field name ends with the input field name
-            auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
-            auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
-            if (found == 0)
-            {
-                matchedFields.push_back(field);
-            }
-        }
-    }
-    ///Check how many matching fields were found and raise appropriate exception
-    if (matchedFields.size() == 1)
-    {
-        return matchedFields[0];
-    }
-    INVARIANT(matchedFields.size() > 1,  "Schema: Found ambiguous field with name {}", fieldName);
-    return {};
 }
 
 void Schema::clear()
