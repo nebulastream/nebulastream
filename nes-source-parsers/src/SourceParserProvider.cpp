@@ -13,7 +13,7 @@
 */
 
 #include <SourceParsers/SourceParserProvider.hpp>
-#include <SourceParsers/SourceParserRegistry.hpp>
+#include <SourceParserRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::SourceParsers::SourceParserProvider

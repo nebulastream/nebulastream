@@ -31,5 +31,5 @@ class SourceParserRegistry : public BaseRegistry<SourceParserRegistry, SourcePar
 }
 
 #define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#include <SourceParsers/SourceParserGeneratedRegistrar.hpp>
+#include <SourceParserGeneratedRegistrar.hpp>
 #undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
