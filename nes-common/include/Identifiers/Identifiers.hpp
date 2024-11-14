@@ -18,8 +18,6 @@
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
 
-#define UNSURE_CONVERSION_TODO_4761(from, to) (to(from.getRawValue()))
-
 namespace NES
 {
 
@@ -34,6 +32,8 @@ using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 using Timestamp = NESStrongType<uint64_t, struct Timestamp_, UINT64_MAX, 0>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
+using SliceStart = Timestamp;
+using SliceEnd = Timestamp;
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
@@ -62,11 +62,21 @@ static constexpr Timestamp INITIAL_WATERMARK_TS_NUMBER = INITIAL<Timestamp>;
 
 static constexpr Timestamp INITIAL_CREATION_TS_NUMBER = INITIAL<Timestamp>;
 
-/// Special overloads for commonly occuring patterns
+/// Special overloads for commonly occurring patterns
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets
 inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
     return id.getRawValue() % containerSize;
+}
+
+/// overload modulo operator for Timestamp as it is commonly used to calculate the difference between two timestamps
+inline Timestamp operator+(const Timestamp ts, const uint64_t offset)
+{
+    return Timestamp(ts.getRawValue() + offset);
+}
+inline Timestamp operator+=(const Timestamp ts, const uint64_t offset)
+{
+    return Timestamp(ts.getRawValue() + offset);
 }
 
 }
