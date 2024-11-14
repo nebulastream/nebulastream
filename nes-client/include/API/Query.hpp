@@ -380,6 +380,14 @@ public:
     Query& selection(NodeFunctionPtr const& filterFunction);
 
     /**
+     * @brief: Sort each buffer by the given field.
+     * @param sortFieldIdentifier field identifier to sort by
+     * @param sortOrder sort order
+     * @return the query
+     */
+    Query& sortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder);
+
+    /**
      * @brief: Limit the number of records according to the limit count.
      * @param limitCount
      * @return the query

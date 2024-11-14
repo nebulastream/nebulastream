@@ -23,6 +23,7 @@ add_source_files(nes-operators
         LogicalUnaryOperator.cpp
         LogicalLimitOperator.cpp
         LogicalBatchJoinDescriptor.cpp
+        LogicalSortBufferOperator.cpp
 )
 
 add_subdirectory(Sinks)

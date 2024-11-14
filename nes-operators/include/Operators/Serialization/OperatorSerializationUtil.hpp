@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -66,6 +67,10 @@ public:
     static LogicalUnaryOperatorPtr deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
 
     static void serializeSelectionOperator(const LogicalSelectionOperator& selectionOperator, SerializableOperator& serializedOperator);
+
+    static void serializeSortBufferOperator(const LogicalSortBufferOperator& sortBufferOperator, SerializableOperator& serializedOperator);
+
+    static LogicalUnaryOperatorPtr deserializeSortBufferOperator(const SerializableOperator_SortBufferDetails& sortBufferDetails);
 
     static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator);
 

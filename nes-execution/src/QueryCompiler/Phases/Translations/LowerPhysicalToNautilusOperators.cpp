@@ -22,6 +22,7 @@
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Selection.hpp>
+#include <Execution/Operators/SortBuffer.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJBuild.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
@@ -43,6 +44,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
@@ -51,6 +53,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include "Execution/MemoryProvider/TupleBufferMemoryProvider.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -126,6 +129,18 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto filter = lowerFilter(operatorNode);
         parentOperator->setChild(filter);
         return filter;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode))
+    {
+        // Add sort buffer operator handler
+        // auto sortBufferHandler = operatorNode->as<PhysicalOperators::PhysicalSortBufferOperator>()->getSortBufferOperatorHandler();
+        // NES_DEBUG("Added sortBufferOpHandler to operatorHandlers!");
+        // operatorHandlers.push_back(sortBufferHandler);
+        // auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto sortBufferOperator = lowerSortBufferOperator(operatorNode, /*handlerIndex,*/ bufferSize);
+        pipeline.setRootOperator(sortBufferOperator);
+        return sortBufferOperator;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(operatorNode))
     {
@@ -249,6 +264,24 @@ LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalO
     auto filterOperator = NES::Util::as<PhysicalOperators::PhysicalSelectionOperator>(operatorPtr);
     auto function = FunctionProvider::lowerFunction(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator>
+LowerPhysicalToNautilusOperators::lowerSortBufferOperator(const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+                                                        //   uint64_t operatorHandlerIndex,
+                                                          size_t bufferSize) {
+    auto schema = operatorNode->getOutputSchema();
+    NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+    // pass buffer size here
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+
+    auto sortBufferOperator = NES::Util::as<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode);
+    return std::make_shared<Runtime::Execution::Operators::SortBuffer>(
+        /*operatorHandlerIndex,*/ std::move(memoryProvider),
+        sortBufferOperator->getSortFieldIdentifier(),
+        sortBufferOperator->getSortOrder());;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

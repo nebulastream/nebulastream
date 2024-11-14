@@ -91,6 +91,13 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
     return queryPlan;
 }
 
+QueryPlanPtr QueryPlanBuilder::addSortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder, QueryPlanPtr queryPlan) {
+    NES_DEBUG("QueryPlanBuilder: add sort buffer operator to query plan");
+    OperatorPtr op = LogicalOperatorFactory::createSortBufferOperator(sortFieldIdentifier, sortOrder);
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
 QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr queryPlan)
 {
     NES_TRACE("QueryPlanBuilder: add limit operator to query plan");

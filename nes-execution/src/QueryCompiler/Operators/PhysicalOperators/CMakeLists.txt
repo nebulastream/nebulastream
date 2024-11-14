@@ -24,6 +24,7 @@ add_source_files(nes-execution
         PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
+        PhysicalSortBufferOperator.cpp
 )
 
 add_subdirectory(Joining)

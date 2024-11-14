@@ -26,6 +26,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -77,6 +78,11 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     else if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
     {
         serializeSelectionOperator(*NES::Util::as<LogicalSelectionOperator>(operatorNode), serializedOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalSortBufferOperator>(operatorNode))
+    {
+        /// serialize sort buffer operator
+        serializeSortBufferOperator(*NES::Util::as<LogicalSortBufferOperator>(operatorNode), serializedOperator);
     }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
@@ -538,6 +544,14 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         details.UnpackTo(&serializedSelectionOperator);
         operatorNode = deserializeSelectionOperator(serializedSelectionOperator);
     }
+    else if (details.Is<SerializableOperator_SortBufferDetails>())
+    {
+        /// de-serialize sort buffer operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to SortBufferLogicalOperator");
+        auto serializedSortBufferOperator = SerializableOperator_SortBufferDetails();
+        details.UnpackTo(&serializedSortBufferOperator);
+        operatorNode = deserializeSortBufferOperator(serializedSortBufferOperator);
+    }
     else if (details.Is<SerializableOperator_ProjectionDetails>())
     {
         /// de-serialize projection operator
@@ -722,6 +736,21 @@ void OperatorSerializationUtil::serializeSelectionOperator(
     auto selectionDetails = SerializableOperator_SelectionDetails();
     FunctionSerializationUtil::serializeFunction(filterOperator.getPredicate(), selectionDetails.mutable_predicate());
     serializedOperator.mutable_details()->PackFrom(selectionDetails);
+}
+
+void OperatorSerializationUtil::serializeSortBufferOperator(
+    const LogicalSortBufferOperator& sortBufferOperator, SerializableOperator& serializedOperator)
+{
+    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalSortBufferOperator");
+    auto sortBufferDetails = SerializableOperator_SortBufferDetails();
+    sortBufferDetails.set_sortfieldidentifier(sortBufferOperator.getSortFieldIdentifier());
+    sortBufferDetails.set_sortorder(sortBufferOperator.getSortOrder());
+    serializedOperator.mutable_details()->PackFrom(sortBufferDetails);
+}
+
+LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSortBufferOperator(const SerializableOperator_SortBufferDetails& sortBufferDetails)
+{
+    return LogicalOperatorFactory::createSortBufferOperator(sortBufferDetails.sortfieldidentifier(), sortBufferDetails.sortorder(), getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeProjectionOperator(

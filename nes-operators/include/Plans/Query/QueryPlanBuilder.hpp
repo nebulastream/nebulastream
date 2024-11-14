@@ -63,6 +63,16 @@ public:
     static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
 
     /**
+     * @brief: this call add the sort buffer operator to the queryPlan, the operator sorts the records in a buffer according
+     * to the gien field and order.
+     * @param sortFieldIdentifier field identifier to sort by
+     * @param sortOrder sort order
+     * @param queryPlanPtr the queryPlan the sort buffer node is added to
+     * @return the updated queryPlan
+     */
+    static QueryPlanPtr addSortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder, QueryPlanPtr queryPlan);
+
+    /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
      * @param filterFunction as function node containing the predicate
      * @param queryPlanPtr the queryPlan the filter node is added to

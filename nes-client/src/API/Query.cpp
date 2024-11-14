@@ -328,6 +328,12 @@ Query& Query::selection(const std::shared_ptr<NodeFunction>& selectionFunction)
     return *this;
 }
 
+Query& Query::sortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder) {
+    NES_DEBUG("Query: add sort buffer operator to query");
+    this->queryPlan = QueryPlanBuilder::addSortBuffer(sortFieldIdentifier, sortOrder, this->queryPlan);
+    return *this;
+}
+
 Query& Query::limit(const uint64_t limit)
 {
     NES_DEBUG("Query: add limit operator to query");
