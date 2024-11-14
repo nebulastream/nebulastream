@@ -13,6 +13,8 @@
 */
 #pragma once
 #include <Execution/Operators/Operator.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

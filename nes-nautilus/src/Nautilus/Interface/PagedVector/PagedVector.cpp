@@ -52,8 +52,7 @@ void PagedVector::appendPageIfFull()
 void PagedVector::appendAllPages(PagedVector& other)
 {
     PRECONDITION(
-        memoryLayout->getSchema()->hasEqualTypes(other.memoryLayout->getSchema()),
-        "Cannot combine PagedVectors with different PhysicalTypes!");
+        *memoryLayout->getSchema() == (*other.memoryLayout->getSchema()), "Cannot combine PagedVectors with different PhysicalTypes!");
 
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
     other.pages.clear();
@@ -93,7 +92,6 @@ uint64_t PagedVector::getBufferPosForEntry(const uint64_t entryPos) const
     throw BufferAccessException("EntryPos {} exceeds the number of entries in the PagedVector {}!", entryPos, getTotalNumberOfEntries());
 }
 
-
 uint64_t PagedVector::getTotalNumberOfEntries() const
 {
     auto totalNumEntries = 0UL;
@@ -118,5 +116,4 @@ uint64_t PagedVector::getNumberOfPages() const
 {
     return pages.size();
 }
-
 }

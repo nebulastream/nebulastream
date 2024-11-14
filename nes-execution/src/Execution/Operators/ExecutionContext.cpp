@@ -13,14 +13,15 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <val_ptr.hpp>
 
@@ -52,7 +53,7 @@ Memory::TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
     return tb;
 }
 
-nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer()
+nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
     return bufferPtr;
@@ -72,7 +73,7 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer*
     delete tb;
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer)
+void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
 {
     nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
@@ -82,7 +83,7 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
     return pec->getId();
 }
 
-nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId()
+nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
 {
     return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
 }
@@ -117,7 +118,7 @@ OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelin
     return handlers[index].get();
 }
 
-nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
+nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const uint64_t handlerIndex) const
 {
     const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);

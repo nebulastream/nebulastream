@@ -23,11 +23,13 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <val_ptr.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <nautilus/val_concepts.hpp>
 
 namespace NES::Runtime::Execution
 {
 using namespace Nautilus;
-class RecordBuffer;
 
 namespace Operators
 {
@@ -57,7 +59,7 @@ struct ExecutionContext final
 
 
     /// Emit a record buffer to the next pipeline or sink
-    void emitBuffer(const RecordBuffer& buffer);
+    void emitBuffer(const RecordBuffer& buffer) const;
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;

@@ -55,7 +55,7 @@ protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline();
+    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline() const;
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> pipelineFunctionCompiled;
     std::vector<OperatorHandlerPtr> operatorHandlers;

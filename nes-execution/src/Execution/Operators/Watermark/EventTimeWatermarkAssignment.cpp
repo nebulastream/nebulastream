@@ -16,8 +16,6 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Common.hpp>

@@ -42,7 +42,23 @@ if (NOT CODE_COVERAGE)
     add_test(systest_compiler systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=10000)
 endif (NOT CODE_COVERAGE)
 
+# We wish to run all join tests with a small, medium and large page size while also setting the threads to 1, 2, 4 for the worker
+set(workerThreads 1 2 4 8)
+foreach(workerThreads IN LISTS workerThreads)
+    add_test(
+            NAME systest_join_${workerThreads}_interpreter
+            COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter
+                            --
+                            --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
 
+    if (NOT CODE_COVERAGE)
+        add_test(
+                NAME systest_join_${workerThreads}_compiler
+                COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
+                                --
+                                --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
+    endif (NOT CODE_COVERAGE)
+endforeach()
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})

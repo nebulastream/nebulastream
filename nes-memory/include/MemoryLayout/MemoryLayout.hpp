@@ -60,6 +60,8 @@ public:
      * @param schema A memory layout is always created for a specific schema.
      */
     MemoryLayout(uint64_t bufferSize, std::shared_ptr<Schema> schema);
+    MemoryLayout(const MemoryLayout&) = default;
+
     virtual ~MemoryLayout() = default;
 
     /**
@@ -80,6 +82,7 @@ public:
      * @return BufferSize in bytes.
      */
     [[nodiscard]] uint64_t getBufferSize() const;
+    void setBufferSize(uint64_t bufferSize);
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
@@ -139,6 +142,8 @@ public:
      */
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
 
+    virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
+
     /**
      * @brief Comparator methods
      * @param rhs
@@ -148,7 +153,7 @@ public:
     bool operator!=(const MemoryLayout& rhs) const;
 
 protected:
-    const uint64_t bufferSize;
+    uint64_t bufferSize;
     std::shared_ptr<Schema> schema;
     uint64_t recordSize;
     uint64_t capacity;
