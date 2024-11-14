@@ -50,9 +50,9 @@ void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const Var
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record)
 {
-    for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(record.recordFields))
+    for (const auto& [_, value] : nautilus::static_iterable(record.recordFields))
     {
-        os << fieldIdentifier.c_str() << ": " << value << ", ";
+        os << value << ", ";
     }
     return os;
 }
@@ -62,5 +62,14 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
     return recordFields.size();
 }
 
+bool Record::operator==(const Record& rhs) const
+{
+    return recordFields == rhs.recordFields;
+}
+
+bool Record::operator!=(const Record& rhs) const
+{
+    return !(rhs == *this);
+}
 
 }

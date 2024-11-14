@@ -14,7 +14,6 @@
 
 #pragma once
 
-
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
@@ -22,14 +21,10 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
+
 namespace NES::Nautilus
 {
 class Record;
-}
-
-namespace NES::Runtime::Execution
-{
-using namespace Nautilus;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.

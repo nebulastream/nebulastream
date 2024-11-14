@@ -11,20 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <MemoryLayout/ColumnLayout.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+#pragma once
+
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
-/// Implements MemoryProvider. Provides columnar memory access.
-class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
+/// Implements MemoryProvider. Provides row-wise memory access.
+class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider
 {
 public:
-    /// Creates a column memory provider based on a valid column memory layout pointer.
-    ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
-    ~ColumnTupleBufferMemoryProvider() = default;
+    /// Creates a row memory provider based on a valid row memory layout pointer.
+    RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
+    ~RowTupleBufferMemoryProvider() override = default;
 
     Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
@@ -36,9 +39,9 @@ public:
     void writeRecord(nautilus::val<uint64_t>& recordIndex, const RecordBuffer& recordBuffer, const Record& rec) const override;
 
 private:
-    nautilus::val<int8_t*>
-    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
-    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
+    [[nodiscard]] nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
+
+    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr;
 };
 
 }

@@ -32,6 +32,16 @@ constexpr Type to_type()
 }
 }
 
+
+namespace details
+{
+template <typename T, typename Tag, T Invalid, T Initial>
+T inline getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
+
+template <typename T, typename Tag, T Invalid, T Initial>
+tracing::TypedValueRef inline getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
+}
+
 /// This class is a nautilus wrapper for our NESStrongType
 template <typename T, typename Tag, T Invalid, T Initial>
 class val<NES::NESStrongType<T, Tag, Invalid, Initial>>
@@ -62,7 +72,10 @@ public:
     [[nodiscard]] friend bool operator>=(const val& lh, const val& rh) noexcept { return lh.value >= rh.value; }
     [[nodiscard]] friend bool operator==(const val& lh, const val& rh) noexcept { return lh.value == rh.value; }
 
+    friend T inline details::getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
+    friend tracing::TypedValueRef inline details::getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
 
+private:
     val<Underlying> value;
 };
 

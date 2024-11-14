@@ -14,12 +14,12 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <nautilus/val_ptr.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 RowTupleBufferMemoryProvider::RowTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr)
