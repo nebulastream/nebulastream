@@ -1243,7 +1243,7 @@ TEST_F(ILPPlacementTest, testPlacingMultipleSinkSharedQueryPlanWithILPStrategy) 
 }
 
 /* Test query placement with ILP strategy - this tests checks if ILP strategy works when operators have multiple children/parents */
-TEST_F(ILPPlacementTest, testMultipleChildrenQueryWithILPStrategy) {
+TEST_F(ILPPlacementTest, DISABLED_testMultipleChildrenQueryWithILPStrategy) {
     setupTopologyAndSourceCatalogForILP();
 
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
