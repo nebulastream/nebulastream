@@ -119,6 +119,19 @@ const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
     return physicalTypes;
 }
 
+std::vector<std::string> MemoryLayout::getKeyFieldNames() const
+{
+    return keyFieldNames;
+}
+
+void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
+{
+    for (const auto& field : keyFields)
+    {
+        keyFieldNames.emplace_back(field);
+    }
+}
+
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
     return bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity

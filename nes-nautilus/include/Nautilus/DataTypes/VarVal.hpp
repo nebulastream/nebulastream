@@ -16,6 +16,7 @@
 
 #include <variant>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/std/sstream.h>

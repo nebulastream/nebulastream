@@ -18,12 +18,19 @@
 #include <functional>
 #include <unordered_map>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <nautilus/val.hpp>
+#include <cstdint>
 #include <nautilus/val_ptr.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <val_concepts.hpp>
 
 namespace NES::Nautilus::Util
 {
+
+template <typename T>
+void writeValueToMemRef(nautilus::val<int8_t*> memRef, nautilus::val<T> value)
+{
+    *static_cast<nautilus::val<T*>>(memRef) = value;
+}
 
 template <typename T>
 nautilus::val<T> readValueFromMemRef(nautilus::val<int8_t*> memRef)
