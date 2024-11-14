@@ -145,7 +145,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     }
     for (const auto& field : *this->memoryLayout->getSchema())
     {
-        if (!other.memoryLayout->getSchema()->getField(field->getName()))
+        if (!other.memoryLayout->getSchema()->getFieldByName(field->getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
             return false;
@@ -281,8 +281,7 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
         str << "|";
         for (const auto& field : *schema)
         {
-            str << field->getName() << ":"
-                << physicalDataTypeFactory.getPhysicalType(field->getDataType())->toString() << "|";
+            str << field->getName() << ":" << physicalDataTypeFactory.getPhysicalType(field->getDataType())->toString() << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;
