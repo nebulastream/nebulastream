@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.6.193](https://github.com/nebulastream/nebulastream/tree/v0.6.193) (2024-11-14)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.192...v0.6.193)
+
+**Implemented enhancements:**
+
+- \[TASK\] Complex Joins - Constant value expressions [\#5073](https://github.com/nebulastream/nebulastream/issues/5073)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Missing dot in the github release [\#5131](https://github.com/nebulastream/nebulastream/issues/5131)
+
 ## [v0.6.192](https://github.com/nebulastream/nebulastream/tree/v0.6.192) (2024-11-07)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.191...v0.6.192)
