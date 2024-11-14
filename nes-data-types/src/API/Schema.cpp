@@ -14,6 +14,7 @@
 
 #include <Configurations/Coordinator/SchemaType.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
@@ -137,16 +138,17 @@ AttributeFieldPtr Schema::get(const std::string& fieldName) const
     if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
         && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
+        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldNameToSearchFor;
     }
 
 
-    if (auto fieldFound = std::ranges::find(fields, fieldNameToSearchFor, &AttributeField::getName); fieldFound != fields.end())
+    if (const auto fieldFound = std::ranges::find(fields, fieldNameToSearchFor, &AttributeField::getName); fieldFound != fields.end())
     {
         return *fieldFound;
     }
 
-    throw FieldNotFound("field {}  does not exist", fieldName);
+    NES_WARNING("field {}  does not exist", fieldName);
+    return nullptr;
 }
 
 AttributeFieldPtr Schema::get(uint32_t index)
@@ -156,7 +158,7 @@ AttributeFieldPtr Schema::get(uint32_t index)
         return fields[index];
     }
     NES_FATAL_ERROR("Schema: No field in the schema with the id {}", index);
-    throw FieldNotFound("field {}  does not exist", std::to_string(index));
+    throw FieldNotFound("field with index {} does not exist", std::to_string(index));
 }
 
 bool Schema::equals(const SchemaPtr& schema, bool considerOrder)

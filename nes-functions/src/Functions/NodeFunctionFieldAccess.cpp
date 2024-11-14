@@ -61,12 +61,18 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return std::format("NodeFunctionFieldAccess( {} + [ {} ])", fieldName, stamp->toString());
+    return std::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp->toString());
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
 {
     /// check if the access field is defined in the schema.
+    if (const auto existingField = schema->getField(fieldName))
+    {
+        fieldName = existingField->getName();
+        stamp = existingField->getDataType();
+        return;
+    }
     if (const auto existingField = schema->get(fieldName))
     {
         fieldName = existingField->getName();

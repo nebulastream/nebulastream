@@ -29,13 +29,8 @@ LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), Logi
 
 bool LogicalBinaryOperator::inferSchema()
 {
-    PRECONDITION(children.size() >= 2, "BinaryOperator: this node should have at least two child operators");
+    PRECONDITION(children.size() == 2, "BinaryOperator: this node should have exactly two child operators");
     distinctSchemas.clear();
-    ///Check the number of child operators
-    if (children.size() < 2)
-    {
-        throw CannotInferSchema("BinaryOperator: this node should have at least two child operators");
-    }
 
     /// Infer schema of all child operators
     for (const auto& child : children)
@@ -61,7 +56,7 @@ bool LogicalBinaryOperator::inferSchema()
     }
 
     ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() > 2, "BinaryOperator: this node should have at least two child operators");
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     return true;
 }

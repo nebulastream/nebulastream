@@ -27,6 +27,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
@@ -72,28 +73,20 @@ bool LogicalJoinOperator::inferSchema()
     leftInputSchema->clear();
     rightInputSchema->clear();
 
-    /// Finds the join schema that contains the joinKey and returns an iterator to the schema
+    /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
     auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, const SchemaPtr& inputSchema)
     {
         for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
         {
-            bool fieldExistsInSchema;
             const auto joinKeyName = joinKey.getFieldName();
-            /// If field name contains qualifier
-            if (joinKeyName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+            if (const auto attributeField = (*itr)->getField(joinKeyName))
             {
-                fieldExistsInSchema = (*itr)->contains(joinKeyName);
-            }
-            else
-            {
-                fieldExistsInSchema = ((*itr)->getField(joinKeyName) != nullptr);
-            }
-
-            if (fieldExistsInSchema)
-            {
-                inputSchema->copyFields(*itr);
+                /// If we have not copied the fields from the schema, copy them for the first time
+                if (inputSchema->getSize() == 0)
+                {
+                    inputSchema->copyFields(*itr);
+                }
                 joinKey.inferStamp(inputSchema);
-                distinctSchemas.erase(itr);
                 return true;
             }
             ++itr;
@@ -101,21 +94,16 @@ bool LogicalJoinOperator::inferSchema()
         return false;
     };
 
-    NES_DEBUG("LogicalJoinOperator: Iterate over all NodeFunction to if check join field is in schema.");
+    NES_DEBUG("LogicalJoinOperator: Iterate over all NodeFunction to check if join field is in schema.");
     /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
     auto bfsIterator = BreadthFirstNodeIterator(joinDefinition->getJoinFunction());
     for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
     {
-        if (NES::Util::as<NodeFunctionBinary>(*itr))
+        if (NES::Util::instanceOf<NodeFunctionBinary>(*itr))
         {
             auto visitingOp = NES::Util::as<NodeFunctionBinary>(*itr);
-            if (visitedFunctions.contains(visitingOp))
-            {
-                /// skip rest of the steps as the node found in already visited node list
-                continue;
-            }
-            else
+            if (not visitedFunctions.contains(visitingOp))
             {
                 visitedFunctions.insert(visitingOp);
                 if (!Util::instanceOf<NodeFunctionBinary>(Util::as<NodeFunctionBinary>(*itr)->getLeft()))
@@ -126,14 +114,14 @@ bool LogicalJoinOperator::inferSchema()
                     const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
                     if (!foundLeftKey)
                     {
-                        throw CannotInferSchema("unable to find left join key {} in schemas", leftJoinKeyName);
+                        throw CannotInferSchema("unable to find left join key \"{}\" in schemas", leftJoinKeyName);
                     }
                     const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getRight());
                     const auto rightJoinKeyName = rightJoinKey->getFieldName();
                     const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
                     if (!foundRightKey)
                     {
-                        throw CannotInferSchema("unable to find right join key {} in schemas", rightJoinKeyName);
+                        throw CannotInferSchema("unable to find right join key \"{}\" in schemas", rightJoinKeyName);
                     }
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedFunctions.insert(visitingOp);
@@ -184,6 +172,8 @@ bool LogicalJoinOperator::inferSchema()
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
+    NES_DEBUG("LeftInput schema for join={}", leftInputSchema->toString());
+    NES_DEBUG("RightInput schema for join={}", rightInputSchema->toString());
     NES_DEBUG("Output schema for join={}", outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     joinDefinition->updateSourceTypes(leftInputSchema, rightInputSchema);

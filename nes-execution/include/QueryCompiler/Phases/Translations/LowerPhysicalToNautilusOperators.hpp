@@ -51,7 +51,8 @@ private:
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-        size_t bufferSize);
+        size_t bufferSize,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);

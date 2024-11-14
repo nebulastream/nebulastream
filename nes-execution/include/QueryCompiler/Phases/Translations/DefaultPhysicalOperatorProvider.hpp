@@ -12,13 +12,16 @@
     limitations under the License.
 */
 #pragma once
+
 #include <vector>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+
 namespace NES::QueryCompilation
 {
 
@@ -55,15 +58,15 @@ struct StreamJoinOperators
 struct StreamJoinConfigs
 {
     StreamJoinConfigs(
-        const std::string& joinFieldNameLeft,
-        const std::string& joinFieldNameRight,
+        const std::vector<std::string>& joinFieldNamesLeft,
+        const std::vector<std::string>& joinFieldNamesRight,
         const uint64_t windowSize,
         const uint64_t windowSlide,
         const TimestampField& timeStampFieldLeft,
         const TimestampField& timeStampFieldRight,
         const StreamJoinStrategy& joinStrategy)
-        : joinFieldNameLeft(joinFieldNameLeft)
-        , joinFieldNameRight(joinFieldNameRight)
+        : joinFieldNamesLeft(joinFieldNamesLeft)
+        , joinFieldNamesRight(joinFieldNamesRight)
         , windowSize(windowSize)
         , windowSlide(windowSlide)
         , timeStampFieldLeft(timeStampFieldLeft)
@@ -71,9 +74,8 @@ struct StreamJoinConfigs
         , joinStrategy(joinStrategy)
     {
     }
-
-    const std::string& joinFieldNameLeft;
-    const std::string& joinFieldNameRight;
+    std::vector<std::string> joinFieldNamesLeft;
+    std::vector<std::string> joinFieldNamesRight;
     const uint64_t windowSize;
     const uint64_t windowSlide;
     const TimestampField& timeStampFieldLeft;
@@ -118,10 +120,15 @@ protected:
 
     void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
 
+    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
     OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
 private:
+    /// Lowers the stream nested loop join
+    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler>
+    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
+
     /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
     [[nodiscard]] std::shared_ptr<Node>
     replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties, const LogicalOperatorPtr& operatorNode);

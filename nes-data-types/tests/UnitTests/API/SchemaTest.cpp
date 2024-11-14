@@ -143,15 +143,21 @@ TEST_F(SchemaTest, removeFieldsTest)
     }
 
     /// Removing fields while we still have one field
-    while (testSchema->getSize() > 0)
+    while (testSchema->getSize() > 1)
     {
         const auto rndPos = rand() % testSchema->getSize();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
-        EXPECT_ANY_THROW(testSchema->get(fieldToRemove->getName()));
+        EXPECT_EQ(testSchema->get(fieldToRemove->getName()), nullptr);
 
         rndFields.erase(rndFields.begin() + rndPos);
     }
+
+    /// For the last field, we have to remove it here, as we expect an exception
+    const auto rndPos = rand() % testSchema->getSize();
+    const auto& fieldToRemove = rndFields[rndPos];
+    EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
+    ASSERT_EXCEPTION_ERRORCODE(testSchema->get(fieldToRemove->getName()), ErrorCode::PreconditionViolated);
 }
 
 TEST_F(SchemaTest, replaceFieldTest)
