@@ -41,7 +41,7 @@ inline void
 Registrar<Sources::SourceRegistryValidation, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrarValidation;
-    registry.registerPlugin("CSV", RegisterSourceValidationFile);
+    registry.registerPlugin("File", RegisterSourceValidationFile);
     registry.registerPlugin("TCP", RegisterSourceValidationTCP);
 }
 }

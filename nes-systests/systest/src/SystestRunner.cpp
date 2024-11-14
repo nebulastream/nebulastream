@@ -94,7 +94,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 }()});
 
             config.physical.emplace_back(
-                CLI::PhysicalSource{.logical = source.name, .config = {{"type", "CSV"}, {"filePath", source.csvFilePath}}});
+                CLI::PhysicalSource{.logical = source.name, .config = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
@@ -117,7 +117,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
+                .config = {{"type", "File"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
 
             /// Write the tuples to a tmp file
             std::ofstream sourceFile(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");

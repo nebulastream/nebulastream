@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #include <chrono>
-#include <memory>
 #include <functional>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>

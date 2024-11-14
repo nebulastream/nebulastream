@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        SourceCSV.cpp
+        SourceFile.cpp
         SourceThread.cpp
         SourceDescriptor.cpp
         Source.cpp
