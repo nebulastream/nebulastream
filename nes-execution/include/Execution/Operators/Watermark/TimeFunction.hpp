@@ -20,13 +20,12 @@
 namespace NES::Nautilus
 {
 class Record;
+class RecordBuffer;
 }
 
 namespace NES::Runtime::Execution
 {
-class RecordBuffer;
 struct ExecutionContext;
-
 }
 
 namespace NES::Runtime::Execution::Operators
@@ -42,7 +41,7 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 class TimeFunction
 {
 public:
-    virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
+    virtual void open(Execution::ExecutionContext& ctx, RecordBuffer& buffer) = 0;
     virtual nautilus::val<Timestamp> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
@@ -54,7 +53,7 @@ class EventTimeFunction final : public TimeFunction
 {
 public:
     explicit EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit);
-    void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
+    void open(Execution::ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
 private:

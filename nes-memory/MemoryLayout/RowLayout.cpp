@@ -29,6 +29,10 @@ RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(buffe
     }
 }
 
+RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets(other.fieldOffSets)
+{
+}
+
 std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
     return std::make_shared<RowLayout>(schema, bufferSize);
@@ -60,4 +64,8 @@ uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) con
     return offSet;
 }
 
+std::shared_ptr<MemoryLayout> RowLayout::deepCopy() const
+{
+    return std::make_shared<RowLayout>(*this);
+}
 }

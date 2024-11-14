@@ -36,7 +36,7 @@ struct QueryCompilerOptions
     struct StreamHashJoinOptions
     {
         uint64_t numberOfPartitions = Configurations::DEFAULT_HASH_NUM_PARTITIONS;
-        uint64_t pageSize = Configurations::DEFAULT_HASH_PAGE_SIZE;
+        uint64_t pageSize = Configurations::DEFAULT_PAGED_VECTOR_SIZE;
         uint64_t preAllocPageCnt = Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT;
         uint64_t totalSizeForDataStructures = Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE;
     } __attribute__((aligned(32)));

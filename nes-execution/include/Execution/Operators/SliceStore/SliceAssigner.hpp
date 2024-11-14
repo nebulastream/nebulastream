@@ -11,10 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <algorithm>
-#include <cinttypes>
+#include <Identifiers/Identifiers.hpp>
+
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -27,18 +30,23 @@ namespace NES::Runtime::Execution::Operators
 class SliceAssigner
 {
 public:
-    explicit SliceAssigner(uint64_t windowSize, uint64_t windowSlide);
+    explicit SliceAssigner(const uint64_t windowSize, const uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide)
+    {
+        INVARIANT(
+            windowSize >= windowSlide, "Currently the window assigner does not support windows with a larger slide then the window size.");
+    }
 
     /**
      * @brief Calculates the start of a slice for a specific timestamp ts.
      * @param ts the timestamp for which we calculate the start of the particular slice.
      * @return uint64_t slice start
      */
-    [[nodiscard]] inline uint64_t getSliceStartTs(uint64_t ts) const
+    [[nodiscard]] SliceStart getSliceStartTs(const Timestamp ts) const
     {
-        auto prevSlideStart = ts - ((ts) % windowSlide);
-        auto prevWindowStart = ts < windowSize ? prevSlideStart : ts - ((ts - windowSize) % windowSlide);
-        return std::max(prevSlideStart, prevWindowStart);
+        const auto timestampRaw = ts.getRawValue();
+        auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
+        auto prevWindowStart = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
+        return SliceStart(std::max(prevSlideStart, prevWindowStart));
     }
 
     /**
@@ -46,11 +54,13 @@ public:
      * @param ts the timestamp for which we calculate the end of the particular slice.
      * @return uint64_t slice end
      */
-    [[nodiscard]] inline uint64_t getSliceEndTs(uint64_t ts) const
+    [[nodiscard]] SliceEnd getSliceEndTs(const Timestamp ts) const
     {
-        auto nextSlideEnd = ts + windowSlide - ((ts) % windowSlide);
-        auto nextWindowEnd = ts < windowSize ? windowSize : ts + windowSlide - ((ts - windowSize) % windowSlide);
-        return std::min(nextSlideEnd, nextWindowEnd);
+        const auto timestampRaw = ts.getRawValue();
+        auto nextSlideEnd = timestampRaw + windowSlide - ((timestampRaw) % windowSlide);
+        auto nextWindowEnd
+            = timestampRaw < windowSize ? windowSize : timestampRaw + windowSlide - ((timestampRaw - windowSize) % windowSlide);
+        return SliceEnd(std::min(nextSlideEnd, nextWindowEnd));
     }
 
     /**
