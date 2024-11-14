@@ -14,6 +14,7 @@
 
 #include <API/AttributeField.hpp>
 
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
@@ -34,7 +35,7 @@ EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(
 }
 
 WatermarkStrategyDescriptorPtr
-EventTimeWatermarkStrategyDescriptor::create(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
+EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeMeasure allowedLateness, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));

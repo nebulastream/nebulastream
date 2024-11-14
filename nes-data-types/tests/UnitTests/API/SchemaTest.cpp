@@ -290,6 +290,24 @@ TEST_F(SchemaTest, containsTest)
     }
 }
 
+TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
+{
+    using enum BasicType;
+
+    /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
+    const auto testSchema = Schema::create()
+                                ->addField("streamstream2$start", UINT64)
+                                ->addField("streamstream2$end", UINT64)
+                                ->addField("stream$id", UINT64)
+                                ->addField("stream$value", UINT64)
+                                ->addField("stream$timestamp", UINT64)
+                                ->addField("stream2$id2", UINT64)
+                                ->addField("stream2$value2", UINT64)
+                                ->addField("stream2$timestamp", UINT64);
+    EXPECT_TRUE(testSchema->getFieldByName("id"));
+    EXPECT_FALSE(testSchema->getFieldByName("notExistingField1"));
+}
+
 TEST_F(SchemaTest, getSourceNameQualifierTest)
 {
     using enum NES::BasicType;

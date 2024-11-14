@@ -23,6 +23,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -277,4 +278,37 @@ std::shared_ptr<Out> as_if(const std::shared_ptr<In>& obj)
     return std::dynamic_pointer_cast<Out>(obj);
 }
 
+}
+
+
+namespace folly
+{
+/// Tries to acquire two locks in a deadlock-free manner. If it fails, it returns an empty optional.
+template <class Sync1, class Sync2>
+auto tryAcquireLocked(Synchronized<Sync1>& l1, Synchronized<Sync2>& l2)
+{
+    if (static_cast<const void*>(&l1) < static_cast<const void*>(&l2))
+    {
+        if (auto locked1 = l1.tryWLock())
+        {
+            if (auto locked2 = l2.tryWLock())
+            {
+                return std::optional(std::make_tuple(std::move(locked1), std::move(locked2)));
+            }
+        }
+    }
+    else
+    {
+        if (auto locked2 = l2.tryWLock())
+        {
+            if (auto locked1 = l1.tryWLock())
+            {
+                return std::optional(std::make_tuple(std::move(locked1), std::move(locked2)));
+            }
+        }
+    }
+    return std::optional<std::tuple<
+        LockedPtr<Synchronized<Sync1>, detail::SynchronizedLockPolicyTryExclusive>,
+        LockedPtr<Synchronized<Sync2>, detail::SynchronizedLockPolicyTryExclusive>>>{};
+}
 }
