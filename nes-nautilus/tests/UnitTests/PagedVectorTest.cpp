@@ -68,8 +68,8 @@ public:
             auto fieldCnt = 0UL;
             for (auto& field : allFields)
             {
-                auto const fieldType = schema->get(field)->getDataType();
-                auto tupleNo = (schema->getSize() * i) + fieldCnt++;
+                auto const fieldType = schema->getFieldByName(field).value()->getDataType();
+                auto tupleNo = (schema->getSchemaSizeInBytes() * i) + fieldCnt++;
 
                 if (NES::Util::instanceOf<VariableSizedDataType>(fieldType))
                 {
@@ -196,9 +196,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::UINT64))
-                          ->addField(createField("value3", BasicType::UINT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", BasicType::UINT64)
+                          ->addField("value3", BasicType::UINT64);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
     auto allRecords = createRecords(testSchema, numItems, 0);
@@ -213,9 +213,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value3", DataTypeFactory::createVariableSizedData()));
+                          ->addField("value1", DataTypeFactory::createVariableSizedData())
+                          ->addField("value2", DataTypeFactory::createVariableSizedData())
+                          ->addField("value3", DataTypeFactory::createVariableSizedData());
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
     auto allRecords = createRecords(testSchema, numItems, 0);
@@ -229,8 +229,7 @@ TEST_F(PagedVectorTest, storeAndRetrieveVarSizeValues)
 TEST_F(PagedVectorTest, storeAndRetrieveLargeValues)
 {
     bufferManager = Memory::BufferManager::create();
-    auto testSchema
-        = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", DataTypeFactory::createVariableSizedData()));
+    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("value1", DataTypeFactory::createVariableSizedData());
     /// smallest possible pageSize ensures that the text is split over multiple pages
     const auto pageSize = 8UL;
     const auto numItems = 507UL;
@@ -246,9 +245,9 @@ TEST_F(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value3", BasicType::FLOAT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", DataTypeFactory::createVariableSizedData())
+                          ->addField("value3", BasicType::FLOAT64);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
     auto allRecords = createRecords(testSchema, numItems, 0);
@@ -263,8 +262,8 @@ TEST_F(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::UINT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", BasicType::UINT64);
     const auto pageSize = 73UL;
     const auto numItems = 507UL;
     auto allRecords = createRecords(testSchema, numItems, 0);
@@ -279,8 +278,8 @@ TEST_F(PagedVectorTest, appendAllPagesTwoVectors)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", DataTypeFactory::createVariableSizedData());
     const auto entrySize = 2 * sizeof(uint64_t);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
@@ -307,9 +306,9 @@ TEST_F(PagedVectorTest, appendAllPagesMultipleVectors)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value3", BasicType::FLOAT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", DataTypeFactory::createVariableSizedData())
+                          ->addField("value3", BasicType::FLOAT64);
     const auto entrySize = (2 * sizeof(uint64_t)) + sizeof(double_t);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
@@ -336,9 +335,9 @@ TEST_F(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value3", BasicType::FLOAT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", DataTypeFactory::createVariableSizedData())
+                          ->addField("value3", BasicType::FLOAT64);
     const auto entrySize = (2 * sizeof(uint64_t)) + sizeof(double_t);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;
@@ -365,9 +364,9 @@ TEST_F(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
     bufferManager = Memory::BufferManager::create();
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", DataTypeFactory::createVariableSizedData()))
-                          ->addField(createField("value3", BasicType::FLOAT64));
+                          ->addField("value1", BasicType::UINT64)
+                          ->addField("value2", DataTypeFactory::createVariableSizedData())
+                          ->addField("value3", BasicType::FLOAT64);
     const auto entrySize = (2 * sizeof(uint64_t)) + sizeof(double_t);
     const auto pageSize = PAGE_SIZE;
     const auto numItems = 507UL;

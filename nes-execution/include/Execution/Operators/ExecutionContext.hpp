@@ -24,11 +24,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <nautilus/val_concepts.hpp>
 
 namespace NES::Runtime::Execution
 {
 using namespace Nautilus;
-class RecordBuffer;
 
 namespace Operators
 {
@@ -51,15 +53,13 @@ struct ExecutionContext final
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex);
-    nautilus::val<WorkerThreadId> getWorkerThreadId();
-    nautilus::val<Memory::TupleBuffer*> allocateBuffer();
-    const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
-    const nautilus::val<WorkerContext*>& getWorkerContext() const;
+    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
+    nautilus::val<WorkerThreadId> getWorkerThreadId() const;
+    nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
 
 
     /// Emit a record buffer to the next pipeline or sink
-    void emitBuffer(const RecordBuffer& buffer);
+    void emitBuffer(const RecordBuffer& buffer) const;
 
     /// Removes the sequence state for the current <OrigindId, uint64_t>
     void removeSequenceState() const;

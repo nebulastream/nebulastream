@@ -38,6 +38,7 @@ public:
      * @param bufferSize the expected buffer size.
      */
     RowLayout(SchemaPtr schema, uint64_t bufferSize);
+    RowLayout(const RowLayout&);
 
     /**
      * @brief Factory to create a RowLayout
@@ -64,6 +65,8 @@ public:
      * @return offset in the tuple buffer.
      */
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
+
+    std::shared_ptr<MemoryLayout> deepCopy() const override;
 
 private:
     std::vector<uint64_t> fieldOffSets;

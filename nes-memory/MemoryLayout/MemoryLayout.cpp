@@ -114,6 +114,11 @@ uint64_t MemoryLayout::getBufferSize() const
     return bufferSize;
 }
 
+void MemoryLayout::setBufferSize(uint64_t bufferSize)
+{
+    MemoryLayout::bufferSize = bufferSize;
+}
+
 const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
 {
     return physicalTypes;

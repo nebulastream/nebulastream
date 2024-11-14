@@ -12,15 +12,32 @@
     limitations under the License.
 */
 
-#include <Execution/Operators/SliceAssigner.hpp>
-#include <Util/Logger/Logger.hpp>
-namespace NES::Runtime::Execution::Operators
+#include <Execution/Operators/SliceStore/Slice.hpp>
+
+namespace NES::Runtime::Execution
 {
 
-SliceAssigner::SliceAssigner(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide)
+Slice::Slice(const SliceStart sliceStart, const SliceEnd sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd)
 {
-    NES_ASSERT(
-        windowSize >= windowSlide, "Currently the window assigner dose not support windows with a larger slide then the window size.");
 }
 
+SliceStart Slice::getSliceStart() const
+{
+    return sliceStart;
+}
+
+SliceEnd Slice::getSliceEnd() const
+{
+    return sliceEnd;
+}
+
+bool Slice::operator==(const Slice& rhs) const
+{
+    return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd);
+}
+
+bool Slice::operator!=(const Slice& rhs) const
+{
+    return !(rhs == *this);
+}
 }

@@ -30,6 +30,10 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
     }
 }
 
+ColumnLayout::ColumnLayout(const ColumnLayout& other) : MemoryLayout(other), columnOffsets(other.columnOffsets)
+{
+}
+
 std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
@@ -55,9 +59,14 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
     auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     return fieldOffset;
 }
+
 const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
 {
     return columnOffsets;
 }
 
+std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const
+{
+    return std::make_shared<ColumnLayout>(*this);
+}
 }
