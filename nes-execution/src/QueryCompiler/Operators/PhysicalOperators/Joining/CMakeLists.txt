@@ -11,22 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        PhysicalInferModelOperator.cpp
-        PhysicalOperator.cpp
-        PhysicalUnaryOperator.cpp
-        PhysicalBinaryOperator.cpp
-        PhysicalFilterOperator.cpp
-        PhysicalLimitOperator.cpp
-        PhysicalProjectOperator.cpp
-        PhysicalMapOperator.cpp
-        PhysicalUnionOperator.cpp
-        PhysicalDemultiplexOperator.cpp
-        PhysicalWatermarkAssignmentOperator.cpp
-        PhysicalScanOperator.cpp
-        PhysicalEmitOperator.cpp
+        PhysicalStreamJoinBuildOperator.cpp
+        PhysicalStreamJoinProbeOperator.cpp
 )
-
-add_subdirectory(Joining)
-
-add_subdirectory(Windowing)
-

@@ -56,7 +56,7 @@ public:
     /**
      * @brief Schema qualifier separator
      */
-    constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
+    constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
     /**
      * @brief Factory method to create a new SchemaPtr.

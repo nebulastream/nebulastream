@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <API/TimeUnit.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing
@@ -26,7 +28,7 @@ using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWaterma
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
 {
 public:
-    static WatermarkStrategyDescriptorPtr create(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    static WatermarkStrategyDescriptorPtr create(const std::shared_ptr<NodeFunction>& onField, TimeMeasure allowedLateness, TimeUnit unit);
 
     NodeFunctionPtr getOnField() const;
 

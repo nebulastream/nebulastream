@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <API/AttributeField.hpp>
@@ -52,7 +53,7 @@ SchemaPtr Schema::copy() const
 uint64_t Schema::getSchemaSizeInBytes() const
 {
     uint64_t size = 0;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    const auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields)
     {
         auto const type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
@@ -111,23 +112,15 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
 {
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
 
-    auto fieldNameToSearchFor = fieldName;
-    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
-        && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
-    }
-
     ///Iterate over all fields and look for field which fully qualified name
     std::vector<AttributeFieldPtr> matchedFields;
-    for (auto& field : fields)
+    for (const auto& field : fields)
     {
-        auto fullyQualifiedFieldName = field->getName();
-        if (fieldNameToSearchFor.length() <= fullyQualifiedFieldName.length())
+        if (auto fullyQualifiedFieldName = field->getName(); fieldName.length() <= fullyQualifiedFieldName.length())
         {
             ///Check if the field name ends with the input field name
-            auto startingPos = fullyQualifiedFieldName.length() - fieldNameToSearchFor.length();
-            auto found = fullyQualifiedFieldName.compare(startingPos, fieldNameToSearchFor.length(), fieldNameToSearchFor);
+            const auto startingPos = fullyQualifiedFieldName.length() - fieldName.length();
+            const auto found = fullyQualifiedFieldName.compare(startingPos, fieldName.length(), fieldName);
             if (found == 0)
             {
                 matchedFields.push_back(field);
@@ -135,9 +128,12 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
         }
     }
     ///Check how many matching fields were found and raise appropriate exception
-    if (matchedFields.size() > 0)
+    if (not matchedFields.empty())
     {
-        NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
+        if (matchedFields.size() > 1)
+        {
+            NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
+        }
         return matchedFields[0];
     }
     NES_WARNING("Schema: field with name {} does not exist", fieldName);
