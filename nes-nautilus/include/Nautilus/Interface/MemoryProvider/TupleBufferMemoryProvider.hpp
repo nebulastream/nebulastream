@@ -11,18 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <Execution/RecordBuffer.hpp>
+#include <cstdint>
+#include <memory>
+#include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 
-
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 class TupleBufferMemoryProvider;
-using MemoryProviderPtr = std::unique_ptr<TupleBufferMemoryProvider>;
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
@@ -31,7 +33,7 @@ class TupleBufferMemoryProvider
 public:
     virtual ~TupleBufferMemoryProvider();
 
-    static MemoryProviderPtr create(const uint64_t bufferSize, const SchemaPtr schema);
+    static std::shared_ptr<TupleBufferMemoryProvider> create(uint64_t bufferSize, const SchemaPtr& schema);
 
     virtual Memory::MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() = 0;
 

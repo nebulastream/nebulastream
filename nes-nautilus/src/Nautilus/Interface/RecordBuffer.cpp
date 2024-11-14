@@ -11,15 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/RecordBuffer.hpp>
-#include <Execution/TupleBufferProxyFunctions.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_ptr.hpp>
 
-namespace NES::Runtime::Execution
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
+#include <nautilus/function.hpp>
+
+namespace NES::Nautilus
 {
 
 RecordBuffer::RecordBuffer(const nautilus::val<Memory::TupleBuffer*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef)

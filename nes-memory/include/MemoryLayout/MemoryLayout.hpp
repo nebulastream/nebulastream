@@ -128,6 +128,18 @@ public:
     [[nodiscard]] const std::vector<uint64_t>& getFieldSizes() const;
 
     /**
+     * @brief Get the names of the key fields as a vector of strings.
+     * @return std::vector<std::string> fieldNames
+     */
+    [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
+
+    /**
+     * @brief Set the names of the key fields.
+     * @param keyFields
+     */
+    void setKeyFieldNames(const std::vector<std::string>& keyFields);
+
+    /**
      * @brief Comparator methods
      * @param rhs
      * @return
@@ -143,6 +155,7 @@ protected:
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
+    std::vector<std::string> keyFieldNames;
 };
 
 using MemoryLayoutPtr = std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>;

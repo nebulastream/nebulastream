@@ -11,7 +11,10 @@
 # limitations under the License.
 
 add_subdirectory(Hash)
+add_subdirectory(MemoryProvider)
+add_subdirectory(PagedVector)
 
 add_source_files(nes-nautilus
         Record.cpp
+        RecordBuffer.cpp
 )
