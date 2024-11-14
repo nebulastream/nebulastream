@@ -76,7 +76,7 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
 
     ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
