@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_nes_unit_test(paged-vector-unit-tests "UnitTests/PagedVectorTest.cpp")
-target_link_libraries(paged-vector-unit-tests nes-nautilus)
-
-add_nes_unit_test(variable-sized-data-unit-tests "UnitTests/VariableSizedDataTest.cpp")
-target_link_libraries(variable-sized-data-unit-tests nes-nautilus)
-
-add_nes_unit_test(var-val-unit-tests "UnitTests/VarValTest.cpp")
-target_link_libraries(var-val-unit-tests nes-nautilus)
+add_source_files(nes-nautilus
+        TupleBufferMemoryProvider.cpp
+        ColumnTupleBufferMemoryProvider.cpp
+        RowTupleBufferMemoryProvider.cpp
+        )

@@ -10,8 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-execution
-        TupleBufferMemoryProvider.cpp
-        ColumnTupleBufferMemoryProvider.cpp
-        RowTupleBufferMemoryProvider.cpp
-        )
+add_source_files(nes-nautilus
+        PagedVector.cpp
+        PagedVectorRef.cpp
+)

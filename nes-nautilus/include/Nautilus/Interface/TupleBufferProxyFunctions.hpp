@@ -18,7 +18,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::ProxyFunctions
+namespace NES::Nautilus::ProxyFunctions
 {
 inline int8_t* NES_Memory_TupleBuffer_getBuffer(Memory::TupleBuffer* tupleBuffer)
 {

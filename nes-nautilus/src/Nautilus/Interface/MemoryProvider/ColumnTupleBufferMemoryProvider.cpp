@@ -14,14 +14,15 @@
 
 #include <cstdint>
 #include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
-#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 ColumnTupleBufferMemoryProvider::ColumnTupleBufferMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr)
@@ -42,15 +43,15 @@ nautilus::val<int8_t*> ColumnTupleBufferMemoryProvider::calculateFieldAddress(
     return fieldAddress;
 }
 
-Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(
-    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+Record ColumnTupleBufferMemoryProvider::readRecord(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     auto& schema = columnMemoryLayoutPtr->getSchema();
     /// read all fields
     const auto bufferAddress = recordBuffer.getBuffer();
-    Nautilus::Record record;
+    Record record;
     for (nautilus::static_val<uint64_t> i = 0; i < schema->getFieldCount(); ++i)
     {
         const auto& fieldName = schema->getFieldByIndex(i)->getName();
