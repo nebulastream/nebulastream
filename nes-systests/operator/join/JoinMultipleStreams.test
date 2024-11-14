@@ -1,6 +1,6 @@
-# name: join/JoinMultiThreaded_legacy.test
-# description: Test join operator from legacy test testJoinMultiThreadedTest
-# groups: [Legacy, Join]
+# name: join/JoinMultipleStreams.test
+# description: Test join operator
+# groups: [Join]
 
 # Source definitions
 SourceCSV window UINT64 id UINT64 value UINT64 timestamp TESTDATA/window.csv
@@ -11,11 +11,7 @@ SourceCSV window7 UINT64 id7 UINT64 value7 UINT64 timestamp TESTDATA/window7.csv
 SourceCSV window7_1 UINT64 id7_1 UINT64 value7_1 UINT64 timestamp TESTDATA/window7.csv
 
 # Query 1 - Join two windows
-Query::from("window")
-    .joinWith(Query::from("window2"))
-    .where(Attribute("id") == Attribute("id2"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .SINK;
+SELECT * FROM (SELECT * FROM window) INNER JOIN (SELECT * FROM window2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO SINK;
 ----
 1000 2000 12 1 1001 12 5 1011
 1000 2000 4 1 1002 4 3 1102
@@ -48,15 +44,11 @@ Query::from("window")
 20000 21000 1 20 20000 1 20 20000
 21000 22000 1 21 21000 1 21 21000
 
-# Query 2 - Join three windows
-Query::from("window")
-    .joinWith(Query::from("window2"))
-    .where(Attribute("id") == Attribute("id2"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .joinWith(Query::from("window4"))
-    .where(Attribute("id") == Attribute("id4"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .SINK;
+# Query 2 - Join three streams
+SELECT * FROM (SELECT * FROM window)
+ INNER JOIN (SELECT * FROM window2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
+ INNER JOIN (SELECT * FROM window4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
+ INTO SINK;
 ----
 1000 2000 1000 2000 4 1 1002 4 3 1112 4 4 1001
 1000 2000 1000 2000 4 1 1002 4 3 1102 4 4 1001
@@ -67,15 +59,12 @@ Query::from("window")
 14000 15000 14000 15000 1 14 14000 1 14 14000 1 14 14000
 15000 16000 15000 16000 1 15 15000 1 15 15000 1 15 15000
 
-Query::from("window")
-    .joinWith(Query::from("window2"))
-    .where(Attribute("id") == Attribute("id2"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .joinWith(Query::from("window4")).where(Attribute("id") == Attribute("id4"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .joinWith(Query::from("window4_1")).where(Attribute("id") == Attribute("id4_1"))
-    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-    .SINK;
+# Query 3 - Join four streams
+SELECT * FROM (SELECT * FROM window)
+ INNER JOIN (SELECT * FROM window2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
+ INNER JOIN (SELECT * FROM window4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
+ INNER JOIN (SELECT * FROM window4_1) ON id = id4_1 WINDOW TUMBLING (timestamp, size 1 sec)
+ INTO SINK;
 ----
 12000 13000 12000 13000 12000 13000 1 12 12000 1 12 12000 1 12 12000 1 12 12000
 13000 14000 13000 14000 13000 14000 1 13 13000 1 13 13000 1 13 13000 1 13 13000
@@ -86,12 +75,10 @@ Query::from("window")
 1000 2000 1000 2000 1000 2000 4 1 1002 4 3 1112 4 4 1001 4 4 1001
 1000 2000 1000 2000 1000 2000 12 1 1001 12 5 1011 12 1 1300 12 1 1300
 
-# Query 3 - Join two windows with a sliding window
-Query::from("window7")
-    .joinWith(Query::from("window7_1"))
-    .where(Attribute("id7") == Attribute("id7_1"))
-    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(250)))
-    .SINK;
+# Query 4 - Join two streams with a sliding window
+SELECT * FROM (SELECT * FROM window7)
+ INNER JOIN (SELECT * FROM window7_1) ON id7 = id7_1 WINDOW SLIDING (timestamp, size 1 sec, advance by 250 ms)
+ INTO SINK;
 ----
 250 1250 1 1 1240 1 1 1240
 250 1250 4 2 1120 4 2 1120
@@ -220,18 +207,12 @@ Query::from("window7")
 2750 3750 17 16 2800 17 16 2800
 2750 3750 42 18 2990 42 18 2990
 
-# Query 4 - Join three windows with a sliding window
-Query::from("window")
-    .joinWith(Query::from("window2"))
-    .where(Attribute("id") == Attribute("id2"))
-    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-    .joinWith(Query::from("window4"))
-    .where(Attribute("id") == Attribute("id4"))
-    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-    .joinWith(Query::from("window4_1"))
-    .where(Attribute("id") == Attribute("id4_1"))
-    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-    .SINK;
+# Query 5 - Join three streams with a sliding window
+SELECT * FROM (SELECT * FROM window)
+ INNER JOIN (SELECT * FROM window2) ON id = id2 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+ INNER JOIN (SELECT * FROM window4) ON id = id4 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+ INNER JOIN (SELECT * FROM window4_1) ON id = id4_1 WINDOW SLIDING (timestamp, size 1 sec, advance by 500 ms)
+ INTO SINK;
 ----
 500 1500 500 1500 500 1500 12 1 1001 12 5 1011 12 1 1300 12 1 1300
 500 1500 500 1500 500 1500 4 1 1002 4 3 1102 4 4 1001 4 4 1001
