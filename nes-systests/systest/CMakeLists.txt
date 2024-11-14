@@ -42,7 +42,26 @@ if (NOT CODE_COVERAGE)
     add_test(systest_compiler systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER)
 endif (NOT CODE_COVERAGE)
 
+# We wish to run all join tests with a small, medium and large page size while also setting the threads to 1, 2, 4 for the worker
+set(pageSizes 1024 4096 10240)
+set(workerThreads 1 2 4)
+foreach(pageSize IN LISTS pageSizes)
+    foreach(workerThreads IN LISTS workerThreads)
+        add_test(
+                NAME systest_join_${workerThreads}_${pageSize}_interpreter
+                COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${pageSize}_interpreter
+                                --
+                                --workerConfiguration.numberOfWorkerThreads=${workerThreads} --queryCompilerConfiguration.pageSize=${pageSize} --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=INTERPRETER)
 
+        if (NOT CODE_COVERAGE)
+            add_test(
+                    NAME systest_join_${workerThreads}_${pageSize}_compiler
+                    COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_${pageSize}_compiler
+                                    --
+                                    --workerConfiguration.numberOfWorkerThreads=${workerThreads} --queryCompilerConfiguration.pageSize=${pageSize} --queryCompilerConfiguration.queryCompilerNautilusBackendConfig=COMPILER)
+        endif (NOT CODE_COVERAGE)
+    endforeach()
+endforeach()
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})

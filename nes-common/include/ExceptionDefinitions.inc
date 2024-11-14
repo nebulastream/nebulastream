@@ -81,6 +81,7 @@ EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 /// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
+EXCEPTION(QueryRuntimeError, 3008, "general query runtime error")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

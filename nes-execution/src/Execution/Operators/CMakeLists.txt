@@ -21,3 +21,4 @@ add_source_files(nes-execution
         ExecutionContext.cpp)
 
 add_subdirectory(Watermark)
+add_subdirectory(Streaming)

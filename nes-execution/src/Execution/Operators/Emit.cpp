@@ -12,14 +12,10 @@
     limitations under the License.
 */
 
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -90,7 +86,7 @@ void Emit::emitRecordBuffer(
     }
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+Emit::Emit(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider))
 {
 }

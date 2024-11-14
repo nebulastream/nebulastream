@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <algorithm>
-#include <cinttypes>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -34,11 +35,12 @@ public:
      * @param ts the timestamp for which we calculate the start of the particular slice.
      * @return uint64_t slice start
      */
-    [[nodiscard]] inline uint64_t getSliceStartTs(uint64_t ts) const
+    [[nodiscard]] inline SliceStart getSliceStartTs(Timestamp ts) const
     {
-        auto prevSlideStart = ts - ((ts) % windowSlide);
-        auto prevWindowStart = ts < windowSize ? prevSlideStart : ts - ((ts - windowSize) % windowSlide);
-        return std::max(prevSlideStart, prevWindowStart);
+        const auto timestampRaw = ts.getRawValue();
+        auto prevSlideStart = timestampRaw - ((timestampRaw) % windowSlide);
+        auto prevWindowStart = timestampRaw < windowSize ? prevSlideStart : timestampRaw - ((timestampRaw - windowSize) % windowSlide);
+        return SliceStart(std::max(prevSlideStart, prevWindowStart));
     }
 
     /**
@@ -46,11 +48,13 @@ public:
      * @param ts the timestamp for which we calculate the end of the particular slice.
      * @return uint64_t slice end
      */
-    [[nodiscard]] inline uint64_t getSliceEndTs(uint64_t ts) const
+    [[nodiscard]] inline SliceEnd getSliceEndTs(Timestamp ts) const
     {
-        auto nextSlideEnd = ts + windowSlide - ((ts) % windowSlide);
-        auto nextWindowEnd = ts < windowSize ? windowSize : ts + windowSlide - ((ts - windowSize) % windowSlide);
-        return std::min(nextSlideEnd, nextWindowEnd);
+        const auto timestampRaw = ts.getRawValue();
+        auto nextSlideEnd = timestampRaw + windowSlide - ((timestampRaw) % windowSlide);
+        auto nextWindowEnd
+            = timestampRaw < windowSize ? windowSize : timestampRaw + windowSlide - ((timestampRaw - windowSize) % windowSlide);
+        return SliceEnd(std::min(nextSlideEnd, nextWindowEnd));
     }
 
     /**

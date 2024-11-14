@@ -13,9 +13,9 @@
 */
 
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,7 +53,7 @@ Memory::TupleBuffer* allocateBufferProxy(WorkerContext* workerContext)
     return tb;
 }
 
-nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer()
+nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(allocateBufferProxy, workerContext);
     return bufferPtr;
@@ -73,7 +73,7 @@ void emitBufferProxy(WorkerContext* workerContext, PipelineExecutionContext* pip
     delete tupleBuffer;
 }
 
-void ExecutionContext::emitBuffer(const RecordBuffer& buffer)
+void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
 {
     nautilus::invoke(emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
@@ -83,7 +83,7 @@ WorkerThreadId getWorkerThreadIdProxy(const WorkerContext* workerContext)
     return workerContext->getId();
 }
 
-nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId()
+nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
 {
     return nautilus::invoke(getWorkerThreadIdProxy, workerContext);
 }
@@ -118,7 +118,7 @@ OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelin
     return handlers[index].get();
 }
 
-nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
+nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) const
 {
     const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
@@ -127,7 +127,7 @@ nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint6
 ChunkNumber::Underlying
 getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
 {
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
+    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
@@ -138,14 +138,14 @@ bool isLastChunkProxy(
     ChunkNumber::Underlying chunkNumber,
     bool isLastChunk)
 {
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
+    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
 void removeSequenceStateProxy(
     PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
 {
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
+    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
     pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 

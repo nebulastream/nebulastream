@@ -34,6 +34,8 @@ using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 using Timestamp = NESStrongType<uint64_t, struct Timestamp_, UINT64_MAX, 0>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
+using SliceStart = Timestamp;
+using SliceEnd = Timestamp;
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;

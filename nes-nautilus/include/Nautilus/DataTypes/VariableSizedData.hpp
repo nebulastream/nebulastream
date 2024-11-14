@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <nautilus/std/sstream.h>
 
 namespace NES::Nautilus

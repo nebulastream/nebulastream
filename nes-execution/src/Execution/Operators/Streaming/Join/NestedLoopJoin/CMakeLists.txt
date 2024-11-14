@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Functions)
-add_subdirectory(Operators)
-add_subdirectory(Pipelines)
+add_source_files(nes-execution
+        NLJBuild.cpp
+        NLJOperatorHandler.cpp
+        NLJProbe.cpp
+        NLJSlice.cpp
+)
