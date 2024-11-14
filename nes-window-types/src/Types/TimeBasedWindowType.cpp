@@ -33,7 +33,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->getField(fieldName);
+        auto existingField = schema->getFieldByName(fieldName);
         if (existingField)
         {
             timeCharacteristic->getField()->setName(existingField.value()->getName());

@@ -62,7 +62,7 @@ bool LogicalMapOperator::inferSchema()
     auto assignedField = mapFunction->getField();
     std::string fieldName = assignedField->getFieldName();
 
-    if (outputSchema->getField(fieldName))
+    if (outputSchema->getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.

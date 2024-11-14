@@ -84,7 +84,7 @@ bool LogicalJoinOperator::inferSchema()
             }
             else
             {
-                fieldExistsInSchema = ((*itr)->getField(joinKeyName).has_value());
+                fieldExistsInSchema = ((*itr)->getFieldByName(joinKeyName).has_value());
             }
 
             if (fieldExistsInSchema)

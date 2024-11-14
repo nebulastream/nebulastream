@@ -78,7 +78,7 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(NodeFunctionFiel
 {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         field->updateFieldName(existingField.value()->getName());
@@ -121,7 +121,7 @@ bool LogicalInferModelOperator::inferSchema()
         auto outputFunction = NES::Util::as<NodeFunctionFieldAccess>(outputField);
         updateToFullyQualifiedFieldName(outputFunction);
         auto fieldName = outputFunction->getFieldName();
-        if (outputSchema->getField(fieldName))
+        if (outputSchema->getFieldByName(fieldName))
         {
             /// The assigned field is part of the current schema.
             /// Thus we check if it has the correct type.

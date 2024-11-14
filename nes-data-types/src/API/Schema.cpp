@@ -109,7 +109,7 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
     }
 }
 
-std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) const
+std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& fieldName) const
 {
     ///Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
@@ -144,7 +144,7 @@ std::optional<AttributeFieldPtr> Schema::getField(const std::string& fieldName) 
     {
         return matchedFields[0];
     }
-    INVARIANT(matchedFields.size() > 1,  "Schema: Found ambiguous field with name {}", fieldName);
+    INVARIANT(matchedFields.size() > 1, "Schema: Found ambiguous field with name {}", fieldName);
     throw FieldNotFound("field {}  does not exist", fieldName);
 }
 
@@ -165,7 +165,7 @@ bool Schema::operator==(const Schema& other) const
     }
     for (auto const& fieldAttribute : fields)
     {
-        auto otherFieldAttribute = other.getField(fieldAttribute->getName());
+        auto otherFieldAttribute = other.getFieldByName(fieldAttribute->getName());
         if (!(otherFieldAttribute && otherFieldAttribute.has_value() && fieldAttribute->isEqual(otherFieldAttribute.value())))
         {
             return false;
