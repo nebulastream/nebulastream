@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <format>
 #include <utility>
 
 #include <API/AttributeField.hpp>
@@ -61,7 +62,7 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return std::format("NodeFunctionFieldAccess( {} + [ {} ])", fieldName, stamp->toString());
+    return std::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp->toString());
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)

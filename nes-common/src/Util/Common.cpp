@@ -174,14 +174,4 @@ std::string_view trimChar(std::string_view in, const char trimFor)
     return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
 
-void throwDynamicCastException(std::string message)
-{
-    throw InvalidDynamicCast(message);
-}
-
-void throwFunctionNotImplemented(std::string messsage)
-{
-    throw FunctionNotImplemented(messsage);
-}
-
 }
