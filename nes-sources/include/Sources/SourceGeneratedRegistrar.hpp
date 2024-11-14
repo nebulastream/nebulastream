@@ -40,7 +40,7 @@ inline void
 Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrar;
-    registry.registerPlugin("CSV", RegisterSourceFile);
+    registry.registerPlugin("File", RegisterSourceFile);
     registry.registerPlugin("TCP", RegisterSourceTCP);
 }
 }

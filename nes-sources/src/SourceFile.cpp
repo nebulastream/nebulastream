@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 #include <cstdlib>
-#include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceFile.hpp>
 #include <Sources/SourceRegistry.hpp>
 #include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -31,55 +31,55 @@
 namespace NES::Sources
 {
 
-SourceCSV::SourceCSV(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+SourceFile::SourceFile(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
 }
 
-void SourceCSV::open()
+void SourceFile::open()
 {
-    const auto realCSVPath = realpath(filePath.c_str(), nullptr);
-    inputFile = std::ifstream(realCSVPath, std::ios::binary);
-    if (!inputFile)
+    const auto realCSVPath = realpath(this->filePath.c_str(), nullptr);
+    this->inputFile = std::ifstream(realCSVPath, std::ios::binary);
+    if (not this->inputFile)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", filePath.c_str(), std::strerror(errno));
+        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath.c_str(), std::strerror(errno));
     }
 }
 
-void SourceCSV::close()
+void SourceFile::close()
 {
-    inputFile.close();
+    this->inputFile.close();
 }
 
-size_t SourceCSV::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
+size_t SourceFile::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
 {
-    inputFile.read(reinterpret_cast<char*>(tupleBuffer.getBuffer()), tupleBuffer.getBufferSize());
-    return inputFile.gcount();
+    this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
+    const auto numBytesRead = this->inputFile.gcount();
+    this->totalNumBytesRead += numBytesRead;
+    return numBytesRead;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+SourceFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
-std::ostream& SourceCSV::toString(std::ostream& str) const
+std::ostream& SourceFile::toString(std::ostream& str) const
 {
-    str << "\nSourceCSV(";
-    str << "\n  Filepath:" << this->filePath;
-    str << ")\n";
+    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead);
     return str;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
 SourceGeneratedRegistrarValidation::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
-    return SourceCSV::validateAndFormat(std::move(sourceConfig));
+    return SourceFile::validateAndFormat(std::move(sourceConfig));
 }
 
 
 std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceFile(const SourceDescriptor& sourceDescriptor)
 {
-    return std::make_unique<SourceCSV>(sourceDescriptor);
+    return std::make_unique<SourceFile>(sourceDescriptor);
 }
 
 }
