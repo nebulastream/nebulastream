@@ -128,8 +128,9 @@ public:
      *
      * @param fieldName: Name of the attribute field that should be returned.
      * @return Pointer to attribute field if present, otherwise `nullptr`.
+     * @throws FieldNotFound if the field does not exist
      */
-    std::optional<AttributeFieldPtr> getField(const std::string& fieldName) const;
+    std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema
@@ -230,16 +231,25 @@ public:
         using pointer = const value_type*;
         using reference = const value_type&;
 
-        Iterator(pointer ptr) : m_ptr(ptr) {}
+        Iterator(pointer ptr) : m_ptr(ptr) { }
 
         reference operator*() const { return *m_ptr; }
         pointer operator->() { return m_ptr; }
 
         /// Prefix increment
-        Iterator& operator++() { m_ptr++; return *this; }
+        Iterator& operator++()
+        {
+            m_ptr++;
+            return *this;
+        }
 
         /// Postfix increment
-        Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+        Iterator operator++(int)
+        {
+            Iterator tmp = *this;
+            ++(*this);
+            return tmp;
+        }
 
         friend bool operator==(const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; }
         friend bool operator!=(const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; }

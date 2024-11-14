@@ -86,7 +86,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         fieldAccessFunction->updateFieldName(existingField.value()->getName());

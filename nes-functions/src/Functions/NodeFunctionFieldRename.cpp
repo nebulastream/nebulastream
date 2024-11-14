@@ -65,7 +65,7 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema->getField(fieldName);
+    auto fieldAttribute = schema->getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
@@ -82,7 +82,7 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     }
     else
     {
-        auto newFieldAttribute = schema->getField(newFieldName);
+        auto newFieldAttribute = schema->getFieldByName(newFieldName);
         if (newFieldAttribute)
         {
             throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
