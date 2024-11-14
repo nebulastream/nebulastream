@@ -130,7 +130,7 @@ public:
      * @param fieldName: Name of the attribute field that should be returned.
      * @return Pointer to attribute field if present, otherwise `nullptr`.
      */
-    std::optional<AttributeFieldPtr> getField(const std::string& fieldName) const;
+    std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema

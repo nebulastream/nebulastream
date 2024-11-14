@@ -33,24 +33,22 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->getField(fieldName);
+        auto existingField = schema->getFieldByName(fieldName);
         if (existingField)
         {
+            if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
+            {
+                throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
+            }
             timeCharacteristic->getField()->setName(existingField.value()->getName());
             return true;
         }
-        else if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
-        {
-            throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
-        }
-        else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+        if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
         {
             return true;
         }
-        else
-        {
-            throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field {}", fieldName);
-        }
+
+        throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field {}", fieldName);
     }
     return true;
 }

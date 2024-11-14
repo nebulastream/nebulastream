@@ -70,7 +70,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
     {
-        if ((*itr)->getField(buildJoinKeyName))
+        if ((*itr)->getFieldByName(buildJoinKeyName))
         {
             leftInputSchema->copyFields(*itr);
             buildJoinKey->inferStamp(leftInputSchema);
@@ -86,7 +86,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
     {
-        if (schema->getField(probeJoinKeyName))
+        if (schema->getFieldByName(probeJoinKeyName))
         {
             rightInputSchema->copyFields(schema);
             probeJoinKey->inferStamp(rightInputSchema);
