@@ -1,0 +1,116 @@
+# name: join/JoinWithDifferentDataTypes.test
+# description: Test join operator and the join function performs the join operation with different data types
+# groups: [Join]
+
+Source stream1 INT8 i8_s1 INT16 i16_s1 INT32 i32_s1 INT64 i64_s1 UINT8 u8_s1 UINT16 u16_s1 UINT32 u32_s1 UINT64 u64_s1 FLOAT32 f32_s1 FLOAT64 f64_s1 UINT64 ts
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100
+
+Source stream2 INT8 i8_s2 INT16 i16_s2 INT32 i32_s2 INT64 i64_s2 UINT8 u8_s2 UINT16 u16_s2 UINT32 u32_s2 UINT64 u64_s2 FLOAT32 f32_s2 FLOAT64 f64_s2 UINT64 ts
+1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 500
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 501
+3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 502
+4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 503
+5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 504
+6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 505
+7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 506
+8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 507
+9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 508
+10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 509
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i8_s1 = i8_s2 and i8_s1 = i16_s2 and i8_s1 = i32_s2 and
+                                                      i8_s1 = i64_s2 and i8_s1 = u8_s2 and i8_s1 = u16_s2 and
+                                                      i8_s1 = u32_s2 and i8_s1 = u64_s2 and i8_s1 = f32_s2 and
+                                                      i8_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,1,1,1,1,1,1,1,1,1.000000,1.000000,500
+
+
+# Check if different numeric types support the equals operation for a tumbling window with ingestion time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i16_s1 = i8_s2 and i16_s1 = i16_s2 and i16_s1 = i32_s2 and
+                                                      i16_s1 = i64_s2 and i16_s1 = u8_s2 and i16_s1 = u16_s2 and
+                                                      i16_s1 = u32_s2 and i16_s1 = u64_s2 and i16_s1 = f32_s2 and
+                                                      i16_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,2,2,2,2,2,2,2,2,2.000000,2.000000,501
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i32_s1 = i8_s2 and i32_s1 = i16_s2 and i32_s1 = i32_s2 and
+                                                      i32_s1 = i64_s2 and i32_s1 = u8_s2 and i32_s1 = u16_s2 and
+                                                      i32_s1 = u32_s2 and i32_s1 = u64_s2 and i32_s1 = f32_s2 and
+                                                      i32_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,3,3,3,3,3,3,3,3,3.000000,3.000000,502
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i64_s1 = i8_s2 and i64_s1 = i16_s2 and i64_s1 = i32_s2 and
+                                                      i64_s1 = i64_s2 and i64_s1 = u8_s2 and i64_s1 = u16_s2 and
+                                                      i64_s1 = u32_s2 and i64_s1 = u64_s2 and i64_s1 = f32_s2 and
+                                                      i64_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,4,4,4,4,4,4,4,4,4.000000,4.000000,503
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u8_s1 = i8_s2 and u8_s1 = i16_s2 and u8_s1 = i32_s2 and
+                                                      u8_s1 = i64_s2 and u8_s1 = u8_s2 and u8_s1 = u16_s2 and
+                                                      u8_s1 = u32_s2 and u8_s1 = u64_s2 and u8_s1 = f32_s2 and
+                                                      u8_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,5,5,5,5,5,5,5,5,5.000000,5.000000,504
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u16_s1 = i8_s2 and u16_s1 = i16_s2 and u16_s1 = i32_s2 and
+                                                      u16_s1 = i64_s2 and u16_s1 = u8_s2 and u16_s1 = u16_s2 and
+                                                      u16_s1 = u32_s2 and u16_s1 = u64_s2 and u16_s1 = f32_s2 and
+                                                      u16_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,6,6,6,6,6,6,6,6,6.000000,6.000000,505
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u32_s1 = i8_s2 and u32_s1 = i16_s2 and u32_s1 = i32_s2 and
+                                                      u32_s1 = i64_s2 and u32_s1 = u8_s2 and u32_s1 = u16_s2 and
+                                                      u32_s1 = u32_s2 and u32_s1 = u64_s2 and u32_s1 = f32_s2 and
+                                                      u32_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,7,7,7,7,7,7,7,7,7.000000,7.000000,506
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u64_s1 = i8_s2 and u64_s1 = i16_s2 and u64_s1 = i32_s2 and
+                                                      u64_s1 = i64_s2 and u64_s1 = u8_s2 and u64_s1 = u16_s2 and
+                                                      u64_s1 = u32_s2 and u64_s1 = u64_s2 and u64_s1 = f32_s2 and
+                                                      u64_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,8,8,8,8,8,8,8,8,8.000000,8.000000,507
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f32_s1 = i8_s2 and f32_s1 = i16_s2 and f32_s1 = i32_s2 and
+                                                      f32_s1 = i64_s2 and f32_s1 = u8_s2 and f32_s1 = u16_s2 and
+                                                      f32_s1 = u32_s2 and f32_s1 = u64_s2 and f32_s1 = f32_s2 and
+                                                      f32_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,9,9,9,9,9,9,9,9,9.000000,9.000000,508
+
+
+# Check if different numeric types support the equals operation for a tumbling window with event time
+SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f64_s1 = i8_s2 and f64_s1 = i16_s2 and f64_s1 = i32_s2 and
+                                                      f64_s1 = i64_s2 and f64_s1 = u8_s2 and f64_s1 = u16_s2 and
+                                                      f64_s1 = u32_s2 and f64_s1 = u64_s2 and f64_s1 = f32_s2 and
+                                                      f64_s1 = f64_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO SINK
+----
+0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,10,10,10,10,10,10,10,10,10.000000,10.000000,509
