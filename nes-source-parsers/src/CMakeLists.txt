@@ -12,4 +12,5 @@
 
 add_source_files(nes-source-parsers
         SourceParserCSV.cpp
+        SourceParserProvider.cpp
 )

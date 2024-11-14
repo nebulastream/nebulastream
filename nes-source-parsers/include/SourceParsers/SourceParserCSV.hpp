@@ -27,7 +27,7 @@ class ProgressTracker;
 class SourceParserCSV : public SourceParser
 {
 public:
-    SourceParserCSV(SchemaPtr schema, const std::vector<NES::PhysicalTypePtr>& physicalTypes, std::string fieldDelimiter);
+    SourceParserCSV(SchemaPtr schema, std::string tupleSeparator, std::string fieldDelimiter);
     ~SourceParserCSV() override;
 
     void parseTupleBufferRaw(
