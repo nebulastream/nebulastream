@@ -13,16 +13,14 @@
 */
 
 #include <memory>
-
-#include <API/AttributeField.hpp>
-#include <SourceParsers/SourceParserCSV.hpp>
+#include <SourceParsers/SourceParserProvider.hpp>
 #include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceRegistry.hpp>
-#include <Sources/SourceTCP.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
@@ -39,20 +37,9 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     SourceReturnType::EmitFunction&& emitFunction)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    std::vector<PhysicalTypePtr> physicalTypes;
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : sourceDescriptor.schema->fields)
-    {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-    }
-    std::string delimiter = ",";
-    if (sourceDescriptor.sourceType == "CSV")
-    {
-        delimiter = sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER);
-    }
-
-    auto sourceParser = std::make_unique<SourceParsers::SourceParserCSV>(sourceDescriptor.schema, physicalTypes, delimiter);
+    const auto sourceType = magic_enum::enum_name(sourceDescriptor.inputFormat);
+    /// Source parser provider currently sets default tuple separator: '\n' and default field delimiter ','
+    auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(sourceType.data(), sourceDescriptor.schema);
 
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
     {

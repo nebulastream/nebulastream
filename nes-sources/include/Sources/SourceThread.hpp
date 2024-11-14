@@ -44,7 +44,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<SourceParsers::SourceParserCSV> csvParser);
+        std::unique_ptr<SourceParsers::SourceParser> sourceParser);
 
     SourceThread() = delete;
 
@@ -76,7 +76,7 @@ protected:
     std::promise<bool> completedPromise;
     uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
-    std::unique_ptr<SourceParsers::SourceParserCSV> csvParser;
+    std::unique_ptr<SourceParsers::SourceParser> sourceParser;
     mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
     std::unique_ptr<std::thread> thread{nullptr};
