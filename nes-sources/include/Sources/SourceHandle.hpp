@@ -38,7 +38,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<SourceParsers::SourceParserCSV> csvParser);
+        std::unique_ptr<SourceParsers::SourceParser> sourceParser);
 
     ~SourceHandle() = default;
 

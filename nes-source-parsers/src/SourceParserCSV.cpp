@@ -22,6 +22,7 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <SourceParsers/SourceParser.hpp>
 #include <SourceParsers/SourceParserCSV.hpp>
+#include <SourceParsers/SourceParserRegistry.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -44,11 +45,9 @@ struct PartialTuple
 
 class ProgressTracker
 {
-    static constexpr char TUPLE_SEPARATOR = '\n';
-
 public:
-    ProgressTracker(const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
+    ProgressTracker(std::string tupleSeparator, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
+        : tupleSeparator(std::move(tupleSeparator)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
 
     ~ProgressTracker() = default;
 
@@ -58,7 +57,7 @@ public:
         this->currentTupleStartTBRaw = 0;
         this->currentFieldOffsetTBFormatted = 0;
         this->tupleBufferRawSV = std::string_view(newTupleBufferRaw, numTotalBytesInTBRaw);
-        this->currentTupleEndTBRaw = tupleBufferRawSV.find(TUPLE_SEPARATOR, currentTupleStartTBRaw);
+        this->currentTupleEndTBRaw = findIndexOfNextTuple();
         this->numTuplesInTBFormatted = 0;
     }
 
@@ -130,22 +129,28 @@ public:
     size_t currentFieldOffsetTBFormatted{0};
 
 private:
+    std::string tupleSeparator;
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
     int8_t* rawBufferFieldPointer{nullptr}; /// owned by TBRaw, reset during each call of 'parseTupleBufferRaw()'
     NES::Memory::TupleBuffer tupleBufferFormatted;
 
-    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(TUPLE_SEPARATOR, currentTupleStartTBRaw); }
+    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(tupleSeparator, currentTupleStartTBRaw); }
 };
 
-
-SourceParserCSV::SourceParserCSV(SchemaPtr schema, const std::vector<PhysicalTypePtr>& physicalTypes, std::string delimiter)
+SourceParserCSV::SourceParserCSV(SchemaPtr schema, std::string tupleSeparator, std::string delimiter)
     : schema(std::move(schema))
     , fieldDelimiter(std::move(delimiter))
-    , physicalTypes(std::move(physicalTypes))
-    , progressTracker(std::make_unique<ProgressTracker>(this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
+    , progressTracker(
+          std::make_unique<ProgressTracker>(std::move(tupleSeparator), this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
 {
+    const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr& field : this->schema->fields)
+    {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
 }
 SourceParserCSV::~SourceParserCSV() = default;
 
@@ -369,6 +374,12 @@ void SourceParserCSV::parseStringTupleToTBFormatted(
         progressTracker->currentFieldOffsetTBFormatted += this->fieldSizes.at(currentFieldNumber);
         ++currentFieldNumber;
     }
+}
+
+std::unique_ptr<SourceParser> SourceParserGeneratedRegistrar::RegisterSourceParserCSV(
+    std::shared_ptr<Schema> schema, std::string tupleSeparator, std::string fieldDelimiter)
+{
+    return std::make_unique<SourceParserCSV>(std::move(schema), std::move(tupleSeparator), std::move(fieldDelimiter));
 }
 
 }

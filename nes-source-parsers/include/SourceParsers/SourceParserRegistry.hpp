@@ -14,20 +14,21 @@
 
 #pragma once
 
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <API/Schema.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Sources
+namespace NES::SourceParsers
 {
 
-using SourceRegistrySignature = RegistrySignature<std::string, Source, const SourceDescriptor&>;
-class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
+/// A SourceParser requires a schema, a tuple separator and a field delimiter.
+using SourceParserRegistrySignature = RegistrySignature<std::string, SourceParser, std::shared_ptr<Schema>, std::string, std::string>;
+class SourceParserRegistry : public BaseRegistry<SourceParserRegistry, SourceParserRegistrySignature>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <Sources/SourceGeneratedRegistrar.hpp>
-#undef INCLUDED_FROM_SOURCE_REGISTRY
+#define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
+#include <SourceParsers/SourceParserGeneratedRegistrar.hpp>
+#undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY

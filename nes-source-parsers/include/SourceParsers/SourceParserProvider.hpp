@@ -11,23 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <memory>
+#include <API/Schema.hpp>
+#include <SourceParsers/SourceParser.hpp>
 
-namespace NES::Sources
+namespace NES::SourceParsers::SourceParserProvider
 {
-
-using SourceRegistrySignature = RegistrySignature<std::string, Source, const SourceDescriptor&>;
-class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
-{
-};
-
+std::unique_ptr<SourceParser> provideSourceParser(const std::string& parserType, std::shared_ptr<Schema> schema);
 }
-
-#define INCLUDED_FROM_SOURCE_REGISTRY
-#include <Sources/SourceGeneratedRegistrar.hpp>
-#undef INCLUDED_FROM_SOURCE_REGISTRY
