@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <SourceParsers/SourceParserProvider.hpp>
-#include <Sources/SourceCSV.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
