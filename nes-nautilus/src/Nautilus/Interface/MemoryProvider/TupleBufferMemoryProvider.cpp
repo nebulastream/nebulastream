@@ -11,17 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <vector>
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,7 +34,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider
+namespace NES::Nautilus::Interface::MemoryProvider
 {
 
 const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
@@ -39,18 +43,18 @@ const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, c
     return childBuffer.getBuffer<uint8_t>();
 }
 
-Nautilus::VarVal TupleBufferMemoryProvider::loadValue(
+VarVal TupleBufferMemoryProvider::loadValue(
     const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
-        return Nautilus::VarVal::readVarValFromMemory(fieldReference, type);
+        return VarVal::readVarValFromMemory(fieldReference, type);
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
-        const auto textPtr = nautilus::invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-        return Nautilus::VariableSizedData(textPtr);
+        const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
+        return VariableSizedData(textPtr);
     }
     throw NotImplemented("Physical Type: type {} is currently not supported", type->toString());
 }
@@ -61,11 +65,8 @@ uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, c
     return tupleBuffer->storeChildBuffer(textBuffer);
 }
 
-Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
-    const NES::PhysicalTypePtr& type,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<int8_t*>& fieldReference,
-    Nautilus::VarVal value)
+VarVal TupleBufferMemoryProvider::storeValue(
+    const PhysicalTypePtr& type, const RecordBuffer& recordBuffer, const nautilus::val<int8_t*>& fieldReference, VarVal value)
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
@@ -74,8 +75,8 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
     }
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
-        const auto textValue = value.cast<Nautilus::VariableSizedData>();
-        const auto childIndex = nautilus::invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
+        const auto textValue = value.cast<VariableSizedData>();
+        const auto childIndex = invoke(storeAssociatedTextValueProxy, recordBuffer.getReference(), textValue.getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;
@@ -85,24 +86,24 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
 
 
 bool TupleBufferMemoryProvider::includesField(
-    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex)
+    const std::vector<Record::RecordFieldIdentifier>& projections, const Record::RecordFieldIdentifier& fieldIndex)
 {
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
-MemoryProviderPtr TupleBufferMemoryProvider::create(const uint64_t bufferSize, const SchemaPtr schema)
+std::shared_ptr<TupleBufferMemoryProvider> TupleBufferMemoryProvider::create(const uint64_t bufferSize, const SchemaPtr& schema)
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
+        return std::make_unique<RowTupleBufferMemoryProvider>(rowMemoryLayout);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
         auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
-        return std::make_unique<Runtime::Execution::MemoryProvider::ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
+        return std::make_unique<ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }

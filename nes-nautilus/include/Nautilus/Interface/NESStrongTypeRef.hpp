@@ -14,22 +14,32 @@
 
 #pragma once
 
-#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <nautilus/tracing/TypedValueRef.hpp>
+#include <nautilus/tracing/Types.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_concepts.hpp>
 
 namespace nautilus
 {
 
 namespace tracing
 {
-template <typename NES_STRONG>
+template <typename T, typename Tag, T Invalid, T Initial>
 constexpr Type to_type()
 {
-    using Underlying = typename NES_STRONG::Underlying;
-    return to_type<Underlying>();
+    return to_type<T>();
 }
+}
+
+
+namespace details
+{
+template <typename T, typename Tag, T Invalid, T Initial>
+T getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
+
+template <typename T, typename Tag, T Invalid, T Initial>
+tracing::TypedValueRef getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
 }
 
 /// This class is a nautilus wrapper for our NESStrongType
@@ -62,6 +72,8 @@ public:
     [[nodiscard]] friend bool operator>=(const val& lh, const val& rh) noexcept { return lh.value >= rh.value; }
     [[nodiscard]] friend bool operator==(const val& lh, const val& rh) noexcept { return lh.value == rh.value; }
 
+    friend T details::getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
+    friend tracing::TypedValueRef details::getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val);
 
     val<Underlying> value;
 };
@@ -69,13 +81,13 @@ public:
 namespace details
 {
 template <typename T, typename Tag, T Invalid, T Initial>
-T inline getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
+T getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
 {
     return details::getRawValue(val.value);
 }
 
 template <typename T, typename Tag, T Invalid, T Initial>
-tracing::TypedValueRef inline getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
+tracing::TypedValueRef getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
 {
     return details::getState(val.value);
 }
