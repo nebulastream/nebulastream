@@ -62,7 +62,7 @@ bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
         auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return (outputSchema == projection->outputSchema);
+        return (*outputSchema == *projection->outputSchema);
     }
     return false;
 };
