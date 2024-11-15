@@ -1,7 +1,5 @@
 query: |
-  Query::from("tcp_and_csv_source")
-    .filter(Attribute("id") != 16)
-    .sink("csv_sink");
+  SELECT * FROM tcp_and_csv_source WHERE id != 16 INTO csv_sink
 sink:
   name: csv_sink
   type: File
@@ -24,7 +22,6 @@ physical:
       socketHost: localhost
       inputFormat: CSV
       socketBufferSize: 2
-      decideMessageSize: TUPLE_SEPARATOR
       flushIntervalMS: 100
   - logical: tcp_and_csv_source
     config:

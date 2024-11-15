@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceThread.hpp>
 #include <fmt/format.h>
@@ -38,7 +38,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<ParserCSV> csvParser);
+        std::unique_ptr<SourceParsers::SourceParserCSV> csvParser);
 
     ~SourceHandle() = default;
 

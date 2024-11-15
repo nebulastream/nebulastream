@@ -35,8 +35,7 @@ public:
     explicit SourceCSV(const SourceDescriptor& sourceDescriptor);
     ~SourceCSV() override = default;
 
-    bool fillTupleBuffer(
-        NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& parserCSV) override;
+    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
 
     /// Open file socket.
     void open() override;
@@ -50,16 +49,8 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::ifstream input;
-    bool fileEnded;
+    std::ifstream inputFile;
     std::string filePath;
-    std::string delimiter;
-    uint64_t currentPositionInFile{0};
-    size_t fileSize;
-    bool skipHeader;
-
-    uint64_t generatedTuples{0};
-    uint64_t generatedBuffers{0};
 };
 
 struct ConfigParametersCSV

@@ -28,7 +28,7 @@
 namespace NES::Sources::SourceGeneratedRegistrarValidation
 {
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&&);
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&&);
 
 }
@@ -41,7 +41,7 @@ inline void
 Registrar<Sources::SourceRegistryValidation, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrarValidation;
-    registry.registerPlugin("CSV", RegisterSourceValidationCSV);
+    registry.registerPlugin("CSV", RegisterSourceValidationFile);
     registry.registerPlugin("TCP", RegisterSourceValidationTCP);
 }
 }

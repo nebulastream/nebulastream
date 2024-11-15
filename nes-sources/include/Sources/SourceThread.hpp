@@ -21,7 +21,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/ParserCSV.hpp>
+#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -44,7 +44,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<ParserCSV> csvParser);
+        std::unique_ptr<SourceParsers::SourceParserCSV> csvParser);
 
     SourceThread() = delete;
 
@@ -76,7 +76,7 @@ protected:
     std::promise<bool> completedPromise;
     uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
-    std::unique_ptr<ParserCSV> csvParser;
+    std::unique_ptr<SourceParsers::SourceParserCSV> csvParser;
     mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
     std::unique_ptr<std::thread> thread{nullptr};
