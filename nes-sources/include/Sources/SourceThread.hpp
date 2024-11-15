@@ -21,7 +21,7 @@
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParserCSV.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
