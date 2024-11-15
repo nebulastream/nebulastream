@@ -13,6 +13,8 @@
 */
 
 #include <Util/Common.hpp>
+#include <magic_enum.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -35,7 +37,7 @@ DataTypePtr Char::join(DataTypePtr otherDataType)
 
 std::string Char::toString()
 {
-    return "Char";
+    return std::string(magic_enum::enum_name(BasicType::CHAR));
 }
 
 }
