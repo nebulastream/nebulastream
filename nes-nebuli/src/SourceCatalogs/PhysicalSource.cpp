@@ -48,6 +48,10 @@ std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescripto
 {
     auto copyOfConfig = sourceDescriptor.config;
     return std::make_unique<Sources::SourceDescriptor>(
-        schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.inputFormat, std::move(copyOfConfig));
+        std::move(schema),
+        sourceDescriptor.logicalSourceName,
+        sourceDescriptor.sourceType,
+        sourceDescriptor.parserConfig,
+        std::move(copyOfConfig));
 }
 }

@@ -45,7 +45,8 @@ struct LogicalSource
 struct PhysicalSource
 {
     std::string logical;
-    std::unordered_map<std::string, std::string> config;
+    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<std::string, std::string> sourceConfig;
 };
 
 struct QueryConfig

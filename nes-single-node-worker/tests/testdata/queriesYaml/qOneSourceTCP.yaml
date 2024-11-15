@@ -14,12 +14,15 @@ logical:
         type: UINT64
 physical:
   - logical: tcp_source
-    config:
+    parserConfig:
+      type: CSV
+      tupleSeparator: "\n"
+      fieldDelimiter: ","
+    sourceConfig:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
       socketPort: 0 # Generated in test to avoid port conflicts.
       socketHost: localhost
-      inputFormat: CSV
       socketBufferSize: 2
       flushIntervalMS: 100

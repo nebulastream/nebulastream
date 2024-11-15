@@ -37,8 +37,10 @@ message NodeLocation {
   uint32 port = 3;
 }
 
-enum InputFormat{
-  CSV = 0;
+message ParserConfig {
+  string type = 1;
+  string tupleSeparator = 2;
+  string fieldDelimiter = 3;
 };
 
 message SerializableEnumWrapper {
@@ -70,7 +72,7 @@ message SerializableOperator {
         SerializableSchema sourceSchema = 1;
         string logicalSourceName = 2;
         string sourceType = 3;
-        InputFormat inputFormat = 4;
+        ParserConfig parserConfig = 4;
         map<string, SerializableVariantDescriptor> config = 5;
     }
 

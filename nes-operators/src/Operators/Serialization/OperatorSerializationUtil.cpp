@@ -904,16 +904,14 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     SchemaSerializationUtil::serializeSchema(sourceDescriptor.schema, serializedSourceDescriptor->mutable_sourceschema());
     serializedSourceDescriptor->set_logicalsourcename(sourceDescriptor.logicalSourceName);
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
-    /// Convert from Configurations::InputFormat to protobuf InputFormat.
-    switch (sourceDescriptor.inputFormat)
-    {
-        case Configurations::InputFormat::CSV:
-            serializedSourceDescriptor->set_inputformat(InputFormat::CSV);
-            break;
-        default:
-            throw InvalidConfigParameter(
-                fmt::format("Serialization of inputFormat: {} is not supported.", magic_enum::enum_name(sourceDescriptor.inputFormat)));
-    }
+
+    /// Serialize parser config.
+    const auto serializedParserConfig = ParserConfig().New();
+    serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
+    serializedParserConfig->set_tupleseparator(sourceDescriptor.parserConfig.tupleSeparator);
+    serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
+    serializedSourceDescriptor->set_allocated_parserconfig(serializedParserConfig);
+
     /// Iterate over SourceDescriptor config and serialize all key-value pairs.
     for (const auto& [key, value] : sourceDescriptor.config)
     {
@@ -961,20 +959,26 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto schema = SchemaSerializationUtil::deserializeSchema(sourceDescriptor.sourceschema());
     auto logicalSourceName = sourceDescriptor.logicalsourcename();
     auto sourceType = sourceDescriptor.sourcetype();
-    auto inputFormat = sourceDescriptor.inputformat();
+
+    /// Deserialize the parser config.
+    const auto serializedParserConfig = sourceDescriptor.parserconfig();
+    auto deserializedParserConfig = Sources::ParserConfig{};
+    deserializedParserConfig.parserType = serializedParserConfig.type();
+    deserializedParserConfig.tupleSeparator = serializedParserConfig.tupleseparator();
+    deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
     Configurations::DescriptorConfig::Config SourceDescriptorConfig{};
-    for (const auto& kv : sourceDescriptor.config())
+    for (const auto& [key, value] : sourceDescriptor.config())
     {
-        SourceDescriptorConfig[kv.first] = protoToDescriptorConfigType(kv.second);
+        SourceDescriptorConfig[key] = protoToDescriptorConfigType(value);
     }
 
     return std::make_unique<Sources::SourceDescriptor>(
         std::move(schema),
         std::move(logicalSourceName),
         std::move(sourceType),
-        std::move(static_cast<Configurations::InputFormat>(inputFormat)),
+        std::move(deserializedParserConfig),
         std::move(SourceDescriptorConfig));
 }
 

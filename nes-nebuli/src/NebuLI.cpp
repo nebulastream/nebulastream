@@ -79,7 +79,8 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -101,8 +102,43 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-Sources::SourceDescriptor
-createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+{
+    auto validParserConfig = Sources::ParserConfig{};
+    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    {
+        validParserConfig.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleSeparator = parserConfig.find("tupleSeparator"); tupleSeparator != parserConfig.end())
+    {
+        validParserConfig.tupleSeparator = tupleSeparator->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleSeparator, using default: \\n");
+        validParserConfig.tupleSeparator = "\n";
+    }
+    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    {
+        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        validParserConfig.fieldDelimiter = ",";
+    }
+    return validParserConfig;
+}
+
+Sources::SourceDescriptor createSourceDescriptor(
+    std::string logicalSourceName,
+    SchemaPtr schema,
+    std::unordered_map<std::string, std::string>&& parserConfig,
+    std::unordered_map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -111,10 +147,10 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
-    /// We currently only support CSV
-    auto inputFormat = Configurations::InputFormat::CSV;
-    auto validConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
-    return Sources::SourceDescriptor(std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(validConfig));
+    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    return Sources::SourceDescriptor(
+        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
@@ -158,10 +194,13 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, config] : config.physical)
+    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
-        auto sourceDescriptor
-            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
+        auto sourceDescriptor = createSourceDescriptor(
+            logicalSourceName,
+            sourceCatalog->getSchemaForLogicalSource(logicalSourceName),
+            std::move(parserConfig),
+            std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
