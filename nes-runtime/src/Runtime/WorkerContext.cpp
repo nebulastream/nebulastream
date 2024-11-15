@@ -137,14 +137,17 @@ void WorkerContext::insertIntoReconnectBufferStorage(OperatorId operatorId, NES:
     reconnectBufferStorage[operatorId].push(std::move(bufferCopy));
 }
 
-void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
+bool WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t timestamp) {
     auto iteratorPartitionId = this->storage.find(nesPartitionId);
+    bool isTrimmed = false;
+    if (iteratorPartitionId != this->storage.end()) {
         auto& [nesPar, pq] = *iteratorPartitionId;
         auto oldStorageSize = pq.size();
         while (!pq.empty()) {
             auto topWatermark = pq.top().getWatermark();
             if (topWatermark <= timestamp) {
                 pq.pop();
+                isTrimmed = true;
             } else {
                 break;
             }
@@ -158,6 +161,7 @@ void WorkerContext::trimStorage(Network::NesPartition nesPartitionId, uint64_t t
         storageFile << oldStorageSize - pq.size() << "\n";
         storageFile.flush();
     }
+    return isTrimmed;
 }
 
 std::optional<NES::Runtime::TupleBuffer> WorkerContext::getTopTupleFromStorage(Network::NesPartition nesPartition) {

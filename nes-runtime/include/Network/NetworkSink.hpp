@@ -168,6 +168,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
+ bool hasTrimmed();
   private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
@@ -212,7 +213,9 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
  std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+ std::function<void(uint64_t, Runtime::WorkerContext&)> deleteFromStorageCallback;
  std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
+ bool trimmingStarted;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

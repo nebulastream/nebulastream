@@ -157,6 +157,8 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     }
 }
 
+uint64_t SinkMedium::getCurrentEpochBarrier() { return watermarkProcessor->getCurrentWatermark(); }
+
 bool SinkMedium::notifyEpochTermination(uint64_t epochBarrier) const {
     auto qep = nodeEngine->getQueryManager()->getQueryExecutionPlan(decomposedQueryId);
     if (nodeEngine->getQueryManager()->propagateEpochBackwards(decomposedQueryId, epochBarrier)) {

@@ -61,15 +61,21 @@ faultToleranceType,
       networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager()),
       queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager()), receiverLocation(destination),
       bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager()), nesPartition(nesPartition),
-      messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version) {
+      messageSequenceNumber(0), numOfProducers(numOfProducers), waitTime(waitTime), retryTimes(retryTimes), version(version), trimmingStarted(false) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition {} location {}", nesPartition, destination.createZmqURI());
-    if (faultToleranceType == FaultToleranceType::UB || faultToleranceType == FaultToleranceType::CH) {
+if (faultToleranceType == FaultToleranceType::UB) {
         insertIntoStorageCallback = [this](Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) {
             workerContext.insertIntoStorage(this->nesPartition, inputBuffer);
         };
+        deleteFromStorageCallback = [this](uint64_t timestamp, Runtime::WorkerContext& workerContext) {
+            return this->trimmingStarted = workerContext.trimStorage(this->nesPartition, timestamp);
+        };
     } else {
         insertIntoStorageCallback = [](Runtime::TupleBuffer&, Runtime::WorkerContext&) {
+        };
+        deleteFromStorageCallback = [](uint64_t, Runtime::WorkerContext&) {
+            return false;
         };
     }
     bufferCount = 0;
@@ -565,4 +571,6 @@ bool NetworkSink::retrieveNewChannelAndUnbuffer(Runtime::WorkerContext& workerCo
     unbuffer(workerContext);
     return true;
 }
+
+bool NetworkSink::hasTrimmed() { return trimmingStarted; }
 }// namespace NES::Network

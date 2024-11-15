@@ -87,6 +87,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
+ uint64_t getCurrentEpochBarrier();
     /**
      * @brief get the id of the owning plan
      * @return sharedQueryId
