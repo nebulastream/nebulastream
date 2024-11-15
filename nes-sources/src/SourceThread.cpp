@@ -21,10 +21,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Sources/SourceThread.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>
+#include <SourceThread.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources

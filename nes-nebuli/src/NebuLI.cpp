@@ -31,7 +31,7 @@
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <nlohmann/detail/input/binary_reader.hpp>
@@ -113,13 +113,8 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
 
     /// We currently only support CSV
     auto inputFormat = Configurations::InputFormat::CSV;
-
-    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
-    {
-        return Sources::SourceDescriptor(
-            std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
-    }
-    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
+    auto validConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    return Sources::SourceDescriptor(std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(validConfig));
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
