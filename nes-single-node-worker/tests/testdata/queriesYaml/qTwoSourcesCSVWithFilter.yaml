@@ -16,12 +16,14 @@ logical:
         type: UINT64
 physical:
   - logical: csv_source
-    config:
+    parserConfig:
       type: CSV
+    sourceConfig:
+      type: File
       filePath: oneToThirtyOneDoubleColumn.csv
-      delimiter: ","
   - logical: csv_source
-    config:
+    parserConfig:
       type: CSV
+    sourceConfig:
+      type: File
       filePath: oneToThirtyOneDoubleColumn.csv
-      delimiter: ","

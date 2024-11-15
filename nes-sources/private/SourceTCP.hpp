@@ -28,10 +28,6 @@ namespace NES::Sources
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
 {
-    static inline const Configurations::DescriptorConfig::ConfigParameter<Configurations::EnumWrapper, Configurations::InputFormat>
-        INPUT_FORMAT{"inputFormat", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-                         return Configurations::DescriptorConfig::tryGet(INPUT_FORMAT, config);
-                     }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> HOST{
         "socketHost", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(HOST, config);
@@ -127,7 +123,7 @@ struct ConfigParametersTCP
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            INPUT_FORMAT, HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
+            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
 };
 
 class SourceTCP : public Source
@@ -161,7 +157,6 @@ private:
     int connection = -1;
     int sockfd = -1;
 
-    Configurations::InputFormat inputFormat;
     std::string socketHost;
     std::string socketPort;
     int socketType;

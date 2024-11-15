@@ -237,8 +237,7 @@ void SourceThread::runningRoutine()
     catch (std::exception const& e)
     {
         /// Todo #237: Improve error handling in sources
-        auto ingestionException = RunningRoutineFailure();
-        ingestionException.what() += e.what();
+        auto ingestionException = RunningRoutineFailure(e.what());
         emitFunction(originId, SourceReturnType::Error{ingestionException});
         completedPromise.set_exception(std::make_exception_ptr(ingestionException));
     }

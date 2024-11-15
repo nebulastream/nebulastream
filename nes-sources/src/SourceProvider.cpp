@@ -19,7 +19,6 @@
 #include <Sources/SourceProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
-#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
@@ -36,9 +35,12 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     SourceReturnType::EmitFunction&& emitFunction)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    const auto sourceType = magic_enum::enum_name(sourceDescriptor.inputFormat);
-    /// Source parser provider currently sets default tuple separator: '\n' and default field delimiter ','
-    auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(sourceType.data(), sourceDescriptor.schema);
+    /// Todo #495: If we completely move the SourceParser out of the sources, we get rid of constructing the parser here.
+    auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(
+        sourceDescriptor.parserConfig.parserType,
+        sourceDescriptor.parserConfig.tupleSeparator,
+        sourceDescriptor.parserConfig.fieldDelimiter,
+        sourceDescriptor.schema);
 
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
     {

@@ -13,22 +13,21 @@
 */
 
 #include <memory>
-#include <API/Schema.hpp>
-#include <SourceParsers/SourceParserProvider.hpp>
+#include <optional>
+#include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceParserRegistry.hpp>
+#include <SourceRegistryValidation.hpp>
 
-namespace NES::SourceParsers::SourceParserProvider
+namespace NES::Sources::SourceValidationProvider
 {
 
-std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, std::string tupleSeparator, std::string fieldDelimiter, std::shared_ptr<Schema> schema)
+NES::Configurations::DescriptorConfig::Config
+provide(const std::string& sourceType, std::unordered_map<std::string, std::string>&& stringConfig)
 {
-    if (auto sourceParser
-        = SourceParserRegistry::instance().create(parserType, std::move(schema), std::move(tupleSeparator), std::move(fieldDelimiter)))
+    if (const auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(stringConfig)))
     {
-        return std::move(sourceParser.value());
+        return std::move(*validConfig.value());
     }
-    throw UnknownParserType("unknown type of parser: {}", parserType);
+    throw UnknownSourceType("We don't support the source type: {}", sourceType);
 }
 }
