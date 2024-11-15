@@ -14,11 +14,13 @@
 #pragma once
 
 #include <memory>
-#include <API/Schema.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceReturnType.hpp>
 
-namespace NES::SourceParsers::SourceParserProvider
+namespace NES::Sources::SourceValidationProvider
 {
-std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, std::string tupleSeparator, std::string fieldDelimiter, std::shared_ptr<Schema> schema);
+NES::Configurations::DescriptorConfig::Config
+provide(const std::string& sourceType, std::unordered_map<std::string, std::string>&& stringConfig);
 }

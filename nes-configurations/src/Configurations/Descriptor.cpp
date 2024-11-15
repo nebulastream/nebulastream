@@ -13,9 +13,11 @@
 */
 
 #include <ostream>
+#include <ranges>
 #include <sstream>
 #include <variant>
 #include <Configurations/Descriptor.hpp>
+#include <fmt/ranges.h>
 
 namespace NES::Configurations
 {
@@ -44,21 +46,24 @@ struct ConfigPrinter
 };
 std::ostream& operator<<(std::ostream& out, const DescriptorConfig::Config& config)
 {
-    for (const auto& [key, value] : config)
+    if (config.empty())
     {
-        out << "  " << key << ": ";
-        std::visit(ConfigPrinter{out}, value);
-        out << '\n';
+        return out;
     }
-    out << "}";
+    out << config.begin()->first << ": ";
+    std::visit(ConfigPrinter{out}, config.begin()->second);
+    for (const auto& [key, value] : config | std::views::drop(1))
+    {
+        out << ", " << key << ": ";
+        std::visit(ConfigPrinter{out}, value);
+    }
     return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor)
 {
-    return out << "\nDescriptor: " << descriptor.config;
+    return out << "\nDescriptor( " << descriptor.config << " )";
 }
-
 
 std::string Descriptor::toStringConfig() const
 {

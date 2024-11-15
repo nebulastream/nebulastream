@@ -41,8 +41,7 @@ namespace NES::Sources
 {
 
 SourceTCP::SourceTCP(const SourceDescriptor& sourceDescriptor)
-    : inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
+    : socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
@@ -65,7 +64,6 @@ std::ostream& SourceTCP::toString(std::ostream& str) const
     str << "\n  generated buffers: " << this->generatedBuffers;
     str << "\n  connection: " << this->connection;
     str << "\n  timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
-    str << "\n  inputFormat: " << magic_enum::enum_name(inputFormat);
     str << "\n  socketHost: " << socketHost;
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
