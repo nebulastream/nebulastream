@@ -149,7 +149,20 @@ auto parseIntegerString()
     return [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
     {
         T* value = reinterpret_cast<T*>(fieldPointer);
-        std::from_chars(fieldValueString.data(), fieldValueString.data() + fieldValueString.size(), *value);
+        auto [_, ec] = std::from_chars(fieldValueString.data(), fieldValueString.data() + fieldValueString.size(), *value);
+        if (ec == std::errc())
+        {
+            return;
+        }
+        if (ec == std::errc::invalid_argument)
+        {
+            throw CannotFormatMalformedStringValue(
+                "Integer value '{}', is not a valid integer of type: {}.", fieldValueString, typeid(T).name());
+        }
+        if (ec == std::errc::result_out_of_range)
+        {
+            throw CannotFormatMalformedStringValue("Integer value '{}', is too large for type: {}.", fieldValueString, typeid(T).name());
+        }
     };
 }
 
