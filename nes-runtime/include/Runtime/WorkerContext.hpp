@@ -219,7 +219,7 @@ class WorkerContext {
       * @param nesPartition partition
       * @param timestamp timestamp
       */
-    void trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
+    bool trimStorage(Network::NesPartition nesPartition, uint64_t timestamp);
 
     /**
      * @brief get the oldest buffered tuple for the specified partition
