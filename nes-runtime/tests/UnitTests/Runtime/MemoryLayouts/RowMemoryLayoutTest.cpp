@@ -22,6 +22,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {

@@ -21,6 +21,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 
 #include <vector>
 

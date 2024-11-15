@@ -14,6 +14,7 @@
 #include <API/AttributeField.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Memory::MemoryLayouts
