@@ -1,5 +1,5 @@
 # The Problem
-NebulaStream promises to be able to cope with millions of sources on millions of devices as one of its main selling points.
+NebulaStream aims to handle millions of heterogeneous sources across massively distributed and heterogeneous devices.
 This requires a single node to handle thousands of sources concurrently.
 
 Currently, each source that is started runs in an individual thread. 
@@ -12,14 +12,13 @@ Currently, sources read external data into the system while additionally parsing
 This mixes up I/O logic with data parsing and therefore violates basic principles like the separation of concerns (**P2**).
 
 Each source reads data from external systems or devices and writes them into buffers provided by the NES `BufferManager`.
-In its current state, all buffers could be taken by fast sources.
-This leads to a deadlock, since query processing can not proceed without buffers (**P3**).
+In its current state, fast sources can cause a deadlock by taking all buffers, since query processing cannot proceed without buffers (**P3**).
 
 
 # Goals
 A single node worker should be able to handle thousands of concurrent sources without data ingestion becoming a bottleneck.
-By that, we do not mean that slow disk or network I/O can not be the bottleneck in query execution (this may be out of the systems control).
-Instead, the key aspect is that adding more sources should not slow down existing sources or CPU-bound operations for internal reasons such as CPU oversubscription or threads spin waiting on data to become ready.
+Slow disk or network I/O can still cause a bottleneck during query execution (this may be out of the system's control).
+However, adding more sources should not slow down existing sources or CPU-bound operations for internal reasons such as CPU oversubscription or threads busy-waiting on data to become ready.
 Of course, devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but at least we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, without blocking the CPU
 (**G1, scalability**, addresses P1).
 
@@ -46,7 +45,7 @@ We do not want the `QueryEngine` that manages sources to know or depend on the i
 Errors should be handled transparently as described in the [DD on error handling](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240711_error_handling.md).
 Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component (**G5, fault transparency**).
 
-It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G5, backwards compatibility)**.
+It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G6, backwards compatibility)**.
 
 # Non-Goals
 - **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here.
@@ -78,22 +77,22 @@ In applications with very large numbers of network connections, it’s therefore
 
 Web servers and query engines therefore often use separate thread pools for I/O and compute.
 This decoupling prevents tasks that are CPU-bound to hog threads and being unable to respond to external requests. 
-At the same time, threads that do blocking I/O calls (e.g., asking for a disk page, making a request to S3, etc.) stall compute threads or other threads that could issue I/O requests the meantime.
+At the same time, threads that do blocking I/O calls (e.g., asking for a disk page, making a request to S3, etc.) stall compute threads or other threads that could issue I/O requests in the meantime.
 
 ## Async I/O
-Now that we have a separate thread pool for I/O operations, we need to define operations and decide how to schedule them on this pool.
+If we have a separate thread pool for I/O operations, we need to define operations and decide how to schedule them on this pool.
 With the assumption that we primarily do I/O when dealing with sources, we are **waiting** for something to happen in the background for most of the time.
-At some point in each source, we call a client like `doRequest()` and then we are blocking on this call.
+At some point in each source, we call a client like `doRequest()` and then block during this call.
 The CPU does not have any insight information on what we are waiting on, so if we are unlucky and the CPU does not give another thread a time slice, we block the CPU with our I/O.
 
 An improvement to this would be to to put the thread to sleep by using mechanisms like `std::future` and have another thread run while we wait on the I/O to complete.
-However, this still has the thread where the call was invoked from occupied, so this exact thread is not free to use for other tasks.
+However, the calling thread would still be occupied and therefore is not free to use for other tasks.
 If we assume a limited pool of threads, which we strive to have, we could still end up in the situation where all available I/O threads are sleeping, waiting for blocking I/O to complete.
 During this time, no other I/O tasks can make progress.
 
 It would be nice to have a mechanism to pause/resume a function waiting for external I/O **without** occupying a thread while waiting for data to arrive.
 That's what async I/O gives us, and the easiest way to implement it using modern C++ are coroutines.
-They enable us to suspend and resume functions as they are running, while **preserving** their state.
+They enable us to suspend and resume running functions while **preserving** their state.
 Internally, the compiler rewrites coroutines to state machines to make this work.
 C++20 introduced three new keywords, namely `co_await`, `co_yield` and `co_return`.
 `co_await` pauses execution and awaits another coroutine that is called (lower-level code), `co_yield` yields a value to the caller without returning to the caller (think python generators), `co_return` signals termination of the coroutine with an optional return value.
@@ -142,7 +141,8 @@ awaitable<void> handleConnection(tcp::socket socket)
             ...
         }
     // Boost Asio handles termination signals via error codes
-    } catch (boost::system::error& error) 
+    } 
+    catch (boost::system::error& error) 
     {
 
         if (error.code() == boost::asio::error::eof)
@@ -177,7 +177,7 @@ The proposed solution depends on these key design decisions:
 3. We introduce a centralized `asyncsourceexecutor` that drives the execution of all asynchronous sources on a thread pool.
 4. We allow synchronous sources to still exist and run on separate detached threads as a fallback.
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not need to deal with the different execution models.
-5. We have sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
+5. Sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
 6. We allow the `QueryEngine` to request partially filled buffers in source implementations when its task queue is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
 
 ## Source Implementations
