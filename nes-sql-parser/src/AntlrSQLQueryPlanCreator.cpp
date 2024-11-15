@@ -871,7 +871,10 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
             throw InvalidQuerySyntax("Unknown data type: {}", concreteValue->getText());
         }
     }
-    const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
+
+    /// Getting the constant value without the type,e .g., 42.0_D, 42.0_F, 42_U or 42_I --> 42.0, 42.0, 42, 42
+    const auto constantText = context->getText();
+    const auto valueType = std::make_shared<BasicValue>(dataType, constantText.substr(0, constantText.find('_')));
     auto constFunctionItem = FunctionItem(NodeFunctionConstantValue::create(valueType));
     helper.functionBuilder.push_back(constFunctionItem);
     poppush(helper);
