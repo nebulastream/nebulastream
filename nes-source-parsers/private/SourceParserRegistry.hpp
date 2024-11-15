@@ -22,7 +22,7 @@ namespace NES::SourceParsers
 {
 
 /// A SourceParser requires a schema, a tuple separator and a field delimiter.
-using SourceParserRegistrySignature = RegistrySignature<std::string, SourceParser, std::shared_ptr<Schema>, std::string, std::string>;
+using SourceParserRegistrySignature = RegistrySignature<std::string, SourceParser, const Schema&, std::string, std::string>;
 class SourceParserRegistry : public BaseRegistry<SourceParserRegistry, SourceParserRegistrySignature>
 {
 };

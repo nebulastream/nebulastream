@@ -27,7 +27,7 @@ class ProgressTracker;
 class SourceParserCSV : public SourceParser
 {
 public:
-    SourceParserCSV(SchemaPtr schema, std::string tupleSeparator, std::string fieldDelimiter);
+    SourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter);
     ~SourceParserCSV() override;
 
     void parseTupleBufferRaw(
@@ -39,7 +39,6 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    SchemaPtr schema;
     std::string fieldDelimiter;
     std::unique_ptr<ProgressTracker> progressTracker;
     std::vector<size_t> fieldSizes;
