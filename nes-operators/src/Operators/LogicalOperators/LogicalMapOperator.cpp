@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
@@ -59,10 +60,8 @@ bool LogicalMapOperator::inferSchema()
     /// use the default input schema to calculate the out schema of this operator.
     mapFunction->inferStamp(getInputSchema());
 
-    auto assignedField = mapFunction->getField();
-    std::string fieldName = assignedField->getFieldName();
-
-    if (outputSchema->getFieldByName(fieldName))
+    const auto assignedField = mapFunction->getField();
+    if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
