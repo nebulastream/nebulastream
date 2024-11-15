@@ -111,28 +111,25 @@ void Schema::replaceField(const std::string& name, const DataTypePtr& type)
 
 std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& fieldName) const
 {
-    ///Check if the field name is with fully qualified name
-    auto stringToMatch = fieldName;
-    if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        ///Add only attribute name separator
-        ///caution: adding the fully qualified name may result in undesired behavior
-        ///E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
-        ///system should throw invalid field exception
-        stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
-    }
     PRECONDITION(not fields.empty(), "Tried to get a field from a schema that has no fields.");
+
+    auto fieldNameToSearchFor = fieldName;
+    if (fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR) != std::string::npos
+        && fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    {
+        fieldNameToSearchFor = getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR + fieldNameToSearchFor;
+    }
 
     ///Iterate over all fields and look for field which fully qualified name
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields)
     {
         auto fullyQualifiedFieldName = field->getName();
-        if (stringToMatch.length() <= fullyQualifiedFieldName.length())
+        if (fieldNameToSearchFor.length() <= fullyQualifiedFieldName.length())
         {
             ///Check if the field name ends with the input field name
-            auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
-            auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
+            auto startingPos = fullyQualifiedFieldName.length() - fieldNameToSearchFor.length();
+            auto found = fullyQualifiedFieldName.compare(startingPos, fieldNameToSearchFor.length(), fieldNameToSearchFor);
             if (found == 0)
             {
                 matchedFields.push_back(field);
@@ -140,12 +137,13 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
         }
     }
     ///Check how many matching fields were found and raise appropriate exception
-    if (matchedFields.size() == 1)
+    if (matchedFields.size() > 0)
     {
+        NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
         return matchedFields[0];
     }
-    INVARIANT(matchedFields.size() > 1, "Schema: Found ambiguous field with name {}", fieldName);
-    throw FieldNotFound("field {}  does not exist", fieldName);
+    NES_WARNING("Schema: field with name {} does not exist", fieldName);
+    return std::nullopt;
 }
 
 AttributeFieldPtr Schema::getFieldByIndex(size_t index) const
@@ -251,7 +249,7 @@ std::vector<std::string> Schema::getFieldNames() const
 {
     std::vector<std::string> fieldNames;
     /// Check if the size of the fields vector is within a reasonable range
-    INVARIANT(fields.size() < (2 ^ 32), "Schema is corrupted: unreasonable number of fields.");
+    INVARIANT(fields.size() < (1U ^ 32), "Schema is corrupted: unreasonable number of fields.");
     for (const auto& attribute : fields)
     {
         fieldNames.emplace_back(attribute->getName());
