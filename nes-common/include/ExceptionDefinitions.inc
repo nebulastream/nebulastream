@@ -75,6 +75,8 @@ EXCEPTION(CannotStartNodeEngine, 3001, "cannot start node engine")
 EXCEPTION(CannotStopNodeEngine, 3002, "cannot stop node engine")
 EXCEPTION(CannotStartQueryManager, 3003, "cannot start query manager")
 EXCEPTION(CannotStopQueryManager, 3004, "cannot stop query manager")
+EXCEPTION(QueryNotRegistered, 3005, "query not registered")
+EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

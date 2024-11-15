@@ -89,6 +89,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
     GRPCServer uut{SingleNodeWorker{configuration}};
 
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
+    ASSERT_NE(queryId.getRawValue(), QueryId::INVALID);
     IntegrationTestUtil::startQuery(queryId, uut);
     IntegrationTestUtil::waitForQueryToEnd(queryId, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);

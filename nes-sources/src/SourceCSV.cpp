@@ -31,99 +31,29 @@
 namespace NES::Sources
 {
 
-SourceCSV::SourceCSV(const SourceDescriptor& sourceDescriptor)
-    : fileEnded(false)
-    , filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
-    , delimiter(sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER))
-    , skipHeader(sourceDescriptor.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
+SourceCSV::SourceCSV(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
 }
 
 void SourceCSV::open()
 {
-    struct Deleter
-    {
-        void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
-    };
     const auto realCSVPath = realpath(filePath.c_str(), nullptr);
-    const auto path = std::unique_ptr<const char, Deleter>(realCSVPath);
-    if (realCSVPath == nullptr)
+    inputFile = std::ifstream(realCSVPath, std::ios::binary);
+    if (!inputFile)
     {
-        throw InvalidConfigParameter(fmt::format("Could not determine absolute pathname: {} - {}", filePath.c_str(), std::strerror(errno)));
-    }
-
-    input.open(path.get());
-    if (!(input.is_open() && input.good()))
-    {
-        throw CannotOpenSource(fmt::format("Cannot open file: {}", std::string(path.get())));
-    }
-
-    NES_DEBUG("SourceCSV: Opening path {}", path.get());
-    input.seekg(0, std::ifstream::end);
-    if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1)
-    {
-        throw CannotOpenSource("SourceCSV::SourceCSV File {} is corrupted", filePath);
-    }
-    else
-    {
-        this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
+        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", filePath.c_str(), std::strerror(errno));
     }
 }
 
 void SourceCSV::close()
 {
-    input.close();
+    inputFile.close();
 }
 
-bool SourceCSV::fillTupleBuffer(
-    NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, const ParserCSV& csvParser)
+size_t SourceCSV::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
 {
-    NES_TRACE("SourceCSV::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
-    if (this->fileEnded)
-
-
-    {
-        NES_WARNING("SourceCSV::fillBuffer: but file has already ended");
-        return false;
-    }
-    auto maxTuplesInBuffer = tupleBuffer.getBufferSize() / csvParser.getSizeOfSchemaInBytes();
-    NES_TRACE("SourceCSV::fillBuffer: fill buffer with #tuples={} of size={}", maxTuplesInBuffer, csvParser.getSizeOfSchemaInBytes());
-
-    std::string line;
-    uint64_t tupleCount = 0;
-
-    input.seekg(currentPositionInFile, std::ifstream::beg);
-    if (skipHeader && currentPositionInFile == 0)
-    {
-        NES_TRACE("SourceCSV: Skipping header");
-        std::getline(input, line);
-        currentPositionInFile = input.tellg();
-    }
-
-    while (tupleCount < maxTuplesInBuffer)
-    {
-        ///Check if EOF has reached
-        if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1)
-        {
-            input.clear();
-            NES_TRACE("SourceCSV::fillBuffer: break because file ended");
-            this->fileEnded = true;
-            break;
-        }
-
-        std::getline(input, line);
-        NES_TRACE("SourceCSV line={} val={}", tupleCount, line);
-        /// #72: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        csvParser.writeInputTupleToTupleBuffer(line, tupleCount, tupleBuffer, bufferManager);
-        tupleCount++;
-    } ///end of while
-
-    currentPositionInFile = input.tellg();
-    tupleBuffer.setNumberOfTuples(tupleCount);
-    generatedTuples += tupleCount;
-    generatedBuffers++;
-    NES_TRACE("SourceCSV::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
-    return true;
+    inputFile.read(reinterpret_cast<char*>(tupleBuffer.getBuffer()), tupleBuffer.getBufferSize());
+    return inputFile.gcount();
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
@@ -135,21 +65,19 @@ SourceCSV::validateAndFormat(std::unordered_map<std::string, std::string>&& conf
 std::ostream& SourceCSV::toString(std::ostream& str) const
 {
     str << "\nSourceCSV(";
-    str << "\n  Filesize:" << this->fileSize;
-    str << "\n  Generated tuples: " << this->generatedTuples;
-    str << "\n  Generated buffers: " << this->generatedBuffers;
+    str << "\n  Filepath:" << this->filePath;
     str << ")\n";
     return str;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceGeneratedRegistrarValidation::RegisterSourceValidationCSV(std::unordered_map<std::string, std::string>&& sourceConfig)
+SourceGeneratedRegistrarValidation::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
     return SourceCSV::validateAndFormat(std::move(sourceConfig));
 }
 
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceCSV(const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceFile(const SourceDescriptor& sourceDescriptor)
 {
     return std::make_unique<SourceCSV>(sourceDescriptor);
 }

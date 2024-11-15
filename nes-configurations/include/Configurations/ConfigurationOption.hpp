@@ -161,30 +161,6 @@ public:
         }
     }
 
-    /**
-     * @brief converts a string to the appropriate TCPDecideMessageSize enum value and sets it
-     * @param decideMessageSize
-     */
-    void setTCPDecideMessageSizeEnum(std::string decideMessageSize)
-    {
-        if (decideMessageSize == "TUPLE_SEPARATOR")
-        {
-            this->value = TCPDecideMessageSize::TUPLE_SEPARATOR;
-        }
-        else if (decideMessageSize == "USER_SPECIFIED_BUFFER_SIZE")
-        {
-            this->value = TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE;
-        }
-        else if (decideMessageSize == "BUFFER_SIZE_FROM_SOCKET")
-        {
-            this->value = TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET;
-        }
-        else
-        {
-            NES_ERROR("TCPDecideMessageSizeEnum: value unknown.");
-        }
-    }
-
 private:
     /**
      * @brief Constructs a ConfigurationOption<T> object
@@ -215,6 +191,5 @@ using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
-using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
 }
