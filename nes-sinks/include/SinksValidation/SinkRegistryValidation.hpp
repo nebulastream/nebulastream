@@ -30,5 +30,5 @@ class SinkRegistryValidation final : public BaseRegistry<SinkRegistryValidation,
 }
 
 #define INCLUDED_FROM_SINK_REGISTRY_VALIDATION
-#include <SinksValidation/SinkGeneratedRegistrarValidation.hpp>
+#include <SinksValidation/SinkGeneratedRegistrarValidation.inc>
 #undef INCLUDED_FROM_REGISTRY_VALIDATION
