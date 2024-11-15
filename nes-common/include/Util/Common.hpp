@@ -93,7 +93,7 @@ std::string escapeJson(const std::string& str);
 /**
 * @brief removes leading and trailing whitespaces
 */
-std::string_view trimWhiteSpaces(std::string_view in);
+std::string_view trimWhiteSpaces(std::string_view input);
 
 /**
 * @brief removes leading and trailing occurences of `trimFor`

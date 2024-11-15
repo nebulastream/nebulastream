@@ -17,6 +17,7 @@
 #include <numeric>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
@@ -149,28 +150,14 @@ uint64_t countLines(std::istream& stream)
     return cnt;
 }
 
-std::string_view trimWhiteSpaces(std::string_view in)
+std::string_view trimWhiteSpaces(const std::string_view input)
 {
-    /// Skip all `isspace` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left)
-    {
-        if (left == in.end())
-        {
-            return {};
-        }
-        if (!isspace(*left))
-        {
-            break;
-        }
-    }
-    auto right = in.end() - 1;
-    for (; right > left && isspace(*right); --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
+    const auto start = input.find_first_not_of(" \t\n\r");
+    const auto end = input.find_last_not_of(" \t\n\r");
+    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
 }
 
-std::string_view trimChar(std::string_view in, char trimFor)
+std::string_view trimChar(std::string_view in, const char trimFor)
 {
     /// Skip all `trimFor` elements from the left (begin) and from the right (end-1)
     auto left = in.begin();

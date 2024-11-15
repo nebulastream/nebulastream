@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
@@ -20,6 +21,7 @@
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
 
 namespace NES::Nautilus
 {
@@ -38,7 +40,7 @@ VarVal& VarVal::operator=(const VarVal& other)
     return *this;
 }
 
-VarVal& VarVal::operator=(VarVal&& other)
+VarVal& VarVal::operator=(VarVal&& other) noexcept
 {
     value = std::move(other.value);
     return *this;

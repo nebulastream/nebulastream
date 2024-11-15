@@ -33,6 +33,7 @@ enum class TokenType : uint8_t
     INVALID,
     CSV_SOURCE,
     SLT_SOURCE,
+    SINK,
     QUERY,
     RESULT_DELIMITER,
 };
@@ -54,7 +55,7 @@ public:
     /// Register a substitution rule to be applied to the file before parsing
     void registerSubstitutionRule(const SubstitutionRule& rule);
 
-    /// Loading overrides exsing parse content
+    /// Loading overrides existing parse content
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
     [[nodiscard]] bool loadString(const std::string& str);
 
@@ -64,6 +65,7 @@ public:
         BasicType type;
         std::string name;
         bool operator==(const Field& other) const = default;
+        bool operator!=(const Field& other) const = default;
     };
     using Schema = std::vector<Field>;
 
@@ -83,6 +85,13 @@ public:
         bool operator==(const SLTSource& other) const = default;
     };
 
+    struct Sink
+    {
+        std::string name;
+        Schema fields;
+        bool operator==(const Sink& other) const = default;
+    };
+
     using Query = std::string;
     using ResultTuples = std::vector<std::string>;
 
@@ -90,12 +99,15 @@ public:
     using ResultTuplesCallback = std::function<void(ResultTuples&&)>;
     using SLTSourceCallback = std::function<void(SLTSource&&)>;
     using CSVSourceCallback = std::function<void(CSVSource&&)>;
+    using SinkCallback = std::function<void(Sink&&)>;
 
     /// Register callbacks to be called when the respective section is parsed
     void registerOnQueryCallback(QueryCallback callback);
     void registerOnResultTuplesCallback(ResultTuplesCallback callback);
     void registerOnSLTSourceCallback(SLTSourceCallback callback);
     void registerOnCSVSourceCallback(CSVSourceCallback callback);
+    void registerOnSinkCallBack(SinkCallback callback);
+
 
     void parse();
 
@@ -108,11 +120,12 @@ private:
     [[nodiscard]] static std::optional<TokenType> getTokenIfValid(std::string potentialToken);
     /// Parse the next token and return its type.
     [[nodiscard]] std::optional<TokenType> nextToken();
-    /// Got the the next token. Returns false if reached end of file.
+    /// Got the next token. Returns false if reached end of file.
     [[nodiscard]] bool moveToNextToken();
 
     [[nodiscard]] SLTSource expectSLTSource();
     [[nodiscard]] CSVSource expectCSVSource() const;
+    [[nodiscard]] Sink expectSink() const;
     [[nodiscard]] ResultTuples expectTuples(bool ignoreFirst = false);
     [[nodiscard]] Query expectQuery();
 
@@ -120,6 +133,7 @@ private:
     ResultTuplesCallback onResultTuplesCallback;
     SLTSourceCallback onSLTSourceCallback;
     CSVSourceCallback onCSVSourceCallback;
+    SinkCallback onSinkCallback;
 
     bool firstToken = true;
     size_t currentLine = 0;

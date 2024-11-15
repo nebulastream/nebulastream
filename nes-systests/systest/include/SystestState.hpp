@@ -26,6 +26,7 @@
 #include <fmt/format.h>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SystestConfiguration.hpp>
+#include <SystestParser.hpp>
 #include <SystestRunner.hpp>
 
 
@@ -36,6 +37,12 @@ using TestGroup = std::string;
 
 struct Query
 {
+    static std::filesystem::path
+    resultFile(const std::filesystem::path& resultDir, const TestName& testName, const uint64_t queryIdInTestFile)
+    {
+        return resultDir / std::filesystem::path(fmt::format("{}_{}.csv", testName, queryIdInTestFile));
+    }
+
     Query() = default;
     explicit Query(
         TestName name,
@@ -43,18 +50,19 @@ struct Query
         std::filesystem::path sqlLogicTestFile,
         DecomposedQueryPlanPtr queryPlan,
         const uint64_t queryIdInFile,
-        std::filesystem::path resultFileBaseDir)
+        std::filesystem::path resultFileBaseDir,
+        SystestParser::Schema sinkSchema)
         : name(std::move(name))
         , queryDefinition(std::move(queryDefinition))
         , sqlLogicTestFile(std::move(sqlLogicTestFile))
         , queryPlan(std::move(queryPlan))
         , queryIdInFile(queryIdInFile)
-        , resultFileBaseDir(std::move(resultFileBaseDir)) {};
-
-    [[nodiscard]] std::filesystem::path resultFile() const
+        , resultFileBaseDir(std::move(resultFileBaseDir))
+        , expectedSinkSchema(std::move(sinkSchema))
     {
-        return resultFileBaseDir / std::filesystem::path(fmt::format("{}_{}.csv", name, queryIdInFile));
     }
+
+    [[nodiscard]] std::filesystem::path resultFile() const { return resultFile(resultFileBaseDir, name, queryIdInFile); }
 
     TestName name;
     std::string queryDefinition;
@@ -62,6 +70,7 @@ struct Query
     DecomposedQueryPlanPtr queryPlan;
     uint64_t queryIdInFile;
     std::filesystem::path resultFileBaseDir;
+    SystestParser::Schema expectedSinkSchema;
 };
 
 struct RunningQuery
