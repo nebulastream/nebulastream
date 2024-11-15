@@ -25,12 +25,13 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SourceParsers/SourceParser.hpp>
-#include <SourceParsers/SourceParserCSV.hpp>
-#include <SourceParsers/SourceParserRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
+#include <SourceParserCSV.hpp>
+#include <SourceParserRegistry.hpp>
+#include <fmt/core.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
