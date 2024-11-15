@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -128,7 +129,6 @@ public:
      *
      * @param fieldName: Name of the attribute field that should be returned.
      * @return Pointer to attribute field if present, otherwise `nullptr`.
-     * @throws FieldNotFound if the field does not exist
      */
     std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 

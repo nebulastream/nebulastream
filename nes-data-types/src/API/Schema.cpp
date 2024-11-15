@@ -145,7 +145,7 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
         return matchedFields[0];
     }
     INVARIANT(matchedFields.size() > 1, "Schema: Found ambiguous field with name {}", fieldName);
-    throw FieldNotFound("field {}  does not exist", fieldName);
+    return std::nullopt;
 }
 
 AttributeFieldPtr Schema::getFieldByIndex(size_t index) const
