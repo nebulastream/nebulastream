@@ -38,9 +38,9 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     /// Todo #495: If we completely move the SourceParser out of the sources, we get rid of constructing the parser here.
     auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(
         sourceDescriptor.parserConfig.parserType,
+        sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleSeparator,
-        sourceDescriptor.parserConfig.fieldDelimiter,
-        sourceDescriptor.schema);
+        sourceDescriptor.parserConfig.fieldDelimiter);
 
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
     {

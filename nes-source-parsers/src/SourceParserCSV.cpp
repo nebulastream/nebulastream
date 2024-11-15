@@ -29,9 +29,9 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
+#include <fmt/core.h>
 #include <SourceParserCSV.hpp>
 #include <SourceParserRegistry.hpp>
-#include <fmt/core.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -166,15 +166,13 @@ auto parseIntegerString()
     };
 }
 
-SourceParserCSV::SourceParserCSV(SchemaPtr schema, std::string tupleSeparator, std::string delimiter)
-    : schema(std::move(schema))
-    , fieldDelimiter(std::move(delimiter))
-    , progressTracker(
-          std::make_unique<ProgressTracker>(std::move(tupleSeparator), this->schema->getSchemaSizeInBytes(), this->schema->getSize()))
+SourceParserCSV::SourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string delimiter)
+    : fieldDelimiter(std::move(delimiter))
+    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleSeparator), schema.getSchemaSizeInBytes(), schema.getSize()))
 {
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : this->schema->fields)
+    for (const AttributeFieldPtr& field : schema.fields)
     {
         physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
     }
@@ -401,9 +399,9 @@ void SourceParserCSV::parseStringIntoTupleBuffer(
 }
 
 std::unique_ptr<SourceParser> SourceParserGeneratedRegistrar::RegisterSourceParserCSV(
-    std::shared_ptr<Schema> schema, std::string tupleSeparator, std::string fieldDelimiter)
+    const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter)
 {
-    return std::make_unique<SourceParserCSV>(std::move(schema), std::move(tupleSeparator), std::move(fieldDelimiter));
+    return std::make_unique<SourceParserCSV>(schema, std::move(tupleSeparator), std::move(fieldDelimiter));
 }
 
 }
