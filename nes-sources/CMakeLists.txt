@@ -22,7 +22,8 @@ target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memor
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)

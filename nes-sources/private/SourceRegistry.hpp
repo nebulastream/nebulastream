@@ -29,5 +29,5 @@ class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignatu
 }
 
 #define INCLUDED_FROM_SOURCE_REGISTRY
-#include <Sources/SourceGeneratedRegistrar.hpp>
+#include <SourceGeneratedRegistrar.hpp>
 #undef INCLUDED_FROM_SOURCE_REGISTRY
