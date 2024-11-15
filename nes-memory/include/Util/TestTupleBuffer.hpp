@@ -21,7 +21,6 @@
 #include <string>
 #include <type_traits>
 #include <variant>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
