@@ -28,11 +28,11 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SourceParsers/SourceParser.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceRegistry.hpp>
-#include <Sources/SourceTCP.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceRegistryValidation.hpp>
+#include <SourceTCP.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include <magic_enum.hpp>

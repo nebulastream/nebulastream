@@ -17,5 +17,6 @@ add_source_files(nes-sources
         Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
+        SourceValidationProvider.cpp
         SourceTCP.cpp
 )

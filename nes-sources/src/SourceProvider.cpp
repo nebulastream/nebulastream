@@ -17,8 +17,8 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/SourceRegistry.hpp>
 #include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources

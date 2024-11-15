@@ -21,12 +21,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/SinkFile.hpp>
-#include <Sources/SourceFile.hpp>
-#include <Sources/SourceTCP.hpp>
 #include <Util/Common.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
@@ -488,16 +485,16 @@ void replaceInputFileInSourceFiles(SerializableDecomposedQueryPlan& decomposedQu
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::SourceFile::NAME)
+            if (sourceDescriptor.sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
                 Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
-                configUpdated.at(Sources::ConfigParametersCSV::FILEPATH) = newInputFileName;
+                configUpdated.at("filePath") = newInputFileName;
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                     sourceDescriptor.schema,
                     sourceDescriptor.logicalSourceName,
                     sourceDescriptor.sourceType,
-                    sourceDescriptor.inputFormat,
+                    sourceDescriptor.parserConfig,
                     std::move(configUpdated));
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
@@ -525,18 +522,18 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::SourceTCP::NAME)
+            if (sourceDescriptor.sourceType == "TCP")
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
                     Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
-                    configUpdated.at(Sources::ConfigParametersTCP::PORT) = static_cast<uint32_t>(mockTcpServerPort);
+                    configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                         sourceDescriptor.schema,
                         sourceDescriptor.logicalSourceName,
                         sourceDescriptor.sourceType,
-                        sourceDescriptor.inputFormat,
+                        sourceDescriptor.parserConfig,
                         std::move(configUpdated));
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(

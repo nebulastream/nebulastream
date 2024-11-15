@@ -15,9 +15,10 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceThread.hpp>
+#include <SourceThread.hpp>
 
 namespace NES::Sources
 {
@@ -37,6 +38,7 @@ SourceHandle::SourceHandle(
         std::move(sourceImplementation),
         std::move(sourceParser));
 }
+SourceHandle::~SourceHandle() = default;
 
 bool SourceHandle::start() const
 {
