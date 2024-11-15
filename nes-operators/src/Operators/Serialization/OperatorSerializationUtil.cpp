@@ -750,7 +750,7 @@ void OperatorSerializationUtil::serializeSortBufferOperator(
 
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSortBufferOperator(const SerializableOperator_SortBufferDetails& sortBufferDetails)
 {
-    return LogicalOperatorFactory::createSortBufferOperator(sortBufferDetails.sortfieldidentifier(), sortBufferDetails.sortorder(), getNextOperatorId());
+    return std::make_shared<LogicalSortBufferOperator>(sortBufferDetails.sortfieldidentifier(), sortBufferDetails.sortorder(), getNextOperatorId());
 }
 
 void OperatorSerializationUtil::serializeProjectionOperator(

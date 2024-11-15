@@ -93,6 +93,17 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
+     EnumOption<QueryCompilation::SliceCacheType> sliceCacheType = {
+        SLICE_CACHE_TYPE,
+        QueryCompilation::SliceCacheType::DEFAULT,
+        "Type of slice cache"
+        "[DEFAULT|FIFO|LRU]. "};
+
+    UIntOption sliceCacheSize = {SLICE_CACHE_SIZE,
+                                "1",
+                                "Size of the slice cache",
+                                {std::make_shared<NumberValidation>()}};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -105,6 +116,8 @@ private:
             &preAllocPageCnt,
             &maxHashTableSize,
             &joinStrategy,
+            &sliceCacheType,
+            &sliceCacheSize
         };
     }
 };

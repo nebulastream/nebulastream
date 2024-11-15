@@ -13,7 +13,6 @@
 */
 
 #include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <utility>
 
@@ -53,7 +52,7 @@ bool LogicalSortBufferOperator::inferSchema() {
 }
 
 OperatorPtr LogicalSortBufferOperator::copy() {
-    auto copy = LogicalOperatorFactory::createSortBufferOperator(sortFieldIdentifier, sortOrder, id);
+    auto copy = std::make_shared<LogicalSortBufferOperator>(sortFieldIdentifier, sortOrder, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -69,7 +68,7 @@ OperatorPtr LogicalSortBufferOperator::copy() {
 
 void LogicalSortBufferOperator::inferStringSignature() {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalSortBufferOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalSortBufferOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalSortBufferOperator: SortBuffer should have children");
 
     //Infer query signatures for child operators

@@ -31,8 +31,11 @@
 namespace NES::Runtime::Execution
 {
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
-    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
+    const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins, Operators::SliceCachePtr& sliceCache)
+    : sliceAssigner(windowSize, windowSlide)
+    , sequenceNumber(SequenceNumber::INITIAL)
+    , numberOfInputOrigins(numberOfInputOrigins)
+    , sliceCache(sliceCache)
 {
 }
 
@@ -96,15 +99,27 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
+    auto sliceId = sliceEnd.getRawValue();
+
+    // Check for slice in slice cache
+    auto sliceFromCache = sliceCache->getSliceFromCache(sliceId);
+    if (sliceFromCache.has_value())
+    {
+        NES_ASSERT(std::holds_alternative<std::shared_ptr<Slice>>(sliceFromCache.value()), "Wrong slice pointer type!");
+        return {std::get<std::shared_ptr<Slice>>(sliceFromCache.value())};
+    }
 
     if (slicesWriteLocked->contains(sliceEnd))
     {
-        return {slicesWriteLocked->find(sliceEnd)->second};
+        auto slice = slicesWriteLocked->find(sliceEnd)->second;
+        sliceCache->passSliceToCache(sliceId, slice);
+        return {slice};
     }
 
     /// We assume that only one slice is created per timestamp
     auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
     slicesWriteLocked->emplace(sliceEnd, newSlice);
+    sliceCache->passSliceToCache(sliceId, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))

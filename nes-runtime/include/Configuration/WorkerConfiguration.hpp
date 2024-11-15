@@ -86,7 +86,7 @@ public:
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
     BoolOption enableStatisticOuput
-        = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output", {std::make_shared<BooleanValidation>()}};
+        = {ENABLE_STATISTIC_OUTPUT_CONFIG, "true", "Enable statistic output", {std::make_shared<BooleanValidation>()}};
 
 
     QueryCompilerConfiguration queryCompiler = {QUERY_COMPILER_CONFIG, "Configuration for the query compiler"};

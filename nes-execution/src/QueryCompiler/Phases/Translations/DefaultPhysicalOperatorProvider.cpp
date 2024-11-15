@@ -60,6 +60,9 @@
 #include <Util/Common.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/SliceCache/DefaultSliceCache.hpp>
+#include <Util/SliceCache/FIFOSliceCache.hpp>
+#include <Util/SliceCache/LeastRecentlyUsedSliceCache.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
@@ -350,8 +353,25 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         leftMemoryProvider->getMemoryLayoutPtr()->getBufferSize(),
         rightMemoryProvider->getMemoryLayoutPtr()->getBufferSize());
 
+    Runtime::Execution::Operators::SliceCachePtr sliceCache;
+    if (options->sliceCacheType == SliceCacheType::DEFAULT)
+    {
+        sliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+        NES_INFO("Slice Cache Type: DEFAULT");
+    }
+    else if (options->sliceCacheType == SliceCacheType::FIFO)
+    {
+        sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize);
+        NES_INFO("Slice Cache Type: FIFO");
+    }
+    else if (options->sliceCacheType == SliceCacheType::LRU)
+    {
+        sliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize);
+        NES_INFO("Slice Cache Type: LRU");
+    }
+
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, 2);
+        = std::make_unique<DefaultTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, 2, sliceCache);
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],

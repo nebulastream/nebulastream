@@ -53,7 +53,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "Execution/MemoryProvider/TupleBufferMemoryProvider.hpp"
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::QueryCompilation
 {
@@ -82,6 +82,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     auto pipeline = std::make_shared<Runtime::Execution::PhysicalOperatorPipeline>();
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator;
+    PipelineId pipelineId = operatorPipeline->getPipelineId();
 
     for (const auto& node : nodes)
     {
@@ -91,8 +92,8 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
-        parentOperator
-            = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
+        parentOperator = lower(
+            *pipeline, pipelineId, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (const auto& root : rootOperators)
@@ -106,6 +107,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
 
 std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lower(
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    PipelineId pipelineId,
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
     size_t bufferSize,
@@ -138,7 +140,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         // operatorHandlers.push_back(sortBufferHandler);
         // auto handlerIndex = operatorHandlers.size() - 1;
 
-        auto sortBufferOperator = lowerSortBufferOperator(operatorNode, /*handlerIndex,*/ bufferSize);
+        auto sortBufferOperator = lowerSortBufferOperator(operatorNode, pipelineId, /*handlerIndex,*/ bufferSize);
         pipeline.setRootOperator(sortBufferOperator);
         return sortBufferOperator;
     }
@@ -151,6 +153,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode))
     {
         auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
+
+        NES_INFO("PhysicalStreamJoinBuildOperator pipelineId: {}", pipelineId);
 
         operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
@@ -176,6 +180,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode))
     {
         const auto probeOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinProbeOperator>(operatorNode);
+
+        NES_INFO("PhysicalStreamJoinProbeOperator pipelineId: {}", pipelineId);
 
         operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
@@ -266,22 +272,28 @@ LowerPhysicalToNautilusOperators::lowerFilter(const PhysicalOperators::PhysicalO
     return std::make_shared<Runtime::Execution::Operators::Selection>(std::move(function));
 }
 
-std::shared_ptr<Runtime::Execution::Operators::Operator>
-LowerPhysicalToNautilusOperators::lowerSortBufferOperator(const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-                                                        //   uint64_t operatorHandlerIndex,
-                                                          size_t bufferSize) {
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerSortBufferOperator(
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+    PipelineId pipelineId,
+    //   uint64_t operatorHandlerIndex,
+    size_t bufferSize)
+{
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
+
+    NES_INFO("PhysicalSortBufferOperator pipelineId: {}", pipelineId);
+
     // pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
+        = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
     auto sortBufferOperator = NES::Util::as<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode);
     return std::make_shared<Runtime::Execution::Operators::SortBuffer>(
         /*operatorHandlerIndex,*/ std::move(memoryProvider),
         sortBufferOperator->getSortFieldIdentifier(),
-        sortBufferOperator->getSortOrder());;
+        sortBufferOperator->getSortOrder());
+    ;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

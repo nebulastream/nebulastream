@@ -14,20 +14,26 @@
 
 #pragma once
 
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-enum class SortOrder : uint8_t { Ascending, Descending };
+enum class SortOrder : uint8_t
+{
+    Ascending,
+    Descending
+};
 
 /**
  * @brief Sort operator for tuple buffers.
  * This operator takes a tuple buffer, sorts the tuples by a given field and emits them.
  */
-class SortBuffer : public Operator {
-  public:
+class SortBuffer : public Operator
+{
+public:
     /**
      * @brief Construct a new SortBuffer operator
      *
@@ -35,22 +41,19 @@ class SortBuffer : public Operator {
      * @param fieldIdentifiers
      * @param sortFieldIdentifier
      */
-    SortBuffer(//const uint64_t operatorHandlerIndex,
-              std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-              const Record::RecordFieldIdentifier& sortFieldIdentifier,
-              const SortOrder sortOrder = SortOrder::Ascending);
+    SortBuffer( //const uint64_t operatorHandlerIndex,
+        std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        const Record::RecordFieldIdentifier& sortFieldIdentifier,
+        const SortOrder sortOrder = SortOrder::Ascending);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void emitRecordBuffer(
-        ExecutionContext& ctx,
-        RecordBuffer& inputBuffer,
-        RecordBuffer& ouputBuffer) const;
+    void emitRecordBuffer(ExecutionContext& ctx, RecordBuffer& inputBuffer, RecordBuffer& ouputBuffer) const;
 
-  private:
+private:
     // const uint64_t operatorHandlerIndex;
-    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     const Record::RecordFieldIdentifier sortFieldIdentifier;
     const SortOrder sortOrder;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

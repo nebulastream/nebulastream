@@ -62,6 +62,10 @@ const std::string STREAM_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
 ///Configuration for joins
 const std::string JOIN_STRATEGY = "joinStrategy";
 
+//Configuration for the slice cache
+const std::string SLICE_CACHE_TYPE = "sliceCacheType";
+const std::string SLICE_CACHE_SIZE = "sliceCacheSize";
+
 ///Optimizer Configurations
 const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCount";
 const std::string PERFORM_ONLY_SOURCE_OPERATOR_EXPANSION = "performOnlySourceOperatorExpansion";
