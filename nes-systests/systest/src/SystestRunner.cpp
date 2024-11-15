@@ -13,16 +13,22 @@
 */
 
 #include <atomic>
+#include <cstddef>
+#include <cstdlib>
 #include <fstream>
 #include <memory>
 #include <ostream>
 #include <regex>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <grpc++/create_channel.h>
-#include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorker.hpp>
@@ -34,42 +40,13 @@
 
 namespace NES::Systest
 {
-std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
+std::vector<LoadedQueryPlan>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
 {
-    std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> plans{};
+    std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
     SystestParser parser{};
-
-    parser.registerSubstitutionRule(
-        {"SINK",
-         [&](std::string& substitute)
-         {
-             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
-             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
-             static size_t currentQueryNumber = 0;
-             static std::string currentTestFileName = "";
-
-             /// We reset the current query number once we see a new test file
-             if (currentTestFileName != testFileName)
-             {
-                 currentTestFileName = testFileName;
-                 currentQueryNumber = 0;
-             }
-             else
-             {
-                 ++currentQueryNumber;
-             }
-
-             const std::string sinkName = testFileName + "_" + std::to_string(currentQueryNumber);
-             const auto resultFile = resultDir / (sinkName + ".csv");
-             auto sink = CLI::Sink{
-                 sinkName,
-                 "File",
-                 {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-             config.sinks.emplace(sinkName, std::move(sink));
-             substitute = sinkName;
-         }});
+    std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema;
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
 
@@ -79,18 +56,22 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
         return {};
     }
 
+    /// We create a map from sink names to their schema
+    parser.registerOnSinkCallBack([&](SystestParser::Sink&& sinkParsed)
+                                  { sinkNamesToSchema.insert_or_assign(sinkParsed.name, sinkParsed.fields); });
+
     /// We add new found sources to our config
     parser.registerOnCSVSourceCallback(
-        [&](SystestParser::SystestParser::CSVSource&& source)
+        [&](SystestParser::CSVSource&& source)
         {
             config.logical.emplace_back(CLI::LogicalSource{
                 .name = source.name,
                 .schema = [&source]()
                 {
                     std::vector<CLI::SchemaField> schema;
-                    for (const auto& field : source.fields)
+                    for (const auto& [type, name] : source.fields)
                     {
-                        schema.push_back({.name = field.name, .type = field.type});
+                        schema.push_back({.name = name, .type = type});
                     }
                     return schema;
                 }()});
@@ -103,7 +84,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/nes-systests/";
     parser.registerOnSLTSourceCallback(
-        [&](SystestParser::SystestParser::SLTSource&& source)
+        [&](SystestParser::SLTSource&& source)
         {
             static uint64_t sourceIndex = 0;
 
@@ -141,13 +122,64 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
     /// We create a new query plan from our config when finding a query
     parser.registerOnQueryCallback(
-        [&](SystestParser::SystestParser::Query&& query)
+        [&](SystestParser::Query&& query)
         {
+            /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
+            /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
+            static size_t currentQueryNumber = 0;
+            static std::string currentTestFileName;
+
+            /// We reset the current query number once we see a new test file
+            if (currentTestFileName != testFileName)
+            {
+                currentTestFileName = testFileName;
+                currentQueryNumber = 0;
+            }
+            else
+            {
+                ++currentQueryNumber;
+            }
+
+            /// We have to get all sink names from the query and then create custom paths for each sink.
+            /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
+            /// We assume:
+            /// - the INTO keyword is the last keyword in the query
+            /// - the sink name is the last word in the INTO clause
+            const auto sinkName = [&query]() -> std::string
+            {
+                const auto intoClause = query.find("INTO");
+                if (intoClause == std::string::npos)
+                {
+                    NES_ERROR("INTO clause not found in query: {}", query);
+                    return "";
+                }
+                const auto intoLength = std::string("INTO").length();
+                return std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+            }();
+            if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
+            {
+                NES_ERROR("Failed to find sink name <{}>", sinkName);
+                std::exit(1);
+            }
+
+
+            /// Replacing the sinkName with the created unique sink name
+            const auto sinkForQuery = sinkName + std::to_string(currentQueryNumber);
+            query = std::regex_replace(query, std::regex(sinkName), sinkForQuery);
+
+            /// Adding the sink to the sink config, such that we can create a fully specified query plan
+            const auto resultFile = Query::resultFile(resultDir, testFileName, currentQueryNumber);
+            auto sinkCLI = CLI::Sink{
+                sinkForQuery,
+                "File",
+                {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
+            config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+
             config.query = query;
             try
             {
                 auto plan = createFullySpecifiedQueryPlan(config);
-                plans.emplace_back(plan, query);
+                plans.emplace_back(plan, query, sinkNamesToSchema[sinkName]);
             }
             catch (const std::exception& e)
             {
@@ -199,8 +231,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                         finishedProducing = true;
                         return;
                     }
-
-                    auto queryId = worker.registerQuery(query.queryPlan);
+                    const auto queryId = worker.registerQuery(query.queryPlan);
                     if (queryId == INVALID_QUERY_ID)
                     {
                         throw QueryInvalid("Received an invalid query id from the worker");
@@ -230,7 +261,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
                 std::this_thread::sleep_for(std::chrono::milliseconds(25));
             }
             worker.unregisterQuery(QueryId(runningQuery->queryId));
-            auto errorMessage = checkResult(runningQuery->query);
+            auto errorMessage = checkResult(*runningQuery);
             printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
             if (errorMessage.has_value())
             {
@@ -299,7 +330,7 @@ runQueriesAtRemoteWorker(const std::vector<Query>& queries, const uint64_t numCo
                 std::this_thread::sleep_for(std::chrono::milliseconds(25));
             }
             client.unregister(runningQuery->queryId.getRawValue());
-            auto errorMessage = checkResult(runningQuery->query);
+            auto errorMessage = checkResult(*runningQuery);
             printQueryResultToStdOut(runningQuery->query, errorMessage.value_or(""));
             if (errorMessage.has_value())
             {

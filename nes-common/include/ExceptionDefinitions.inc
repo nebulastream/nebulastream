@@ -24,6 +24,7 @@ EXCEPTION(InvalidConfigParameter, 1000, "invalid config parameter")
 EXCEPTION(MissingConfigParameter, 1001, "missing config parameter")
 EXCEPTION(CannotLoadConfig, 1002, "cannot load config")
 EXCEPTION(SLTUnexpectedToken, 1003, "unexpected token in sql logic test file")
+EXCEPTION(SLTWrongSchema, 1004, "schema is not equal to query result schema")
 
 /// 2XXX Errors during query registration and compilation
 EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")

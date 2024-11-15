@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -25,29 +26,59 @@
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>
 #include <magic_enum.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Systest
 {
-static std::string CSVSourceToken = "SourceCSV";
-static std::string SLTSourceToken = "Source";
-static std::string QueryToken = "SELECT";
-static std::string ResultDelimiter = "----";
+static constexpr auto CSVSourceToken = "SourceCSV"s;
+static constexpr auto SLTSourceToken = "Source"s;
+static constexpr auto QueryToken = "SELECT"s;
+static constexpr auto SinkToken = "SINK"s;
+static constexpr auto ResultDelimiter = "----"s;
 
-static std::array<std::pair<std::string_view, TokenType>, 4> stringToToken
+static const std::array<std::pair<std::string_view, TokenType>, 5> stringToToken
     = {{{CSVSourceToken, TokenType::CSV_SOURCE},
         {SLTSourceToken, TokenType::SLT_SOURCE},
         {QueryToken, TokenType::QUERY},
+        {SinkToken, TokenType::SINK},
         {ResultDelimiter, TokenType::RESULT_DELIMITER}}};
 
-bool emptyOrComment(const std::string& line)
+static bool emptyOrComment(const std::string& line)
 {
     return line.empty() /// completely empty
         || line.find_first_not_of(" \t\n\r\f\v") == std::string::npos /// only whitespaces
         || line.starts_with('#'); /// slt comment
 }
+
+/// Parses the stream into a schema. It expects a string in the format: FIELDNAME FIELDTYPE, FIELDNAME FIELDTYPE, ...
+SystestParser::Schema parseSchemaFields(const std::vector<std::string>& arguments)
+{
+    SystestParser::Schema schema;
+    if (arguments.size() % 2 != 0)
+    {
+        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
+    }
+
+    for (size_t i = 0; i < arguments.size(); i += 2)
+    {
+        if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]); type.has_value())
+        {
+            schema.emplace_back(type.value(), arguments[i + 1]);
+        }
+        else
+        {
+            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
+        }
+    }
+
+
+    return schema;
+}
+
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -114,6 +145,11 @@ void SystestParser::registerOnSLTSourceCallback(SLTSourceCallback callback)
     this->onSLTSourceCallback = std::move(callback);
 }
 
+void SystestParser::registerOnSinkCallBack(SinkCallback callback)
+{
+    this->onSinkCallback = std::move(callback);
+}
+
 void SystestParser::registerOnCSVSourceCallback(CSVSourceCallback callback)
 {
     this->onCSVSourceCallback = std::move(callback);
@@ -125,7 +161,7 @@ void SystestParser::parse()
 {
     while (auto token = nextToken())
     {
-        if (token.value() == TokenType::CSV_SOURCE)
+        if (token == TokenType::CSV_SOURCE)
         {
             auto source = expectCSVSource();
             if (onCSVSourceCallback)
@@ -133,7 +169,7 @@ void SystestParser::parse()
                 onCSVSourceCallback(std::move(source));
             }
         }
-        else if (token.value() == TokenType::SLT_SOURCE)
+        else if (token == TokenType::SLT_SOURCE)
         {
             auto source = expectSLTSource();
             if (onSLTSourceCallback)
@@ -141,7 +177,15 @@ void SystestParser::parse()
                 onSLTSourceCallback(std::move(source));
             }
         }
-        else if (token.value() == TokenType::QUERY)
+        else if (token == TokenType::SINK)
+        {
+            auto sink = expectSink();
+            if (onSinkCallback)
+            {
+                onSinkCallback(std::move(sink));
+            }
+        }
+        else if (token == TokenType::QUERY)
         {
             auto query = expectQuery();
             if (onQueryCallback)
@@ -149,7 +193,7 @@ void SystestParser::parse()
                 onQueryCallback(std::move(query));
             }
             token = nextToken();
-            if (token.has_value() && token.value() == TokenType::RESULT_DELIMITER)
+            if (token == TokenType::RESULT_DELIMITER)
             {
                 auto tuples = expectTuples();
                 if (onResultTuplesCallback)
@@ -162,11 +206,11 @@ void SystestParser::parse()
                 throw SLTUnexpectedToken("expected result delimiter `{}` after query", ResultDelimiter);
             }
         }
-        else if (token.value() == TokenType::RESULT_DELIMITER)
+        else if (token == TokenType::RESULT_DELIMITER)
         {
             throw SLTUnexpectedToken("unexpected occurrence of result delimiter `{}`", ResultDelimiter);
         }
-        else if (token.value() == TokenType::INVALID)
+        else if (token == TokenType::INVALID)
         {
             throw SLTUnexpectedToken("got invalid token in line: {}", lines[currentLine]);
         }
@@ -249,6 +293,41 @@ std::optional<TokenType> SystestParser::nextToken()
     return getTokenIfValid(potentialToken);
 }
 
+SystestParser::Sink SystestParser::expectSink() const
+{
+    INVARIANT(currentLine < lines.size(), "current parse line should exist");
+
+    Sink sink;
+    const auto& line = lines[currentLine];
+    std::istringstream lineAsStream(line);
+
+    /// Read and discard the first word as it is always Source
+    std::string discard;
+    if (!(lineAsStream >> discard))
+    {
+        throw SLTUnexpectedToken("failed to read the first word in: {}", line);
+    }
+    INVARIANT(discard == SinkToken, "Expected first word to be `{}` for sink statement", SLTSourceToken);
+
+    /// Read the source name and check if successful
+    if (!(lineAsStream >> sink.name))
+    {
+        throw SLTUnexpectedToken("failed to read sink name in {}", line);
+    }
+
+    std::vector<std::string> arguments;
+    std::string argument;
+    while (lineAsStream >> argument)
+    {
+        arguments.push_back(argument);
+    }
+
+    /// After the source definition line we expect schema fields
+    sink.fields = parseSchemaFields(arguments);
+
+    return sink;
+}
+
 SystestParser::SLTSource SystestParser::expectSLTSource()
 {
     INVARIANT(currentLine < lines.size(), "current parse line should exist");
@@ -278,24 +357,10 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
         arguments.push_back(argument);
     }
 
-    if (arguments.size() % 2 != 0)
-    {
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
-    }
+    /// After the source definition line we expect schema fields
+    source.fields = parseSchemaFields(arguments);
 
-    for (size_t i = 0; i < arguments.size(); i += 2)
-    {
-        if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]))
-        {
-            source.fields.emplace_back(type.value(), arguments[i + 1]);
-        }
-        else
-        {
-            throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
-        }
-    }
-
-    /// After the source definition line we expect result tuples
+    /// After the source definition line, we expect the tuples
     source.tuples = expectTuples(true);
 
     return source;
@@ -333,28 +398,11 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
     source.csvFilePath = arguments.back();
     arguments.pop_back();
 
-    if (arguments.size() % 2 != 0)
-    {
-        throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for line: " + line);
-    }
-
-    for (size_t i = 0; i < arguments.size(); i += 2)
-    {
-        std::string const fieldtype = arguments[i];
-        std::string const fieldname = arguments[i + 1];
-        if (auto type = magic_enum::enum_cast<BasicType>(fieldtype))
-        {
-            source.fields.emplace_back(type.value(), fieldname);
-        }
-        else
-        {
-            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
-        }
-    }
+    source.fields = parseSchemaFields(arguments);
     return source;
 }
 
-SystestParser::ResultTuples SystestParser::expectTuples(bool ignoreFirst)
+SystestParser::ResultTuples SystestParser::expectTuples(const bool ignoreFirst)
 {
     INVARIANT(currentLine < lines.size(), "current line to parse should exist");
     std::vector<std::string> tuples;

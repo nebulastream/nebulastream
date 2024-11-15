@@ -286,6 +286,14 @@ int main(int argc, const char** argv)
         auto testMap = Systest::loadTestFileMap(config);
         const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
+        if (queries.empty())
+        {
+            std::stringstream outputMessage;
+            outputMessage << "No queries were run.";
+            NES_ERROR("{}", outputMessage.str());
+            std::cout << outputMessage.str() << '\n';
+            std::exit(1);
+        }
 
         std::filesystem::remove_all(config.resultDir.getValue());
         std::filesystem::create_directory(config.resultDir.getValue());
