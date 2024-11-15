@@ -13,6 +13,7 @@
 */
 
 #include <sstream>
+#include <fmt/format.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 
@@ -21,9 +22,7 @@ namespace NES
 
 std::string BasicValue::toString() const noexcept
 {
-    std::stringstream ss;
-    ss << "BasicValue(" << value << ")";
-    return ss.str();
+    return fmt::format("BasicValue({}, {})", value, dataType->toString());
 }
 
 bool BasicValue::isEquals(ValueTypePtr other) const noexcept

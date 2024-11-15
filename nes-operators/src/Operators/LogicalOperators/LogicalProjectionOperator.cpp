@@ -113,7 +113,7 @@ bool LogicalProjectionOperator::inferSchema()
         else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
         {
             auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
-            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getStamp());
+            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
         {
