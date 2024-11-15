@@ -21,6 +21,8 @@
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystestParser.hpp>
+
 
 namespace NES::Systest
 {
@@ -28,13 +30,21 @@ namespace NES::Systest
 struct Query;
 struct RunningQuery;
 
+struct LoadedQueryPlan
+{
+    DecomposedQueryPlanPtr queryPlan;
+    std::string queryName;
+    SystestParser::Schema sinkSchema;
+};
+
 /// Pad size of (PASSED / FAILED) in the console output of the systest to have a nicely looking output
 static constexpr auto padSizeSuccess = 60;
 /// We pad to a maximum of 3 digits ---> maximum value that is correctly padded is 99 queries
 static constexpr auto padSizeQueryNumber = 2;
 
 /// Load query plan objects by parsing an SLT file for queries and lowering it
-[[nodiscard]] std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
+/// Returns a triplet of the lowered query plan, the query name and the schema of the sink
+[[nodiscard]] std::vector<LoadedQueryPlan>
 loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName);
 
 /// Run queries locally ie not on single-node-worker in a separate process

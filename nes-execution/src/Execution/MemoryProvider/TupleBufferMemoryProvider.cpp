@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <API/Schema.hpp>
@@ -27,6 +28,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
@@ -60,7 +62,6 @@ uint32_t storeAssociatedTextValueProxy(const Memory::TupleBuffer* tupleBuffer, c
     auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer(const_cast<int8_t*>(textValue));
     return tupleBuffer->storeChildBuffer(textBuffer);
 }
-
 Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
     const NES::PhysicalTypePtr& type,
     const RecordBuffer& recordBuffer,
@@ -69,9 +70,16 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
 {
     if (NES::Util::instanceOf<BasicPhysicalType>(type))
     {
-        value.writeToMemory(fieldReference);
-        return value;
+        /// We might have to cast the value to the correct type, e.g. VarVal could be a INT8 but the type we have to write is of type INT16
+        /// We get the correct function to call via a unordered_map
+        if (const auto storeFunction = Nautilus::Util::storeValueFunctionMap.find(NES::Util::as<BasicPhysicalType>(type)->nativeType);
+            storeFunction != Nautilus::Util::storeValueFunctionMap.end())
+        {
+            return storeFunction->second(value, fieldReference);
+        }
+        throw UnsupportedOperation("Physical Type: {} is currently not supported", type->toString());
     }
+
     if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(type))
     {
         const auto textValue = value.cast<Nautilus::VariableSizedData>();
@@ -87,7 +95,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::storeValue(
 bool TupleBufferMemoryProvider::includesField(
     const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections, const Nautilus::Record::RecordFieldIdentifier& fieldIndex)
 {
-    return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
+    return std::ranges::find(projections, fieldIndex) != projections.end();
 }
 
 TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
@@ -106,5 +114,4 @@ MemoryProviderPtr TupleBufferMemoryProvider::create(const uint64_t bufferSize, c
     }
     throw NotImplemented("Currently only row and column layout are supported");
 }
-
 }

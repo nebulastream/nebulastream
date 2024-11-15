@@ -6,12 +6,12 @@ Source window INT8 val_i8 INT16 val_i16 INT32 val_i32 INT64 val_i64 UINT8 val_u8
 -42,-129,-32769,-2147483649,42,256,65536,4294967296,23,23
 
 # Todo #442: the below system level tests currently perform downcasts.
-# Since equals is commutative, e.g., 'val_i8 + val_f32' equals 'val_f32 + val_i8', so we check only one direction.
+# Since add is commutative, e.g., 'val_i8 + val_f32' equals 'val_f32 + val_i8', so we check only one direction.
 #   - int8_t + int16_t = int8_t -> -42(int8) + -129(int16) = 85(int8)
 #   - int16_t + int8_t = int16_t -> -129(int16) + -42(int8) = -171(int16)
 # - the above follows the c++ standard, given that there is no implicit cast to a larger datatype and the
 #   left-side datatype determines the type.
-# Check if different numeric types support the equals operation
+# Check if different numeric types support the add operation
 SELECT
     val_i8 + 42 AS val_i8,
     val_i16 + 42 AS val_i16,
@@ -27,9 +27,10 @@ SELECT
     val_f64 + 42.0_D AS val_f64
 FROM window INTO SINK
 ----
-0 -87 -32727 -2147483607 84 298 65578 4294967338 65.000000 65.000000
+window$val_f32:FLOAT32, window$val_f64:FLOAT64,window$val_i8:INT32, window$val_i16:INT32, window$val_i32:INT32, window$val_i64:INT64, window$val_u8:INT32, window$val_u16:INT32, window$val_u32:UINT32, window$val_u64:UINT64,
+65.000000,65.000000,0,-87,-32727,-2147483607,84,298,65578,4294967338
 
-# Equal i8 value with all other data types
+# Add i8 value with all other data types
 SELECT
     # signed
     val_i8 + val_i8 AS val_i8_i8,
@@ -56,9 +57,9 @@ SELECT
     val_i8 + val_f64 + 1_D AS val_i8_f64_plus_1
 FROM window INTO SINK
 ----
--84 -83 85 86 -43 -42 -43 -42 0 1 -42 -41 -42 -41 -42 -41 0 0 0 0
+-84,-83,-171,-170,-32811,-32810,-2147483691,-2147483690,0,1,214,215,65494,65495,4294967254,4294967255,-19.000000,-18.000000,-19.000000,-18.000000
 
-# Equal i16 value with all other data types
+# Add i16 value with all other data types
 SELECT
     # signed
     val_i16 + val_i8 AS val_i16_i8,
@@ -85,9 +86,9 @@ SELECT
     val_i16 + val_f64 + 1_D AS val_i16_f64_plus_1
 FROM window INTO SINK
 ----
--171 -170 -258 -257 32638 32639 -130 -129 -87 -86 127 128 -129 -128 -129 -128 0 0 0 0
+-171,-170,-258,-257,-32898,-32897,-2147483778,-2147483777,-87,-86,127,128,65407,65408,4294967167,4294967168,-106.000000,-105.000000,-106.000000,-105.000000
 
-# Equal i32 value with all other data types
+# Add i32 value with all other data types
 SELECT
     # signed
     val_i32 + val_i8 AS val_i32_i8,
@@ -114,9 +115,9 @@ SELECT
     val_i32 + val_f64 + 1_D AS val_i32_f64_plus_1
 FROM window INTO SINK
 ----
--32811 -32810 -32898 -32897 -65538 -65537 2147450878 2147450879 -32727 -32726 -32513 -32512 32767 32768 -32769 -32768 -956312576 -956313088 0 0
+-32811,-32810,-32898,-32897,-65538,-65537,-2147516418,-2147516417,-32727,-32726,-32513,-32512,32767,32768,4294934527,4294934528,-32746.000000,-32745.000000,-32746.000000,-32745.000000
 
-# Equal i64 value with all other data types
+# Add i64 value with all other data types
 SELECT
     # signed
     val_i64 + val_i8 AS val_i64_i8,
@@ -143,4 +144,4 @@ SELECT
     val_i64 + val_f64 + 1_D AS val_i64_f64_plus_1
 FROM window INTO SINK
 ----
--2147483691 -2147483690 -2147483778 -2147483777 -2147516418 -2147516417 -4294967298 -4294967297 -2147483607 -2147483606 -2147483393 -2147483392 -2147418113 -2147418112 2147483647 2147483648 3472883712 3472883712 -4476578029698547712 -4476578029702742016
+-2147483691,-2147483690,-2147483778,-2147483777,-2147516418,-2147516417,-4294967298,-4294967297,-2147483607,-2147483606,-2147483393,-2147483392,-2147418113,-2147418112,2147483647,2147483648,-2147483648.000000,-2147483648.000000,-2147483626.000000,-2147483625.000000
