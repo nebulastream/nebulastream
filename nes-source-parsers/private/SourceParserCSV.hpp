@@ -21,7 +21,7 @@
 namespace NES::SourceParsers
 {
 
-/// Defined in implementation of ParserCSV
+/// Implementation detail of SourceParserCSV
 class ProgressTracker;
 
 class SourceParserCSV : public SourceParser

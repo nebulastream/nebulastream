@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceThread.hpp>
 #include <fmt/format.h>

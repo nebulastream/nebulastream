@@ -18,9 +18,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParserCSV.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
