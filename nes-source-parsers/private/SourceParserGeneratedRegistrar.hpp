@@ -21,13 +21,14 @@
 
 #include <memory>
 #include <string>
+#include <API/Schema.hpp>
 #include <SourceParsers/SourceParser.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::SourceParsers::SourceParserGeneratedRegistrar
 {
 
-std::unique_ptr<SourceParser> RegisterSourceParserCSV(std::shared_ptr<Schema>, std::string, std::string);
+std::unique_ptr<SourceParser> RegisterSourceParserCSV(const Schema& schema, std::string, std::string);
 
 }
 
