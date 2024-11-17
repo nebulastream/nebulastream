@@ -124,11 +124,12 @@ public:
      * @brief Returns the attribute field based on a qualified or unqualified field name.
      *
      * @details
-     * If an unqualified field name is given (e.g., `getField("fieldName")`), the function will match attribute fields with any source name.
-     * If a qualified field name is given (e.g., `getField("source$fieldName")`), the entire qualified field must match.
+     * If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
+     * If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
+     * Note that this function does not return a field with an ambiguous field name.
      *
      * @param fieldName: Name of the attribute field that should be returned.
-     * @return Pointer to attribute field if present, otherwise `nullptr`.
+     * @return std::optional<AttributeFieldPtr> The attribute field if found, otherwise an empty optional.
      */
     std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 
