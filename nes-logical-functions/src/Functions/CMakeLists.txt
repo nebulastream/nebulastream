@@ -10,6 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-functions
-        UtilityFunction.cpp
+add_source_files(nes-logical-functions
+        FunctionSerializationUtil.cpp
+        NodeFunction.cpp
+        NodeFunctionBinary.cpp
+        NodeFunctionCase.cpp
+        NodeFunctionConstantValue.cpp
+        NodeFunctionFieldAccess.cpp
+        NodeFunctionFieldAssignment.cpp
+        NodeFunctionFieldRename.cpp
+        NodeFunctionUnary.cpp
+        NodeFunctionWhen.cpp
 )
+add_subdirectory(LogicalFunctions)
+add_subdirectory(ArithmeticalFunctions)

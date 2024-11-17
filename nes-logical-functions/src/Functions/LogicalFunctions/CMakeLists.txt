@@ -10,20 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-functions
-        NodeFunctionAbs.cpp
-        NodeFunctionAdd.cpp
-        NodeFunctionArithmeticalBinary.cpp
-        NodeFunctionArithmeticalUnary.cpp
-        NodeFunctionCeil.cpp
-        NodeFunctionDiv.cpp
-        NodeFunctionExp.cpp
-        NodeFunctionFloor.cpp
-        NodeFunctionMod.cpp
-        NodeFunctionMul.cpp
-        NodeFunctionPow.cpp
-        NodeFunctionRound.cpp
-        NodeFunctionSqrt.cpp
-        NodeFunctionSub.cpp
+add_source_files(nes-logical-functions
+        NodeFunctionAnd.cpp
+        NodeFunctionEquals.cpp
+        NodeFunctionGreater.cpp
+        NodeFunctionGreaterEquals.cpp
+        NodeFunctionLess.cpp
+        NodeFunctionLessEquals.cpp
+        NodeFunctionLogicalBinary.cpp
+        NodeFunctionLogicalUnary.cpp
+        NodeFunctionNegate.cpp
+        NodeFunctionOr.cpp
 )
 

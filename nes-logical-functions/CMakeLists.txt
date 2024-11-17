@@ -12,17 +12,17 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-functions NES_FUNCTIONS_SOURCE_FILES)
+get_source(nes-logical-functions NES_FUNCTIONS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-functions  ${NES_FUNCTIONS_SOURCE_FILES})
-target_link_libraries(nes-functions PUBLIC nes-data-types)
-target_include_directories(nes-functions PUBLIC
+add_library(nes-logical-functions  ${NES_FUNCTIONS_SOURCE_FILES})
+target_link_libraries(nes-logical-functions PUBLIC nes-data-types)
+target_include_directories(nes-logical-functions PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 #Add the nes functions and headers to cpack
-install(TARGETS nes-functions
+install(TARGETS nes-logical-functions
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
         DESTINATION lib)
