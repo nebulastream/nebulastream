@@ -5,14 +5,11 @@ This requires a single node to handle thousands of sources concurrently.
 Currently, each source that is started runs in an individual thread. 
 That is, starting 1000 sources means starting 1000 threads just for the sources. 
 Since the threads are running permanently, ingesting data into the system, this leads to a massive oversubscription of the CPU and causes frequent context switching.
-Given that each thread allocates state (a private stack of several MBs), this is expensive. 
+Given that each thread allocates state in the form of a private stack), this is expensive. 
 Therefore, the current approach does not scale with an increasing number of sources (**P1**).
 
-Currently, sources read external data into the system while additionally parsing that data to the schema of the logical source.
-This mixes up I/O logic with data parsing and therefore violates basic principles like the separation of concerns (**P2**).
-
 Each source reads data from external systems or devices and writes them into buffers provided by the NES `BufferManager`.
-In its current state, fast sources can cause a deadlock by taking all buffers, since query processing cannot proceed without buffers (**P3**).
+In its current state, fast sources can cause a deadlock by taking all buffers, since query processing cannot proceed without buffers (**P2**).
 
 
 # Goals
@@ -31,7 +28,7 @@ After the redesign, a source should be easy to digest and contain only the state
 The `BufferManager` should have entirely separate pools for I/O and compute, removing the potential deadlocks (**G3**, addresses P3).
 It may be possible to enable transferring buffers between the two pools if necessary, but that is an optimization.
 The `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
-In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) guaranteeing each source to receive a single buffer at a time to make progress for queries that are dependants of that source.
+In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) guaranteeing each source to receive a single buffer at a time to make progress for queries that depend on that source.
 In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within I/O threads wherever possible.
 We propose simple policies and provide a PoC implementation to showcase this.
@@ -49,9 +46,9 @@ It should still be possible to implement new sources with the current threading 
 
 # Non-Goals
 - **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here.
-- **NG2**: a complete vision or implementation on how to handle parsing tuples out of the bytes that the source emits.
-- **NG3**: a complete vision or implementation on how to handle source sharing.
-- **NG4**: a complete vision or implementation on how to handle data ingestion via internal sources (e.g., when intermediate data is shuffled around between nodes).
+- **NG2**: a complete vision or implementation on how to handle source sharing.
+- **NG3**: a complete vision or implementation on how to handle data ingestion via internal sources (e.g., when intermediate data is shuffled around between nodes).
+- **NG4**: handling of selective reads, i.e., predicate/projection pushdown as typically done in formats like Parquet
 
 # Solution Background
 Most software systems depend on external data in some way:
@@ -63,8 +60,8 @@ All of them need some mechanism to map compute resources (i.e., threads) to thes
 
 ## Threads
 There are two naive threading models to manage data ingestion:
-1. Single-threaded I/O that switches between all tasks/connections/sources
-2. A single thread per task/connection/source (as currently implemented in NES)
+1. Single-threaded I/O that switches between all connections/sources
+2. A single thread per connection/source (as currently implemented in NES)
 
 The former leads to serial execution, limiting throughput. 
 The latter leads to a lot of overhead in the case of very large numbers of connections/queries and therefore to a term called *oversubscription* of the CPU.
@@ -91,7 +88,7 @@ If we assume a limited pool of threads, which we strive to have, we could still 
 During this time, no other I/O tasks can make progress.
 
 It would be nice to have a mechanism to pause/resume a function waiting for external I/O **without** occupying a thread while waiting for data to arrive.
-That's what async I/O gives us, and the easiest way to implement it using modern C++ are coroutines.
+That's what async I/O gives us, and an elegant way to implement it using modern C++ are coroutines.
 They enable us to suspend and resume running functions while **preserving** their state.
 Internally, the compiler rewrites coroutines to state machines to make this work.
 C++20 introduced three new keywords, namely `co_await`, `co_yield` and `co_return`.
@@ -103,6 +100,8 @@ Utilizing these mechanisms of pausing/resuming execution, we are now able to wai
 An important thing to note is that we should avoid running blocking operations by yielding control regularly.
 Otherwise, we block a thread, possibly preventing other async operations from making progress.
 For this reason, the efforts to move data parsing (which might be CPU-intensive) from the sources and async I/O go hand in hand.
+Currently, sources read external data into the system while additionally parsing that data to the schema of the logical source.
+This mixes up I/O logic with data parsing and therefore violates basic principles like the separation of concerns. 
 If we follow the guideline and isolate I/O-bound operations properly from CPU-bound operations, an enormous amount of concurrent tasks can be scheduled on relatively few threads. 
 
 The ongoing I/O operations can be wrapped into coroutines that represent tasks that drive the sources' progress.
@@ -110,8 +109,8 @@ An async runtime manages these ongoing tasks.
 It can run with a fixed-size thread pool or even just a single thread and it polls tasks that are ready to make progress.
 How does it know what tasks (coroutines) are ready to be resumed and make progress?
 Typically, this is done via syscalls like `epoll`. 
-They allow the kernel to notify when something happened (i.e., data has arrived), queueing an event together with the coroutine to be picked up by a thread and resumed.
-We do not rely on spin waiting, nor do we need a timer or regularly wake up to check if something is ready.
+They allow the kernel to notify the asynchronous runtime (`boost::asio::io_context`) when something happened on a file descriptor (i.e., data has arrived), queueing an event together with the coroutine to be picked up by a thread and resumed.
+We do not rely on busy-waiting, nor do we need a timer or regularly wake up to check if something is ready.
 
 When resumed, we can deal with the arrived data, e.g., by giving it out to other components for further processing.
 Potentially, the task can then make a new request before yielding control again.
@@ -173,20 +172,63 @@ In summary, systems using async I/O get the following benefits:
 # Our Proposed Solution
 The proposed solution depends on these key design decisions:
 1. We redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads.
-2. We remove parsing from the sources to separate cpu-bound and i/o-bound workloads.
-3. We introduce a centralized `asyncsourceexecutor` that drives the execution of all asynchronous sources on a thread pool.
+2. We remove parsing from the sources to separate CPU-bound and I/O-bound workloads.
+3. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool.
 4. We allow synchronous sources to still exist and run on separate detached threads as a fallback.
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not need to deal with the different execution models.
 5. Sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
 6. We allow the `QueryEngine` to request partially filled buffers in source implementations when its task queue is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
 
-## Source Implementations
-We need asynchronous i/o requests and the removal of parsing logic because if we desire to reduce the number of threads significantly when dealing with large numbers of sources, we can not afford to make blocking calls or do CPU-intensive work on these few threads.
-Therefore, we strip the schema and all other parsing-related state and logic off the sources.
+## Interfaces
+The highest-level component that we need to redesign is the `SourceHandle`, which is created by the `SourceProvider`.
+General functionality of plugin registration, source descriptor validation, and construction of the source implementation does not need to change.
+Currently, `SourceHandle` wraps a `SourceThread`, an object that drives the source on an internal thread.
+The `QueryEngine` creates an `InstantiatedQueryPlan` that contains the `SourceHandle`s for that query and starts them, delegating the call to the `SourceThread`.
+We remove the `SourceThread` and replace it with an abstract base class called `SourceRunner` that is now owned by a `SourceHandle`.
+A `SourceRunner`'s primary responsibility (like the `SourceThread`'s) is to drive the source on (a set of) internal threads.
+However, we want two distinct ways to do so: 
 
-The primary library for implementing async I/O in C++ is `boost::asio`, which is battle-tested and known to have only small overhead.
-It provides us with everything we need, from an async runtime to asynchronous I/O objects like sockets, file descriptors, serial port interfaces, etc.
-Therefore, we choose `boost::asio` as the library to implement asynchronous sources.
+1. The fallback of running an internal thread for each synchronous source.
+2. The prefered approach of dispatching the source onto an async I/O runtime.
+
+Therefore, we create two derived classes, namely the `SourceRunnerSync` that will run a blocking source, and the `SourceRunnerAsync`, which is responsible for running asynchronous sources.
+For this reason, the former uniquely owns a thread, whereas the latter has shared ownership of an `AsyncSourceExecutor` that all asynchronous sources use to run on.
+The `AsyncSourceExecutor` should be created from the outside by a higher-level component and live for the entire duration of the worker.
+The following diagram illustrates the interfaces.
+
+```mermaid
+classDiagram
+    SourceHandle --* SourceRunner: Owns One
+    SourceRunner --|> SourceRunnerSync
+    SourceRunner --|> SourceRunnerAsync
+    SourceRunnerAsync --> Source: Executes Async
+    SourceRunnerSync --> Source: Executes Sync
+
+    class SourceHandle {
+      -SourceRunner runner
+    }
+
+    class SourceRunner {
+        -unique_ptr~Source~ sourceImpl
+        -shared_ptr~BufferProvider~ bufferProvider
+        -OriginId sourceId
+        +execute(StopToken& token, EmitFunction&& emitFn) = 0
+        +stop()
+        +close()
+    }
+
+    class SourceRunnerSync {
+        -unique_ptr~thread~ thread
+        +execute(StopToken& token, EmitFunction&& emitFn) override
+    }
+
+    class SourceRunnerAsync {
+        -shared_ptr~AsyncSourceExecutor~ executor
+        +execute(StopToken& token, EmitFunction&& emitFn) override
+    }
+```
+
+The `execute` function encapsulates the `runningRoutine` of the current `SourceThread` and runs in a loop until a stop token is received from the outside.
 
 
 ```mermaid
@@ -224,7 +266,7 @@ classDiagram
       -SourceRunnerBase runner
     }
 
-    class SourceRunnerBase {
+    class SourceRunner {
         -unique_ptr~Source~ sourceImpl
         -shared_ptr~BufferProvider~ bufferProvider
         -OriginId sourceId
@@ -250,6 +292,11 @@ classDiagram
 
 ```
 
+The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
+It provides us with everything we need to implement the goal of executing a large number of concurrent sources in an asynchronous, non-blocking way.
+The library comes with a runtime, asynchronous I/O objects like sockets, file descriptors, serial port interfaces, etc.
+Therefore, we choose `boost::asio` as the library to implement asynchronous sources and their orchestration on a fixed-size thread pool.
+
 ## Buffer Management
 On a high level, deadlocks occur if there are cyclic dependencies on a specific resource in the system (here: buffers).
 In our case, producers and consumers of data depend on buffers to make progress.
@@ -258,7 +305,7 @@ Therefore, we have a horizontal divison of components (producer-consumer depende
 Only producer/consumer relationships are susceptible to deadlocks in our case.
 Hence, between producer/consumer relationships deadlocks need to be avoided, whereas among sources only fairness of distribution plays a role. 
 By separating an I/O pool from the rest of the global buffer pools, we avoid the deadlock problem between sources and their consumer pipelines (P3).
-A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point.
+A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG4).
 
 Currently, each source has a local `BufferProvider` that maintains a pool of buffers only for this source. 
 The `SourceThread` uses this provider to call `getBufferBlocking` repeatedly in the running thread routine.
@@ -268,7 +315,7 @@ Since sources should be implemented in an asynchronous manner from now on, we ne
 This call blocks until a buffer becomes available, which we want to avoid on I/O threads.
 There is a non-blocking alternative available called `getBufferNoBlocking`, which returns an `std::optional`.
 In this case we do not block, but the source still requires a buffer to make progress, so we need to use a timer within the source that wakes us up to try again.
-This timeout is arbitrary and needs to be set by us developers, which is not ideal. 
+This timeout is arbitrary and needs to be set by us developers, which is not ideal.
 An alternative might be to extend the asynchronous behavior of the sources and implement an event-based mechanism into the `BufferManager` that notifies the coroutine that asked for the buffer when it is available.
 
 ### 2) Flow Control
@@ -315,7 +362,14 @@ To facilitate fairness here, I propose the simple algorithm:
 The previous necessitate the assumption/invariant that more buffers exist than the number of sources registered.
 When a source wants to be registered and this would violate the requirement, performance will degrade.
 
+#### 1.2) Local Pools + Steal
+
+## Testing
+
+## Benchmarking
+
 # Proof of Concept
+Will be created after approval of this PR.
 
 # Alternatives
 
@@ -326,6 +380,7 @@ When a source wants to be registered and this would violate the requirement, per
 # Sources and Further Reading
 - https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html
 - https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how
+- https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20
 
 # (Optional) Appendix
 
