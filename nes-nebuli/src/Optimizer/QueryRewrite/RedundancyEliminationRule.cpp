@@ -110,7 +110,7 @@ NES::NodeFunctionPtr RedundancyEliminationRule::constantMoving(const NodeFunctio
 NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFunctionPtr& predicate)
 {
     /// Detect sum/subtraction/multiplication/division of constants inside a predicate and resolve them
-    NES_DEBUG("Applying RedundancyEliminationRule.constantFolding to predicate {}", predicate->toString());
+    NES_DEBUG("Applying RedundancyEliminationRule.constantFolding to predicate {}", *predicate);
     if (Util::instanceOf<NodeFunctionAdd>(predicate) || Util::instanceOf<NodeFunctionSub>(predicate)
         || Util::instanceOf<NodeFunctionMul>(predicate) || Util::instanceOf<NodeFunctionDiv>(predicate))
     {
@@ -177,7 +177,7 @@ NES::NodeFunctionPtr RedundancyEliminationRule::arithmeticSimplification(const N
 {
     /// Handle cases when a field value is multiplied by 0, 1 or summed with 0. Replace the two functions with
     /// one equivalent function
-    NES_DEBUG("Applying RedundancyEliminationRule.arithmeticSimplification to predicate {}", predicate->toString());
+    NES_DEBUG("Applying RedundancyEliminationRule.arithmeticSimplification to predicate {}", *predicate);
     if (NES::Util::instanceOf<NodeFunctionAdd>(predicate) || NES::Util::instanceOf<NodeFunctionMul>(predicate))
     {
         NES_DEBUG("The predicate involves an addition or multiplication, the rule can be applied");

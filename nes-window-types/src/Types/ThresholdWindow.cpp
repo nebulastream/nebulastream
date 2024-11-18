@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
+#include <functional>
 #include <Functions/NodeFunction.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 namespace NES::Windowing
 {
@@ -78,10 +80,10 @@ std::string ThresholdWindow::toString() const
 {
     std::stringstream ss;
     ss << "Threshold Window: predicate ";
-    ss << predicate->toString();
+    ss << *predicate;
     ss << "and minimumCount";
     ss << minimumCount;
-    ss << std::endl;
+    ss << '\n';
     return ss.str();
 }
 
@@ -89,7 +91,7 @@ uint64_t ThresholdWindow::hash() const
 {
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(minimumCount);
-    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(predicate->toString());
+    hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(fmt::format("{}", *predicate));
     return hashValue;
 }
 }

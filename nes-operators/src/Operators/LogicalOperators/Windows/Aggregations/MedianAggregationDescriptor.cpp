@@ -43,7 +43,7 @@ WindowAggregationDescriptorPtr MedianAggregationDescriptor::on(const NodeFunctio
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
+        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
     }
     auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
     return std::make_shared<MedianAggregationDescriptor>(MedianAggregationDescriptor(fieldAccess));

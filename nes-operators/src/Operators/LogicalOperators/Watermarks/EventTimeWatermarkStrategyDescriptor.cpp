@@ -76,7 +76,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << onField->toString() << ",";
+    ss << "FIELD =" << *onField << ",";
     ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
     return ss.str();
 }

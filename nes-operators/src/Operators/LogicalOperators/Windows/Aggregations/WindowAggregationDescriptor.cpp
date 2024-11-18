@@ -52,8 +52,8 @@ std::string WindowAggregationDescriptor::toString() const
     std::stringstream ss;
     ss << "WindowAggregation: ";
     ss << " Type=" << getTypeAsString();
-    ss << " onField=" << onField->toString();
-    ss << " asField=" << asField->toString();
+    ss << " onField=" << *onField;
+    ss << " asField=" << *asField;
     ss << std::endl;
     return ss.str();
 }

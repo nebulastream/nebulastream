@@ -42,6 +42,7 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
 
@@ -51,7 +52,7 @@ namespace NES
 SerializableFunction*
 FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize function {}", function->toString());
+    NES_DEBUG("FunctionSerializationUtil:: serialize function {}", *function);
     /// serialize function node depending on its type.
     if (Util::instanceOf<LogicalNodeFunction>(function))
     {
@@ -110,7 +111,7 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
     else if (Util::instanceOf<NodeFunctionWhen>(function))
     {
         /// serialize when function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize when function {}.", function->toString());
+        NES_TRACE("FunctionSerializationUtil:: serialize when function {}.", *function);
         auto whenNodeFunction = Util::as<NodeFunctionWhen>(function);
         auto serializedNodeFunction = SerializableFunction_FunctionWhen();
         serializeFunction(whenNodeFunction->getLeft(), serializedNodeFunction.mutable_left());
@@ -120,7 +121,7 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
     else if (Util::instanceOf<NodeFunctionCase>(function))
     {
         /// serialize case function node.
-        NES_TRACE("FunctionSerializationUtil:: serialize case function {}.", function->toString());
+        NES_TRACE("FunctionSerializationUtil:: serialize case function {}.", *function);
         auto caseNodeFunction = Util::as<NodeFunctionCase>(function);
         auto serializedNodeFunction = SerializableFunction_FunctionCase();
         for (const auto& elem : caseNodeFunction->getWhenChildren())
@@ -132,7 +133,7 @@ FunctionSerializationUtil::serializeFunction(const NodeFunctionPtr& function, Se
     }
     else
     {
-        throw CannotSerialize(fmt::format("function: {}", function->toString()));
+        throw CannotSerialize(fmt::format("function: {}", *function));
     }
 
     DataTypeSerializationUtil::serializeDataType(function->getStamp(), serializedFunction->mutable_stamp());
@@ -182,8 +183,9 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             if (!Util::instanceOf<NodeFunctionFieldAccess>(originalFieldAccessFunction))
             {
                 throw CannotDeserialize(fmt::format(
-                    "FunctionSerializationUtil: the original field access function should be of type NodeFunctionFieldAccess, but was a {}",
-                    originalFieldAccessFunction->toString()));
+                    "FunctionSerializationUtil: the original field access function should be of type NodeFunctionFieldAccess,"
+                    "but was a {}",
+                    *originalFieldAccessFunction));
             }
             const auto& newFieldName = serializedFieldRenameFunction.newfieldname();
             nodeFunctionPtr = NodeFunctionFieldRename::create(Util::as<NodeFunctionFieldAccess>(originalFieldAccessFunction), newFieldName);
@@ -242,13 +244,13 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
     /// deserialize function stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedFunction.stamp());
     nodeFunctionPtr->setStamp(stamp);
-    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", nodeFunctionPtr->toString());
+    NES_DEBUG("FunctionSerializationUtil:: deserialized function node to the following node: {}", *nodeFunctionPtr);
     return nodeFunctionPtr;
 }
 
 void FunctionSerializationUtil::serializeArithmeticalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", function->toString());
+    NES_DEBUG("FunctionSerializationUtil:: serialize arithmetical function {}", *function);
     if (Util::instanceOf<NodeFunctionAdd>(function))
     {
         /// serialize add function node.
@@ -366,13 +368,15 @@ void FunctionSerializationUtil::serializeArithmeticalFunctions(const NodeFunctio
     else
     {
         throw CannotSerialize(fmt::format(
-            "TranslateToLegacyPhase: No serialization implemented for this arithmetical function node: {}", function->toString()));
+            "TranslateToLegacyPhase:"
+            "No serialization implemented for this arithmetical function node: {}",
+            *function));
     }
 }
 
 void FunctionSerializationUtil::serializeLogicalFunctions(const NodeFunctionPtr& function, SerializableFunction* serializedFunction)
 {
-    NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", function->toString());
+    NES_DEBUG("FunctionSerializationUtil:: serialize logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
     {
         /// serialize and function node.
@@ -456,8 +460,8 @@ void FunctionSerializationUtil::serializeLogicalFunctions(const NodeFunctionPtr&
     }
     else
     {
-        throw CannotSerialize(fmt::format(
-            "FunctionSerializationUtil: No serialization implemented for this logical function node: {}", function->toString()));
+        throw CannotSerialize(
+            fmt::format("FunctionSerializationUtil: No serialization implemented for this logical function node: {}", *function));
     }
 }
 

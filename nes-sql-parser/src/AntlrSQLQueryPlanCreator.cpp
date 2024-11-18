@@ -141,10 +141,7 @@ std::shared_ptr<NodeFunction> createLogicalBinaryFunction(
     }
 
     throw InvalidQuerySyntax(
-        "Unknown binary function in SQL query for op {} and left {} and right {}",
-        opStr,
-        leftFunction->toString(),
-        rightFunction->toString());
+        "Unknown binary function in SQL query for op {} and left {} and right {}", opStr, *leftFunction, *rightFunction);
 }
 
 void AntlrSQLQueryPlanCreator::poppush(const AntlrSQLHelper& helper)
