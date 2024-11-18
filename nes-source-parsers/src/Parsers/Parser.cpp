@@ -17,7 +17,7 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Parsers/Parser.hpp>
+#include <Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
