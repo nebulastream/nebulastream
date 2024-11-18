@@ -75,7 +75,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 
 NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFunctionPtr function)
 {
-    NES_DEBUG("Sorting attributed for input function {}", function->toString());
+    NES_DEBUG("Sorting attributed for input function {}", *function);
     if (Util::instanceOf<NES::LogicalNodeFunction>(function))
     {
         return sortAttributesInLogicalFunctions(function);
@@ -96,13 +96,13 @@ NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFuncti
     {
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the function: " + function->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the function: ", *function);
     return nullptr;
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
 {
-    NES_DEBUG("Create Z3 function for arithmetical function {}", function->toString());
+    NES_DEBUG("Create Z3 function for arithmetical function {}", *function);
     if (Util::instanceOf<NES::NodeFunctionAdd>(function))
     {
         auto addNodeFunction = Util::as<NES::NodeFunctionAdd>(function);
@@ -319,13 +319,13 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
         sortAttributesInFunction(right);
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: " + function->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
     return nullptr;
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
 {
-    NES_DEBUG("Create Z3 function node for logical function {}", function->toString());
+    NES_DEBUG("Create Z3 function node for logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
     {
         auto andNodeFunction = Util::as<NodeFunctionAnd>(function);
@@ -617,7 +617,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
         return NodeFunctionNegate::create(updatedChildFunction);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: " + function->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: ", *function);
     return nullptr;
 }
 

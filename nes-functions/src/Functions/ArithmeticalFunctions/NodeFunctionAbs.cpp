@@ -58,7 +58,7 @@ bool NodeFunctionAbs::equal(NodePtr const& rhs) const
 std::string NodeFunctionAbs::toString() const
 {
     std::stringstream ss;
-    ss << "ABS(" << children[0]->toString() << ")";
+    ss << "ABS(" << *children[0] << ")";
     return ss.str();
 }
 

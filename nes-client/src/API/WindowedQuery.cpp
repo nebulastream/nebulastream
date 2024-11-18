@@ -122,7 +122,7 @@ Query& Query::windowByKey(
     {
         if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onKey))
         {
-            NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a {}", onKey->toString());
+            NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a {}", *onKey);
         }
         nodeFunctions.emplace_back(NES::Util::as<NodeFunctionFieldAccess>(onKey));
     }

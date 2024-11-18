@@ -59,15 +59,19 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
         if (!NES::Util::instanceOf<NodeFunctionWhen>(elem))
         {
             NES_THROW_RUNTIME_ERROR(
-                "Error during stamp inference. All functions in when function vector must be when functions, but " + elem->toString()
-                + " is not a when function.");
+                "Error during stamp inference. All functions in when function vector must be when functions, "
+                "but {} is not a when function.",
+                *elem);
         }
         ///all elements must have same stamp as defaultExp value
         if (!defaultExp->getStamp()->equals(elem->getStamp()))
         {
             NES_THROW_RUNTIME_ERROR(
-                "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element "
-                + elem->toString() + " has: " + elem->getStamp()->toString() + ". Right was: " + defaultExp->getStamp()->toString());
+                "Error during stamp inference. All elements must have same stamp as defaultExp default value, "
+                "but element {} has: {}. Right was: {}",
+                *elem,
+                elem->getStamp()->toString(),
+                defaultExp->getStamp()->toString());
         }
     }
 
@@ -135,9 +139,9 @@ std::string NodeFunctionCase::toString() const
     std::vector<NodeFunctionPtr> left = getWhenChildren();
     for (std::size_t i = 0; i < left.size() - 1; i++)
     {
-        ss << left.at(i)->toString() << ",";
+        ss << *(left.at(i)) << ",";
     }
-    ss << (*(left.end() - 1))->toString() << "}," << getDefaultExp()->toString();
+    ss << *(*(left.end() - 1)) << "}," << getDefaultExp();
 
     return ss.str();
 }

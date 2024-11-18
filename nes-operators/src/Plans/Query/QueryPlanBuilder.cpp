@@ -241,7 +241,7 @@ std::shared_ptr<NodeFunctionFieldAccess> QueryPlanBuilder::asNodeFunctionFieldAc
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
     {
-        NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessFunction but it was a  {}", side, function->toString());
+        NES_ERROR("QueryPlanBuilder: window key ({}) has to be an FieldAccessFunction but it was a  {}", side, *function);
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: window key has to be an FieldAccessFunction");
     }
     return NES::Util::as<NodeFunctionFieldAccess>(function);

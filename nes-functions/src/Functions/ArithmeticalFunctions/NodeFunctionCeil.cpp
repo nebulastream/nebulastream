@@ -57,7 +57,7 @@ bool NodeFunctionCeil::equal(NodePtr const& rhs) const
 std::string NodeFunctionCeil::toString() const
 {
     std::stringstream ss;
-    ss << "CEIL(" << children[0]->toString() << ")";
+    ss << "CEIL(" << *children[0] << ")";
     return ss.str();
 }
 
