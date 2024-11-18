@@ -39,7 +39,7 @@ public:
     using CastFunctionSignature
         = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
 
-    SourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter);
+    SourceParserCSV(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
     ~SourceParserCSV() override;
 
     SourceParserCSV(const SourceParserCSV&) = delete;

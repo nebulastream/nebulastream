@@ -25,10 +25,10 @@ namespace NES::SourceParsers::SourceParserProvider
 {
 
 std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter)
+provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
     if (auto sourceParser
-        = SourceParserRegistry::instance().create(parserType, schema, std::move(tupleSeparator), std::move(fieldDelimiter)))
+        = SourceParserRegistry::instance().create(parserType, schema, std::move(tupleDelimiter), std::move(fieldDelimiter)))
     {
         return std::move(sourceParser.value());
     }

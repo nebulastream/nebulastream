@@ -115,14 +115,14 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleSeparator = parserConfig.find("tupleSeparator"); tupleSeparator != parserConfig.end())
+    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
     {
-        validParserConfig.tupleSeparator = tupleSeparator->second;
+        validParserConfig.tupleDelimiter = tupleDelimiter->second;
     }
     else
     {
-        NES_DEBUG("Parser configuration did not contain: tupleSeparator, using default: \\n");
-        validParserConfig.tupleSeparator = "\n";
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        validParserConfig.tupleDelimiter = "\n";
     }
     if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
     {

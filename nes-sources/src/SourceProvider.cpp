@@ -39,7 +39,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(
         sourceDescriptor.parserConfig.parserType,
         sourceDescriptor.schema,
-        sourceDescriptor.parserConfig.tupleSeparator,
+        sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))

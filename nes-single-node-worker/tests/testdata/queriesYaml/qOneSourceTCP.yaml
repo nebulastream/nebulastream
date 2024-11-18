@@ -16,7 +16,7 @@ physical:
   - logical: tcp_source
     parserConfig:
       type: CSV
-      tupleSeparator: "\n"
+      tupleDelimiter: "\n"
       fieldDelimiter: ","
     sourceConfig:
       type: TCP
