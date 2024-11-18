@@ -10,5 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
-add_subdirectory(Parsers)
+add_source_files(nes-source-parsers
+        Parser.cpp
+        ParserCSV.cpp
+)

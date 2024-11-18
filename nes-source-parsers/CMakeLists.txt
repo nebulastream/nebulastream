@@ -12,10 +12,10 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-source-parsers NES_SOURCES_SOURCE_FILES)
+get_source(nes-source-parsers NES_SOURCE_PARSERS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-source-parsers ${NES_SOURCES_SOURCE_FILES})
+add_library(nes-source-parsers ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
 target_link_libraries(nes-source-parsers PUBLIC nes-common nes-configurations nes-data-types nes-memory)
 
