@@ -39,7 +39,7 @@ message NodeLocation {
 
 message ParserConfig {
   string type = 1;
-  string tupleSeparator = 2;
+  string tupleDelimiter = 2;
   string fieldDelimiter = 3;
 };
 

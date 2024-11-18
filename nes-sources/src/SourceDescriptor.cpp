@@ -38,9 +38,9 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescri
 {
     const auto schemaString = ((sourceDescriptor.schema) ? sourceDescriptor.schema->toString() : "NULL");
     const auto parserConfigString = fmt::format(
-        "type: {}, tupleSeparator: {}, stringDelimiter: {}",
+        "type: {}, tupleDelimiter: {}, stringDelimiter: {}",
         sourceDescriptor.parserConfig.parserType,
-        sourceDescriptor.parserConfig.tupleSeparator,
+        sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
     return out << fmt::format(
                "SourceDescriptor( logicalSourceName: {}, sourceType: {}, schema: {}, parserConfig: {}, config: {})",

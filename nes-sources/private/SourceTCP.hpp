@@ -109,7 +109,7 @@ struct ConfigParametersTCP
             return std::nullopt;
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tupleSeparator", '\n', [](const std::unordered_map<std::string, std::string>& config) {
+        "tupleDelimiter", '\n', [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(SEPARATOR, config);
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
@@ -170,7 +170,7 @@ private:
     std::string socketPort;
     int socketType;
     int socketDomain;
-    char tupleSeparator;
+    char tupleDelimiter;
     size_t socketBufferSize;
     size_t bytesUsedForSocketBufferSizeTransfer;
     float flushIntervalInMs;

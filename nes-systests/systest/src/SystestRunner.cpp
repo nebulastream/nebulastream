@@ -97,7 +97,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleSeparator", "\n"}, {"fieldDelimiter", ","}},
+                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", source.csvFilePath}}});
         });
 
@@ -121,7 +121,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             config.physical.emplace_back(CLI::PhysicalSource{
                 .logical = source.name,
-                .parserConfig = {{"type", "CSV"}, {"tupleSeparator", "\n"}, {"fieldDelimiter", ","}},
+                .parserConfig = {{"type", "CSV"}, {"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}},
                 .sourceConfig = {{"type", "File"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
 
             /// Write the tuples to a tmp file

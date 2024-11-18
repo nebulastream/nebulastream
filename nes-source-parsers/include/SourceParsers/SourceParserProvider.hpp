@@ -21,5 +21,5 @@
 namespace NES::SourceParsers::SourceParserProvider
 {
 std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter);
+provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
 }
