@@ -58,6 +58,7 @@ Checks: [
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-llvm-namespace-comment", # we do not require namespace comments
+  "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
@@ -236,7 +237,6 @@ WarningsAsErrors: '
   -google-upgrade-googletest-case,
   -fuchsia-multiple-inheritance,
   -cppcoreguidelines-pro-type-member-init,
-  -fuchsia-statically-constructed-objects,
   -cppcoreguidelines-pro-type-static-cast-downcast,
   -misc-unused-parameters,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
