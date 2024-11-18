@@ -19,21 +19,20 @@ However, adding more sources should not slow down existing sources or CPU-bound 
 Of course, devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but at least we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, without blocking the CPU
 (**G1, scalability**, addresses P1).
 
-The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
-Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
-Sources will be free of parsing logic, enabling clear separation of concerns regarding I/O and compute.
-Their only task should be to ingest raw bytes into buffers as fast as possible.
-After the redesign, a source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G2, simplicity and decomposition**, addresses P2).
 
-The `BufferManager` should have entirely separate pools for I/O and compute, removing the potential deadlocks (**G3**, addresses P3).
-It may be possible to enable transferring buffers between the two pools if necessary, but that is an optimization.
-The `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
+The `BufferManager` should have entirely separate pools for I/O and compute, removing the potential deadlocks (**G2, deadlock prevention**, addresses P2).
+Moreover, the `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
 In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) guaranteeing each source to receive a single buffer at a time to make progress for queries that depend on that source.
 In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within I/O threads wherever possible.
 We propose simple policies and provide a PoC implementation to showcase this.
 
 The following three goals are additional goals that do not address specific problems in the current implementation, but are still important with respect to usability and maintainability.
+
+The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
+Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
+After the redesign, a source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G3, simplicity and decomposition**).
+
 The implementation should conform to the past effort of refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md).
 We want this redesign to not impact the construction of sources at all, we aim to only redesign the execution model.
 The impact on the rest of the codebase should be minimal (**G4, non-invasiveness**).
@@ -171,25 +170,31 @@ In summary, systems using async I/O get the following benefits:
 
 # Our Proposed Solution
 The proposed solution depends on these key design decisions:
-1. We redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads.
-2. We remove parsing from the sources to separate CPU-bound and I/O-bound workloads.
-3. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool.
-4. We allow synchronous sources to still exist and run on separate detached threads as a fallback.
-Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not need to deal with the different execution models.
-5. Sources receive buffers by utilizing an asynchronous interface (prevent blocking i/o threads) from a separate buffer pool (prevent deadlocks).
-6. We allow the `QueryEngine` to request partially filled buffers in source implementations when its task queue is empty, canceling asynchronous operations. this prevents high tail latencies without timeouts. 
+1. We redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads (G1).
+2. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool (G1).
+3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G6).
+Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
+4. Sources receive buffers by utilizing non-blocking calls (prevent blocking I/O threads) from a separate I/O buffer pool (prevent deadlocks) (G2).
+5. We allow the user to configure timeouts on a per-source basis. When the timeout expires, a pending asynchronous operation is cancelled to prevent high tail latencies. 
+
+
+## Async I/O Library
+The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
+It provides us with everything we need to implement the goal of executing a large number of concurrent sources in an asynchronous, non-blocking way.
+The library comes with a runtime, asynchronous I/O objects like sockets, file descriptors, serial port interfaces, etc.
+Therefore, we choose `boost::asio` as the library to implement asynchronous sources and their orchestration on a thread pool.
 
 ## Interfaces
 The highest-level component that we need to redesign is the `SourceHandle`, which is created by the `SourceProvider`.
-General functionality of plugin registration, source descriptor validation, and construction of the source implementation does not need to change.
-Currently, `SourceHandle` wraps a `SourceThread`, an object that drives the source on an internal thread.
+General functionality of plugin registration, source descriptor validation, and construction of the source implementation does not need to change (G4).
+Currently, `SourceHandle` wraps a `SourceThread`, an object that drives a single source on an internal thread.
 The `QueryEngine` creates an `InstantiatedQueryPlan` that contains the `SourceHandle`s for that query and starts them, delegating the call to the `SourceThread`.
-We remove the `SourceThread` and replace it with an abstract base class called `SourceRunner` that is now owned by a `SourceHandle`.
+We remove the `SourceThread` and replace it with an abstract base class called `SourceRunner` that is owned by a `SourceHandle`.
 A `SourceRunner`'s primary responsibility (like the `SourceThread`'s) is to drive the source on (a set of) internal threads.
 However, we want two distinct ways to do so: 
 
-1. The fallback of running an internal thread for each synchronous source.
-2. The prefered approach of dispatching the source onto an async I/O runtime.
+1. The fallback of running an internal thread for each synchronous/blocking source.
+2. The preferred approach of dispatching the source to an async I/O runtime.
 
 Therefore, we create two derived classes, namely the `SourceRunnerSync` that will run a blocking source, and the `SourceRunnerAsync`, which is responsible for running asynchronous sources.
 For this reason, the former uniquely owns a thread, whereas the latter has shared ownership of an `AsyncSourceExecutor` that all asynchronous sources use to run on.
@@ -199,55 +204,144 @@ The following diagram illustrates the interfaces.
 ```mermaid
 classDiagram
     SourceHandle --* SourceRunner: Owns One
-    SourceRunner --|> SourceRunnerSync
-    SourceRunner --|> SourceRunnerAsync
-    SourceRunnerAsync --> Source: Executes Async
-    SourceRunnerSync --> Source: Executes Sync
+    SourceRunner --|> BlockingSourceRunner
+    SourceRunner --|> AsyncSourceRunner
+    AsyncSourceRunner --> Source: Executes Async
+    BlockingSourceRunner --> Source: Executes Blocking
 
     class SourceHandle {
-      -SourceRunner runner
+      -unique_ptr~SourceRunner~ runner
     }
 
     class SourceRunner {
         -unique_ptr~Source~ sourceImpl
         -shared_ptr~BufferProvider~ bufferProvider
         -OriginId sourceId
+        +start(StopToken& token, EmitFunction&& emitFn) = 0
         +execute(StopToken& token, EmitFunction&& emitFn) = 0
         +stop()
         +close()
     }
 
-    class SourceRunnerSync {
+    class BlockingSourceRunner {
         -unique_ptr~thread~ thread
+        +start(StopToken& token, EmitFunction&& emitFn) override
         +execute(StopToken& token, EmitFunction&& emitFn) override
     }
 
-    class SourceRunnerAsync {
+    class AsyncSourceRunner {
         -shared_ptr~AsyncSourceExecutor~ executor
+        +start(StopToken& token, EmitFunction&& emitFn) override
         +execute(StopToken& token, EmitFunction&& emitFn) override
     }
 ```
 
-The `execute` function encapsulates the `runningRoutine` of the current `SourceThread` and runs in a loop until a stop token is received from the outside.
+## SourceRunner
 
+The `execute` function encapsulates the `runningRoutine` of the current `SourceThread` and runs a loop until a stop token is received from the outside:
+```cpp
+void SourceRunnerSync::execute(StopToken& token, EmitFunction&& emitFn)
+{
+    sourceImpl->open();
+    while (!token.stopRequested())
+    {
+        RawBuffer buffer = bufferProvider->getBufferBlocking();
+        sourceImpl->fillBuffer(buffer);
+        emitFn(buffer);
+    }
+    sourceImpl->close();
+}
+```
+`AsyncSourceRunner::execute`, on the other hand, represents the highest-level coroutine that drives a particular asynchronous source:
+```cpp 
+awaitable<void> AsyncSourceRunner::execute(StopToken& token, EmitFunction&& emitFn)
+{
+    co_await sourceImpl->open();
+    while (!token.stopRequested())
+    {
+        RawBuffer buffer = co_await acquireBuffer();
+        co_await sourceImpl->fillBuffer(buffer);
+        emitFn(buffer);
+    }
+    co_await sourceImpl->close();
+    co_return;
+}
+```
+Note that all functions that are called are either non-blocking coroutines (like `sourceImpl->fillBuffer()`), or cheap functions that do not block the CPU for a long time (e.g., the `emitFn` that emits a buffer to successors).
+Also note that at this point, the code is not entirely complete: error handling is missing and the `stopToken` is not considered in the `acquireBuffer` function.
+When the `QueryEngine` wants to start a new asynchronous source, it calls `start` on the `AsyncSourceRunner`.
+This function will then dispatch the `execute` function to the underlying `AsyncSourceExecutor` in a non-blocking way.
+
+```cpp
+void SourceRunnerAsync::start(StopToken& token, EmitFunction&& emitFn)
+{
+    executor->dispatch([this, &token, emitFn]()
+    {
+        execute(token, emitFn);
+    });
+}
+```
+
+## AsyncSourceExecutor
+The `AsyncSourceExecutor` is the central component that manages the execution of all asynchronous sources at once.
+It is responsible for creating the `boost::asio::io_context` and the thread pool that runs the coroutines.
+For now, we hardcode a reasonable number of threads or use `std::thread::hardware_concurrency()` to determine the number of threads.
+At a later point, we could define the number as a function of the number of async sources that are currently running and change the number of threads adaptively at runtime.
+
+```cpp
+class AsyncSourceExecutor
+{
+private:
+    boost::asio::io_context ioc;
+    std::vector<std::unique_ptr<std::jthread>> threadPool;
+public:
+    AsyncSourceExecutor()
+    {
+        for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        {
+            threadPool.push_back(std::make_unique<std::jthread>([this]()
+            {
+                ioc.run();
+            }));
+        }
+    }
+
+    void dispatch(std::function<awaitable<void>(StopToken&, EmitFunction&&)> fn)
+    {
+        boost::asio::post(ioc, 
+                          co_spawn(ioc, 
+                                   []() { fn(); },
+                                   detached)
+        );
+    }
+
+    ~AsyncSourceExecutor()
+    {
+        ioc.stop();
+    }
+}
+```
+
+As we can see, the executor is very simple and the magic happens behind the scenes in the `boost::asio::io_context`.
+It contains the reactor pattern that is responsible for polling file descriptors and waking up coroutines that are ready to make progress.
+The `io_context` is allowed to schedule tasks to any thread that called `run` on it.
+
+## Sources
+The sources' interface only contains the functions `open`, `fillBuffer`, and `close`.
+Instead of returning `void`, they return `awaitable<void>`, which is a type that can be awaited in a coroutine.
+Blocking sources can be integrated into this scheme by wrapping their blocking calls into a coroutine.
 
 ```mermaid
 classDiagram
-    SourceHandle --* SourceRunnerBase: Owns One
-    SourceRunnerBase --|> SourceRunnerSync
-    SourceRunnerBase --|> SourceRunnerAsync
-    SourceRunnerAsync --> Source: Executes Async
-    SourceRunnerSync --> Source: Executes Sync
-    SourceRunnerAsync --* AsyncSourceExecutor: Owns One
     Source --|> TCPSource
     Source --|> FileSource
     Source --|> MQTTSource
 
     class Source
     <<interface>> Source
-    Source: open()
+    Source: open() awaitable~void~
     Source: fillBuffer(RawBuffer& buffer) awaitable~void~
-    Source: close()
+    Source: close() awaitable~void~
     
 
     class TCPSource {
@@ -255,114 +349,152 @@ classDiagram
     }
 
     class FileSource {
-        -boost::asio::stream_descriptor streamDescriptor
+        -boost::asio::stream_file streamFile
     }
 
     class MQTTSource {
-        -mqtt_client asyncClient
+        -mqtt_client client
+    }
+```
+
+The sources' implementations will be very simple, requiring only logic to open/close resources and fill a single buffer with data (G3):
+```cpp
+class TCPSource : public Source
+{
+private:
+    boost::asio::ip::tcp::socket socket;
+
+public:
+    awaitable<void> open() override
+    {
+        co_await socket.async_connect(...);
     }
 
-    class SourceHandle {
-      -SourceRunnerBase runner
+    awaitable<void> fillBuffer(RawBuffer& buffer) override
+    {
+        size_t bufferOffset = 0;
+        try
+        {
+            while (bufferOffset < buffer.size())
+            {
+                size_t bytesRead = co_await socket->async_read_some(boost::asio::buffer(buffer.data() + bufOffset, buffer.size() - bufOffset), use_awaitable);
+                bufferOffset += bytesRead;
+            }
+        }
+        catch (boost::system::system_error& error)
+        {
+            if (error.code() == boost::asio::error::eof)
+            {
+                // Connection closed
+                co_return;
+            }
+            else
+            {
+                // Handle error
+            }
+        }
+        co_return;
     }
 
-    class SourceRunner {
-        -unique_ptr~Source~ sourceImpl
-        -shared_ptr~BufferProvider~ bufferProvider
-        -OriginId sourceId
-        +execute(EmitFunction&& emitFn)
-        +stop()
-        +close()
+    void close() override
+    {
+        socket.close();
+        co_return;
     }
-
-    class SourceRunnerSync {
-        -unique_ptr~thread~ thread
-        +execute(EmitFunction&& emitFn)
-    }
-
-    class SourceRunnerAsync {
-        -unique_ptr~AsyncSourceExecutor~ executor
-        +execute(EmitFunction&& emitFn)
-    }
-
-    class AsyncSourceExecutor {
-        -boost::asio::io_context ioc
-        -vector~unique_ptr~thread~~ threadPool
-    }
+}
 
 ```
 
-The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
-It provides us with everything we need to implement the goal of executing a large number of concurrent sources in an asynchronous, non-blocking way.
-The library comes with a runtime, asynchronous I/O objects like sockets, file descriptors, serial port interfaces, etc.
-Therefore, we choose `boost::asio` as the library to implement asynchronous sources and their orchestration on a fixed-size thread pool.
-
 ## Buffer Management
+We aim to address four challenges related to buffer management:
+1. Deadlock prevention (G2)
+2. Flow control
+3. Fairness of distribution
+4. Asynchronous interface (G1)
+
+### Deadlock Prevention
 On a high level, deadlocks occur if there are cyclic dependencies on a specific resource in the system (here: buffers).
-In our case, producers and consumers of data depend on buffers to make progress.
-If a consumer acquires all buffers to store internal state of e.g., pending windows, the corresponding source can not acquire a buffer anymore, so no new data can be produced for the operator to trigger the window and release its buffers.
-Therefore, we have a horizontal divison of components (producer-consumer dependencies) and a vertical division (e.g., among different sources/pipelines, no dependencies).
-Only producer/consumer relationships are susceptible to deadlocks in our case.
-Hence, between producer/consumer relationships deadlocks need to be avoided, whereas among sources only fairness of distribution plays a role. 
-By separating an I/O pool from the rest of the global buffer pools, we avoid the deadlock problem between sources and their consumer pipelines (P3).
+In our case, producers (sources) and consumers (successor pipelines) of data depend on buffers to make progress.
+If a consumer acquires all buffers to store internal state of e.g., pending windows, the corresponding source can not acquire a buffer anymore. 
+Consequently, no new data can be produced for the operator to trigger the window and release its buffers.
+In our producer/consumer relationship between sources and successor pipelines, deadlocks need to be avoided (G2). 
+By separating an I/O pool from the rest of the global buffer pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
 A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG4).
-
-Currently, each source has a local `BufferProvider` that maintains a pool of buffers only for this source. 
-The `SourceThread` uses this provider to call `getBufferBlocking` repeatedly in the running thread routine.
-
-### 1) Asynchronous Interface
-Since sources should be implemented in an asynchronous manner from now on, we need to question the call to `getBufferBlocking` that currently happens on an I/O thread.
-This call blocks until a buffer becomes available, which we want to avoid on I/O threads.
-There is a non-blocking alternative available called `getBufferNoBlocking`, which returns an `std::optional`.
-In this case we do not block, but the source still requires a buffer to make progress, so we need to use a timer within the source that wakes us up to try again.
-This timeout is arbitrary and needs to be set by us developers, which is not ideal.
-An alternative might be to extend the asynchronous behavior of the sources and implement an event-based mechanism into the `BufferManager` that notifies the coroutine that asked for the buffer when it is available.
 
 ### 2) Flow Control
 For flow control (handling speed differences between producer and consumer, and among different producers), the following questions arise with respect to buffers:
-1. **Slow Source, Fast Downstream**: *How do we keep the latency in check when a source takes a very long time to fill a buffer?*
+1. **Slow Source <--> Fast Downstream**: *How do we keep the latency in check when a source takes a very long time to fill a buffer?*
 
 This will be the general case where the system is not overwhelmed with external data, and I see two approaches here:
-- *Demand-based*: If the `QueryEngine` sees that the task queue is empty, it may ask a `Source` to release a partially filled buffer.
-Instead of issuing new requests or waiting for more data, the coroutine driving the source could yield control and give out the buffer, asking the `BufferManager` for a new one.
-This approach would require to have some kind of backwards control flow or would need to be implemented by the `QueryEngine`, but it would give a consistent approach for controlling the latency.
+- *Demand-based*: If a running successor pipeline of a source is idle (no task has been produced that it can process), it may ask a `Source` to release a partially filled buffer.
+Instead of issuing new requests or waiting for more data, the `SourceRunner` driving the source could yield control and give out the buffer, asking the `BufferManager` for a new one.
+This approach would require to have some kind of backwards control flow from pipelines directly to the source or would need to be handled by the `QueryEngine`. 
 - *Timeout-based*: After some time has passed, the source releases its buffer, writing it downstream.
-Here, we get another hyperparameter for the system. 
 Global timeouts are not suitable as each query might have different latency requirements.
-Also, the timeout set might not even be reflected in the final latency (it only reflects on the latency of the source).
-Therefore, I propose the implementation of a demand-based solution.
+Instead, we let the user set a timeout on a per-source basis.
+A disadvantage of this approach is that the timeout set only reflects on the maximum latency of the source and might not translate to query latency, which most users are interested in.
 
-2. **Fast Source, Slow Downstream**: *How do we apply backpressure to help the system under high load?*
+As a first baseline, we implement the timeout-based approach.
+The timer is associated with each asynchronous operation.
+When the timer of the source expires, the source cancels the ongoing operation and releases the partially filled buffer.
 
-If we work with a fixed-size buffer pool, we can apply backpressure to a source by rejecting its request to acquire a buffer.
+-- TODO: describe cancellation of async operations
+
+2. **Fast Source <--> Slow Downstream**: *How do we apply backpressure to help the system under high load?*
+
+If we work with a fixed-size buffer pool, we apply backpressure automatically to a source when the `BufferManager` rejects its request to acquire a buffer.
 This forces the source to try again later.
-The source could then set a timeout and be woken up by the I/O executor at a later point to try again.
+We implement this in the `AsyncSourceRunner` by setting a timeout to an asynchronous timer `retryTimer` and try again when it expires.
 In the meantime, the external system will be throttled.
+A future, more sophisticated approach could involve an asynchronous interface between the `AsyncSourceRunner` and the `BufferManager`, discussed [here](#asynchronous-interface).
 
-3. **Fast Sources, Slow Sources**: *How do we handle speed differences between sources and prevent fast sources from stealing all resources?*
+```cpp
+boost::asio::steady_timer retryTimer(ioc, std::chrono::milliseconds(10));
 
-Speed differences can be defined as differences in buffer requests per unit time.
+awaitable<RawBuffer> AsyncSourceRunner::acquireBuffer()
+{
+    std::optional<RawBuffer> buf;
+    while (!buf)
+    {
+        // Call non-blocking function
+        buf = bufferProvider->getBufferNoBlocking();
+        if (!buf)
+        {
+            // Wait for a while and try again
+            co_await retryTimer.async_wait();
+        }
+    }
+    co_return buf.value();
+}
+```
+
+3. **Fast Sources <--> Slow Sources**: *How do we handle speed differences between sources and prevent fast sources from stealing all resources?*
+
+Speed differences among sources can be defined as differences in buffer requests per unit time.
 When downstream tasks are generally reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies and the speed differences do not lead to problems. 
 By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies.
 In a temporary case, enough buffers are available and the buffer manager will happily give them out to fast producers so the available buffers will be automatically be distributed relative to the demand.
-Problems arise when a single or few sources take so many buffers that others are impacted and have buffer requests denied.
-Therefore, in general, we always want to guarantee **each source having a single buffer available that it can fill in the background (double buffering)**. 
+With the separation of I/O and compute pools, we prevent fast sources from stealing all resources from the global pool.
+Problems arise when a single or few sources take so many buffers such that others are impacted and have buffer requests denied.
+
+In general, we always want to guarantee **each source having a single buffer available that it can fill in the background (double buffering)**. 
 This is the minimum required to effectively utilize async I/O.
-The `BufferManager` needs to make sure it holds a reserve of a single buffer per source at all times.
-Implementation-wise, I see two approaches here:
-#### 1.1) Global Pool + Backup Pool
-Under normal operation, the `BufferManager` draws buffers from the global I/O pool based on demand.
-It is aware of currently running sources and keeps a backup of buffers when under high load. 
-In order to prevent sources that are under high load from stealing all resources of the global pool, we draw from the backup pool if the global pool is in use.
+
 To facilitate fairness here, I propose the simple algorithm:
 - Sources ask for buffers, by putting their id in a FIFO queue 
 - A source can only ask for one buffer at a time. After a source received a buffer, it can only ask for another buffer, after it finished processing the current one and sees that it needs more.
 - Slower sources are guaranteed to move up in the FIFO queue everytime a faster source takes a buffer
 
-The previous necessitate the assumption/invariant that more buffers exist than the number of sources registered.
-When a source wants to be registered and this would violate the requirement, performance will degrade.
+### Asynchronous Interface
+Currently, each source has a local `BufferProvider` that maintains a pool of buffers only for this source. 
+The `SourceThread` uses this provider to call `getBufferBlocking` repeatedly in the running thread routine.
+This call blocks until a buffer becomes available, which we want to avoid on I/O threads.
+Therefore, we use the non-blocking alternative available called `getBufferNoBlocking`, which returns an `std::optional`.
+In this case we do not block, but the source still requires a buffer to make progress, so we go to sleep without blocking the I/O runtime.
+The timeout is arbitrary and needs to be set explicitly at compile-time, which is not ideal.
 
-#### 1.2) Local Pools + Steal
+A future alternative is to extend the asynchronous behavior across the boundaries of the sources and integrate an event-based mechanism into the `BufferManager`.
+
 
 ## Testing
 
@@ -371,11 +503,25 @@ When a source wants to be registered and this would violate the requirement, per
 # Proof of Concept
 Will be created after approval of this PR.
 
+## Implementation plan
+1. Implement the redesign of the execution model for sources.
+2. Implement three sources (TCP, File, MQTT) that use the new execution model.
+3. Write unit tests for the sources.
+4. Write integration tests that show the interplay of multiple sources.
+5. Benchmark the system with a high number of sources.
+6. Make the `BufferManager` aware of sources and implement a simple policy for fairness of distribution.
+
 # Alternatives
 
 # Open Questions
-- How to deal with source sharing?
+## Urgent
+- How to handle the PR, split up into execution model, implementation of specific sources and the `BufferManager` changes?
+
+## Non-Urgent
+- How to deal with source sharing? Are there special considerations?
 - How to deal with internal sources?
+- 
+
 
 # Sources and Further Reading
 - https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html
