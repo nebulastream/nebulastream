@@ -17,23 +17,23 @@
 #include <string>
 
 namespace MEOS {
-    extern "C" {
-    #include <meos.h>
-    }
+extern "C" {
+#include <meos.h>
+}
 
-    class Meos {
-    public:
-        /**
+class Meos {
+  public:
+    /**
          * @brief Initialize MEOS library
          * @param[in] timezone Timezone of reference
          */
-        Meos(std::string);
+    Meos(std::string);
 
-        /**
+    /**
         * @brief Finalize MEOS library, free the timezone cache
         */
-        ~Meos();
-    };
+    ~Meos();
+};
 }// namespace MEOS
 
 #endif// NES_PLUGINS_MEOS_INCLUDE_EXECUTION_OPERATORS_MEOS_MEOS_HPP_

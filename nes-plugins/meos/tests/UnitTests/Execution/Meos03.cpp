@@ -31,9 +31,9 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-    #include <stdio.h>
-    #include <stdlib.h>
-    //#include <libpq-fe.h>
+#include <stdio.h>
+#include <stdlib.h>
+//#include <libpq-fe.h>
 }
 
 using namespace std;
