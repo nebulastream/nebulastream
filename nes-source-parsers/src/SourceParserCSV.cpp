@@ -62,8 +62,8 @@ struct PartialTuple
 class ProgressTracker
 {
 public:
-    ProgressTracker(std::string tupleSeparator, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleSeparator(std::move(tupleSeparator)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
+    ProgressTracker(std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
+        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
 
     ~ProgressTracker() = default;
 
@@ -120,10 +120,10 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const ProgressTracker& progressTracker)
     {
         return out << fmt::format(
-                   "tupleSeparator: {}, size of tuples in bytes: {}, number of fields in schema: {}, tbRaw(total number of bytes: {}, "
+                   "tupleDelimiter: {}, size of tuples in bytes: {}, number of fields in schema: {}, tbRaw(total number of bytes: {}, "
                    "start of "
                    "current tuple: {}, end of current tuple: {}), tbFormatted(number of tuples: {}, current field offset: {})",
-                   (progressTracker.tupleSeparator == "\n") ? "\\n" : progressTracker.tupleSeparator,
+                   (progressTracker.tupleDelimiter == "\n") ? "\\n" : progressTracker.tupleDelimiter,
                    progressTracker.tupleSizeInBytes,
                    progressTracker.numSchemaFields,
                    progressTracker.numTotalBytesInTBRaw,
@@ -137,7 +137,7 @@ public:
     [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
-    const std::string& getTupleSeparator() { return this->tupleSeparator; }
+    const std::string& getTupleDelimiter() { return this->tupleDelimiter; }
 
     size_t currentTupleStartTBRaw{0};
     size_t currentTupleEndTBRaw{0};
@@ -147,13 +147,13 @@ public:
     size_t currentFieldOffsetTBFormatted{0};
 
 private:
-    std::string tupleSeparator;
+    std::string tupleDelimiter;
     size_t tupleSizeInBytes{0};
     uint64_t numSchemaFields{0};
     std::string_view tupleBufferRawSV;
     NES::Memory::TupleBuffer tupleBufferFormatted;
 
-    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(tupleSeparator, currentTupleStartTBRaw); }
+    size_t findIndexOfNextTuple() { return tupleBufferRawSV.find(tupleDelimiter, currentTupleStartTBRaw); }
 };
 
 template <typename T>
@@ -422,9 +422,9 @@ void SourceParserCSV::parseStringIntoTupleBuffer(
 }
 
 std::unique_ptr<SourceParser>
-SourceParserGeneratedRegistrar::RegisterSourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter)
+SourceParserGeneratedRegistrar::RegisterSourceParserCSV(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    return std::make_unique<SourceParserCSV>(schema, std::move(tupleSeparator), std::move(fieldDelimiter));
+    return std::make_unique<SourceParserCSV>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
 }
 
 }

@@ -1,4 +1,4 @@
-# name: parser/TupleSeparatorRightBeforeBufferSplit.test
+# name: parser/TupleDelimiterRightBeforeBufferSplit.test
 # description: parser tests
 # groups: [Parser,Tuples]
 

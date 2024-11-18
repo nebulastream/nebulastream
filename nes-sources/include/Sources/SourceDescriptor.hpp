@@ -28,7 +28,7 @@ namespace NES::Sources
 struct ParserConfig
 {
     std::string parserType;
-    std::string tupleSeparator;
+    std::string tupleDelimiter;
     std::string fieldDelimiter;
 };
 
