@@ -132,19 +132,22 @@ jobs:
           mkdir -p /tmp/cache/code-coverage-${{ matrix.platform }}
           rm -rf /tmp/cache/code-coverage-${{ matrix.platform }}/*
           
-          filepath=$(find build -name "style.css" -print)
-          cp "$filepath" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
-          echo "Copying ${filepath} to /tmp/cache/code-coverage-${{ matrix.platform }}."
+          filepath_style_css=$(find build -name "style.css" -print)
+          cp "${filepath_style_css}" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
+          echo "Copying ${filepath_style_css} to /tmp/cache/code-coverage-${{ matrix.platform }}."
           
           # We only want to copy the html files of the changed files to the cache
           # Otherwise, we would copy all html files, which would be a lot of data and we run into the data limit of github.
           for file in ${ALL_CHANGED_FILES}; do
             base_name=$(basename ${file})
             filepath=$(find build -name "${base_name}.html" -print)
-            if [ -n "$filepath" ]; then
-              sed -i "s#href='\(\.\.\/\)*style\.css'#href='style.css'#g" "$filepath"
-              cp "$filepath" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
-              echo "Copying ${filepath} to /tmp/cache/code-coverage-${{ matrix.platform }}."
+            echo "Outside of the loop: <${filepath}<"
+            if [ -n "filepath" ]; then
+              for found_file in ${filepath}; do
+                sed -i "s#href='\(\.\.\/\)*style\.css'#href='style.css'#g" "${found_file}"
+                cp "${found_file}" "/tmp/cache/code-coverage-${{ matrix.platform }}/."
+                echo "Copying ${found_file} to /tmp/cache/code-coverage-${{ matrix.platform }}."
+              done 
             fi
           done
       - name: Upload Code Coverage Summary
