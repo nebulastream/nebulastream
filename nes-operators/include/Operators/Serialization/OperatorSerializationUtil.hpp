@@ -22,7 +22,6 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
-#include <memory>
 
 namespace NES {
 
@@ -46,6 +45,7 @@ class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
 class StatisticWindowDescriptorMessage;
 class SerializableOperator_SinkDetails_StatisticSinkDescriptor;
+class SerializableOperator_MeosOperatorDetails;
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a
@@ -304,6 +304,22 @@ class OperatorSerializationUtil {
      * @return LogicalUnaryOperator of type InferModel::LogicalInferModelOperator
      */
     static LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
+    /**
+     * @brief Serializes a meos logical operator
+     * @param meosOperator
+     * @param serializedOperator serialized instance of the operator
+     */
+
+    static void serializemeosOperator(const MeosOperator::LogicalMeosOperator& meosOperator,
+                                      SerializableOperator& serializedOperator);
+
+    /** 
+     * @brief Deserializes a meos logical operator
+     * @param meosDetails
+     * @return MeosOperator::LogicalMeosOperatorPtr of type MeosOperator::LogicalMeosOperator
+     */
+    static MeosOperator::LogicalMeosOperatorPtr
+    deserializemeosOperator(const SerializableOperator_MeosOperatorDetails& meosDetails);
 
     /**
      * @brief Serializes a Map or FlatMap Java UDF operator

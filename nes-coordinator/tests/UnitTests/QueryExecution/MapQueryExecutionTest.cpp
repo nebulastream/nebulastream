@@ -76,11 +76,11 @@ class MapQueryExecutionTest
                                1);
     }
     static auto createLogTestData() {
-        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
-                               "MapLogarithmicFunctions",
-                               std::vector<string>{"test$id", "test$log10", "test$log2", "test$ln"},
-                               std::vector<string>{"log10", "log2", "ln"},
-                               1);
+    return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                            "MapLogarithmicFunctions",
+                            std::vector<string>{"test$id", "test$log10", "test$log2", "test$ln"},
+                            std::vector<string>{"log10", "log2", "ln"},
+                            1);
     }
     static auto createTwoMapQueryTestData() {
         return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
@@ -110,13 +110,34 @@ class MapQueryExecutionTest
                                std::vector<string>{"left$id", "right$id", "power"},
                                1);
     }
+    static auto createReadTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadFunction",
+                               std::vector<string>{"test$left$id", "test$readF"},
+                               std::vector<string>{"left$id", "readF"},
+                               1);
+    }
+    static auto createRead3TestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$readT"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "readT"},
+                               1);
+    }
+    static auto createReadmeosTestData() {
+        return std::make_tuple(QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
+                               "MapReadMeosTernaryFunction",
+                               std::vector<string>{"test$left$id", "test$middle$id", "test$right$id", "test$meosT"},
+                               std::vector<string>{"left$id", "middle$id", "right$id", "meosT"},
+                               1);
+    }
 };
 
 static auto getExpression(const std::string expression) {// Includes the names for the query
     if (expression == "id") {                            // MapQueryArithmetic
         return Attribute("id") * 2;
     } else if (expression == "log10") {// MapLogarithmicFunctions
-        return LOG10(Attribute("id"));
+    return LOG10(Attribute("id"));
     } else if (expression == "log2") {
         return LOG2(Attribute("id"));
     } else if (expression == "ln") {
@@ -135,6 +156,12 @@ static auto getExpression(const std::string expression) {// Includes the names f
         return RADIANS(Attribute("id"));
     } else if (expression == "power") {// MapPowerFunction
         return POWER(Attribute("left$id"), Attribute("right$id"));
+    } else if (expression == "readF") {
+        return READ(Attribute("left$id"));
+    } else if (expression == "readT") {
+        return readT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
+    } else if (expression == "meosT") {
+        return meosT(Attribute("left$id"), Attribute("middle$id"), Attribute("right$id"));
     } else {
         return EXP(Attribute("id"));
     }
@@ -142,7 +169,7 @@ static auto getExpression(const std::string expression) {// Includes the names f
 static auto getFunction(const std::string function, int input) {// Includes the names for the EXPECT_EQ statement
     if (function == "test$one") {                               // MapQueryArithmetic
         return (double) input * 2;
-    } else if (function == "test$log10") {// MapLogarithmicFunctions
+     } else if (function == "test$log10") {// MapLogarithmicFunctions
         return std::log10(input);
     } else if (function == "test$log2") {
         return std::log2(input);
@@ -283,6 +310,9 @@ INSTANTIATE_TEST_CASE_P(testMapQueries,
                                           MapQueryExecutionTest::createTwoMapQueryTestData(),
                                           MapQueryExecutionTest::createAbsTestData(),
                                           MapQueryExecutionTest::createPowerTestData(),
+                                          MapQueryExecutionTest::createReadTestData(),
+                                          MapQueryExecutionTest::createRead3TestData(),
+                                          MapQueryExecutionTest::createReadmeosTestData(),
                                           MapQueryExecutionTest::createTrigTestData()),
                         [](const testing::TestParamInfo<MapQueryExecutionTest::ParamType>& info) {
                             std::string name = std::get<1>(info.param);

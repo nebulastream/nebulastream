@@ -59,6 +59,15 @@ using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 class LogicalBinaryOperator;
 using LogicalBinaryOperatorPtr = std::shared_ptr<LogicalBinaryOperator>;
 
+class TernaryOperator;
+using TernaryOperatorPtr = std::shared_ptr<TernaryOperator>;
+
+class LogicalTernaryOperator;
+using LogicalTernaryOperatorPtr = std::shared_ptr<LogicalTernaryOperator>;
+
+class LogicalQuaternaryOperator;
+using LogicalQuaternaryOperatorPtr = std::shared_ptr<LogicalQuaternaryOperator>;
+
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
@@ -113,6 +122,11 @@ using OperatorPtr = std::shared_ptr<Operator>;
 
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
+
+namespace MeosOperator {
+class LogicalMeosOperator;
+using LogicalMeosOperatorPtr = std::shared_ptr<LogicalMeosOperator>;
+}// namespace MeosOperator
 
 namespace Statistic {
 class LogicalStatisticWindowOperator;

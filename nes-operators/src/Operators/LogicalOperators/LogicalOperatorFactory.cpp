@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMeosOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
@@ -91,7 +92,16 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createInferModelOperator(std::st
                                                                          std::vector<ExpressionNodePtr> outputFieldsPtr,
                                                                          OperatorId id) {
 
-    return std::make_shared<NES::InferModel::LogicalInferModelOperator>(model, inputFieldsPtr, outputFieldsPtr, id);
+    return std::make_shared<InferModel::LogicalInferModelOperator>(model, inputFieldsPtr, outputFieldsPtr, id);
+}
+
+MeosOperator::LogicalMeosOperatorPtr LogicalOperatorFactory::createMeosOperator(const ExpressionNodePtr left,
+                                                                                const ExpressionNodePtr middle,
+                                                                                const ExpressionNodePtr right,
+                                                                                const std::string function,
+                                                                                OperatorId id) {
+
+    return std::make_shared<MeosOperator::LogicalMeosOperator>(left, middle, right, function, id);
 }
 
 LogicalBinaryOperatorPtr LogicalOperatorFactory::createUnionOperator(OperatorId id) {

@@ -25,4 +25,9 @@ DataTypePtr BinaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& in
     return inferBinary(inputStamps[0], inputStamps[1]);
 }
 
+DataTypePtr TernaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& inputStamps) const {
+    NES_ASSERT(inputStamps.size() == 3, "Ternary function should receive three input stamp.");
+    return inferTernary(inputStamps[0], inputStamps[1], inputStamps[2]);
+}
+
 }// namespace NES

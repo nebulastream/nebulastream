@@ -41,3 +41,5 @@ add_nes_execution_test(execution-random-expression-test "RandomExpressionTest.cp
 add_nes_execution_test(execution-trunc-expression-test "TruncExpressionTest.cpp")
 add_nes_execution_test(execution-exp-expression-test "ExpExpressionTest.cpp")
 add_nes_execution_test(execution-sign-expression-test "SignExpressionTest.cpp")
+add_nes_execution_test(execution-read-expression-test "ReadExpressionTest.cpp")
+add_nes_execution_test(execution-read3-expression-test "ReadTernaryExpressionTest.cpp")

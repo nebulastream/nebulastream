@@ -81,6 +81,13 @@ class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 }// namespace InferModel
 
+namespace MeosOperator {
+
+class LogicalMeosOperator;
+using LogicalMeosOperatorPtr = std::shared_ptr<LogicalMeosOperator>;
+
+}// namespace MeosOperator
+
 namespace Statistic {
 class LogicalStatisticWindowOperator;
 using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;

@@ -21,4 +21,7 @@ add_source_files(nes-expressions
         SinFunction.cpp
         CosFunction.cpp
         RadiansFunction.cpp
+        ReadFunction.cpp
+        ReadTernaryFunction.cpp
+        ReadMeosTernaryFunction.cpp
         )

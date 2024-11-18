@@ -111,7 +111,6 @@ bool LogicalInferModelOperator::inferSchema() {
             outputSchema->addField(fieldName, outputExpression->getStamp());
         }
     }
-
     return true;
 }
 

@@ -99,6 +99,19 @@ class LogicalOperatorFactory {
                                                             OperatorId id = getNextOperatorId());
 
     /**
+     * @brief Create a new infer meos operator.
+     * @param left
+     * @param middle
+     * @param right
+     * @return LogicalMeosOperatorPtr
+     */
+    static MeosOperator::LogicalMeosOperatorPtr createMeosOperator(const ExpressionNodePtr left,
+                                                                   const ExpressionNodePtr middle,
+                                                                   const ExpressionNodePtr right,
+                                                                   const std::string function,
+                                                                   OperatorId id = getNextOperatorId());
+
+    /** 
      * @brief Creates a synopsis build operator
      * @param window: Window properties
      * @param statisticDescriptor: Descriptor on how to build the statistic

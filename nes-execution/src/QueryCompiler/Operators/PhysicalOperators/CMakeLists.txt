@@ -15,6 +15,7 @@ add_source_files(nes-execution
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp
+        PhysicalTernaryOperator.cpp
         PhysicalSourceOperator.cpp
         PhysicalSinkOperator.cpp
         PhysicalFilterOperator.cpp
@@ -29,6 +30,7 @@ add_source_files(nes-execution
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
+        PhysicalMeosOperator.cpp
 )
 
 add_subdirectory(Windowing)

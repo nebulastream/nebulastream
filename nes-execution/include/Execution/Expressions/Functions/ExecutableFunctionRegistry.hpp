@@ -62,6 +62,19 @@ class BinaryFunctionProvider : public FunctionExpressionProvider {
 };
 
 /**
+ * @brief A function provider for ternary function expressions.
+ * @tparam T
+ */
+template<typename T>
+class TernaryFunctionProvider : public FunctionExpressionProvider {
+  public:
+    std::unique_ptr<Expression> create(std::vector<ExpressionPtr>& args) override {
+        NES_ASSERT(args.size() == 3, "A Ternary function should receive three arguments");
+        return std::make_unique<T>(args[0], args[1], args[2]);
+    };
+};
+
+/**
  * @brief The ExecutableFunctionRegistry manages all executable function expressions for the engine.
  */
 using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;

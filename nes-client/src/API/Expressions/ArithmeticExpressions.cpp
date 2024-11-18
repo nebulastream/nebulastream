@@ -79,6 +79,22 @@ ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
 }
 
+ExpressionNodePtr READ(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "readF", {exp});
+}
+
+ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
+}
+
+ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "readT", {left, middle, right});
+}
+
+ExpressionNodePtr meosT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
+    return FunctionExpression::create(DataTypeFactory::createUndefined(), "meosT", {left, middle, right});
+}
+
 ExpressionNodePtr SIN(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "sin", {exp});
 }
@@ -217,6 +233,16 @@ ExpressionNodePtr LN(ExpressionItem exp) { return LN(exp.getExpressionNode()); }
 ExpressionNodePtr LOG2(ExpressionItem exp) { return LOG2(exp.getExpressionNode()); }
 
 ExpressionNodePtr LOG10(ExpressionItem exp) { return LOG10(exp.getExpressionNode()); }
+
+ExpressionNodePtr READ(ExpressionItem exp) { return READ(exp.getExpressionNode()); }
+
+ExpressionNodePtr readT(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
+    return readT(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+}
+
+ExpressionNodePtr meosT(ExpressionItem left, ExpressionItem middle, ExpressionItem right) {
+    return meosT(left.getExpressionNode(), middle.getExpressionNode(), right.getExpressionNode());
+}
 
 ExpressionNodePtr SIN(ExpressionItem exp) { return SIN(exp.getExpressionNode()); }
 

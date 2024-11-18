@@ -99,6 +99,7 @@ std::shared_ptr<Expression> ExpressionProvider::lowerExpression(const Expression
         auto rightNautilusExpression = lowerExpression(divNode->getRight());
         return std::make_shared<DivExpression>(leftNautilusExpression, rightNautilusExpression);
     } else if (auto functionExpression = expressionNode->as_if<FunctionExpression>()) {
+        NES_INFO("Returning a function {}", functionExpression->getFunctionName());
         return lowerFunctionExpression(functionExpression);
     } else if (auto constantValue = expressionNode->as_if<ConstantValueExpressionNode>()) {
         return lowerConstantExpression(constantValue);
@@ -175,6 +176,7 @@ ExpressionProvider::lowerFunctionExpression(const std::shared_ptr<FunctionExpres
     for (const auto& arg : expressionNode->getArguments()) {
         arguments.emplace_back(lowerExpression(arg));
     }
+    NES_INFO("Lower Function Expression {}", expressionNode->getFunctionName());
     auto functionProvider = ExecutableFunctionRegistry::createPlugin(expressionNode->getFunctionName());
     return functionProvider->create(arguments);
 }

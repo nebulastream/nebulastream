@@ -11,6 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp"
+#include "Operators/OperatorForwardDeclaration.hpp"
+#include "SerializableOperator.pb.h"
+#include "Util/Logger/Logger.hpp"
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
@@ -72,6 +76,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <fstream>
+
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -258,6 +263,7 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         auto serializedInferModelOperator = SerializableOperator_InferModelDetails();
         details.UnpackTo(&serializedInferModelOperator);
         operatorNode = deserializeInferModelOperator(serializedInferModelOperator);
+
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
@@ -1702,6 +1708,43 @@ OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOpera
                                                             outputFields,
                                                             getNextOperatorId());
 }
+
+// void OperatorSerializationUtil::serializemeosOperator(
+//     const MeosOperator::LogicalMeosOperator& meosOperator,
+//     SerializableOperator& serializedOperator
+// ) {
+//     NES_TRACE("OperatorSerializationUtil::serializemeosOperator");
+
+//     SerializableOperator_MeosOperatorDetails meosDetails;
+
+//     // Serialize input expressions
+//     ExpressionSerializationUtil::serializeExpression(meosOperator.getLeft(), *meosDetails.mutable_left());
+//     ExpressionSerializationUtil::serializeExpression(meosOperator.getMiddle(), *meosDetails.mutable_middle());
+//     ExpressionSerializationUtil::serializeExpression(meosOperator.getRight(), *meosDetails.mutable_right());
+
+//     // Serialize the function
+//     meosDetails.set_function(meosOperator.getFunction());
+
+//     // Pack the MeosOperatorDetails into the serializedOperator
+//     serializedOperator.mutable_details()->PackFrom(meosDetails);
+
+//     NES_INFO("Serialization of LogicalMeosOperator (ID: {}) completed.", meosOperator.getId());
+// }
+
+// MeosOperator::LogicalMeosOperatorPtr OperatorSerializationUtil::deserializemeosOperator(
+//     const SerializableOperator_MeosOperatorDetails& meosDetails
+// ) {
+//     NES_TRACE("OperatorSerializationUtil::deserializemeosOperator");
+
+//     auto leftExpression = ExpressionSerializationUtil::deserializeExpression(meosDetails.left());
+//     auto middleExpression = ExpressionSerializationUtil::deserializeExpression(meosDetails.middle());
+//     auto rightExpression = ExpressionSerializationUtil::deserializeExpression(meosDetails.right());
+
+//     const std::string function = meosDetails.function();
+//     OperatorId newOperatorId = getNextOperatorId();
+
+//     return LogicalOperatorFactory::createMeosOperator(leftExpression, middleExpression, rightExpression, function, newOperatorId);
+// }
 
 template<typename T, typename D>
 void OperatorSerializationUtil::serializeJavaUDFOperator(const T& javaUdfOperator, SerializableOperator& serializedOperator) {

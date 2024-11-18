@@ -74,7 +74,7 @@ class NamedPluginRegistry {
     static std::unique_ptr<T>& getPlugin(std::string name) {
         auto found = items.find(name);
         if (found == items.end()) {
-            NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
+          NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
         }
         return found->second;
     }
@@ -114,9 +114,9 @@ class NamedPluginRegistry {
 
 /**
  * @brief The plugin factory allows the dynamic registration of plugins at that dynamically create instances of the plugin at runtime.
- * A plugin is a provider of a specific type T, which defines the plugin interface.
- * Plugins use [[maybe_unused]] static T::Add<PluginXType> pluginX; to register them self to the registry.
- * @tparam T plugin interface type
+ * A plugin is a provider of a spectatic T::Add<PluginXType> pluginX; to register them self to the registry.
+ * @tparam T plugin interface typeific type T, which defines the plugin interface.
+ * Plugins use [[maybe_unused]] s
  */
 template<typename T>
 class PluginFactory {
@@ -148,7 +148,7 @@ class PluginFactory {
     static std::unique_ptr<T> createPlugin(std::string name) {
         auto found = items.find(name);
         if (found == items.end()) {
-            NES_THROW_RUNTIME_ERROR("No plugin with name " << name.c_str() << " found.");
+            NES_THROW_RUNTIME_ERROR("CreatePlugin No plugin with name " << name.c_str() << " found.");
         }
         return found->second->create();
     }

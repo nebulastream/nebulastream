@@ -42,4 +42,6 @@
          TruncExpression.cpp
          SignExpression.cpp
          ExpExpression.cpp
+         ReadExpression.cpp
+         ReadTernaryExpression.cpp
          )

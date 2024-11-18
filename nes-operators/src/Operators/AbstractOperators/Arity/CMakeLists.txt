@@ -13,4 +13,6 @@
 add_source_files(nes-operators
         BinaryOperator.cpp
         UnaryOperator.cpp
-)
+        TernaryOperator.cpp
+        QuaternaryOperator.cpp
+ )
