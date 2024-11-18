@@ -71,7 +71,7 @@ bool NodeFunctionSqrt::equal(NodePtr const& rhs) const
 std::string NodeFunctionSqrt::toString() const
 {
     std::stringstream ss;
-    ss << "SQRT(" << children[0]->toString() << ")";
+    ss << "SQRT(" << *children[0] << ")";
     return ss.str();
 }
 

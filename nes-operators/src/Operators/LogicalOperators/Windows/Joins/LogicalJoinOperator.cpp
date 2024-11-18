@@ -47,7 +47,7 @@ std::string LogicalJoinOperator::toString() const
         "Join({}, windowType = {}, joinFunction = {})",
         id,
         joinDefinition->getWindowType()->toString(),
-        joinDefinition->getJoinFunction()->toString());
+        *joinDefinition->getJoinFunction());
 }
 
 Join::LogicalJoinDescriptorPtr LogicalJoinOperator::getJoinDefinition() const

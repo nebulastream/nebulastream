@@ -416,6 +416,6 @@ void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
             filterAccessFunction->replace(mapTransformation->deepCopy());
         }
     }
-    NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());
+    NES_TRACE("New filter predicate: {}", *filterOperator->getPredicate());
 }
 }

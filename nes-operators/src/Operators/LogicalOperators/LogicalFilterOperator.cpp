@@ -57,7 +57,7 @@ bool LogicalFilterOperator::equal(NodePtr const& rhs) const
 std::string LogicalFilterOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << predicate->toString() << ")";
+    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
     return ss.str();
 }
 
@@ -106,7 +106,7 @@ void LogicalFilterOperator::inferStringSignature()
 
     std::stringstream signatureStream;
     auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
-    signatureStream << "FILTER(" + predicate->toString() + ")." << *childSignature.begin()->second.begin();
+    signatureStream << "FILTER(" << *predicate << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());

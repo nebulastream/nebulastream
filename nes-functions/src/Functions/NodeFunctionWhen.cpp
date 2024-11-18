@@ -69,7 +69,7 @@ bool NodeFunctionWhen::equal(NodePtr const& rhs) const
 std::string NodeFunctionWhen::toString() const
 {
     std::stringstream ss;
-    ss << "WHEN(" << children[0]->toString() << "," << children[1]->toString() << ")";
+    ss << "WHEN(" << *children[0] << "," << *children[1] << ")";
     return ss.str();
 }
 

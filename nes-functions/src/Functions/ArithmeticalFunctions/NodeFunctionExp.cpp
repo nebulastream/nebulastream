@@ -59,7 +59,7 @@ bool NodeFunctionExp::equal(NodePtr const& rhs) const
 std::string NodeFunctionExp::toString() const
 {
     std::stringstream ss;
-    ss << "EXP(" << children[0]->toString() << ")";
+    ss << "EXP(" << *children[0] << ")";
     return ss.str();
 }
 

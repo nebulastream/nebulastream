@@ -145,7 +145,7 @@ bool Operator::addChild(const NodePtr newNode)
 
     if (found == currentChildren.end())
     {
-        NES_TRACE("Operator: Adding node {} to the children.", newNode->toString());
+        NES_TRACE("Operator: Adding node {} to the children.", *newNode);
         children.push_back(newNode);
         newNode->addParent(shared_from_this());
         return true;
@@ -176,7 +176,7 @@ bool Operator::addParent(const NodePtr newNode)
 
     if (found == currentParents.end())
     {
-        NES_TRACE("Operator: Adding node {} to the Parents.", newNode->toString());
+        NES_TRACE("Operator: Adding node {} to the Parents.", *newNode);
         parents.push_back(newNode);
         newNode->addChild(shared_from_this());
         return true;

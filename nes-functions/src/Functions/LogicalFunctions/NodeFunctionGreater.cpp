@@ -48,7 +48,7 @@ bool NodeFunctionGreater::equal(NodePtr const& rhs) const
 std::string NodeFunctionGreater::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << ">" << children[1]->toString();
+    ss << *children[0] << ">" << *children[1];
     return ss.str();
 }
 

@@ -25,6 +25,7 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Common.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -39,7 +40,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
     /// 1. Check if the function is valid.
     if (not nodeFunction->validateBeforeLowering())
     {
-        throw InvalidUseOfFunction(nodeFunction->toString());
+        throw InvalidUseOfFunction(fmt::format("{}", *nodeFunction));
     }
 
     /// 2. Recursively lower the children of the function node.

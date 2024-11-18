@@ -79,7 +79,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
         {
             continue;
         }
-        NES_INFO("Lowering node: {}", node->toString());
+        NES_INFO("Lowering node: {}", *node);
         parentOperator = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();

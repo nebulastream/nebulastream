@@ -61,7 +61,7 @@ bool NodeFunctionRound::equal(NodePtr const& rhs) const
 std::string NodeFunctionRound::toString() const
 {
     std::stringstream ss;
-    ss << "ROUND(" << children[0]->toString() << ")";
+    ss << "ROUND(" << *children[0] << ")";
     return ss.str();
 }
 

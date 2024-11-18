@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
@@ -39,7 +40,7 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
     bool allFunctionsAreSupported = true;
     for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
     {
-        NES_ERROR("The projection operator does not support the function: {}", function->toString());
+        NES_ERROR("The projection operator does not support the function: {}", *function);
         allFunctionsAreSupported = false;
     }
     INVARIANT(
@@ -116,10 +117,10 @@ bool LogicalProjectionOperator::inferSchema()
         }
         else
         {
-            throw CannotInferSchema(
+            throw CannotInferSchema(fmt::format(
                 "LogicalProjectionOperator: Function has to be an NodeFunctionFieldAccess, a "
-                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a "
-                + function->toString());
+                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a {}",
+                *function));
         }
     }
     return true;
