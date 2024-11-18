@@ -8,13 +8,13 @@ Adds interactable gutter icons for each System-Level Test .test file, that will 
 - click on "Manage repositories, Configure proxy or install plugins from disk"
 - select "install from disk..."
 - navigate to tests/utils/SystestPlugin/NES-Systest-Runner-1.0-SNAPSHOT.zip and select it
-- install the plugin and restart IDE (confirm if necessary)
+- install the plugin (does not necessarily require restart)
 
 ### Configuration:
-- To run the system tests, the plugin requires the path to the 'systest' binary.
+- To run the system tests, the plugin requires the path of the folder of the 'systest' binary (not the binary itself).
 - Go to Project Settings -> Tools -> Nes-SysTest-Runner
-- Then, for "./systest folder path:" click on the file selector and navigate to the directory containting 'systest'
-  The file should be somewhere under: path\to\nebulastream-public\build\nes-systests\systest\systest
+- Then, for "./systest folder path:" click on the file selector and navigate to the directory (which contains the binary 'systest')
+  The folder is located somewhere at: path\to\nebulastream-public\build\nes-systests\systest
 
 ### Run systests
 - navigate to any .test file
