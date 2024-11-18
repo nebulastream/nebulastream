@@ -154,7 +154,14 @@ TEST_F(SchemaTest, removeFieldsTest)
         const auto rndPos = rand() % testSchema->getFieldCount();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
-        EXPECT_ANY_THROW(testSchema->getFieldByName(fieldToRemove->getName()));
+        if (testSchema->getFieldCount() < 1)
+        {
+            EXPECT_ANY_THROW(testSchema->getFieldByName(fieldToRemove->getName()));
+        }
+        else
+        {
+            EXPECT_FALSE(testSchema->getFieldByName(fieldToRemove->getName()));
+        }
 
         rndFields.erase(rndFields.begin() + rndPos);
     }
