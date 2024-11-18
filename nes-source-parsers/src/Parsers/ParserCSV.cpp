@@ -16,8 +16,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Sources/Parsers/Parser.hpp>
-#include <Sources/Parsers/ParserCSV.hpp>
+#include <Parsers/Parser.hpp>
+#include <Parsers/ParserCSV.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
