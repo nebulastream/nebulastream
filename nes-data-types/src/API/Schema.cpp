@@ -144,7 +144,11 @@ std::optional<AttributeFieldPtr> Schema::getFieldByName(const std::string& field
     {
         return matchedFields[0];
     }
-    INVARIANT(matchedFields.size() > 1, "Schema: Found ambiguous field with name {}", fieldName);
+    if (matchedFields.size() > 1)
+    {
+        NES_WARNING("Schema: Found ambiguous field with name {}", fieldName);
+    }
+    NES_WARNING("Schema: field with name {} does not exist", fieldName);
     return std::nullopt;
 }
 
