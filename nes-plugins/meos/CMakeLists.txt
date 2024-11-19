@@ -15,13 +15,11 @@ message(STATUS "Enable MEOS Plugin")
 # Detect the platform
 if (APPLE)
     message(STATUS "Building on macOS")
-
     # Set the include and library directories for Homebrew (macOS)
-    set(MEOS_INCLUDE_DIR "/opt/homebrew/include")
-    set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include")  # Include Meos.hpp directory
-    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14")
-    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14")
-
+    set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
+    set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
+    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
+    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
     include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
     link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
 
@@ -49,9 +47,6 @@ endif()
 
 link_directories(${MEOS_INCLUDE_DIR})
 
- # Only needed if building connection with postgres
- #include_directories(/usr/include/postgresql)
- #link_directories(/usr/lib/x86_64-linux-gnu/libpq.so)
 
  add_dependencies(build_all_plugins nes-meos)
 
@@ -67,9 +62,9 @@ link_directories(${MEOS_INCLUDE_DIR})
      add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/tests/testData/")
      # Add tests with command
      add_subdirectory(tests)
-     message(STATUS "MEOSL Tests are enabled")
+     message(STATUS "MEOS Tests are enabled")
  else ()
-     message(STATUS "MEOSL Tests are disabled")
+     message(STATUS "MEOS Tests are disabled")
  endif ()
 
 

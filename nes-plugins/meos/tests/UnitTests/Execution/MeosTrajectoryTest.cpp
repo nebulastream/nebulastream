@@ -42,6 +42,7 @@ using namespace std;
 /* Maximum length in characters of a timestamp in the input data */
 #define MAX_LENGTH_TIMESTAMP 32
 
+namespace NES::Runtime::Execution {
 using namespace std;
 using namespace MEOS;
 
@@ -53,19 +54,20 @@ typedef struct {
     double SOG;
 } AIS_record;
 
-namespace NES::Runtime::Execution {
 
 /**
  * @brief Test Executing MEOS, reading from a CSV file and creating trajectories
  */
-class Meos02 : public ::testing::Test {
+class MeosTrajectoryTest : public ::testing::Test {
   protected:
-    MEOS::Meos* meos;
+    MEOS::Meos* meos= new MEOS::Meos("UTC");
 
-    Meos02() : meos(nullptr) {}
+    MeosTrajectoryTest() : meos(nullptr) {}
 
     void SetUp() override {
+        /* Initialize the MEOS object with "UTC" timezone */
         meos = new MEOS::Meos("UTC");
+        /* Open the input CSV file containing AIS records */
         std::fstream file("../../../../../../nes-plugins/meos/tests/testData/ais_instants.csv");
         AIS_record rec;
         int no_records = 0;
@@ -77,6 +79,7 @@ class Meos02 : public ::testing::Test {
 
         cout << "Reading input file..." << endl;
 
+        /* Read the first line (header) of the CSV file */
         std::string first_line;
         std::getline(file, first_line);
         std::strncpy(header_buffer, first_line.c_str(), MAX_LENGTH_HEADER);
@@ -85,7 +88,9 @@ class Meos02 : public ::testing::Test {
         /* Continue reading the file */
         while (getline(file, line)) {
             stringstream ss(line);
+            /* Read the line from the file */
             getline(ss, timestamp_buffer, ',');
+            /* Extract the MMSI, Latitude, Longitude, and SOG values from the line */
             ss >> rec.MMSI;
             ss.ignore(1, ',');
 
@@ -103,12 +108,14 @@ class Meos02 : public ::testing::Test {
             /* Print only 1 out of 1000 records */
             if (no_records % 1000 == 0) {
                 char* t_out = pg_timestamp_out(rec.T);
-                /* See above the assumptions made wrt the input data in the file */
                 sprintf(point_buffer, "SRID=4326;Point(%lf %lf)@%s+00", rec.Longitude, rec.Latitude, t_out);
+                /* Create a temporal geography instant */
                 Temporal* inst1 = tgeogpoint_in(point_buffer);
+                /* Print  geography point as text*/
                 char* inst1_out = tpoint_as_text(inst1, 2);
-
+                /* Create a temporal float instant fo rthe speed overground */
                 TInstant* inst2 = tfloatinst_make(rec.SOG, rec.T);
+                /* Print the speed overground as text */
                 char* inst2_out = tfloat_out((Temporal*) inst2, 2);
                 std::cout << "MMSI: " << rec.MMSI << ", Location: " << inst1_out << " SOG : " << inst2_out << std::endl;
                 free(inst1);
@@ -130,6 +137,6 @@ class Meos02 : public ::testing::Test {
     }
 };
 
-TEST_F(Meos02, Meos02Test) { ASSERT_NE(meos, nullptr); }
+TEST_F(MeosTrajectoryTest, MeosTrajectoryTest) { ASSERT_NE(meos, nullptr); }
 
 }// namespace NES::Runtime::Execution

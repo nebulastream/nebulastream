@@ -29,17 +29,17 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-using namespace std;
-using namespace MEOS;
+
 
 namespace NES::Runtime::Execution {
-
+using namespace std;
+using namespace MEOS;
 /**
  * @brief Test Executing MEOS from the plugin
  */
 class MeosCreationTest : public ::testing::Test {
   protected:
-    MEOS::Meos* meos;
+    MEOS::Meos* meos = new MEOS::Meos("UTC");
 
     MeosCreationTest() : meos(nullptr) {}
 

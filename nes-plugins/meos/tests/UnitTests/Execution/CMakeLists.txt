@@ -11,13 +11,10 @@
 # limitations under the License.
 
 
-add_nes_execution_test(meos-creation-test "Meos01.cpp")
+add_nes_execution_test(meos-creation-test "MeosCreationTest.cpp")
 target_link_libraries(meos-creation-test nes-meos)
 
-add_nes_execution_test(meos-trajectoryfromCSV "Meos02.cpp")
-target_link_libraries(meos-trajectoryfromCSV nes-meos)
+add_nes_execution_test(meos-trajectory-test "MeosTrajectoryTest.cpp")
+target_link_libraries(meos-trajectory-test nes-meos)
 
-# test with postgres, requires libpq.so and postgres developer libraries
-# add_nes_execution_test(meos-postgres "Meos03.cpp")
-# target_link_libraries(meos-postgres nes-meos)
 

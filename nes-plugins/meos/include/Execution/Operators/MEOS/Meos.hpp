@@ -21,17 +21,23 @@ extern "C" {
 #include <meos.h>
 }
 
+/**
+ * @brief MEOS class encapsulates the initialization and finalization of the MEOS library. 
+ * It automatically initializes the library with a specified timezone when an instance is created and 
+ * ensures proper resource cleanup upon destruction. 
+ */
 class Meos {
   public:
     /**
-         * @brief Initialize MEOS library
-         * @param[in] timezone Timezone of reference
-         */
+     * @brief Initialize MEOS library
+     * @param[in] timezone Timezone of reference
+     * @note The second parameter refers to the error handler, always set to NULL
+     */
     Meos(std::string);
 
     /**
-        * @brief Finalize MEOS library, free the timezone cache
-        */
+     * @brief Finalize MEOS library, free the timezone cache
+     */
     ~Meos();
 };
 }// namespace MEOS

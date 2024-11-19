@@ -16,15 +16,9 @@
 
 namespace MEOS {
 
-/**
-     * @brief Initialize MEOS library
-     * @param[in] timezone Timezone of reference
-     * @note The second parameter refers to the error handler, always set to NULL
-     */
+
 Meos::Meos(std::string timezone) { meos_initialize(timezone.c_str(), NULL); }
 
-/**
-     * @brief Finalize MEOS library, free the timezone cache
-     */
+
 Meos::~Meos() { meos_finalize(); }
 }// namespace MEOS
