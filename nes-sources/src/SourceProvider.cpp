@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <SourceParsers/SourceParserProvider.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
@@ -35,8 +35,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     SourceReturnType::EmitFunction&& emitFunction)
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    /// Todo #495: If we completely move the SourceParser out of the sources, we get rid of constructing the parser here.
-    auto sourceParser = NES::SourceParsers::SourceParserProvider::provideSourceParser(
+    /// Todo #495: If we completely move the InputFormatter out of the sources, we get rid of constructing the parser here.
+    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
         sourceDescriptor.parserConfig.parserType,
         sourceDescriptor.schema,
         sourceDescriptor.parserConfig.tupleDelimiter,
@@ -50,7 +50,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             std::move(emitFunction),
             NUM_SOURCE_LOCAL_BUFFERS,
             std::move(source.value()),
-            std::move(sourceParser));
+            std::move(inputFormatter));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.sourceType);
 }

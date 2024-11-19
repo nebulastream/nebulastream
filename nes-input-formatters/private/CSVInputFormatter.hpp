@@ -23,29 +23,29 @@
 #include <string_view>
 #include <vector>
 #include <API/Schema.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <SourceParsers/SourceParser.hpp>
 
-namespace NES::SourceParsers
+namespace NES::InputFormatters
 {
 
-/// Implementation detail of CSVSourceParser
+/// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVSourceParser : public SourceParser
+class CSVInputFormatter : public InputFormatter
 {
 public:
     using CastFunctionSignature
         = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
 
-    CSVSourceParser(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
-    ~CSVSourceParser() override;
+    CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
+    ~CSVInputFormatter() override;
 
-    CSVSourceParser(const CSVSourceParser&) = delete;
-    CSVSourceParser& operator=(const CSVSourceParser&) = delete;
-    CSVSourceParser(CSVSourceParser&&) = delete;
-    CSVSourceParser& operator=(CSVSourceParser&&) = delete;
+    CSVInputFormatter(const CSVInputFormatter&) = delete;
+    CSVInputFormatter& operator=(const CSVInputFormatter&) = delete;
+    CSVInputFormatter(CSVInputFormatter&&) = delete;
+    CSVInputFormatter& operator=(CSVInputFormatter&&) = delete;
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,

@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -29,7 +29,7 @@ SourceHandle::SourceHandle(
     Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<SourceParsers::SourceParser> sourceParser)
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
 {
     this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId),
@@ -37,7 +37,7 @@ SourceHandle::SourceHandle(
         std::move(emitFunction),
         numSourceLocalBuffers,
         std::move(sourceImplementation),
-        std::move(sourceParser));
+        std::move(inputFormatter));
 }
 SourceHandle::~SourceHandle() = default;
 

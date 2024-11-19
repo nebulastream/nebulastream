@@ -16,29 +16,29 @@
 
 /// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#    error "This file should not be included directly! Include instead include SourceParserRegistry.hpp"
+#    error "This file should not be included directly! Include instead include InputFormatterRegistry.hpp"
 #endif
 
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::SourceParsers::SourceParserGeneratedRegistrar
+namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 {
 
-std::unique_ptr<SourceParser> RegisterCSVSourceParser(const Schema& schema, std::string, std::string);
+std::unique_ptr<InputFormatter> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
 
 }
 
 namespace NES
 {
 template <>
-inline void Registrar<SourceParsers::SourceParserRegistry, SourceParsers::SourceParserRegistrySignature>::registerAll(
+inline void Registrar<InputFormatters::InputFormatterRegistry, InputFormatters::InputFormatterRegistrySignature>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::SourceParsers::SourceParserGeneratedRegistrar;
-    registry.registerPlugin("CSV", RegisterCSVSourceParser);
+    using namespace NES::InputFormatters::InputFormatterGeneratedRegistrar;
+    registry.registerPlugin("CSV", RegisterCSVInputFormatter);
 }
 }

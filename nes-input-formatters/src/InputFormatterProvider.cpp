@@ -16,21 +16,21 @@
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
-#include <SourceParsers/SourceParser.hpp>
-#include <SourceParsers/SourceParserProvider.hpp>
+#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceParserRegistry.hpp>
+#include <InputFormatterRegistry.hpp>
 
-namespace NES::SourceParsers::SourceParserProvider
+namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+std::unique_ptr<InputFormatter>
+provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    if (auto sourceParser
-        = SourceParserRegistry::instance().create(parserType, schema, std::move(tupleDelimiter), std::move(fieldDelimiter)))
+    if (auto inputFormatter
+        = InputFormatterRegistry::instance().create(parserType, schema, std::move(tupleDelimiter), std::move(fieldDelimiter)))
     {
-        return std::move(sourceParser.value());
+        return std::move(inputFormatter.value());
     }
     throw UnknownParserType("unknown type of parser: {}", parserType);
 }

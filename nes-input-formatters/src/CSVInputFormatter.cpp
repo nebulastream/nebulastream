@@ -30,22 +30,22 @@
 #include <strings.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <SourceParsers/SourceParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <CSVSourceParser.hpp>
+#include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceParserRegistry.hpp>
+#include <InputFormatterRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::SourceParsers
+namespace NES::InputFormatters
 {
 
 struct PartialTuple
@@ -180,7 +180,7 @@ auto parseIntegerString()
 }
 
 void addBasicTypeParseFunction(
-    const BasicPhysicalType& basicPhysicalType, std::vector<CSVSourceParser::CastFunctionSignature>& fieldParseFunctions)
+    const BasicPhysicalType& basicPhysicalType, std::vector<CSVInputFormatter::CastFunctionSignature>& fieldParseFunctions)
 {
     switch (basicPhysicalType.nativeType)
     {
@@ -283,7 +283,7 @@ void addBasicTypeParseFunction(
     }
 }
 
-CSVSourceParser::CSVSourceParser(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
     : fieldDelimiter(std::move(fieldDelimiter))
     , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getSize()))
 {
@@ -334,9 +334,9 @@ CSVSourceParser::CSVSourceParser(const Schema& schema, std::string tupleDelimite
     }
 }
 
-CSVSourceParser::~CSVSourceParser() = default;
+CSVInputFormatter::~CSVInputFormatter() = default;
 
-void CSVSourceParser::parseTupleBufferRaw(
+void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     NES::Memory::AbstractBufferProvider& bufferProvider,
     const size_t numBytesInTBRaw,
@@ -407,7 +407,7 @@ void CSVSourceParser::parseTupleBufferRaw(
     progressTracker->handleResidualBytes(tbRaw);
 }
 
-void CSVSourceParser::parseStringIntoTupleBuffer(
+void CSVInputFormatter::parseStringIntoTupleBuffer(
     const std::string_view stringTuple, NES::Memory::AbstractBufferProvider& bufferProvider) const
 {
     const boost::char_separator sep{this->fieldDelimiter.c_str()};
@@ -421,17 +421,17 @@ void CSVSourceParser::parseStringIntoTupleBuffer(
     }
 }
 
-std::ostream& CSVSourceParser::toString(std::ostream& str) const
+std::ostream& CSVInputFormatter::toString(std::ostream& str) const
 {
-    str << std::format("CSVSourceParser(fieldDelimiter: '{}'", this->fieldDelimiter);
+    str << std::format("CSVInputFormatter(fieldDelimiter: '{}'", this->fieldDelimiter);
     str << ", progressTracker: " << *this->progressTracker;
     return str;
 }
 
-std::unique_ptr<SourceParser>
-SourceParserGeneratedRegistrar::RegisterCSVSourceParser(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+std::unique_ptr<InputFormatter>
+InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
-    return std::make_unique<CSVSourceParser>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
+    return std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
 }
 
 }
