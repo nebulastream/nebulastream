@@ -1,4 +1,6 @@
-name: Get Dependency Image
+# This workflow calculates the development image tag of a ref. If the development image does not exist yet
+# the workflow will build the new dependency image.
+name: Dependency Image
 
 on:
   workflow_call:
