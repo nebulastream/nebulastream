@@ -2,15 +2,18 @@
 NebulaStream aims to handle millions of heterogeneous sources across massively distributed and heterogeneous devices.
 This requires a single node to handle thousands of sources concurrently.
 
-Currently, each source that is started runs in an individual thread. 
+Currently, each source runs in an individual thread. 
 That is, starting 1000 sources means starting 1000 threads just for the sources. 
 Since the threads are running permanently, ingesting data into the system, this leads to a massive oversubscription of the CPU and causes frequent context switching.
-Given that each thread allocates state in the form of a private stack), this is expensive. 
+Given that each thread allocates state in the form of a private stack, this is expensive. 
 Therefore, the current approach does not scale with an increasing number of sources (**P1**).
 
-Each source reads data from external systems or devices and writes them into buffers provided by the NES `BufferManager`.
-In its current state, fast sources can cause a deadlock by taking all buffers, since query processing cannot proceed without buffers (**P2**).
-
+Sources read data from external systems or devices and writes them into buffers provided by the NES `BufferManager`.
+Precisely, local buffer providers maintain a fixed-size buffer pool per source. 
+The size of this pool is hardcoded into the system in the `SourceProvider` as `static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64`.
+If the available memory of the system is exhausted by the number of sources, potentially all available memory will be taken by the sources.
+This can cause a deadlock, since query processing cannot proceed without buffers (**P2**).
+Furthermore, this static assignment is highly inflexible with respect to the actual requirements of the sources at runtime.
 
 # Goals
 A single node worker should be able to handle thousands of concurrent sources without data ingestion becoming a bottleneck.
@@ -20,9 +23,9 @@ Of course, devices like the disk or network card are limited in the bandwidth th
 (**G1, scalability**, addresses P1).
 
 
-The `BufferManager` should have entirely separate pools for I/O and compute, removing the potential deadlocks (**G2, deadlock prevention**, addresses P2).
+The `BufferManager` should have separate pools for I/O and compute, removing potential deadlocks (**G2, deadlock prevention**, addresses P2).
 Moreover, the `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
-In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) guaranteeing each source to receive a single buffer at a time to make progress for queries that depend on that source.
+In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source.
 In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within I/O threads wherever possible.
 We propose simple policies and provide a PoC implementation to showcase this.
@@ -47,7 +50,7 @@ It should still be possible to implement new sources with the current threading 
 - **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here.
 - **NG2**: a complete vision or implementation on how to handle source sharing.
 - **NG3**: a complete vision or implementation on how to handle data ingestion via internal sources (e.g., when intermediate data is shuffled around between nodes).
-- **NG4**: handling of selective reads, i.e., predicate/projection pushdown as typically done in formats like Parquet
+- **NG4**: handling of selective reads, i.e., predicate/projection pushdown as typically done in formats like Parquet.
 
 # Solution Background
 Most software systems depend on external data in some way:
@@ -175,8 +178,8 @@ The proposed solution depends on these key design decisions:
 3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G6).
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
 4. Sources receive buffers by utilizing non-blocking calls (prevent blocking I/O threads) from a separate I/O buffer pool (prevent deadlocks) (G2).
+5. We implement a simple policy for fairness of distribution of buffers among sources under contention.
 5. We allow the user to configure timeouts on a per-source basis. When the timeout expires, a pending asynchronous operation is cancelled to prevent high tail latencies. 
-
 
 ## Async I/O Library
 The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
@@ -185,20 +188,23 @@ The library comes with a runtime, asynchronous I/O objects like sockets, file de
 Therefore, we choose `boost::asio` as the library to implement asynchronous sources and their orchestration on a thread pool.
 
 ## Interfaces
-The highest-level component that we need to redesign is the `SourceHandle`, which is created by the `SourceProvider`.
+The highest-level component that affects this redesign is the `SourceHandle`, which is created by the `SourceProvider` to wrap a single physical source.
 General functionality of plugin registration, source descriptor validation, and construction of the source implementation does not need to change (G4).
-Currently, `SourceHandle` wraps a `SourceThread`, an object that drives a single source on an internal thread.
+Currently, `SourceHandle` owns a `SourceThread`, an object that runs a single source on an internal thread.
 The `QueryEngine` creates an `InstantiatedQueryPlan` that contains the `SourceHandle`s for that query and starts them, delegating the call to the `SourceThread`.
 We remove the `SourceThread` and replace it with an abstract base class called `SourceRunner` that is owned by a `SourceHandle`.
 A `SourceRunner`'s primary responsibility (like the `SourceThread`'s) is to drive the source on (a set of) internal threads.
-However, we want two distinct ways to do so: 
+However, we want two distinct ways of doing so: 
 
 1. The fallback of running an internal thread for each synchronous/blocking source.
 2. The preferred approach of dispatching the source to an async I/O runtime.
 
-Therefore, we create two derived classes, namely the `SourceRunnerSync` that will run a blocking source, and the `SourceRunnerAsync`, which is responsible for running asynchronous sources.
+Therefore, we create two derived classes:
+- `BlockingSourceRunner`, where each instance will run a single blocking source.
+- `AsyncSourceRunner`, which is responsible for running an asynchronous source.
+
 For this reason, the former uniquely owns a thread, whereas the latter has shared ownership of an `AsyncSourceExecutor` that all asynchronous sources use to run on.
-The `AsyncSourceExecutor` should be created from the outside by a higher-level component and live for the entire duration of the worker.
+The `AsyncSourceExecutor` should be created from the outside by a higher-level component and live for the entire duration of the single node worker.
 The following diagram illustrates the interfaces.
 
 ```mermaid
@@ -217,16 +223,16 @@ classDiagram
         -unique_ptr~Source~ sourceImpl
         -shared_ptr~BufferProvider~ bufferProvider
         -OriginId sourceId
-        +start(StopToken& token, EmitFunction&& emitFn) = 0
-        +execute(StopToken& token, EmitFunction&& emitFn) = 0
+        +start(StopToken& token, EmitFunction&& emitFn)
+        +execute(StopToken& token, EmitFunction&& emitFn)
         +stop()
         +close()
     }
 
     class BlockingSourceRunner {
         -unique_ptr~thread~ thread
-        +start(StopToken& token, EmitFunction&& emitFn) override
-        +execute(StopToken& token, EmitFunction&& emitFn) override
+        +start(StopToken& token, EmitFunction&& emitFn)
+        +execute(StopToken& token, EmitFunction&& emitFn)
     }
 
     class AsyncSourceRunner {
@@ -238,9 +244,9 @@ classDiagram
 
 ## SourceRunner
 
-The `execute` function encapsulates the `runningRoutine` of the current `SourceThread` and runs a loop until a stop token is received from the outside:
+The `execute` function encapsulates the `runningRoutine` of the current `SourceThread` and runs a loop until requested from the outside in the given stop token:
 ```cpp
-void SourceRunnerSync::execute(StopToken& token, EmitFunction&& emitFn)
+void BlockingSourceRunner::execute(StopToken& token, EmitFunction&& emitFn)
 {
     sourceImpl->open();
     while (!token.stopRequested())
@@ -252,7 +258,7 @@ void SourceRunnerSync::execute(StopToken& token, EmitFunction&& emitFn)
     sourceImpl->close();
 }
 ```
-`AsyncSourceRunner::execute`, on the other hand, represents the highest-level coroutine that drives a particular asynchronous source:
+`AsyncSourceRunner::execute`, on the other hand, represents the coroutine that drives a particular asynchronous source to completion:
 ```cpp 
 awaitable<void> AsyncSourceRunner::execute(StopToken& token, EmitFunction&& emitFn)
 {
@@ -264,13 +270,14 @@ awaitable<void> AsyncSourceRunner::execute(StopToken& token, EmitFunction&& emit
         emitFn(buffer);
     }
     co_await sourceImpl->close();
-    co_return;
 }
 ```
-Note that all functions that are called are either non-blocking coroutines (like `sourceImpl->fillBuffer()`), or cheap functions that do not block the CPU for a long time (e.g., the `emitFn` that emits a buffer to successors).
-Also note that at this point, the code is not entirely complete: error handling is missing and the `stopToken` is not considered in the `acquireBuffer` function.
-When the `QueryEngine` wants to start a new asynchronous source, it calls `start` on the `AsyncSourceRunner`.
-This function will then dispatch the `execute` function to the underlying `AsyncSourceExecutor` in a non-blocking way.
+Note that all functions are either non-blocking coroutines (like `sourceImpl->fillBuffer()`), or cheap functions that do not block the CPU for a long time (e.g., the `emitFn` that emits a buffer to successors).
+Also note that at this point, the code is neither entirely complete nor correct, it aims to show the general structure of the new execution model.
+For example, error handling is omitted and the interfaces are not implemented exactly as specified.
+
+When the `QueryEngine` decides to start a new asynchronous source, it calls `start` on the `SourceHandle`, which in turn invokes `start` on the corresponding `SourceRunner`.
+There, we dispatch the `execute` function to the underlying `AsyncSourceExecutor` in a non-blocking way.
 
 ```cpp
 void SourceRunnerAsync::start(StopToken& token, EmitFunction&& emitFn)
@@ -286,7 +293,7 @@ void SourceRunnerAsync::start(StopToken& token, EmitFunction&& emitFn)
 The `AsyncSourceExecutor` is the central component that manages the execution of all asynchronous sources at once.
 It is responsible for creating the `boost::asio::io_context` and the thread pool that runs the coroutines.
 For now, we hardcode a reasonable number of threads or use `std::thread::hardware_concurrency()` to determine the number of threads.
-At a later point, we could define the number as a function of the number of async sources that are currently running and change the number of threads adaptively at runtime.
+At a later point, we could define the number as a function of the number of async sources that are currently running and change the thread count adaptively at runtime.
 
 ```cpp
 class AsyncSourceExecutor
@@ -309,9 +316,7 @@ public:
     void dispatch(std::function<awaitable<void>(StopToken&, EmitFunction&&)> fn)
     {
         boost::asio::post(ioc, 
-                          co_spawn(ioc, 
-                                   []() { fn(); },
-                                   detached)
+                          [fn]() { co_spawn(ioc, fn(), boost::asio::detached) }
         );
     }
 
@@ -323,7 +328,7 @@ public:
 ```
 
 As we can see, the executor is very simple and the magic happens behind the scenes in the `boost::asio::io_context`.
-It contains the reactor pattern that is responsible for polling file descriptors and waking up coroutines that are ready to make progress.
+It contains the reactor pattern that is responsible for polling file descriptors and resuming the coroutines that are ready to make progress.
 The `io_context` is allowed to schedule tasks to any thread that called `run` on it.
 
 ## Sources
@@ -377,7 +382,9 @@ public:
         {
             while (bufferOffset < buffer.size())
             {
-                size_t bytesRead = co_await socket->async_read_some(boost::asio::buffer(buffer.data() + bufOffset, buffer.size() - bufOffset), use_awaitable);
+                size_t bytesRead = 
+                    co_await socket->async_read_some(boost::asio::buffer(buffer.data() + bufferOffset, buffer.size() - bufferOffset), 
+                                                     boost::asio::use_awaitable);
                 bufferOffset += bytesRead;
             }
         }
@@ -390,19 +397,17 @@ public:
             }
             else
             {
-                // Handle error
+                // Handle other errors
             }
         }
-        co_return;
     }
 
-    void close() override
+    awaitable<void> close() override
     {
         socket.close();
         co_return;
     }
 }
-
 ```
 
 ## Buffer Management
@@ -417,35 +422,78 @@ On a high level, deadlocks occur if there are cyclic dependencies on a specific 
 In our case, producers (sources) and consumers (successor pipelines) of data depend on buffers to make progress.
 If a consumer acquires all buffers to store internal state of e.g., pending windows, the corresponding source can not acquire a buffer anymore. 
 Consequently, no new data can be produced for the operator to trigger the window and release its buffers.
+Similarly, when sources take all buffers, the downstream tasks are blocked and cannot release buffers, leading to a deadlock.
 In our producer/consumer relationship between sources and successor pipelines, deadlocks need to be avoided (G2). 
 By separating an I/O pool from the rest of the global buffer pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
 A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG4).
 
-### 2) Flow Control
+### Flow Control
 For flow control (handling speed differences between producer and consumer, and among different producers), the following questions arise with respect to buffers:
 1. **Slow Source <--> Fast Downstream**: *How do we keep the latency in check when a source takes a very long time to fill a buffer?*
 
 This will be the general case where the system is not overwhelmed with external data, and I see two approaches here:
-- *Demand-based*: If a running successor pipeline of a source is idle (no task has been produced that it can process), it may ask a `Source` to release a partially filled buffer.
+- *Demand-based*: If a running successor pipeline of a source is idle (no task has been produced that it can process), the `Source` may be asked to release a partially filled buffer.
 Instead of issuing new requests or waiting for more data, the `SourceRunner` driving the source could yield control and give out the buffer, asking the `BufferManager` for a new one.
-This approach would require to have some kind of backwards control flow from pipelines directly to the source or would need to be handled by the `QueryEngine`. 
+With this approach, it is unclear which component is responsible for detecting the idle state of the pipeline and request the cancellation of the ongoing operation.
+We might require to have some kind of backwards control flow from pipelines directly to the source or need to handle this with the `QueryEngine`?
 - *Timeout-based*: After some time has passed, the source releases its buffer, writing it downstream.
 Global timeouts are not suitable as each query might have different latency requirements.
 Instead, we let the user set a timeout on a per-source basis.
+If no timeout is provided, the source will wait indefinitely for a buffer to be filled.
 A disadvantage of this approach is that the timeout set only reflects on the maximum latency of the source and might not translate to query latency, which most users are interested in.
+An advantage is that the source is autonomous and no external components need to be involved. 
 
 As a first baseline, we implement the timeout-based approach.
 The timer is associated with each asynchronous operation.
 When the timer of the source expires, the source cancels the ongoing operation and releases the partially filled buffer.
+```cpp
+auto deadline = std::chrono::milliseconds(100);
+asio::steady_timer timer{co_await boost::asio::this_coro::executor, deadline};
+asio::cancellation_signal cancel_read;
 
--- TODO: describe cancellation of async operations
+awaitable<void> fillBuffer()
+{
+    size_t bufferOffset = 0;
+    try
+    {
+        while (bufferOffset < buffer.size())
+        {
+            timer.async_wait(
+                [&](system::error_code ec)
+                {
+                    if (!ec) // Timer expired
+                        cancel_read.emit(asio::cancellation_type::total);
+                }
+            );
+
+            size_t bytesRead = 
+                co_await socket->async_read_some(boost::asio::buffer(buffer.data() + bufferOffset, buffer.size() - bufferOffset), 
+                                                 boost::asio::bind_cancellation_slot(cancel_read.slot()), // Bind the cancellation slot to the read operation
+                                                 boost::asio::use_awaitable);
+            bufferOffset += bytesRead;
+            timer.cancel();
+        }
+    }
+    catch (boost::system::system_error& error)
+    {
+        ...
+    }
+}
+```
+
+In this example, we use the `asio::cancellation_signal` to emit a cancellation signal when the timer expires after 100ms.
+We start the timer before the read operation and cancel it when the read operation completes.
+The `bind_cancellation_slot` function binds the cancellation slot to the read operation.
 
 2. **Fast Source <--> Slow Downstream**: *How do we apply backpressure to help the system under high load?*
 
-If we work with a fixed-size buffer pool, we apply backpressure automatically to a source when the `BufferManager` rejects its request to acquire a buffer.
+As long as the global I/O buffer pool is not exhausted, the system can handle the load, which is called "buffering".
+We apply backpressure automatically to a source when no buffers are available, i.e., the `BufferManager` rejects the source's request to acquire a buffer.
 This forces the source to try again later.
-We implement this in the `AsyncSourceRunner` by setting a timeout to an asynchronous timer `retryTimer` and try again when it expires.
 In the meantime, the external system will be throttled.
+
+We implement this in the `AsyncSourceRunner` by setting a timeout to an asynchronous timer `retryTimer` and try again when it expires.
+The asynchronous timer is necessary to avoid blocking any of the I/O threads in the `AsyncSourceExecutor`.
 A future, more sophisticated approach could involve an asynchronous interface between the `AsyncSourceRunner` and the `BufferManager`, discussed [here](#asynchronous-interface).
 
 ```cpp
@@ -471,19 +519,23 @@ awaitable<RawBuffer> AsyncSourceRunner::acquireBuffer()
 3. **Fast Sources <--> Slow Sources**: *How do we handle speed differences between sources and prevent fast sources from stealing all resources?*
 
 Speed differences among sources can be defined as differences in buffer requests per unit time.
-When downstream tasks are generally reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies and the speed differences do not lead to problems. 
+When downstream tasks are overall reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies and the speed differences do not lead to problems. 
 By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies.
-In a temporary case, enough buffers are available and the buffer manager will happily give them out to fast producers so the available buffers will be automatically be distributed relative to the demand.
-With the separation of I/O and compute pools, we prevent fast sources from stealing all resources from the global pool.
-Problems arise when a single or few sources take so many buffers such that others are impacted and have buffer requests denied.
+In a temporary case, enough buffers are available and the buffer manager will happily give them out to fast producers, so the available buffers will be automatically be distributed relative to the demand.
+With the separation of I/O and compute pools, we prevent fast sources from stealing resources from the global pool.
+Problems arise when a single or few sources take so many buffers such that the mejority are impacted and have buffer requests denied, preventing them from making progress.
 
-In general, we always want to guarantee **each source having a single buffer available that it can fill in the background (double buffering)**. 
-This is the minimum required to effectively utilize async I/O.
+In general, we want to guarantee **a single buffer available to fill in the background** for as many sources as possible. 
+This is required to effectively utilize async I/O.
 
-To facilitate fairness here, I propose the simple algorithm:
-- Sources ask for buffers, by putting their id in a FIFO queue 
-- A source can only ask for one buffer at a time. After a source received a buffer, it can only ask for another buffer, after it finished processing the current one and sees that it needs more.
-- Slower sources are guaranteed to move up in the FIFO queue everytime a faster source takes a buffer
+To facilitate fairness here, we propose the following round-robin algorithm:
+- Give out buffers on a first-come, first-serve basis as long as there is no contention
+- When there is contention (no buffers available), switch to round-robin mode and place the requesting source's id into a FIFO queue
+- Track requests of the sources to ensure each source requests only one buffer at a time
+- When a buffer is available, give it out to the next source in the queue
+
+This approach would lend itself well to an asynchronous interface, because in this case the `BufferManager` could notify the waiting source that a buffer has become available.
+With the timeout-based approach, the source would have to poll the `BufferManager` regularly for a buffer, and it will be denied each time before its turn is reached in the FIFO queue.
 
 ### Asynchronous Interface
 Currently, each source has a local `BufferProvider` that maintains a pool of buffers only for this source. 
@@ -494,11 +546,53 @@ In this case we do not block, but the source still requires a buffer to make pro
 The timeout is arbitrary and needs to be set explicitly at compile-time, which is not ideal.
 
 A future alternative is to extend the asynchronous behavior across the boundaries of the sources and integrate an event-based mechanism into the `BufferManager`.
+The following example shows in simplified pseudocode how this could look like.
+Note that this is simplified and ignores aspects like locking, error handling, etc.
+```cpp
+awaitable<RawBuffer> BufferManager::getBufferAsync()
+{
+    RawBuffer buffer;
+    if (!pool.empty())
+    {
+        // Get buffer directly
+        buffer = pool.front();
+        pool.pop_front();
+    }
+    else
+    {
+        // Wait for a buffer to become available
+        auto promise = std::make_shared<boost::asio::awaitable<void>::promise_type>();
+        pendingCoroutines.push_back(promise);
 
+        co_await promise->get_future();
+
+        buffer = pool.front();
+        pool.pop_front();
+    }
+    co_return buffer;
+}
+```
+The `BufferManager` provides an asynchronous interface to the sources, which can now await the availability of a buffer.
+When a buffer becomes available, the `BufferManager` notifies a source that is waiting for a buffer with `pendingSources.pop_front` and `promise->set_value`.
 
 ## Testing
+- We write unit tests for the specific sources that for correct behavior in normal cases.
+- We write integration tests with multiple async and blocking sources active at the same time.
+- We write negative tests to ensure that the new components handle errors correctly.
+
+An open question is how we want to model external systems to test specific sources like MQTT or TCP.
+One option would be to use the C library of testcontainers `testcontainers-c` and setup containers as test fixtures in gtest.
+We have included an example on how this works in the [appendix](#appendix).
 
 ## Benchmarking
+We provide a benchmark that compares the performance of the current thread-per-source model with the new async I/O model.
+The benchmark should show whether the new model can handle more sources concurrently than the old model.
+We envision the benchmarking setup as follows:
+- One machine acts as the data generator
+- We use [fio](https://github.com/axboe/fio), a "flexible I/O tester" written by Jens Axboe (author of parts of the Linux I/O stack)
+- We run fio on the data generator machine to simulate a large number of sources
+- On another machine, we run a single-node worker that ingests the data from the sources and releases buffers right away
+- We measure the throughput of both models and compare
 
 # Proof of Concept
 Will be created after approval of this PR.
@@ -510,23 +604,80 @@ Will be created after approval of this PR.
 4. Write integration tests that show the interplay of multiple sources.
 5. Benchmark the system with a high number of sources.
 6. Make the `BufferManager` aware of sources and implement a simple policy for fairness of distribution.
+7. Write unit tests for the `BufferManager` changes
 
 # Alternatives
+- **Alternative 1**: Implement the I/O layer in Rust using `tokio.rs`, which is a more sophisticated async I/O library.
+This alternative would require a significantly higher engineering effort but could pave the way for writing more parts of the system in Rust.
+- **Alternative 2**: Use libraries like `libcoro` or `cppcoro` to implement the sources and their execution.
+These are libraries that are build around the concept of coroutines and provide a more lightweight interface than `boost::asio`.
+They are missing low-level I/O primitives for which we would have to rely on `boost::asio` anyway.
+- **Alternative 3**: Use `io_uring` for async I/O, which is a new interface for asynchronous I/O supported in newer versions of the Linux kernel.
+It has been shown to be faster than `epoll` in some cases, requiring less system calls and general overhead by sharing data structures between user and kernel space.
+In some experiments, `io_uring` showed [good results](https://ryanseipp.com/post/iouring-vs-epoll/).
+However, it is a low-level interface and has limited support in `boost::asio`, and would therefore require us to build a lot more custom code around it.
+Also, it is not portable to other operating systems and requires Linux kernel 5.1 or newer.
 
 # Open Questions
 ## Urgent
 - How to handle the PR, split up into execution model, implementation of specific sources and the `BufferManager` changes?
+- How to model external systems to test specific sources?
 
 ## Non-Urgent
 - How to deal with source sharing? Are there special considerations?
 - How to deal with internal sources?
-- 
 
 
 # Sources and Further Reading
-- https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html
-- https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how
-- https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20
+- [`boost::asio` docs](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html)
+- [Blocking vs. Non-blocking I/O](https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how)
+- [Coroutines](https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20)
+- [Definition async/sync/blocking/non-blocking](https://stackoverflow.com/questions/2625493/asynchronous-and-non-blocking-calls-also-between-blocking-and-synchronous)
+- [Per-operation cancellation in `boost::asio`](https://cppalliance.org/asio/2023/01/02/Asio201Timeouts.html)
 
-# (Optional) Appendix
+# Appendix
+## Testcontainers
+```cpp
+#include <iostream>
+#include <string>
+#include <gtest/gtest.h>
+#include "testcontainers-c.h"
+
+class WireMockTestContainer : public ::testing::Test {
+
+const char* WIREMOCK_IMAGE = "wiremock/wiremock:3.0.1-1";
+const char* WIREMOCK_ADMIN_MAPPING_ENDPOINT = "/__admin/mappings";
+
+protected:
+    void SetUp() override {
+        std::cout << "Creating new container: " << WIREMOCK_IMAGE << '\n';
+        int requestId = tc_new_container_request(WIREMOCK_IMAGE);
+        tc_with_exposed_tcp_port(requestId, 8080);
+        tc_with_wait_for_http(requestId, 8080, WIREMOCK_ADMIN_MAPPING_ENDPOINT);
+        tc_with_file(requestId, "test_data/hello.json", "/home/wiremock/mappings/hello.json");
+
+        struct tc_run_container_return ret = tc_run_container(requestId);
+        containerId = ret.r0;
+
+        EXPECT_TRUE(ret.r1) << "Failed to run the container: " << ret.r2;
+    };
+
+    void TearDown() override {
+        char* error = tc_terminate_container(containerId);
+        ASSERT_EQ(error, nullptr) << "Failed to terminate the container after the test: " << error;
+    };
+
+    int containerId;
+};
+
+TEST_F(WireMockTestContainer, HelloWorld) {
+    std::cout << "Sending HTTP request to the container\n";
+    struct tc_send_http_get_return response = tc_send_http_get(containerId, 8080, "/hello");
+
+    ASSERT_NE(response.r0, -1) << "Failed to send HTTP request: " << response.r2;
+    ASSERT_EQ(response.r0, 200) << "Received wrong response code: " << response.r1 << response.r2;
+
+    std::cout << "Server Response: HTTP-" << response.r0 << '\n' << response.r1 << '\n';
+}
+```
 
