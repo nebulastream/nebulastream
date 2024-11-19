@@ -22,12 +22,12 @@ classDiagram
     SourceRegistry --> SourceProvider : return Source
     SourceProvider --> SourceHandle : construct SourceHandle
     SourceDescriptor --> SourceProvider : fully describes Source
-    PhysicalSourceParser --> SourceValidationRegistry : provides string description of source
-    SourceValidationRegistry --> PhysicalSourceParser : validates and constructs typed descriptor
-    PhysicalSourceParser --> SourceDescriptor : constructs SourceDescriptor if valid
+    PhysicalInputFormatter --> SourceValidationRegistry : provides string description of source
+    SourceValidationRegistry --> PhysicalInputFormatter : validates and constructs typed descriptor
+    PhysicalInputFormatter --> SourceDescriptor : constructs SourceDescriptor if valid
     
     namespace Parser {
-        class PhysicalSourceParser {
+        class PhysicalInputFormatter {
             SourceDescriptor createSourceDescriptor(unordered_map~string, string~)
         }
     }

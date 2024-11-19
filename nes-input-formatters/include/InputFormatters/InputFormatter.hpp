@@ -21,20 +21,20 @@
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 
-namespace NES::SourceParsers
+namespace NES::InputFormatters
 {
 
 /// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
-class SourceParser
+class InputFormatter
 {
 public:
-    SourceParser() = default;
-    virtual ~SourceParser() = default;
+    InputFormatter() = default;
+    virtual ~InputFormatter() = default;
 
-    SourceParser(const SourceParser&) = delete;
-    SourceParser& operator=(const SourceParser&) = delete;
-    SourceParser(SourceParser&&) = delete;
-    SourceParser& operator=(SourceParser&&) = delete;
+    InputFormatter(const InputFormatter&) = delete;
+    InputFormatter& operator=(const InputFormatter&) = delete;
+    InputFormatter(InputFormatter&&) = delete;
+    InputFormatter& operator=(InputFormatter&&) = delete;
 
     virtual void parseTupleBufferRaw(
         const NES::Memory::TupleBuffer& tbRaw,
@@ -43,7 +43,7 @@ public:
         const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
         = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceParser& sourceParser) { return sourceParser.toString(out); }
+    friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
@@ -54,7 +54,7 @@ protected:
 namespace fmt
 {
 template <>
-struct formatter<NES::SourceParsers::SourceParser> : ostream_formatter
+struct formatter<NES::InputFormatters::InputFormatter> : ostream_formatter
 {
 };
 }

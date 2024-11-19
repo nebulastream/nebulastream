@@ -19,9 +19,9 @@
 #include <thread>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -38,13 +38,13 @@ SourceThread::SourceThread(
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<SourceParsers::SourceParser> sourceParser)
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
-    , sourceParser(std::move(sourceParser))
+    , inputFormatter(std::move(inputFormatter))
 {
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
@@ -218,7 +218,7 @@ void SourceThread::runningRoutine()
             {
                 auto emitBufferLambda
                     = [this](Memory::TupleBuffer& buffer, bool addBufferMetaData) { emitWork(buffer, addBufferMetaData); };
-                sourceParser->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
+                inputFormatter->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
             }
             else
             {

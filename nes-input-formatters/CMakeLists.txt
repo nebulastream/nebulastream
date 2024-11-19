@@ -12,19 +12,19 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-source-parsers NES_SOURCE_PARSERS_SOURCE_FILES)
+get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-source-parsers ${NES_SOURCE_PARSERS_SOURCE_FILES})
+add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
-target_link_libraries(nes-source-parsers PRIVATE nes-common nes-configurations nes-memory)
+target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory)
 
-target_include_directories(nes-source-parsers PUBLIC
+target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(nes-source-parsers REUSE_FROM nes-common)
+    target_precompile_headers(nes-input-formatters REUSE_FROM nes-common)
 endif ()

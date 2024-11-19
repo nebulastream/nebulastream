@@ -20,8 +20,8 @@
 #include <mutex>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -44,7 +44,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<SourceParsers::SourceParser> sourceParser);
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     SourceThread() = delete;
 
@@ -76,7 +76,7 @@ protected:
     std::promise<bool> completedPromise;
     uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
-    std::unique_ptr<SourceParsers::SourceParser> sourceParser;
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
     mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
     std::unique_ptr<std::thread> thread{nullptr};
