@@ -34,6 +34,7 @@ EXCEPTION(FieldNotFound, 2004, "field not found")
 EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
 EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 EXCEPTION(CannotInferStamp, 2007, "cannot infer stamp")
+EXCEPTION(TestException, 2008, "Test exception that should be deleted before mergin into main")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")

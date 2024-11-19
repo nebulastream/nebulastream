@@ -112,3 +112,4 @@ Exception wrapExternalException();
 [[nodiscard]] uint64_t getCurrentExceptionCode();
 
 }
+
