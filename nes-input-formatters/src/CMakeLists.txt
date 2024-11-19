@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-source-parsers
-        CSVSourceParser.cpp
-        SourceParserProvider.cpp
+add_source_files(nes-input-formatters
+        CSVInputFormatter.cpp
+        InputFormatterProvider.cpp
 )

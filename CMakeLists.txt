@@ -326,7 +326,7 @@ add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 add_subdirectory(nes-sql-parser)
-add_subdirectory(nes-source-parsers)
+add_subdirectory(nes-input-formatters)
 
 add_tests_if_enabled(nes-systests)
 

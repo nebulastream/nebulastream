@@ -16,10 +16,10 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 
-namespace NES::SourceParsers::SourceParserProvider
+namespace NES::InputFormatters::InputFormatterProvider
 {
-std::unique_ptr<SourceParser>
-provideSourceParser(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
+std::unique_ptr<InputFormatter>
+provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
 }

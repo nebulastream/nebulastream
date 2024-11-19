@@ -15,7 +15,7 @@
 #pragma once
 
 #include <memory>
-#include <SourceParsers/SourceParser.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <fmt/format.h>
@@ -41,7 +41,7 @@ public:
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        std::unique_ptr<SourceParsers::SourceParser> sourceParser);
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     ~SourceHandle();
 

@@ -16,20 +16,20 @@
 
 #include <string>
 #include <API/Schema.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::SourceParsers
+namespace NES::InputFormatters
 {
 
-/// A SourceParser requires a schema, a tuple separator and a field delimiter.
-using SourceParserRegistrySignature = RegistrySignature<std::string, SourceParser, const Schema&, std::string, std::string>;
-class SourceParserRegistry : public BaseRegistry<SourceParserRegistry, SourceParserRegistrySignature>
+/// A InputFormatter requires a schema, a tuple separator and a field delimiter.
+using InputFormatterRegistrySignature = RegistrySignature<std::string, InputFormatter, const Schema&, std::string, std::string>;
+class InputFormatterRegistry : public BaseRegistry<InputFormatterRegistry, InputFormatterRegistrySignature>
 {
 };
 
 }
 
 #define INCLUDED_FROM_SOURCE_PARSER_REGISTRY
-#include <SourceParserGeneratedRegistrar.inc>
+#include <InputFormatterGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SOURCE_PARSER_REGISTRY
