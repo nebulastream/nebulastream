@@ -1,5 +1,8 @@
-name: Clang-Tidy
+# This workflow computes a complete clang-tidy analysis based on the input ref.
+# This workflow output a list of clang-tidy warnings and their frequency and fails if we encounter any clang-tidy
+# warnings which have been flagged as errors.
 
+name: Clang-Tidy
 on:
   workflow_call:
     inputs:
