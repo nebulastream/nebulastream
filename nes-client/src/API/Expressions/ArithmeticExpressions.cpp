@@ -83,10 +83,6 @@ ExpressionNodePtr READ(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "readF", {exp});
 }
 
-ExpressionNodePtr LOG10(const ExpressionNodePtr& exp) {
-    return FunctionExpression::create(DataTypeFactory::createUndefined(), "log10", {exp});
-}
-
 ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "readT", {left, middle, right});
 }
