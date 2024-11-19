@@ -30,5 +30,5 @@ class SourceRegistryValidation final : public BaseRegistry<SourceRegistryValidat
 }
 
 #define INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
-#include <Sources/SourceGeneratedRegistrarValidation.inc>
+#include <SourcesValidation/SourceGeneratedRegistrarValidation.hpp>
 #undef INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
