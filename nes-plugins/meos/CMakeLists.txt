@@ -10,27 +10,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-message(STATUS "Enable meos Plugin")
+message(STATUS "Enable MEOS Plugin")
 
 # Detect the platform
 if (APPLE)
     message(STATUS "Building on macOS")
-
     # Set the include and library directories for Homebrew (macOS)
-    set(meos_INCLUDE_DIR "/opt/homebrew/include")
-    set(meos_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include")  # Include Meos.hpp directory
-    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14")
-    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14")
-
-    include_directories(SYSTEM ${meos_INCLUDE_DIR} ${meos_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
-    link_directories(${meos_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
+    set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
+    set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
+    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
+    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
+    link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
 
 else()
     message(STATUS "Building on Linux")
 
     # Default behavior for Linux
     find_package(meos REQUIRED)
-    include_directories(SYSTEM ${meos_INCLUDE_DIR})
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
 endif()
 
 # Manually specify the source files for nes-meos
@@ -42,16 +40,13 @@ add_library(nes-meos SHARED ${NES_COMPILER_SOURCE_FILES})
 
 # Link libraries
 if (APPLE)
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-compiler nes-expressions nes-catalogs nes-operators nes-configurations nes-execution nes-coordinator nes-client nes-nautilus /opt/homebrew/lib/libmeos.dylib pq)
+    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib pq)
 else()
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-compiler nes-expressions nes-catalogs nes-operators nes-configurations nes-execution nes-coordinator nes-client nes-nautilus meos pq)
+    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos pq)
 endif()
 
-link_directories(${meos_INCLUDE_DIR})
+link_directories(${MEOS_INCLUDE_DIR})
 
- # Only needed if building connection with postgres
- #include_directories(/usr/include/postgresql)
- #link_directories(/usr/lib/x86_64-linux-gnu/libpq.so)
 
  add_dependencies(build_all_plugins nes-meos)
 
@@ -67,9 +62,9 @@ link_directories(${meos_INCLUDE_DIR})
      add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/tests/testData/")
      # Add tests with command
      add_subdirectory(tests)
-     message(STATUS "meosL Tests are enabled")
+     message(STATUS "MEOS Tests are enabled")
  else ()
-     message(STATUS "meosL Tests are disabled")
+     message(STATUS "MEOS Tests are disabled")
  endif ()
 
 

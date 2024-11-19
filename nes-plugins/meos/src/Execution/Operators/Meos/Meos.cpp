@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Operators/meos/Meos.hpp>
 
-namespace meos {
+#include <Execution/Operators/MEOS/Meos.hpp>
 
-Meos::Meos(std::string timezone) { meos_initialize(timezone.c_str(), nullptr); }
+namespace MEOS {
+
+Meos::Meos(std::string timezone) { meos_initialize(timezone.c_str(), NULL); }
 
 Meos::~Meos() { meos_finalize(); }
-
-}// namespace meos
+}// namespace MEOS

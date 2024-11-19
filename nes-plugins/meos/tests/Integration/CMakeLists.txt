@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_integration_test(meos-speedAgregation "Query1.cpp")
-add_nes_integration_test(meos-intersection "Query2.cpp")
-add_nes_integration_test(meos-trajectoryInputation "Query3.cpp")
+add_nes_integration_test(meos-speedAgregation "MeosSpeedAgregation.cpp")
+add_nes_integration_test(meos-intersection "MeosIntersection.cpp")
+add_nes_integration_test(meos-trajectoryInputation "MeosTrajectoryInputation.cpp")
 
 
 target_link_libraries(meos-speedAgregation nes-meos)
