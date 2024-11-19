@@ -38,7 +38,7 @@ namespace NES
 
 template <>
 inline void
-Registrar<Sources::SourceValidationRegistry, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
+Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
     registry.registerPlugin("File", RegisterSourceValidationFile);

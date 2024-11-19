@@ -33,7 +33,7 @@ std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValid
 namespace NES
 {
 template <>
-inline void Registrar<Sinks::SinkValidationRegistry, Sinks::SinkRegistryValidationSignature>::registerAll(
+inline void Registrar<Sinks::SinkValidationRegistry, Sinks::SinkValidationRegistrySignature>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sinks::SinkValidationGeneratedRegistrar;
