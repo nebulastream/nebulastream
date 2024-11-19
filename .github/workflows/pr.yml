@@ -76,6 +76,9 @@ jobs:
       # We need to build the project, as some headers are only created during the build.
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
+      # We run clang-tidy-diff with only one single rule, as we want to check if there are any compiler errors
+      - name: Clang-Tidy Precheck
+        run: git diff -U0 "$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}")" -- ':!*.inc' | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -config-file .clang-tidy-pre-check -j $(nproc)
       - name: Create results directory
         run: mkdir clang-tidy-result
       - name: Analyze by running Clang-Tidy
