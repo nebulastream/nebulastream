@@ -142,7 +142,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         auto testMap = loadTestFileMap(config);
 
         auto expectedGroup = program.get<std::string>("-g");
-        expectedGroup.erase(std::remove_if(expectedGroup.begin(), expectedGroup.end(), isspace), expectedGroup.end());
+        std::erase_if(expectedGroup, isspace);
 
         auto found = std::any_of(
             testMap.begin(),
@@ -153,6 +153,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
                 const auto& groups = testfile.groups;
                 return std::any_of(groups.begin(), groups.end(), [&expectedGroup](const auto& group) { return group == expectedGroup; });
             });
+        config.testGroup = expectedGroup;
     }
 
     if (program.is_used("--shuffle"))
