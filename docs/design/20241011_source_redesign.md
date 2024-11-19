@@ -8,7 +8,7 @@ Since the threads are running permanently, ingesting data into the system, this 
 Given that each thread allocates state in the form of a private stack, this is expensive. 
 Therefore, the current approach does not scale with an increasing number of sources (**P1**).
 
-Sources read data from external systems or devices and writes them into buffers provided by the NES `BufferManager`.
+Sources read data from external systems or devices and write them into buffers provided by the NES `BufferManager`.
 Precisely, local buffer providers maintain a fixed-size buffer pool per source. 
 The size of this pool is hardcoded into the system in the `SourceProvider` as `static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64`.
 If the available memory of the system is exhausted by the number of sources, potentially all available memory will be taken by the sources.
@@ -63,7 +63,7 @@ All of them need some mechanism to map compute resources (i.e., threads) to thes
 ## Threads
 There are two naive threading models to manage data ingestion:
 1. Single-threaded I/O that switches between all connections/sources
-2. A single thread per connection/source (as currently implemented in NES)
+2. A thread per connection/source (as currently implemented in NES)
 
 The former leads to serial execution, limiting throughput. 
 The latter leads to a lot of overhead in the case of very large numbers of connections/queries and therefore to a term called *oversubscription* of the CPU.
@@ -164,12 +164,12 @@ boost::asio::post(io_context, [socket]()
     }
 );
 ```
-`detached` is a special completion token that indicates the end of an asynchronous execution chain, i.e., we are not interested in the result of the awaitable.
+`detached` is a special completion token that indicates that we are not interested in the result of the awaitable.
 
 In summary, systems using async I/O get the following benefits:
-- The number of threads (and therefore the overhead) is kept small
+- The number of threads (and therefore the overhead) is kept small despite a large number of concurrent I/O operations
 - I/O operations can be interleaved with other I/O operations 
-- I/O operations can be interleaved with computation (CPU-bound tasks)
+- I/O operations can be interleaved with computation (CPU-bound operations)
 
 # Our Proposed Solution
 The proposed solution depends on these key design decisions:
@@ -190,7 +190,7 @@ Therefore, we choose `boost::asio` as the library to implement asynchronous sour
 ## Interfaces
 The highest-level component that affects this redesign is the `SourceHandle`, which is created by the `SourceProvider` to wrap a single physical source.
 General functionality of plugin registration, source descriptor validation, and construction of the source implementation does not need to change (G4).
-Currently, `SourceHandle` owns a `SourceThread`, an object that runs a single source on an internal thread.
+Currently, the `SourceHandle` owns a `SourceThread`, an object that runs a single source on an internal thread.
 The `QueryEngine` creates an `InstantiatedQueryPlan` that contains the `SourceHandle`s for that query and starts them, delegating the call to the `SourceThread`.
 We remove the `SourceThread` and replace it with an abstract base class called `SourceRunner` that is owned by a `SourceHandle`.
 A `SourceRunner`'s primary responsibility (like the `SourceThread`'s) is to drive the source on (a set of) internal threads.
@@ -233,12 +233,14 @@ classDiagram
         -unique_ptr~thread~ thread
         +start(StopToken& token, EmitFunction&& emitFn)
         +execute(StopToken& token, EmitFunction&& emitFn)
+        +stop()
     }
 
     class AsyncSourceRunner {
         -shared_ptr~AsyncSourceExecutor~ executor
         +start(StopToken& token, EmitFunction&& emitFn) override
         +execute(StopToken& token, EmitFunction&& emitFn) override
+        +stop()
     }
 ```
 
@@ -273,7 +275,7 @@ awaitable<void> AsyncSourceRunner::execute(StopToken& token, EmitFunction&& emit
 }
 ```
 Note that all functions are either non-blocking coroutines (like `sourceImpl->fillBuffer()`), or cheap functions that do not block the CPU for a long time (e.g., the `emitFn` that emits a buffer to successors).
-Also note that at this point, the code is neither entirely complete nor correct, it aims to show the general structure of the new execution model.
+Also note that the code is neither entirely complete nor correct, instead it aims to show the general structure of the new execution model.
 For example, error handling is omitted and the interfaces are not implemented exactly as specified.
 
 When the `QueryEngine` decides to start a new asynchronous source, it calls `start` on the `SourceHandle`, which in turn invokes `start` on the corresponding `SourceRunner`.
@@ -290,7 +292,7 @@ void SourceRunnerAsync::start(StopToken& token, EmitFunction&& emitFn)
 ```
 
 ## AsyncSourceExecutor
-The `AsyncSourceExecutor` is the central component that manages the execution of all asynchronous sources at once.
+The `AsyncSourceExecutor` is the central component that manages the execution of all async sources at once.
 It is responsible for creating the `boost::asio::io_context` and the thread pool that runs the coroutines.
 For now, we hardcode a reasonable number of threads or use `std::thread::hardware_concurrency()` to determine the number of threads.
 At a later point, we could define the number as a function of the number of async sources that are currently running and change the thread count adaptively at runtime.
@@ -299,10 +301,10 @@ At a later point, we could define the number as a function of the number of asyn
 class AsyncSourceExecutor
 {
 private:
-    boost::asio::io_context ioc;
+    boost::asio::io_context& ioc;
     std::vector<std::unique_ptr<std::jthread>> threadPool;
 public:
-    AsyncSourceExecutor()
+    AsyncSourceExecutor(boost::asio_io_context& ioc) : ioc(ioc)
     {
         for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
         {
@@ -523,7 +525,9 @@ When downstream tasks are overall reading and thus releasing the buffers faster 
 By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies.
 In a temporary case, enough buffers are available and the buffer manager will happily give them out to fast producers, so the available buffers will be automatically be distributed relative to the demand.
 With the separation of I/O and compute pools, we prevent fast sources from stealing resources from the global pool.
-Problems arise when a single or few sources take so many buffers such that the mejority are impacted and have buffer requests denied, preventing them from making progress.
+
+### Fairness of Distribution
+Problems arise when a single or few sources take so many buffers such that the majority are impacted and have buffer requests denied, preventing them from making progress.
 
 In general, we want to guarantee **a single buffer available to fill in the background** for as many sources as possible. 
 This is required to effectively utilize async I/O.
@@ -576,7 +580,7 @@ The `BufferManager` provides an asynchronous interface to the sources, which can
 When a buffer becomes available, the `BufferManager` notifies a source that is waiting for a buffer with `pendingSources.pop_front` and `promise->set_value`.
 
 ## Testing
-- We write unit tests for the specific sources that for correct behavior in normal cases.
+- We write unit tests for the specific sources that check for correct behavior in normal cases.
 - We write integration tests with multiple async and blocking sources active at the same time.
 - We write negative tests to ensure that the new components handle errors correctly.
 
@@ -628,7 +632,7 @@ Also, it is not portable to other operating systems and requires Linux kernel 5.
 - How to deal with internal sources?
 
 
-# Sources and Further Reading
+# Sources (no pun intended) and Further Reading
 - [`boost::asio` docs](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html)
 - [Blocking vs. Non-blocking I/O](https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how)
 - [Coroutines](https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20)
