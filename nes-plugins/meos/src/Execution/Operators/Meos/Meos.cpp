@@ -16,9 +16,7 @@
 
 namespace MEOS {
 
-
 Meos::Meos(std::string timezone) { meos_initialize(timezone.c_str(), NULL); }
-
 
 Meos::~Meos() { meos_finalize(); }
 }// namespace MEOS

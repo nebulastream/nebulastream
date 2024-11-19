@@ -30,7 +30,6 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 
-
 namespace NES::Runtime::Execution {
 using namespace std;
 using namespace MEOS;

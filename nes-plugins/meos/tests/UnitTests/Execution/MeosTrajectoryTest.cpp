@@ -54,13 +54,12 @@ typedef struct {
     double SOG;
 } AIS_record;
 
-
 /**
  * @brief Test Executing MEOS, reading from a CSV file and creating trajectories
  */
 class MeosTrajectoryTest : public ::testing::Test {
   protected:
-    MEOS::Meos* meos= new MEOS::Meos("UTC");
+    MEOS::Meos* meos = new MEOS::Meos("UTC");
 
     MeosTrajectoryTest() : meos(nullptr) {}
 
