@@ -69,7 +69,7 @@ private:
     }; \
     }
 
-#include <ExceptionDefinitions.inc>
+#include <ExceptionDefinitions.hpp>
 #undef EXCEPTION
 
 /**

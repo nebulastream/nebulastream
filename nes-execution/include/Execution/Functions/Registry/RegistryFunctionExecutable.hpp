@@ -29,5 +29,5 @@ class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutabl
 
 
 #define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.inc>
+#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.hpp>
 #undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
