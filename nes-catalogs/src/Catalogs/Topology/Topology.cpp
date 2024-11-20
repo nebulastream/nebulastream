@@ -27,6 +27,7 @@
 #include <Util/Placement/ElegantPayloadKeys.hpp>
 #include <algorithm>
 #include <deque>
+#include <queue>
 #include <utility>
 
 namespace NES {
@@ -421,21 +422,22 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
     NES_INFO("Topology: Finding path between set of start and destination nodes");
     std::vector<TopologyNodePtr> startNodesOfGraph;
     for (const auto& sourceTopologyNode : sourceTopologyNodes) {
-        NES_TRACE("Topology: Finding all paths between the source node {} and a set of destination nodes",
-                  sourceTopologyNode->toString());
-        std::map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
-        TopologyNodePtr startNodeOfGraph = find(sourceTopologyNode, destinationTopologyNodes, mapOfUniqueNodes);
-        NES_TRACE("Topology: Validate if all destination nodes reachable");
-        for (const auto& destinationTopologyNode : destinationTopologyNodes) {
-            if (mapOfUniqueNodes.find(destinationTopologyNode->getId()) == mapOfUniqueNodes.end()) {
-                NES_ERROR("Topology: Unable to find path between source node {} and destination node{}",
-                          sourceTopologyNode->toString(),
-                          destinationTopologyNode->toString());
-                return {};
-            }
+        NES_TRACE("Topology: Breadth First Search for a graph");
+        std::unordered_map<WorkerId, bool> visited{};
+        std::unordered_map<WorkerId, uint64_t> distances{};
+        std::unordered_map<WorkerId, WorkerId> prevNodes{};
+
+        breadthFirstSearch(sourceTopologyNode, visited, distances, prevNodes);
+
+        for (const auto& destinationNode : destinationTopologyNodes) {
+            NES_TRACE("Topology: Finding all paths between the source node {} and destination node {}",
+                      sourceTopologyNode->toString(),
+                      destinationNode->toString());
+            std::unordered_map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
+            TopologyNodePtr startNodeOfGraph = createSubGraphCopy(destinationNode, visited, prevNodes, mapOfUniqueNodes);
+            NES_TRACE("Topology: Push the start node of the graph into a collection of start nodes");
+            startNodesOfGraph.push_back(startNodeOfGraph);
         }
-        NES_TRACE("Topology: Push the start node of the graph into a collection of start nodes");
-        startNodesOfGraph.push_back(startNodeOfGraph);
     }
     NES_TRACE("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of "
               "the merged graph.");
@@ -497,48 +499,18 @@ bool Topology::findAllDownstreamNodes(const WorkerId& startNode,
     return true;
 }
 
-std::optional<TopologyNodePtr> Topology::findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId) {
-
-    NES_DEBUG("Topology: Finding path between {} and {}", sourceTopologyNodeId, destinationTopologyNodeId);
-
-    //Fetch the source topology node
-    auto readLockedSourceTopologyNode = workerIdToTopologyNode.at(sourceTopologyNodeId).tryRLock();
-    if (!readLockedSourceTopologyNode) {
-        NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
-                    sourceTopologyNodeId);
-        return {};
-    }
-    const auto& sourceTopologyNode = (*(readLockedSourceTopologyNode));
-
-    //Fetch the destination topology node
-    std::vector<TopologyNodePtr> destinationTopologyNodes;
-    auto readLockedDestinationTopologyNode = workerIdToTopologyNode.at(destinationTopologyNodeId).tryRLock();
-    if (!readLockedDestinationTopologyNode) {
-        NES_WARNING("Unable to acquire read lock on the topology node {} to process the find path between request",
-                    destinationTopologyNodeId);
-        return {};
-    }
-    const auto& destinationTopologyNode = (*(readLockedDestinationTopologyNode));
-
-    std::vector<TopologyNodePtr> searchedNodes{destinationTopologyNode};
-    std::map<WorkerId, TopologyNodePtr> mapOfUniqueNodes;
-    TopologyNodePtr found = find(sourceTopologyNode, searchedNodes, mapOfUniqueNodes);
-    if (found) {
-        NES_DEBUG("Topology: Found path between {} and {}", sourceTopologyNode->toString(), destinationTopologyNode->toString());
-        return found;
-    }
-    NES_WARNING("Topology: Unable to find path between {} and {}",
-                sourceTopologyNode->toString(),
-                destinationTopologyNode->toString());
-    return std::nullopt;
-}
-
 std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes) {
     NES_INFO("Topology: Merge {} sub-graphs to create a single sub-graph", startNodes.size());
 
     NES_DEBUG("Topology: Compute a map storing number of times a node occurred in different sub-graphs");
     std::map<WorkerId, uint32_t> nodeCountMap;
     for (const auto& startNode : startNodes) {
+
+        if (!startNode) {
+            NES_ERROR("Topology: Unable to find path between source node and destination node");
+            return {};
+        }
+
         NES_TRACE("Topology: Fetch all ancestor nodes of the given start node");
         const std::vector<NodePtr> family = startNode->getAndFlattenAllAncestors();
         NES_TRACE(
@@ -641,9 +613,106 @@ std::vector<TopologyNodePtr> Topology::mergeSubGraphs(const std::vector<Topology
     return result;
 }
 
-TopologyNodePtr Topology::find(TopologyNodePtr testNode,
-                               std::vector<TopologyNodePtr> searchedNodes,
-                               std::map<WorkerId, TopologyNodePtr>& uniqueNodes) {
+void Topology::breadthFirstSearch(TopologyNodePtr startNode,
+                                  std::unordered_map<WorkerId, bool>& visited,
+                                  std::unordered_map<WorkerId, uint64_t>& distances,
+                                  std::unordered_map<WorkerId, WorkerId>& prevNodes) {
+    NES_INFO("Topology: make bfs starting in {}", startNode->toString());
+    // queue to store nodes next to be traversed
+    auto nodesQueue = std::queue<TopologyNodePtr>();
+    // put start node to the queue
+    nodesQueue.push(startNode);
+
+    // map to mark visited nodes, store distances and previous nodes
+    auto startNodeId = startNode->getId();
+    visited[startNodeId] = true;
+    prevNodes.insert(std::pair<WorkerId, WorkerId>(startNodeId, INVALID_WORKER_NODE_ID));
+
+    while (!nodesQueue.empty()) {
+        auto currNode = nodesQueue.front();
+        auto currNodeId = currNode->getId();
+        nodesQueue.pop();
+
+        // next nodes to be traversed: parents and children
+        std::vector<NodePtr> candidates = currNode->getParents();
+        candidates.insert(candidates.end(), currNode->getChildren().begin(), currNode->getChildren().end());
+
+        // go over candidate nodes
+        for (auto& candidate : candidates) {
+            auto candidateNode = candidate->as<TopologyNode>();
+            auto nextNodeId = candidateNode->getId();
+
+            // Filter out all outgoing nodes that are marked for maintenance and that are already visited, as these should be ignored during path finding
+            auto search = visited.find(nextNodeId);
+            if (!candidateNode->isUnderMaintenance() && (search == visited.end() || !search->second)) {
+                nodesQueue.push(candidateNode);
+                visited[nextNodeId] = true;
+                // next node has an edge with current, so the distance will be + 1, as graph is not weighted
+                distances[nextNodeId] = distances[currNodeId] + 1;
+                // set previous node to decode path later
+                prevNodes.insert(std::pair<WorkerId, WorkerId>(nextNodeId, currNodeId));
+            }
+        }
+    }
+}
+
+TopologyNodePtr Topology::createSubGraphCopy(TopologyNodePtr destinationNode,
+                                             std::unordered_map<WorkerId, bool>& visited,
+                                             std::unordered_map<WorkerId, WorkerId>& prevNodes,
+                                             std::unordered_map<WorkerId, TopologyNodePtr>& mapOfUniqueNodes) {
+    NES_INFO("Topology: create sub-graph copy to {}", destinationNode->toString());
+    // if destination node is not reachable, there is not path
+    if (auto isVisited = visited[destinationNode->getId()]; !isVisited) {
+        NES_ERROR("Topology: Unable to find path between source node and destination node {}", destinationNode->toString());
+        return nullptr;
+    } else {
+        // copy destination node
+        if (!mapOfUniqueNodes.contains(destinationNode->getId())) {
+            mapOfUniqueNodes[destinationNode->getId()] = destinationNode->copy();
+        }
+        TopologyNodePtr currNode = destinationNode;
+
+        try {
+            // traverse path from end to the start
+            WorkerId nextNodeId = prevNodes.at(currNode->getId());
+            while (nextNodeId != INVALID_WORKER_NODE_ID) {
+                std::vector<NodePtr> nearestNodes = currNode->getParents();
+                nearestNodes.insert(nearestNodes.end(), currNode->getChildren().begin(), currNode->getChildren().end());
+
+                // find next node by id
+                auto nextNode = std::find_if(nearestNodes.begin(), nearestNodes.end(), [&](const NodePtr& searchedNode) {
+                    return searchedNode->as<TopologyNode>()->getId() == nextNodeId;
+                });
+
+                if (nextNode == nearestNodes.end()) {
+                    NES_ERROR("Topology: Unable to copy path between source node and destination node");
+                    return nullptr;
+                } else {
+                    // get next node
+                    auto nextTopologyNode = nextNode->get()->as<TopologyNode>();
+                    // copy next node
+                    if (mapOfUniqueNodes.find(nextTopologyNode->getId()) == mapOfUniqueNodes.end()) {
+                        mapOfUniqueNodes[nextTopologyNode->getId()] = nextTopologyNode->copy();
+                    }
+                    // add parent link to copies
+                    mapOfUniqueNodes[nextTopologyNode->getId()]->addParent(mapOfUniqueNodes[currNode->getId()]);
+
+                    currNode = nextTopologyNode;
+                    nextNodeId = prevNodes.at(currNode->getId());
+                }
+            }
+
+            return mapOfUniqueNodes[currNode->getId()];
+        } catch (const std::out_of_range& ex) {
+            NES_WARNING("No path found")
+        }
+    }
+    return nullptr;
+}
+
+TopologyNodePtr Topology::depthFirstSearchOnlyParents(TopologyNodePtr testNode,
+                                                      std::vector<TopologyNodePtr> searchedNodes,
+                                                      std::unordered_map<WorkerId, TopologyNodePtr>& uniqueNodes) {
 
     NES_TRACE("Topology: check if test node is one of the searched node");
     auto found = std::find_if(searchedNodes.begin(), searchedNodes.end(), [&](const TopologyNodePtr& searchedNode) {
@@ -657,7 +726,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
             const TopologyNodePtr copyOfTestNode = testNode->copy();
             uniqueNodes[testNode->getId()] = copyOfTestNode;
         }
-        NES_TRACE("Topology: Insert the information about the test node in the unique node map");
+        NES_TRACE("Topology: Return start of sub-graph copy");
         return uniqueNodes[testNode->getId()];
     }
 
@@ -677,7 +746,7 @@ TopologyNodePtr Topology::find(TopologyNodePtr testNode,
 
     TopologyNodePtr foundNode = nullptr;
     for (auto& parent : updatedParents) {
-        TopologyNodePtr foundInParent = find(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
+        TopologyNodePtr foundInParent = depthFirstSearchOnlyParents(parent->as<TopologyNode>(), searchedNodes, uniqueNodes);
         if (foundInParent) {
             NES_TRACE("Topology: found the destination node as the parent of the physical node.");
             if (!foundNode) {
@@ -1024,5 +1093,5 @@ nlohmann::json Topology::convertNodeLocationInfoToJson(WorkerId workerId,
     return nodeInfo;
 }
 
-WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdCounter++); }
+WorkerId Topology::getNextWorkerId() { return WorkerId(topologyNodeIdNextIndex++); }
 }// namespace NES

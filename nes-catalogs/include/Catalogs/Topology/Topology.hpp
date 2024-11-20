@@ -241,8 +241,8 @@ class Topology {
      * @param sourceTopologyNodeId: the source topology node
      * @param destinationTopologyNodeId: the destination topology node
      * @return topology nodes representing the source nodes of the returned subgraph.
-     */
     std::optional<TopologyNodePtr> findAllPathBetween(WorkerId sourceTopologyNodeId, WorkerId destinationTopologyNodeId);
+     */
 
     /**
      * @brief Find a sub-graph such that each start node in the given set of start nodes can connect to each destination node in the given set of destination nodes.
@@ -410,14 +410,40 @@ class Topology {
     static std::vector<TopologyNodePtr> mergeSubGraphs(const std::vector<TopologyNodePtr>& startNodes);
 
     /**
+     * @brief bfs in topology graph to find shortest paths from start node
+     * @param startNode: node where to start bfs
+     * @param visited: key-value storage for visited nodes
+     * @param distances: key-value storage for distances from starting nodes
+     * @param prevNodes: key is next node, value is previous node
+     */
+    void breadthFirstSearch(TopologyNodePtr startNode,
+                            std::unordered_map<WorkerId, bool>& visited,
+                            std::unordered_map<WorkerId, uint64_t>& distances,
+                            std::unordered_map<WorkerId, WorkerId>& prevNodes);
+
+    /**
+     * @brief sub-graph copy of path between one source and destination node
+     * @param destinationNode: node where to go
+     * @param visited: key-value storage for visited nodes
+     * @param prevNodes: key is next node, value is previous node
+     * @param mapOfUniqueNodes: storage for node copies
+     * @return: starting node of sub-graph copy
+     */
+    TopologyNodePtr createSubGraphCopy(TopologyNodePtr destinationNode,
+                                       std::unordered_map<WorkerId, bool>& visited,
+                                       std::unordered_map<WorkerId, WorkerId>& prevNodes,
+                                       std::unordered_map<WorkerId, TopologyNodePtr>& mapOfUniqueNodes);
+
+    /**
      * @brief Find if searched nodes are the parent or grand parents of the input test node
      * @param testNode: the test node
      * @param searchedNodes: the searched node
      * @param uniqueNodes: map of all unique worker id to topology nodes observed during the iteration
      * @return the node where the searched node is found
      */
-    TopologyNodePtr
-    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<WorkerId, TopologyNodePtr>& uniqueNodes);
+    TopologyNodePtr depthFirstSearchOnlyParents(TopologyNodePtr testNode,
+                                                std::vector<TopologyNodePtr> searchedNodes,
+                                                std::unordered_map<WorkerId, TopologyNodePtr>& uniqueNodes);
 
     /**
      * @brief method to generate the next (monotonically increasing) topology node id
@@ -429,7 +455,7 @@ class Topology {
     std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
-    std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
+    std::atomic_uint64_t topologyNodeIdNextIndex = INITIAL_WORKER_NODE_ID.getRawValue();
 };
 }// namespace NES
 #endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
