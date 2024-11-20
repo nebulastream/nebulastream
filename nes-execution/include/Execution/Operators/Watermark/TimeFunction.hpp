@@ -16,6 +16,7 @@
 #include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
 namespace NES::Nautilus
 {

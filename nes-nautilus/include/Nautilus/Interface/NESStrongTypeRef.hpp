@@ -19,6 +19,11 @@
 #include <nautilus/tracing/TypedValueRef.hpp>
 #include <nautilus/val.hpp>
 
+namespace NES::Nautilus
+{
+class VarVal;
+}
+
 namespace nautilus
 {
 
@@ -65,6 +70,10 @@ public:
         value = other.value;
         return *this;
     }
+
+    /// IMPORTANT: This should be used with utmost care. Only, if there is no other way to work with the strong types.
+    /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function
+    val<Underlying> convertToValue() const { return value; }
 
     [[nodiscard]] friend bool operator<(const val& lh, const val& rh) noexcept { return lh.value < rh.value; }
     [[nodiscard]] friend bool operator<=(const val& lh, const val& rh) noexcept { return lh.value <= rh.value; }
