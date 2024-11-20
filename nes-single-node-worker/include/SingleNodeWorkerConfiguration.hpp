@@ -35,13 +35,12 @@ connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
 
 protected:
-    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &queryCompilerConfiguration, &grpcAddressUri}; }
+    std::vector<BaseOption*> getOptions() override { return {&workerConfiguration, &grpcAddressUri}; }
     template <typename T>
     friend void generateHelp(std::ostream& ostream);
 
 public:
     SingleNodeWorkerConfiguration() = default;
     Configurations::WorkerConfiguration workerConfiguration = {"workerConfiguration", "NodeEngine Configuration"};
-    Configurations::QueryCompilerConfiguration queryCompilerConfiguration = {"queryCompilerConfiguration", "QueryCompiler Configuration"};
 };
 }
