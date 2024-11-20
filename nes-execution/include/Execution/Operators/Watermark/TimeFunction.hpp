@@ -15,6 +15,7 @@
 
 #include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus
@@ -37,7 +38,7 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /// @brief A time function, infers the timestamp of an record.
 /// For ingestion time, this is determined by the creation ts in the buffer.
-/// For event time, this is infered by a field in the record.
+/// For event time, this is inferred by a field in the record.
 class TimeFunction
 {
 public:
