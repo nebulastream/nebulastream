@@ -1,25 +1,25 @@
 # The Problem
 NebulaStream aims to handle millions of heterogeneous sources across massively distributed and heterogeneous devices.
-This requires a single node to handle thousands of sources concurrently.
+This could require a single node to handle up to thousands of sources concurrently.
 
 Currently, each source runs in an individual thread. 
 That is, starting 1000 sources means starting 1000 threads just for the sources. 
 Since the threads are running permanently, ingesting data into the system, this leads to a massive oversubscription of the CPU and causes frequent context switching.
 Given that each thread allocates state in the form of a private stack, this is expensive. 
-Therefore, the current approach does not scale with an increasing number of sources (**P1**).
+Therefore, the current approach does not scale with an increasing number of sources per node (**P1**).
 
 Sources read data from external systems or devices and write them into buffers provided by the NES `BufferManager`.
 Precisely, local buffer providers maintain a fixed-size buffer pool per source. 
-The size of this pool is hardcoded into the system in the `SourceProvider` as `static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64`.
 If the available memory of the system is exhausted by the number of sources, potentially all available memory will be taken by the sources.
 This can cause a deadlock, since query processing cannot proceed without buffers (**P2**).
 Furthermore, this static assignment is highly inflexible with respect to the actual requirements of the sources at runtime.
 
 # Goals
-A single node worker should be able to handle thousands of concurrent sources without data ingestion becoming a bottleneck.
-Slow disk or network I/O can still cause a bottleneck during query execution (this may be out of the system's control).
-However, adding more sources should not slow down existing sources or CPU-bound operations for internal reasons such as CPU oversubscription or threads busy-waiting on data to become ready.
-Of course, devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but at least we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, without blocking the CPU
+A single node worker should be able to handle thousands of concurrent sources as efficiently as possible.
+Slow disk or network I/O can be the main bottleneck during query execution (this may be out of the system's control).
+However, adding more sources should impact existing sources or CPU-bound operations as little as possible. 
+Therefore, we want to avoid stalls due to CPU oversubscription or threads busy-waiting on data to become ready.
+Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as little as possible.
 (**G1, scalability**, addresses P1).
 
 
@@ -27,14 +27,15 @@ The `BufferManager` should have separate pools for I/O and compute, removing pot
 Moreover, the `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
 In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source.
 In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
-Our goal is to get rid of blocking operations within I/O threads wherever possible.
+Our goal is to get rid of blocking operations within source threads wherever possible.
 We propose simple policies and provide a PoC implementation to showcase this.
 
 The following three goals are additional goals that do not address specific problems in the current implementation, but are still important with respect to usability and maintainability.
 
 The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
 Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
-After the redesign, a source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G3, simplicity and decomposition**).
+This complements with the [removal of parsing from the sources](https://github.com/nebulastream/nebulastream-public/pull/492).
+A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G3, simplicity and decomposition**).
 
 The implementation should conform to the past effort of refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md).
 We want this redesign to not impact the construction of sources at all, we aim to only redesign the execution model.
@@ -81,7 +82,7 @@ At the same time, threads that do blocking I/O calls (e.g., asking for a disk pa
 ## Async I/O
 If we have a separate thread pool for I/O operations, we need to define operations and decide how to schedule them on this pool.
 With the assumption that we primarily do I/O when dealing with sources, we are **waiting** for something to happen in the background for most of the time.
-At some point in each source, we call a client like `doRequest()` and then block during this call.
+At some point, each source calls a client library to interact with the external system like `requestData()` and then blocks during this call.
 The CPU does not have any insight information on what we are waiting on, so if we are unlucky and the CPU does not give another thread a time slice, we block the CPU with our I/O.
 
 An improvement to this would be to to put the thread to sleep by using mechanisms like `std::future` and have another thread run while we wait on the I/O to complete.
@@ -109,13 +110,13 @@ If we follow the guideline and isolate I/O-bound operations properly from CPU-bo
 The ongoing I/O operations can be wrapped into coroutines that represent tasks that drive the sources' progress.
 An async runtime manages these ongoing tasks.
 It can run with a fixed-size thread pool or even just a single thread and it polls tasks that are ready to make progress.
-How does it know what tasks (coroutines) are ready to be resumed and make progress?
+How does it know what operations (coroutines) are ready to be resumed and make progress?
 Typically, this is done via syscalls like `epoll`. 
 They allow the kernel to notify the asynchronous runtime (`boost::asio::io_context`) when something happened on a file descriptor (i.e., data has arrived), queueing an event together with the coroutine to be picked up by a thread and resumed.
 We do not rely on busy-waiting, nor do we need a timer or regularly wake up to check if something is ready.
 
 When resumed, we can deal with the arrived data, e.g., by giving it out to other components for further processing.
-Potentially, the task can then make a new request before yielding control again.
+Then, the task can request more data before yielding control again.
 
 Libraries that help implementing async I/O are, among others, `boost::asio` (C++) and `tokio.rs` (Rust).
 They provide executors, thread pools, and low-level I/O primitives like `boost::asio::posix::stream_descriptor` and `boost::asio::ip::tcp::socket`.
@@ -179,7 +180,7 @@ The proposed solution depends on these key design decisions:
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
 4. Sources receive buffers by utilizing non-blocking calls (prevent blocking I/O threads) from a separate I/O buffer pool (prevent deadlocks) (G2).
 5. We implement a simple policy for fairness of distribution of buffers among sources under contention.
-5. We allow the user to configure timeouts on a per-source basis. When the timeout expires, a pending asynchronous operation is cancelled to prevent high tail latencies. 
+6. We allow the user to configure timeouts on a per-source basis. When the timeout expires, a pending asynchronous operation is cancelled to prevent high tail latencies. 
 
 ## Async I/O Library
 The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
@@ -294,8 +295,8 @@ void SourceRunnerAsync::start(StopToken& token, EmitFunction&& emitFn)
 ## AsyncSourceExecutor
 The `AsyncSourceExecutor` is the central component that manages the execution of all async sources at once.
 It is responsible for creating the `boost::asio::io_context` and the thread pool that runs the coroutines.
-For now, we hardcode a reasonable number of threads or use `std::thread::hardware_concurrency()` to determine the number of threads.
-At a later point, we could define the number as a function of the number of async sources that are currently running and change the thread count adaptively at runtime.
+For now, we hardcode a reasonable number of threads to use for the async sources.
+At a later point, we could define the number as a function of the number of sources that are currently running and change the thread count adaptively at runtime.
 
 ```cpp
 class AsyncSourceExecutor
@@ -306,7 +307,7 @@ private:
 public:
     AsyncSourceExecutor(boost::asio_io_context& ioc) : ioc(ioc)
     {
-        for (size_t i = 0; i < std::thread::hardware_concurrency(); ++i)
+        for (size_t i = 0; i < numSourceThreads; ++i)
         {
             threadPool.push_back(std::make_unique<std::jthread>([this]()
             {
@@ -433,7 +434,7 @@ A redistribution of these pools based on the requirements of I/O and processing 
 For flow control (handling speed differences between producer and consumer, and among different producers), the following questions arise with respect to buffers:
 1. **Slow Source <--> Fast Downstream**: *How do we keep the latency in check when a source takes a very long time to fill a buffer?*
 
-This will be the general case where the system is not overwhelmed with external data, and I see two approaches here:
+This will be the common case where the system is not overwhelmed with external data, and I see two approaches here:
 - *Demand-based*: If a running successor pipeline of a source is idle (no task has been produced that it can process), the `Source` may be asked to release a partially filled buffer.
 Instead of issuing new requests or waiting for more data, the `SourceRunner` driving the source could yield control and give out the buffer, asking the `BufferManager` for a new one.
 With this approach, it is unclear which component is responsible for detecting the idle state of the pipeline and request the cancellation of the ongoing operation.
