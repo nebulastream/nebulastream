@@ -13,6 +13,7 @@
 */
 #include <sstream>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -32,14 +33,14 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 }
 
 /// TODO use here the BufferMetaData class for the params #4177
-uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin)
+Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin)
 {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
         if (origins[originIndex] == origin)
         {
-            watermarkProcessors[originIndex]->emplace(sequenceData, ts);
+            watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
             found = true;
         }
     }
@@ -66,14 +67,14 @@ std::string MultiOriginWatermarkProcessor::getCurrentStatus()
     return ss.str();
 }
 
-uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark()
+Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark()
 {
     auto minimalWatermark = UINT64_MAX;
     for (const auto& wt : watermarkProcessors)
     {
         minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
     }
-    return minimalWatermark;
+    return Timestamp(minimalWatermark);
 }
 
 }
