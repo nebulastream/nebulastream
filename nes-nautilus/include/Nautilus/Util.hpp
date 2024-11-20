@@ -31,7 +31,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_TRACE); \
-        nautilus::invoke(Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_DEBUG_EXEC(TEXT) \
@@ -40,7 +40,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_DEBUG); \
-        nautilus::invoke(Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_INFO_EXEC(TEXT) \
@@ -49,7 +49,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_INFO); \
-        nautilus::invoke(Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_WARNING_EXEC(TEXT) \
@@ -58,7 +58,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_WARNING); \
-        nautilus::invoke(Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 #define NES_ERROR_EXEC(TEXT) \
@@ -67,7 +67,7 @@ void logProxy(const char* message, const LogLevel logLevel);
         nautilus::stringstream ss; \
         ss << TEXT; \
         const nautilus::val<LogLevel> logLevel = (LogLevel::LOG_ERROR); \
-        nautilus::invoke(Util::logProxy, ss.str().c_str(), logLevel); \
+        nautilus::invoke(NES::Nautilus::Util::logProxy, ss.str().c_str(), logLevel); \
     } while (0)
 
 
