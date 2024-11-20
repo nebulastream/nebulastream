@@ -12,11 +12,7 @@
 
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 
-# We don't use libc++ if it is either explicitly forbidden via the `USE_LIBCXX_IF_AVAILABLE=OFF` or we are using
-# a local installation of mlir which is most-likely not compiled with libc++
-cmake_dependent_option(USE_LIBCXX "Uses Libc++" ON "USE_LIBCXX_IF_AVAILABLE; NOT USE_LOCAL_MLIR" OFF)
-
-if (USE_LIBCXX)
+if (USE_LIBCXX_IF_AVAILABLE)
     # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
     execute_process(
             COMMAND ${CMAKE_COMMAND} -E echo "#include<ciso646> \n int main(){return 0;}"
