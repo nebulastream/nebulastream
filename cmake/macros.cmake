@@ -36,7 +36,6 @@ endmacro()
 
 # Looks for the configured clang format version and enabled the format target if available.
 function(project_enable_format)
-    find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${LLVM_MAJOR_VERSION} clang-format)
     if (NOT CLANG_FORMAT_EXECUTABLE)
         message(WARNING "Clang-Format not found, but can be installed with 'sudo apt install clang-format'. Disabling format target.")
