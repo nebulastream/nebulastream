@@ -41,6 +41,6 @@ protected:
 
 public:
     SingleNodeWorkerConfiguration() = default;
-    Configurations::WorkerConfiguration workerConfiguration = {"workerConfiguration", "NodeEngine Configuration"};
+    Configurations::WorkerConfiguration workerConfiguration = {"worker", "NodeEngine Configuration"};
 };
 }
