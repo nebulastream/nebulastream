@@ -43,7 +43,7 @@ cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
 TAG=${HASH}
 if [[ $STDLIB != 'libcxx' ]]; then
-    TAG=${TAG}-stdlibcxx
+    TAG=${TAG}-libstdcxx
 fi
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current 
