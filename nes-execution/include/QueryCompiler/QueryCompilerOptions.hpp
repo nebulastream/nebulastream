@@ -33,7 +33,7 @@ struct QueryCompilerOptions
         PREDICATION /// Uses predication for filter functions if possible
     };
 
-    struct StreamHashJoinOptions
+    struct StreamJoinOptions
     {
         uint64_t numberOfPartitions = Configurations::DEFAULT_HASH_NUM_PARTITIONS;
         uint64_t pageSize = Configurations::DEFAULT_PAGED_VECTOR_SIZE;
@@ -48,7 +48,7 @@ struct QueryCompilerOptions
     DumpMode dumpMode = DumpMode::FILE_AND_CONSOLE;
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
-    StreamHashJoinOptions hashJoinOptions;
+    StreamJoinOptions joinOptions;
 } __attribute__((aligned(64)));
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
@@ -62,13 +62,13 @@ queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfigurati
     options->compilationStrategy = queryCompilerConfiguration.compilationStrategy;
     options->dumpMode = queryCompilerConfiguration.queryCompilerDumpMode;
     options->nautilusBackend = queryCompilerConfiguration.nautilusBackend;
-    options->hashJoinOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
-    options->hashJoinOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
-    options->hashJoinOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();
+    options->joinOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
+    options->joinOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
+    options->joinOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();
     /// zero indicate that it has not been set in the yaml config
     if (queryCompilerConfiguration.maxHashTableSize.getValue() != 0)
     {
-        options->hashJoinOptions.totalSizeForDataStructures = queryCompilerConfiguration.maxHashTableSize.getValue();
+        options->joinOptions.totalSizeForDataStructures = queryCompilerConfiguration.maxHashTableSize.getValue();
     }
 
     options->joinStrategy = queryCompilerConfiguration.joinStrategy;
