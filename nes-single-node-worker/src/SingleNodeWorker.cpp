@@ -31,7 +31,7 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : qc(std::make_unique<QueryCompilation::NautilusQueryCompiler>(
-          QueryCompilation::queryCompilationOptionsFromConfig(configuration.queryCompilerConfiguration),
+          QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration).build())
 {
