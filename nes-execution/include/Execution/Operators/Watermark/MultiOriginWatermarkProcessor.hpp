@@ -18,6 +18,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sequencing/SequenceData.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -44,13 +45,13 @@ public:
      * @param origin of the watermark ts
      * @return currentWatermarkTs
      */
-    uint64_t updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin);
+    Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin);
 
     /**
      * @brief Returns the current watermark across all origins
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t getCurrentWatermark();
+    [[nodiscard]] Timestamp getCurrentWatermark();
 
     std::string getCurrentStatus();
 
