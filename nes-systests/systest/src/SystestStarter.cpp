@@ -276,12 +276,12 @@ int main(int argc, const char** argv)
     using namespace NES;
     int returnCode = 0;
 
+    setupLogging();
+
     try
     {
         /// Read the configuration
         auto config = Systest::readConfiguration(argc, argv);
-
-        setupLogging();
 
         auto testMap = Systest::loadTestFileMap(config);
         const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
@@ -303,7 +303,7 @@ int main(int argc, const char** argv)
         }
         else
         {
-            auto singleNodeWorkerConfiguration = Configuration::SingleNodeWorkerConfiguration();
+            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(Configuration::SingleNodeWorkerConfiguration{});
             if (not config.workerConfig.getValue().empty())
             {
                 singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
