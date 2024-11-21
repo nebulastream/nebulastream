@@ -13,11 +13,9 @@
 */
 #pragma once
 
-#include <memory>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <string>
+#include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES::Sources::SourceValidationProvider
 {

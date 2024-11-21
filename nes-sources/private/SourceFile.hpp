@@ -14,11 +14,13 @@
 
 #pragma once
 
+#include <cstddef>
 #include <fstream>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -32,6 +34,11 @@ public:
 
     explicit SourceFile(const SourceDescriptor& sourceDescriptor);
     ~SourceFile() override = default;
+
+    FileSource(const FileSource&) = delete;
+    FileSource& operator=(const FileSource&) = delete;
+    FileSource(FileSource&&) = delete;
+    FileSource& operator=(FileSource&&) = delete;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
 
@@ -49,7 +56,7 @@ public:
 private:
     std::ifstream inputFile;
     std::string filePath;
-    size_t totalNumBytesRead;
+    size_t totalNumBytesRead{};
 };
 
 struct ConfigParametersCSV

@@ -16,6 +16,7 @@
 #include <sstream>
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <fmt/format.h>
 namespace NES::Sources
 {
 

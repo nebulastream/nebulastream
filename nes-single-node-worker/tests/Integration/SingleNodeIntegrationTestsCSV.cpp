@@ -17,9 +17,11 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>

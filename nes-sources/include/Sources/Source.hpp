@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <string>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -29,6 +30,11 @@ class Source
 public:
     Source() = default;
     virtual ~Source() = default;
+
+    Source(const Source&) = delete;
+    Source& operator=(const Source&) = delete;
+    Source(Source&&) = delete;
+    Source& operator=(Source&&) = delete;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;

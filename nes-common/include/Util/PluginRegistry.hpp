@@ -16,8 +16,10 @@
 #include <algorithm>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace NES
 {
@@ -35,11 +37,11 @@ public:
     Registry& operator=(Registry&& other) noexcept = delete;
     ~Registry() = default;
 
-    [[nodiscard]] bool contains(const typename Registrar::Signature::Key& key) const { return registryImpl.contains(key); }
+    [[nodiscard]] bool contains(const typename Registrar::Signature::KeyType& key) const { return registryImpl.contains(key); }
 
     template <typename... Args>
-    [[nodiscard]] std::optional<typename Registrar::Signature::Type>
-    create(const typename Registrar::Signature::Key& key, Args&&... args) const
+    [[nodiscard]] std::optional<typename Registrar::Signature::ReturnType>
+    create(const typename Registrar::Signature::KeyType& key, Args&&... args) const
     {
         if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
         {
@@ -49,9 +51,9 @@ public:
         return std::nullopt;
     }
 
-    [[nodiscard]] std::vector<typename Registrar::Signature::Key> getRegisteredNames() const
+    [[nodiscard]] std::vector<typename Registrar::Signature::KeyType> getRegisteredNames() const
     {
-        std::vector<typename Registrar::Signature::Key> names;
+        std::vector<typename Registrar::Signature::KeyType> names;
         names.reserve(registryImpl.size());
         std::ranges::transform(registryImpl, std::back_inserter(names), [](const auto& kv) { return kv.first; });
         return names;
@@ -63,13 +65,13 @@ protected:
 
 private:
     /// Only the Registrar can register new plugins.
-    void registerPlugin(typename Registrar::Signature::Key key, typename Registrar::Signature::CreatorFn fn)
+    void registerPlugin(typename Registrar::Signature::KeyType key, typename Registrar::Signature::CreatorFn creatorFunction)
     {
-        registryImpl.emplace(std::move(key), std::move(fn));
+        registryImpl.emplace(std::move(key), std::move(creatorFunction));
     }
     friend Registrar;
 
-    std::unordered_map<typename Registrar::Signature::Key, typename Registrar::Signature::CreatorFn> registryImpl;
+    std::unordered_map<typename Registrar::Signature::KeyType, typename Registrar::Signature::CreatorFn> registryImpl;
 };
 
 /// Tagging the Registrar avoids the following issue:
@@ -88,12 +90,13 @@ class Registrar
     friend class Registry;
 };
 
-template <typename K, typename BaseType, typename... Args>
+
+template <typename KeyTypeT, typename ReturnTypeT, typename... Args>
 struct RegistrySignature
 {
-    using Key = K;
-    using Type = std::unique_ptr<BaseType>;
-    using CreatorFn = std::function<Type(Args...)>;
+    using KeyType = KeyTypeT;
+    using ReturnType = std::unique_ptr<ReturnTypeT>;
+    using CreatorFn = std::function<ReturnType(Args...)>;
 };
 
 /// CRTPBase of the Registry. This allows the `instance()` method to return a concrete instance of the registry, which is useful

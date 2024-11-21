@@ -20,7 +20,6 @@ using namespace std::string_literals;
 namespace NES::Configurations
 {
 
-/// input format enum gives information whether a JSON or CSV was used to transfer data
 enum class InputFormat : uint8_t
 {
     CSV

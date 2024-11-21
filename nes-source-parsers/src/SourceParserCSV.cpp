@@ -14,26 +14,36 @@
 
 #include <charconv>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <format>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <utility>
+#include <vector>
+#include <strings.h>
 #include <API/AttributeField.hpp>
-#include <Exceptions/RuntimeException.hpp>
+#include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SourceParsers/SourceParser.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 #include <fmt/core.h>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <SourceParserCSV.hpp>
 #include <SourceParserRegistry.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::SourceParsers
 {
@@ -43,9 +53,9 @@ struct PartialTuple
     uint64_t offsetInBuffer;
     Memory::TupleBuffer tbRaw;
 
-    std::string_view getStringView() const
+    [[nodiscard]] std::string_view getStringView() const
     {
-        return std::string_view(tbRaw.getBuffer<const char>() + offsetInBuffer, tbRaw.getBufferSize() - offsetInBuffer);
+        return {tbRaw.getBuffer<const char>() + offsetInBuffer, tbRaw.getBufferSize() - offsetInBuffer};
     }
 };
 
@@ -69,9 +79,9 @@ public:
 
     int8_t* getCurrentFieldPointer() { return (this->tupleBufferFormatted.getBuffer() + currentFieldOffsetTBFormatted); }
 
-    bool hasOneMoreTupleInTBRaw() const { return this->currentTupleEndTBRaw != std::string::npos; }
+    [[nodiscard]] bool hasOneMoreTupleInTBRaw() const { return this->currentTupleEndTBRaw != std::string::npos; }
 
-    size_t sizeOfCurrentTuple() const { return this->currentTupleEndTBRaw - this->currentTupleStartTBRaw; }
+    [[nodiscard]] size_t sizeOfCurrentTuple() const { return this->currentTupleEndTBRaw - this->currentTupleStartTBRaw; }
 
     void progressOneTuple()
     {
@@ -80,14 +90,17 @@ public:
         currentTupleEndTBRaw = findIndexOfNextTuple();
     }
 
-    bool hasSpaceForTupleInTBFormatted() const
+    [[nodiscard]] bool hasSpaceForTupleInTBFormatted() const
     {
         return tupleBufferFormatted.getBufferSize() - currentFieldOffsetTBFormatted >= tupleSizeInBytes;
     }
 
-    bool hasPartialTuple() const { return not stagingAreaTBRaw.empty(); }
+    [[nodiscard]] bool hasPartialTuple() const { return not stagingAreaTBRaw.empty(); }
 
-    std::string_view getNextTuple() const { return this->tupleBufferRawSV.substr(currentTupleStartTBRaw, sizeOfCurrentTuple()); }
+    [[nodiscard]] std::string_view getNextTuple() const
+    {
+        return this->tupleBufferRawSV.substr(currentTupleStartTBRaw, sizeOfCurrentTuple());
+    }
 
     void setNewTupleBufferFormatted(NES::Memory::TupleBuffer&& tupleBufferFormatted)
     {
@@ -121,7 +134,7 @@ public:
     }
 
     /// Getter & Setter
-    uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
+    [[nodiscard]] uint64_t getNumSchemaFields() const { return this->numSchemaFields; }
     NES::Memory::TupleBuffer& getTupleBufferFormatted() { return this->tupleBufferFormatted; }
     void setNumberOfTuplesInTBFormatted() { this->tupleBufferFormatted.setNumberOfTuples(numTuplesInTBFormatted); }
     const std::string& getTupleSeparator() { return this->tupleSeparator; }
@@ -166,12 +179,119 @@ auto parseIntegerString()
     };
 }
 
-SourceParserCSV::SourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string delimiter)
-    : fieldDelimiter(std::move(delimiter))
-    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleSeparator), schema.getSchemaSizeInBytes(), schema.getSize()))
+void addBasicTypeParseFunction(
+    const BasicPhysicalType& basicPhysicalType, std::vector<SourceParserCSV::CastFunctionSignature>& fieldParseFunctions)
 {
+    switch (basicPhysicalType.nativeType)
+    {
+        case NES::BasicPhysicalType::NativeType::INT_8: {
+            fieldParseFunctions.emplace_back(parseIntegerString<int8_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::INT_16: {
+            fieldParseFunctions.emplace_back(parseIntegerString<int16_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::INT_32: {
+            fieldParseFunctions.emplace_back(parseIntegerString<int32_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::INT_64: {
+            fieldParseFunctions.emplace_back(parseIntegerString<int64_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::UINT_8: {
+            fieldParseFunctions.emplace_back(parseIntegerString<uint8_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::UINT_16: {
+            fieldParseFunctions.emplace_back(parseIntegerString<uint16_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::UINT_32: {
+            fieldParseFunctions.emplace_back(parseIntegerString<uint32_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::UINT_64: {
+            fieldParseFunctions.emplace_back(parseIntegerString<uint64_t>());
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::FLOAT: {
+            const auto validateAndParseFloat
+                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
+            {
+                if (fieldValueString.find(',') != std::string_view::npos)
+                {
+                    throw CannotFormatMalformedStringValue(
+                        "Floats must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
+                }
+                *reinterpret_cast<float*>(fieldPointer) = std::stof(fieldValueString);
+            };
+            fieldParseFunctions.emplace_back(std::move(validateAndParseFloat));
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::DOUBLE: {
+            const auto validateAndParseDouble
+                = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
+            {
+                if (fieldValueString.find(',') != std::string_view::npos)
+                {
+                    throw CannotFormatMalformedStringValue(
+                        "Doubles must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
+                }
+                *reinterpret_cast<double*>(fieldPointer) = std::stod(fieldValueString);
+            };
+            fieldParseFunctions.emplace_back(std::move(validateAndParseDouble));
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::CHAR: {
+            ///verify that only a single char was transmitted
+            fieldParseFunctions.emplace_back(
+                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
+                {
+                    PRECONDITION(inputString.size() == 1, "A char must not have a size bigger than 1.");
+                    const auto value = inputString.front();
+                    *fieldPointer = value;
+                    return sizeof(char);
+                });
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::BOOLEAN: {
+            ///verify that a valid bool was transmitted (valid{true,false,0,1})
+            fieldParseFunctions.emplace_back(
+                [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
+                {
+                    bool const value = (strcasecmp(inputString.c_str(), "true") == 0) || (strcasecmp(inputString.c_str(), "1") == 0);
+                    if (!value)
+                    {
+                        if ((static_cast<int>(strcasecmp(inputString.c_str(), "false") != 0) != 0)
+                            && (strcasecmp(inputString.c_str(), "0") != 0))
+                        {
+                            NES_FATAL_ERROR(
+                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
+                                inputString.c_str());
+                            throw CannotFormatMalformedStringValue("Value: {} is not a boolean", inputString);
+                        }
+                    }
+                    *fieldPointer = static_cast<int8_t>(value);
+                    return sizeof(bool);
+                });
+            break;
+        }
+        case NES::BasicPhysicalType::NativeType::UNDEFINED:
+            NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
+    }
+}
+
+SourceParserCSV::SourceParserCSV(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+    : fieldDelimiter(std::move(fieldDelimiter))
+    , progressTracker(std::make_unique<ProgressTracker>(std::move(tupleDelimiter), schema.getSchemaSizeInBytes(), schema.getSize()))
+{
+    this->fieldSizes.reserve(schema.fields.size());
+    this->fieldParseFunctions.reserve(schema.fields.size());
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     const auto defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    physicalTypes.reserve(schema.fields.size());
     for (const AttributeFieldPtr& field : schema.fields)
     {
         physicalTypes.emplace_back(defaultPhysicalTypeFactory.getPhysicalType(field->getDataType()));
@@ -187,104 +307,7 @@ SourceParserCSV::SourceParserCSV(const Schema& schema, std::string tupleSeparato
         /// Store the parsing function in a vector.
         if (const auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
-            switch (basicPhysicalType->nativeType)
-            {
-                case NES::BasicPhysicalType::NativeType::INT_8: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<int8_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_16: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<int16_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_32: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<int32_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::INT_64: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<int64_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_8: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<uint8_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_16: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<uint16_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_32: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<uint32_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UINT_64: {
-                    this->fieldParseFunctions.emplace_back(parseIntegerString<uint64_t>());
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::FLOAT: {
-                    const auto validateAndParseFloat
-                        = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
-                    {
-                        if (fieldValueString.find(',') != std::string_view::npos)
-                        {
-                            throw CannotFormatMalformedStringValue(
-                                "Floats must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
-                        }
-                        *reinterpret_cast<float*>(fieldPointer) = std::stof(fieldValueString);
-                    };
-                    this->fieldParseFunctions.emplace_back(std::move(validateAndParseFloat));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::DOUBLE: {
-                    const auto validateAndParseDouble
-                        = [](const std::string& fieldValueString, int8_t* fieldPointer, NES::Memory::AbstractBufferProvider&)
-                    {
-                        if (fieldValueString.find(',') != std::string_view::npos)
-                        {
-                            throw CannotFormatMalformedStringValue(
-                                "Doubles must use '.' as the decimal point. Parsed: {}, which uses ',' instead.", fieldValueString);
-                        }
-                        *reinterpret_cast<double*>(fieldPointer) = std::stod(fieldValueString);
-                    };
-                    this->fieldParseFunctions.emplace_back(std::move(validateAndParseDouble));
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::CHAR: {
-                    ///verify that only a single char was transmitted
-                    this->fieldParseFunctions.emplace_back(
-                        [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
-                        {
-                            PRECONDITION(inputString.size() == 1, "A char must not have a size bigger than 1.");
-                            const auto value = inputString.front();
-                            *fieldPointer = value;
-                            return sizeof(char);
-                        });
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    ///verify that a valid bool was transmitted (valid{true,false,0,1})
-                    this->fieldParseFunctions.emplace_back(
-                        [](const std::string& inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider&)
-                        {
-                            bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
-                            if (!value)
-                            {
-                                if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0"))
-                                {
-                                    NES_FATAL_ERROR(
-                                        "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                        inputString.c_str());
-                                    throw CannotFormatMalformedStringValue("Value: {} is not a boolean", inputString);
-                                }
-                            }
-                            *fieldPointer = value;
-                            return sizeof(bool);
-                        });
-                    break;
-                }
-                case NES::BasicPhysicalType::NativeType::UNDEFINED:
-                    NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
-            }
+            addBasicTypeParseFunction(*basicPhysicalType, this->fieldParseFunctions);
         }
         else
         {
@@ -303,7 +326,7 @@ SourceParserCSV::SourceParserCSV(const Schema& schema, std::string tupleSeparato
                     *childBufferVal.getBuffer<uint32_t>() = valueLength;
                     std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), inputString.data(), valueLength);
                     const auto index = progressTracker->getTupleBufferFormatted().storeChildBuffer(childBufferVal);
-                    auto childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
+                    auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
                     *childBufferIndexPointer = index;
                     return sizeof(uint32_t);
                 });
@@ -398,8 +421,8 @@ void SourceParserCSV::parseStringIntoTupleBuffer(
     }
 }
 
-std::unique_ptr<SourceParser> SourceParserGeneratedRegistrar::RegisterSourceParserCSV(
-    const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter)
+std::unique_ptr<SourceParser>
+SourceParserGeneratedRegistrar::RegisterSourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter)
 {
     return std::make_unique<SourceParserCSV>(schema, std::move(tupleSeparator), std::move(fieldDelimiter));
 }

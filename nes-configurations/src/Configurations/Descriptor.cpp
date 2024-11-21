@@ -17,7 +17,6 @@
 #include <sstream>
 #include <variant>
 #include <Configurations/Descriptor.hpp>
-#include <fmt/ranges.h>
 
 namespace NES::Configurations
 {
