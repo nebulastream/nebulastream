@@ -31,7 +31,7 @@ Moreover, there should be a centralized `BufferManager` for just the sources.
 It can be aware of the sources and their requirements holds the information it needs to facilitate fairness and maximum efficiency.
 In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source (**G3, fairness and demand-based buffer distribution**, addresses P3).
 
-In addition, the source-local `BufferManager` should be extended to expose an asynchronous interface for sources to use.
+In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within source threads wherever possible.
 We propose a simple policy and provide a PoC implementation to showcase this.
 
@@ -40,17 +40,17 @@ The following three goals are additional goals that do not address specific prob
 The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
 Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
 This complements with the [removal of parsing from the sources](https://github.com/nebulastream/nebulastream-public/pull/492).
-A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G3, simplicity and decomposition**).
+A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G4, simplicity and decomposition**).
 
 The implementation should conform to the past effort of refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md).
 We want this redesign to not impact the construction of sources at all, we aim to only redesign the execution model.
-The impact on the rest of the codebase should be minimal (**G4, non-invasiveness**).
+The impact on the rest of the codebase should be minimal (**G5, non-invasiveness**).
 We do not want the `QueryEngine` that manages sources to know or depend on the internals of the execution model of the sources.
 
 Errors should be handled transparently as described in the [DD on error handling](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240711_error_handling.md).
-Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component (**G5, fault transparency**).
+Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component (**G6, fault transparency**).
 
-It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G6, backwards compatibility)**.
+It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G7, backwards compatibility)**.
 
 # Non-Goals
 - **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here. For further details, see the [BM spilling & redesign DD](https://db.in.tum.de/~fent/papers/coroutines.pdf?lang=de)
@@ -181,7 +181,7 @@ In summary, systems using async I/O get the following benefits:
 The proposed solution depends on these key design decisions:
 1. We redesign sources to make asynchronous calls inside coroutines to allow efficient data ingestion for thousands of sources on relatively few threads (G1).
 2. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool (G1).
-3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G6).
+3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G7).
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
 4. We have a single separate the I/O buffer pool shared among sources to prevent deadlocks (G2).
 5. A local `BufferManager` maintains the buffer pool for the sources and exposes an asynchronous interface to prevent blocking I/O threads.
@@ -372,7 +372,7 @@ classDiagram
     }
 ```
 
-The sources' implementations will be very simple, requiring only logic to open/close resources and fill a single buffer with data (G3):
+The sources' implementations will be very simple, requiring only logic to open/close resources and fill a single buffer with data (G4):
 ```cpp
 class TCPSource : public Source
 {
