@@ -54,7 +54,7 @@ PlacementAdditionResult
 MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                               DecomposedQueryPlanVersion querySubPlanVersion) {
+                                               DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Create copy of the query plan
@@ -75,7 +75,7 @@ MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion, faultToleranceType);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
