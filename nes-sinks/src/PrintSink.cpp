@@ -20,17 +20,18 @@
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/PrintSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sinks/SinkPrint.hpp>
 #include <Sinks/SinkRegistry.hpp>
-#include <SinksValidation/SinkRegistryValidation.hpp>
+#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sinks
 {
 
-SinkPrint::SinkPrint(const QueryId queryId, const SinkDescriptor& sinkDescriptor) : Sink(queryId), outputStream(std::cout)
+PrintSink::PrintSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor) : Sink(queryId), outputStream(std::cout)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
@@ -42,41 +43,41 @@ SinkPrint::SinkPrint(const QueryId queryId, const SinkDescriptor& sinkDescriptor
     }
 }
 
-bool SinkPrint::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
+bool PrintSink::emitTupleBuffer(Memory::TupleBuffer& tupleBuffer)
 {
-    PRECONDITION(inputBuffer, "Invalid input buffer in SinkPrint.");
+    PRECONDITION(tupleBuffer, "Invalid input buffer in PrintSink.");
 
-    const auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
+    const auto bufferAsString = outputParser->getFormattedBuffer(tupleBuffer);
     outputStream << bufferAsString << std::endl;
     return true;
 }
 
-std::ostream& SinkPrint::toString(std::ostream& str) const
+std::ostream& PrintSink::toString(std::ostream& str) const
 {
     str << fmt::format("PRINT_SINK(Writing to: std::cout, using outputParser: {}", *outputParser);
     return str;
 }
 
-bool SinkPrint::equals(const Sink& other) const
+bool PrintSink::equals(const Sink& other) const
 {
     return this->queryId == other.queryId;
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config>
-SinkPrint::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SinkGeneratedRegistrarValidation::RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&& sinkConfig)
+SinkValidationGeneratedRegistrar::RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&& sinkConfig)
 {
-    return SinkPrint::validateAndFormat(std::move(sinkConfig));
+    return PrintSink::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkPrint(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterPrintSink(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<SinkPrint>(queryId, sinkDescriptor);
+    return std::make_unique<PrintSink>(queryId, sinkDescriptor);
 }
 
 }

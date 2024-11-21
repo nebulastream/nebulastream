@@ -11,12 +11,12 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        SourceFile.cpp
+        FileSource.cpp
         SourceThread.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
         SourceValidationProvider.cpp
-        SourceTCP.cpp
+        TCPSource.cpp
 )

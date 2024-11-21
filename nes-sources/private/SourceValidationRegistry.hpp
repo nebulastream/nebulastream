@@ -22,14 +22,14 @@
 namespace NES::Sources
 {
 
-using SourceRegistryValidationSignature
+using SourceValidationRegistrySignature
     = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
-class SourceRegistryValidation final : public BaseRegistry<SourceRegistryValidation, SourceRegistryValidationSignature>
+class SourceValidationRegistry final : public BaseRegistry<SourceValidationRegistry, SourceValidationRegistrySignature>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
-#include <SourceGeneratedRegistrarValidation.inc>
-#undef INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
+#define INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
+#include <SourceValidationGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY

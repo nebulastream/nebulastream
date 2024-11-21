@@ -28,8 +28,8 @@
 namespace NES::Sources::SourceGeneratedRegistrar
 {
 
-std::unique_ptr<Source> RegisterSourceFile(const SourceDescriptor&);
-std::unique_ptr<Source> RegisterSourceTCP(const SourceDescriptor&);
+std::unique_ptr<Source> RegisterFileSource(const SourceDescriptor&);
+std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor&);
 
 }
 
@@ -40,7 +40,7 @@ inline void
 Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrar;
-    registry.registerPlugin("File", RegisterSourceFile);
-    registry.registerPlugin("TCP", RegisterSourceTCP);
+    registry.registerPlugin("File", RegisterFileSource);
+    registry.registerPlugin("TCP", RegisterTCPSource);
 }
 }

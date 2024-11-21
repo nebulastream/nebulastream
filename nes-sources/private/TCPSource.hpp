@@ -50,7 +50,7 @@ struct ConfigParametersTCP
                 {
                     return portNumber;
                 }
-                NES_ERROR("SourceTCP specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+                NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
             return portNumber;
         }};
@@ -69,7 +69,7 @@ struct ConfigParametersTCP
             {
                 return AF_INET6;
             }
-            NES_ERROR("SourceTCP: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
+            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
             return std::nullopt;
         }};
     static inline const Configurations::DescriptorConfig::ConfigParameter<int32_t> TYPE{
@@ -103,7 +103,7 @@ struct ConfigParametersTCP
                 return SOCK_RDM;
             }
             NES_ERROR(
-                "SourceTCP: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
+                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
                 "SOCK_RDM",
                 socketTypeString)
             return std::nullopt;
@@ -130,7 +130,7 @@ struct ConfigParametersTCP
             HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
 };
 
-class SourceTCP : public Source
+class TCPSource : public Source
 {
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
     constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
@@ -140,8 +140,8 @@ class SourceTCP : public Source
 public:
     static inline const std::string NAME = "TCP";
 
-    explicit SourceTCP(const SourceDescriptor& sourceDescriptor);
-    ~SourceTCP() override = default;
+    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
+    ~TCPSource() override = default;
 
     TCPSource(const TCPSource&) = delete;
     TCPSource& operator=(const TCPSource&) = delete;

@@ -14,7 +14,7 @@
 
 #pragma once
 
-#ifndef INCLUDED_FROM_SINK_REGISTRY_VALIDATION
+#ifndef INCLUDED_FROM_SINK_VALIDATION_REGISTRY
 #    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
 #endif
 
@@ -22,7 +22,7 @@
 #include <Util/PluginRegistry.hpp>
 #include <Configurations/Descriptor.hpp>
 
-namespace NES::Sinks::SinkGeneratedRegistrarValidation
+namespace NES::Sinks::SinkValidationGeneratedRegistrar
 {
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&&);
@@ -33,10 +33,10 @@ std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValid
 namespace NES
 {
 template <>
-inline void Registrar<Sinks::SinkRegistryValidation, Sinks::SinkRegistryValidationSignature>::registerAll(
+inline void Registrar<Sinks::SinkValidationRegistry, Sinks::SinkRegistryValidationSignature>::registerAll(
     [[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sinks::SinkGeneratedRegistrarValidation;
+    using namespace NES::Sinks::SinkValidationGeneratedRegistrar;
     registry.registerPlugin("Print", RegisterSinkValidationPrint);
     registry.registerPlugin("File", RegisterSinkValidationFile);
 }

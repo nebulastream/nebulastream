@@ -125,8 +125,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 .sourceConfig = {{"type", "File"}, {"filePath", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv"}}});
 
             /// Write the tuples to a tmp file
-            std::ofstream sourceFile(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
-            if (!sourceFile)
+            std::ofstream fileSource(tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
+            if (!fileSource)
             {
                 NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testFileName + std::to_string(sourceIndex) + ".csv");
                 return;
@@ -135,7 +135,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             /// Write tuples to csv file
             for (const auto& tuple : source.tuples)
             {
-                sourceFile << tuple << '\n';
+                fileSource << tuple << '\n';
             }
         });
 

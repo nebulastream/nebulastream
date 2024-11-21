@@ -15,7 +15,7 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_SOURCE_REGISTRY_VALIDATION
+#ifndef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
 
@@ -25,7 +25,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Sources::SourceGeneratedRegistrarValidation
+namespace NES::Sources::SourceValidationGeneratedRegistrar
 {
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&&);
@@ -38,9 +38,9 @@ namespace NES
 
 template <>
 inline void
-Registrar<Sources::SourceRegistryValidation, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
+Registrar<Sources::SourceValidationRegistry, Sources::SourceRegistryValidationSignature>::registerAll(Registry<Registrar>& registry)
 {
-    using namespace NES::Sources::SourceGeneratedRegistrarValidation;
+    using namespace NES::Sources::SourceValidationGeneratedRegistrar;
     registry.registerPlugin("File", RegisterSourceValidationFile);
     registry.registerPlugin("TCP", RegisterSourceValidationTCP);
 }

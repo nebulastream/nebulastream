@@ -14,27 +14,27 @@
 
 #include <filesystem>
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <utility>
-
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/FileSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sinks/SinkFile.hpp>
 #include <Sinks/SinkRegistry.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <SinksValidation/SinkRegistryValidation.hpp>
+#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sinks
 {
 
-SinkFile::SinkFile(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
+FileSink::FileSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
     : Sink(queryId)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
@@ -50,22 +50,22 @@ SinkFile::SinkFile(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
     }
 }
 
-std::ostream& SinkFile::toString(std::ostream& str) const
+std::ostream& FileSink::toString(std::ostream& str) const
 {
-    str << fmt::format("SinkFile(filePathOutput: {}, isAppend: {})", outputFilePath, isAppend);
+    str << fmt::format("FileSink(filePathOutput: {}, isAppend: {})", outputFilePath, isAppend);
     return str;
 }
-bool SinkFile::equals(const Sink& other) const
+bool FileSink::equals(const Sink& other) const
 {
-    if (const auto* otherSinkFile = dynamic_cast<const SinkFile*>(&other))
+    if (const auto* otherFileSink = dynamic_cast<const FileSink*>(&other))
     {
-        return (this->queryId == other.queryId) && (this->outputFilePath == otherSinkFile->outputFilePath)
-            && (this->isAppend == otherSinkFile->isAppend) && (this->isOpen == otherSinkFile->isOpen);
+        return (this->queryId == other.queryId) && (this->outputFilePath == otherFileSink->outputFilePath)
+            && (this->isAppend == otherFileSink->isAppend) && (this->isOpen == otherFileSink->isOpen);
     }
     return false;
 }
 
-void SinkFile::open()
+void FileSink::open()
 {
     NES_DEBUG("Setting up file sink: {}", *this);
     /// Remove an existing file unless the isAppend mode is isAppend.
@@ -107,15 +107,15 @@ void SinkFile::open()
     }
 }
 
-void SinkFile::close()
+void FileSink::close()
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
     outputFileStream.close();
 }
 
-bool SinkFile::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
+bool FileSink::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
 {
-    PRECONDITION(inputBuffer, "Invalid input buffer in SinkFile.");
+    PRECONDITION(inputBuffer, "Invalid input buffer in FileSink.");
     if (!isOpen)
     {
         NES_ERROR("The output file could not be opened during setup of the file sink.");
@@ -132,20 +132,20 @@ bool SinkFile::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
     return true;
 }
 
-std::unique_ptr<Configurations::DescriptorConfig::Config> SinkFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+std::unique_ptr<Configurations::DescriptorConfig::Config> FileSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SinkGeneratedRegistrarValidation::RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&& sinkConfig)
+SinkValidationGeneratedRegistrar::RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&& sinkConfig)
 {
-    return SinkFile::validateAndFormat(std::move(sinkConfig));
+    return FileSink::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterSinkFile(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterFileSink(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<SinkFile>(queryId, sinkDescriptor);
+    return std::make_unique<FileSink>(queryId, sinkDescriptor);
 }
 
 }
