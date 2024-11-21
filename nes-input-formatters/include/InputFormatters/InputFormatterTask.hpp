@@ -72,7 +72,6 @@ public:
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         Runtime::WorkerContext& workerContext) override;
 
-    // void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData);
 
     virtual void
     parseTupleBufferRaw(const NES::Memory::TupleBuffer& tbRaw, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, Runtime::WorkerContext& workerContext,
@@ -83,11 +82,6 @@ public:
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
-
-// private:
-//     ReturnType::EmitFunction emitFunction;
-    // uint64_t maxSequenceNumber{};
-    // OriginId originId = OriginId(1);
 };
 
 
