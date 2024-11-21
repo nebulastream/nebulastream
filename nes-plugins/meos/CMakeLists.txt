@@ -31,7 +31,7 @@ else()
     include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
 endif()
 
-# Manually specify the source files for nes-meos
+# Specify the source files for nes-meos
 set(NES_COMPILER_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Execution/Operators/Meos/Meos.cpp  # Add necessary files here
 )
@@ -40,9 +40,9 @@ add_library(nes-meos SHARED ${NES_COMPILER_SOURCE_FILES})
 
 # Link libraries
 if (APPLE)
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib pq)
+    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib)
 else()
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos pq)
+    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos)
 endif()
 
 link_directories(${MEOS_INCLUDE_DIR})

@@ -19,6 +19,9 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
+extern "C" {
+#include <meos.h>
+}
 
 /**
  * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring (currently only tensorflow) machine learning model over incoming data stream.

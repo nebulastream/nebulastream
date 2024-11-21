@@ -65,6 +65,7 @@ option(NES_USE_GPU "Build with GPU acceleration" OFF)
 option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
 option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
 option(NES_BUILD_PLUGIN_MEOS "Build MEOS Plugin support" ON)
+option(USE_MEOS "Build MEOS main support" ON)
 option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
 option(NES_BUILD_PLUGIN_CUDA "Build CUDA Plugin" OFF)
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
@@ -689,6 +690,29 @@ if (NES_USE_GPU)
     set(NES_TEST_TIMEOUT 300)
     add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 endif ()
+
+
+if (USE_MEOS)
+    message(STATUS "Building with MEOS support")
+    # Detect the platform
+    if (APPLE)
+        message(STATUS "Building on macOS")
+        # Set the include and library directories for Homebrew (macOS)
+        set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
+        set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
+        set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
+        set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
+        include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
+        link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
+
+    else()
+        message(STATUS "Building on Linux")
+
+        # Default behavior for Linux
+        find_package(meos REQUIRED)
+        include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
+    endif()
+endif()
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)

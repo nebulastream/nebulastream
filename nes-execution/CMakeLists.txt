@@ -17,11 +17,29 @@ include_directories(tests/include)
 add_subdirectory(src)
 
 get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
+# Detect the platform
+if (APPLE)
+    message(STATUS "Building on MEOS in nes-execution")
+    # Set the include and library directories for Homebrew (macOS)
+    set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
+    set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
+    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
+    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
+    link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
+
+else()
+    message(STATUS "Building on Linux")
+
+    # Default behavior for Linux
+    find_package(meos REQUIRED)
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
+endif()
 
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
-target_link_libraries(nes-execution PUBLIC nes-nautilus)
+target_link_libraries(nes-execution PUBLIC nes-nautilus /opt/homebrew/lib/libmeos.dylib)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

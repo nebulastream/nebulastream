@@ -18,9 +18,7 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
-// extern "C" {
-// #include <meos.h>
-// }
+
 
 MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
     : left(left), middle(middle), right(right) {}
@@ -34,7 +32,11 @@ MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& m
 double meosT(double x, double y, double z) {
     // Implement your logic here
     NES_INFO("meosT called with x: {}, y: {}, z: {}", x, y, z);
-    return x;
+    meos_initialize("UTC", NULL);
+
+    NES_INFO("meos initialized");
+
+    return true;
 }
 
 Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
