@@ -36,9 +36,9 @@
 struct InputValue {
     uint64_t timestamp;
     uint64_t mmsi;
-    float latitude;
-    float longitude;
-    float sog;
+    double latitude;
+    double longitude;
+    double sog;
 };
 
 namespace NES {
@@ -75,8 +75,8 @@ TEST_F(MeosDeploy, testCSVIntersection) {
                               ->addField("timestamp", BasicType::UINT64)
                               ->addField("mmsi", BasicType::UINT64)
                               ->addField("latitude", BasicType::FLOAT64)
-                              ->addField("longitude", BasicType::FLOAT32)
-                              ->addField("sog", BasicType::FLOAT32);
+                              ->addField("longitude", BasicType::FLOAT64)
+                              ->addField("sog", BasicType::FLOAT64);
 
         ASSERT_EQ(sizeof(InputValue), meosSchema->getSchemaSizeInBytes());
 
@@ -90,7 +90,7 @@ TEST_F(MeosDeploy, testCSVIntersection) {
         auto query =
             Query::from("ais")
                 .filter(READ(Attribute("timestamp", BasicType::UINT64)) > 0
-                        && meosT(Attribute("longitude", BasicType::FLOAT32),
+                        && meosT(Attribute("longitude", BasicType::FLOAT64),
                                  Attribute("latitude", BasicType::FLOAT64),
                                  Attribute("timestamp", BasicType::UINT64))
                             > 0)

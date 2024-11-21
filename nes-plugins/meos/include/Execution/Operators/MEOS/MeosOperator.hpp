@@ -31,7 +31,6 @@ class MeosOperator : public Expression {
         return std::make_shared<MeosOperator>(left, middle, right);
     }
     Value<> execute(Record& record) const override;
-    double meosT(double x, double y, double z);
 
   private:
     const ExpressionPtr left;

@@ -16,6 +16,11 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <string>
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -23,18 +28,52 @@ namespace NES::Runtime::Execution::Expressions {
 MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
     : left(left), middle(middle), right(right) {}
 
+
+
+
+std::string convertSecondsToTimestamp(long long seconds) {
+    // Convert seconds to time_point
+    std::chrono::seconds sec(seconds);
+    std::chrono::time_point<std::chrono::system_clock> tp(sec);
+
+    // Convert to time_t for formatting
+    std::time_t time = std::chrono::system_clock::to_time_t(tp);
+
+    // Convert to local time
+    std::tm local_tm = *std::localtime(&time);
+
+    // Format the time as a string
+    std::ostringstream oss;
+    oss << std::put_time(&local_tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
+}
+
+
 /**
  * @brief This method calculates the log2 of x.
  * This function is basically a wrapper for std::log2 and enables us to use it in our execution engine framework.
  * @param x double
  * @return double
  */
-double meosT(double x, double y, double z) {
+double meosT(float lon, float lat, int t) {
     // Implement your logic here
-    NES_INFO("meosT called with x: {}, y: {}, z: {}", x, y, z);
+    NES_INFO("meosT called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
-
     NES_INFO("meos initialized");
+
+    STBox *stbx =stbox_in("SRID=4326;STBOX X((3.3615, 53.964367),(16.505853, 59.24544))");
+    NES_INFO("STBox created");
+    std::string t_out = convertSecondsToTimestamp(t);
+    std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
+    NES_INFO("Point buffer created {}", str_pointbuffer);
+
+    // if (eintersects_tpoint_geo((const Temporal *)planes[i].trip, continents[0].geom)){
+    //     NES_INFO("Intersects");
+    //     return true;
+    // } else {
+    //     NES_INFO("Does not intersect");
+    //     return false;
+    // }
 
     return true;
 }
@@ -44,42 +83,11 @@ Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
     Value middleValue = middle->execute(record);
     Value rightValue = right->execute(record);
 
-    if (leftValue->isType<Int8>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Int8>(), middleValue.as<Int8>(), rightValue.as<Int8>());
-    } else if (leftValue->isType<Int16>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Int16>(), middleValue.as<Int16>(), rightValue.as<Int16>());
-    } else if (leftValue->isType<Int32>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Int32>(), middleValue.as<Int32>(), rightValue.as<Int32>());
-    } else if (leftValue->isType<Int64>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Int64>(), middleValue.as<Int64>(), rightValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<UInt8>(), middleValue.as<UInt8>(), rightValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>()) {
-        return Nautilus::FunctionCall<>("meosT",
-                                        meosT,
-                                        leftValue.as<UInt16>(),
-                                        middleValue.as<UInt16>(),
-                                        rightValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>()) {
-        return Nautilus::FunctionCall<>("meosT",
-                                        meosT,
-                                        leftValue.as<UInt32>(),
-                                        middleValue.as<UInt32>(),
-                                        rightValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>()) {
-        return Nautilus::FunctionCall<>("meosT",
-                                        meosT,
-                                        leftValue.as<UInt64>(),
-                                        middleValue.as<UInt64>(),
-                                        rightValue.as<UInt64>());
-    } else if (leftValue->isType<Float>()) {
-        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Float>(), middleValue.as<Float>(), rightValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
-        return Nautilus::FunctionCall<>("meosT",
-                                        meosT,
-                                        leftValue.as<Double>(),
-                                        middleValue.as<Double>(),
-                                        rightValue.as<Double>());
+    NES_INFO("Executing MeosExpression types: left: {}, middle: {}, right: {}", leftValue->getType()->toString(), middleValue->getType()->toString(), rightValue->getType()->toString());
+
+     if (leftValue->isType<Double>()) {
+        return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Double>(), middleValue.as<Double>(), rightValue.as<Int64>());
+
     } else {
         // Throw an exception if no type is applicable
         throw Exceptions::NotImplementedException(
