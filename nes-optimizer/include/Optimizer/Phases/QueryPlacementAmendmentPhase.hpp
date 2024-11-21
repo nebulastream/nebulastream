@@ -18,6 +18,7 @@
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
@@ -262,7 +263,7 @@ class QueryPlacementAmendmentPhase {
                                  const std::set<LogicalOperatorPtr>& upstreamOperators,
                                  const std::set<LogicalOperatorPtr>& downstreamOperators,
                                  DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-                                 std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
+                                 std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts, FaultToleranceType faultToleranceType);
 
     /**
      * @brief Method to identify the location where reconfiguration marker needs to be pushed.

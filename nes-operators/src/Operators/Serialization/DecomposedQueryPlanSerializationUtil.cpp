@@ -13,6 +13,7 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
@@ -21,6 +22,7 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
 #include <Util/CompilerConstants.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryStateSerializationUtil.hpp>
 
@@ -51,6 +53,8 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     for (const auto& rootOperator : rootOperators) {
         auto rootOperatorId = rootOperator->getId();
         serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
+        if (rootOperator->instanceOf<SinkLogicalOperator>())
+            serializableDecomposedQueryPlan->set_faulttolerance(static_cast<uint64_t>(rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->getFaultToleranceType()));
     }
 
     //Serialize the sub query plan and query plan id
@@ -75,6 +79,9 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
         const auto& operatorId = OperatorId(serializedOperator.operatorid());
         deserializedOperator->setId(operatorId);
         operatorIdToOperatorMap[serializedOperator.operatorid()] = deserializedOperator;
+        if (deserializedOperator->instanceOf<SinkLogicalOperator>())
+            deserializedOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->setFaultToleranceType(
+                static_cast<FaultToleranceType>(serializableDecomposedQueryPlan->faulttolerance()));
     }
 
     //Add deserialized children

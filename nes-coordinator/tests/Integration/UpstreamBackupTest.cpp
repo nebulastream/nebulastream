@@ -11,6 +11,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <API/Query.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -21,11 +22,13 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Network/NetworkSink.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/RequestHandlerService.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
@@ -38,7 +41,7 @@ namespace NES {
 
 using namespace Configurations;
 const int timestamp = 1644426604;
-const uint64_t numberOfTupleBuffers = 4;
+const uint64_t numberOfTupleBuffers = 100;
 const uint64_t numberOfBuffersToProduceInTuples = 1000000;
 const uint64_t ingestionRate = 20;
 
@@ -59,15 +62,17 @@ class UpstreamBackupTest : public Testing::BaseIntegrationTest {
     void SetUp() override {
         BaseIntegrationTest::SetUp();
 
-        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 1);
+        bufferManager = std::make_shared<Runtime::BufferManager>(1024, 100);
 
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
         coordinatorConfig->restPort = *restPort;
+        coordinatorConfig->numberOfBuffersPerEpoch = 2;
 
         workerConfig = WorkerConfiguration::create();
         workerConfig->coordinatorPort = *rpcCoordinatorPort;
         workerConfig->numWorkerThreads = 1;
+        workerConfig->numberOfBuffersPerEpoch = 2;
 
         auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
             struct Record {
@@ -285,17 +290,12 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     //Setup Worker
     NES_INFO("UpstreamBackupTest: Start worker 1");
-    workerConfig->physicalSourceTypes.add(csvSourceTypeFinite);
+    workerConfig->physicalSourceTypes.add(lambdaSource);
 
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig));
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UpstreamBackupTest: Worker1 started successfully");
-
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig));
-    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart2);
-    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
 
     auto queryCatalog = crd->getQueryCatalog();
     auto requestHandlerService = crd->getRequestHandlerService();
@@ -305,17 +305,17 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query =
-        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
 
-    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query,
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(),
                                                                     Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE);
+                                                                    FaultToleranceType::UB);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000000));
 
     NES_INFO("UpstreamBackupTest: Remove query");
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
@@ -324,9 +324,6 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("UpstreamBackupTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
 
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

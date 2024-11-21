@@ -55,6 +55,7 @@ SharedQueryPlan::SharedQueryPlan(const QueryPlanPtr& queryPlan)
     runningQueryIds = {queryId};
     //Set the placement strategy used
     placementStrategy = queryPlan->getPlacementStrategy();
+    faultToleranceType = queryPlan->getFaultTolerance();
     //Initialize change log
     changeLog = Optimizer::ChangeLog::create();
 
@@ -487,6 +488,8 @@ SharedQueryPlanStatus SharedQueryPlan::getStatus() const { return sharedQueryPla
 void SharedQueryPlan::setStatus(SharedQueryPlanStatus newStatus) { this->sharedQueryPlanStatus = newStatus; }
 
 Optimizer::PlacementStrategy SharedQueryPlan::getPlacementStrategy() const { return placementStrategy; }
+
+FaultToleranceType SharedQueryPlan::getFaultToleranceType() const { return faultToleranceType; }
 
 void SharedQueryPlan::updateProcessedChangeLogTimestamp(Timestamp timestamp) {
     changeLog->updateProcessedChangeLogTimestamp(timestamp);

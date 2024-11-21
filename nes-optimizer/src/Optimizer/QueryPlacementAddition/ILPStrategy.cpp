@@ -81,7 +81,7 @@ static std::pair<OperatorId, WorkerId> deconstructTopologyId(std::string_view to
 PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                               DecomposedQueryPlanVersion querySubPlanVersion) {
+                                                               DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) {
 
     try {
         NES_INFO("Performing placement of the input query plan with id {}", sharedQueryId);
@@ -291,7 +291,7 @@ PlacementAdditionResult ILPStrategy::updateGlobalExecutionPlan(SharedQueryId sha
         addNetworkOperators(computedQuerySubPlans);
 
         // 11. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion, faultToleranceType);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }

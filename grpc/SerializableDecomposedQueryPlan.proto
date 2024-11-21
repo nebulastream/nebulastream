@@ -29,6 +29,7 @@ message SerializableDecomposedQueryPlan{
   optional uint32 decomposedQueryVersion = 4;
   optional uint64 sharedQueryPlanId = 5;
   optional SerializableQueryState state = 6;
+  uint64 faultTolerance = 7;
 }
 
 enum SerializableQueryState {

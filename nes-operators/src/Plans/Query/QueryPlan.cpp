@@ -272,6 +272,7 @@ QueryPlanPtr QueryPlan::copy() {
     auto newQueryPlan = QueryPlan::create(queryId, duplicateRootOperators);
     newQueryPlan->setSourceConsumed(sourceConsumed);
     newQueryPlan->setPlacementStrategy(placementStrategy);
+    newQueryPlan->setFaultTolerance(faultTolerance);
     newQueryPlan->setQueryState(currentState);
     return newQueryPlan;
 }

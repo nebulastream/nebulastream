@@ -117,7 +117,7 @@ class BasePlacementAdditionStrategy {
     virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
+                                                              DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) = 0;
 
   protected:
     /**

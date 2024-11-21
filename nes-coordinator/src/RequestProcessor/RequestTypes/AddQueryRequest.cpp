@@ -249,6 +249,7 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         queryId = PlanIdGenerator::getNextQueryId();
         queryPlan->setQueryId(queryId);
         queryPlan->setPlacementStrategy(queryPlacementStrategy);
+        queryPlan->setFaultTolerance(faultTolerance);
 
         // Perform semantic validation
         semanticQueryValidation->validate(queryPlan);

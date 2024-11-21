@@ -132,7 +132,6 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
     NES_TRACE("Network Sink: {} data sent with sequence number {} successful", decomposedQueryId, messageSequenceNumber + 1);
     //todo 4228: check if buffers are actually sent and not only inserted into to send queue
     insertIntoStorageCallback(inputBuffer, workerContext);
-    bufferCount++;
     return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes(), ++messageSequenceNumber);
 }
 
@@ -223,11 +222,9 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             break;
         }
         case Runtime::ReconfigurationType::PropagateEpoch: {
-            auto* channel = workerContext.getNetworkChannel(nesPartition.getOperatorId());
             //on arrival of an epoch barrier trim data in buffer storages in network sinks that belong to one query plan
             auto timestamp = task.getUserData<uint64_t>();
             NES_DEBUG("Executing PropagateEpoch on qep queryId={} punctuation={} ", decomposedQueryId, timestamp);
-            channel->sendEvent<Runtime::PropagateEpochEvent>(Runtime::EventType::kCustomEvent, timestamp);
             workerContext.trimStorage(nesPartition, timestamp);
             break;
         }
@@ -426,14 +423,25 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
 }
 
 void NetworkSink::onEvent(Runtime::BaseEvent& event) {
-    NES_DEBUG("NetworkSink::onEvent(event) called. uniqueNetworkSinkDescriptorId: {}", this->uniqueNetworkSinkDescriptorId);
-    auto qep = queryManager->getQueryExecutionPlan(DecomposedQueryIdWithVersion(decomposedQueryId, version));
-    qep->onEvent(event);
-
-    if (event.getEventType() == Runtime::EventType::kStartSourceEvent) {
-        // todo jm continue here. how to obtain local worker context?
+    NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
+              this->uniqueNetworkSinkDescriptorId);
+    if (event.getEventType() == Runtime::EventType::kCustomEvent) {
+        auto epochEvent = dynamic_cast<Runtime::CustomEventWrapper&>(event).data<Runtime::PropagateEpochEvent>();
+        auto epochBarrier = epochEvent->timestampValue();
+        auto success = queryManager->sendTrimmingReconfiguration(decomposedQueryId, epochBarrier);
+        if (success) {
+            success = queryManager->propagateEpochBackwards(decomposedQueryId, epochBarrier);
+            if (success) {
+                NES_DEBUG("NetworkSink::onEvent: epoch {} queryId {} trimmed", epochBarrier, decomposedQueryId);
+            } else {
+                NES_INFO("NetworkSink::onEvent end of propagation: epoch {} queryId {}", epochBarrier, decomposedQueryId);
+            }
+        } else {
+            NES_ERROR("NetworkSink::onEvent:: could not trim : epoch {} queryId {}", epochBarrier, decomposedQueryId);
+        }
     }
 }
+
 void NetworkSink::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef) {
     NES_DEBUG("NetworkSink::onEvent(event, wrkContext) called. uniqueNetworkSinkDescriptorId: {}",
               this->uniqueNetworkSinkDescriptorId);

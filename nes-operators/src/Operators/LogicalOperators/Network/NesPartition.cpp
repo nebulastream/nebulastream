@@ -26,6 +26,7 @@ NesPartition::NesPartition(SharedQueryId sharedQueryId,
     : sharedQueryId(sharedQueryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId) {}
 
 PartitionId NesPartition::getPartitionId() const { return partitionId; }
+
 OperatorId NesPartition::getOperatorId() const { return operatorId; }
 
 SharedQueryId NesPartition::getQueryId() const { return sharedQueryId; }

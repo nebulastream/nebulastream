@@ -230,7 +230,7 @@ class WorkerConfiguration : public BaseConfiguration {
 
 
 
- UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, 0, "Lambda source"};
+ UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, "0", "Lambda source"};
 
  UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, "1024", "Number of buffers to produce"};
 
