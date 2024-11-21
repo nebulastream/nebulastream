@@ -50,19 +50,18 @@ std::string convertSecondsToTimestamp(long long seconds) {
 
 
 /**
- * @brief This method calculates the log2 of x.
- * This function is basically a wrapper for std::log2 and enables us to use it in our execution engine framework.
- * @param x double
- * @return double
+ * @brief This method if the given point is within the given STBox at the given time.
+ * This function is basically a wrapper for MEOS ever intersects function.
+ * @param lon Longitude of the point
+* @param lat Latitude of the point
+* @param t Time of the point
+ * @return true if the point is within the STBox at the given time, false otherwise
  */
-double meosT(float lon, float lat, int t) {
+double meosT(double lon, double lat, int t) {
     // Implement your logic here
     NES_INFO("meosT called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
-    NES_INFO("meos initialized");
-
     STBox *stbx =stbox_in("SRID=4326;STBOX X((3.3615, 53.964367),(16.505853, 59.24544))");
-    NES_INFO("STBox created");
     std::string t_out = convertSecondsToTimestamp(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
@@ -83,7 +82,7 @@ Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
     Value middleValue = middle->execute(record);
     Value rightValue = right->execute(record);
 
-    NES_INFO("Executing MeosExpression types: left: {}, middle: {}, right: {}", leftValue->getType()->toString(), middleValue->getType()->toString(), rightValue->getType()->toString());
+    //NES_INFO("Executing MeosExpression types: left: {}, middle: {}, right: {}", leftValue->getType()->toString(), middleValue->getType()->toString(), rightValue->getType()->toString());
 
      if (leftValue->isType<Double>()) {
         return Nautilus::FunctionCall<>("meosT", meosT, leftValue.as<Double>(), middleValue.as<Double>(), rightValue.as<Int64>());
@@ -91,7 +90,7 @@ Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
     } else {
         // Throw an exception if no type is applicable
         throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+            "This expression is only defined on numeric input arguments that are Double, Double and Unsigned int.");
     }
 }
 static ExecutableFunctionRegistry::Add<TernaryFunctionProvider<MeosExpression>> MeosExpression("meosT");

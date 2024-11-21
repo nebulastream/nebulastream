@@ -38,24 +38,34 @@ Value<> ReadTernaryExpression::execute(NES::Nautilus::Record& record) const {
     Value rightValue = right->execute(record);
 
     if (leftValue->isType<Int8>()) {
+        NES_INFO("ReadTernaryExpression called Int8");
         return FunctionCall<>("readT", readT, leftValue.as<Int8>(), middleValue.as<Int8>(), rightValue.as<Int8>());
     } else if (leftValue->isType<Int16>()) {
+        NES_INFO("ReadTernaryExpression called Int16");
         return FunctionCall<>("readT", readT, leftValue.as<Int16>(), middleValue.as<Int16>(), rightValue.as<Int16>());
     } else if (leftValue->isType<Int32>()) {
+        NES_INFO("ReadTernaryExpression called Int32");
         return FunctionCall<>("readT", readT, leftValue.as<Int32>(), middleValue.as<Int32>(), rightValue.as<Int32>());
     } else if (leftValue->isType<Int64>()) {
+        NES_INFO("ReadTernaryExpression called Int64");
         return FunctionCall<>("readT", readT, leftValue.as<Int64>(), middleValue.as<Int64>(), rightValue.as<Int64>());
     } else if (leftValue->isType<UInt8>()) {
+        NES_INFO("ReadTernaryExpression called UInt8");
         return FunctionCall<>("readT", readT, leftValue.as<UInt8>(), middleValue.as<UInt8>(), rightValue.as<UInt8>());
     } else if (leftValue->isType<UInt16>()) {
+        NES_INFO("ReadTernaryExpression called UInt16");
         return FunctionCall<>("readT", readT, leftValue.as<UInt16>(), middleValue.as<UInt16>(), rightValue.as<UInt16>());
     } else if (leftValue->isType<UInt32>()) {
+        NES_INFO("ReadTernaryExpression called UInt32");
         return FunctionCall<>("readT", readT, leftValue.as<UInt32>(), middleValue.as<UInt32>(), rightValue.as<UInt32>());
     } else if (leftValue->isType<UInt64>()) {
+        NES_INFO("ReadTernaryExpression called UInt64");
         return FunctionCall<>("readT", readT, leftValue.as<UInt64>(), middleValue.as<UInt64>(), rightValue.as<UInt64>());
     } else if (leftValue->isType<Float>()) {
+        NES_INFO("ReadTernaryExpression called Float");
         return FunctionCall<>("readT", readT, leftValue.as<Float>(), middleValue.as<Float>(), rightValue.as<Float>());
     } else if (leftValue->isType<Double>()) {
+        NES_INFO("ReadTernaryExpression called Double");
         return FunctionCall<>("readT", readT, leftValue.as<Double>(), middleValue.as<Double>(), rightValue.as<Double>());
     } else {
         // Throw an exception if no type is applicable
