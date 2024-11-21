@@ -14,13 +14,16 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <string>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
 
 namespace NES::Sinks
 {
@@ -32,6 +35,11 @@ public:
     static inline std::string NAME = "File";
     explicit SinkFile(QueryId queryId, const SinkDescriptor& sinkDescriptor);
     ~SinkFile() override = default;
+
+    FileSink(const FileSink&) = delete;
+    FileSink& operator=(const FileSink&) = delete;
+    FileSink(FileSink&&) = delete;
+    FileSink& operator=(FileSink&&) = delete;
 
     /// Opens file and writes schema to file, if the file is empty.
     void open() override;

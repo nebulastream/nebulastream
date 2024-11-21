@@ -16,9 +16,9 @@
 
 #include <atomic>
 #include <future>
+#include <memory>
 #include <mutex>
 #include <string>
-#include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <SourceParsers/SourceParser.hpp>

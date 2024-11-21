@@ -31,6 +31,11 @@ public:
     Sink(const QueryId queryId) : queryId(queryId) {};
     virtual ~Sink() = default;
 
+    Sink(const Sink&) = delete;
+    Sink& operator=(const Sink&) = delete;
+    Sink(Sink&&) = delete;
+    Sink& operator=(Sink&&) = delete;
+
     virtual bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
 
     virtual void open() = 0;

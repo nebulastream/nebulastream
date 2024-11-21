@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-#include "Exceptions/RuntimeException.hpp"
+#include <Exceptions/RuntimeException.hpp>
 namespace NES::Configurations
 {
 

@@ -12,30 +12,33 @@
     limitations under the License.
 */
 
+#include <cerrno> /// For socket error
 #include <chrono>
-#include <cstdint>
 #include <cstring>
+#include <exception>
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <errno.h> /// For socket error
 #include <netdb.h>
 #include <unistd.h> /// For read
-#include <API/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceParsers/SourceParser.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <asm-generic/socket.h>
+#include <bits/types/struct_timeval.h>
 #include <sys/socket.h> /// For socket functions
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceRegistryValidation.hpp>
 #include <SourceTCP.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
@@ -51,7 +54,7 @@ SourceTCP::SourceTCP(const SourceDescriptor& sourceDescriptor)
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
 {
     /// init physical types
-    std::vector<std::string> schemaKeys;
+    std::vector<std::string> const schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
     NES_TRACE("SourceTCP::SourceTCP: Init SourceTCP.");
@@ -80,8 +83,8 @@ void SourceTCP::open()
 {
     NES_TRACE("SourceTCP::open: Trying to create socket and connect.");
 
-    addrinfo hints;
-    addrinfo* result;
+    addrinfo hints{};
+    addrinfo* result = nullptr;
 
     hints.ai_family = socketDomain;
     hints.ai_socktype = socketType;
@@ -92,8 +95,7 @@ void SourceTCP::open()
     const auto errorCode = getaddrinfo(socketHost.c_str(), socketPort.c_str(), &hints, &result);
     if (errorCode != 0)
     {
-        /// #72: use correct error type
-        NES_THROW_RUNTIME_ERROR("SourceTCP::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
+        throw CannotOpenSource("Failed getaddrinfo with error: {}", gai_strerror(errorCode));
     }
 
     /// Try each address until we successfully connect
@@ -106,8 +108,8 @@ void SourceTCP::open()
             continue;
         }
 
-        constexpr static timeval timeout{0, TCP_SOCKET_DEFAULT_TIMEOUT.count()};
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        constexpr static timeval Timeout{0, TCP_SOCKET_DEFAULT_TIMEOUT.count()};
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &Timeout, sizeof(Timeout));
         connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
         if (connection != -1)
@@ -122,8 +124,7 @@ void SourceTCP::open()
 
     if (result == nullptr)
     {
-        /// #72: use correct error type
-        NES_THROW_RUNTIME_ERROR("SourceTCP::open: Could not connect to " << socketHost << ":" << socketPort);
+        throw CannotOpenSource("Could not connect to: {}:", socketHost, socketPort);
     }
 
     NES_TRACE("SourceTCP::open: Connected to server.");

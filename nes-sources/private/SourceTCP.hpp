@@ -14,13 +14,17 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <sys/socket.h> /// For socket functions
+#include <sys/types.h>
+#include "Util/Logger/Logger.hpp"
 
 namespace NES::Sources
 {
@@ -138,6 +142,11 @@ public:
 
     explicit SourceTCP(const SourceDescriptor& sourceDescriptor);
     ~SourceTCP() override = default;
+
+    TCPSource(const TCPSource&) = delete;
+    TCPSource& operator=(const TCPSource&) = delete;
+    TCPSource(TCPSource&&) = delete;
+    TCPSource& operator=(TCPSource&&) = delete;
 
     size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
 

@@ -12,11 +12,16 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sinks/SinkPrint.hpp>
 #include <Sinks/SinkRegistry.hpp>
 #include <SinksValidation/SinkRegistryValidation.hpp>

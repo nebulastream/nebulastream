@@ -15,6 +15,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>

@@ -19,8 +19,10 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>

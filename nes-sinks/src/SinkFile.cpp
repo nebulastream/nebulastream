@@ -15,9 +15,13 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <memory>
+#include <unordered_map>
 #include <utility>
 
 #include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
