@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
 #include <Util/Execution.hpp>
 #include <Util/Logger/LogLevel.hpp>

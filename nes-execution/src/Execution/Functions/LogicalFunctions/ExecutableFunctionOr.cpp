@@ -18,8 +18,6 @@
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Functions/LogicalFunctions/ExecutableFunctionOr.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Util/Execution.hpp>
-#include <Util/Logger/LogLevel.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Functions

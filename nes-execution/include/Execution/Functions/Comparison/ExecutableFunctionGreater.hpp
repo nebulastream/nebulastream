@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {

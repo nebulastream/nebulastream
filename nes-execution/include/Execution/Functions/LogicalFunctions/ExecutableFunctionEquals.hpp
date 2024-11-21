@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <memory>
 #include <Execution/Functions/Function.hpp>
 
 namespace NES::Runtime::Execution::Functions
