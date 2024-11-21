@@ -61,18 +61,21 @@ double meosT(double lon, double lat, int t) {
     // Implement your logic here
     NES_INFO("meosT called with lon: {}, lat: {}, t: {}", lon, lat, t);
     meos_initialize("UTC", NULL);
-    STBox *stbx =stbox_in("SRID=4326;STBOX X((3.3615, 53.964367),(16.505853, 59.24544))");
+    STBox *stbx = stbox_in("SRID=4326;STBOX X((4.617118, 55.574268),(12.272388, 57.59226))");
+    //STBox *stbx = stbox_in("SRID=4326;STBOX X((13, 58),(14, 59))");
+    GSERIALIZED *geom = stbox_to_geo(stbx);
     std::string t_out = convertSecondsToTimestamp(t);
     std::string str_pointbuffer = std::format("SRID=4326;POINT({} {})@{}", lon, lat, t_out);
     NES_INFO("Point buffer created {}", str_pointbuffer);
+    TInstant *inst = (TInstant *)tgeompoint_in(str_pointbuffer.c_str());
 
-    // if (eintersects_tpoint_geo((const Temporal *)planes[i].trip, continents[0].geom)){
-    //     NES_INFO("Intersects");
-    //     return true;
-    // } else {
-    //     NES_INFO("Does not intersect");
-    //     return false;
-    // }
+    if (eintersects_tpoint_geo((const Temporal *)inst, geom)){
+        NES_INFO("Intersects");
+        return true;
+    } else {
+        NES_INFO("Does not intersect");
+        return false;
+    }
 
     return true;
 }

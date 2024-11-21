@@ -91,7 +91,8 @@ TEST_F(MeosDeploy, testCSVIntersection) {
             Query::from("ais")
                 .filter(meosT(Attribute("longitude", BasicType::FLOAT64),
                                  Attribute("latitude", BasicType::FLOAT64),
-                                 Attribute("timestamp", BasicType::UINT64)) > 0)
+                                 Attribute("timestamp", BasicType::UINT64)) >0
+                                && Attribute("sog") > 0)
                 .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10), Seconds(10)))
                 .apply(Sum(Attribute("mmsi", BasicType::UINT64)));
 
