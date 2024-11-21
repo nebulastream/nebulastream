@@ -15,7 +15,6 @@
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/ReadTernaryExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 

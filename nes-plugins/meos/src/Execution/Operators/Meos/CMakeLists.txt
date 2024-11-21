@@ -12,6 +12,5 @@
 
 add_source_files(nes-meos 
         Meos.cpp
-        MeosOperator.cpp
         MeosOperatorPlugin.cpp
 )

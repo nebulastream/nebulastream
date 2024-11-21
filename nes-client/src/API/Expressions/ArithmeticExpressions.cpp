@@ -89,7 +89,7 @@ ExpressionNodePtr readT(const ExpressionNodePtr& left, const ExpressionNodePtr& 
 
 ExpressionNodePtr meosT(const ExpressionNodePtr& left, const ExpressionNodePtr& middle, const ExpressionNodePtr& right) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "meosT", {left, middle, right});
-}
+} 
 
 ExpressionNodePtr SIN(const ExpressionNodePtr& exp) {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "sin", {exp});

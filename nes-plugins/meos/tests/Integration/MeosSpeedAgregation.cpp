@@ -32,7 +32,6 @@
 #include <gtest/gtest.h>
 
 #include <Execution/Operators/meos/Meos.hpp>
-#include <Execution/Operators/meos/MeosOperator.hpp>
 
 struct InputValue {
     uint64_t timestamp;

@@ -43,5 +43,6 @@
          SignExpression.cpp
          ExpExpression.cpp
          ReadExpression.cpp
+         MeosExpression.cpp
          ReadTernaryExpression.cpp
          )

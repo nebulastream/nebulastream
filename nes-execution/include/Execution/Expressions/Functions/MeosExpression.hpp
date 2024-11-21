@@ -23,10 +23,10 @@ namespace NES::Runtime::Execution::Expressions {
 /**
  * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring (currently only tensorflow) machine learning model over incoming data stream.
  */
-class MeosOperator : public Expression {
+class MeosExpression : public Expression {
 
   public:
-    MeosOperator(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right);
+    MeosExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right);
     Value<> execute(Record& record) const override;
 
   private:

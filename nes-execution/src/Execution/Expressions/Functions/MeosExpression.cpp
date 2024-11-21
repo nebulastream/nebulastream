@@ -12,16 +12,17 @@
     limitations under the License.
 */
 
-#include "Util/PluginRegistry.hpp"
+#include <Execution/Expressions/Functions/MeosExpression.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
-#include <Execution/Expressions/Functions/MeosOperator.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
+// extern "C" {
+// #include <meos.h>
+// }
 
-MeosOperator::MeosOperator(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
+MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& middle, const ExpressionPtr& right)
     : left(left), middle(middle), right(right) {}
 
 /**
@@ -36,7 +37,7 @@ double meosT(double x, double y, double z) {
     return x;
 }
 
-Value<> MeosOperator::execute(NES::Nautilus::Record& record) const {
+Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = left->execute(record);
     Value middleValue = middle->execute(record);
     Value rightValue = right->execute(record);
@@ -83,6 +84,6 @@ Value<> MeosOperator::execute(NES::Nautilus::Record& record) const {
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
-static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<MeosOperator>> MeosOperator("meosT");
+static ExecutableFunctionRegistry::Add<TernaryFunctionProvider<MeosExpression>> MeosExpression("meosT");
 
 }// namespace NES::Runtime::Execution::Expressions
