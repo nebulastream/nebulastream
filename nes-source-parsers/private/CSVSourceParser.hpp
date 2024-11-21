@@ -30,22 +30,22 @@
 namespace NES::SourceParsers
 {
 
-/// Implementation detail of SourceParserCSV
+/// Implementation detail of CSVSourceParser
 class ProgressTracker;
 
-class SourceParserCSV : public SourceParser
+class CSVSourceParser : public SourceParser
 {
 public:
     using CastFunctionSignature
         = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
 
-    SourceParserCSV(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
-    ~SourceParserCSV() override;
+    CSVSourceParser(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter);
+    ~CSVSourceParser() override;
 
-    SourceParserCSV(const SourceParserCSV&) = delete;
-    SourceParserCSV& operator=(const SourceParserCSV&) = delete;
-    SourceParserCSV(SourceParserCSV&&) = delete;
-    SourceParserCSV& operator=(SourceParserCSV&&) = delete;
+    CSVSourceParser(const CSVSourceParser&) = delete;
+    CSVSourceParser& operator=(const CSVSourceParser&) = delete;
+    CSVSourceParser(CSVSourceParser&&) = delete;
+    CSVSourceParser& operator=(CSVSourceParser&&) = delete;
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,

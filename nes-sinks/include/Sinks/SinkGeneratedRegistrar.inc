@@ -27,8 +27,8 @@
 namespace NES::Sinks::SinkGeneratedRegistrar
 {
 
-std::unique_ptr<Sink> RegisterSinkPrint(QueryId, const SinkDescriptor&);
-std::unique_ptr<Sink> RegisterSinkFile(QueryId, const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterPrintSink(QueryId, const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterFileSink(QueryId, const SinkDescriptor&);
 
 }
 
@@ -38,8 +38,8 @@ template <>
 inline void Registrar<Sinks::SinkRegistry, Sinks::SinkRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::Sinks::SinkGeneratedRegistrar;
-    registry.registerPlugin("Print", RegisterSinkPrint);
-    registry.registerPlugin("File", RegisterSinkFile);
+    registry.registerPlugin("Print", RegisterPrintSink);
+    registry.registerPlugin("File", RegisterFileSink);
 }
 
 }

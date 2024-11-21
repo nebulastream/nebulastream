@@ -27,13 +27,13 @@
 namespace NES::Sources
 {
 
-class SourceFile final : public Source
+class FileSource final : public Source
 {
 public:
     static inline const std::string NAME = "File";
 
-    explicit SourceFile(const SourceDescriptor& sourceDescriptor);
-    ~SourceFile() override = default;
+    explicit FileSource(const SourceDescriptor& sourceDescriptor);
+    ~FileSource() override = default;
 
     FileSource(const FileSource&) = delete;
     FileSource& operator=(const FileSource&) = delete;

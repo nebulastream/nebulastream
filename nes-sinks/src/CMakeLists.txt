@@ -16,6 +16,6 @@ add_source_files(nes-sinks
         SinkDescriptor.cpp
         Sink.cpp
         SinkProvider.cpp
-        SinkFile.cpp
-        SinkPrint.cpp
+        FileSink.cpp
+        PrintSink.cpp
 )

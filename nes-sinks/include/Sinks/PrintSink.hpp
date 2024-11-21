@@ -26,13 +26,13 @@
 namespace NES::Sinks
 {
 
-class SinkPrint : public Sink
+class PrintSink : public Sink
 {
 public:
     static inline std::string NAME = "Print";
 
-    explicit SinkPrint(QueryId queryId, const SinkDescriptor& sinkDescriptor);
-    ~SinkPrint() override = default;
+    explicit PrintSink(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
     PrintSink& operator=(const PrintSink&) = delete;
