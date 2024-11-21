@@ -16,38 +16,80 @@
 #include <cstddef>
 #include <functional>
 #include <ostream>
+#include <variant>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::InputFormatters
 {
 
+namespace ReturnType
+{
+struct Error
+{
+    Exception ex;
+};
+
+struct Data
+{
+    NES::Memory::TupleBuffer buffer;
+};
+
+struct EoS
+{
+};
+struct Stopped
+{
+};
+
+using InputFormatterReturnType = std::variant<Error, Data, EoS, Stopped>;
+using EmitFunction = std::function<void(const OriginId, InputFormatterReturnType)>;
+}
+
+
 /// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
-class InputFormatter
+class InputFormatter : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
     InputFormatter() = default;
-    virtual ~InputFormatter() = default;
+    ~InputFormatter() override = default;
 
     InputFormatter(const InputFormatter&) = delete;
     InputFormatter& operator=(const InputFormatter&) = delete;
     InputFormatter(InputFormatter&&) = delete;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    virtual void parseTupleBufferRaw(
-        const NES::Memory::TupleBuffer& tbRaw,
-        NES::Memory::AbstractBufferProvider& bufferProvider,
-        size_t numBytesInTBRaw,
-        const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    // Todo: think about what to do with setup and stop
+    // uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    // uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    ExecutionResult execute(
+        Memory::TupleBuffer& inputTupleBuffer, //Todo: for now write num bytes as num tuples to input buffer
+        Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+        Runtime::WorkerContext& workerContext) override;
+
+    // void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData);
+
+    virtual void
+    parseTupleBufferRaw(const NES::Memory::TupleBuffer& tbRaw, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, Runtime::WorkerContext& workerContext,
+        size_t numBytesInTBRaw)
         = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
+
+// private:
+//     ReturnType::EmitFunction emitFunction;
+    // uint64_t maxSequenceNumber{};
+    // OriginId originId = OriginId(1);
 };
+
 
 }
 

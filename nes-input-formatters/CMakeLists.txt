@@ -17,7 +17,7 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 # Add Library
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
 
-target_link_libraries(nes-input-formatters PRIVATE nes-common nes-configurations nes-memory)
+target_link_libraries(nes-input-formatters PUBLIC nes-configurations nes-memory PRIVATE nes-runtime)
 
 target_include_directories(nes-input-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

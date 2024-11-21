@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -33,7 +32,7 @@ SourceHandle::SourceHandle(
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation), std::move(inputFormatter));
+        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));
 }
 SourceHandle::~SourceHandle() = default;
 

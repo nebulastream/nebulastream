@@ -63,7 +63,7 @@ class ProgressTracker
 {
 public:
     ProgressTracker(std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) {};
+        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields){};
 
     ~ProgressTracker() = default;
 
@@ -338,9 +338,9 @@ CSVInputFormatter::~CSVInputFormatter() = default;
 
 void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
-    NES::Memory::AbstractBufferProvider& bufferProvider,
-    const size_t numBytesInTBRaw,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
+    Runtime::WorkerContext& workerContext,
+    const size_t numBytesInTBRaw)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
     /// Reset all values that are tied to a specific tbRaw.
@@ -355,7 +355,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         return;
     }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
-    progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
+    progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
 
     /// A single partial tuple may have spanned over the prior N TBRs, ending in the current TBR. If so, construct the tuple using the prior TBRs.
     /// The size of the partial tuple may reach from just the last byte of the prior TBR to all bytes of multiple prior TBRs.
@@ -369,7 +369,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         }
         /// Add the final part of the partial tuple from the current TBR to the partial tuple to complete it.
         completeTuple << progressTracker->getNextTuple();
-        parseStringIntoTupleBuffer(completeTuple.str(), bufferProvider);
+        parseStringIntoTupleBuffer(completeTuple.str(), *pipelineExecutionContext.getBufferManager());
         /// Release all prior TBRs with partial tuples. Sources can now use these buffers again.
         progressTracker->stagingAreaTBRaw.clear();
         /// We parsed the first tuple terminated by the current TBR. If the current TBR does not terminate another tuple, we skip the below while loop.
@@ -387,14 +387,14 @@ void CSVInputFormatter::parseTupleBufferRaw(
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            emitFunction(progressTracker->getTupleBufferFormatted(), true); /// true triggers adding sequence number, etc.
-            progressTracker->setNewTupleBufferFormatted(bufferProvider.getBufferBlocking());
+            pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), workerContext); /// true triggers adding sequence number, etc.
+            progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
         }
 
         const auto currentTuple = progressTracker->getNextTuple();
-        parseStringIntoTupleBuffer(currentTuple, bufferProvider);
+        parseStringIntoTupleBuffer(currentTuple, *pipelineExecutionContext.getBufferManager());
 
         progressTracker->progressOneTuple();
     }
@@ -403,7 +403,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
     NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    emitFunction(progressTracker->getTupleBufferFormatted(), /* add metadata */ true);
+    pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), workerContext);
     progressTracker->handleResidualBytes(tbRaw);
 }
 

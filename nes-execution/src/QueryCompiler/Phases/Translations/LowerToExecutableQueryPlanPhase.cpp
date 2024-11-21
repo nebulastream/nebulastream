@@ -23,6 +23,8 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatterProvider.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -80,26 +82,125 @@ Successor processSuccessor(
     return processOperatorPipeline(pipeline, pipelineQueryPlan, context);
 }
 
+std::shared_ptr<Runtime::Execution::ExecutablePipeline> processInputFormatter(
+    PipelineId pipelineId,
+    QueryId queryId,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successorPipelinesOfInputFormatter,
+    const Runtime::NodeEnginePtr& nodeEngine,
+    const Sources::SourceDescriptor& sourceDescriptor)
+{
+    auto inputFormatter = NES::InputFormatters::InputFormatterProvider::provideInputFormatter(
+        sourceDescriptor.parserConfig.parserType,
+        sourceDescriptor.schema,
+        sourceDescriptor.parserConfig.tupleDelimiter,
+        sourceDescriptor.parserConfig.fieldDelimiter);
+
+    auto emitToSuccessorFunctionHandler
+        = [successorPipelinesOfInputFormatter](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef workerContext)
+    {
+        for (const auto& executableSuccessor : successorPipelinesOfInputFormatter)
+        {
+            if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executableSuccessor))
+            {
+                NES_TRACE("Emit Buffer to data sink {}", **sink);
+                (*sink)->emitTupleBuffer(buffer);
+            }
+            else if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
+            {
+                NES_TRACE("Emit Buffer to pipeline {}", (*nextExecutablePipeline)->getPipelineId());
+                (*nextExecutablePipeline)->execute(buffer, workerContext);
+            }
+        }
+    };
+
+    auto queryManager = nodeEngine->getQueryManager();
+    auto emitToQueryManagerFunctionHandler = [successorPipelinesOfInputFormatter, queryManager](Memory::TupleBuffer& buffer)
+    {
+        for (const auto& executableSuccessor : successorPipelinesOfInputFormatter)
+        {
+            NES_TRACE("Emit buffer to query manager");
+            queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
+        }
+    };
+
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers; //Todo: empty operatorHandlers
+    const auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+        pipelineId,
+        queryId,
+        queryManager->getBufferManager(),
+        queryManager->getNumberOfWorkerThreads(),
+        std::move(emitToSuccessorFunctionHandler),
+        std::move(emitToQueryManagerFunctionHandler),
+        operatorHandlers);
+
+    // Todo:
+    auto executableInputFormatterPipeline = Runtime::Execution::ExecutablePipeline::create(
+        pipelineId,
+        queryId,
+        nodeEngine->getQueryManager(),
+        executionContext,
+        std::move(inputFormatter),
+        1, //Todo: figure out
+        std::move(successorPipelinesOfInputFormatter),
+        false);
+    return executableInputFormatterPipeline;
+}
+
 Runtime::Execution::Source
 processSource(const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& context)
 {
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
-    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
+    // const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    // const auto sourceOperator = NES::Util::as<SourceDescriptorLogicalOperator>(rootOperator);
 
-    std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    // std::vector<std::weak_ptr<Runtime::Execution::ExecutablePipeline>> executableSuccessorPipelines;
+    // for (const auto& successor : pipeline->getSuccessors())
+    // {
+    //     if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, context))
+    //     {
+    //         executableSuccessorPipelines.emplace_back(*executableSuccessor);
+    //     }
+    // }
+
+    // context.sources.emplace_back(sourceOperator->getSourceDescriptor(), sourceOperator->getOriginId(), executableSuccessorPipelines);
+    // return context.sources.back();
+
+    /// Get successors of source (will become successors of InputFormatterPipeline
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successorPipelinesOfInputFormatter;
     for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator->getOriginId(), successor, pipelineQueryPlan, context))
-        {
-            executableSuccessorPipelines.emplace_back(*executableSuccessor);
-        }
+        auto executableSuccessor
+            = processSuccessor(successor, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
+        successorPipelinesOfInputFormatter.emplace_back(executableSuccessor);
     }
+    // Todo: not using pipelineToExecutableMap
+    // -> we use pipelineToExecutableMap to detect whether we encountered a pipeline already
 
-    context.sources.emplace_back(sourceOperator->getSourceDescriptor(), sourceOperator->getOriginId(), executableSuccessorPipelines);
-    return context.sources.back();
+    /// Create executable pipeline from InputFormatter
+    auto executableInputFormatterPipeline = processInputFormatter(
+        pipeline->getPipelineId(),
+        pipelineQueryPlan->getQueryId(),
+        std::move(successorPipelinesOfInputFormatter),
+        nodeEngine,
+        sourceOperator->getSourceDescriptorRef());
+    executablePipelines.emplace_back(executableInputFormatterPipeline);
+
+    /// Set executable pipeline of InputFormatter as successor of source.
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successorPipelinesOfSource;
+    successorPipelinesOfSource.emplace_back(executableInputFormatterPipeline);
+
+    /// Create emit function for source (that emits rawTB-InputFormatter-Task)
+    auto sourceEmitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(successorPipelinesOfSource));
+
+    /// Create source and emplace in sources.
+    auto source = Sources::SourceProvider::lower(
+        sourceOperator->getOriginId(),
+        sourceOperator->getSourceDescriptorRef(),
+        nodeEngine->getBufferManager(),
+        std::move(sourceEmitFunction));
+    sources.emplace_back(std::move(source));
 }
 
 void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipeline, LoweringContext& context)
