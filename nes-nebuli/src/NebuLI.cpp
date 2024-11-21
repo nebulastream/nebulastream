@@ -16,6 +16,7 @@
 #include <fstream>
 #include <ranges>
 #include <regex>
+#include <utility>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -30,6 +31,7 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -137,8 +139,8 @@ Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std
 Sources::SourceDescriptor createSourceDescriptor(
     std::string logicalSourceName,
     SchemaPtr schema,
-    std::unordered_map<std::string, std::string>&& parserConfig,
-    std::unordered_map<std::string, std::string>&& sourceConfiguration)
+    const std::unordered_map<std::string, std::string>& parserConfig,
+    std::unordered_map<std::string, std::string> sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -197,10 +199,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
         auto sourceDescriptor = createSourceDescriptor(
-            logicalSourceName,
-            sourceCatalog->getSchemaForLogicalSource(logicalSourceName),
-            std::move(parserConfig),
-            std::move(sourceConfig));
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(

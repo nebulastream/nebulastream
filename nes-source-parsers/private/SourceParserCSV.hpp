@@ -14,9 +14,18 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <vector>
 #include <API/Schema.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SourceParsers/SourceParser.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::SourceParsers
 {
@@ -27,8 +36,16 @@ class ProgressTracker;
 class SourceParserCSV : public SourceParser
 {
 public:
+    using CastFunctionSignature
+        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
+
     SourceParserCSV(const Schema& schema, std::string tupleSeparator, std::string fieldDelimiter);
     ~SourceParserCSV() override;
+
+    SourceParserCSV(const SourceParserCSV&) = delete;
+    SourceParserCSV& operator=(const SourceParserCSV&) = delete;
+    SourceParserCSV(SourceParserCSV&&) = delete;
+    SourceParserCSV& operator=(SourceParserCSV&&) = delete;
 
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,
@@ -42,8 +59,6 @@ private:
     std::string fieldDelimiter;
     std::unique_ptr<ProgressTracker> progressTracker;
     std::vector<size_t> fieldSizes;
-    using CastFunctionSignature
-        = std::function<void(std::string inputString, int8_t* fieldPointer, Memory::AbstractBufferProvider& bufferProvider)>;
     std::vector<CastFunctionSignature> fieldParseFunctions;
 
     /// Splits the string-tuple into string-fields, parsing each string-field, converting it to the internal representation.

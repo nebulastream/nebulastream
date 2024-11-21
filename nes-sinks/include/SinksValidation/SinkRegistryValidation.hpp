@@ -16,13 +16,14 @@
 
 #include <string>
 #include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Sinks
 {
 
 using SinkRegistryValidationSignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>;
+    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
 class SinkRegistryValidation final : public BaseRegistry<SinkRegistryValidation, SinkRegistryValidationSignature>
 {
 };
@@ -31,4 +32,4 @@ class SinkRegistryValidation final : public BaseRegistry<SinkRegistryValidation,
 
 #define INCLUDED_FROM_SINK_REGISTRY_VALIDATION
 #include <SinksValidation/SinkGeneratedRegistrarValidation.inc>
-#undef INCLUDED_FROM_REGISTRY_VALIDATION
+#undef INCLUDED_FROM_SINK_REGISTRY_VALIDATION

@@ -13,7 +13,9 @@
 */
 
 #include <atomic>
+#include <fstream>
 #include <memory>
+#include <ostream>
 #include <regex>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -133,7 +135,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             /// Write tuples to csv file
             for (const auto& tuple : source.tuples)
             {
-                sourceFile << tuple << std::endl;
+                sourceFile << tuple << '\n';
             }
         });
 

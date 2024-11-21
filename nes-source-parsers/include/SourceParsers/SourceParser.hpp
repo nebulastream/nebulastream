@@ -13,8 +13,12 @@
 */
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <ostream>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <fmt/base.h>
 #include <fmt/ostream.h>
 
 namespace NES::SourceParsers
@@ -27,10 +31,15 @@ public:
     SourceParser() = default;
     virtual ~SourceParser() = default;
 
+    SourceParser(const SourceParser&) = delete;
+    SourceParser& operator=(const SourceParser&) = delete;
+    SourceParser(SourceParser&&) = delete;
+    SourceParser& operator=(SourceParser&&) = delete;
+
     virtual void parseTupleBufferRaw(
         const NES::Memory::TupleBuffer& tbRaw,
         NES::Memory::AbstractBufferProvider& bufferProvider,
-        const size_t numBytesInTBRaw,
+        size_t numBytesInTBRaw,
         const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
         = 0;
 

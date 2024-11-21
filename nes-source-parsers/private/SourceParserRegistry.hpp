@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <API/Schema.hpp>
 #include <SourceParsers/SourceParser.hpp>
 #include <Util/PluginRegistry.hpp>

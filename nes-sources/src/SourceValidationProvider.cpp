@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
 #include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistryValidation.hpp>

@@ -13,7 +13,10 @@
 */
 
 #include <memory>
+#include <string>
+#include <utility>
 #include <API/Schema.hpp>
+#include <SourceParsers/SourceParser.hpp>
 #include <SourceParsers/SourceParserProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceParserRegistry.hpp>

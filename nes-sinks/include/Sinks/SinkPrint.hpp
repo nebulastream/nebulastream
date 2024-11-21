@@ -14,12 +14,10 @@
 
 #pragma once
 
-
-#include <cstdint>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <Configurations/ConfigurationsNames.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
@@ -35,6 +33,11 @@ public:
 
     explicit SinkPrint(QueryId queryId, const SinkDescriptor& sinkDescriptor);
     ~SinkPrint() override = default;
+
+    PrintSink(const PrintSink&) = delete;
+    PrintSink& operator=(const PrintSink&) = delete;
+    PrintSink(PrintSink&&) = delete;
+    PrintSink& operator=(PrintSink&&) = delete;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };

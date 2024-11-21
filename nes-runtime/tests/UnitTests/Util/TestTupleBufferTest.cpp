@@ -18,7 +18,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-#include "Common/DataTypes/DataTypeFactory.hpp"
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {

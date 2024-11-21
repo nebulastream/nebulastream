@@ -16,13 +16,14 @@
 
 #include <string>
 #include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Sources
 {
 
 using SourceRegistryValidationSignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>&&>;
+    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
 class SourceRegistryValidation final : public BaseRegistry<SourceRegistryValidation, SourceRegistryValidationSignature>
 {
 };

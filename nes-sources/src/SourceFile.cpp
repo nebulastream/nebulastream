@@ -12,17 +12,20 @@
     limitations under the License.
 */
 
-#include <chrono>
+#include <cerrno>
 #include <cstring>
+#include <format>
+#include <ios>
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <string>
+#include <unordered_map>
 #include <utility>
-#include <vector>
 #include <cstdlib>
+#include <Configurations/Descriptor.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <fmt/std.h>
 #include <ErrorHandling.hpp>
 #include <SourceFile.hpp>
 #include <SourceRegistry.hpp>
@@ -37,7 +40,7 @@ SourceFile::SourceFile(const SourceDescriptor& sourceDescriptor) : filePath(sour
 
 void SourceFile::open()
 {
-    const auto realCSVPath = realpath(this->filePath.c_str(), nullptr);
+    auto* const realCSVPath = realpath(this->filePath.c_str(), nullptr);
     this->inputFile = std::ifstream(realCSVPath, std::ios::binary);
     if (not this->inputFile)
     {

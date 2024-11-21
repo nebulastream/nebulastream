@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>

@@ -19,8 +19,8 @@
 #endif
 
 #include <string>
-#include <unordered_map>
 #include <Util/PluginRegistry.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES::Sinks::SinkGeneratedRegistrarValidation
 {

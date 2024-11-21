@@ -21,6 +21,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <SourceParsers/SourceParser.hpp>
+#include <Sources/Source.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>

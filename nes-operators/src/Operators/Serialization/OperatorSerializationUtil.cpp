@@ -906,7 +906,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     serializedSourceDescriptor->set_sourcetype(sourceDescriptor.sourceType);
 
     /// Serialize parser config.
-    const auto serializedParserConfig = ParserConfig().New();
+    auto* const serializedParserConfig = ParserConfig().New();
     serializedParserConfig->set_type(sourceDescriptor.parserConfig.parserType);
     serializedParserConfig->set_tupleseparator(sourceDescriptor.parserConfig.tupleSeparator);
     serializedParserConfig->set_fielddelimiter(sourceDescriptor.parserConfig.fieldDelimiter);
@@ -961,7 +961,7 @@ std::unique_ptr<Sources::SourceDescriptor> OperatorSerializationUtil::deserializ
     auto sourceType = sourceDescriptor.sourcetype();
 
     /// Deserialize the parser config.
-    const auto serializedParserConfig = sourceDescriptor.parserconfig();
+    const auto& serializedParserConfig = sourceDescriptor.parserconfig();
     auto deserializedParserConfig = Sources::ParserConfig{};
     deserializedParserConfig.parserType = serializedParserConfig.type();
     deserializedParserConfig.tupleSeparator = serializedParserConfig.tupleseparator();
