@@ -11,24 +11,29 @@ Therefore, the current approach does not scale with an increasing number of sour
 Sources read data from external systems or devices and write them into buffers provided by the NES `BufferManager`.
 Precisely, local buffer providers maintain a fixed-size buffer pool per source. 
 If the available memory of the system is exhausted by the number of sources, potentially all available memory will be taken by the sources.
-This can cause a deadlock, since query processing cannot proceed without buffers (**P2**).
-Furthermore, this static assignment is highly inflexible with respect to the actual requirements of the sources at runtime.
+As an example, if we have 100 buffers in the system and 10 sources.
+If each source receives a local buffer pool of 10 buffers, this can cause a deadlock, since query processing cannot proceed without buffers (**P2**).
+
+Furthermore, this static assignment of buffers so sources is highly inflexible with respect to the actual requirements of the sources at runtime (**P3**).
+For example, a source might be idle for a long time, while another source is producing data at a high rate.
 
 # Goals
 A single node worker should be able to handle thousands of concurrent sources as efficiently as possible.
 Slow disk or network I/O can be the main bottleneck during query execution (this may be out of the system's control).
 However, adding more sources should impact existing sources or CPU-bound operations as little as possible. 
 Therefore, we want to avoid stalls due to CPU oversubscription or threads busy-waiting on data to become ready.
-Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as little as possible.
+Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as short as possible.
 (**G1, scalability**, addresses P1).
 
 
-The `BufferManager` should have separate pools for I/O and compute, removing potential deadlocks (**G2, deadlock prevention**, addresses P2).
-Moreover, the `BufferManager` should receive the information it needs to facilitate fairness and maximum efficiency by making it aware of sources and their requirements.
-In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source.
-In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
+The `BufferManager` should have separate pools for sources and processing, removing potential deadlocks due to sources taking all buffers (**G2, deadlock prevention**, addresses P2).
+Moreover, there should be a centralized `BufferManager` for just the sources. 
+It can be aware of the sources and their requirements holds the information it needs to facilitate fairness and maximum efficiency.
+In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source (**G3, fairness and demand-based buffer distribution**, addresses P3).
+
+In addition, the source-local `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within source threads wherever possible.
-We propose simple policies and provide a PoC implementation to showcase this.
+We propose a simple policy and provide a PoC implementation to showcase this.
 
 The following three goals are additional goals that do not address specific problems in the current implementation, but are still important with respect to usability and maintainability.
 
@@ -48,7 +53,7 @@ Every possible error regarding I/O operations should be handled appropriately by
 It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G6, backwards compatibility)**.
 
 # Non-Goals
-- **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here.
+- **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here. For further details, see the [BM spilling & redesign DD](https://db.in.tum.de/~fent/papers/coroutines.pdf?lang=de)
 - **NG2**: a complete vision or implementation on how to handle source sharing.
 - **NG3**: a complete vision or implementation on how to handle data ingestion via internal sources (e.g., when intermediate data is shuffled around between nodes).
 - **NG4**: handling of selective reads, i.e., predicate/projection pushdown as typically done in formats like Parquet.
@@ -178,9 +183,11 @@ The proposed solution depends on these key design decisions:
 2. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool (G1).
 3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G6).
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
-4. Sources receive buffers by utilizing non-blocking calls (prevent blocking I/O threads) from a separate I/O buffer pool (prevent deadlocks) (G2).
-5. We implement a simple policy for fairness of distribution of buffers among sources under contention.
-6. We allow the user to configure timeouts on a per-source basis. When the timeout expires, a pending asynchronous operation is cancelled to prevent high tail latencies. 
+4. We have a single separate the I/O buffer pool shared among sources to prevent deadlocks (G2).
+5. A local `BufferManager` maintains the buffer pool for the sources and exposes an asynchronous interface to prevent blocking I/O threads.
+6. To prevent high tail latencies, we allow the user to configure timeouts on a per-source basis. 
+When the timeout expires, a pending asynchronous operation is cancelled. 
+7. We implement a simple policy for fairness and demand-based buffer distribution among sources despite contention (G3).
 
 ## Async I/O Library
 The primary library for implementing async I/O in C++ is [`boost::asio`](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html), which is battle-tested and used in numerous applications that require efficient I/O handling.
@@ -416,8 +423,8 @@ public:
 ## Buffer Management
 We aim to address four challenges related to buffer management:
 1. Deadlock prevention (G2)
-2. Flow control
-3. Fairness of distribution
+2. Flow control (G3)
+3. Fairness of distribution (G3)
 4. Asynchronous interface (G1)
 
 ### Deadlock Prevention
@@ -427,7 +434,7 @@ If a consumer acquires all buffers to store internal state of e.g., pending wind
 Consequently, no new data can be produced for the operator to trigger the window and release its buffers.
 Similarly, when sources take all buffers, the downstream tasks are blocked and cannot release buffers, leading to a deadlock.
 In our producer/consumer relationship between sources and successor pipelines, deadlocks need to be avoided (G2). 
-By separating an I/O pool from the rest of the global buffer pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
+By separating an source pool from processing pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
 A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG4).
 
 ### Flow Control
@@ -490,14 +497,14 @@ The `bind_cancellation_slot` function binds the cancellation slot to the read op
 
 2. **Fast Source <--> Slow Downstream**: *How do we apply backpressure to help the system under high load?*
 
-As long as the global I/O buffer pool is not exhausted, the system can handle the load, which is called "buffering".
+As long as the source buffer pool is not exhausted, the system can handle the load, which is called "buffering".
 We apply backpressure automatically to a source when no buffers are available, i.e., the `BufferManager` rejects the source's request to acquire a buffer.
 This forces the source to try again later.
 In the meantime, the external system will be throttled.
 
-We implement this in the `AsyncSourceRunner` by setting a timeout to an asynchronous timer `retryTimer` and try again when it expires.
+A first baseline to implement this could be the `AsyncSourceRunner` setting a timeout to an asynchronous timer `retryTimer` and try again when it expires.
 The asynchronous timer is necessary to avoid blocking any of the I/O threads in the `AsyncSourceExecutor`.
-A future, more sophisticated approach could involve an asynchronous interface between the `AsyncSourceRunner` and the `BufferManager`, discussed [here](#asynchronous-interface).
+A second, more sophisticated follow-up approach could involve an asynchronous interface between the `AsyncSourceRunner` and the `BufferManager` for the sources, discussed [here](#asynchronous-interface).
 
 ```cpp
 boost::asio::steady_timer retryTimer(ioc, std::chrono::milliseconds(10));
@@ -522,22 +529,25 @@ awaitable<RawBuffer> AsyncSourceRunner::acquireBuffer()
 3. **Fast Sources <--> Slow Sources**: *How do we handle speed differences between sources and prevent fast sources from stealing all resources?*
 
 Speed differences among sources can be defined as differences in buffer requests per unit time.
-When downstream tasks are overall reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies and the speed differences do not lead to problems. 
-By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies.
-In a temporary case, enough buffers are available and the buffer manager will happily give them out to fast producers, so the available buffers will be automatically be distributed relative to the demand.
-With the separation of I/O and compute pools, we prevent fast sources from stealing resources from the global pool.
+When downstream tasks are overall reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies (slow source, fast downstream) and the speed differences do not lead to contention for buffers. 
+By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies (fast source, slow downstream).
+In a temporary case, enough buffers are available (buffering), and the buffer manager happily give them out to fast producers.
+This is not possible in the current implementation of source-local buffer pools that can not be redistributed.
+In the new implementation, we will have a source buffer pool that can be shared among all sources.
+In this scenario, the available buffers will be automatically be distributed relative to the demand.
+With the separation of a single source pool and N processing pools, we prevent fast sources from stealing resources from the processing pipelines.
 
 ### Fairness of Distribution
-Problems arise when a single or few sources take so many buffers such that the majority are impacted and have buffer requests denied, preventing them from making progress.
+With this model, problems arise when a single or few sources take so many buffers such that the majority are impacted and have buffer requests denied, preventing them from making progress.
 
 In general, we want to guarantee **a single buffer available to fill in the background** for as many sources as possible. 
 This is required to effectively utilize async I/O.
 
 To facilitate fairness here, we propose the following round-robin algorithm:
-- Give out buffers on a first-come, first-serve basis as long as there is no contention
-- When there is contention (no buffers available), switch to round-robin mode and place the requesting source's id into a FIFO queue
-- Track requests of the sources to ensure each source requests only one buffer at a time
-- When a buffer is available, give it out to the next source in the queue
+- Give out buffers on a first-come, first-serve basis as long as there is no contention.
+- When there is contention (no buffers available), switch to round-robin mode and place the requesting source's id into a FIFO queue.
+- Track requests of the sources to ensure each source requests only one buffer at a time.
+- When a buffer is available, give it out to the next source in the queue.
 
 This approach would lend itself well to an asynchronous interface, because in this case the `BufferManager` could notify the waiting source that a buffer has become available.
 With the timeout-based approach, the source would have to poll the `BufferManager` regularly for a buffer, and it will be denied each time before its turn is reached in the FIFO queue.
@@ -639,6 +649,7 @@ Also, it is not portable to other operating systems and requires Linux kernel 5.
 - [Coroutines](https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20)
 - [Definition async/sync/blocking/non-blocking](https://stackoverflow.com/questions/2625493/asynchronous-and-non-blocking-calls-also-between-blocking-and-synchronous)
 - [Per-operation cancellation in `boost::asio`](https://cppalliance.org/asio/2023/01/02/Asio201Timeouts.html)
+- [TUM paper on coroutines and async I/O in Umbra](https://db.in.tum.de/~fent/papers/coroutines.pdf?lang=de)
 
 # Appendix
 ## Testcontainers
