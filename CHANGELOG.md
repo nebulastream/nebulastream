@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.194](https://github.com/nebulastream/nebulastream/tree/v0.6.194) (2024-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.193...v0.6.194)
+
+**Implemented enhancements:**
+
+- Topology: provide ability to find path between children nodes  [\#5077](https://github.com/nebulastream/nebulastream/issues/5077)
+
 ## [v0.6.193](https://github.com/nebulastream/nebulastream/tree/v0.6.193) (2024-11-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.192...v0.6.193)
