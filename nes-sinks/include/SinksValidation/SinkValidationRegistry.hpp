@@ -22,14 +22,14 @@
 namespace NES::Sinks
 {
 
-using SinkRegistryValidationSignature
+using SinkValidationRegistrySignature
     = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
-class SinkRegistryValidation final : public BaseRegistry<SinkRegistryValidation, SinkRegistryValidationSignature>
+class SinkValidationRegistry final : public BaseRegistry<SinkValidationRegistry, SinkValidationRegistrySignature>
 {
 };
 
 }
 
-#define INCLUDED_FROM_SINK_REGISTRY_VALIDATION
-#include <SinksValidation/SinkGeneratedRegistrarValidation.inc>
-#undef INCLUDED_FROM_SINK_REGISTRY_VALIDATION
+#define INCLUDED_FROM_SINK_VALIDATION_REGISTRY
+#include <SinksValidation/SinkValidationGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_SINK_VALIDATION_REGISTRY

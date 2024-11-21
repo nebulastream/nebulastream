@@ -13,6 +13,7 @@
 */
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <format>
 #include <ios>
@@ -21,24 +22,23 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <cstdlib>
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceFile.hpp>
+#include <FileSource.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceRegistryValidation.hpp>
+#include <SourceValidationRegistry.hpp>
 
 namespace NES::Sources
 {
 
-SourceFile::SourceFile(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
 }
 
-void SourceFile::open()
+void FileSource::open()
 {
     auto* const realCSVPath = realpath(this->filePath.c_str(), nullptr);
     this->inputFile = std::ifstream(realCSVPath, std::ios::binary);
@@ -48,12 +48,12 @@ void SourceFile::open()
     }
 }
 
-void SourceFile::close()
+void FileSource::close()
 {
     this->inputFile.close();
 }
 
-size_t SourceFile::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
+size_t FileSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
 {
     this->inputFile.read(tupleBuffer.getBuffer<char>(), static_cast<std::streamsize>(tupleBuffer.getBufferSize()));
     const auto numBytesRead = this->inputFile.gcount();
@@ -62,27 +62,27 @@ size_t SourceFile::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceFile::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+FileSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
 }
 
-std::ostream& SourceFile::toString(std::ostream& str) const
+std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead);
     return str;
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceGeneratedRegistrarValidation::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
+SourceValidationGeneratedRegistrar::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
-    return SourceFile::validateAndFormat(std::move(sourceConfig));
+    return FileSource::validateAndFormat(std::move(sourceConfig));
 }
 
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterSourceFile(const SourceDescriptor& sourceDescriptor)
+std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterFileSource(const SourceDescriptor& sourceDescriptor)
 {
-    return std::make_unique<SourceFile>(sourceDescriptor);
+    return std::make_unique<FileSource>(sourceDescriptor);
 }
 
 }

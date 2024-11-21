@@ -53,7 +53,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInSourceFiles(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
@@ -97,7 +97,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInSourceFiles(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;

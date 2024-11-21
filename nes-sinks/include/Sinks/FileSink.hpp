@@ -29,12 +29,12 @@ namespace NES::Sinks
 {
 
 /// A sink that writes formatted TupleBuffers to arbitrary files.
-class SinkFile : public Sink
+class FileSink : public Sink
 {
 public:
     static inline std::string NAME = "File";
-    explicit SinkFile(QueryId queryId, const SinkDescriptor& sinkDescriptor);
-    ~SinkFile() override = default;
+    explicit FileSink(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;
     FileSink& operator=(const FileSink&) = delete;
@@ -88,7 +88,7 @@ struct ConfigParametersFile
 namespace fmt
 {
 template <>
-struct formatter<NES::Sinks::SinkFile> : ostream_formatter
+struct formatter<NES::Sinks::FileSink> : ostream_formatter
 {
 };
 }

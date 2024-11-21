@@ -6,7 +6,7 @@ the described **Source** using the **SourceRegistry** and, using the constructed
 becomes part of an executable query plan. The SourceHandel offers a very slim interface, `start()` and `stop()` and thereby hides all the
 implementation details from users of sources. Internally, the SourceHandle constructs a **SourceThread** and delegates the start and stop
 calls to the *SourceThread*. The SourceThread starts a thread, so one thread per source, which runs the `runningRoutine()`. In the running routine,
-the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **SourceTCP**.
+the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **TCPSource**.
 If `fillTupleBuffer` succeeds, the *SourceThread* returns a TupleBuffer to the runtime via the *EmitFunction*, if not, it returns an
 error using the *EmitFunction*.
 ```mermaid
@@ -16,14 +16,14 @@ title: Sources Implementation Overview
 classDiagram
     SourceHandle --> SourceThread : calls start/stop of SourceThread
     SourceThread --> Source : calls fillTupleBuffer in running routine
-    Source ..> SourceFile : data ingestion implemented by
-    Source ..> SourceTCP : data ingestion implemented by
+    Source ..> FileSource : data ingestion implemented by
+    Source ..> TCPSource : data ingestion implemented by
     SourceProvider --> SourceRegistry : provide SourceDescriptor
     SourceRegistry --> SourceProvider : return Source
     SourceProvider --> SourceHandle : construct SourceHandle
     SourceDescriptor --> SourceProvider : fully describes Source
-    PhysicalSourceParser --> SourceRegistryValidation : provides string description of source
-    SourceRegistryValidation --> PhysicalSourceParser : validates and constructs typed descriptor
+    PhysicalSourceParser --> SourceValidationRegistry : provides string description of source
+    SourceValidationRegistry --> PhysicalSourceParser : validates and constructs typed descriptor
     PhysicalSourceParser --> SourceDescriptor : constructs SourceDescriptor if valid
     
     namespace Parser {
@@ -53,7 +53,7 @@ classDiagram
             Source create(SourceDescriptor)
         }
 
-        class SourceRegistryValidation {
+        class SourceValidationRegistry {
             SourceDescriptor create(unordered_map~string, string~)
         }
     }
@@ -74,14 +74,14 @@ classDiagram
             + void virtual close()
         }
 
-        class SourceFile {
+        class FileSource {
             + bool fillTupleBuffer(TupleBuffer)
             + void open()
             + void close()
             - std::string filePath
         }
 
-        class SourceTCP {
+        class TCPSource {
             + bool fillTupleBuffer(TupleBuffer)
             + void open()
             + void close()

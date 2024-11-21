@@ -23,7 +23,7 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Sinks/SinkFile.hpp>
+#include <Sinks/FileSink.hpp>
 #include <Util/Common.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
@@ -453,7 +453,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
         << "Redirection expects the single root operator to be a sink operator";
     const auto deserializedSinkOperator = NES::Util::as<SinkLogicalOperator>(OperatorSerializationUtil::deserializeOperator(rootOperator));
     auto descriptor = NES::Util::as<SinkLogicalOperator>(deserializedSinkOperator)->getSinkDescriptorRef();
-    if (descriptor.sinkType == Sinks::SinkFile::NAME)
+    if (descriptor.sinkType == Sinks::FileSink::NAME)
     {
         const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
         auto configCopy = descriptor.config;
@@ -475,7 +475,7 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replaceInputFileInSourceFiles(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
@@ -511,9 +511,9 @@ void replaceInputFileInSourceFiles(SerializableDecomposedQueryPlan& decomposedQu
     }
 }
 
-void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
 {
-    int queryPlanSourceTcpCounter = 0;
+    int queryPlanTCPSourceCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
         auto& value = pair.second; /// Note: non-const reference
@@ -524,7 +524,7 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
             if (sourceDescriptor.sourceType == "TCP")
             {
-                if (sourceNumber == queryPlanSourceTcpCounter)
+                if (sourceNumber == queryPlanTCPSourceCounter)
                 {
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
                     Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
@@ -547,7 +547,7 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
                     swap(value, serializedOperator);
                     break;
                 }
-                ++queryPlanSourceTcpCounter;
+                ++queryPlanTCPSourceCounter;
             }
         }
     }

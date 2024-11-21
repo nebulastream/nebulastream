@@ -112,7 +112,7 @@ const std::string MQTT_SOURCE_CONFIG = "MQTTSource";
 const std::string KAFKA_SOURCE_CONFIG = "KafkaSource";
 const std::string OPC_SOURCE_CONFIG = "OPCSource";
 const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
-const std::string TCP_SOURCE_CONFIG = "SourceTCP";
+const std::string TCP_SOURCE_CONFIG = "TCPSource";
 const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
@@ -151,7 +151,7 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string TENSORFLOW_SUPPORTED_CONFIG = "tensorflowSupported";
 
-///SourceTCPType configs
+///TCPSourceType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";

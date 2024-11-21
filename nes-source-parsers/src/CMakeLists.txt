@@ -11,6 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-source-parsers
-        SourceParserCSV.cpp
+        CSVSourceParser.cpp
         SourceParserProvider.cpp
 )

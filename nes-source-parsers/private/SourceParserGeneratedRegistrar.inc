@@ -28,7 +28,7 @@
 namespace NES::SourceParsers::SourceParserGeneratedRegistrar
 {
 
-std::unique_ptr<SourceParser> RegisterSourceParserCSV(const Schema& schema, std::string, std::string);
+std::unique_ptr<SourceParser> RegisterCSVSourceParser(const Schema& schema, std::string, std::string);
 
 }
 
@@ -39,6 +39,6 @@ inline void Registrar<SourceParsers::SourceParserRegistry, SourceParsers::Source
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::SourceParsers::SourceParserGeneratedRegistrar;
-    registry.registerPlugin("CSV", RegisterSourceParserCSV);
+    registry.registerPlugin("CSV", RegisterCSVSourceParser);
 }
 }

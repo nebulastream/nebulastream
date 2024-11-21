@@ -15,7 +15,7 @@
 #include <ostream>
 #include <sstream>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksValidation/SinkRegistryValidation.hpp>
+#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sinks
@@ -29,7 +29,7 @@ SinkDescriptor::SinkDescriptor(std::string sinkType, Configurations::DescriptorC
 std::unique_ptr<Configurations::DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string& sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
-    if (auto validatedConfig = SinkRegistryValidation::instance().create(sinkType, std::move(configPairs)))
+    if (auto validatedConfig = SinkValidationRegistry::instance().create(sinkType, std::move(configPairs)))
     {
         return std::move(validatedConfig.value());
     }
