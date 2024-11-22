@@ -15,19 +15,36 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <future>
 #include <memory>
-#include <mutex>
-#include <string>
+#include <ostream>
+#include <stop_token>
+#include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
-
+struct SourceImplementationTermination
+{
+    enum : uint8_t
+    {
+        StopRequested,
+        EndOfStream
+    } result;
+    friend std::ostream& operator<<(std::ostream& os, const SourceImplementationTermination& obj)
+    {
+        return os << magic_enum::enum_name(obj.result);
+    }
+};
 /// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
@@ -40,23 +57,27 @@ class SourceThread
 public:
     explicit SourceThread(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
-        SourceReturnType::EmitFunction&&,
+        std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
         std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     SourceThread() = delete;
+    SourceThread(const SourceThread& other) = delete;
+    SourceThread(SourceThread&& other) noexcept = delete;
+    SourceThread& operator=(const SourceThread& other) = delete;
+    SourceThread& operator=(SourceThread&& other) noexcept = delete;
 
-    ~SourceThread() = default;
+    ~SourceThread();
 
     /// clean up thread-local state for the source.
     void close();
 
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
-    [[nodiscard]] bool start();
+    [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
 
-    /// check if bool running is false. If running is false return, otherwise stops the source.
+    /// Attempts to stop the DataSource. If the data source is not running (maybe it never ran) this function return false.
+    /// If this function returns true the thread has been stopped.
     [[nodiscard]] bool stop();
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
@@ -67,25 +88,22 @@ public:
 protected:
     OriginId originId;
     std::shared_ptr<NES::Memory::AbstractPoolProvider> localBufferManager;
-    SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider{nullptr};
     uint64_t numSourceLocalBuffers;
-    std::atomic_bool wasStarted{false};
-    std::atomic_bool futureRetrieved{false};
-    std::atomic_bool running{false};
-    std::promise<bool> completedPromise;
-    uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
-    mutable std::recursive_mutex startStopMutex;
-    mutable std::recursive_mutex successorModifyMutex;
-    std::unique_ptr<std::thread> thread{nullptr};
+    std::atomic_bool started;
+
+    std::jthread thread;
+    std::future<SourceImplementationTermination> terminationFuture;
 
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
-    void runningRoutine();
+    void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
     void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 };
 
 }
+
+FMT_OSTREAM(NES::Sources::SourceImplementationTermination);
