@@ -42,8 +42,8 @@ endif (CODE_COVERAGE)
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-add_test(NAME systest_interpreter COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryCompiler.nautilusBackend=INTERPRETER)
-add_test(NAME systest_compiler COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER)
+add_test(NAME systest_interpreter COMMAND systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
+add_test(NAME systest_compiler COMMAND systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryEngine.numberOfWorkerThreads=8 --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 
 
 ## We wish to run all join tests with 1, 2, 4 worker threads
@@ -55,14 +55,14 @@ foreach(workerThreads IN LISTS workerThreads)
 
     add_test(
             NAME systest_join_${workerThreads}_interpreter
-            COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter
+            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter
                             --
-                            --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
+                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=20000)
     add_test(
             NAME systest_join_${workerThreads}_compiler
-            COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
+            COMMAND systest -n 6 --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
                             --
-                            --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
+                            --worker.queryEngine.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=20000)
 endforeach()
 
 
