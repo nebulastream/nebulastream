@@ -36,6 +36,7 @@
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::Optimizer
@@ -96,8 +97,7 @@ NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFuncti
     {
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the function: ", *function);
-    return nullptr;
+    throw NotImplemented("No conversion to Z3 function implemented for the function: ", *function);
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
