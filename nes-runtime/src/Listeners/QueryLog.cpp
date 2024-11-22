@@ -72,10 +72,10 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
     const auto log = readLock->find(queryId);
     if (log != readLock->end())
     {
-        QuerySummary summary = {queryId, Execution::QueryStatus::Invalid, 0, {}};
+        QuerySummary summary = {queryId, Execution::QueryStatus::Registered, 0, {}};
         summary.currentStatus = log->second.back().state; /// last status change
 
-        Execution::QueryStatus previousState = Execution::QueryStatus::Invalid;
+        Execution::QueryStatus previousState = Execution::QueryStatus::Registered;
         for (const auto& statusChange : log->second)
         {
             if (statusChange.state == Execution::QueryStatus::Failed)
