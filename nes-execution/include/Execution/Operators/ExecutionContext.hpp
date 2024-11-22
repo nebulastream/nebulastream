@@ -60,15 +60,6 @@ struct ExecutionContext final
     /// Emit a record buffer to the next pipeline or sink
     void emitBuffer(const RecordBuffer& buffer) const;
 
-    /// Removes the sequence state for the current <OrigindId, uint64_t>
-    void removeSequenceState() const;
-
-    /// Checks if all chunks have been seen
-    nautilus::val<bool> isLastChunk() const;
-
-    /// Returns the next chunk number for the emitted sequence numbers
-    [[nodiscard]] nautilus::val<ChunkNumber> getNextChunkNumber() const;
-
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     const nautilus::val<WorkerContext*> workerContext;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
