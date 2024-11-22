@@ -19,39 +19,25 @@
 namespace NES::QueryCompilation
 {
 
-/**
- * @brief A nautilus pipeline, that can be stored in a query plan.
- */
-class NautilusPipelineOperator : public UnaryOperator
+class NautilusPipelineOperator final : public UnaryOperator
 {
 public:
-    /**
-     * @brief Creates a new nautilus pipeline operator, which captures a pipeline stage and a set of operators.
-     * @return PhysicalOperatorPipeline for nautilus.
-     */
-    static OperatorPtr create(
-        std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
-
     OperatorPtr copy() override;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
-    /**
-     * @brief get a vector of operator handlers
-     * @return operator handler
-     */
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
+
+    NautilusPipelineOperator(
+        OperatorId id,
+        std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
 protected:
     std::string toString() const override;
 
 private:
-    NautilusPipelineOperator(
-        OperatorId id,
-        std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline;
 };
 
 }
