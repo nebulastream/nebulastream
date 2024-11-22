@@ -11,8 +11,12 @@ Source window INT64 id INT64 value INT64 timestamp
 6,20,20000
 7,21,21000
 
+SINK windowSink INT64 window$id INT64 window$value INT64 window$timestamp
+SINK windowSinkWithNew INT64 window$id INT64 window$value INT64 window$timestamp INT64 window$new
+
+
 # Map with mul function touches one field
-SELECT id * 3 AS id, value, timestamp FROM window INTO SINK
+SELECT id * 3 AS id, value, timestamp FROM window INTO windowSink
 ----
 3,1,1000
 6,1,1001
@@ -23,7 +27,7 @@ SELECT id * 3 AS id, value, timestamp FROM window INTO SINK
 21,21,21000
 
 # Map with mul function touches two fields
-SELECT id * value AS id, value, timestamp FROM window INTO SINK
+SELECT id * value AS id, value, timestamp FROM window INTO windowSink
 ----
 1,1,1000
 2,1,1001
@@ -34,7 +38,7 @@ SELECT id * value AS id, value, timestamp FROM window INTO SINK
 147,21,21000
 
 # Map with mul function touches two fields and adds a new field
-SELECT id, value, timestamp, id * value AS new FROM window INTO SINK
+SELECT id, value, timestamp, id * value AS new FROM window INTO windowSinkWithNew
 ----
 1,1,1000,1
 2,1,1001,2
@@ -45,7 +49,7 @@ SELECT id, value, timestamp, id * value AS new FROM window INTO SINK
 7,21,21000,147
 
 # Two maps after each other that both touch the same fields
-SELECT id * 3 AS id, id * value AS value, timestamp FROM window INTO SINK
+SELECT id * 3 AS id, id * value AS value, timestamp FROM window INTO windowSink
 ----
 3,3,1000
 6,6,1001

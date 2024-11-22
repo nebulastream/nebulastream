@@ -11,23 +11,27 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 6,20,20000
 7,21,21000
 
+SINK sinkId UINT64 window$id
+SINK sinkNewId UINT64 window$new_id
+
+
 # 0: first filter on 'timestamp', then project on 'id'
-SELECT id FROM window WHERE timestamp == 1002 INTO SINK
+SELECT id FROM window WHERE timestamp == 1002 INTO sinkId
 ----
 3
 
 # 1: first filter on 'timestamp' and 'value', then project on 'id'
-SELECT id FROM window WHERE timestamp == 1002 AND value == 1 INTO SINK
+SELECT id FROM window WHERE timestamp == 1002 AND value == 1 INTO sinkId
 ----
 3
 
 # 2: filter -> project [id]
-SELECT id FROM window WHERE id == 1 INTO SINK
+SELECT id FROM window WHERE id == 1 INTO sinkId
 ----
 1
 
 # 3: project -> filter -> map [id]
-SELECT id * 2 AS id FROM window WHERE id == 1 INTO SINK
+SELECT id * 2 AS id FROM window WHERE id == 1 INTO sinkId
 ----
 2
 
@@ -37,11 +41,11 @@ SELECT id * 2 AS id FROM window WHERE id == 1 INTO SINK
 # 4: map -> filter -> project [id]
 SELECT new_id FROM
     (SELECT id * 2 AS new_id FROM window)
-WHERE new_id == 2 INTO SINK
+WHERE new_id == 2 INTO sinkNewId
 ----
 2
 
 # 5: filter -> map -> project [id -> new_id]
-SELECT id * 2 AS new_id FROM window WHERE id == 1 INTO SINK
+SELECT id * 2 AS new_id FROM window WHERE id == 1 INTO sinkNewId
 ----
 2

@@ -11,8 +11,11 @@ Source window INT64 id INT64 value INT64 timestamp
 30,20,20000
 35,21,21000
 
+SINK windowSink INT64 window$id INT64 window$value INT64 window$timestamp
+SINK windowSinkWithNew INT64 window$id INT64 window$value INT64 window$timestamp INT64 window$new
+
 # Map with div function touches one field
-SELECT id / 5 AS id, value, timestamp FROM window INTO SINK
+SELECT id / 5 AS id, value, timestamp FROM window INTO windowSink
 ----
 1,1,1000
 2,1,1001
@@ -23,7 +26,7 @@ SELECT id / 5 AS id, value, timestamp FROM window INTO SINK
 7,21,21000
 
 # Map with div function touches two fields
-SELECT id / value AS id, value, timestamp FROM window INTO SINK
+SELECT id / value AS id, value, timestamp FROM window INTO windowSink
 ----
 5,1,1000
 10,1,1001
@@ -34,7 +37,7 @@ SELECT id / value AS id, value, timestamp FROM window INTO SINK
 1,21,21000
 
 # Map with div function touches two fields and adds a new field
-SELECT id, value, timestamp, id / value AS new FROM window INTO SINK
+SELECT id, value, timestamp, id / value AS new FROM window INTO windowSinkWithNew
 ----
 5,1,1000,5
 10,1,1001,10
@@ -45,7 +48,7 @@ SELECT id, value, timestamp, id / value AS new FROM window INTO SINK
 35,21,21000,1
 
 # Two maps after each other that both touch the same fields
-SELECT id / 5 AS id, value / id AS value, timestamp FROM window INTO SINK
+SELECT id / 5 AS id, value / id AS value, timestamp FROM window INTO windowSink
 ----
 1,1,1000
 2,0,1001
