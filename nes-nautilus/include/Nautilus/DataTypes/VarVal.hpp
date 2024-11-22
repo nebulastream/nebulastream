@@ -171,6 +171,7 @@ public:
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
+    DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
     DEFINE_OPERATOR_VAR_VAL_BINARY(operator&&, &&);

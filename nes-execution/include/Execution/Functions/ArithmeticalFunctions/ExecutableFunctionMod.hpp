@@ -13,29 +13,24 @@
 */
 
 #pragma once
+
 #include <memory>
-#include <vector>
-#include <Runtime/TupleBuffer.hpp>
+#include <Execution/Functions/Function.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
-namespace NES::Runtime::Execution
+namespace NES::Runtime::Execution::Functions
 {
-/**
- * @brief Interface that defines operations to migrate an operator state
- */
-class MigratableStateInterface
-{
-    /**
-     * @brief Gets the state
-     * @param startTS
-     * @param stopTS
-     * @return list of TupleBuffers
-     */
-    virtual std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) = 0;
 
-    /**
-     * @brief Merges migrated slices
-     * @param buffers
-     */
-    virtual void restoreState(std::vector<Memory::TupleBuffer>&) = 0;
+/// Performs leftExecutableFunctionSub / rightExecutableFunctionSub
+class ExecutableFunctionMod : public Function
+{
+public:
+    ExecutableFunctionMod(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    VarVal execute(Record& record) const override;
+
+private:
+    const std::unique_ptr<Function> leftExecutableFunctionSub;
+    const std::unique_ptr<Function> rightExecutableFunctionSub;
 };
+
 }
