@@ -24,6 +24,7 @@
 #include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -58,8 +59,10 @@ private:
     std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
+    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        size_t bufferSize,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);

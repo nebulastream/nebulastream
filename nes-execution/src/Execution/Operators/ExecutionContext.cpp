@@ -127,43 +127,4 @@ nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-ChunkNumber getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, const OriginId originId, const SequenceNumber sequenceNumber)
-{
-    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
-    return ChunkNumber(pipelineCtx->getNextChunkNumber({sequenceNumber, originId}));
-}
-
-bool isLastChunkProxy(
-    PipelineExecutionContext* pipelineCtx,
-    const OriginId originId,
-    const SequenceNumber sequenceNumber,
-    const ChunkNumber chunkNumber,
-    const bool isLastChunk)
-{
-    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
-    return pipelineCtx->isLastChunk({sequenceNumber, originId}, chunkNumber, isLastChunk);
-}
-
-void removeSequenceStateProxy(PipelineExecutionContext* pipelineCtx, const OriginId originId, const SequenceNumber sequenceNumber)
-{
-    PRECONDITION(pipelineCtx != nullptr, "operator handler should not be null");
-    pipelineCtx->removeSequenceState({sequenceNumber, originId});
-}
-
-nautilus::val<bool> ExecutionContext::isLastChunk() const
-{
-    return nautilus::invoke(
-        isLastChunkProxy, this->pipelineContext, this->originId, this->sequenceNumber, this->chunkNumber, this->lastChunk);
-}
-
-nautilus::val<ChunkNumber> ExecutionContext::getNextChunkNumber() const
-{
-    return {nautilus::invoke(getNextChunkNumberProxy, this->pipelineContext, this->originId, this->sequenceNumber)};
-}
-
-void ExecutionContext::removeSequenceState() const
-{
-    nautilus::invoke(removeSequenceStateProxy, this->pipelineContext, this->originId, this->sequenceNumber);
-}
-
 }
