@@ -48,8 +48,8 @@ public:
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
     void setWorkerThreads(uint64_t numberOfWorkerThreads);
     void setBufferProvider(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
-    void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
-    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
+    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
