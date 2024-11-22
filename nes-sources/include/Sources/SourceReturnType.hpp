@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <functional>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -35,11 +36,8 @@ struct Data
 struct EoS
 {
 };
-struct Stopped
-{
-};
 
-using SourceReturnType = std::variant<Error, Data, EoS, Stopped>;
+using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }

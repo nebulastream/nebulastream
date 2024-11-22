@@ -18,6 +18,7 @@
 #include <exception>
 #include <memory>
 #include <ostream>
+#include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -130,7 +131,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer)
+size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
