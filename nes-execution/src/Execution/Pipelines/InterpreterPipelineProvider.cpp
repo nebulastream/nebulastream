@@ -23,12 +23,14 @@ std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider(
     return std::make_unique<InterpreterPipelineProvider>();
 }
 
-std::unique_ptr<ExecutablePipelineStage>
-InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options)
+std::unique_ptr<ExecutablePipelineStage> InterpreterPipelineProvider::create(
+    std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+    nautilus::engine::Options& options)
 {
     /// As we are creating here a pipeline that is interpreted, we need to set the compilation option to false
     options.setOption("engine.Compilation", false);
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, std::move(operatorHandlers), options);
 }
 
 }
