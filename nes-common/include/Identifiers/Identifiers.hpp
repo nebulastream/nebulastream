@@ -20,15 +20,17 @@
 
 namespace NES
 {
+/// TODO #601 Refactor Identifiers.hpp
 
-///                      data type, struct name, invalid value, initial value
+/// Global Identifiers: These Identifierers are unique to the SingleNodeWorkers entire lifetime.
+/// There can never exist two objects with the same Identifier, regardless if the previous object has been destroyed
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
-using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
-using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
-using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
+
+/// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
+using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
 
@@ -44,10 +46,6 @@ static constexpr OriginId INITIAL_ORIGIN_ID = INITIAL<OriginId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;
-static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
-static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
-
-static constexpr RequestId INVALID_REQUEST_ID = INVALID<RequestId>;
 
 static constexpr ChunkNumber INVALID_CHUNK_NUMBER = INVALID<ChunkNumber>;
 static constexpr ChunkNumber INITIAL_CHUNK_NUMBER = INITIAL<ChunkNumber>;
@@ -61,4 +59,9 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
     return id.getRawValue() % containerSize;
 }
+
+/// Legacy
+using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
+static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
+static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
 }

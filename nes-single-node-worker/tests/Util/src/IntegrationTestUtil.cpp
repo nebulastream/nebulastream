@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <thread>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -324,7 +326,7 @@ testing::AssertionResult waitForQueryToEnd(QueryId queryId, GRPCServer& uut)
     constexpr size_t maxNumberOfTimeoutChecks = 80;
     size_t numTimeouts = 0;
     auto currentQueryStatus = queryStatus(queryId, uut);
-    while (currentQueryStatus != Stopped && currentQueryStatus != Failed && currentQueryStatus != Finished)
+    while (currentQueryStatus != Stopped && currentQueryStatus != Failed)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(25));
         if (++numTimeouts > maxNumberOfTimeoutChecks)
