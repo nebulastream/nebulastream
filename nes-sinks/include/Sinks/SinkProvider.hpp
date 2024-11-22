@@ -14,13 +14,13 @@
 #pragma once
 
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 
 namespace NES::Sinks::SinkProvider
 {
 
 /// Takes a SinkDescriptor and in exchange returns a SinkPipeline, which Tasks can process (together with a TupleBuffer).
-std::shared_ptr<Sink> lower(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+std::unique_ptr<NES::Sinks::Sink> lower(const SinkDescriptor& sinkDescriptor);
 
 }

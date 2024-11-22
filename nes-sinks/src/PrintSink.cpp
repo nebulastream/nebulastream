@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <iostream>
-#include <sstream>
+#include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/PrintSink.hpp>
 #include <Sinks/Sink.hpp>
@@ -26,12 +28,15 @@
 #include <Sinks/SinkRegistry.hpp>
 #include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <PipelineExecutionContext.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sinks
 {
 
-PrintSink::PrintSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor) : Sink(queryId), outputStream(std::cout)
+PrintSink::PrintSink(const SinkDescriptor& sinkDescriptor) : outputStream(&std::cout)
 {
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
@@ -42,25 +47,26 @@ PrintSink::PrintSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
     }
 }
-
-bool PrintSink::emitTupleBuffer(Memory::TupleBuffer& tupleBuffer)
+void PrintSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
-    PRECONDITION(tupleBuffer, "Invalid input buffer in PrintSink.");
+}
 
-    const auto bufferAsString = outputParser->getFormattedBuffer(tupleBuffer);
-    outputStream << bufferAsString << std::endl;
-    return true;
+void PrintSink::stop(Runtime::Execution::PipelineExecutionContext&)
+{
+}
+
+void PrintSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
+{
+    PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
+
+    const auto bufferAsString = outputParser->getFormattedBuffer(inputBuffer);
+    *(*outputStream.wlock()) << bufferAsString << '\n';
 }
 
 std::ostream& PrintSink::toString(std::ostream& str) const
 {
     str << fmt::format("PRINT_SINK(Writing to: std::cout, using outputParser: {}", *outputParser);
     return str;
-}
-
-bool PrintSink::equals(const Sink& other) const
-{
-    return this->queryId == other.queryId;
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config>
@@ -75,9 +81,9 @@ SinkValidationGeneratedRegistrar::RegisterSinkValidationPrint(std::unordered_map
     return PrintSink::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterPrintSink(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterPrintSink(const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<PrintSink>(queryId, sinkDescriptor);
+    return std::make_unique<PrintSink>(sinkDescriptor);
 }
 
 }
