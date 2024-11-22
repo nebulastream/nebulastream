@@ -29,8 +29,6 @@ MeosExpression::MeosExpression(const ExpressionPtr& left, const ExpressionPtr& m
     : left(left), middle(middle), right(right) {}
 
 
-
-
 std::string convertSecondsToTimestamp(long long seconds) {
     // Convert seconds to time_point
     std::chrono::seconds sec(seconds);
