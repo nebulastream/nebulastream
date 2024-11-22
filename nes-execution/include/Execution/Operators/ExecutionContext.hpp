@@ -22,9 +22,7 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <val_ptr.hpp>
@@ -57,7 +55,6 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
-    const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
 
 
     /// Emit a record buffer to the next pipeline or sink
