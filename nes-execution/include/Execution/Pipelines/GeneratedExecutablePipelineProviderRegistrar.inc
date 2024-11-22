@@ -22,7 +22,7 @@
 namespace NES::Runtime::Execution
 {
 std::unique_ptr<ExecutablePipelineProvider> RegisterInterpreterPipelineProvider();
-std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider();
+std::unique_ptr<ExecutablePipelineProvider> RegisterCompilationPipelineProvider();
 }
 namespace NES
 {
@@ -33,6 +33,6 @@ Registrar<Runtime::Execution::ExecutablePipelineProviderRegistry, Runtime::Execu
 {
     using namespace NES::Runtime::Execution;
     registry.registerPlugin("PipelineInterpreter", RegisterInterpreterPipelineProvider);
-    registry.registerPlugin("PipelineCompiler", RegisterCompilingPipelineProvider);
+    registry.registerPlugin("PipelineCompiler", RegisterCompilationPipelineProvider);
 }
 }

@@ -28,8 +28,13 @@ namespace NES::Runtime::Execution
 {
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline, nautilus::engine::Options options)
-    : options(std::move(options)), pipelineFunctionCompiled(nullptr), physicalOperatorPipeline(physicalOperatorPipeline)
+    const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+    std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+    nautilus::engine::Options options)
+    : options(std::move(options))
+    , pipelineFunctionCompiled(nullptr)
+    , operatorHandlers(std::move(operatorHandlers))
+    , physicalOperatorPipeline(physicalOperatorPipeline)
 {
 }
 
@@ -39,6 +44,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(
     /// we call the compiled pipeline function with an input buffer and the execution context
     pipelineFunctionCompiled(&workerContext, &pipelineExecutionContext, std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
 }
 
 nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
@@ -72,6 +78,7 @@ uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelin
     const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
     const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
     return 0;
 }
@@ -81,6 +88,7 @@ uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
     const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
     const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     pipelineFunctionCompiled = this->compilePipeline();
     return 0;

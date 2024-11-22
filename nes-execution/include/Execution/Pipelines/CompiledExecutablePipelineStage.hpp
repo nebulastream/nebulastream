@@ -43,14 +43,18 @@ public:
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     ExecutionResult execute(
         Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
+        const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandler,
+        nautilus::engine::Options options);
+        uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
-    compilePipeline() const;
-    const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> pipelineFunctionCompiled;
-    std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
+    private:
+        [[nodiscard]] nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
+        compilePipeline() const;
+        const nautilus::engine::Options options;
+        nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> compiledPipelineFunction;
+        std::vector<OperatorHandlerPtr> operatorHandlers;
+        std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
 }

@@ -94,7 +94,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
     {
         decomposedQueryPlan->removeAsRootOperator(root->getId());
     }
-    auto nautilusPipelineWrapper = NautilusPipelineOperator::create(pipeline, operatorHandlers);
+    auto nautilusPipelineWrapper = std::make_shared<NautilusPipelineOperator>(getNextOperatorId(), pipeline, operatorHandlers);
     decomposedQueryPlan->addRootOperator(nautilusPipelineWrapper);
     return operatorPipeline;
 }

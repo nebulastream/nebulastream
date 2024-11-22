@@ -11,25 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
+#include <vector>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation
 {
 
-OperatorPtr NautilusPipelineOperator::create(
-    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-{
-    return std::make_shared<NautilusPipelineOperator>(
-        NautilusPipelineOperator(getNextOperatorId(), std::move(nautilusPipeline), std::move(operatorHandlers)));
-}
-
 NautilusPipelineOperator::NautilusPipelineOperator(
     OperatorId id,
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-    : Operator(id), UnaryOperator(id), nautilusPipeline(std::move(nautilusPipeline)), operatorHandlers(std::move(operatorHandlers))
+    std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers)
+    : Operator(id), UnaryOperator(id), operatorHandlers(std::move(operatorHandlers)), nautilusPipeline(std::move(nautilusPipeline))
 {
 }
 
@@ -40,7 +39,7 @@ std::string NautilusPipelineOperator::toString() const
 
 OperatorPtr NautilusPipelineOperator::copy()
 {
-    auto result = create(nautilusPipeline, operatorHandlers);
+    auto result = std::make_shared<NautilusPipelineOperator>(getNextOperatorId(), nautilusPipeline, operatorHandlers);
     result->addAllProperties(properties);
     return result;
 }
@@ -50,7 +49,7 @@ std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOp
     return nautilusPipeline;
 }
 
-std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::getOperatorHandlers()
+std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> NautilusPipelineOperator::getOperatorHandlers()
 {
     return operatorHandlers;
 }
