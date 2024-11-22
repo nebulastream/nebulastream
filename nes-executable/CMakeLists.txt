@@ -10,6 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        TaskExecutionException.cpp
-)
+add_library(nes-executable ExecutableQueryPlan.cpp)
+target_include_directories(nes-executable PUBLIC include PRIVATE .)
+target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)

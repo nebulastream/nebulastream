@@ -13,8 +13,8 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/Reconfigurable.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -24,13 +24,17 @@ using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public Reconfigurable
+class OperatorHandler
 {
 public:
     OperatorHandler() = default;
-    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) = 0;
-    virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
-    virtual ~OperatorHandler() override = default;
+
+    virtual ~OperatorHandler() = default;
+
+    virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
+
+    virtual void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };
+
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 }
