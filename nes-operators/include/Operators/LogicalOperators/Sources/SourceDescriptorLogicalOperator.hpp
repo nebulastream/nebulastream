@@ -35,6 +35,7 @@ public:
         std::shared_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId);
 
     const Sources::SourceDescriptor& getSourceDescriptorRef() const;
+    std::shared_ptr<Sources::SourceDescriptor> getSourceDescriptor() const;
 
     /// Returns the result schema of a source operator, which is defined by the source descriptor.
     bool inferSchema() override;
