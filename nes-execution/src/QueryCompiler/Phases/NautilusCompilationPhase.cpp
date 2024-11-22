@@ -85,7 +85,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     if (auto provider = Runtime::Execution::ExecutablePipelineProviderRegistry::instance().create(providerName))
     {
-        auto pipelineStage = provider.value()->create(nautilusPipeline->getNautilusPipeline(), options);
+        auto pipelineStage
+            = provider.value()->create(nautilusPipeline->getNautilusPipeline(), nautilusPipeline->getOperatorHandlers(), options);
         /// we replace the current pipeline operators with an executable operator.
         /// this allows us to keep the pipeline structure.
         auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
