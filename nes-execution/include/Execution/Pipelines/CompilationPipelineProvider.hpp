@@ -23,7 +23,9 @@ namespace NES::Runtime::Execution
 class CompilationPipelineProvider : public ExecutablePipelineProvider
 {
 public:
-    std::unique_ptr<ExecutablePipelineStage>
-    create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) override;
+    std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) override;
 };
 }
