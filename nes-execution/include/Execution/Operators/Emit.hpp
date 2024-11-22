@@ -12,9 +12,16 @@
     limitations under the License.
 */
 #pragma once
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/RecordBuffer.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <val.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -26,14 +33,18 @@ namespace NES::Runtime::Execution::Operators
 class Emit : public ExecutableOperator
 {
 public:
-    Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+    Emit(size_t operatorHandlerIndex, std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    static void emitRecordBuffer(
-        ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk);
+    void emitRecordBuffer(
+        ExecutionContext& ctx,
+        RecordBuffer& recordBuffer,
+        const nautilus::val<uint64_t>& numRecords,
+        const nautilus::val<bool>& lastChunk) const;
 
 private:
+    size_t operatorHandlerIndex;
     uint64_t maxRecordsPerBuffer;
     std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };

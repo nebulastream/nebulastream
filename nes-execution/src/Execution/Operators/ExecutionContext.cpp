@@ -124,45 +124,4 @@ nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint6
     return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-ChunkNumber::Underlying
-getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
-{
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
-    return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
-}
-
-bool isLastChunkProxy(
-    PipelineExecutionContext* pipelineCtx,
-    OriginId::Underlying originId,
-    SequenceNumber::Underlying sequenceNumber,
-    ChunkNumber::Underlying chunkNumber,
-    bool isLastChunk)
-{
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
-    return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
-}
-
-void removeSequenceStateProxy(
-    PipelineExecutionContext* pipelineCtx, OriginId::Underlying originId, SequenceNumber::Underlying sequenceNumber)
-{
-    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
-    pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
-}
-
-nautilus::val<bool> ExecutionContext::isLastChunk() const
-{
-    return nautilus::invoke(
-        isLastChunkProxy, this->pipelineContext, this->originId, this->sequenceNumber, this->chunkNumber, this->lastChunk);
-}
-
-nautilus::val<ChunkNumber> ExecutionContext::getNextChunkNumber() const
-{
-    return {nautilus::invoke(getNextChunkNumberProxy, this->pipelineContext, this->originId, this->sequenceNumber)};
-}
-
-void ExecutionContext::removeSequenceState() const
-{
-    nautilus::invoke(removeSequenceStateProxy, this->pipelineContext, this->originId, this->sequenceNumber);
-}
-
 }

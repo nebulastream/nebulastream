@@ -80,7 +80,8 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
-        parentOperator = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize);
+        parentOperator
+            = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (auto& root : rootOperators)
@@ -96,7 +97,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     Runtime::Execution::PhysicalOperatorPipeline& pipeline,
     std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
     const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
-    size_t bufferSize)
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
@@ -107,7 +109,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
-        auto emit = lowerEmit(operatorNode, bufferSize);
+        auto emit = lowerEmit(operatorNode, bufferSize, operatorHandlers);
         parentOperator->setChild(emit);
         return emit;
     }
@@ -139,8 +141,10 @@ LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOpe
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -148,7 +152,8 @@ LowerPhysicalToNautilusOperators::lowerEmit(const PhysicalOperators::PhysicalOpe
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
+    operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::EmitOperatorHandler>());
+    return std::make_shared<Runtime::Execution::Operators::Emit>(operatorHandlers.size() - 1, std::move(memoryProvider));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
