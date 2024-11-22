@@ -1,0 +1,28 @@
+query: |
+  SELECT id, 100000 - id as left FROM tcp_source 
+  WHERE id % 2 == 0
+  INTO csv_sink
+sink:
+  name: csv_sink
+  type: File
+  config:
+    inputFormat: CSV
+    filePath: "GENERATE"
+    append: false
+logical:
+  - name: tcp_source
+    schema:
+      - name: id
+        type: UINT64
+physical:
+  - logical: tcp_source
+    config:
+      type: TCP
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 5000
+      socketHost: localhost
+      inputFormat: CSV
+      socketBufferSize: 2
+      decideMessageSize: TUPLE_SEPARATOR
+      flushIntervalMS: 100
