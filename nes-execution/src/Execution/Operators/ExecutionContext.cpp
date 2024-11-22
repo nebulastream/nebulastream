@@ -17,21 +17,19 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <val_ptr.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
 {
-ExecutionContext::ExecutionContext(
-    const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext)
-    : workerContext(workerContext)
-    , pipelineContext(pipelineContext)
+ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext)
+    : pipelineContext(pipelineContext)
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
@@ -41,54 +39,51 @@ ExecutionContext::ExecutionContext(
 {
 }
 
-Memory::TupleBuffer* allocateBufferProxy(WorkerContext* workerContext)
+Memory::TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
 {
-    if (workerContext == nullptr)
-    {
-        NES_THROW_RUNTIME_ERROR("worker context should not be null");
-    }
+    PRECONDITION(pec, "pipeline execution context should not be null");
     /// We allocate a new tuple buffer for the runtime.
     /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
     /// This increases the reference counter in the buffer.
     /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-    const auto buffer = workerContext->allocateTupleBuffer();
+    auto buffer = pec->allocateTupleBuffer();
     auto* tb = new Memory::TupleBuffer(buffer);
     return tb;
 }
 
 nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
 {
-    auto bufferPtr = nautilus::invoke(allocateBufferProxy, workerContext);
+    auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
     return bufferPtr;
 }
 
-void emitBufferProxy(WorkerContext* workerContext, PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tupleBuffer)
+void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)
 {
-    NES_TRACE("Emitting buffer with SequenceData = {}", tupleBuffer->getSequenceDataAsString());
+    NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 
     /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
      * fusion, this should only happen occasionally.
      */
-    pipelineCtx->emitBuffer(*tupleBuffer, *workerContext);
+    pipelineCtx->emitBuffer(*tb, PipelineExecutionContext::ContinuationPolicy::NEVER);
 
     /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
-    delete tupleBuffer;
+    delete tb;
 }
 
 void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const
 {
-    nautilus::invoke(emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
+    nautilus::invoke(emitBufferProxy, pipelineContext, buffer.getReference());
 }
 
-WorkerThreadId getWorkerThreadIdProxy(const WorkerContext* workerContext)
+WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 {
-    return workerContext->getId();
+    return pec->getId();
 }
 
 nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId() const
 {
-    return nautilus::invoke(getWorkerThreadIdProxy, workerContext);
+    return nautilus::invoke(getWorkerThreadIdProxy, pipelineContext);
 }
 
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
