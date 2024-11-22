@@ -20,7 +20,7 @@
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
-#include <Executable.hpp>
+#include <ExecutablePipelineStage.hpp>
 
 namespace NES::Runtime::Execution
 {

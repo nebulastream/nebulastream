@@ -12,7 +12,11 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <vector>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
 namespace NES::Runtime::Execution
 {

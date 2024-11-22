@@ -12,8 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
+#include <vector>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/InterpreterPipelineProvider.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <ExecutablePipelineStage.hpp>
+#include <options.hpp>
 
 namespace NES::Runtime::Execution
 {
