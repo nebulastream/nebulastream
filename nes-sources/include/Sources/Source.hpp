@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <stop_token>
 #include <string>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -38,7 +39,7 @@ public:
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     /// @return the number of bytes read
-    virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
+    virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
     virtual void open() = 0;

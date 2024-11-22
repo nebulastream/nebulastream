@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstddef>
 #include <memory>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -26,24 +28,18 @@ namespace NES::Sources
 SourceHandle::SourceHandle(
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-    Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
 {
     this->sourceThread = std::make_unique<SourceThread>(
-        std::move(originId),
-        std::move(bufferPool),
-        std::move(emitFunction),
-        numSourceLocalBuffers,
-        std::move(sourceImplementation),
-        std::move(inputFormatter));
+        std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation), std::move(inputFormatter));
 }
 SourceHandle::~SourceHandle() = default;
 
-bool SourceHandle::start() const
+bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
-    return this->sourceThread->start();
+    return this->sourceThread->start(std::move(emitFunction));
 }
 bool SourceHandle::stop() const
 {
