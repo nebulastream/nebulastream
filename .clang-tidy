@@ -39,7 +39,6 @@ Checks: [
   "-llvmlibc-*", # project-specific
   "-android-*", # project-specific
   "-zircon-*", # project-specific
-
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
@@ -59,6 +58,8 @@ Checks: [
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-llvm-namespace-comment", # we do not require namespace comments
   "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
+
+  "-misc-no-recursion",
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
@@ -294,6 +295,7 @@ CheckOptions:
   readability-identifier-naming.TypeTemplateParameterCase: CamelCase
   readability-identifier-naming.TypedefCase: CamelCase
   readability-identifier-naming.UnionCase: CamelCase
+  readability-identifier-naming.ParameterCase: camelBack
   modernize-loop-convert.UseCxx20ReverseRanges: false
   performance-move-const-arg.CheckTriviallyCopyableMove: false
   # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
@@ -301,5 +303,6 @@ CheckOptions:
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
   # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
-  readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs|ts"
-  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs|ts'
+  readability-identifier-length.IgnoredParameterNames: 'it|bm|tb|id|os|lhs|rhs|ts'
+  readability-identifier-length.IgnoredVariableNames: 'it|bm|tb|id|os|lhs|rhs|ts'
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
