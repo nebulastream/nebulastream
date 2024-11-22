@@ -11,8 +11,21 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 6,20,20000
 7,21,21000
 
+SINK sinkId UINT64 window$id
+SINK sinkValue UINT64 window$value
+SINK sinkTimestamp UINT64 window$timestamp
+SINK sinkIdValue UINT64 window$id UINT64 window$value
+SINK sinkIdTimestamp UINT64 window$id UINT64 window$timestamp
+SINK sinkValueTimestamp UINT64 window$value UINT64 window$timestamp
+SINK sinkIdValueTimestamp UINT64 window$id UINT64 window$value UINT64 window$timestamp
+SINK sinkIdTimestampValue UINT64 window$id UINT64 window$timestamp UINT64 window$value
+SINK sinkValueIdTimestamp UINT64 window$value UINT64 window$id UINT64 window$timestamp
+SINK sinkValueTimestampId UINT64 window$value UINT64 window$timestamp UINT64 window$id
+SINK sinkTimestampIdValue UINT64 window$timestamp UINT64 window$id UINT64 window$value
+SINK sinkTimestampValueId UINT64 window$timestamp UINT64 window$value UINT64 window$id
+
 # 0: [id]
-SELECT id FROM window INTO SINK
+SELECT id FROM window INTO sinkId
 ----
 1
 2
@@ -24,7 +37,7 @@ SELECT id FROM window INTO SINK
 
 
 # 1: [value]
-SELECT value FROM window INTO SINK
+SELECT value FROM window INTO sinkValue
 ----
 1
 1
@@ -35,7 +48,7 @@ SELECT value FROM window INTO SINK
 21
 
 # 2: [timestamp]
-SELECT timestamp FROM window INTO SINK
+SELECT timestamp FROM window INTO sinkTimestamp
 ----
 1000
 1001
@@ -46,7 +59,7 @@ SELECT timestamp FROM window INTO SINK
 21000
 
 # 3: [id, value]
-SELECT id, value FROM window INTO SINK
+SELECT id, value FROM window INTO sinkIdValue
 ----
 1,1
 2,1
@@ -57,7 +70,7 @@ SELECT id, value FROM window INTO SINK
 7,21
 
 # 4: [id, timestamp]
-SELECT id, timestamp FROM window INTO SINK
+SELECT id, timestamp FROM window INTO sinkIdTimestamp
 ----
 1,1000
 2,1001
@@ -68,7 +81,7 @@ SELECT id, timestamp FROM window INTO SINK
 7,21000
 
 # 5: [value, timestamp]
-SELECT value, timestamp FROM window INTO SINK
+SELECT value, timestamp FROM window INTO sinkValueTimestamp
 ----
 1,1000
 1,1001
@@ -79,7 +92,7 @@ SELECT value, timestamp FROM window INTO SINK
 21,21000
 
 # 6: [id, value, timestamp]
-SELECT id, value, timestamp FROM window INTO SINK
+SELECT id, value, timestamp FROM window INTO sinkIdValueTimestamp
 ----
 1,1,1000
 2,1,1001
@@ -90,7 +103,7 @@ SELECT id, value, timestamp FROM window INTO SINK
 7,21,21000
 
 # 7: [id, timestamp, value]
-SELECT id, timestamp, value FROM window INTO SINK
+SELECT id, timestamp, value FROM window INTO sinkIdTimestampValue
 ----
 1,1000,1
 2,1001,1
@@ -101,7 +114,7 @@ SELECT id, timestamp, value FROM window INTO SINK
 7,21000,21
 
 # 8: [value, id, timestamp]
-SELECT value, id, timestamp FROM window INTO SINK
+SELECT value, id, timestamp FROM window INTO sinkValueIdTimestamp
 ----
 1,1,1000
 1,2,1001
@@ -111,8 +124,8 @@ SELECT value, id, timestamp FROM window INTO SINK
 20,6,20000
 21,7,21000
 
-# 8: [value, timestamp, id]
-SELECT value, timestamp, id FROM window INTO SINK
+# 9: [value, timestamp, id]
+SELECT value, timestamp, id FROM window INTO sinkValueTimestampId
 ----
 1,1000,1
 1,1001,2
@@ -122,8 +135,8 @@ SELECT value, timestamp, id FROM window INTO SINK
 20,20000,6
 21,21000,7
 
-# 9: [timestamp, id, value]
-SELECT timestamp, id, value FROM window INTO SINK
+# 10: [timestamp, id, value]
+SELECT timestamp, id, value FROM window INTO sinkTimestampIdValue
 ----
 1000,1,1
 1001,2,1
@@ -133,8 +146,8 @@ SELECT timestamp, id, value FROM window INTO SINK
 20000,6,20
 21000,7,21
 
-# 10: [timestamp, value, id]
-SELECT timestamp, value, id FROM window INTO SINK
+# 11: [timestamp, value, id]
+SELECT timestamp, value, id FROM window INTO sinkTimestampValueId
 ----
 1000,1,1
 1001,1,2

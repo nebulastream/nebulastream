@@ -4,6 +4,7 @@
 
 Source noTuple UINT64 field_1
 
+SINK SINK UINT64 noTuple$field_1
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM noTuple INTO SINK
