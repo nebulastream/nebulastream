@@ -62,7 +62,7 @@ constexpr auto replaceNewlines(const std::string_view input, const std::string_v
     return result;
 }
 
-std::string CSVFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
+std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
 {
     std::string bufferContent;
     if (addTimestamp)
