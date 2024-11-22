@@ -16,7 +16,7 @@
 
 #include <ostream>
 #include <fmt/ostream.h>
-#include <Executable.hpp>
+#include <ExecutablePipelineStage.hpp>
 
 namespace NES::Sinks
 {

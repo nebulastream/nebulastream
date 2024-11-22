@@ -75,12 +75,11 @@ CompiledExecutablePipelineStage::compilePipeline() const
     return executable;
 }
 
-uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
+void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     auto ctx = ExecutionContext(&pipelineExecutionContext);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
-    return 0;
 }
 
 std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
@@ -88,13 +87,12 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
     return os << "CompiledExecutablePipelineStage()";
 }
 
-uint32_t CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
+void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     auto ctx = ExecutionContext(std::addressof(pipelineExecutionContext));
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     compiledPipelineFunction = this->compilePipeline();
-    return 0;
 }
 
 }
