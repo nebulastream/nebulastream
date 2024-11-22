@@ -115,7 +115,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
-        auto emit = lowerEmit(operatorNode, bufferSize);
+        auto emit = lowerEmit(operatorNode, bufferSize, operatorHandlers);
         parentOperator->setChild(emit);
         return emit;
     }
@@ -226,8 +226,10 @@ LowerPhysicalToNautilusOperators::lowerScan(const PhysicalOperators::PhysicalOpe
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider), schema->getFieldNames());
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& operatorNode, size_t bufferSize)
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerEmit(
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
+    size_t bufferSize,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
@@ -235,7 +237,8 @@ LowerPhysicalToNautilusOperators::lowerEmit(const PhysicalOperators::PhysicalOpe
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider
         = std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
-    return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
+    operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::EmitOperatorHandler>());
+    return std::make_shared<Runtime::Execution::Operators::Emit>(operatorHandlers.size() - 1, std::move(memoryProvider));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

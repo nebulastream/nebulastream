@@ -12,15 +12,75 @@
     limitations under the License.
 */
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Util.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/val.hpp>
+#include <function.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
+
+uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
+{
+    PRECONDITION(operatorHandlerPtr != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
+    auto chunkNumber = pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
+    NES_TRACE("(Sequence Number: {}, Chunk Number: {})", sequenceNumber, chunkNumber);
+    return chunkNumber;
+}
+
+bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
+{
+    NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
+    return pipelineCtx->processChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
+}
+
+void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
+{
+    NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
+    auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
+    pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
+}
+
+namespace
+{
+nautilus::val<bool> isLastChunk(ExecutionContext& context, size_t operatorHandlerIndex)
+{
+    return nautilus::invoke(
+        isLastChunkProxy,
+        context.getGlobalOperatorHandler(operatorHandlerIndex),
+        context.originId,
+        context.sequenceNumber,
+        context.chunkNumber,
+        context.lastChunk);
+}
+
+nautilus::val<ChunkNumber> getNextChunkNr(ExecutionContext& context, size_t operatorHandlerIndex)
+{
+    return nautilus::invoke(
+        getNextChunkNumberProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
+}
+
+void removeSequenceState(ExecutionContext& context, size_t operatorHandlerIndex)
+{
+    nautilus::invoke(
+        removeSequenceStateProxy, context.getGlobalOperatorHandler(operatorHandlerIndex), context.originId, context.sequenceNumber);
+}
+}
 
 class EmitState : public OperatorState
 {
@@ -65,30 +125,35 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
-    const auto emitState = static_cast<EmitState*>(ctx.getLocalState(this));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
+    auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(this));
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, isLastChunk(ctx, operatorHandlerIndex));
 }
 
 void Emit::emitRecordBuffer(
-    ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk)
+    ExecutionContext& ctx,
+    RecordBuffer& recordBuffer,
+    const nautilus::val<uint64_t>& numRecords,
+    const nautilus::val<bool>& isLastChunk) const
 {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
-    recordBuffer.setChunkNumber(ctx.getNextChunkNumber());
-    recordBuffer.setLastChunk(lastChunk);
+    recordBuffer.setChunkNumber(getNextChunkNr(ctx, operatorHandlerIndex));
+    recordBuffer.setLastChunk(isLastChunk);
     recordBuffer.setCreationTs(ctx.currentTs);
     ctx.emitBuffer(recordBuffer);
 
-    if (lastChunk == true)
+    if (isLastChunk == true)
     {
-        ctx.removeSequenceState();
+        removeSequenceState(ctx, operatorHandlerIndex);
     }
 }
 
-Emit::Emit(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
-    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider))
+Emit::Emit(size_t operatorHandlerIndex, std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity())
+    , memoryProvider(std::move(memoryProvider))
 {
 }
 
