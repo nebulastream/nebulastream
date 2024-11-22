@@ -12,8 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -46,6 +50,18 @@ std::string SinkLogicalOperator::toString() const
     ss << ")";
     return ss.str();
 }
+bool SinkLogicalOperator::inferSchema()
+{
+    auto result = LogicalUnaryOperator::inferSchema();
+
+    if (result && sinkDescriptor)
+    {
+        sinkDescriptor->schema = this->outputSchema;
+    }
+
+    return result && sinkDescriptor;
+}
+
 const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
 {
     if (this->sinkDescriptor)
@@ -53,6 +69,10 @@ const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
         return *sinkDescriptor;
     }
     throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
+}
+std::shared_ptr<Sinks::SinkDescriptor> SinkLogicalOperator::getSinkDescriptor() const
+{
+    return sinkDescriptor;
 }
 
 OperatorPtr SinkLogicalOperator::copy()

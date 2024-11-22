@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -33,8 +35,10 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+    bool inferSchema() override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
+    std::shared_ptr<Sinks::SinkDescriptor> getSinkDescriptor() const;
 
     OperatorPtr copy() override;
     void inferStringSignature() override;
