@@ -13,9 +13,14 @@
 */
 #pragma once
 
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <cstdint>
+#include <memory>
 #include <Util/Timer.hpp>
+#include <ExecutableQueryPlan.hpp>
 
+namespace NES::Runtime::Execution
+{
+}
 namespace NES::QueryCompilation
 {
 /// Provides the query compilation results.
@@ -24,14 +29,14 @@ namespace NES::QueryCompilation
 class QueryCompilationResult
 {
 public:
-    static std::shared_ptr<QueryCompilationResult> create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
+    static std::shared_ptr<QueryCompilationResult> create(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> qep, Timer<>&& timer);
 
-    Runtime::Execution::ExecutableQueryPlanPtr getExecutableQueryPlan();
+    std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> takeExecutableQueryPlan();
     [[nodiscard]] uint64_t getCompilationTimeMilli() const;
 
 private:
-    explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan, Timer<> timer);
-    Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan;
+    explicit QueryCompilationResult(std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan, Timer<> timer);
+    std::unique_ptr<Runtime::Execution::ExecutableQueryPlan> executableQueryPlan;
     Timer<> timer;
 };
 using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
