@@ -14,7 +14,7 @@
 
 #pragma once
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Runtime/QueryManager.hpp>
+#include <Runtime/NodeEngine.hpp>
 
 namespace NES::Runtime
 {
@@ -26,12 +26,9 @@ public:
 
     explicit NodeEngineBuilder(const Configurations::WorkerConfiguration& workerConfiguration);
 
-    NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
-
     std::unique_ptr<NodeEngine> build();
 
 private:
-    QueryManagerPtr queryManager;
     const Configurations::WorkerConfiguration& workerConfiguration;
 };
 }
