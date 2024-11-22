@@ -12,10 +12,15 @@
     limitations under the License.
 */
 #pragma once
-#include <future>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Util/Timer.hpp>
+#include <cstdint>
+#include <memory>
+#include <ostream>
+#include <vector>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
+#include <Executable.hpp>
+#include <options.hpp>
 namespace NES
 {
 class DumpHelper;
@@ -46,8 +51,11 @@ public:
     void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
+protected:
+    std::ostream& toString(std::ostream& os) const override;
+
 private:
-    nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*> compilePipeline();
+    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> compilePipeline();
     const nautilus::engine::Options options;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*> pipelineFunctionCompiled;
     std::vector<OperatorHandlerPtr> operatorHandlers;

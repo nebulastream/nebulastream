@@ -13,10 +13,8 @@
 */
 
 #pragma once
-#include <Exceptions/RuntimeException.hpp>
-#include <Runtime/Execution/MigratableStateInterface.hpp>
+#include <cstdint>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/Reconfigurable.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -26,7 +24,7 @@ using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler : public virtual Reconfigurable, public virtual MigratableStateInterface
+class OperatorHandler
 {
 public:
     /**
@@ -34,38 +32,21 @@ public:
      */
     OperatorHandler() = default;
 
+    virtual ~OperatorHandler() = default;
+
     /**
      * @brief Starts the operator handler.
      * @param pipelineExecutionContext
      * @param localStateVariableId
-     * @param stateManager
      */
-    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) = 0;
+    virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
 
     /**
      * @brief Stops the operator handler.
      * @param pipelineExecutionContext
      */
-    virtual void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) = 0;
-
-    /**
-     * @brief Gets the state
-     * @param startTS
-     * @param stopTS
-     * @return list of TupleBuffers
-     */
-    std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
-
-    /**
-     * @brief Merges migrated slices
-     * @param buffer
-     */
-    void restoreState(std::vector<Memory::TupleBuffer>&) override;
-
-    /**
-     * @brief Default deconstructor
-     */
-    virtual ~OperatorHandler() override = default;
+    virtual void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };
+
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 }

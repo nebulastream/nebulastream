@@ -14,3 +14,7 @@ add_subdirectory(Runtime)
 add_subdirectory(Util)
 add_subdirectory(QueryCompiler)
 add_subdirectory(Listeners)
+
+add_source_files(nes-runtime
+        InstantiatedQueryPlan.cpp
+)
