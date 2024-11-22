@@ -4,6 +4,7 @@ This documents covers abbreviations and terms which are frequently used througho
 
 | Abbreviation | Long          | Description                                                  |
 |--------------|---------------|--------------------------------------------------------------|
+| it/iter      | Iterator      | Iterator returned by stl algorithms e.g. `begin` or `find`   |
 | TB           | TupleBuffer   | TupleBuffers are the unit of data used within the system.    |
 | BM           | BufferManager | The BufferManager provides access to new TupleBuffers        |
 | LHS          | LeftHandSide  | Usually refers to the left parameter of a binary expression  |
