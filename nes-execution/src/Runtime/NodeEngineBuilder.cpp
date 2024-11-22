@@ -12,51 +12,112 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <memory>
 #include <utility>
+#include <variant>
+#include <vector>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <QueryEngine.hpp>
+#include <QueryEngineStatisticListener.hpp>
 
 namespace NES::Runtime
 {
+
+template <typename T>
+const char* functionName()
+{
+#ifdef _MSC_VER
+    return __FUNCSIG__;
+#else
+    return __PRETTY_FUNCTION__;
+#endif
+}
+
+template <typename... Ts>
+struct Overloaded : Ts...
+{
+    using Ts::operator()...;
+};
+
+struct PrintingStatisticListener final : QueryEngineStatisticListener
+{
+    void onEvent(Event event) override { events.writeIfNotFull(event); }
+
+    explicit PrintingStatisticListener(const std::filesystem::path& path)
+        : file(path, std::ios::out | std::ios::app)
+        , printThread([this](const std::stop_token& stopToken) { this->threadRoutine(stopToken); })
+    {
+    }
+
+private:
+    void threadRoutine(const std::stop_token& token)
+    {
+        while (!token.stop_requested())
+        {
+            Event event = QueryStart{WorkerThreadId(0), QueryId(0)};
+
+            if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(100), event))
+            {
+                continue;
+            }
+            std::visit(
+                Overloaded{
+                    [&](TaskExecutionStart taskStartEvent)
+                    {
+                        file << fmt::format(
+                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started\n",
+                            std::chrono::system_clock::now(),
+                            taskStartEvent.taskId,
+                            taskStartEvent.pipelineId,
+                            taskStartEvent.queryId);
+                    },
+                    [&](TaskExecutionComplete taskStopEvent)
+                    {
+                        file << fmt::format(
+                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
+                            std::chrono::system_clock::now(),
+                            taskStopEvent.id,
+                            taskStopEvent.pipelineId,
+                            taskStopEvent.queryId);
+                    },
+                    [](auto) {}},
+                event);
+        }
+    }
+
+    std::ofstream file;
+    folly::MPMCQueue<Event> events{100};
+    std::jthread printThread;
+};
 
 NodeEngineBuilder::NodeEngineBuilder(const Configurations::WorkerConfiguration& workerConfiguration)
     : workerConfiguration(workerConfiguration)
 {
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager)
-{
-    this->queryManager = std::move(queryManager);
-    return *this;
-}
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     auto bufferManager = Memory::BufferManager::create(
         workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
-
     auto queryLog = std::make_shared<QueryLog>();
-    QueryManagerPtr queryManager{this->queryManager};
-    if (!this->queryManager)
-    {
-        auto numThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
-        std::vector<uint64_t> workerToCoreMapping;
-        std::vector<Memory::BufferManagerPtr> bufferManagers = {bufferManager};
-        /// TODO #34: For now, the worker id is always 0. We need to change this during the refactoring.
-        queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, workerToCoreMapping);
-        if (!queryManager)
-        {
-            throw CannotStartQueryManager("during creation of NodeEngine");
-        }
-    }
 
-    return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryManager), std::move(queryLog));
+    auto queryManager = std::make_unique<QueryEngine>(
+        workerConfiguration.numberOfWorkerThreads.getValue(),
+        std::make_shared<PrintingStatisticListener>("/tmp/statistics.txt"),
+        queryLog,
+        bufferManager);
+
+    return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryLog), std::move(queryManager));
 }
 
 }
