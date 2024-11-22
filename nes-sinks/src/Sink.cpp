@@ -22,9 +22,5 @@ std::ostream& operator<<(std::ostream& out, const Sink& sink)
 {
     return sink.toString(out);
 }
-bool operator==(const Sink& lhs, const Sink& rhs)
-{
-    return lhs.equals(rhs);
-}
 
 }

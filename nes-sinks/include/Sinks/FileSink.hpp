@@ -14,16 +14,21 @@
 
 #pragma once
 
+#include <cstdint>
+#include <fstream>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <fmt/base.h>
-#include <fmt/ostream.h>
+#include <folly/Synchronized.h>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES::Sinks
 {
@@ -33,7 +38,7 @@ class FileSink : public Sink
 {
 public:
     static inline std::string NAME = "File";
-    explicit FileSink(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    explicit FileSink(const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 
     FileSink(const FileSink&) = delete;
@@ -41,17 +46,17 @@ public:
     FileSink(FileSink&&) = delete;
     FileSink& operator=(FileSink&&) = delete;
 
-    /// Opens file and writes schema to file, if the file is empty.
-    void open() override;
-    void close() override;
+    void start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void
+    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-    bool emitTupleBuffer(Memory::TupleBuffer& inputBuffer) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
+
 
 private:
     std::string outputFilePath;
@@ -59,8 +64,7 @@ private:
     bool isOpen;
     /// Todo #417: support abstract/arbitrary formatter
     std::unique_ptr<CSVFormat> formatter;
-    std::mutex writeMutex;
-    std::ofstream outputFileStream;
+    folly::Synchronized<std::ofstream> outputFileStream;
 };
 
 /// Todo #355 : combine configuration with source configuration (get rid of duplicated code)
