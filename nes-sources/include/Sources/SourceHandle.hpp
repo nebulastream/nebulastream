@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <fmt/format.h>
@@ -38,15 +40,14 @@ public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-        SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
         std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
     ~SourceHandle();
 
-    bool start() const;
-    bool stop() const;
+    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
+    [[nodiscard]] bool stop() const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 

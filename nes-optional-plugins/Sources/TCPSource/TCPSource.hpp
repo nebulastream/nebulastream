@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <memory>
 #include <ostream>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -53,7 +54,7 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
+    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
     void open() override;
