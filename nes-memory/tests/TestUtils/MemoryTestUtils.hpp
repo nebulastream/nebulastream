@@ -12,6 +12,11 @@
     limitations under the License.
 */
 
-namespace NES::Runtime::Execution::Operators
+#pragma once
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
+namespace NES::Testing
 {
+Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::AbstractBufferProvider& provider);
 }
