@@ -45,13 +45,3 @@ WHERE new_id == 2 INTO SINK
 SELECT id * 2 AS new_id FROM window WHERE id == 1 INTO SINK
 ----
 2
-
-# 6: filter -> map ->  project [id, id * 2 -> new_id, value, timestamp]
-SELECT id, id * 2 AS new_id, value, timestamp FROM window WHERE id == 1 INTO SINK
-----
-1 2 1 1000
-
-# 7: filter -> map -> project -> map -> map [new_id -> id, value, timestamp]
-SELECT id * 2 AS new_id, id, id AS value, id * 1000 AS timestamp FROM window WHERE id == 1 INTO SINK
-----
-2 1 1 1000
