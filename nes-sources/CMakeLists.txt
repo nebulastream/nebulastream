@@ -30,3 +30,5 @@ create_plugin_registry_library(nes-sources-registry nes-sources)
 target_link_libraries(nes-sources PRIVATE nes-sources-registry)
 # Generate a registrar for every registry in nes-sources
 generate_plugin_registrars(nes-sources Source SourceValidation)
+
+add_tests_if_enabled(tests)
