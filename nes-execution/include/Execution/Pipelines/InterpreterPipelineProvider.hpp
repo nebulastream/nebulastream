@@ -13,7 +13,13 @@
 */
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <options.hpp>
+
 namespace NES::Runtime::Execution
 {
 
@@ -23,7 +29,9 @@ namespace NES::Runtime::Execution
 class InterpreterPipelineProvider : public ExecutablePipelineProvider
 {
 public:
-    std::unique_ptr<ExecutablePipelineStage>
-    create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) override;
+    std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options) override;
 };
 }
