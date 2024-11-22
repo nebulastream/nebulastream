@@ -92,6 +92,7 @@ EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread
 EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(CSVParsingError, 4005, "error during csv parsing")
+EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")

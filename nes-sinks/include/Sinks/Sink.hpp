@@ -14,41 +14,18 @@
 
 #pragma once
 
-#include <string>
-
-#include <API/Schema.hpp>
-#include <Configurations/Descriptor.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
+#include <ostream>
+#include <fmt/ostream.h>
+#include <Executable.hpp>
 
 namespace NES::Sinks
 {
 
-class Sink
+class Sink : public Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    Sink(const QueryId queryId) : queryId(queryId) {};
-    virtual ~Sink() = default;
-
-    Sink(const Sink&) = delete;
-    Sink& operator=(const Sink&) = delete;
-    Sink(Sink&&) = delete;
-    Sink& operator=(Sink&&) = delete;
-
-    virtual bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
-
-    virtual void open() = 0;
-    virtual void close() = 0;
-
+    ~Sink() override = default;
     friend std::ostream& operator<<(std::ostream& out, const Sink& sink);
-    friend bool operator==(const Sink& lhs, const Sink& rhs);
-
-    const QueryId queryId;
-
-protected:
-    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
-    [[nodiscard]] virtual bool equals(const Sink& other) const = 0;
 };
 
 }
