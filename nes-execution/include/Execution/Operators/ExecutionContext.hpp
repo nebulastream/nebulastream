@@ -26,6 +26,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <nautilus/val_concepts.hpp>
+#include <nautilus/val_ptr.hpp>
+#include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -47,7 +49,7 @@ class OperatorState;
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    ExecutionContext(const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext);
+    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext);
 
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
@@ -55,13 +57,13 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
 
 
-    /// Emit a record buffer to the next pipeline or sink
+    /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    const nautilus::val<WorkerContext*> workerContext;
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
