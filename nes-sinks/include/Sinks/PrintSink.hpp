@@ -14,13 +14,20 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
+#include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
+#include <folly/Synchronized.h>
+#include <PipelineExecutionContext.hpp>
 
 
 namespace NES::Sinks
@@ -31,27 +38,26 @@ class PrintSink : public Sink
 public:
     static inline std::string NAME = "Print";
 
-    explicit PrintSink(QueryId queryId, const SinkDescriptor& sinkDescriptor);
+    explicit PrintSink(const SinkDescriptor& sinkDescriptor);
     ~PrintSink() override = default;
 
     PrintSink(const PrintSink&) = delete;
     PrintSink& operator=(const PrintSink&) = delete;
     PrintSink(PrintSink&&) = delete;
     PrintSink& operator=(PrintSink&&) = delete;
+    void start(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void
+    execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+    void stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
 
-    void open() override { /* noop */ };
-    void close() override { /* noop */ };
-
-    bool emitTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
 
 private:
-    std::ostream& outputStream;
+    folly::Synchronized<std::ostream*> outputStream;
     std::unique_ptr<CSVFormat> outputParser;
 };
 

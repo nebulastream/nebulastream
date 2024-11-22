@@ -14,7 +14,6 @@
 
 #pragma once
 
-/// NOLINT(clang-diagnostic-error)
 #ifndef INCLUDED_FROM_SINK_REGISTRY
 #    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
 #endif
@@ -27,8 +26,8 @@
 namespace NES::Sinks::SinkGeneratedRegistrar
 {
 
-std::unique_ptr<Sink> RegisterPrintSink(QueryId, const SinkDescriptor&);
-std::unique_ptr<Sink> RegisterFileSink(QueryId, const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterPrintSink(const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterFileSink(const SinkDescriptor&);
 
 }
 

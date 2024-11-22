@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -29,13 +31,16 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <PipelineExecutionContext.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sinks
 {
 
-FileSink::FileSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
-    : Sink(queryId)
+FileSink::FileSink(const SinkDescriptor& sinkDescriptor)
+    : Sink()
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILEPATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
@@ -55,19 +60,11 @@ std::ostream& FileSink::toString(std::ostream& str) const
     str << fmt::format("FileSink(filePathOutput: {}, isAppend: {})", outputFilePath, isAppend);
     return str;
 }
-bool FileSink::equals(const Sink& other) const
-{
-    if (const auto* otherFileSink = dynamic_cast<const FileSink*>(&other))
-    {
-        return (this->queryId == other.queryId) && (this->outputFilePath == otherFileSink->outputFilePath)
-            && (this->isAppend == otherFileSink->isAppend) && (this->isOpen == otherFileSink->isOpen);
-    }
-    return false;
-}
 
-void FileSink::open()
+void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up file sink: {}", *this);
+    auto stream = outputFileStream.wlock();
     /// Remove an existing file unless the isAppend mode is isAppend.
     if (!isAppend)
     {
@@ -76,60 +73,50 @@ void FileSink::open()
             std::error_code ec;
             if (!std::filesystem::remove(outputFilePath.c_str(), ec))
             {
-                NES_ERROR("Could not remove existing output file: filePath={} ", outputFilePath);
                 isOpen = false;
-                return;
+                throw CannotOpenSink("Could not remove existing output file: filePath={} ", outputFilePath);
             }
         }
     }
 
     /// Open the file stream
-    if (!outputFileStream.is_open())
+    if (!stream->is_open())
     {
-        outputFileStream.open(outputFilePath, std::ofstream::binary | std::ofstream::app);
+        stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
     }
-    isOpen = outputFileStream.is_open() && outputFileStream.good();
+    isOpen = stream->is_open() && stream->good();
     if (!isOpen)
     {
-        NES_ERROR(
-            "Could not open output file; filePathOutput={}, is_open()={}, good={}",
-            outputFilePath,
-            outputFileStream.is_open(),
-            outputFileStream.good());
-        return;
+        throw CannotOpenSink(
+            "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
     }
 
     /// Write the schema to the file, if it is empty.
-    if (outputFileStream.tellp() == 0)
+    if (stream->tellp() == 0)
     {
         const auto schemaStr = formatter->getFormattedSchema();
-        outputFileStream.write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
+        stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
+void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
+{
+    PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
+    PRECONDITION(isOpen, "Sink was not opened");
 
-void FileSink::close()
+    {
+        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
+        {
+            auto wlocked = outputFileStream.wlock();
+            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+            wlocked->flush();
+        }
+    }
+}
+void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    outputFileStream.close();
-}
-
-bool FileSink::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
-{
-    PRECONDITION(inputBuffer, "Invalid input buffer in FileSink.");
-    if (!isOpen)
-    {
-        NES_ERROR("The output file could not be opened during setup of the file sink.");
-        return false;
-    }
-
-    std::unique_lock lock(writeMutex);
-    {
-        auto fBuffer = formatter->getFormattedBuffer(inputBuffer);
-        NES_TRACE("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
-        outputFileStream.write(fBuffer.c_str(), fBuffer.size());
-        outputFileStream.flush();
-    }
-    return true;
+    outputFileStream.wlock()->close();
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config> FileSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
@@ -143,9 +130,9 @@ SinkValidationGeneratedRegistrar::RegisterSinkValidationFile(std::unordered_map<
     return FileSink::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterFileSink(const QueryId queryId, const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterFileSink(const Sinks::SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<FileSink>(queryId, sinkDescriptor);
+    return std::make_unique<FileSink>(sinkDescriptor);
 }
 
 }

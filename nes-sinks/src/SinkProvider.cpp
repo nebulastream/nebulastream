@@ -13,21 +13,23 @@
 */
 
 #include <memory>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sinks/SinkProvider.hpp>
 #include <Sinks/SinkRegistry.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sinks::SinkProvider
 {
 
-std::shared_ptr<Sink> lower(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> lower(const SinkDescriptor& sinkDescriptor)
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
-    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.sinkType, queryId, sinkDescriptor); sink.has_value())
+    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.sinkType, sinkDescriptor); sink.has_value())
     {
         return std::move(sink.value());
     }
