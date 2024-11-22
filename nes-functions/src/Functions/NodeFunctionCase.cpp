@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
+#include "ErrorHandling.hpp"
 namespace NES
 {
 NodeFunctionCase::NodeFunctionCase(DataTypePtr stamp) : NodeFunction(std::move(stamp), "Case")
@@ -46,33 +47,27 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
-    if (NES::Util::instanceOf<Undefined>(defaultExp->getStamp()))
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "Error during stamp inference. Right type must be defined, but was: {}", defaultExp->getStamp()->toString());
-    }
+    INVARIANT(
+        NES::Util::instanceOf<Undefined>(defaultExp->getStamp()),
+        "Error during stamp inference. Right type must be defined, but was: {}",
+        defaultExp->getStamp()->toString());
 
     for (auto elem : whenChildren)
     {
         elem->inferStamp(schema);
-        ///NodeFunctionall elements in whenChildren must be Whens
-        if (!NES::Util::instanceOf<NodeFunctionWhen>(elem))
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "Error during stamp inference. All functions in when function vector must be when functions, "
-                "but {} is not a when function.",
-                *elem);
-        }
+        ///all elements in whenChildren must be Whens
+        INVARIANT(
+            !NES::Util::instanceOf<NodeFunctionWhen>(elem),
+            "Error during stamp inference. All functions in when function vector must be when functions, but {} is not a when function.",
+            *elem);
         ///all elements must have same stamp as defaultExp value
-        if (!defaultExp->getStamp()->equals(elem->getStamp()))
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "Error during stamp inference. All elements must have same stamp as defaultExp default value, "
-                "but element {} has: {}. Right was: {}",
-                *elem,
-                elem->getStamp()->toString(),
-                defaultExp->getStamp()->toString());
-        }
+        INVARIANT(
+            !defaultExp->getStamp()->equals(elem->getStamp()),
+            "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element {} has: {}. Right "
+            "was: {}",
+            *elem,
+            elem->getStamp()->toString(),
+            defaultExp->getStamp()->toString())
     }
 
     stamp = defaultExp->getStamp();
