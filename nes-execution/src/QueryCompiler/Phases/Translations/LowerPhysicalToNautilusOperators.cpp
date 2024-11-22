@@ -17,6 +17,7 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/Operators/Emit.hpp>
+#include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Map.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -47,6 +48,7 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
+#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -90,7 +92,7 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
             = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
-    for (auto& root : rootOperators)
+    for (const auto& root : rootOperators)
     {
         decomposedQueryPlan->removeAsRootOperator(root->getId());
     }
@@ -113,7 +115,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         pipeline.setRootOperator(scan);
         return scan;
     }
-    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
+    if (NES::Util::instanceOf<PhysicalOperators::PhysicalEmitOperator>(operatorNode))
     {
         auto emit = lowerEmit(operatorNode, bufferSize, operatorHandlers);
         parentOperator->setChild(emit);
