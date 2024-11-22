@@ -11,9 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
+#include <ErrorHandling.hpp>
+#include <ExecutablePipelineStage.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -37,9 +41,13 @@ OperatorPtr ExecutableOperator::create(
         ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage()
+const Runtime::Execution::ExecutablePipelineStage& ExecutableOperator::getStage() const
 {
-    return executablePipelineStage;
+    return *executablePipelineStage;
+}
+std::unique_ptr<Runtime::Execution::ExecutablePipelineStage> ExecutableOperator::takeStage()
+{
+    return std::move(executablePipelineStage);
 }
 
 std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers()
@@ -54,7 +62,7 @@ std::string ExecutableOperator::toString() const
 
 OperatorPtr ExecutableOperator::copy()
 {
-    return create(executablePipelineStage, operatorHandlers);
+    throw NotImplemented();
 }
 
 }
