@@ -51,13 +51,9 @@ message StopQueryRequest {
 
 enum QueryStatus {
     Registered = 0;
-    Unregistered = 1;
-    Deployed = 2;
-    Running = 3;
-    Finished = 4;
-    Stopped = 5;
-    Failed = 6;
-    Invalid = 7;
+    Running = 1;
+    Stopped = 2;
+    Failed = 3;
 }
 
 message Error {
