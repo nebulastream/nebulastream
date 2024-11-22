@@ -42,7 +42,7 @@ public:
      */
     virtual std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+        std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>& operatorHandlers)
         = 0;
 
     virtual ~NautilusOperatorLoweringPlugin() = default;
