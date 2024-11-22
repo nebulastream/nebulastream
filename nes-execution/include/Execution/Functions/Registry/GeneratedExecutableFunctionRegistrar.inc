@@ -30,6 +30,7 @@ std::unique_ptr<Function> RegisterExecutableFunctionAdd(std::vector<std::unique_
 std::unique_ptr<Function> RegisterExecutableFunctionMul(std::vector<std::unique_ptr<Function>> childFunctions);
 std::unique_ptr<Function> RegisterExecutableFunctionSub(std::vector<std::unique_ptr<Function>> childFunctions);
 std::unique_ptr<Function> RegisterExecutableFunctionDiv(std::vector<std::unique_ptr<Function>> childFunctions);
+std::unique_ptr<Function> RegisterExecutableFunctionMod(std::vector<std::unique_ptr<Functions::Function>> childFunctions);
 
 /// Defining all logical supported functions
 std::unique_ptr<Function> RegisterExecutableFunctionEquals(std::vector<std::unique_ptr<Function>> childFunctions);
@@ -56,6 +57,7 @@ Registrar<Execution::Functions::RegistryFunctionExecutable, Execution::Functions
     registry.registerPlugin("Mul", RegisterExecutableFunctionMul);
     registry.registerPlugin("Sub", RegisterExecutableFunctionSub);
     registry.registerPlugin("Div", RegisterExecutableFunctionDiv);
+    registry.registerPlugin("Mod", RegisterExecutableFunctionMod);
 
     /// Registering all logical supported functions
     registry.registerPlugin("Equals", RegisterExecutableFunctionEquals);
