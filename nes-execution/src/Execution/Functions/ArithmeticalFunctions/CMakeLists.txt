@@ -14,5 +14,6 @@ add_source_files(nes-execution
         ExecutableFunctionAdd.cpp
         ExecutableFunctionMul.cpp
         ExecutableFunctionDiv.cpp
+        ExecutableFunctionMod.cpp
         ExecutableFunctionSub.cpp
         )
