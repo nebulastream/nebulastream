@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <optional>
 #include <vector>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES::QueryCompilation
 {
 
-std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-NautilusOperatorLoweringPlugin::lower(const PhysicalOperators::PhysicalOperatorPtr&, std::vector<Runtime::Execution::OperatorHandlerPtr>&)
+std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> NautilusOperatorLoweringPlugin::lower(
+    const PhysicalOperators::PhysicalOperatorPtr&, std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>>&)
 {
     return {};
 }

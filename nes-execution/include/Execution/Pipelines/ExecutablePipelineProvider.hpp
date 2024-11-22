@@ -13,8 +13,10 @@
 */
 
 #pragma once
-#include <ranges>
+#include <memory>
+#include <vector>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/options.hpp>
 namespace NES::Runtime::Execution
 {
@@ -27,8 +29,11 @@ class ExecutablePipelineProvider
 public:
     /// Creates an executable pipeline for the pipeline of physical operators.
     /// Options for the nautilus compilation backend: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
-    virtual std::unique_ptr<ExecutablePipelineStage>
-    create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options) = 0;
+    virtual std::unique_ptr<ExecutablePipelineStage> create(
+        std::shared_ptr<PhysicalOperatorPipeline> pipeline,
+        std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
+        nautilus::engine::Options& options)
+        = 0;
     virtual ~ExecutablePipelineProvider() = default;
 };
 
