@@ -30,4 +30,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-# There are currently no tests in nes-sources. There are system level tests and integration tests (nes-single-node-worker)
+add_tests_if_enabled(tests)
