@@ -13,7 +13,6 @@
 
 add_source_files(nes-runtime
         BufferStorage.cpp
-        WorkerContext.cpp
         NesThread.cpp
 )
 
