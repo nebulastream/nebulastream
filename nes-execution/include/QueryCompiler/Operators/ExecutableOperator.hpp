@@ -13,7 +13,8 @@
 */
 #pragma once
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Executable.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -40,7 +41,9 @@ public:
      * @brief Gets the executable pipeline stage.
      * @return ExecutablePipelineStagePtr
      */
-    Runtime::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
+    const Runtime::Execution::ExecutablePipelineStage& getExecutablePipelineStage() const;
+
+    Runtime::Execution::ExecutablePipelineStagePtr takeExecutablePipelineStage();
 
     /**
      * @brief Gets the operator handlers, which capture specific operator state.

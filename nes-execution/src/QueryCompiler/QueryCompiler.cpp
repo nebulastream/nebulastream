@@ -73,14 +73,14 @@ std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(const QueryC
     dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
     timer.snapshot("AfterAddScanAndEmitPhase");
     auto nodeEngine = request->getNodeEngine();
-    auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
+    auto bufferSize = 8192; /// TODO #403: This size should be a parameter to the query compiler
     pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
     timer.snapshot("AfterToNautilusPlanPhase");
 
     pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
     timer.snapshot("AfterNautilusCompilationPhase");
 
-    auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan, request->getNodeEngine());
-    return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
+    auto executableQueryPlan = LowerToExecutableQueryPlanPhase::apply(pipelinedQueryPlan);
+    return QueryCompilationResult::create(std::move(executableQueryPlan), std::move(timer));
 }
 }
