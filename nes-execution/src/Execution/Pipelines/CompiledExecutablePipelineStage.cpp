@@ -13,16 +13,20 @@
 */
 #include <cstdint>
 #include <functional>
+#include <memory>
+#include <ostream>
 #include <utility>
+#include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Util/DumpHelper.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
-#include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
-#include <ErrorHandling.hpp>
+#include <Engine.hpp>
+#include <options.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -32,22 +36,21 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
     : options(std::move(options))
-    , pipelineFunctionCompiled(nullptr)
+    , compiledPipelineFunction(nullptr)
     , operatorHandlers(std::move(operatorHandlers))
     , physicalOperatorPipeline(physicalOperatorPipeline)
 {
 }
 
-ExecutionResult CompiledExecutablePipelineStage::execute(
-    Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
+void CompiledExecutablePipelineStage::execute(
+    const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
-    pipelineFunctionCompiled(&workerContext, &pipelineExecutionContext, std::addressof(inputTupleBuffer));
-    return ExecutionResult::Ok;
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    compiledPipelineFunction(&pipelineExecutionContext, std::addressof(inputTupleBuffer));
 }
 
-nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     Timer timer("compiler");
@@ -55,11 +58,10 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
     /// We must capture the physicalOperatorPipeline by value to ensure it is not destroyed before the function is called
     /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-    const std::function compiledFunction = [&](nautilus::val<WorkerContext*> workerContext,
-                                               nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                               nautilus::val<Memory::TupleBuffer*> recordBufferRef)
+    const std::function compiledFunction
+        = [&](nautilus::val<PipelineExecutionContext*> pipelineExecutionContext, nautilus::val<const Memory::TupleBuffer*> recordBufferRef)
     {
-        auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
+        auto ctx = ExecutionContext(pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);
         physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
         physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
@@ -75,22 +77,23 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
 uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
-    const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
-    auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    auto ctx = ExecutionContext(&pipelineExecutionContext);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
     return 0;
 }
 
-uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext)
+std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 {
-    const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
-    const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
-    auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
+    return os << "CompiledExecutablePipelineStage()";
+}
+
+uint32_t CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
+{
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    auto ctx = ExecutionContext(std::addressof(pipelineExecutionContext));
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
-    pipelineFunctionCompiled = this->compilePipeline();
+    compiledPipelineFunction = this->compilePipeline();
     return 0;
 }
 
