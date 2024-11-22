@@ -13,6 +13,8 @@
 */
 
 #pragma once
+#include <API/Schema.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <fmt/ostream.h>
 
 namespace NES::Sinks
@@ -28,7 +30,7 @@ public:
     std::string getFormattedSchema() const;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
-    std::string getFormattedBuffer(Memory::TupleBuffer& inputBuffer);
+    std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
     static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
