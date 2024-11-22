@@ -12,29 +12,7 @@
 
 
 add_source_files(nes-runtime
-        BufferStorage.cpp
-        NesThread.cpp
-)
-
-
-add_source_files(nes-runtime
         NodeEngine.cpp
-        AsyncTaskExecutor.cpp
-        QueryManager.cpp
-        QueryManagerLifecycle.cpp
-        QueryManagerTaskScheduler.cpp
-        QueryManagerStatusListener.cpp
-        ReconfigurationMessage.cpp
-        InMemoryLineageManager.cpp
-        ThreadPool.cpp
-        Task.cpp
-        QueryStatistics.cpp
 )
 
-add_subdirectory(Profiler)
-
-add_source_files(nes-runtime
-        Allocator/NumaRegionMemoryAllocator.cpp
-)
-add_subdirectory(Execution)
 add_subdirectory(detail)
