@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <chrono>
+#include <thread>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>
@@ -100,7 +102,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::INTERPRETER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -109,6 +111,7 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
     IntegrationTestUtil::stopQuery(queryId, StopQueryRequest::HardStop, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     /// Test for query status after registration
     auto summary = IntegrationTestUtil::querySummary(queryId, uut);
     EXPECT_EQ(summary.status(), Stopped);
