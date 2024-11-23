@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/SchemaType.hpp>
-
 #include <iostream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>

@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Operators/Operator.hpp>
 
 namespace NES
