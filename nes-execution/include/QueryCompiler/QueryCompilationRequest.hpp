@@ -71,7 +71,7 @@ public:
     void setBufferSize(size_t bufferSize);
 
 private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
+    explicit QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
     DecomposedQueryPlanPtr decomposedQueryPlan;
     bool debug;
     bool optimize;

@@ -13,7 +13,6 @@
 */
 #pragma once
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
