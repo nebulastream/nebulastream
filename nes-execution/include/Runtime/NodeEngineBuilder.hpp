@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configuration/WorkerConfiguration.hpp>
 #include <Runtime/NodeEngine.hpp>
 
 namespace NES::Runtime
