@@ -31,12 +31,6 @@
 #include <ExecutableQueryPlan.hpp>
 #include <InstantiatedQueryPlan.hpp>
 
-template <typename... U>
-struct Overloaded : U...
-{
-    using U::operator()...;
-};
-
 namespace NES::Runtime
 {
 

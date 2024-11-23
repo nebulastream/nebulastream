@@ -45,6 +45,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Util/Overloaded.hpp>
 #include <folly/Synchronized.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest-assertion-result.h>
@@ -262,12 +263,6 @@ createSinkPipeline(std::shared_ptr<Memory::AbstractBufferProvider> bm);
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors);
 
-
-template <typename... Ts>
-struct Overloaded : Ts...
-{
-    using Ts::operator()...;
-};
 struct QueryPlanBuilder
 {
     using identifier_t = size_t;
