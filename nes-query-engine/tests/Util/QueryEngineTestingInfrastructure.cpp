@@ -47,6 +47,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <TestSource.hpp>
+#include "QueryEngineConfiguration.hpp"
 
 namespace NES::Testing
 {
@@ -337,7 +338,9 @@ void TestingHarness::start()
     {
         queryRunningFutures[queryRunning.first] = queryRunning.second->get_future().share();
     }
-    qm = std::make_unique<NES::Runtime::QueryEngine>(numberOfThreads, this->stats, this->status, this->bm);
+    Runtime::QueryEngineConfiguration configuration{};
+    configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->stats, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const
 {
