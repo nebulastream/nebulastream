@@ -20,7 +20,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configuration/WorkerConfiguration.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -109,7 +109,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 
     std::vector bufferManagers = {bufferManager};
     auto queryManager = std::make_unique<QueryEngine>(
-        workerConfiguration.numberOfWorkerThreads.getValue(),
+        workerConfiguration.queryEngineConfiguration,
         std::make_shared<PrintingStatisticListener>("/tmp/statistics.txt"),
         queryLog,
         bufferManagers[0]);

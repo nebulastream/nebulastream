@@ -20,6 +20,7 @@
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/WrapOption.hpp>
+#include <QueryEngineConfiguration.hpp>
 
 namespace NES
 {
@@ -53,11 +54,7 @@ public:
     EnumOption<LogLevel> logLevel
         = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
-    UIntOption numberOfWorkerThreads
-        = {"numberOfWorkerThreads",
-           "1",
-           "Number of worker threads.",
-           {std::make_shared<NonZeroValidation>(), std::make_shared<NumberValidation>()}};
+    Runtime::QueryEngineConfiguration queryEngineConfiguration = {"queryEngine", "Query Engine Configuration"};
 
     /**
      * @brief The number of buffers in the global buffer manager.
@@ -113,7 +110,7 @@ private:
         return {
             &localWorkerHost,
             &rpcPort,
-            &numberOfWorkerThreads,
+            &queryEngineConfiguration,
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersPerWorker,
             &numberOfBuffersInSourceLocalBufferPool,
