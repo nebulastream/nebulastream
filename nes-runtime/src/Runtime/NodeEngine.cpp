@@ -41,16 +41,15 @@ class QueryTracker
     struct Executing
     {
     };
-    std::atomic<QueryId::Underlying> queryIdGenerator = QueryId::INITIAL;
     using QueryState = AtomicState<Idle, Executing>;
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
     QueryId registerQuery(std::unique_ptr<Execution::ExecutableQueryPlan> qep)
     {
-        auto qid = QueryId(queryIdGenerator++);
-        queries.wlock()->emplace(qid, std::make_unique<QueryState>(Idle{std::move(qep)}));
-        return qid;
+        QueryId queryId = qep->queryId;
+        queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
+        return queryId;
     }
 
     std::unique_ptr<Execution::ExecutableQueryPlan> moveToExecuting(QueryId qid)
@@ -92,7 +91,7 @@ void NodeEngine::startQuery(QueryId queryId)
 {
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
-        queryEngine->start(queryId, InstantiatedQueryPlan::instantiate(std::move(qep), bufferManager));
+        queryEngine->start(InstantiatedQueryPlan::instantiate(std::move(qep), bufferManager));
     }
     else
     {

@@ -94,12 +94,15 @@ std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
     }
 
 
-    return std::make_unique<InstantiatedQueryPlan>(std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
+    return std::make_unique<InstantiatedQueryPlan>(
+        executableQueryPlan->queryId, std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
 }
 
 InstantiatedQueryPlan::InstantiatedQueryPlan(
-    std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources)
-    : pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    QueryId queryId,
+    std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
+    std::vector<SourceWithSuccessor> instantiatedSources)
+    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
 {
 }
 }

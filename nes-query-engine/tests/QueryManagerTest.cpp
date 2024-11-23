@@ -76,7 +76,7 @@ TEST_F(QueryManagerTest, singleQueryWithShutdown)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl->waitUntilOpened());
 
@@ -116,7 +116,7 @@ TEST_F(QueryManagerTest, singleQueryWithSystemShutdown)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->wasClosed());
@@ -164,7 +164,7 @@ TEST_F(QueryManagerTest, singleQueryWithExternalStop)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl->waitUntilOpened());
 
@@ -215,7 +215,7 @@ TEST_F(QueryManagerTest, singleQueryWithSystemStop)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->wasClosed());
@@ -259,7 +259,7 @@ TEST_F(QueryManagerTest, singleQueryWithSourceFailure)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl->waitUntilOpened());
         EXPECT_FALSE(ctrl->waitUntilClosed());
@@ -308,7 +308,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesShutdown)
     EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_))).Times(8);
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl1->waitUntilOpened());
         EXPECT_FALSE(ctrl1->wasClosed());
@@ -349,7 +349,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         EXPECT_TRUE(ctrl1->waitUntilOpened());
         EXPECT_FALSE(ctrl1->wasClosed());
@@ -412,7 +412,7 @@ TEST_F(QueryManagerTest, singleQueryWithManySources)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
         DataGenerator dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
         sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination);
@@ -453,7 +453,7 @@ TEST_F(QueryManagerTest, singleQueryWithManySourcesOneOfThemFails)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
 
         DataGenerator<FailAfter<numberOfBuffersBeforeFailure, 0>> dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
@@ -604,8 +604,8 @@ TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesOneSourceFails)
         /// start all queries
         for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
         {
-            auto queryId = QueryId(qidGenerator++);
-            test.startQuery(q, std::move(query));
+            auto queryId = query->queryId;
+            test.startQuery(std::move(query));
             EXPECT_TRUE(test.waitForQepRunning(queryId, DEFAULT_AWAIT_TIMEOUT));
         }
 
@@ -654,7 +654,7 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourceExternalStop)
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
         EXPECT_TRUE(test.sourceControls[source1]->waitUntilOpened());
         EXPECT_TRUE(test.sourceControls[source2]->waitUntilOpened());
 
@@ -690,7 +690,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminati
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
         EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
@@ -717,7 +717,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermin
 
     test.start();
     {
-        test.startQuery(QueryId(1), std::move(query));
+        test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
         EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
