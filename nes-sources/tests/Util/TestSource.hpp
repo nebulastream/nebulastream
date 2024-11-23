@@ -31,6 +31,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
@@ -97,13 +98,6 @@ private:
     };
     using ControlData = std::variant<EoS, Data, Error>;
     folly::MPMCQueue<ControlData> queue{10};
-};
-
-
-template <typename... T>
-struct Overloaded : T...
-{
-    using T::operator()...;
 };
 
 class TestSource : public Source
