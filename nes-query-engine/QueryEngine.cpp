@@ -440,7 +440,7 @@ void ThreadPool::addThread()
     pool.emplace_back(
         [this, id = pool.size()](const std::stop_token& stopToken)
         {
-            setThreadName("WorkerThread-%d", id);
+            setThreadName(fmt::format("WorkerThread-{}", id));
             WorkerThread worker{WorkerThreadId(id), *this, false};
             while (!stopToken.stop_requested())
             {
