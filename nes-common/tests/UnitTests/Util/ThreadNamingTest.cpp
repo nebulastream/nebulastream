@@ -12,18 +12,17 @@
     limitations under the License.
 */
 
+#include <array>
 #include <cstring>
+#include <string_view>
+#include <pthread.h>
 #include <unistd.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-#ifdef _POSIX_THREADS
-#    define HAS_POSIX_THREAD
-#    include <pthread.h>
-#else
-#    error "Unsupported architecture"
-#endif
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {
@@ -39,11 +38,20 @@ public:
 
 TEST_F(ThreadNamingTest, testThreadNaming)
 {
-    char threadName[17];
-    setThreadName("NES-%d", 0);
-#if defined(__GLIBC__) || defined(__APPLE__)
-    pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
-    EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
-#endif
+    setThreadName("NES-0");
+
+    std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
+    pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
+
+    EXPECT_EQ(std::string_view(pthreadName.data()), "NES-0");
+}
+
+TEST_F(ThreadNamingTest, testThreadNamingWithTruncation)
+{
+    setThreadName("NES_LONG-123456789");
+    std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
+    pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
+
+    EXPECT_EQ(std::string_view(pthreadName.data()), "NES_LONG-123456");
 }
 }

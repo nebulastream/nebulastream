@@ -13,18 +13,21 @@
 */
 
 #pragma once
+#include <cstddef>
+#include <string_view>
 
 namespace NES
 {
+namespace detail
+{
+///POSIX limits the thread name to 16 bytes which includes null termination:
+///https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
+constexpr size_t PTHREAD_NAME_LENGTH = 15;
+}
+
 /**
- * @brief Sets the calling thread's name using the supplied
- * formattable string. For example, setThreadName("helper") will
- * set the thread name to "helper", setThreadName("helper-%d", 123)
- * will set the thread name to "helper-123". Be careful that on some
- * operating systems, the length of the thread name is constrained, e.g.,
- * on Linux it is 16 characters.
- * @param threadNameFmt name of the thread with formatting option
- * @param ... variadic arguments
+ * @brief Sets the currents thread's name.
+ * @param threadName non-empty string_view
  */
-void setThreadName(const char* threadNameFmt, ...);
+void setThreadName(std::string_view threadName);
 }
