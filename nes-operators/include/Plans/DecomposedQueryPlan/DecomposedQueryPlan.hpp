@@ -97,9 +97,6 @@ public:
     void setQueryId(QueryId queryId);
     [[nodiscard]] QueryId getQueryId() const;
 
-    void setState(QueryState state);
-    [[nodiscard]] QueryState getState() const;
-
     [[nodiscard]] WorkerId getWorkerId() const;
 
     [[nodiscard]] DecomposedQueryPlanPtr copy() const;
@@ -136,7 +133,6 @@ public:
 private:
     QueryId queryId;
     WorkerId workerId;
-    QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };
 }

@@ -126,16 +126,6 @@ std::vector<SinkLogicalOperatorPtr> DecomposedQueryPlan::getSinkOperators() cons
     return sinkOperators;
 }
 
-QueryState DecomposedQueryPlan::getState() const
-{
-    return currentState;
-}
-
-void DecomposedQueryPlan::setState(QueryState state)
-{
-    currentState = state;
-}
-
 bool DecomposedQueryPlan::hasOperatorWithId(OperatorId operatorId) const
 {
     NES_DEBUG("Checking if the operator exists in the query plan or not");
@@ -299,7 +289,6 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
 
     /// Create the duplicated decomposed query plan
     auto copiedDecomposedQueryPlan = DecomposedQueryPlan::create(queryId, workerId, duplicateRootOperators);
-    copiedDecomposedQueryPlan->setState(currentState);
     return copiedDecomposedQueryPlan;
 }
 
