@@ -26,6 +26,7 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 
 namespace NES::QueryCompilation
 {
@@ -41,22 +42,20 @@ NautilusQueryCompiler::NautilusQueryCompiler(
 {
 }
 
-std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(QueryCompilationRequestPtr request, QueryId queryId)
+std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(QueryCompilationRequestPtr request)
 {
     NES_INFO("Compile Query with Nautilus");
-    /// For now we have to override the id here as it should not be set by the client
-    request->getDecomposedQueryPlan()->setQueryId(queryId);
 
     Timer timer("NautilusQueryCompiler");
     /// Uncomment these dumb informations for debugging purposes. They are be quite intrusive.
-    auto query = fmt::format("{}", queryId);
+    auto query = fmt::format("{}", request->getDecomposedQueryPlan()->getQueryId());
     /// create new context for handling debug output
     bool dumpToFile = options->dumpMode != DumpMode::CONSOLE;
     bool dumpToConsole = options->dumpMode != DumpMode::FILE;
     auto dumpHelper = DumpHelper("QueryCompiler", dumpToConsole, dumpToFile, options->dumpPath);
 
     timer.start();
-    NES_DEBUG("compile query with id: {}", queryId);
+    NES_DEBUG("compile query with id: {}", request->getDecomposedQueryPlan()->getQueryId());
     auto logicalQueryPlan = request->getDecomposedQueryPlan();
     dumpHelper.dump("1. LogicalQueryPlan", logicalQueryPlan->toString());
     timer.snapshot("LogicalQueryPlan");

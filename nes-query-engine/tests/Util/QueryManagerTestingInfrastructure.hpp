@@ -279,7 +279,7 @@ struct QueryPlanBuilder
         std::unordered_map<identifier_t, Runtime::Execution::ExecutablePipelineStage*> stages;
     };
 
-    TestPlanCtrl build(std::shared_ptr<Memory::BufferManager> bm) &&;
+    TestPlanCtrl build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
 
     QueryPlanBuilder(identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter)
         : nextIdentifier(nextIdentifier), pipelineIdCounter(pipelineIdCounter), originIdCounter(originIdCounter)
@@ -339,7 +339,7 @@ struct TestingHarness
 
     void start();
 
-    void startQuery(QueryId id, std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const { qm->start(id, std::move(query)); }
+    void startQuery(std::unique_ptr<Runtime::InstantiatedQueryPlan> query) const { qm->start(std::move(query)); }
     void stopQuery(QueryId id) const { qm->stop(id); }
 
     void stop() { qm.reset(); }

@@ -13,6 +13,8 @@
 */
 #pragma once
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 
 namespace NES::QueryCompilation
@@ -25,7 +27,7 @@ class NautilusQueryCompiler : public QueryCompiler
 {
 public:
     NautilusQueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory);
-    std::shared_ptr<QueryCompilationResult> compileQuery(QueryCompilationRequestPtr request, QueryId queryId) override;
+    std::shared_ptr<QueryCompilationResult> compileQuery(QueryCompilationRequestPtr request) override;
 
 protected:
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;

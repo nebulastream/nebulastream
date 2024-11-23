@@ -24,7 +24,7 @@ namespace NES::QueryCompilation
 class QueryCompiler
 {
 public:
-    virtual std::shared_ptr<QueryCompilationResult> compileQuery(std::shared_ptr<QueryCompilationRequest> request, QueryId queryId) = 0;
+    virtual std::shared_ptr<QueryCompilationResult> compileQuery(std::shared_ptr<QueryCompilationRequest> request) = 0;
     virtual ~QueryCompiler() = default;
 
 protected:
