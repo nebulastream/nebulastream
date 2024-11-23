@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
@@ -29,10 +27,8 @@
 namespace NES::Optimizer
 {
 
-QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration)
+QueryRewritePhasePtr QueryRewritePhase::create()
 {
-    auto optimizerConfigurations = coordinatorConfiguration->optimizer;
-
     return std::make_shared<QueryRewritePhase>(QueryRewritePhase());
 }
 
