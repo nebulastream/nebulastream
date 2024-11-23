@@ -20,18 +20,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Overloaded.hpp>
 #include <Interfaces.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
 
 namespace NES::Runtime
 {
-
-template <typename... Ts>
-struct Overloaded : Ts...
-{
-    using Ts::operator()...;
-};
 
 namespace
 {
