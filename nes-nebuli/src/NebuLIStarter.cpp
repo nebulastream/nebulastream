@@ -13,7 +13,6 @@
 */
 
 #include <fstream>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <argparse/argparse.hpp>
