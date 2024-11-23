@@ -71,12 +71,12 @@ public:
     void setBufferSize(size_t bufferSize);
 
 private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
+    explicit QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
     DecomposedQueryPlanPtr decomposedQueryPlan;
     bool debug;
     bool optimize;
     bool dumpQueryPlans;
-    size_t bufferSize;
+    size_t bufferSize; /// TODO #403: Use QueryCompiler Configuration instead
 };
 using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 }

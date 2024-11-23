@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <memory>
 #include <utility>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 
 namespace NES::QueryCompilation

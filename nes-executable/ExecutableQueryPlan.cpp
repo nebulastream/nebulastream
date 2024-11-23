@@ -18,6 +18,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Ranges.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -28,7 +29,6 @@ std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
     std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
 {
     return std::make_shared<ExecutablePipeline>(
-        id,
         std::move(stage),
         std::views::transform(successors, [](const auto& strong) { return std::weak_ptr(strong); }) | ranges::to<std::vector>());
 }
