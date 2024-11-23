@@ -34,8 +34,8 @@ std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
 }
 
 std::unique_ptr<ExecutableQueryPlan> ExecutableQueryPlan::create(
-    std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
+    QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources)
 {
-    return std::make_unique<ExecutableQueryPlan>(std::move(pipelines), std::move(sinks), std::move(sources));
+    return std::make_unique<ExecutableQueryPlan>(queryId, std::move(pipelines), std::move(sinks), std::move(sources));
 }
 }

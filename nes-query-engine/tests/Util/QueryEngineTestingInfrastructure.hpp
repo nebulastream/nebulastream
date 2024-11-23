@@ -302,7 +302,7 @@ struct QueryPlanBuilder
         std::unordered_map<identifier_t, Runtime::Execution::ExecutablePipelineStage*> stages;
     };
 
-    TestPlanCtrl build(std::shared_ptr<Memory::BufferManager> bm) &&;
+    TestPlanCtrl build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&;
 
     QueryPlanBuilder(identifier_t nextIdentifier, PipelineId::Underlying pipelineIdCounter, OriginId::Underlying originIdCounter);
 

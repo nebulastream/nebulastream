@@ -156,7 +156,8 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
                      { return Runtime::Execution::Sink(descriptorAndPredecessors.first, std::move(descriptorAndPredecessors.second)); })
         | ranges::to<std::vector>();
 
-    return Runtime::Execution::ExecutableQueryPlan::create(std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
+    return Runtime::Execution::ExecutableQueryPlan::create(
+        pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(loweringContext.sources));
 }
 
 }
