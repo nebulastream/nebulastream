@@ -35,6 +35,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
           QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration).build())
+    , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
 }
 
@@ -46,8 +47,12 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 {
     try
     {
-        auto compilationResult
-            = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine), QueryId(queryIdCounter++));
+        auto logicalQueryPlan
+            = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+
+        auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
+
+        auto compilationResult = qc->compileQuery(std::move(request), QueryId(queryIdCounter++));
         return nodeEngine->registerExecutableQueryPlan(compilationResult->takeExecutableQueryPlan());
     }
     catch (Exception& e)
