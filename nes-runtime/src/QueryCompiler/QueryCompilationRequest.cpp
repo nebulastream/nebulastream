@@ -17,17 +17,13 @@
 namespace NES::QueryCompilation
 {
 
-QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
+QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
-    return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan), std::move(nodeEngine)));
+    return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan)));
 }
 
-QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
-    : decomposedQueryPlan(std::move(decomposedQueryPlan))
-    , nodeEngine(std::move(nodeEngine))
-    , debug(false)
-    , optimize(false)
-    , dumpQueryPlans(false)
+QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan)
+    : decomposedQueryPlan(std::move(decomposedQueryPlan)), debug(false), optimize(false), dumpQueryPlans(false)
 {
 }
 
@@ -64,11 +60,6 @@ bool QueryCompilationRequest::isDumpEnabled() const
 DecomposedQueryPlanPtr QueryCompilationRequest::getDecomposedQueryPlan()
 {
     return decomposedQueryPlan;
-}
-
-Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine()
-{
-    return nodeEngine;
 }
 
 }

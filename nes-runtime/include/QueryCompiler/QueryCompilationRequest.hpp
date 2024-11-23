@@ -25,7 +25,7 @@ namespace NES::QueryCompilation
 class QueryCompilationRequest
 {
 public:
-    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
+    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan);
 
     /**
      * @brief Enable debugging for this query.
@@ -66,16 +66,9 @@ public:
      */
     DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
-    /**
-     * @brief Gets the node engine
-     * @return Runtime::NodeEnginePtr
-     */
-    Runtime::NodeEnginePtr getNodeEngine();
-
 private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
+    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan);
     DecomposedQueryPlanPtr decomposedQueryPlan;
-    Runtime::NodeEnginePtr nodeEngine;
     bool debug;
     bool optimize;
     bool dumpQueryPlans;
