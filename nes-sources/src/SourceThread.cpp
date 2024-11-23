@@ -89,8 +89,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
 using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
 void threadSetup(OriginId originId)
 {
-    std::string const thName = fmt::format("DataSrc-{}", originId);
-    setThreadName(thName.c_str());
+    setThreadName(fmt::format("DataSrc-{}", originId));
 }
 
 /// RAII-Wrapper around source open and close
