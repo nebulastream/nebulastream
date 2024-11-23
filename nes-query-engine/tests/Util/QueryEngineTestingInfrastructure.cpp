@@ -170,7 +170,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
     objects[identifier] = SinkDescriptor{};
     return identifier;
 }
-QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(std::shared_ptr<Memory::BufferManager> bm) &&
+QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&
 {
     auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
                                                { return std::holds_alternative<SourceDescriptor>(kv.second); });
@@ -233,7 +233,7 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(std::shared_ptr<Memory::B
     }
 
     return {
-        std::make_unique<Runtime::InstantiatedQueryPlan>(std::move(pipelines), std::move(sources)),
+        std::make_unique<Runtime::InstantiatedQueryPlan>(queryId, std::move(pipelines), std::move(sources)),
         sourceIds,
         pipelineIds,
         sourceCtrls,
@@ -266,7 +266,7 @@ std::unique_ptr<Runtime::InstantiatedQueryPlan> TestingHarness::addNewQuery(Quer
     lastOriginIdCounter = builder.originIdCounter;
     lastPipelineIdCounter = builder.pipelineIdCounter;
 
-    auto [plan, pSourceIds, pPipelineIds, pSourceCtrls, pSinkCtrls, pPipelineCtrls, pStages] = std::move(builder).build(bm);
+    auto [plan, pSourceIds, pPipelineIds, pSourceCtrls, pSinkCtrls, pPipelineCtrls, pStages] = std::move(builder).build(queryId, bm);
     sourceIds.insert(pSourceIds.begin(), pSourceIds.end());
     pipelineIds.insert(pPipelineIds.begin(), pPipelineIds.end());
     sourceControls.insert(pSourceCtrls.begin(), pSourceCtrls.end());
