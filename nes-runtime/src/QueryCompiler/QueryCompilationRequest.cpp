@@ -11,23 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstddef>
+#include <memory>
 #include <utility>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 
 namespace NES::QueryCompilation
 {
 
-QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
+QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize)
 {
-    return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan), std::move(nodeEngine)));
+    return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan), bufferSize));
 }
 
-QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
-    : decomposedQueryPlan(std::move(decomposedQueryPlan))
-    , nodeEngine(std::move(nodeEngine))
-    , debug(false)
-    , optimize(false)
-    , dumpQueryPlans(false)
+QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize)
+    : decomposedQueryPlan(std::move(decomposedQueryPlan)), debug(false), optimize(false), dumpQueryPlans(false), bufferSize(bufferSize)
 {
 }
 
@@ -66,9 +64,13 @@ DecomposedQueryPlanPtr QueryCompilationRequest::getDecomposedQueryPlan()
     return decomposedQueryPlan;
 }
 
-Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine()
+size_t QueryCompilationRequest::getBufferSize() const
 {
-    return nodeEngine;
+    return bufferSize;
+}
+void QueryCompilationRequest::setBufferSize(size_t bufferSize)
+{
+    this->bufferSize = bufferSize;
 }
 
 }
