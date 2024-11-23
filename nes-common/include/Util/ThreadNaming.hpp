@@ -13,18 +13,13 @@
 */
 
 #pragma once
+#include <string_view>
 
 namespace NES
 {
 /**
- * @brief Sets the calling thread's name using the supplied
- * formattable string. For example, setThreadName("helper") will
- * set the thread name to "helper", setThreadName("helper-%d", 123)
- * will set the thread name to "helper-123". Be careful that on some
- * operating systems, the length of the thread name is constrained, e.g.,
- * on Linux it is 16 characters.
- * @param threadNameFmt name of the thread with formatting option
- * @param ... variadic arguments
+ * @brief Sets the currents thread's name.
+ * @param threadName non-empty string_view
  */
-void setThreadName(const char* threadNameFmt, ...);
+void setThreadName(std::string_view threadName);
 }
