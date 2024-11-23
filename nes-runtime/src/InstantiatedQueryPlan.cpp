@@ -22,14 +22,14 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sinks/SinkProvider.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Executable.hpp>
+#include <ExecutableQueryPlan.hpp>
 #include <InstantiatedQueryPlan.hpp>
-#include "ExecutableQueryPlan.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "Sinks/SinkProvider.hpp"
-#include "Sources/SourceHandle.hpp"
-#include "Sources/SourceProvider.hpp"
 
 template <typename... U>
 struct Overloaded : U...
@@ -95,14 +95,16 @@ std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
     }
 
 
-    return std::make_unique<InstantiatedQueryPlan>(std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
+    return std::make_unique<InstantiatedQueryPlan>(
+        executableQueryPlan->queryId, std::move(executableQueryPlan->pipelines), std::move(instantiatedSources));
 }
 
 InstantiatedQueryPlan::InstantiatedQueryPlan(
+    QueryId queryId,
     std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
     std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>>
         instantiatedSources)
-    : pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
+    : queryId(queryId), pipelines(std::move(pipelines)), sources(std::move(instantiatedSources))
 {
 }
 }

@@ -17,10 +17,11 @@
 #include <ostream>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <ExecutableQueryPlan.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
 
 namespace NES::Runtime
 {
@@ -31,10 +32,12 @@ struct InstantiatedQueryPlan
         const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider);
 
     InstantiatedQueryPlan(
+        QueryId queryId,
         std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines,
         std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>>
             instantiatedSources);
 
+    QueryId queryId;
     std::vector<std::shared_ptr<Execution::ExecutablePipeline>> pipelines;
     std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::weak_ptr<Execution::ExecutablePipeline>>>> sources;
     friend std::ostream& operator<<(std::ostream& os, const InstantiatedQueryPlan& obj);

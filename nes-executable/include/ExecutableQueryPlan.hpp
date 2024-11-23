@@ -51,11 +51,13 @@ struct Sink
 
 struct ExecutableQueryPlan
 {
-    static std::unique_ptr<ExecutableQueryPlan>
-    create(std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
+    static std::unique_ptr<ExecutableQueryPlan> create(
+        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
 
-    ExecutableQueryPlan(std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
+    ExecutableQueryPlan(
+        QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<Sink> sinks, std::vector<Source> sources);
 
+    QueryId queryId;
     std::vector<Sink> sinks;
     std::vector<Source> sources;
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;

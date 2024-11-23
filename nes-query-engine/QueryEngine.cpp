@@ -473,10 +473,10 @@ void QueryEngine::stop(QueryId queryId)
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
-void QueryEngine::start(QueryId queryId, std::unique_ptr<InstantiatedQueryPlan> qep)
+void QueryEngine::start(std::unique_ptr<InstantiatedQueryPlan> qep)
 {
     NES_INFO("Starting Query: {}", fmt::streamed(*qep));
-    threadPool->taskQueue.blockingWrite(StartQueryTask{queryId, std::move(qep), queryCatalog, {}, {}});
+    threadPool->taskQueue.blockingWrite(StartQueryTask{qep->queryId, std::move(qep), queryCatalog, {}, {}});
 }
 
 QueryEngine::~QueryEngine()

@@ -156,7 +156,8 @@ Runtime::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::appl
         sinks.emplace_back(k, std::move(v));
     }
 
-    return Runtime::Execution::ExecutableQueryPlan::create(std::move(pipelines), std::move(sinks), std::move(context.sources));
+    return Runtime::Execution::ExecutableQueryPlan::create(
+        pipelineQueryPlan->getQueryId(), std::move(pipelines), std::move(sinks), std::move(context.sources));
 }
 
 }

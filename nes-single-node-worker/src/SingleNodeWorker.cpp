@@ -52,7 +52,7 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 
-        auto compilationResult = qc->compileQuery(std::move(request), QueryId(queryIdCounter++));
+        auto compilationResult = qc->compileQuery(std::move(request));
         return nodeEngine->registerExecutableQueryPlan(compilationResult->takeExecutableQueryPlan());
     }
     catch (Exception& e)
