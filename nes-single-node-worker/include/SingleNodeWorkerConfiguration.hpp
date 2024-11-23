@@ -14,9 +14,9 @@
 
 #pragma once
 #include <string>
+#include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/PrintingVisitor.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
 
 namespace NES::Configuration
 {

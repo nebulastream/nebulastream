@@ -18,6 +18,7 @@
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <InstantiatedQueryPlan.hpp>
+#include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 
 namespace NES::Runtime
@@ -30,7 +31,7 @@ class QueryEngine
 {
 public:
     explicit QueryEngine(
-        size_t workerThreads,
+        const QueryEngineConfiguration& configuration,
         std::shared_ptr<QueryEngineStatisticListener> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<Memory::BufferManager> bm);
