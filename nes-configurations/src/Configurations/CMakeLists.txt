@@ -19,6 +19,4 @@ add_source_files(nes-configurations
         TypedBaseOption.cpp
 )
 
-add_subdirectory(Coordinator)
-add_subdirectory(Enums)
 add_subdirectory(Validation)

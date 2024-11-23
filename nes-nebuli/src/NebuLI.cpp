@@ -17,7 +17,6 @@
 #include <ranges>
 #include <regex>
 #include <utility>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
@@ -179,7 +178,6 @@ void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& co
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 {
-    auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
 
@@ -212,7 +210,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
+    auto queryRewritePhase = Optimizer::QueryRewritePhase::create();
 
     auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
 

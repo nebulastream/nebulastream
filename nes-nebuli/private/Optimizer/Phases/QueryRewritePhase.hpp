@@ -69,7 +69,7 @@ using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProje
 class QueryRewritePhase
 {
 public:
-    static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+    static QueryRewritePhasePtr create();
 
     void execute(QueryPlanPtr& queryPlan) const;
 
