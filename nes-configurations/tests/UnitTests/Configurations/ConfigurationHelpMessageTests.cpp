@@ -16,9 +16,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/SchemaType.hpp>
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
 #include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>

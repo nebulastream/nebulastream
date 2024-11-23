@@ -71,7 +71,7 @@ using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 class QueryRewritePhase
 {
 public:
-    static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
+    static QueryRewritePhasePtr create();
 
     void execute(QueryPlanPtr& queryPlan) const;
 
