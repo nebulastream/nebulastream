@@ -25,6 +25,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
@@ -42,11 +43,6 @@ const char* functionName()
 #endif
 }
 
-template <typename... Ts>
-struct Overloaded : Ts...
-{
-    using Ts::operator()...;
-};
 
 struct PrintingStatisticListener final : QueryEngineStatisticListener
 {
