@@ -35,6 +35,7 @@
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
@@ -227,8 +228,12 @@ public:
     ThreadPool(
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
-        std::shared_ptr<Memory::AbstractBufferProvider> buffer_provider)
-        : listener(std::move(listener)), statistic(std::move(std::move(stats))), bufferProvider(std::move(buffer_provider))
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+        const size_t taskQueueSize)
+        : listener(std::move(listener))
+        , statistic(std::move(std::move(stats)))
+        , bufferProvider(std::move(bufferProvider))
+        , taskQueue(taskQueueSize)
     {
     }
 
@@ -263,7 +268,7 @@ private:
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
-    detail::Queue taskQueue{1000};
+    detail::Queue taskQueue;
     std::vector<std::jthread> pool;
     friend class QueryEngine;
 };
@@ -490,7 +495,7 @@ void ThreadPool::addThread()
 }
 
 QueryEngine::QueryEngine(
-    size_t workerThreads,
+    const QueryEngineConfiguration& config,
     std::shared_ptr<QueryEngineStatisticListener> statListener,
     std::shared_ptr<AbstractQueryStatusListener> listener,
     std::shared_ptr<Memory::BufferManager> bm)
@@ -498,9 +503,9 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager))
+    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.taskQueueSize.getValue()))
 {
-    for (size_t i = 0; i < workerThreads; ++i)
+    for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
         threadPool->addThread();
     }

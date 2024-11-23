@@ -19,5 +19,6 @@ endmacro()
 
 add_query_engine_test(query-engine-test QueryManagerTest.cpp)
 add_query_engine_test(running-query-plan-test QueryPlanTest.cpp)
+add_query_engine_test(query-engine-configuration-test QueryEngineConfigurationTest.cpp)
 
 add_subdirectory(Util)
