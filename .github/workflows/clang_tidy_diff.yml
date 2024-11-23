@@ -20,7 +20,7 @@ on:
       number_of_commits:
         type: number
         required: false
-        default: 0
+        default: -1
 
 jobs:
   check-clang-tidy:
@@ -35,10 +35,13 @@ jobs:
         MOLD_JOBS: 1
         GH_TOKEN: ${{ github.token }}
     steps:
+      - name: Include base commit
+        id: increment
+        run: echo "result=$((${{ inputs.number_of_commits }} + 1))" >> $GITHUB_OUTPUT
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: ${{ inputs.number_of_commits }}
+          fetch-depth: ${{ steps.increment.outputs.result }}
       - name: Configure NebulaStream for Clang-Tidy
         run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       # We need to build the project, as some headers are only created during the build.
