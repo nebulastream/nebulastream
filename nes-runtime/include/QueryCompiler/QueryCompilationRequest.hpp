@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -25,7 +26,7 @@ namespace NES::QueryCompilation
 class QueryCompilationRequest
 {
 public:
-    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
+    static std::shared_ptr<QueryCompilationRequest> create(DecomposedQueryPlanPtr decomposedQueryPlan, size_t bufferSize);
 
     /**
      * @brief Enable debugging for this query.
@@ -66,19 +67,16 @@ public:
      */
     DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
-    /**
-     * @brief Gets the node engine
-     * @return Runtime::NodeEnginePtr
-     */
-    Runtime::NodeEnginePtr getNodeEngine();
+    [[nodiscard]] size_t getBufferSize() const;
+    void setBufferSize(size_t bufferSize);
 
 private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
+    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, size_t bufferSize);
     DecomposedQueryPlanPtr decomposedQueryPlan;
-    Runtime::NodeEnginePtr nodeEngine;
     bool debug;
     bool optimize;
     bool dumpQueryPlans;
+    size_t bufferSize;
 };
 using QueryCompilationRequestPtr = std::shared_ptr<QueryCompilationRequest>;
 }
