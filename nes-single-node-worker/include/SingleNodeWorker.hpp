@@ -41,6 +41,7 @@ class SingleNodeWorker
 {
     std::unique_ptr<QueryCompilation::QueryCompiler> qc;
     std::shared_ptr<Runtime::NodeEngine> nodeEngine;
+    size_t bufferSize;
 
 public:
     explicit SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration&);
