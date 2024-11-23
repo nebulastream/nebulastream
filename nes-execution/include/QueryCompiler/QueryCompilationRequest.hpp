@@ -67,7 +67,7 @@ public:
     DecomposedQueryPlanPtr getDecomposedQueryPlan();
 
 private:
-    QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan);
+    explicit QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan);
     DecomposedQueryPlanPtr decomposedQueryPlan;
     bool debug;
     bool optimize;

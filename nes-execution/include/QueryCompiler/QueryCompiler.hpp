@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
