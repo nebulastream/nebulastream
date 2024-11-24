@@ -23,7 +23,6 @@ target_compile_definitions(nes-systest-lib PRIVATE
         TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
 )
 
-
 find_package(argparse CONFIG REQUIRED)
 
 add_executable(systest src/SystestStarter.cpp)

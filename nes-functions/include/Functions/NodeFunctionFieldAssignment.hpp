@@ -26,7 +26,7 @@ using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignme
 class NodeFunctionFieldAssignment : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionFieldAssignment(DataTypePtr stamp);
+    explicit NodeFunctionFieldAssignment(DataType stamp);
 
     /**
      * @brief Create untyped field read.
@@ -54,7 +54,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     /**
     * @brief Create a deep copy of this function node.

@@ -22,7 +22,7 @@ namespace NES
 class NodeFunctionUnary : public NodeFunction
 {
 public:
-    explicit NodeFunctionUnary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionUnary(DataType stamp, std::string name);
 
     /**
      * @brief set the child node of this function.

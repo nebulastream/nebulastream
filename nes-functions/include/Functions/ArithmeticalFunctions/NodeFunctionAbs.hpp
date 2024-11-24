@@ -22,7 +22,7 @@ namespace NES
 class NodeFunctionAbs final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionAbs(DataTypePtr stamp);
+    explicit NodeFunctionAbs(DataType stamp);
     ~NodeFunctionAbs() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -33,7 +33,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     NodeFunctionPtr deepCopy() override;
 
 private:

@@ -30,7 +30,7 @@ public:
     /**
     * @brief Create typed field read.
     */
-    static NodeFunctionPtr create(DataTypePtr stamp, std::string fieldName);
+    static NodeFunctionPtr create(DataType stamp, std::string fieldName);
 
     /**
      * @brief Create untyped field read.
@@ -57,7 +57,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     /**
     * @brief Create a deep copy of this function node.
@@ -70,7 +70,7 @@ public:
 protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
-    NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName);
+    NodeFunctionFieldAccess(DataType stamp, std::string fieldName);
     /**
      * @brief Name of the field want to access.
      */

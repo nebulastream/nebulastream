@@ -22,7 +22,7 @@
 namespace NES
 {
 
-NodeFunctionFloor::NodeFunctionFloor(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
+NodeFunctionFloor::NodeFunctionFloor(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Floor") {};
 
 NodeFunctionFloor::NodeFunctionFloor(NodeFunctionFloor* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -35,7 +35,7 @@ NodeFunctionPtr NodeFunctionFloor::create(NodeFunctionPtr const& child)
     return floorNode;
 }
 
-void NodeFunctionFloor::inferStamp(SchemaPtr schema)
+void NodeFunctionFloor::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);

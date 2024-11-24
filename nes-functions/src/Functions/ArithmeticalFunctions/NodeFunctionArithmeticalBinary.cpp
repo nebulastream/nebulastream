@@ -17,14 +17,11 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
 
-NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name)
+NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(DataType stamp, std::string name)
     : NodeFunctionBinary(std::move(stamp), std::move(name)), NodeFunctionArithmetical()
 {
 }
@@ -39,7 +36,7 @@ NodeFunctionArithmeticalBinary::NodeFunctionArithmeticalBinary(NodeFunctionArith
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
+void NodeFunctionArithmeticalBinary::inferStamp(Schema& schema)
 {
     /// infer the stamps of the left and right child
     const auto left = getLeft();
@@ -48,30 +45,25 @@ void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
     right->inferStamp(schema);
 
     /// both sub functions have to be numerical
-    if (!NES::Util::instanceOf<Numeric>(left->getStamp()) || !NES::Util::instanceOf<Numeric>(right->getStamp()))
+    if (!(isNumerical(left->getStamp()) && isNumerical(right->getStamp())))
     {
         throw CannotInferSchema(fmt::format(
             "Error during stamp inference. Types need to be Numerical but Left was: {} Right was: {}",
-            left->getStamp()->toString(),
-            right->getStamp()->toString()));
+            left->getStamp(),
+            right->getStamp()));
     }
 
     /// calculate the common stamp by joining the left and right stamp
-    const auto commonStamp = left->getStamp()->join(right->getStamp());
-    NES_DEBUG(
-        "NodeFunctionArithmeticalBinary: the common stamp is: {} with left {} and right {}",
-        commonStamp->toString(),
-        left->getStamp()->toString(),
-        right->getStamp()->toString());
-
-    /// check if the common stamp is defined
-    if (NES::Util::instanceOf<Undefined>(commonStamp))
+    const auto commonStamp = left->getStamp().commonType(right->getStamp());
+    if (!commonStamp)
     {
-        /// the common stamp was not valid -> in this case the common stamp is undefined.
-        throw CannotInferSchema(fmt::format("{} is not supported by arithmetical functions", commonStamp->toString()));
+        throw CannotInferSchema(fmt::format(
+            "Error during stamp inference. Types need to be compatible but Left was: {} Right was: {}",
+            left->getStamp(),
+            right->getStamp()));
     }
 
-    stamp = commonStamp;
+    stamp = *commonStamp;
     NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
 }
 
@@ -96,8 +88,8 @@ bool NodeFunctionArithmeticalBinary::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
-        && NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
+    return isNumerical(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
+        && isNumerical(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
 }
 
 

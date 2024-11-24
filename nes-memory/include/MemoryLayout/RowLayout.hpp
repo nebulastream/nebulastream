@@ -37,7 +37,7 @@ public:
      * @param schema the underling schema of this memory layout.
      * @param bufferSize the expected buffer size.
      */
-    RowLayout(SchemaPtr schema, uint64_t bufferSize);
+    RowLayout(const Schema& schema, uint64_t bufferSize);
 
     /**
      * @brief Factory to create a RowLayout
@@ -45,7 +45,7 @@ public:
      * @param bufferSize the expected buffer size.
      * @return std::shared_ptr<RowLayout>
      */
-    static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
+    static std::shared_ptr<RowLayout> create(const Schema& schema, uint64_t bufferSize);
 
     /**
      * Gets the offset in bytes of all fields within a single tuple.

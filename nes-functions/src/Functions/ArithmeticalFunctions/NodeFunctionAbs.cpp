@@ -17,12 +17,11 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
 
-NodeFunctionAbs::NodeFunctionAbs(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
+NodeFunctionAbs::NodeFunctionAbs(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Abs") {};
 
 NodeFunctionAbs::NodeFunctionAbs(NodeFunctionAbs* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -35,13 +34,16 @@ NodeFunctionPtr NodeFunctionAbs::create(const NodeFunctionPtr& child)
     return absNode;
 }
 
-void NodeFunctionAbs::inferStamp(SchemaPtr schema)
+void NodeFunctionAbs::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);
-
+    if(auto intType = stamp.getUnderlying<IntegerType>())
+    {
+        intType->max = std::max(intType->max, intType->negativeMin ? -intType->min : intType->min);
+        intType->min = 0;
+    }
     /// increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);
     NES_TRACE("NodeFunctionAbs: increased the lower bound of stamp to 0: {}", toString());
 }
 

@@ -191,6 +191,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
         for (const auto& [name, type] : schemaFields)
         {
             schema = schema->addField(name, type);
+            schema = schema->addField(name, DataType)
         }
         sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }

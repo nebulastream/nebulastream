@@ -20,6 +20,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 #include <Common/DataTypes/BasicTypes.hpp>
 
@@ -58,10 +59,35 @@ public:
     [[nodiscard]] bool loadFile(const std::filesystem::path& filePath);
     [[nodiscard]] bool loadString(const std::string& str);
 
-    /// Type defintions ///
-    struct Field
+
+    struct Scalar
     {
         BasicType type;
+        bool operator==(const Scalar &) const = default;
+    };
+    struct Fixed
+    {
+        BasicType type;
+        size_t size;
+        bool operator==(const Fixed &) const = default;
+    };
+    struct Variable
+    {
+        BasicType type;
+        bool operator==(const Variable &) const = default;
+    };
+    using FieldType = std::variant<Scalar, Fixed, Variable>;
+
+    static BasicType getUnderlyingType(const FieldType& fieldType)
+    {
+        return std::visit([](const auto& variant) { return variant.type; }, fieldType);
+    }
+
+
+    /// Type definitions ///
+    struct Field
+    {
+        FieldType type;
         std::string name;
         bool operator==(const Field& other) const = default;
     };
@@ -125,4 +151,6 @@ private:
     size_t currentLine = 0;
     std::vector<std::string> lines;
 };
+
+std::optional<SystestParser::FieldType> parseFieldType(const std::string& rawFieldType);
 }

@@ -19,7 +19,7 @@
 
 namespace NES
 {
-NodeFunctionBinary::NodeFunctionBinary(DataTypePtr stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
+NodeFunctionBinary::NodeFunctionBinary(DataType stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
 {
 }
 

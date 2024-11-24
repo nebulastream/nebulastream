@@ -48,7 +48,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     /**
     * @brief Create a deep copy of this function node.

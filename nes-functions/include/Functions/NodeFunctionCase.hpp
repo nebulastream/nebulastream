@@ -23,7 +23,7 @@ namespace NES
 class NodeFunctionCase : public NodeFunction
 {
 public:
-    explicit NodeFunctionCase(DataTypePtr stamp);
+    explicit NodeFunctionCase(DataType stamp);
     ~NodeFunctionCase() noexcept override = default;
 
     /**
@@ -54,7 +54,7 @@ public:
      * @brief Infers the stamp of this function node.
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
     [[nodiscard]] std::string toString() const final;

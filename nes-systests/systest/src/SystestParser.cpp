@@ -14,11 +14,15 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <optional>
+#include <regex>
+#include <system_error>
+#include <version>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -285,9 +289,9 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        if (auto type = magic_enum::enum_cast<BasicType>(arguments[i]))
+        if (auto type = parseFieldType(arguments[i]))
         {
-            source.fields.emplace_back(type.value(), arguments[i + 1]);
+            source.fields.emplace_back(*type, arguments[i + 1]);
         }
         else
         {
@@ -301,6 +305,47 @@ SystestParser::SLTSource SystestParser::expectSLTSource()
     return source;
 }
 
+/// Expects the type of a field:
+/// Types can be either scalar as in UINT64, fixed size arrays UINT64[32] or variable size UINT64[]
+std::optional<SystestParser::FieldType> parseFieldType(const std::string& rawFieldType)
+{
+    static const std::regex typePattern(R"(^([A-Z]+[0-9]*)(\[([0-9]+)?\])?$)");
+    std::smatch match;
+    if (!std::regex_search(rawFieldType, match, typePattern))
+    {
+        return {};
+    }
+
+    INVARIANT(match.size() == 4, "Expected match with 4 groups");
+    BasicType type;
+    if (auto parsedType = magic_enum::enum_cast<BasicType>(match[1].str()))
+    {
+        type = *parsedType;
+    }
+    else
+    {
+        return {};
+    }
+
+    if (match[2].matched && match[3].matched)
+    {
+        size_t fixedSize = 0;
+        const auto fixedSizeStr = match[3].str();
+        auto [_, ec] = std::from_chars(fixedSizeStr.data(), fixedSizeStr.data() + fixedSizeStr.size(), fixedSize);
+        if (ec != std::errc{})
+        {
+            return {};
+        }
+
+        return SystestParser::Fixed{.type=type, .size=fixedSize};
+    }
+
+    if (match[2].matched)
+    {
+        return SystestParser::Variable{type};
+    }
+    return SystestParser::Scalar{type};
+}
 
 SystestParser::CSVSource SystestParser::expectCSVSource() const
 {
@@ -340,15 +385,16 @@ SystestParser::CSVSource SystestParser::expectCSVSource() const
 
     for (size_t i = 0; i < arguments.size(); i += 2)
     {
-        std::string const fieldtype = arguments[i];
+        std::string const rawFieldtype = arguments[i];
         std::string const fieldname = arguments[i + 1];
-        if (auto type = magic_enum::enum_cast<BasicType>(fieldtype))
+
+        if (auto fieldtype = parseFieldType(rawFieldtype))
         {
-            source.fields.emplace_back(type.value(), fieldname);
+            source.fields.emplace_back(*fieldtype, fieldname);
         }
         else
         {
-            throw SLTUnexpectedToken("Unknown basic type: " + fieldtype);
+            throw SLTUnexpectedToken("Unknown basic type: " + rawFieldtype);
         }
     }
     return source;

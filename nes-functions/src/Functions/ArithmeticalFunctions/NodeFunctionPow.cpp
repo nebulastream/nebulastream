@@ -23,7 +23,7 @@
 namespace NES
 {
 
-NodeFunctionPow::NodeFunctionPow(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
+NodeFunctionPow::NodeFunctionPow(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Pow") {};
 
 NodeFunctionPow::NodeFunctionPow(NodeFunctionPow* other) : NodeFunctionArithmeticalBinary(other)
 {
@@ -36,7 +36,7 @@ NodeFunctionPtr NodeFunctionPow::create(NodeFunctionPtr const& left, NodeFunctio
     return powNode;
 }
 
-void NodeFunctionPow::inferStamp(SchemaPtr schema)
+void NodeFunctionPow::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalBinary::inferStamp(schema);

@@ -42,7 +42,7 @@ public:
 
     std::string toString() override;
 
-    bool inferStamp(SchemaPtr schema) override;
+    bool inferStamp(Schema& schema) override;
 
 private:
     /// Field where the watermark should be retrieved

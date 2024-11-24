@@ -20,7 +20,7 @@ namespace NES
 class NodeFunctionSub final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionSub(DataTypePtr stamp);
+    explicit NodeFunctionSub(DataType stamp);
     ~NodeFunctionSub() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;

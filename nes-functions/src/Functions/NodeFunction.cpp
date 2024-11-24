@@ -15,28 +15,27 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <API/DataType.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunction::NodeFunction(DataTypePtr stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
+NodeFunction::NodeFunction(DataType stamp, std::string type) : stamp(std::move(stamp)), type(std::move(type))
 {
 }
 
 bool NodeFunction::isPredicate() const
 {
-    return NES::Util::instanceOf<Boolean>(stamp);
+    return stamp == boolean();
 }
 
-DataTypePtr NodeFunction::getStamp() const
+const DataType& NodeFunction::getStamp() const
 {
     return stamp;
 }
 
-void NodeFunction::setStamp(DataTypePtr stamp)
+void NodeFunction::setStamp(DataType stamp)
 {
     this->stamp = std::move(stamp);
 }
@@ -46,7 +45,7 @@ const std::string& NodeFunction::getType() const
     return type;
 }
 
-void NodeFunction::inferStamp(SchemaPtr schema)
+void NodeFunction::inferStamp(Schema& schema)
 {
     /// infer stamp on all children nodes
     for (const auto& node : children)

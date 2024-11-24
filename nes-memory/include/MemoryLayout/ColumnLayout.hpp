@@ -15,6 +15,7 @@
 #pragma once
 
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -33,8 +34,8 @@ class ColumnLayout;
 class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
 {
 public:
-    ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
-    static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
+    ColumnLayout(const Schema& schema, uint64_t bufferSize);
+    static std::shared_ptr<ColumnLayout> create(const Schema& schema, uint64_t bufferSize);
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.

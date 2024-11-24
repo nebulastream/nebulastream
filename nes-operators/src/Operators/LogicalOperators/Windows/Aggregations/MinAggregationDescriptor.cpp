@@ -63,7 +63,7 @@ DataTypePtr MinAggregationDescriptor::getFinalAggregateStamp()
     return onField->getStamp();
 }
 
-void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
+void MinAggregationDescriptor::inferStamp(Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);

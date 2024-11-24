@@ -23,7 +23,7 @@ namespace NES
 class NodeFunctionWhen final : public NodeFunctionBinary
 {
 public:
-    explicit NodeFunctionWhen(DataTypePtr stamp);
+    explicit NodeFunctionWhen(DataType stamp);
     ~NodeFunctionWhen() noexcept override = default;
 
     /**
@@ -36,7 +36,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;

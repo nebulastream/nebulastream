@@ -36,7 +36,7 @@ std::string IngestionTimeWatermarkStrategyDescriptor::toString()
     return "TYPE = INGESTION-TIME";
 }
 
-bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr)
+bool IngestionTimeWatermarkStrategyDescriptor::inferStamp(Schema&)
 {
     return true;
 }

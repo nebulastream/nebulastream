@@ -51,7 +51,7 @@ WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const NodeFunctionPt
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
 }
 
-void MaxAggregationDescriptor::inferStamp(SchemaPtr schema)
+void MaxAggregationDescriptor::inferStamp(Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);

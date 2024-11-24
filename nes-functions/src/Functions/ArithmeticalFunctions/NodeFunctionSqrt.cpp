@@ -25,7 +25,7 @@
 namespace NES
 {
 
-NodeFunctionSqrt::NodeFunctionSqrt(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
+NodeFunctionSqrt::NodeFunctionSqrt(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Sqrt") {};
 
 NodeFunctionSqrt::NodeFunctionSqrt(NodeFunctionSqrt* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -38,7 +38,7 @@ NodeFunctionPtr NodeFunctionSqrt::create(NodeFunctionPtr const& child)
     return sqrtNode;
 }
 
-void NodeFunctionSqrt::inferStamp(SchemaPtr schema)
+void NodeFunctionSqrt::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);

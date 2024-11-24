@@ -312,6 +312,7 @@ add_custom_target(build_all_plugins)
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
 add_subdirectory(nes-data-types)
+add_subdirectory(nes-data-types-ref)
 add_subdirectory(nes-runtime)
 add_subdirectory(nes-sources)
 add_subdirectory(nes-sinks)

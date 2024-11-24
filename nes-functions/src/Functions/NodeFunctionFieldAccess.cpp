@@ -22,12 +22,12 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 namespace NES
 {
-NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName)
+NodeFunctionFieldAccess::NodeFunctionFieldAccess(DataType stamp, std::string fieldName)
     : NodeFunction(std::move(stamp), "FieldAccess"), fieldName(std::move(fieldName)) {};
 
 NodeFunctionFieldAccess::NodeFunctionFieldAccess(NodeFunctionFieldAccess* other) : NodeFunction(other), fieldName(other->getFieldName()) {};
 
-NodeFunctionPtr NodeFunctionFieldAccess::create(DataTypePtr stamp, std::string fieldName)
+NodeFunctionPtr NodeFunctionFieldAccess::create(DataType stamp, std::string fieldName)
 {
     return std::make_shared<NodeFunctionFieldAccess>(NodeFunctionFieldAccess(std::move(stamp), std::move(fieldName)));
 }
@@ -64,7 +64,7 @@ std::string NodeFunctionFieldAccess::toString() const
     return std::format("NodeFunctionFieldAccess( {} + [ {} ])", fieldName, stamp->toString());
 }
 
-void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
+void NodeFunctionFieldAccess::inferStamp(Schema& schema)
 {
     /// check if the access field is defined in the schema.
     if (const auto existingField = schema->get(fieldName))

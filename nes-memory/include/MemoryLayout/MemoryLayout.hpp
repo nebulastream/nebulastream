@@ -14,13 +14,14 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <MemoryLayout/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -59,7 +60,7 @@ public:
      * @param bufferSize A memory layout is always created for a specific buffer size.
      * @param schema A memory layout is always created for a specific schema.
      */
-    MemoryLayout(uint64_t bufferSize, std::shared_ptr<Schema> schema);
+    MemoryLayout(uint64_t bufferSize, Schema schema);
     virtual ~MemoryLayout() = default;
 
     /**
@@ -112,13 +113,13 @@ public:
      * @brief Gets the underling schema of this memory layout.
      * @return SchemaPtr
      */
-    [[nodiscard]] const SchemaPtr& getSchema() const;
+    [[nodiscard]] const Schema& getSchema() const;
 
     /**
      * @brief Gets a vector of all physical fields for this memory layout.
      * @return Reference to vector physical fields.
      */
-    [[nodiscard]] const std::vector<std::shared_ptr<PhysicalType>>& getPhysicalTypes() const;
+    [[nodiscard]] const std::vector<PhysicalType>& getPhysicalTypes() const;
 
     /**
      * Gets a vector that contains the physical size of all tuple fields.
@@ -132,16 +133,15 @@ public:
      * @param rhs
      * @return
      */
-    bool operator==(const MemoryLayout& rhs) const;
-    bool operator!=(const MemoryLayout& rhs) const;
+    bool operator==(const MemoryLayout& rhs) const = default;
 
 protected:
     const uint64_t bufferSize;
-    std::shared_ptr<Schema> schema;
+    Schema schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
+    std::vector<PhysicalType> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
 

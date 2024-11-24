@@ -22,7 +22,7 @@
 
 namespace NES
 {
-NodeFunctionWhen::NodeFunctionWhen(DataTypePtr stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
+NodeFunctionWhen::NodeFunctionWhen(DataType stamp) : NodeFunctionBinary(std::move(stamp), "When") {};
 
 NodeFunctionWhen::NodeFunctionWhen(NodeFunctionWhen* other) : NodeFunctionBinary(other)
 {
@@ -35,7 +35,7 @@ NodeFunctionPtr NodeFunctionWhen::create(const NodeFunctionPtr& left, const Node
     return whenNode;
 }
 
-void NodeFunctionWhen::inferStamp(SchemaPtr schema)
+void NodeFunctionWhen::inferStamp(Schema& schema)
 {
     auto left = getLeft();
     auto right = getRight();

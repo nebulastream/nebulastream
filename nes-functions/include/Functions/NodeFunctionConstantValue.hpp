@@ -41,7 +41,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;

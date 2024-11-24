@@ -11,16 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
 #include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+ColumnLayout::ColumnLayout(const Schema& schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (auto& fieldSize : physicalFieldSizes)
@@ -30,7 +28,7 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
     }
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(const Schema& schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }

@@ -23,7 +23,7 @@
 namespace NES
 {
 
-NodeFunctionExp::NodeFunctionExp(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") {};
+NodeFunctionExp::NodeFunctionExp(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Exp") {};
 
 NodeFunctionExp::NodeFunctionExp(NodeFunctionExp* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -36,7 +36,7 @@ NodeFunctionPtr NodeFunctionExp::create(NodeFunctionPtr const& child)
     return expNode;
 }
 
-void NodeFunctionExp::inferStamp(SchemaPtr schema)
+void NodeFunctionExp::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);

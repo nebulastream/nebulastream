@@ -60,7 +60,7 @@ std::string NodeFunctionFieldRename::toString() const
     return "FieldRenameFunction(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
-void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
+void NodeFunctionFieldRename::inferStamp(Schema& schema)
 {
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);

@@ -25,7 +25,7 @@
 namespace NES
 {
 
-NodeFunctionRound::NodeFunctionRound(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
+NodeFunctionRound::NodeFunctionRound(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Round") {};
 
 NodeFunctionRound::NodeFunctionRound(NodeFunctionRound* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -38,7 +38,7 @@ NodeFunctionPtr NodeFunctionRound::create(NodeFunctionPtr const& child)
     return roundNode;
 }
 
-void NodeFunctionRound::inferStamp(SchemaPtr schema)
+void NodeFunctionRound::inferStamp(Schema& schema)
 {
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);

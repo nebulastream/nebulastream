@@ -71,11 +71,61 @@ TEST_F(SystestParserTest, testCallbackSourceCSV)
         [&](SystestParser::CSVSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(sourceOut.fields[0].type, BasicType::UINT64);
+            ASSERT_EQ(sourceOut.fields[0].type, SystestParser::FieldType{SystestParser::Fixed(BasicType::UINT64)});
             ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(sourceOut.fields[1].type, BasicType::UINT64);
+            ASSERT_EQ(sourceOut.fields[1].type, SystestParser::FieldType{SystestParser::Fixed(BasicType::UINT64)});
             ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(sourceOut.fields[2].type, BasicType::UINT64);
+            ASSERT_EQ(sourceOut.fields[2].type, SystestParser::FieldType{SystestParser::Fixed(BasicType::UINT64)});
+            ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
+            ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
+            callbackCalled = true;
+        });
+
+    ASSERT_TRUE(parser.loadString(str));
+    EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(callbackCalled);
+}
+
+TEST_F(SystestParserTest, testFieldTypeParser)
+{
+    using namespace ::testing;
+    EXPECT_THAT(parseFieldType("UINT64"), Optional(VariantWith<SystestParser::Scalar>(SystestParser::Scalar{BasicType::UINT64})));
+    EXPECT_THAT(parseFieldType("UINT64[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::UINT64})));
+    EXPECT_THAT(parseFieldType("CHAR[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::CHAR})));
+    EXPECT_THAT(parseFieldType("FLOAT32[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::FLOAT32})));
+    EXPECT_THAT(parseFieldType("BOOLEAN[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::BOOLEAN})));
+    EXPECT_THAT(parseFieldType("FLOAT64[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::FLOAT64})));
+    EXPECT_THAT(parseFieldType("INT32[]"), Optional(VariantWith<SystestParser::Variable>(SystestParser::Variable{BasicType::INT32})));
+    EXPECT_THAT(parseFieldType("UINT64[321231]"), Optional(VariantWith<SystestParser::Fixed>(SystestParser::Fixed{BasicType::UINT64, 321231})));
+    EXPECT_THAT(parseFieldType("CHAR[32]"), Optional(VariantWith<SystestParser::Fixed>(SystestParser::Fixed{BasicType::CHAR, 32})));
+    EXPECT_THAT(parseFieldType("UINT[]"), Eq(std::nullopt));
+    EXPECT_THAT(parseFieldType("UINT3"), Eq(std::nullopt));
+    EXPECT_THAT(parseFieldType("UINT3[]"), Eq(std::nullopt));
+    EXPECT_THAT(parseFieldType("UINT32["), Eq(std::nullopt));
+    EXPECT_THAT(parseFieldType("UINT32]"), Eq(std::nullopt));
+}
+
+TEST_F(SystestParserTest, testCallbackSourceCSVWithArrayTypes)
+{
+    SystestParser parser{};
+    const std::string sourceIn = "SourceCSV window UINT64[5] id window.csv";
+
+    bool callbackCalled = false;
+
+    const std::string str = sourceIn + "\n";
+
+    parser.registerOnQueryCallback([&](SystestParser::Query&&) { FAIL(); });
+    parser.registerOnResultTuplesCallback([&](SystestParser::ResultTuples&&) { FAIL(); });
+    parser.registerOnSLTSourceCallback([&](SystestParser::SLTSource&&) { FAIL(); });
+    parser.registerOnCSVSourceCallback(
+        [&](SystestParser::CSVSource&& sourceOut)
+        {
+            ASSERT_EQ(sourceOut.name, "window");
+            ASSERT_THAT(sourceOut.fields[0].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
+            ASSERT_EQ(sourceOut.fields[0].name, "id");
+            ASSERT_THAT(sourceOut.fields[1].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
+            ASSERT_EQ(sourceOut.fields[1].name, "value");
+            ASSERT_THAT(sourceOut.fields[2].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
             ASSERT_EQ(sourceOut.csvFilePath, "window.csv");
             callbackCalled = true;
@@ -138,11 +188,11 @@ TEST_F(SystestParserTest, testCallbackSLTSource)
         [&](SystestParser::SLTSource&& sourceOut)
         {
             ASSERT_EQ(sourceOut.name, "window");
-            ASSERT_EQ(sourceOut.fields[0].type, BasicType::UINT64);
+            ASSERT_THAT(sourceOut.fields[0].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
             ASSERT_EQ(sourceOut.fields[0].name, "id");
-            ASSERT_EQ(sourceOut.fields[1].type, BasicType::UINT64);
+            ASSERT_THAT(sourceOut.fields[1].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
             ASSERT_EQ(sourceOut.fields[1].name, "value");
-            ASSERT_EQ(sourceOut.fields[2].type, BasicType::UINT64);
+            ASSERT_THAT(sourceOut.fields[2].type, testing::VariantWith<SystestParser::Fixed>(SystestParser::Fixed(BasicType::UINT64)));
             ASSERT_EQ(sourceOut.fields[2].name, "timestamp");
             ASSERT_EQ(sourceOut.tuples[0], tpl1);
             ASSERT_EQ(sourceOut.tuples[1], tpl2);

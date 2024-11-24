@@ -20,7 +20,7 @@ namespace NES
 class NodeFunctionMod final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionMod(DataTypePtr stamp);
+    explicit NodeFunctionMod(DataType stamp);
     ~NodeFunctionMod() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -33,7 +33,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema: the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     NodeFunctionPtr deepCopy() override;
 
 private:

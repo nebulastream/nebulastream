@@ -20,7 +20,7 @@
 #include <Common/DataTypes/Undefined.hpp>
 namespace NES
 {
-NodeFunctionCase::NodeFunctionCase(DataTypePtr stamp) : NodeFunction(std::move(stamp), "Case")
+NodeFunctionCase::NodeFunctionCase(DataType stamp) : NodeFunction(std::move(stamp), "Case")
 {
 }
 
@@ -41,7 +41,7 @@ NodeFunctionPtr NodeFunctionCase::create(std::vector<NodeFunctionPtr> const& whe
     return caseNode;
 }
 
-void NodeFunctionCase::inferStamp(SchemaPtr schema)
+void NodeFunctionCase::inferStamp(Schema& schema)
 {
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();

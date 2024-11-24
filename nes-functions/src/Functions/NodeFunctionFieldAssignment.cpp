@@ -24,7 +24,7 @@
 
 namespace NES
 {
-NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataTypePtr stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
+NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(DataType stamp) : NodeFunctionBinary(std::move(stamp), "FieldAssignment") {};
 
 NodeFunctionFieldAssignment::NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other) : NodeFunctionBinary(other) {};
 
@@ -66,7 +66,7 @@ NodeFunctionPtr NodeFunctionFieldAssignment::getAssignment() const
     return getRight();
 }
 
-void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
+void NodeFunctionFieldAssignment::inferStamp(Schema& schema)
 {
     /// infer stamp of assignment function
     getAssignment()->inferStamp(schema);

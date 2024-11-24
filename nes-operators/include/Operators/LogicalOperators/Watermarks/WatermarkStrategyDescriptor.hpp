@@ -38,6 +38,6 @@ public:
 
     virtual std::string toString() = 0;
 
-    virtual bool inferStamp(SchemaPtr schema) = 0;
+    virtual bool inferStamp(Schema& schema) = 0;
 };
 }

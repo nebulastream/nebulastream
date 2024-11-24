@@ -19,12 +19,12 @@ namespace NES
 class NodeFunctionExp final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionExp(DataTypePtr stamp);
+    explicit NodeFunctionExp(DataType stamp);
     ~NodeFunctionExp() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     NodeFunctionPtr deepCopy() override;
 
 private:

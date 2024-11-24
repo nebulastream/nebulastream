@@ -44,7 +44,7 @@ WindowAggregationDescriptorPtr CountAggregationDescriptor::on()
     return std::make_shared<CountAggregationDescriptor>(CountAggregationDescriptor(NES::Util::as<NodeFunctionFieldAccess>(countField)));
 }
 
-void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
+void CountAggregationDescriptor::inferStamp(Schema& schema)
 {
     auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     auto asFieldName = NES::Util::as<NodeFunctionFieldAccess>(asField)->getFieldName();

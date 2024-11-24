@@ -20,7 +20,7 @@ namespace NES
 class NodeFunctionDiv final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionDiv(DataTypePtr stamp);
+    explicit NodeFunctionDiv(DataType stamp);
     ~NodeFunctionDiv() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;

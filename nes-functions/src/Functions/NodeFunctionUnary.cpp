@@ -18,7 +18,7 @@
 
 namespace NES
 {
-NodeFunctionUnary::NodeFunctionUnary(DataTypePtr stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
+NodeFunctionUnary::NodeFunctionUnary(DataType stamp, std::string name) : NodeFunction(std::move(stamp), std::move(name))
 {
 }
 

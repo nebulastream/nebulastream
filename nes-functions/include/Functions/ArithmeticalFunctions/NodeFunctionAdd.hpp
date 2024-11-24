@@ -22,7 +22,7 @@ namespace NES
 class NodeFunctionAdd final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionAdd(DataTypePtr stamp);
+    explicit NodeFunctionAdd(DataType stamp);
     ~NodeFunctionAdd() noexcept override = default;
     /**
      * @brief Create a new ADD function

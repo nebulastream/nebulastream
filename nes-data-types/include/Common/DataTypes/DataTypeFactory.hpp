@@ -197,28 +197,28 @@ public:
      * @param minLowerBound lowerBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound);
+    static DataTypePtr copyTypeAndIncreaseLowerBound(DataType stamp, double minLowerBound);
     /**
      * @brief If the given lowerBound is tighter than the one on the given stamp, create a new stamp with tighter lowerBound. If not, return original stamp.
      * @param stamp Datatype to copy
      * @param minLowerBound lowerBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound);
+    static DataTypePtr copyTypeAndIncreaseLowerBound(DataType stamp, int64_t minLowerBound);
     /**
      * @brief If the given upperBound is tighter than the one on the given stamp, create a new stamp with tighter upperBound. If not, return original stamp.
      * @param stamp Datatype to copy
      * @param maxUpperBound upperBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound);
+    static DataTypePtr copyTypeAndDecreaseUpperBound(DataType stamp, double maxUpperBound);
     /**
      * @brief If the given upperBound is tighter than the one on the given stamp, create a new stamp with tighter upperBound. If not, return original stamp.
      * @param stamp Datatype to copy
      * @param maxUpperBound upperBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound);
+    static DataTypePtr copyTypeAndDecreaseUpperBound(DataType stamp, int64_t maxUpperBound);
 
     /// functions to increase lower and decrease upper bound at the same time:
     /**
@@ -228,7 +228,7 @@ public:
      * @param maxUpperBound upperBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound);
+    static DataTypePtr copyTypeAndTightenBounds(DataType stamp, int64_t minLowerBound, int64_t maxUpperBound);
     /**
      * @brief If the given bounds are tighter than the one on the given stamp, create a new stamp with tighter bounds. If not, return original stamp.
      * @param stamp Datatype to copy
@@ -236,14 +236,14 @@ public:
      * @param maxUpperBound upperBound that can not be exceeded in the returned type
      * @return DataTypePtr
      */
-    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound);
+    static DataTypePtr copyTypeAndTightenBounds(DataType stamp, double minLowerBound, double maxUpperBound);
 
     /**
      * @brief Creates Integer stamp with bounds equivalent to passed FLoat stamp
      * @param Integer stamp Datatype to copy. If float is passed the same stamp is returned. Error at non-numeric stamp.
      * @return DataTypePtr
      */
-    static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
+    static DataTypePtr createFloatFromInteger(DataType stamp);
 };
 
 }

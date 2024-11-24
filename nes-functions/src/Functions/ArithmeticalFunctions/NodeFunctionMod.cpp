@@ -23,7 +23,7 @@
 namespace NES
 {
 
-NodeFunctionMod::NodeFunctionMod(DataTypePtr stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
+NodeFunctionMod::NodeFunctionMod(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mod") {};
 
 NodeFunctionMod::NodeFunctionMod(NodeFunctionMod* other) : NodeFunctionArithmeticalBinary(other)
 {
@@ -37,7 +37,7 @@ NodeFunctionPtr NodeFunctionMod::create(const NodeFunctionPtr& left, const NodeF
     return addNode;
 }
 
-void NodeFunctionMod::inferStamp(SchemaPtr schema)
+void NodeFunctionMod::inferStamp(Schema& schema)
 {
     NodeFunctionArithmeticalBinary::inferStamp(schema);
 

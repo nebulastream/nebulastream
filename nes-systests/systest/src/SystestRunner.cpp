@@ -90,7 +90,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& field : source.fields)
                     {
-                        schema.push_back({.name = field.name, .type = field.type});
+                        schema.push_back({.name = field.name, .type = SystestParser::getUnderlyingType(field.type)});
                     }
                     return schema;
                 }()});
@@ -114,7 +114,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     std::vector<CLI::SchemaField> schema;
                     for (const auto& field : source.fields)
                     {
-                        schema.push_back({.name = field.name, .type = field.type});
+                        schema.push_back({.name = field.name, .type = SystestParser::getUnderlyingType(field.type)});
                     }
                     return schema;
                 }()});

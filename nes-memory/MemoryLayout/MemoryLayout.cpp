@@ -14,15 +14,12 @@
 
 #include <cstring>
 #include <memory>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <MemoryLayout/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -61,17 +58,16 @@ const std::vector<uint64_t>& MemoryLayout::getFieldSizes() const
     return physicalFieldSizes;
 }
 
-MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0)
+MemoryLayout::MemoryLayout(uint64_t bufferSize, Schema schema) : bufferSize(bufferSize), schema(std::move(schema)), recordSize(0)
 {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); fieldIndex++)
+    for (size_t index = 0; const auto& [name, field] : this->schema)
     {
-        auto field = schema->fields[fieldIndex];
-        auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        physicalFieldSizes.emplace_back(physicalFieldSize->size());
-        physicalTypes.emplace_back(physicalFieldSize);
-        recordSize += physicalFieldSize->size();
-        nameFieldIndexMap[field->getName()] = fieldIndex;
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(field.type);
+        physicalFieldSizes.emplace_back(physicalType.size);
+        recordSize += physicalType.size;
+        nameFieldIndexMap[name] = index++;
+        physicalTypes.emplace_back(physicalType);
     }
     /// calculate the buffer capacity only if the record size is larger then zero
     capacity = recordSize > 0 ? bufferSize / recordSize : 0;
@@ -95,7 +91,7 @@ std::optional<uint64_t> MemoryLayout::getFieldOffset(uint64_t tupleIndex, std::s
         const auto fieldIndexValue = fieldIndex.value();
         return getFieldOffset(tupleIndex, fieldIndexValue);
     }
-    NES_ERROR("Field with name {} not found in schema {}", fieldName, schema->toString());
+    NES_ERROR("Field with name {} not found in schema {}", fieldName, schema);
     return {};
 }
 
@@ -104,7 +100,7 @@ uint64_t MemoryLayout::getCapacity() const
     return capacity;
 }
 
-const SchemaPtr& MemoryLayout::getSchema() const
+const Schema& MemoryLayout::getSchema() const
 {
     return schema;
 }
@@ -114,19 +110,8 @@ uint64_t MemoryLayout::getBufferSize() const
     return bufferSize;
 }
 
-const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
+const std::vector<PhysicalType>& MemoryLayout::getPhysicalTypes() const
 {
     return physicalTypes;
-}
-
-bool MemoryLayout::operator==(const MemoryLayout& rhs) const
-{
-    return bufferSize == rhs.bufferSize && schema->equals(rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
-        && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap;
-}
-
-bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
-{
-    return !(rhs == *this);
 }
 }

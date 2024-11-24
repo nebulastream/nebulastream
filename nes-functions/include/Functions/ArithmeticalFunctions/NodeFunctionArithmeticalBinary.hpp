@@ -29,14 +29,14 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
     bool validateBeforeLowering() const override;
 
 protected:
-    explicit NodeFunctionArithmeticalBinary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionArithmeticalBinary(DataType stamp, std::string name);
     explicit NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other);
     ~NodeFunctionArithmeticalBinary() noexcept override = default;
 };

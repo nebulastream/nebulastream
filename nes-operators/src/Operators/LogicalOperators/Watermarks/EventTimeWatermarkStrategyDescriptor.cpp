@@ -81,7 +81,7 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
     return ss.str();
 }
 
-bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
+bool EventTimeWatermarkStrategyDescriptor::inferStamp(Schema& schema)
 {
     auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();

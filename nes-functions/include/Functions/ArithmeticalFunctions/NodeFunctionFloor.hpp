@@ -19,12 +19,12 @@ namespace NES
 class NodeFunctionFloor final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionFloor(DataTypePtr stamp);
+    explicit NodeFunctionFloor(DataType stamp);
     ~NodeFunctionFloor() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     NodeFunctionPtr deepCopy() override;
 
 private:

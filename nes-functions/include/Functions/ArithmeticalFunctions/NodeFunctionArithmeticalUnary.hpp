@@ -27,13 +27,13 @@ public:
      * @param typeInferencePhaseContext
      * @param schema the current schema.
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     bool validateBeforeLowering() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
 protected:
-    explicit NodeFunctionArithmeticalUnary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionArithmeticalUnary(DataType stamp, std::string name);
     explicit NodeFunctionArithmeticalUnary(NodeFunctionArithmeticalUnary* other);
     ~NodeFunctionArithmeticalUnary() noexcept override = default;
 };

@@ -18,7 +18,7 @@
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <API/DataType.hpp>
 
 namespace NES
 {
@@ -34,7 +34,7 @@ using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 class NodeFunction : public Node
 {
 public:
-    explicit NodeFunction(DataTypePtr stamp, std::string type);
+    explicit NodeFunction(DataType stamp, std::string type);
 
     ~NodeFunction() override = default;
 
@@ -45,10 +45,10 @@ public:
     bool isPredicate() const;
 
     ///Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-    virtual void inferStamp(SchemaPtr schema);
+    virtual void inferStamp(Schema& schema);
 
-    DataTypePtr getStamp() const;
-    void setStamp(DataTypePtr stamp);
+    const DataType& getStamp() const;
+    void setStamp(DataType stamp);
     [[nodiscard]] const std::string& getType() const;
 
     /// Checks if the function is valid. This means that the function can be lowered to an executable function.
@@ -65,7 +65,7 @@ protected:
      * @brief declares the type of this function.
      * todo replace the direct usage of data types with a stamp abstraction.
      */
-    DataTypePtr stamp;
+    DataType stamp;
     const std::string type;
 };
 }

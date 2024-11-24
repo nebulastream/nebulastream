@@ -20,7 +20,7 @@ namespace NES
 class NodeFunctionMul final : public NodeFunctionArithmeticalBinary
 {
 public:
-    explicit NodeFunctionMul(DataTypePtr stamp);
+    explicit NodeFunctionMul(DataType stamp);
     ~NodeFunctionMul() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;

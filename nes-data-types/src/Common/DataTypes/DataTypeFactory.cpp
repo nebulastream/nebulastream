@@ -179,7 +179,7 @@ DataTypePtr DataTypeFactory::createType(BasicType type)
     }
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound)
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataType stamp, double minLowerBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
@@ -205,7 +205,7 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, do
     return stamp; /// increase does not apply -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound)
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataType stamp, int64_t minLowerBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
@@ -232,7 +232,7 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
     return stamp; /// increase does not apply -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataType stamp, double maxUpperBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
@@ -259,7 +259,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
     return stamp; /// decrease does not apply -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataType stamp, int64_t maxUpperBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
@@ -286,7 +286,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
     return stamp; /// decrease does not apply -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataType stamp, int64_t minLowerBound, int64_t maxUpperBound)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {
@@ -317,7 +317,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
     return stamp; /// neither bound needs to be modified -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound)
+DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataType stamp, double minLowerBound, double maxUpperBound)
 {
     if (NES::Util::instanceOf<Float>(stamp))
     {
@@ -349,7 +349,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
     return stamp; /// neither bound needs to be modified -> return shared pointer given as argument
 }
 
-DataTypePtr DataTypeFactory::createFloatFromInteger(DataTypePtr stamp)
+DataTypePtr DataTypeFactory::createFloatFromInteger(DataType stamp)
 {
     if (NES::Util::instanceOf<Integer>(stamp))
     {

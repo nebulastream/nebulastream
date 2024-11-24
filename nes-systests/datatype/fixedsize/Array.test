@@ -1,0 +1,12 @@
+# name: datatype/fixedsize/Array.test
+# description: Simple function testing Array Support
+# groups: [Function, FunctionDiv]
+
+Source points UINT8[3] array
+123,123,123
+
+# Check if the values are multiplied correctly with a constant
+SELECT *
+FROM points INTO SINK
+----
+123,123,123

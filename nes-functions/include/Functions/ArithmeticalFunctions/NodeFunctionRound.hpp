@@ -19,7 +19,7 @@ namespace NES
 class NodeFunctionRound final : public NodeFunctionArithmeticalUnary
 {
 public:
-    explicit NodeFunctionRound(DataTypePtr stamp);
+    explicit NodeFunctionRound(DataType stamp);
     ~NodeFunctionRound() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -30,7 +30,7 @@ public:
      * @param typeInferencePhaseContext
      * @param schema
      */
-    void inferStamp(SchemaPtr schema) override;
+    void inferStamp(Schema& schema) override;
     NodeFunctionPtr deepCopy() override;
 
 private:

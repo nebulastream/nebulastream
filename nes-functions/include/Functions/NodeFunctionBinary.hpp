@@ -40,7 +40,7 @@ public:
     NodeFunctionPtr getRight() const;
 
 protected:
-    explicit NodeFunctionBinary(DataTypePtr stamp, std::string name);
+    explicit NodeFunctionBinary(DataType stamp, std::string name);
     explicit NodeFunctionBinary(NodeFunctionBinary* other);
 };
 

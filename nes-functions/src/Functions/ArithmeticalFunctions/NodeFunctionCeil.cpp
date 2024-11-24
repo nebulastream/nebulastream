@@ -21,7 +21,7 @@
 namespace NES
 {
 
-NodeFunctionCeil::NodeFunctionCeil(DataTypePtr stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
+NodeFunctionCeil::NodeFunctionCeil(DataType stamp) : NodeFunctionArithmeticalUnary(std::move(stamp), "Ceil") {};
 
 NodeFunctionCeil::NodeFunctionCeil(NodeFunctionCeil* other) : NodeFunctionArithmeticalUnary(other)
 {
@@ -34,7 +34,7 @@ NodeFunctionPtr NodeFunctionCeil::create(NodeFunctionPtr const& child)
     return ceilNode;
 }
 
-void NodeFunctionCeil::inferStamp(SchemaPtr schema)
+void NodeFunctionCeil::inferStamp(Schema& schema)
 {
     /// infer stamp of the child, check if its numerical, assume the same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);
