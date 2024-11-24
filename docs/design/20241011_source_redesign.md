@@ -647,6 +647,7 @@ Also, it is not portable to other operating systems and requires Linux kernel 5.
 - [`boost::asio` docs](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html)
 - [Blocking vs. Non-blocking I/O](https://stackoverflow.com/questions/8546273/is-non-blocking-i-o-really-faster-than-multi-threaded-blocking-i-o-how)
 - [Coroutines](https://stackoverflow.com/questions/43503656/what-are-coroutines-in-c20)
+- [Coroutines under the hood](https://lewissbaker.github.io/)
 - [Definition async/sync/blocking/non-blocking](https://stackoverflow.com/questions/2625493/asynchronous-and-non-blocking-calls-also-between-blocking-and-synchronous)
 - [Per-operation cancellation in `boost::asio`](https://cppalliance.org/asio/2023/01/02/Asio201Timeouts.html)
 - [TUM paper on coroutines and async I/O in Umbra](https://db.in.tum.de/~fent/papers/coroutines.pdf?lang=de)
