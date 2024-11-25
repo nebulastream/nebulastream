@@ -310,25 +310,10 @@ add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
-add_subdirectory(nes-common)
-add_subdirectory(nes-data-types)
-add_subdirectory(nes-runtime)
-add_subdirectory(nes-sources)
-add_subdirectory(nes-sinks)
-add_subdirectory(nes-configurations)
-add_subdirectory(nes-operators)
-add_subdirectory(nes-client)
-add_subdirectory(nes-execution)
-add_subdirectory(nes-nautilus)
-add_subdirectory(nes-functions)
-add_subdirectory(nes-window-types)
-add_subdirectory(nes-memory)
-add_subdirectory(nes-single-node-worker)
-add_subdirectory(nes-nebuli)
-add_subdirectory(nes-sql-parser)
-add_subdirectory(nes-input-formatters)
-
-add_tests_if_enabled(nes-systests)
+file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+foreach(NES_DIR ${NES_DIRECTORIES})
+    add_subdirectory(${NES_DIR})
+endforeach()
 
 # Other configurations
 project_enable_format()
