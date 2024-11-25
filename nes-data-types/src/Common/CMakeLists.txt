@@ -11,5 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(DataTypes)
-add_subdirectory(ValueTypes)
 add_subdirectory(PhysicalTypes)

@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Functions/NodeFunction.hpp>
 namespace NES
 {

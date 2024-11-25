@@ -27,7 +27,6 @@
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/DataTypes/VariableSizedDataType.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES
 {

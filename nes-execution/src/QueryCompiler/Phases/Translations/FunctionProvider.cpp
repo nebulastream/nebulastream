@@ -29,7 +29,6 @@
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::QueryCompilation
 {

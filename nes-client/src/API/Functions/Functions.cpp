@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <utility>
 #include <vector>
 #include <API/Functions/ArithmeticalFunctions.hpp>
@@ -80,7 +81,7 @@ FunctionItem::FunctionItem(double value)
 }
 
 FunctionItem::FunctionItem(bool value)
-    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createBoolean(), std::to_string(value)))
+    : FunctionItem(NodeFunctionConstantValue::create(DataTypeFactory::createBoolean(), std::to_string(static_cast<int>(value))))
 {
 }
 

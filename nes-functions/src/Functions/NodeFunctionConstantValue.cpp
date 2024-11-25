@@ -11,10 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <memory>
+#include <string>
+#include <utility>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES
 {
@@ -40,7 +41,7 @@ bool NodeFunctionConstantValue::equal(NodePtr const& rhs) const
 
 std::string NodeFunctionConstantValue::toString() const
 {
-    return "ConstantValue(" + constantValue + ")";
+    return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
 NodeFunctionPtr NodeFunctionConstantValue::create(const DataTypePtr& type, std::string value)

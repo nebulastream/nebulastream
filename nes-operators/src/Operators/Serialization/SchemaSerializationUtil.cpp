@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES
 {
