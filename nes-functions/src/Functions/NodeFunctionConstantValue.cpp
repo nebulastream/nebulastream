@@ -36,7 +36,7 @@ bool NodeFunctionConstantValue::equal(NodePtr const& rhs) const
     if (Util::instanceOf<NodeFunctionConstantValue>(rhs))
     {
         auto otherConstantValueNode = Util::as<NodeFunctionConstantValue>(rhs);
-        return otherConstantValueNode->stamp->equals(stamp) && constantValue == otherConstantValueNode->constantValue;
+        return *otherConstantValueNode->stamp == *stamp && constantValue == otherConstantValueNode->constantValue;
     }
     return false;
 }

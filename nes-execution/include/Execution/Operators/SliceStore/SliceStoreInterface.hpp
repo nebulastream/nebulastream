@@ -12,4 +12,22 @@
     limitations under the License.
 */
 
-#pragma once
+#include <sstream>
+#include <fmt/format.h>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/ValueTypes/BasicValue.hpp>
+
+namespace NES
+{
+
+std::string BasicValue::toString() const noexcept
+{
+    return fmt::format("BasicValue({}, {})", value, dataType->toString());
+}
+
+bool BasicValue::isEquals(ValueTypePtr other) const noexcept
+{
+    return *dataType == *other->dataType && value == std::dynamic_pointer_cast<BasicValue>(other)->value;
+}
+
+}

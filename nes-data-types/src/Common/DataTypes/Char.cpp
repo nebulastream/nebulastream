@@ -21,9 +21,9 @@
 namespace NES
 {
 
-bool Char::equals(DataTypePtr otherDataType)
+bool Char::operator==(const NES::DataType& other) const
 {
-    return NES::Util::instanceOf<Char>(otherDataType);
+    return dynamic_cast<const Char*>(&other) != nullptr;
 }
 
 DataTypePtr Char::join(DataTypePtr otherDataType)

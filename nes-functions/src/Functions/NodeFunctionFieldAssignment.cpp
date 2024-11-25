@@ -102,6 +102,17 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
     }
+    else
+    {
+        /// the field already has a type, check if it is compatible with the assignment
+        if (*field->getStamp() != *getAssignment()->getStamp())
+        {
+            NES_WARNING(
+                "Field {} stamp is incompatible with assignment stamp. Overwriting field stamp with assignment stamp.",
+                field->getFieldName())
+            field->setStamp(getAssignment()->getStamp());
+        }
+    }
 }
 NodeFunctionPtr NodeFunctionFieldAssignment::deepCopy()
 {
