@@ -154,6 +154,8 @@ HJProbeVarSized::HJProbeVarSized(const uint64_t operatorHandlerIndex,
                                  const SchemaPtr& rightSchema,
                                  QueryCompilation::StreamJoinStrategy joinStrategy,
                                  QueryCompilation::WindowingStrategy windowingStrategy,
+                                 TimeFunctionPtr leftTimeFunctionPtr,
+                                 TimeFunctionPtr rightTimeFunctionPtr,
                                  bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
@@ -161,6 +163,8 @@ HJProbeVarSized::HJProbeVarSized(const uint64_t operatorHandlerIndex,
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,
+                      std::move(leftTimeFunctionPtr),
+                      std::move(rightTimeFunctionPtr),
                       withDeletion),
       leftSchema(leftSchema), rightSchema(rightSchema) {}
 

@@ -13,6 +13,7 @@
 */
 
 #include <API/TestSchemas.hpp>
+#include <API/TimeUnit.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -409,8 +410,8 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         EXPECT_EQ(nljOperatorHandler->getNumberOfSlices(), recreatedOperatorHandler->getNumberOfSlices());
 
         // go over slices and compare them
-        auto maxSliceId = std::ceil((double) maxTimestamp / windowSize) * windowSize;
-        for (auto sliceIdentifier = 1000; sliceIdentifier <= maxSliceId; sliceIdentifier += windowSize) {
+        auto maxSliceId = std::ceil((double) maxTimestamp / windowSize);
+        for (uint64_t sliceIdentifier = 1; sliceIdentifier <= maxSliceId; sliceIdentifier += 1) {
             NES_DEBUG("Check slice={}", sliceIdentifier);
             NES_DEBUG("Checking number of left tuples in expected and recreated operator handler");
             EXPECT_EQ(

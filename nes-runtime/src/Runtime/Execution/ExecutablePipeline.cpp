@@ -16,6 +16,7 @@
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/OperatorHandlerSlices.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -311,6 +312,32 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         }
         default: {
             break;
+        }
+    }
+}
+
+void ExecutablePipeline::stopQueryFromSharedJoin(QueryId queryId) {
+    NES_INFO("stopping query from shared join with id {}", queryId.getRawValue())
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        if (operatorHandler->instanceOf<OperatorHandlerSlices>()) {
+            auto opHandler = operatorHandler->as<OperatorHandlerSlices>();
+            opHandler->removeQueryFromSharedJoin(queryId);
+            NES_INFO("An op handler of type OperatorHandlerSlices (SJOH)")
+        } else {
+            NES_INFO("An op handler of a different type than OperatorHandlerSlices (SJOH)")
+        }
+    }
+}
+
+void ExecutablePipeline::addQueryToSharedJoin(NES::QueryId queryId, uint64_t deploymentTime) {
+    NES_INFO("stopping query from shared join with id {}", queryId.getRawValue())
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        if (operatorHandler->instanceOf<OperatorHandlerSlices>()) {
+            auto opHandler = operatorHandler->as<OperatorHandlerSlices>();
+            opHandler->addQueryToSharedJoinApproachOneProbing(queryId, deploymentTime);
+            NES_INFO("An op handler of type OperatorHandlerSlices (SJOH)")
+        } else {
+            NES_INFO("An op handler of a different type than OperatorHandlerSlices (SJOH)")
         }
     }
 }

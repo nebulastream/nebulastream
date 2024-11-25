@@ -19,6 +19,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators {
@@ -52,7 +53,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
                                       const std::string& windowEndFieldName,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
-                                      QueryCompilation::WindowingStrategy windowingStrategy);
+                                      QueryCompilation::WindowingStrategy windowingStrategy,
+                                      const TimestampField timestampFieldLeft,
+                                      const TimestampField timestampFieldRight);
 
     /**
      * @brief Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
@@ -74,7 +77,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
                                       const std::string& windowEndFieldName,
                                       const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                       QueryCompilation::StreamJoinStrategy joinStrategy,
-                                      QueryCompilation::WindowingStrategy windowingStrategy);
+                                      QueryCompilation::WindowingStrategy windowingStrategy,
+                                      const TimestampField timestampFieldLeft,
+                                      const TimestampField timestampFieldRight);
 
     /**
      * @brief Constructor for a PhysicalStreamJoinProbeOperator
@@ -95,7 +100,9 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
                                     const std::string& windowEndFieldName,
                                     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                     QueryCompilation::StreamJoinStrategy joinStrategy,
-                                    QueryCompilation::WindowingStrategy windowingStrategy);
+                                    QueryCompilation::WindowingStrategy windowingStrategy,
+                                    const TimestampField timestampFieldLeft,
+                                    const TimestampField timestampFieldRight);
 
     /**
      * @brief Creates a string containing the name of this physical operator
@@ -127,9 +134,15 @@ class PhysicalStreamJoinProbeOperator : public PhysicalStreamJoinOperator,
      */
     ExpressionNodePtr getJoinExpression() const;
 
+    TimestampField getTimestampFieldLeft() const;
+
+    TimestampField getTimestampFieldRight() const;
+
   protected:
     ExpressionNodePtr joinExpression;
     const Runtime::Execution::Operators::WindowMetaData windowMetaData;
+    const TimestampField timestampFieldLeft;
+    const TimestampField timestampFieldRight;
 };
 }// namespace NES::QueryCompilation::PhysicalOperators
 #endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINPROBEOPERATOR_HPP_

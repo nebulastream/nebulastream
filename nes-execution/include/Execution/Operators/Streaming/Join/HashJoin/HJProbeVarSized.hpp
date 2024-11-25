@@ -45,6 +45,8 @@ class HJProbeVarSized : public StreamJoinProbe {
                     const SchemaPtr& rightSchema,
                     QueryCompilation::StreamJoinStrategy joinStrategy,
                     QueryCompilation::WindowingStrategy windowingStrategy,
+                    TimeFunctionPtr leftTimeFunctionPtr,
+                    TimeFunctionPtr rightTimeFunctionPtr,
                     bool withDeletion = true);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

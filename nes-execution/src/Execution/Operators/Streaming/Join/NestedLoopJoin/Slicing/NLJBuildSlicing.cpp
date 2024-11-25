@@ -15,10 +15,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -26,18 +24,6 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
-    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
-    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    return nljSlice->getSliceStart();
-}
-
-uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
-    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
-    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    return nljSlice->getSliceEnd();
-}
 
 void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");

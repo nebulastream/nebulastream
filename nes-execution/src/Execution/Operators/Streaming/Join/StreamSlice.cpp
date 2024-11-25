@@ -16,17 +16,24 @@
 #include <sstream>
 
 namespace NES::Runtime::Execution {
-uint64_t StreamSlice::getSliceIdentifier() const { return getSliceIdentifier(getSliceStart(), getSliceEnd()); }
-
-uint64_t StreamSlice::getSliceIdentifier(uint64_t, uint64_t sliceEnd) { return sliceEnd; }
+uint64_t StreamSlice::getSliceIdentifier() const { return sliceId; }
 
 uint64_t StreamSlice::getSliceStart() const { return sliceStart; }
 
 uint64_t StreamSlice::getSliceEnd() const { return sliceEnd; }
 
+void StreamSlice::setSliceStart(uint64_t newSliceStart) { sliceStart = newSliceStart; }
+
 void StreamSlice::setSliceEnd(uint64_t newSliceEnd) { sliceEnd = newSliceEnd; }
 
-StreamSlice::StreamSlice(uint64_t sliceStart, uint64_t sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd) {}
+void StreamSlice::setImmutable() { sliceMutable = false; }
+
+bool StreamSlice::isMutable() { return sliceMutable; }
+
+uint64_t StreamSlice::getSliceId() { return sliceId; }
+
+StreamSlice::StreamSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId)
+    : sliceStart(sliceStart), sliceEnd(sliceEnd), sliceId(sliceId) {}
 
 bool StreamSlice::operator==(const StreamSlice& rhs) const { return (sliceStart == rhs.sliceStart && sliceEnd == rhs.sliceEnd); }
 
@@ -37,7 +44,7 @@ std::vector<Runtime::TupleBuffer> StreamSlice::serialize(std::shared_ptr<BufferM
 
 std::string StreamSlice::toString() {
     std::ostringstream basicOstringstream;
-    basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
+    basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << " sliceId: " << sliceId << ")";
     return basicOstringstream.str();
 }
 }// namespace NES::Runtime::Execution

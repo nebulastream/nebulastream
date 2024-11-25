@@ -40,6 +40,8 @@ class NLJProbe : public StreamJoinProbe {
              const SchemaPtr& rightSchema,
              QueryCompilation::StreamJoinStrategy joinStrategy,
              QueryCompilation::WindowingStrategy windowingStrategy,
+             TimeFunctionPtr leftTimeFunctionPtr,
+             TimeFunctionPtr rightTimeFunctionPtr,
              bool withDeletion = true);
 
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;

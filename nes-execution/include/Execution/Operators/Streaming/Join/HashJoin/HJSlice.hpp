@@ -48,6 +48,7 @@ class HJSlice : public StreamSlice {
     explicit HJSlice(size_t numberOfWorkerThreads,
                      uint64_t sliceStart,
                      uint64_t sliceEnd,
+                     uint64_t sliceId,
                      size_t sizeOfRecordLeft,
                      size_t sizeOfRecordRight,
                      size_t maxHashTableSize,

@@ -171,12 +171,17 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(joinFieldNameRight);
         auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
-        auto joinProbe = std::make_shared<Operators::HJProbe>(handlerIndex,
-                                                              joinSchemaStruct,
-                                                              keyExpressions,
-                                                              windowMetaData,
-                                                              QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                              QueryCompilation::WindowingStrategy::SLICING);
+        auto joinProbe = std::make_shared<Operators::HJProbe>(
+            handlerIndex,
+            joinSchemaStruct,
+            keyExpressions,
+            windowMetaData,
+            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
+            QueryCompilation::WindowingStrategy::SLICING,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()));
 
         // Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};

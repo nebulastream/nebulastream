@@ -47,6 +47,7 @@ class TimeFunction {
   public:
     virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
     virtual Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
+    virtual Value<UInt64> getTsWithoutContext(Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
 
@@ -58,6 +59,7 @@ class EventTimeFunction final : public TimeFunction {
     explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
     Value<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) override;
+    Value<UInt64> getTsWithoutContext(Record& record) override;
 
   private:
     Windowing::TimeUnit unit;
@@ -71,6 +73,14 @@ class IngestionTimeFunction final : public TimeFunction {
   public:
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
     Nautilus::Value<UInt64> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
+    /**
+     *  We might need something like this if the operator handler or probe is checking the ts to know if a tuple belongs to a slice.
+     *  It was added to the slice, but slice definitions might have changed afterwards. With ingestion time we never save this time
+     *  for a record so we have no way of change the slice for individual records. (or checking correctness in probe) #5138
+     * @param record to get the timestamp for
+     * @return timestamp in milliseconds
+     */
+    Value<UInt64> getTsWithoutContext(Record& record) override;
 };
 
 }// namespace NES::Runtime::Execution::Operators

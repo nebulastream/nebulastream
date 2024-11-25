@@ -69,6 +69,7 @@ void HJSlice::mergeLocalToGlobalHashTable() {
 HJSlice::HJSlice(size_t numberOfWorker,
                  uint64_t sliceStart,
                  uint64_t sliceEnd,
+                 uint64_t sliceId,
                  size_t sizeOfRecordLeft,
                  size_t sizeOfRecordRight,
                  size_t maxHashTableSize,
@@ -76,7 +77,7 @@ HJSlice::HJSlice(size_t numberOfWorker,
                  size_t preAllocPageSizeCnt,
                  size_t numPartitions,
                  QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamSlice(sliceStart, sliceEnd), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
+    : StreamSlice(sliceStart, sliceEnd, sliceId), mergingHashTableLeftSide(Operators::MergingHashTable(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTable(numPartitions)), fixedPagesAllocator(maxHashTableSize),
       alreadyMergedLocalToGlobalHashTable(false), joinStrategy(joinStrategy) {
 

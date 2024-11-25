@@ -34,7 +34,7 @@ class StreamSlice : public StreamSliceInterface {
      * @param sliceStart: Start timestamp of this slice
      * @param sliceEnd: End timestamp of this slice
      */
-    explicit StreamSlice(uint64_t sliceStart, uint64_t sliceEnd);
+    explicit StreamSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId);
 
     /**
      * @brief Compares if two slices are equal
@@ -81,14 +81,6 @@ class StreamSlice : public StreamSliceInterface {
     uint64_t getSliceIdentifier() const;
 
     /**
-     * @brief Static method for getting the identifier from sliceStart and SliceEnd
-     * @param sliceStart
-     * @param sliceEnd
-     * @return uint64_t
-     */
-    static uint64_t getSliceIdentifier(uint64_t sliceStart, uint64_t sliceEnd);
-
-    /**
      * @brief Gets stored state as vector of tuple buffers
      * @param std::shared_ptr<BufferManager>&
      * @return list of pages that store records and metadata
@@ -106,11 +98,22 @@ class StreamSlice : public StreamSliceInterface {
      */
     virtual ~StreamSlice() = default;
 
+    void setSliceStart(uint64_t newSliceStart);
+
     void setSliceEnd(uint64_t newSliceEnd);
+
+    void setImmutable();
+
+    bool isMutable();
+
+    uint64_t getSliceId();
 
   protected:
     uint64_t sliceStart;
     uint64_t sliceEnd;
+    uint64_t sliceId;
+
+    bool sliceMutable = true;
 };
 }// namespace NES::Runtime::Execution
 

@@ -39,11 +39,11 @@ std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFi
     workerVec.clear();
     for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide) {
         WindowInfo windowInfo(start, start + windowSize);
-        auto window = getSliceBySliceIdentifier(slicesWriteLocked, windowInfo.windowId);
+        auto window = getSliceByStartEnd(slicesWriteLocked, windowInfo.windowStart, windowInfo.windowEnd);
         if (window.has_value()) {
             workerVec.emplace_back(window.value().get());
         } else {
-            auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd);
+            auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd, getNextSliceId());
             (*windowToSlicesLocked)[windowInfo].slices.emplace_back(newWindow);
             (*windowToSlicesLocked)[windowInfo].windowState = WindowInfoState::BOTH_SIDES_FILLING;
             slicesWriteLocked->emplace_back(newWindow);

@@ -382,8 +382,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                 auto queriesAndDeploymentTimes = joinOperatorHandler->getQueriesAndDeploymentTimes();
                 for (auto queryAndTime : streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getDeploymentTimes()) {
                     if (!queriesAndDeploymentTimes.contains(queryAndTime.first)) {
-                        joinOperatorHandler->addQueryToSharedJoin(queryAndTime.first, queryAndTime.second);
-                        //dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())->updateSlicesNewDefinition(queryAndTime.second);
+                        dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())
+                            ->addQueryToSharedJoinApproachOneProbing(queryAndTime.first, queryAndTime.second);
                     }
                 }
                 joinOperatorHandler->setThisForReuse(
@@ -432,7 +432,9 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                    joinOperator->getWindowEndFieldName(),
                                                                    joinOperatorHandler,
                                                                    options->getStreamJoinStrategy(),
-                                                                   options->getWindowingStrategy());
+                                                                   options->getWindowingStrategy(),
+                                                                   timeStampFieldLeft,
+                                                                   timeStampFieldRight);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);

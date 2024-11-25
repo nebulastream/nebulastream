@@ -344,39 +344,45 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
         switch (probeOperator->getJoinStrategy()) {
             case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(handlerIndex,
-                                                                                     probeOperator->getJoinSchema(),
-                                                                                     joinExpression,
-                                                                                     probeOperator->getWindowMetaData(),
-                                                                                     probeOperator->getLeftInputSchema(),
-                                                                                     probeOperator->getRightInputSchema(),
-                                                                                     probeOperator->getJoinStrategy(),
-                                                                                     probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    probeOperator->getLeftInputSchema(),
+                    probeOperator->getRightInputSchema(),
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
             case StreamJoinStrategy::HASH_JOIN_LOCAL:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
-                                                                             probeOperator->getJoinSchema(),
-                                                                             joinExpression,
-                                                                             probeOperator->getWindowMetaData(),
-                                                                             probeOperator->getJoinStrategy(),
-                                                                             probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbe>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
             case StreamJoinStrategy::NESTED_LOOP_JOIN:
                 const auto leftSchema = probeOperator->getLeftInputSchema();
                 const auto rightSchema = probeOperator->getRightInputSchema();
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
-                                                                              probeOperator->getJoinSchema(),
-                                                                              joinExpression,
-                                                                              probeOperator->getWindowMetaData(),
-                                                                              leftSchema,
-                                                                              rightSchema,
-                                                                              probeOperator->getJoinStrategy(),
-                                                                              probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    leftSchema,
+                    rightSchema,
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
         }
         pipeline.setRootOperator(joinProbeNautilus);

@@ -35,6 +35,14 @@ using WLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::WLockedPtr
 using RLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::RLockedPtr;
 
 /**
+ * This class (and others) will temporarily contain code that handles sharing with different approaches to test for a
+ * master thesis. Task #5113 describes different approaches. While under testing I will try to keep the code clean by naming methods
+ * according to their approach and storing the helper enum class to know which approach is being tested. However some parts will
+ * need to be commented out and adjusted to test each approach individually
+ */
+enum class SharedJoinApproach : uint8_t { UNSHARED, APPROACH_ONE_PROBING, APPROACH_TWO_DELETING, APPROACH_THREE_TOMBSTONE };
+
+/**
  * @brief This operator is the general join operator handler and implements the JoinOperatorHandlerInterface. It is expected that
  * all StreamJoinOperatorHandlers inherit from this
  */
@@ -47,8 +55,10 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param outputOriginId
      * @param windowSize
      * @param windowSlide
-     * @param sizeOfRecordLeft
-     * @param sizeOfRecordRight
+     * @param leftSchema
+     * @param rightSchema
+     * @param deploymentTimes In case this join is not shared deployment times should only contain one (possibly dummy)
+     * QueryId with a deployment time of 0. Otherwise, all QueryIds with their deploymentTimes.
      */
     StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                               const OriginId outputOriginId,
@@ -126,8 +136,18 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @return Optional
      */
     std::optional<StreamSlicePtr> getSliceBySliceIdentifier(uint64_t sliceIdentifier);
-    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const RLockedSlices& slicesLocked, uint64_t sliceIdentifier);
-    std::optional<StreamSlicePtr> getSliceBySliceIdentifier(const WLockedSlices& slicesLocked, uint64_t sliceIdentifier);
+
+    /**
+     * @brief Retrieves the slice/window by its start and end time. Slices become un-writable to if they were emitted to probe
+     * (happens in a shared join where one query stops) in this case such a slice is not returned.
+     * If no slice that is writable exists for these times, the optional return value is of nullopt.
+     * If we want to use a slice that is un-writable we need to get it by the identifier method.
+     * @param slicesLocked all slices passed with a write lock
+     * @param sliceStart the start time of the slice
+     * @param sliceEnd the end time of the slice
+     * @return Optional
+     */
+    std::optional<StreamSlicePtr> getSliceByStartEnd(const WLockedSlices& slicesLocked, uint64_t sliceStart, uint64_t sliceEnd);
 
     /**
      * @brief Triggers all slices/windows that have not been already emitted to the probe
@@ -142,6 +162,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     /**
      * @brief Triggers windows that are ready. This method updates the watermarkProcessor and should be thread-safe
      * @param bufferMetaData
+     * @param pipelineCtx
      */
     void checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx);
 
@@ -173,12 +194,13 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     uint64_t getNumberOfTuplesInSlice(uint64_t sliceIdentifier, QueryCompilation::JoinBuildSideType buildSide);
 
     /**
-     * @brief Creates a new slice/window for the given start and end
-     * @param sliceStart
-     * @param sliceEnd
+     * @brief Creates a new slice/window for the given start, end and id
+     * @param sliceStart the start time of this slice (inclusive)
+     * @param sliceEnd the end time of this slice (exclusive)
+     * @param sliceId the slice id (unique identifier that increments by one for each slice)
      * @return StreamSlicePtr
      */
-    virtual StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) = 0;
+    virtual StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId) = 0;
 
     /**
      * @brief Emits the left and right slice to the probe
@@ -238,23 +260,10 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void setBufferManager(const BufferManagerPtr& bufManager);
 
     /**
-     * adds a query id and the time it was deployed to this handler.
-     * @note This updates slices start and end times, however it does not
-     * change tuples inside slices. As this is also necessary the corresponding method in StreamOpHandlerSlicing needs to be called
-     * afterwards
-     * @param queryId
-     * @param deploymentTime
+     * In case this joinOperatorHandler is shared by multiple queries, each query will be stored with its QueryId and
+     * the time that it was deployed
+     * @return QueryIds with their corresponding deployment time
      */
-    void addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime);
-
-    /**
-     * removes a query deployment time from this handler.
-     * @note slices do not get updated (to span bigger times). Shifting tuples to different slices might be expensive and all
-     * windows can still be calculated with smaller than necessary slices.
-     * @param queryId
-     */
-    void removeQueryFromSharedJoin(QueryId queryId);
-
     std::map<QueryId, uint64_t> getQueriesAndDeploymentTimes();
 
     /**
@@ -262,6 +271,24 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * @param reuse true if we want to reuse this opHandler, false otherwise
      */
     void setThisForReuse(bool reuse) { setForReuse = reuse; }
+
+    /**
+     * the operator handler keeps the highest slice id. Each time a new slice is created this method needs to be called to assign
+     * the new id to the slice. This method increments the highest slice id by one and returns it
+     * @return the next valid slice id
+     */
+    [[nodiscard]] uint64_t getNextSliceId();
+
+    /**
+     * Set this to have a helper that will chose code functionality written for #5113
+     * @param approach specifies which approach to use
+     */
+    void setApproach(SharedJoinApproach approach);
+    /**
+     * get helper that will chose code written for #5113
+     * @return the approach that was set
+     */
+    SharedJoinApproach getApproach();
 
   private:
     /**
@@ -294,8 +321,25 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
         deploymentTimes;//just one entry with "queryId and time" == 0  iff this streamJoinOperatorHandler is not shared among multiple queries. Otherwise, we store the time each query is deployed, so their windows will start from the time they are deployed.
     SliceAssigner sliceAssigner;
 
+    uint64_t currentSliceId = 0;
     bool setForReuse = false;
+    SharedJoinApproach approach = SharedJoinApproach::UNSHARED;
 };
+
+/**
+ * gets the start time of a slice. Useful for nautilus function calls
+ * @param ptrNljSlice pointer to a slice
+ * @return start time of the slice
+ */
+uint64_t getNLJSliceStartProxy(void* ptrNljSlice);
+
+/**
+ * gets the end time of a slice. Useful for nautilus function calls
+ * @param ptrNljSlice pointer to a slice
+ * @return end time of the slice
+ */
+uint64_t getNLJSliceEndProxy(void* ptrNljSlice);
+
 }// namespace NES::Runtime::Execution::Operators
 
 #endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

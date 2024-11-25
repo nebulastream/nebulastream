@@ -46,10 +46,13 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+        NES_INFO("Emitted leftSliceId {} (end {}) rightSliceId {} (end {}) with watermarkTs {} sequenceNumber {} originId {} for "
+                 "no. left tuples "
                  "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
+                 sliceLeft.getSliceEnd(),
                  bufferMemory->rightSliceIdentifier,
+                 sliceRight.getSliceEnd(),
                  tupleBuffer.getWatermark(),
                  tupleBuffer.getSequenceNumber(),
                  tupleBuffer.getOriginId(),
@@ -58,9 +61,10 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
     }
 }
 
-StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
+StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId) {
     return std::make_shared<NLJSlice>(sliceStart,
                                       sliceEnd,
+                                      sliceId,
                                       numberOfWorkerThreads,
                                       bufferManager,
                                       leftSchema,

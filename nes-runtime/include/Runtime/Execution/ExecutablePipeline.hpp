@@ -157,6 +157,23 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
     /**
+     * Stops the specified query from a shared StreamJoinOperatorHandler. The slices that already exist will be used to emit the
+     * tuples that were already ingested for this query
+     * @note only works if this ExecutablePipeline contains one StreamJoinOperatorHandler
+     * @param queryId the id of the query
+     */
+    void stopQueryFromSharedJoin(QueryId queryId);
+
+    /**
+     * Adds a query to a StreamJoinOperatorHandler. This will affect all slices that are currently stored and that will be created
+     * in the handler.
+     * @note only works if this ExecutablePipeline contains one StreamJoinOperatorHandler
+     * @param queryId the identifier to remove this from the then shared StreamJoinOperatorHandler
+     * @param deploymentTime the time this query was deployed (should be deduced by the system in a later point)
+     */
+    void addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime);
+
+    /**
      * @brief Get query plan id.
      * @return QueryId.
      */
