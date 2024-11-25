@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iomanip>
 #include <numeric>
@@ -86,10 +87,28 @@ bool startsWith(const std::string& fullString, const std::string& ending)
     return (fullString.rfind(ending, 0) == 0);
 }
 
-std::string toUpperCase(std::string string)
+void toLowerCaseInPlace(std::string& string)
 {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-    return string;
+    std::ranges::transform(string, string.begin(), ::tolower);
+}
+
+void toUpperCaseInPlace(std::string& string)
+{
+    std::ranges::transform(string, string.begin(), ::toupper);
+}
+
+std::string toLowerCase(const std::string_view string)
+{
+    auto stringCopy = std::string(string);
+    toLowerCaseInPlace(stringCopy);
+    return stringCopy;
+}
+
+std::string toUpperCase(const std::string_view string)
+{
+    auto stringCopy = std::string(string);
+    toUpperCaseInPlace(stringCopy);
+    return stringCopy;
 }
 
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header)

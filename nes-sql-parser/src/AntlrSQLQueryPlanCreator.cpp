@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <cctype>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -479,6 +479,10 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         queryPlan = QueryPlanBuilder::addProjection(helper.getProjectionFields(), queryPlan);
     }
+    if (not helper.windowAggs.empty())
+    {
+        queryPlan = QueryPlanBuilder::addWindowAggregation(queryPlan, helper.windowType, helper.windowAggs, helper.groupByFields);
+    }
 
     if (helper.windowType != nullptr)
     {
@@ -512,7 +516,6 @@ void AntlrSQLQueryPlanCreator::exitWindowClause(AntlrSQLParser::WindowClauseCont
     AntlrSQLHelper helper = helpers.top();
     helper.isWindow = false;
     poppush(helper);
-
     AntlrSQLBaseListener::exitWindowClause(context);
 }
 
@@ -881,11 +884,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
 void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLHelper helper = helpers.top();
-    auto funcName = context->children[0]->getText();
-    for (char& c : funcName)
-    {
-        c = std::tolower(static_cast<unsigned char>(c));
-    }
+    const auto funcName = Util::toLowerCase(context->children[0]->getText());
     if (funcName == "count")
     {
         helper.windowAggs.push_back(API::Count()->aggregation);
