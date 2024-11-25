@@ -42,6 +42,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Util/Core.hpp>
 #include <Util/Execution.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation

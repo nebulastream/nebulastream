@@ -13,6 +13,7 @@
 */
 
 #include <functional>
+#include <ostream>
 #include <Functions/NodeFunction.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>

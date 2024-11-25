@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <queue>
 #include <utility>
 #include <Nodes/Node.hpp>
