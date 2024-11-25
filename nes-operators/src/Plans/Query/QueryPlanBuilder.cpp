@@ -15,12 +15,15 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
@@ -35,19 +38,21 @@
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
-
 QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string logicalSourceName)
 {
     NES_TRACE("QueryPlanBuilder: create query plan for input source  {}", logicalSourceName);
@@ -103,6 +108,49 @@ QueryPlanPtr QueryPlanBuilder::addMap(NodeFunctionFieldAssignmentPtr const& mapF
     }
     OperatorPtr const op = std::make_shared<LogicalMapOperator>(mapFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+QueryPlanPtr QueryPlanBuilder::addWindowAggregation(
+    QueryPlanPtr queryPlan,
+    const std::shared_ptr<Windowing::WindowType>& windowType,
+    const std::vector<Windowing::WindowAggregationDescriptorPtr>& windowAggs,
+    const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys)
+{
+    PRECONDITION(not queryPlan->getRootOperators().empty(), "invalid query plan, as the root operator is empty");
+
+    if (const auto timeBasedWindowType = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType))
+    {
+        /// check if query contain watermark assigner, and add if missing (as default behaviour)
+        if (not NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(queryPlan->getRootOperators()[0]))
+            NES_DEBUG("add default watermark strategy as non is provided");
+
+        switch (timeBasedWindowType->getTimeCharacteristic()->getType())
+        {
+            case Windowing::TimeCharacteristic::Type::IngestionTime:
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
+                break;
+            case Windowing::TimeCharacteristic::Type::EventTime:
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                        NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                    getNextOperatorId()));
+                break;
+        }
+    }
+    else
+    {
+        throw NotImplemented("Only TimeBasedWindowType is supported for now");
+    }
+
+
+    auto inputSchema = queryPlan->getRootOperators()[0]->getOutputSchema();
+    const auto windowDefinition = Windowing::LogicalWindowDescriptor::create(onKeys, windowAggs, windowType);
+    const auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDefinition, getNextOperatorId());
+
+    queryPlan->appendOperatorAsNewRoot(windowOperator);
     return queryPlan;
 }
 
@@ -229,7 +277,6 @@ QueryPlanPtr QueryPlanBuilder::checkAndAddWatermarkAssignment(QueryPlanPtr query
                 queryPlan,
                 Windowing::EventTimeWatermarkStrategyDescriptor::create(
                     NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
-                    Windowing::TimeMeasure(0),
                     timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()));
         }
     }

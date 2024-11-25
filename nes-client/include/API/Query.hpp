@@ -471,17 +471,9 @@ private:
      */
     Query& window(Windowing::WindowTypePtr const& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
-    /**
-      * @brief: Creates a keyed window aggregation.
-      * @param joinFunctions keys.
-      * @param windowType Window definition.
-      * @param aggregations Window aggregation functions.
-      * @return query.
-      */
+
     Query& windowByKey(
-        std::vector<NodeFunctionPtr> joinFunctions,
-        Windowing::WindowTypePtr const& windowType,
-        std::vector<API::WindowAggregationPtr> aggregations);
+        std::vector<NodeFunctionPtr> keys, const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
       * @brief: Given a Function is identifies which JoinType has to be used for processing, i.e., Equi-Join enables

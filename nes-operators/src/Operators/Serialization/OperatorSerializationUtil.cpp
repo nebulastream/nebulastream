@@ -273,7 +273,6 @@ deserializeWatermarkStrategyDescriptor(const SerializableOperator_WatermarkStrat
         NES_DEBUG("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
         auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
             NodeFunctionFieldAccess::create(onField->getFieldName()),
-            Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),
             Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
         return eventTimeWatermarkStrategyDescriptor;
     }
@@ -415,14 +414,13 @@ LogicalUnaryOperatorPtr deserializeWindowOperator(const SerializableOperator_Win
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
-    auto allowedLateness = windowDetails.allowedlateness();
     std::vector<NodeFunctionFieldAccessPtr> keyAccessFunction;
     for (auto& key : windowDetails.keys())
     {
         keyAccessFunction.emplace_back(Util::as<NodeFunctionFieldAccess>(FunctionSerializationUtil::deserializeFunction(key)));
     }
-    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window, allowedLateness);
-    windowDef->setOriginId(OriginId(windowDetails.origin()));
+    auto windowDef = Windowing::LogicalWindowDescriptor::create(keyAccessFunction, aggregation, window);
+    windowDef->setOriginId(OriginId(windowDetails.originid()));
     return std::make_shared<LogicalWindowOperator>(windowDef, operatorId);
 }
 
@@ -761,8 +759,7 @@ void OperatorSerializationUtil::serializeWindowOperator(const WindowOperator& wi
             FunctionSerializationUtil::serializeFunction(key, function);
         }
     }
-    windowDetails.set_origin(windowOperator.getOriginId().getRawValue());
-    windowDetails.set_allowedlateness(windowDefinition->getAllowedLateness());
+    windowDetails.set_originid(windowOperator.getOriginId().getRawValue());
     auto windowType = windowDefinition->getWindowType();
 
     if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
@@ -1139,7 +1136,6 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
             = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
         FunctionSerializationUtil::serializeFunction(
             eventTimeWatermarkStrategyDescriptor.getOnField(), serializedWatermarkStrategyDescriptor.mutable_onfield());
-        serializedWatermarkStrategyDescriptor.set_allowedlateness(eventTimeWatermarkStrategyDescriptor.getAllowedLateness().getTime());
         serializedWatermarkStrategyDescriptor.set_multiplier(
             eventTimeWatermarkStrategyDescriptor.getTimeUnit().getMillisecondsConversionMultiplier());
         watermarkStrategyDetails.mutable_strategy()->PackFrom(serializedWatermarkStrategyDescriptor);
@@ -1154,6 +1150,40 @@ void OperatorSerializationUtil::serializeWatermarkStrategyDescriptor(
     {
         NES_ERROR("OperatorSerializationUtil: Unknown Watermark Strategy Descriptor Type");
         throw std::invalid_argument("Unknown Watermark Strategy Descriptor Type");
+    }
+}
+
+Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserializeWatermarkStrategyDescriptor(
+    const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails)
+{
+    NES_TRACE("OperatorSerializationUtil:: de-serialize watermark strategy ");
+    const auto& deserializedWatermarkStrategyDescriptor = watermarkStrategyDetails.strategy();
+    if (deserializedWatermarkStrategyDescriptor
+            .Is<SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor>())
+    {
+        /// de-serialize print sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized WatermarkStrategy as EventTimeWatermarkStrategyDescriptor");
+        auto serializedEventTimeWatermarkStrategyDescriptor
+            = SerializableOperator_WatermarkStrategyDetails_SerializableEventTimeWatermarkStrategyDescriptor();
+        deserializedWatermarkStrategyDescriptor.UnpackTo(&serializedEventTimeWatermarkStrategyDescriptor);
+
+        const auto onField = Util::as<NodeFunctionFieldAccess>(
+            FunctionSerializationUtil::deserializeFunction(serializedEventTimeWatermarkStrategyDescriptor.onfield()));
+        NES_DEBUG("OperatorSerializationUtil:: deserialized field name {}", onField->getFieldName());
+        auto eventTimeWatermarkStrategyDescriptor = Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            NodeFunctionFieldAccess::create(onField->getFieldName()),
+            Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
+        return eventTimeWatermarkStrategyDescriptor;
+    }
+    if (deserializedWatermarkStrategyDescriptor
+            .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>())
+    {
+        return Windowing::IngestionTimeWatermarkStrategyDescriptor::create();
+    }
+    else
+    {
+        NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");
+        throw std::invalid_argument("Unknown Serialized Watermark Strategy Descriptor Type");
     }
 }
 

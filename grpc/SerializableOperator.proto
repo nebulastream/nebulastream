@@ -98,8 +98,7 @@ message SerializableOperator {
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
       SerializableFunction onField = 1;
-      uint64 allowedLateness = 2;
-      uint64 multiplier = 3;
+      uint64 multiplier = 2;
     }
 
     message SerializableIngestionTimeWatermarkStrategyDescriptor {
@@ -250,8 +249,7 @@ message SerializableOperator {
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
     repeated SerializableFunction keys = 4;
-    uint64 allowedLateness = 5;
-    uint64 origin = 6;
+    uint64 originId = 5;
   }
 
   /**
