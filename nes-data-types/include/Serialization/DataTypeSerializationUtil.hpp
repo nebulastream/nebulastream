@@ -25,7 +25,6 @@ class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
 class SerializableDataType;
-class SerializableDataValue;
 
 /**
  * @brief The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a

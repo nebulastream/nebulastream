@@ -69,27 +69,3 @@ message SerializableDataType{
   google.protobuf.Any details = 2;
 
 }
-
-/**
- The serializable wrapper definition for data value objects
- */
-message SerializableDataValue {
-
-  /**
-   An basic data type value
-   */
-  message BasicValue {
-    SerializableDataType type = 1;
-    string value = 2;
-  }
-
-  /**
-   An array value
-   */
-  message ArrayValue {
-    SerializableDataType type = 1;
-    repeated string values = 2;
-  }
-
-  google.protobuf.Any value = 1;
-}
