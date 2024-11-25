@@ -51,7 +51,6 @@
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::Parsers
 {

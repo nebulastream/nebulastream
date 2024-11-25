@@ -27,9 +27,6 @@ namespace NES
 class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
-
 class NodeFunctionFieldAssignment;
 using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignment>;
 

@@ -24,9 +24,6 @@ class VariableSizedDataType;
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
-
 class SerializableDataType;
 class SerializableDataValue;
 

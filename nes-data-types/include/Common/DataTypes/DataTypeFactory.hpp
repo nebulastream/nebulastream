@@ -25,9 +25,6 @@ using DataTypePtr = std::shared_ptr<DataType>;
 class VariableSizedDataType;
 using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
-
 /**
  * @brief The data type factory offers multiple methods to construct data types
  */
