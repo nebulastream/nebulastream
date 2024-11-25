@@ -19,9 +19,9 @@
 namespace NES
 {
 
-bool VariableSizedDataType::equals(DataTypePtr otherDataType)
+bool VariableSizedDataType::operator==(const NES::DataType& other) const
 {
-    return NES::Util::instanceOf<VariableSizedDataType>(otherDataType);
+    return dynamic_cast<const VariableSizedDataType*>(&other) != nullptr;
 }
 
 /// A VariableSizedData type cannot be joined with another type.

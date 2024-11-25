@@ -19,9 +19,9 @@
 namespace NES
 {
 
-bool Undefined::equals(DataTypePtr otherDataType)
+bool Undefined::operator==(const DataType& other) const
 {
-    return NES::Util::instanceOf<Undefined>(otherDataType);
+    return dynamic_cast<const Undefined*>(&other) != nullptr;
 }
 
 DataTypePtr Undefined::join(DataTypePtr)
