@@ -44,7 +44,7 @@ bool NodeFunctionFieldAccess::equal(NodePtr const& rhs) const
     {
         auto otherFieldRead = NES::Util::as<NodeFunctionFieldAccess>(rhs);
         bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
-        bool stampsMatch = otherFieldRead->stamp->equals(stamp);
+        bool const stampsMatch = *otherFieldRead->stamp == *stamp;
         return fieldNamesMatch and stampsMatch;
     }
     return false;

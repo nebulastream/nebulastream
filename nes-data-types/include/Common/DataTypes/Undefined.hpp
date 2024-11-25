@@ -29,9 +29,9 @@ public:
     /**
      * @brief Checks if two data types are equal.
      * @param otherDataType
-     * @return
+     * @return true if equal types false if unequal
      */
-    bool equals(DataTypePtr otherDataType) override;
+    bool operator==(const DataType& other) const override;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.

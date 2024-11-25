@@ -43,7 +43,8 @@ public:
      * @param otherDataType
      * @return
      */
-    virtual bool equals(DataTypePtr otherDataType) = 0;
+    virtual bool operator==(const DataType& other) const = 0;
+    bool operator!=(const DataType& other) const { return !(*this == other); }
 
     /**
      * @brief Calculates the joined data type between this data type and the other.
