@@ -16,6 +16,12 @@ Adds interactable gutter icons for each System-Level Test .test file, that will 
 - Then, for "./systest folder path:" click on the file selector and navigate to the directory (which contains the binary 'systest')
   The folder is located somewhere at: path\to\nebulastream-public\build\nes-systests\systest
 
+### Docker
+- To run the system tests within the docker, you will need to enable running with docker in the plugin settings and configure the used docker command
+- Go to Project Settings -> Tools -> Nes-SysTest-Runner
+- Then, enable the checkbox "Use Docker?" to run using your predefined docker command instead
+- e.g.: 'docker run -it -v /home/user/workspace/nebulastream-public/:/tmp local:latest /tmp/nebulastream-public/cmake-build-docker/nes-systests/systest/systest'
+
 ### Run systests
 - navigate to any .test file
 - within the code gutter, a green, clickable arrow icon will appear beside each line 
