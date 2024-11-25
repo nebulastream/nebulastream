@@ -37,7 +37,6 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::Optimizer
 {
