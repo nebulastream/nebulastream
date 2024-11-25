@@ -30,11 +30,6 @@ WindowInfo::WindowInfo(const uint64_t windowStart, const uint64_t windowEnd) : w
     }
 }
 
-bool WindowInfo::operator<(const WindowInfo& other) const
-{
-    return windowEnd < other.windowEnd;
-}
-
 namespace Util
 {
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema)

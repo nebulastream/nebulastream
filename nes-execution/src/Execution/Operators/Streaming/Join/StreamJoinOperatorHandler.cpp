@@ -21,6 +21,40 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Util/Timer.hpp>
+#include <folly/Synchronized.h>
+
+namespace folly
+{
+
+template <class Sync1, class Sync2>
+auto tryAcquireLocked(Synchronized<Sync1>& l1, Synchronized<Sync2>& l2)
+{
+    if (static_cast<const void*>(&l1) < static_cast<const void*>(&l2))
+    {
+        if (auto locked1 = l1.tryWLock())
+        {
+            if (auto locked2 = l2.tryWLock())
+            {
+                return std::optional(std::make_tuple(std::move(locked1), std::move(locked2)));
+            }
+        }
+    }
+    else
+    {
+        if (auto locked2 = l2.tryWLock())
+        {
+            if (auto locked1 = l1.tryWLock())
+            {
+                return std::optional(std::make_tuple(std::move(locked1), std::move(locked2)));
+            }
+        }
+    }
+    return std::optional<std::tuple<
+        LockedPtr<Synchronized<Sync1>, detail::SynchronizedLockPolicyTryExclusive>,
+        LockedPtr<Synchronized<Sync2>, detail::SynchronizedLockPolicyTryExclusive>>>{};
+}
+}
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -154,10 +188,17 @@ void StreamJoinOperatorHandler::triggerAllWindows(PipelineExecutionContext* pipe
 
 void StreamJoinOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData)
 {
+    Timer<> timer("garbageCollect");
+    timer.start();
     const auto newGlobalWaterMarkProbe
         = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
+    timer.snapshot("updateWatermark");
+    auto locked = folly::tryAcquireLocked(slices, windows);
+    if (!locked)
+        return;
 
+    auto& [slicesWriteLocked, windowsWriteLocked] = *locked;
+    timer.snapshot("acquireLocked");
 
     /// 1. We iterate over all windows and set their state to CAN_BE_DELETED if they can be deleted
     /// This condition is true, if the window end is smaller than the new global watermark of the probe phase.
@@ -169,13 +210,17 @@ void StreamJoinOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaD
         }
     }
 
+    timer.snapshot("markDeletedWindows");
     /// 2. We gather all slices if they are not used in any window that has not been triggered/can not be deleted yet
+
+    size_t maxNumberOfWindowSlices = 0;
     std::vector<SliceEnd> slicesToDelete;
     for (auto& [sliceEnd, slice] : *slicesWriteLocked)
     {
         bool sliceUsedInUntriggeredWindow = false;
         for (auto& [windowInfo, windowSlicesAndState] : *windowsWriteLocked)
         {
+            maxNumberOfWindowSlices = std::max(maxNumberOfWindowSlices, windowSlicesAndState.windowSlices.size());
             if (windowSlicesAndState.windowState != WindowInfoState::CAN_BE_DELETED
                 and std::ranges::find(windowSlicesAndState.windowSlices, slice) != windowSlicesAndState.windowSlices.end())
             {
@@ -188,16 +233,30 @@ void StreamJoinOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaD
         {
             slicesToDelete.emplace_back(sliceEnd);
         }
+        else
+        {
+            break;
+        }
     }
-
+    NES_DEBUG(
+        "Slices Size: {}, Windows Size: {}, Max windowSlicesAndState: {}",
+        slicesWriteLocked->size(),
+        windowsWriteLocked->size(),
+        maxNumberOfWindowSlices);
+    timer.snapshot("markDeletedSlices");
     /// 3. Remove all slices that are not used in any window that has not been triggered/can not be deleted yet
     for (const auto& sliceEnd : slicesToDelete)
     {
+        NES_DEBUG("Erasing sliceEnd: {}", sliceEnd);
         slicesWriteLocked->erase(sliceEnd);
     }
 
+    timer.snapshot("eraseSlices");
     /// 4. Remove all windows that can be deleted
     std::erase_if(*windowsWriteLocked, [](const auto& window) { return window.second.windowState == WindowInfoState::CAN_BE_DELETED; });
+    timer.snapshot("eraseWindows");
+
+    NES_DEBUG("Garbage Collection Time: \n{}", fmt::streamed(timer));
 }
 
 void StreamJoinOperatorHandler::deleteAllSlicesAndWindows()

@@ -80,7 +80,7 @@ struct WindowMetaData
 struct WindowInfo
 {
     WindowInfo(uint64_t windowStart, uint64_t windowEnd);
-    bool operator<(const WindowInfo& other) const;
+    std::strong_ordering operator<=>(const WindowInfo& other) const = default;
     Timestamp windowStart;
     Timestamp windowEnd;
 };
@@ -91,3 +91,14 @@ namespace Util
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema);
 }
 }
+
+template <>
+struct std::hash<NES::Runtime::Execution::WindowInfo>
+{
+    std::size_t operator()(const NES::Runtime::Execution::WindowInfo& s) const noexcept
+    {
+        std::size_t h1 = std::hash<NES::Timestamp>{}(s.windowEnd);
+        std::size_t h2 = std::hash<NES::Timestamp>{}(s.windowStart);
+        return h1 ^ (h2 << 1);
+    }
+};

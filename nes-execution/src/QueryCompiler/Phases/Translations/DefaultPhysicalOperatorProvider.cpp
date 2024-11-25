@@ -329,11 +329,11 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     using namespace Runtime::Execution;
     const auto joinOperator = NES::Util::as<LogicalJoinOperator>(streamJoinOperators.operatorNode);
 
-    auto leftMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->joinOptions.pageSize, joinOperator->getLeftInputSchema());
+    auto leftMemoryProvider
+        = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(4096, joinOperator->getLeftInputSchema());
     leftMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesLeft);
-    auto rightMemoryProvider = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(
-        options->joinOptions.pageSize, joinOperator->getRightInputSchema());
+    auto rightMemoryProvider
+        = Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider::create(4096, joinOperator->getRightInputSchema());
     rightMemoryProvider->getMemoryLayoutPtr()->setKeyFieldNames(streamJoinConfig.joinFieldNamesRight);
     NES_DEBUG(
         "Created left and right memory provider for StreamJoin with page size {}--{}",

@@ -101,6 +101,8 @@ void NLJProbe::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) 
     const auto windowStart = invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
     const auto windowEnd = invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
+    NES_DEBUG("Handling Probe of {}-{}", nautilus::details::getRawValue(windowStart), nautilus::details::getRawValue(windowEnd));
+
     /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
     const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(0);
 

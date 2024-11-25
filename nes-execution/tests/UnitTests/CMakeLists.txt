@@ -11,3 +11,4 @@
 # limitations under the License.
 
 add_subdirectory(QueryCompilers)
+add_nes_execution_test(nested-loop-join-test "NLJOperatorTest.cpp")

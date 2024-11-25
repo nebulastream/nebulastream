@@ -58,6 +58,8 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
         tupleBuffer.setOriginId(outputOriginId);
         tupleBuffer.setSequenceNumber(SequenceNumber(getNextSequenceNumber()));
+        tupleBuffer.setChunkNumber(ChunkNumber(1));
+        tupleBuffer.setLastChunk(true);
         tupleBuffer.setWatermark(Timestamp(std::min(sliceLeft.getSliceStart().getRawValue(), sliceRight.getSliceStart().getRawValue())));
 
         auto* bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTriggerTask>();
