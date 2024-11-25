@@ -58,8 +58,6 @@ function(add_nes_test_nebuli)
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
 
-add_tests_if_enabled(tests)
-
 # Configure CPackage
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
