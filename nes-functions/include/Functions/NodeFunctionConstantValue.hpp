@@ -17,11 +17,9 @@
 #include <memory>
 #include <string>
 #include <Functions/NodeFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
-
-class DataType;
-using DataTypePtr = std::shared_ptr<DataType>;
 
 /// This function node represents a constant value and a fixed data type.
 /// Thus the samp of this function is always fixed.
@@ -29,7 +27,7 @@ class NodeFunctionConstantValue : public NodeFunction
 {
 public:
     ///Factory method to create a NodeFunctionConstantValue.
-    static NodeFunctionPtr create(const DataTypePtr& type, std::string value);
+    static NodeFunctionPtr create(const std::shared_ptr<DataType>& type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
     std::string getConstantValue() const;
@@ -47,7 +45,7 @@ protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
 
 private:
-    explicit NodeFunctionConstantValue(const DataTypePtr& type, std::string&& value);
+    explicit NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value);
     /// Value of this function
     std::string constantValue;
 };
