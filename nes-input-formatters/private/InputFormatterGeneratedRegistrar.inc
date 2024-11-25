@@ -22,13 +22,13 @@
 #include <memory>
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 {
 
-std::unique_ptr<InputFormatter> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
+std::unique_ptr<InputFormatterTask> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
 
 }
 

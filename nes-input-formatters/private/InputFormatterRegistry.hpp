@@ -16,14 +16,14 @@
 
 #include <string>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::InputFormatters
 {
 
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
-using InputFormatterRegistrySignature = RegistrySignature<std::string, InputFormatter, const Schema&, std::string, std::string>;
+using InputFormatterRegistrySignature = RegistrySignature<std::string, InputFormatterTask, const Schema&, std::string, std::string>;
 class InputFormatterRegistry : public BaseRegistry<InputFormatterRegistry, InputFormatterRegistrySignature>
 {
 };

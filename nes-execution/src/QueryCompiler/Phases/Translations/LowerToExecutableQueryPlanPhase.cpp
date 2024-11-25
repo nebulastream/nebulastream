@@ -24,6 +24,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
+#include <InputFormatters/InputFormatterOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -122,8 +123,8 @@ std::shared_ptr<Runtime::Execution::ExecutablePipeline> processInputFormatter(
             queryManager->addWorkForNextPipeline(buffer, executableSuccessor);
         }
     };
-
-    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers; //Todo: empty operatorHandlers
+    // Todo: create OperatorHandler for Parser
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers{std::make_shared<InputFormatterOperatorHandler>()};
     const auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
         pipelineId,
         queryId,

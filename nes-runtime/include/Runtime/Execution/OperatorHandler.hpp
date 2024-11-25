@@ -21,30 +21,16 @@ namespace NES::Runtime::Execution
 /// Forward declaration of PipelineExecutionContext, which directly includes OperatorHandler
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
-/**
- * @brief Interface to handle specific operator state.
- */
+
+/// Interface to handle specific operator state.
 class OperatorHandler
 {
 public:
-    /**
-     * @brief Default constructor
-     */
     OperatorHandler() = default;
 
     virtual ~OperatorHandler() = default;
 
-    /**
-     * @brief Starts the operator handler.
-     * @param pipelineExecutionContext
-     * @param localStateVariableId
-     */
     virtual void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) = 0;
-
-    /**
-     * @brief Stops the operator handler.
-     * @param pipelineExecutionContext
-     */
     virtual void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 };
 

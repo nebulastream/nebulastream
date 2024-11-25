@@ -30,7 +30,8 @@
 #include <strings.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterOperatorHandler.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -351,7 +352,9 @@ void CSVInputFormatter::parseTupleBufferRaw(
     if (not progressTracker->hasOneMoreTupleInTBRaw())
     {
         /// If there is not a single complete tuple in the buffer, write it to the staging area and wait for the next buffer(s).
-        progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
+        // progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
+        pipelineExecutionContext.getOperatorHandler<InputFormatterOperatorHandler>(0)->getTupleBufferStagingArea().pushTupleBuffer(
+        tbRaw, 0); // at tbRaw.getSequenceNumber().getRawValue()
         return;
     }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
@@ -387,7 +390,8 @@ void CSVInputFormatter::parseTupleBufferRaw(
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
-            pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), workerContext); /// true triggers adding sequence number, etc.
+            pipelineExecutionContext.emitBuffer(
+                progressTracker->getTupleBufferFormatted(), workerContext); /// true triggers adding sequence number, etc.
             progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
@@ -404,7 +408,11 @@ void CSVInputFormatter::parseTupleBufferRaw(
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
     pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), workerContext);
-    progressTracker->handleResidualBytes(tbRaw);
+    // Todo: remove staging area from progressTracker
+    // - write to pipelineExecutionContext
+    pipelineExecutionContext.getOperatorHandler<InputFormatterOperatorHandler>(0)->getTupleBufferStagingArea().pushTupleBuffer(
+        tbRaw, progressTracker->currentTupleEndTBRaw);
+    // progressTracker->handleResidualBytes(tbRaw);
 }
 
 void CSVInputFormatter::parseStringIntoTupleBuffer(
@@ -428,7 +436,7 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatter>
+std::unique_ptr<InputFormatterTask>
 InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
     return std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));

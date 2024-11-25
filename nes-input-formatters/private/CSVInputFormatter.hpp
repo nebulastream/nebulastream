@@ -23,7 +23,7 @@
 #include <string_view>
 #include <vector>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -33,7 +33,7 @@ namespace NES::InputFormatters
 /// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVInputFormatter : public InputFormatter
+class CSVInputFormatter : public InputFormatterTask
 {
 public:
     using CastFunctionSignature

@@ -11,7 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        InputFormatter.cpp
+        InputFormatterTask.cpp
         CSVInputFormatter.cpp
         InputFormatterProvider.cpp
+        InputFormatterOperatorHandler.cpp
 )

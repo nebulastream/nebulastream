@@ -47,28 +47,28 @@ struct Stopped
 {
 };
 
-using InputFormatterReturnType = std::variant<Error, Data, EoS, Stopped>;
-using EmitFunction = std::function<void(const OriginId, InputFormatterReturnType)>;
+using InputFormatterTaskReturnType = std::variant<Error, Data, EoS, Stopped>;
+using EmitFunction = std::function<void(const OriginId, InputFormatterTaskReturnType)>;
 }
 
 
 /// Takes tuple buffers with raw bytes (TBRaw/TBR), parses the TBRs and writes the formatted data to formatted tuple buffers (TBFormatted/TBF)
-class InputFormatter : public NES::Runtime::Execution::ExecutablePipelineStage
+class InputFormatterTask : public NES::Runtime::Execution::ExecutablePipelineStage
 {
 public:
-    InputFormatter() = default;
-    ~InputFormatter() override = default;
+    InputFormatterTask() = default;
+    ~InputFormatterTask() override = default;
 
-    InputFormatter(const InputFormatter&) = delete;
-    InputFormatter& operator=(const InputFormatter&) = delete;
-    InputFormatter(InputFormatter&&) = delete;
-    InputFormatter& operator=(InputFormatter&&) = delete;
+    InputFormatterTask(const InputFormatterTask&) = delete;
+    InputFormatterTask& operator=(const InputFormatterTask&) = delete;
+    InputFormatterTask(InputFormatterTask&&) = delete;
+    InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
     // Todo: think about what to do with setup and stop
     // uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     // uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     ExecutionResult execute(
-        Memory::TupleBuffer& inputTupleBuffer, //Todo: for now write num bytes as num tuples to input buffer
+        Memory::TupleBuffer& inputTupleBuffer,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
         Runtime::WorkerContext& workerContext) override;
 
@@ -78,7 +78,7 @@ public:
         size_t numBytesInTBRaw)
         = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const InputFormatter& inputFormatter) { return inputFormatter.toString(out); }
+    friend std::ostream& operator<<(std::ostream& out, const InputFormatterTask& InputFormatterTask) { return InputFormatterTask.toString(out); }
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
@@ -90,7 +90,7 @@ protected:
 namespace fmt
 {
 template <>
-struct formatter<NES::InputFormatters::InputFormatter> : ostream_formatter
+struct formatter<NES::InputFormatters::InputFormatterTask> : ostream_formatter
 {
 };
 }

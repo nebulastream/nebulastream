@@ -16,7 +16,7 @@
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
-#include <InputFormatters/InputFormatter.hpp>
+#include <InputFormatters/InputFormatterTask.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
@@ -24,7 +24,7 @@
 namespace NES::InputFormatters::InputFormatterProvider
 {
 
-std::unique_ptr<InputFormatter>
+std::unique_ptr<InputFormatterTask>
 provideInputFormatter(const std::string& parserType, const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
 {
     if (auto inputFormatter
