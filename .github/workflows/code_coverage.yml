@@ -170,6 +170,7 @@ jobs:
   # For now, we build the code coverage for x64 only
   build-code-coverage:
     needs: [ build-code-coverage-ref, build-code-coverage-pr-branch ]
+    if: ${{ github.event_name == 'pull_request' }}
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
@@ -203,7 +204,7 @@ jobs:
 
   create_sticky_note:
     needs: [ build-code-coverage-ref, build-code-coverage-pr-branch ]
-    if: ${{ github.event_type == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' }}
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
