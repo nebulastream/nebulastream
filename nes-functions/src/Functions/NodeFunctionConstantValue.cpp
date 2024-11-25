@@ -16,10 +16,12 @@
 #include <utility>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
+#include <fmt/format.h>
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
-NodeFunctionConstantValue::NodeFunctionConstantValue(const DataTypePtr& type, std::string&& value)
+NodeFunctionConstantValue::NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value)
     : NodeFunction(type, "ConstantValue"), constantValue(std::move(value))
 {
 }
@@ -44,7 +46,7 @@ std::string NodeFunctionConstantValue::toString() const
     return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
 }
 
-NodeFunctionPtr NodeFunctionConstantValue::create(const DataTypePtr& type, std::string value)
+NodeFunctionPtr NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)
 {
     return std::make_shared<NodeFunctionConstantValue>(NodeFunctionConstantValue(type, std::move(value)));
 }
