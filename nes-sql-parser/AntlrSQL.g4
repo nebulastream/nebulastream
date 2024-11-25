@@ -171,6 +171,7 @@ namedExpressionSeq
 
 expression
     : booleanExpression
+    | identifier
     ;
 
 booleanExpression

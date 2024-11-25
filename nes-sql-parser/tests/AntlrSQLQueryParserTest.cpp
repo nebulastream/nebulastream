@@ -623,323 +623,167 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithFilterAndMapAfterJoinWithQu
 }
 
 
-/// Todo #447: use the code below as guidance for how to support WINDOWs and JOINs using the antlr sql parser
-/// The below tests are the 'validation' of the bachelor's thesis that introduced the antlr SQL parser.
-/// The tests mostly fail currently, but they provide valuable documentation for adding operators/functionality in the future.
-/*
-TEST(SQLParsingServiceTest, globalWindowTest)
+TEST_F(AntlrSQLQueryParserTest, globalWindowTest)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-    double totalTime = 0.0;
+    const auto inputQueryEventTime
+        = "select sum(id) as average_id from StreamName window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("StreamName")
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+                                    .apply(Sum(Attribute("id"))->as(Attribute("average_id")))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-
-    std::cout << "-------------------------Global Window-------------------------\n";
-
-    inputQuery = "select sum(f2) from StreamName window tumbling (size 10 ms) INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
-                      .apply(Sum(Attribute("f2")))
-                      .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2), max(f3) from StreamName as sn window tumbling (timestamp, size 10 ms) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
-                .apply(Sum(Attribute("f2")), Max(Attribute("f3")))
-                .sink("PRINT");
-
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2) from StreamName WINDOW THRESHOLD (f1>2, 10) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName").window(ThresholdWindow::of(Attribute("f1") > 2, 10)).apply(Sum(Attribute("f2"))).sink("PRINT");
-
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .byKey(Attribute("f2"))
-                .apply(Sum(Attribute("f2")))
-                .sink("PRINT");
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2) from StreamName group by f2 window tumbling (size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .byKey(Attribute("f2"))
-                .apply(Sum(Attribute("f2")))
-                .sink("PRINT");
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10), Milliseconds(5)))
-                .byKey(Attribute("f2"))
-                .apply(Sum(Attribute("f2")))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select * from StreamName group by f2 window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10), Milliseconds(5)))
-                .byKey(Attribute("f2"))
-                .apply()
-                .sink("PRINT");
-    std::cout << "Time taken for all Global Window Queries: " << totalTime / 7 << " ms" << std::endl;
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    const auto inputQueryIngestionTime = "select MIN(id) from StreamName window sliding (size 1234 sec, advance by 9876 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("StreamName")
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(1234), Milliseconds(9876)))
+                                        .apply(Min(Attribute("id")))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-TEST(SQLParsingServiceTest, multipleAggregationFunctionsWindowTest)
+TEST_F(AntlrSQLQueryParserTest, keyedWindowTest)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    double totalTime = 0.0;
-    QueryPlanPtr actualPlan;
+    const auto inputQueryEventTime
+        = "select avg(id) as average_id from StreamName GROUP BY grouped_field window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("StreamName")
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+                                    .byKey(Attribute("grouped_field"))
+                                    .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    std::cout << "-------------------------Multiple Aggregation-------------------------\n";
-
-    std::string inputQuery = "select sum(f2), min(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                      .apply(Sum(Attribute("f2")), Min(Attribute("f2")))
-                      .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select sum(f2), min(f2), max(f2) from StreamName window tumbling (timestamp, size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .apply(Sum(Attribute("f2")), Min(Attribute("f2")), Max(Attribute("f2")))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select max(f2) as max_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .byKey(Attribute("f2"))
-                .apply(Max(Attribute("f2")))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery
-        = "select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .byKey(Attribute("f2"))
-                .apply(Max(Attribute("f2")), Sum(Attribute("f2")))
-                .sink("PRINT");
-    std::cout << "Time taken for all Global Window Queries: " << totalTime / 4 << " ms" << std::endl;
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    const auto inputQueryIngestionTime
+        = "select MAX(id) from StreamName GROUP BY grouped_field window sliding (size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("StreamName")
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+                                        .byKey(Attribute("grouped_field"))
+                                        .apply(Max(Attribute("id")))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-
-TEST(SQLParsingServiceTest, CountAggregationFunctionWindowTest)
+TEST_F(AntlrSQLQueryParserTest, multipleKeyedWindowTestWithHaving)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-    double totalTime = 0.0;
-    QueryPlanPtr actualPlan;
+    const auto inputQueryEventTime
+        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3)  window tumbling (timestamp, size 10 days) HAVING average_id > 24 and average_id < 100 INTO PRINT"s;
+    const auto queryEventTime = Query::from("StreamName")
+                                    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Days(10)))
+                                    .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+                                    .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                    .selection(Attribute("average_id") > 24 && Attribute("average_id") < 100)
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    std::cout << "-------------------------Count Aggregation Function Window-------------------------\n";
-
-    std::string inputQuery = "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                      .byKey(Attribute("f2"))
-                      .apply(Count())
-                      .sink("PRINT");
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
-                .byKey(Attribute("f2"))
-                .apply(Count())
-                .sink("PRINT");
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select count(*) from StreamName window tumbling (size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query
-        = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).apply(Count()).sink("PRINT");
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select count() from StreamName window tumbling (size 10 sec) INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query
-        = Query::from("StreamName").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).apply(Count()).sink("PRINT");
-    std::cout << "Time taken for all Count Aggregation Function Window Queries: " << totalTime / 4 << " ms" << std::endl;
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-}
-TEST(SQLParsingServiceTest, havingClauseTest)
-{
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-
-    inputQuery = "select sum(f2) as sum_f2 from StreamName window tumbling (size 10 ms) having sum_f2 > 5 INTO PRINT";
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    Query query = Query::from("StreamName")
-                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
-                      .apply(Sum(Attribute("f2"))->as(Attribute("sum_f2")))
-                      .selection(Attribute("sum_f2") > 5)
-                      .sink("PRINT");
-    ;
-
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    const auto inputQueryIngestionTime
+        = "select avg(id) as average_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING 24 < average_id and average_id < 100 INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("StreamName")
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+                                        .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+                                        .apply(Avg(Attribute("id"))->as(Attribute("average_id")))
+                                        .selection(24 < Attribute("average_id") && Attribute("average_id") < 100)
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-TEST(SQLParsingServiceTest, subQueryTest)
+TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithHaving)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
+    const auto inputQueryEventTime
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 100 INTO PRINT"s;
+    const auto queryEventTime
+        = Query::from("StreamName")
+              .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    std::string inputQuery = "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT";
-    QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto query = Query::from("subStream").project(Attribute("f1")).selection(Attribute("f1") > 1).selection(Attribute("f1") < 5).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    const auto inputQueryIngestionTime
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 100 INTO PRINT"s;
+    const auto queryIngestionTime
+        = Query::from("StreamName")
+              .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
 
-TEST(SQLParsingServiceTest, perfomanceTest1)
+TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithHavingBeforeJoin)
 {
-    std::shared_ptr<QueryParsingService> SQLParsingService;
+    const auto inputQueryEventTime
+        = "select * from (select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY "
+          "(grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance "
+          "by 5 ms) HAVING average_id > 24 and max_id < 100)"
+          " INNER JOIN (select * from stream2) ON average_id = id2 window tumbling (timestamp, size 1 day) INTO PRINT"s;
+    const auto queryEventTime
+        = Query::from("StreamName")
+              .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
+              .joinWith(Query::from("stream2"))
+              .where(Attribute("average_id") == Attribute("id2"))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Days(1)))
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    std::vector<std::string> selectClauses
-        = {"select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "SELECT name FROM employees;",
-           "SELECT department, COUNT(*) AS total FROM employees GROUP BY department window tumbling (timestamp, size 10 sec) INTO PRINT;",
-           "select f1 from StreamName where f1 > 10*3 INTO PRINT",
-           "select * from StreamName where (f1 > 10 AND f2 < 10) INTO PRINT",
-           "select * from StreamName as sn INTO PRINT",
-           "select f1,f2 from StreamName INTO PRINT",
-           "select column1 as c1, column2 as c2 from StreamName INTO PRINT;",
-           "select f1 from cars union select f1 from bikes INTO PRINT",
-           "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT",
-           "select f1*f2 as newfield from StreamName INTO PRINT",
-           "select (f1*f2)/(f3+f4) as f5 from StreamName INTO PRINT",
-           "select f1*f2/f3+f4 as f5 from StreamName INTO PRINT",
-           "select f1*f2 as newfield, f1+5 as newfield2, f1 as f from StreamName INTO PRINT",
-           "select sum(f2), max(f3) from StreamName as sn window tumbling (timestamp, size 10 ms) INTO PRINT",
-           "select sum(f2) from StreamName WINDOW THRESHOLD (f1>2, 10) INTO PRINT",
-           "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT",
-           "SELECT name FROM employees;",
-           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "select * from purchases inner join tweets on purchases.userId = tweets.userId window tumbling (timestamp, size 10 sec) INTO "
-           "PRINT",
-           "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT",
-           "SELECT name, department FROM employees WHERE age > 30 INTO ZMQ (stream_name, localhost, 5555)",
-           "select sum(f2) as sum_f2 from StreamName window tumbling (size 10 ms) having sum_f2 > 5 INTO PRINT",
-           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT"};
-    double totalTime = 0.0;
-    std::cout << "-------------------------Mixed Queries-------------------------\n";
-
-    for (const auto& SQLString : selectClauses)
-    {
-        auto start = std::chrono::high_resolution_clock::now();
-        QueryPlanPtr sqlPlan = SQLParsingService->createQueryFromSQL(SQLString);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start;
-        std::cout << "Time taken for \"" << SQLString << "\": " << duration.count() << " ms" << std::endl;
-        totalTime += duration.count();
-    }
-    std::cout << "Average time for all queries: " << totalTime / selectClauses.size() << " ms. "
-              << "Amount of queries:" << selectClauses.size() << std::endl;
+    const auto inputQueryIngestionTime
+        = "select * from (select avg(id) as average_id, sum(id2), max(id3) as max_id from StreamName GROUP BY "
+          "(grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance "
+          "by 5 ms) HAVING average_id > 24 and max_id < 100)"
+          " INNER JOIN (select * from stream2) ON average_id = id2 window tumbling (timestamp, size 12 day) INTO PRINT"s;
+    const auto queryIngestionTime
+        = Query::from("StreamName")
+              .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") < 100)
+              .joinWith(Query::from("stream2"))
+              .where(Attribute("average_id") == Attribute("id2"))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Days(12)))
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
 }
-*/
+
+TEST_F(AntlrSQLQueryParserTest, multipleKeyedMultipleAggFunctionsWindowTestWithHavingAfterJoin)
+{
+    const auto inputQueryEventTime
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from (select * from (select * from stream1) INNER JOIN "
+          "(select * from stream2) ON id = id2 window tumbling(timestamp, size 1 hour))"
+          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (timestamp, size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id < 123 INTO PRINT"s;
+    const auto queryEventTime
+        = Query::from("stream1")
+              .joinWith(Query::from("stream2"))
+              .where(Attribute("id") == Attribute("id2"))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
+              .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") < 123)
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select avg(id) as average_id, sum(id2), max(id3) as max_id from (select * from (select * from stream1) INNER JOIN "
+          "(select * from stream2) ON id = id2 window tumbling(timestamp, size 1 hour))"
+          " GROUP BY (grouped_field_1, grouped_field_2, grouped_field_3) window sliding (size 10 sec, advance by 5 ms) HAVING average_id > 24 and max_id >= 456 INTO PRINT"s;
+    const auto queryIngestionTime
+        = Query::from("stream1")
+              .joinWith(Query::from("stream2"))
+              .where(Attribute("id") == Attribute("id2"))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1)))
+              .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+              .byKey(Attribute("grouped_field_1"), Attribute("grouped_field_2"), Attribute("grouped_field_3"))
+              .apply(
+                  Avg(Attribute("id"))->as(Attribute("average_id")), Sum(Attribute("id2")), Max(Attribute("id3"))->as(Attribute("max_id")))
+              .selection(Attribute("average_id") > 24 && Attribute("max_id") >= 456)
+              .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}

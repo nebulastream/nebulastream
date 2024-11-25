@@ -19,6 +19,7 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/WindowType.hpp>
@@ -77,6 +78,12 @@ public:
      * @return the updated queryPlanPtr
      */
     static QueryPlanPtr addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan);
+
+    static QueryPlanPtr addWindowAggregation(
+        QueryPlanPtr queryPlan,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
+        const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
+        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys);
 
     /**
     * @brief UnionOperator to combine two query plans

@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
@@ -25,9 +27,8 @@ namespace NES::Windowing
 LogicalWindowDescriptor::LogicalWindowDescriptor(
     const std::vector<NodeFunctionFieldAccessPtr>& keys,
     std::vector<WindowAggregationDescriptorPtr> windowAggregation,
-    WindowTypePtr windowType,
-    uint64_t allowedLateness)
-    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys), allowedLateness(allowedLateness)
+    WindowTypePtr windowType)
+    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(keys)
 {
     NES_TRACE("LogicalWindowDescriptor: create new window definition");
 }
@@ -37,19 +38,18 @@ bool LogicalWindowDescriptor::isKeyed() const
     return !onKey.empty();
 }
 
-LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
-    const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType, uint64_t allowedLateness)
+LogicalWindowDescriptorPtr
+LogicalWindowDescriptor::create(const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType)
 {
-    return create({}, windowAggregations, windowType, allowedLateness);
+    return create({}, windowAggregations, windowType);
 }
 
 LogicalWindowDescriptorPtr LogicalWindowDescriptor::create(
-    std::vector<NodeFunctionFieldAccessPtr> keys,
+    const std::vector<NodeFunctionFieldAccessPtr>& keys,
     std::vector<WindowAggregationDescriptorPtr> windowAggregation,
-    const WindowTypePtr& windowType,
-    uint64_t allowedLateness)
+    const WindowTypePtr& windowType)
 {
-    return std::make_shared<LogicalWindowDescriptor>(keys, windowAggregation, windowType, allowedLateness);
+    return std::make_shared<LogicalWindowDescriptor>(keys, windowAggregation, windowType);
 }
 
 uint64_t LogicalWindowDescriptor::getNumberOfInputEdges() const
@@ -92,7 +92,7 @@ void LogicalWindowDescriptor::setOnKey(const std::vector<NodeFunctionFieldAccess
 
 LogicalWindowDescriptorPtr LogicalWindowDescriptor::copy() const
 {
-    return create(onKey, windowAggregation, windowType, allowedLateness);
+    return create(onKey, windowAggregation, windowType);
 }
 
 std::string LogicalWindowDescriptor::toString() const
@@ -115,10 +115,6 @@ OriginId LogicalWindowDescriptor::getOriginId() const
 void LogicalWindowDescriptor::setOriginId(OriginId originId)
 {
     this->originId = originId;
-}
-uint64_t LogicalWindowDescriptor::getAllowedLateness() const
-{
-    return allowedLateness;
 }
 
 bool LogicalWindowDescriptor::equal(LogicalWindowDescriptorPtr otherWindowDefinition) const

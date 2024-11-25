@@ -88,8 +88,17 @@ uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
 /// Get number of unique elements
 bool startsWith(const std::string& fullString, const std::string& ending);
 
-/// transforms the string to an upper case version
-std::string toUpperCase(std::string string);
+/// creates a copy of the string, transforms the copy to a lower case version and returns the copy
+std::string toLowerCase(std::string_view string);
+
+/// creates a copy of the string, transforms the copy to an upper case version and returns the copy
+std::string toUpperCase(std::string_view string);
+
+/// takes a reference to a string and transforms the string data behind the reference to a lower case version in place
+void toLowerCaseInPlace(std::string& string);
+
+/// takes a reference to a string and transforms the string data behind the reference to an upper case version in place
+void toUpperCaseInPlace(std::string& string);
 
 /// splits a string given a delimiter into multiple substrings stored in a T vector
 /// the delimiter is allowed to be a string rather than a char only.

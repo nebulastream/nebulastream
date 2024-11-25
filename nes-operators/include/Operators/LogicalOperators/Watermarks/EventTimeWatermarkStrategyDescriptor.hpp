@@ -17,7 +17,6 @@
 #include <memory>
 #include <API/TimeUnit.hpp>
 #include <Functions/NodeFunction.hpp>
-#include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 namespace NES::Windowing
 {
@@ -28,13 +27,11 @@ using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWaterma
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor
 {
 public:
-    static WatermarkStrategyDescriptorPtr create(const std::shared_ptr<NodeFunction>& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    static WatermarkStrategyDescriptorPtr create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit);
 
     NodeFunctionPtr getOnField() const;
 
     void setOnField(const NodeFunctionPtr& newField);
-
-    TimeMeasure getAllowedLateness() const;
 
     TimeUnit getTimeUnit() const;
 
@@ -50,9 +47,8 @@ private:
     /// Field where the watermark should be retrieved
     NodeFunctionPtr onField;
     TimeUnit unit;
-    TimeMeasure allowedLateness;
 
-    explicit EventTimeWatermarkStrategyDescriptor(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
+    explicit EventTimeWatermarkStrategyDescriptor(NodeFunctionPtr onField, TimeUnit unit);
 };
 
 }
