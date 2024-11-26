@@ -17,6 +17,7 @@
 
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
@@ -73,18 +74,58 @@ class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
 
 /**
+ * @brief This struct holds information about locations and plans of operator that needs to be migrated
+ */
+struct MigrateOperatorProperties {
+  private:
+    /// id of decomposed query id of operator before replacement
+    DecomposedQueryId oldDecomposedQueryId;
+    /// id of worker id of operator before replacement
+    WorkerId oldWorkerId;
+    /// id of worker id after replacement
+    WorkerId newWorkerId;
+
+  public:
+    static std::shared_ptr<MigrateOperatorProperties>
+    create(DecomposedQueryId oldDecomposedQueryId, WorkerId oldWorkerId, WorkerId newWorkerId) {
+        return std::make_shared<MigrateOperatorProperties>(oldDecomposedQueryId, oldWorkerId, newWorkerId);
+    }
+
+    MigrateOperatorProperties(DecomposedQueryId oldDecomposedQueryId, WorkerId oldWorkerId, WorkerId newWorkerId)
+        : oldDecomposedQueryId(oldDecomposedQueryId), oldWorkerId(oldWorkerId), newWorkerId(newWorkerId) {}
+
+    /**
+     * @brief Get the id of decomposed plan from the old operator location node
+     * @return the id of decomposed query plan
+     */
+    DecomposedQueryId getOldDecomposedQueryId() const { return oldDecomposedQueryId; }
+
+    /**
+     * @brief Get the id of worker, where operator was located
+     * @return the id of worker id
+     */
+    WorkerId getOldWorkerId() const { return oldWorkerId; }
+
+    /**
+     * @brief Get the id of worker, where operator is located
+     * @return the id of worker id
+     */
+    WorkerId getNewWorkerId() const { return newWorkerId; }
+};
+
+/**
  * @brief This struct wraps around the information about the reconfiguration marker units that are
  */
 struct ReconfigurationMarkerUnit {
   public:
-    ReconfigurationMarkerUnit(const std::string& address,
+    ReconfigurationMarkerUnit(const std::string address,
                               WorkerId workerId,
                               SharedQueryId sharedQueryId,
                               DecomposedQueryId decomposedQueryId)
         : address(address), workerId(workerId), sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId){};
 
     bool operator<(ReconfigurationMarkerUnit otherReconfigurationMarkerUnit) const {
-        return decomposedQueryId < otherReconfigurationMarkerUnit.decomposedQueryId;
+        return decomposedQueryId.getRawValue() < otherReconfigurationMarkerUnit.decomposedQueryId.getRawValue();
     }
 
     const std::string address;
@@ -92,6 +133,9 @@ struct ReconfigurationMarkerUnit {
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
 };
+
+/**
+ */
 
 /**
  * @brief This struct holds the placement removal and addition deployment contexts. In addition a set of reconfigurationMarkerUnits need to be sent.
@@ -230,6 +274,23 @@ class QueryPlacementAmendmentPhase {
     computeReconfigurationMarkerDeploymentUnit(SharedQueryId& sharedQueryId,
                                                const ChangeLogEntryPtr& changeLogEntry,
                                                std::set<ReconfigurationMarkerUnit>& reconfigurationMarkerUnitComparator) const;
+
+    /**
+     * @brief perform placement for migrating operators
+     * @param placementStrategy: the placement strategy
+     * @param migratingOperatorToProperties: operator id to operator properties (old and new node id, old decomposed plan id)
+     * @param planIdToCopy: decomposed plan copy saved by operator id
+     * @param sharedQueryId: id of the shared query plan
+     * @param nextDecomposedQueryPlanVersion: next decomposed query plan version
+     * @param deploymentContexts: map containing deployment contexts
+     */
+    void handleMigrationPlacement(
+        Optimizer::PlacementStrategy placementStrategy,
+        const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
+        std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+        std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;

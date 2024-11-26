@@ -15,7 +15,10 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Exceptions/QueryPlacementAdditionException.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
@@ -26,6 +29,7 @@
 #include <Optimizer/QueryPlacementAddition/TopDownStrategy.hpp>
 #include <Optimizer/QueryPlacementRemoval/PlacementRemovalStrategy.hpp>
 #include <Plans/ChangeLog/ChangeLogEntry.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -90,8 +94,48 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
         // Create container to record all deployment contexts
         std::map<DecomposedQueryId, DeploymentContextPtr> deploymentContexts;
         std::vector<ChangeLogEntryPtr> failedChangelogEntries;
+
         for (const auto& [_, changeLogEntry] : sharedQueryPlan->getChangeLogEntries(nowInMicroSec)) {
             try {
+                // P0: Identify workers where reconfiguration markers need to be sent
+                computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
+
+                // Identify stateful operators that possibly needs to be migrated
+                std::vector<OperatorPtr> statefulOperatorsPossiblyToBeMigrated;
+                // Save old decomposed plan id and old worker id for this stateful operators
+                std::unordered_map<OperatorId, std::pair<DecomposedQueryId, WorkerId>> statefulOperatorToOldProperties;
+                // Make a copy of current decomposed plan, which includes this stateful operators
+                std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToPlanCopy;
+
+                // TODO [#5149]: rewrite to give stateful operators not including upstream and downstream [https://github.com/nebulastream/nebulastream/issues/5149]
+                for (auto operatorId : changeLogEntry->poSetOfSubQueryPlan) {
+                    auto logicalOperator = queryPlan->getOperatorWithOperatorId(operatorId);
+                    // TODO [#5149]: convert to property isStatefulOperator [https://github.com/nebulastream/nebulastream/issues/5149]
+                    if (logicalOperator->instanceOf<LogicalJoinOperator>()) {
+                        NES_DEBUG("QueryPlacementAmendmentPhase: Stateful operator with id {} found", logicalOperator->getId());
+                        // get operator's worker and plan Ids and save
+                        if (logicalOperator->hasProperty(PINNED_WORKER_ID)
+                            && logicalOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
+                            auto executionNode = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
+                            auto decomposedPlanId =
+                                std::any_cast<DecomposedQueryId>(logicalOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            NES_DEBUG("QueryPlacementAmendmentPhase: Stateful operator with id {} belongs to plan {} and is "
+                                      "placed on node {}",
+                                      logicalOperator->getId(),
+                                      decomposedPlanId,
+                                      executionNode);
+                            statefulOperatorsPossiblyToBeMigrated.push_back(logicalOperator);
+                            statefulOperatorToOldProperties.insert(
+                                std::pair(operatorId, std::pair(decomposedPlanId, executionNode)));
+                            // make copy of old decomposed plan
+                            planIdToPlanCopy.insert(
+                                std::pair(decomposedPlanId,
+                                          globalExecutionPlan->getCopyOfDecomposedQueryPlan(executionNode,
+                                                                                            sharedQueryId,
+                                                                                            decomposedPlanId)));
+                        }
+                    }
+                }
                 // P0: Identify workers where reconfiguration markers need to be sent
                 computeReconfigurationMarkerDeploymentUnit(sharedQueryId, changeLogEntry, reconfigurationMarkerUnitComparator);
 
@@ -101,7 +145,6 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                        changeLogEntry->downstreamOperators,
                                        nextDecomposedQueryPlanVersion,
                                        deploymentContexts);
-
                 // P2: Compute placement addition
                 handlePlacementAddition(placementStrategy,
                                         sharedQueryId,
@@ -110,6 +153,33 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                         nextDecomposedQueryPlanVersion,
                                         deploymentContexts);
 
+                // get new location of migrating stateful operator
+                std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>> migratingOperatorToProperties;
+                for (const auto& logicalOperator : statefulOperatorsPossiblyToBeMigrated) {
+                    if (logicalOperator->hasProperty(PINNED_WORKER_ID)) {
+                        auto newNodeId = std::any_cast<WorkerId>(logicalOperator->getProperty(PINNED_WORKER_ID));
+                        auto [oldPlanId, oldNodeId] = statefulOperatorToOldProperties.at(logicalOperator->getId());
+                        // if location changed then operator's state needs to be migrated
+                        if (newNodeId != oldNodeId) {
+                            // store old decomposed plan id, old and new location of operator
+                            migratingOperatorToProperties.insert(
+                                std::pair(logicalOperator->getId(),
+                                          MigrateOperatorProperties::create(oldPlanId, oldNodeId, newNodeId)));
+                            NES_DEBUG("QueryPlacementAmendmentPhase: Location of stateful operator with id {} changed, state "
+                                      "needs to be migrated",
+                                      logicalOperator->getId());
+                        }
+                    } else {
+                        NES_ERROR("Failed to get new workerId.");
+                    }
+                }
+                // add new decomposed plans with migration path from old node to new node
+                handleMigrationPlacement(placementStrategy,
+                                         migratingOperatorToProperties,
+                                         planIdToPlanCopy,
+                                         sharedQueryId,
+                                         nextDecomposedQueryPlanVersion,
+                                         deploymentContexts);
             } catch (std::exception& ex) {
                 NES_ERROR("Failed to process change log. Marking shared query plan as partially processed and recording the "
                           "failed changelog for further processing. {}",
@@ -191,6 +261,96 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
 
     NES_DEBUG("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return {computedDeploymentRemovalContexts, computedDeploymentAdditionContexts, reconfigurationMarkerUnitComparator};
+}
+
+void QueryPlacementAmendmentPhase::handleMigrationPlacement(
+    Optimizer::PlacementStrategy placementStrategy,
+    const std::unordered_map<OperatorId, std::shared_ptr<MigrateOperatorProperties>>& migratingOperatorToProperties,
+    std::unordered_map<DecomposedQueryId, std::shared_ptr<DecomposedQueryPlan>> planIdToCopy,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+    std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts) {
+
+    // go over operators that needs to be migrated
+    for (const auto& [migratingOperatorId, migratingOperatorProperties] : migratingOperatorToProperties) {
+        // 1. Create new operators for state migration
+        // create source operator for gathering state on the source node
+        // TODO [#5151] change source operator
+        auto migrateSourceOperator =
+            LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("state_gathering"));
+        // set node id where operator was located
+        migrateSourceOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getOldWorkerId());
+
+        // create sink operator to save state to the file on destination node
+        // TODO [#5151] change sink operator
+        auto migrateSinkOperator = LogicalOperatorFactory::createSinkOperator(FileSinkDescriptor::create("state_persisting"));
+        // set node id where operator is located now
+        migrateSinkOperator->addProperty(Optimizer::PINNED_WORKER_ID, migratingOperatorProperties->getNewWorkerId());
+        // set downstream sink as a parent to source
+        migrateSourceOperator->addParent(migrateSinkOperator);
+
+        // 2. Make placement of new operators and path between them
+        auto strategy = getStrategy(placementStrategy);
+        auto placementResults = strategy->updateGlobalExecutionPlan(sharedQueryId,
+                                                                    {migrateSourceOperator},
+                                                                    {migrateSinkOperator},
+                                                                    nextDecomposedQueryPlanVersion);
+
+        // save new contexts
+        for (const auto& [decomposedQueryPlanId, deploymentContext] : placementResults.deploymentContexts) {
+            deploymentContexts[decomposedQueryPlanId] = deploymentContext;
+        }
+
+        // 3. Get necessary information to link old stateful operator decomposed plan and newly created migration plan
+        // get copy of plan before migration
+        auto statefulOperatorOldPlan = planIdToCopy.find(migratingOperatorProperties->getOldDecomposedQueryId());
+        auto newPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+        // get plan id of the newly created plan for migration
+        if (migrateSourceOperator->hasProperty(PLACED_DECOMPOSED_PLAN_ID)) {
+            newPlanId = std::any_cast<DecomposedQueryId>(migrateSourceOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+        } else {
+            NES_ERROR("Failed to get migration decomposed plan id");
+        }
+        // find deployment context for this plan
+        auto statefulOperatorNewPlan = deploymentContexts.find(newPlanId);
+
+        // 3. Link old stateful operator decomposed plan and newly created migration plan
+        if (statefulOperatorOldPlan != planIdToCopy.end() && statefulOperatorNewPlan != deploymentContexts.end()) {
+            // get stateful operator
+            auto statefulOperatorInOldPlan = statefulOperatorOldPlan->second->getOperatorWithOperatorId(migratingOperatorId);
+            // get source operator in newly created plan
+            auto sourceOperatorInNewPlan = statefulOperatorNewPlan->second->getDecomposedQueryPlan()->getOperatorWithOperatorId(
+                migrateSourceOperator->getId());
+
+            // link operators
+            statefulOperatorInOldPlan->addParent(sourceOperatorInNewPlan);
+            statefulOperatorOldPlan->second->addRootOperator(
+                statefulOperatorNewPlan->second->getDecomposedQueryPlan()->getRootOperators()[0]);
+
+            statefulOperatorOldPlan->second->setVersion(nextDecomposedQueryPlanVersion);
+            statefulOperatorOldPlan->second->setState(QueryState::MARKED_FOR_UPDATE_AND_DRAIN);
+
+            // delete old migrating deployment context for the old node
+            deploymentContexts.erase(newPlanId);
+            auto oldDeploymentContext = deploymentContexts[migratingOperatorProperties->getOldDecomposedQueryId()];
+            // create new context for the updated plan
+            auto newContext = DeploymentContext::create(oldDeploymentContext->getGrpcAddress(), statefulOperatorOldPlan->second);
+            // save this plan
+            deploymentContexts[migratingOperatorProperties->getOldDecomposedQueryId()] = newContext;
+            globalExecutionPlan->removeDecomposedQueryPlan(migratingOperatorProperties->getOldWorkerId(),
+                                                           sharedQueryId,
+                                                           newPlanId,
+                                                           nextDecomposedQueryPlanVersion);
+            globalExecutionPlan->addDecomposedQueryPlan(migratingOperatorProperties->getOldWorkerId(),
+                                                        {statefulOperatorOldPlan->second});
+        } else {
+            NES_ERROR("Failed to find old decomposed plan");
+        }
+
+        if (!placementResults.completedSuccessfully) {
+            throw std::runtime_error("Placement addition phase unsuccessfully completed");
+        }
+    }
 }
 
 void QueryPlacementAmendmentPhase::computeReconfigurationMarkerDeploymentUnit(
