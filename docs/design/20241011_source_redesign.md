@@ -18,17 +18,17 @@ Furthermore, this static assignment of buffers to sources is highly inflexible w
 For example, a source might be idle for a long time, while another source is producing data at a high rate.
 
 # Goals
-## G1: Scalability, adresses P1
+#### G1: Scalability, adresses P1
 A single node worker should be able to handle thousands of concurrent sources as efficiently as possible.
 Slow disk or network I/O can be the main bottleneck during query execution (this may be out of the system's control).
 However, adding more sources should impact existing sources or CPU-bound operations as little as possible. 
 Therefore, we want to avoid stalls due to CPU oversubscription or threads busy-waiting on data to become ready.
 Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as little as possible.
 
-## G2: Deadlock Prevention, addresses P2
+#### G2: Deadlock Prevention, addresses P2
 The `BufferManager` should have separate pools for sources and processing, removing potential deadlocks due to sources taking all buffers.
 
-## G3: Fairness and demand-based buffer distribution, addresses P3
+#### G3: Fairness and demand-based buffer distribution, addresses P3
 Moreover, there should be a centralized `BufferManager` for just the sources. 
 It can be aware of the sources and their requirements by storing the state it needs to facilitate fairness and maximum efficiency.
 In particular, it needs to take care of flow control and speed differences between different sources to ensure that:
@@ -41,23 +41,23 @@ We propose a simple policy and provide a PoC implementation to showcase this.
 
 The following three goals are additional goals that do not address specific problems in the current implementation, but are still important with respect to usability and maintainability.
 
-## G4: Simplicity and Decomposition
+#### G4: Simplicity and Decomposition
 The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
 Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
 This complements with the [removal of parsing from the sources](https://github.com/nebulastream/nebulastream-public/pull/492).
 A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device.
 
-## G5: Non-invasiveness
+#### G5: Non-invasiveness
 The implementation should conform to the past effort of refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md).
 We want this redesign to not impact the construction of sources at all, we aim to only redesign the execution model.
 The impact on the rest of the codebase should be minimal.
 We do not want the `QueryEngine` that manages sources to know or depend on the internals of the execution model of the sources.
 
-## G6: Fault Transparency
+#### G6: Fault Transparency
 Errors should be handled transparently as described in the [DD on error handling](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240711_error_handling.md).
 Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component.
 
-## G7: Backwards Compatibility
+#### G7: Backwards Compatibility
 It should still be possible to implement new sources with the current threading model as a fallback/baseline.
 
 # Non-Goals
