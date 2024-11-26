@@ -1,0 +1,103 @@
+
+# MEOS (Mobility Engine, Open Source)
+
+MEOS is a C library and API designed for manipulating temporal and spatiotemporal data. It is the core component of MobilityDB, which is an open-source platform for managing and analyzing geospatial trajectory data, built on PostgreSQL and PostGIS. MEOS extends the ISO 19141:2008 standard, allowing it to represent changes not only in spatial but also non-spatial attributes over time. A key feature of MEOS is its ability to handle "temporal gaps," which occur when mobility data is missing for a certain period due to issues like signal loss.
+
+Inspired by the GEOS (Geometry Engine, Open Source) library, MEOS provides comprehensive support for handling complex spatiotemporal data, making it suitable for applications like location-based services, smart city planning, and mobility data analytics.
+
+For further details, visit [MEOS Official Site](https://libmeos.org/).
+
+---
+
+# Why Integrate MEOS into NebulaStream
+
+By integrating MEOS with NebulaStream, we gain the ability to process and analyze spatiotemporal data in real-time. MEOS provides  functionalities for managing spatiotemporal objects, including temporal and spatial operators, aggregations, and mobility-specific functions (e.g., trajectory manipulation). NebulaStream makes it possible to apply these MEOS' functions on live data streams. This is particularly useful for applications such as vessel tracking, traffic management, and smart city infrastructure monitoring, where large volumes of mobility data need to be processed and acted upon instantly.
+
+
+### Key Possibilities:
+1. **Real-Time Spatiotemporal Analysis**: MEOS functions, such as spatiotemporal joins, aggregations, and trajectory processing, can be executed in real time using NebulaStream's streaming engine.
+2. **Enhanced Mobility Data Processing**: With MEOS, NebulaStream can handle mobility data scenarios, such as the maritime domain where real-time vessel tracking and behavior analysis.
+3. **Scalable Data Processing**: NebulaStream’s architecture allows MEOS to process large-scale mobility data efficiently by distributing the computations across cloud and edge resources.
+4. **Support for Temporal Gaps**: MEOS natively handles temporal gaps in mobility data, enabling real-time analysis even when there are disruptions in the data stream.
+5. **IoT and Edge Integration**: With NebulaStream, spatiotemporal data from edge devices (e.g., sensors on vehicles, drones, or other mobile entities) can be processed in real-time, making the system applicable for dynamic and distributed IoT environments.
+
+---
+
+# Installation and Integration
+
+### MEOS Installation
+
+1. Clone the MobilityDB repository:
+   ```bash
+   git clone -b stable-1.1 https://github.com/MobilityDB/MobilityDB
+   ```
+2. Build and install MEOS:
+   ```bash
+   mkdir MobilityDB/build
+   cd MobilityDB/build
+   cmake -DMEOS=on ..
+   make
+   sudo make install
+   ```
+
+### NebulaStream Integration with MEOS
+
+To integrate MEOS with NebulaStream, a new plugin directory (`nes-plugins/meos/`) is added, and the build system needs to be configured to include MEOS using `Findmeos.cmake`. This setup allows NebulaStream to access MEOS functions directly during stream processing.
+
+1. **Set the CMake flag**:
+   Make sure the CMake configuration includes flags for integrating MEOS:
+   ```bash
+   set option(NES_BUILD_PLUGIN_MEOS "Build MEOS Plugin support" ON) 
+
+   ```
+2. **Dependencies**:
+   Ensure that your system meets the following requirements:
+   - Linux or MacOS
+   - CMake >= 3.7
+   - GEOS >= 3.8
+   - PROJ4 >= 6.1
+   - JSON-C
+   - GNU Scientific Library (GSL)
+
+---
+
+# Use Case: Maritime Domain
+
+In this integration, MEOS is applied in the maritime domain using Automatic Identification System (AIS) data, which consists of messages from vessels equipped with sensors. The goal is to monitor vessel behavior in real time by analyzing the vessel's trip details, navigational status, and other key metrics.
+
+### AIS Dataset Structure:
+The AIS dataset contains spatiotemporal information about vessels, with fields representing time (`t`), vessel ID (`mmsi`), latitude, longitude, and speed over ground (`sog`).
+
+Example CSV format (`ais_instants.csv`):
+```
+t,mmsi,latitude,longitude,sog
+2021-01-08 00:00:00,265513270,57.059,12.272388,0
+```
+
+`aisdk-2024-09-01.csv`
+Real data downloaded from the [Danish Maritime Authority](https://www.dma.dk).
+
+---
+
+# Integration
+
+### Query 1: Speed Over Ground Aggregation
+This query uses a keyed sliding window to sum the speed over ground (SOG) for vessels over time. The spatiotemporal data is processed in real-time, allowing maritime authorities to track vessel speeds and ensure compliance with navigational safety standards.
+
+### Query 2: Real-Time Vessel intersection (In progress)
+A real-time query that computes if trajectory of vessels intersect with a SpatioTemporal Bounding Box. This query utilizes MEOS's functions to create points, a SpatioTemporal Bounding Box and check if they ever intersect.
+
+
+### Query 3: Real-Time Vessel trajectory inputation (In progress)
+A real-time query that computes trajectory of vessels for a whole day 4.4GB of data points. This query utilizes MEOS's functions to create points to create the trajectory.
+
+---
+
+# Unit Tests
+The following unit tests validate the integration of MEOS within NebulaStream environment:
+
+- **MEOS00**: Tests the basic creation and destruction of a MEOS object.
+- **MEOS02**: Validates the processing of spatiotemporal data, creating trajectories as they are read.
+- **MEOS03**: Ensures correct connection with MEOS and Postgres. Postgres is a dependency in this file. Connection parameters should be filled out accordingly. Postgres is used to to store and process AIS records.
+
+---
