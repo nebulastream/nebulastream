@@ -144,7 +144,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
                   entry->getSharedQueryId(),
                   entry->getDecomposedQueryId());
         entry->notifySourceCompletion(source, terminationType);
-        if (terminationType == QueryTerminationType::Graceful) {
+        if (terminationType == QueryTerminationType::Graceful || terminationType == QueryTerminationType::Reconfiguration) {
             queryStatusListener->notifySourceTermination(entry->getSharedQueryId(),
                                                          entry->getDecomposedQueryId(),
                                                          operatorId,

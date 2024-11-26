@@ -75,9 +75,11 @@ class ExchangeProtocol {
 
     /**
      * @brief Reaction of the zmqServer after an EndOfStream message is received.
-     * @param the endOfStreamMessage
+     * @param endOfStreamMessage a message containing details about the type of EoS
+     * @param marker in case of reconfiguration: a marker containing a set of reconfiguration events
      */
-    void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
+    void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage,
+                       std::optional<ReconfigurationMarkerPtr> marker = std::nullopt);
 
     /**
      * @brief This method is called when the server receives an event message.

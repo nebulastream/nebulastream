@@ -139,11 +139,12 @@ void WorkerContext::removeTopTupleFromStorage(Network::NesPartition nesPartition
 bool WorkerContext::releaseNetworkChannel(OperatorId id,
                                           Runtime::QueryTerminationType terminationType,
                                           uint16_t sendingThreadCount,
-                                          uint64_t currentMessageSequenceNumber) {
+                                          uint64_t currentMessageSequenceNumber,
+                                          const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
     NES_TRACE("WorkerContext: releasing channel for operator {} for context {}", id, workerId);
     if (auto it = dataChannels.find(id); it != dataChannels.end()) {
         if (auto& channel = it->second; channel) {
-            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber);
+            channel->close(terminationType, sendingThreadCount, currentMessageSequenceNumber, reconfigurationMarker);
         }
         dataChannels.erase(it);
         return true;

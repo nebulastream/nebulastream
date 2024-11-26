@@ -41,7 +41,7 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableDrainQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
                 break;
             }
             case ReconfigurationMetadataType::UpdateQuery: {
@@ -55,7 +55,7 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableUpdateQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
                 break;
             }
             case ReconfigurationMetadataType::UpdateAndDrainQuery: {
@@ -74,7 +74,7 @@ void ReconfigurationMarkerSerializationUtil::serialize(const ReconfigurationMark
                 serializableReconfigurationMetadata.mutable_reconfigurationmetadata()->mutable_details()->PackFrom(
                     serializableUpdateAndDrainQueryMetadata);
                 serializableReconfigurationMetadata.set_querystate(QueryStateSerializationUtil::serializeQueryState(queryState));
-                mutableReconfigurationMarkerEvents[key] = serializableReconfigurationMetadata;
+                mutableReconfigurationMarkerEvents[key.getRawValue()] = serializableReconfigurationMetadata;
                 break;
             }
         }
@@ -96,7 +96,7 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
             reconfigurationMetaData.details().UnpackTo(&serializedDrainQueryMetadata);
             auto reConfMetaData = std::make_shared<DrainQueryMetadata>(serializedDrainQueryMetadata.numberofsources());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
         } else if (reconfigurationMetaData.details()
                        .Is<SerializableReconfigurationMetadata_SerializableUpdateAndDrainMetadata>()) {
             auto serializedUpdateAndDrainQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateAndDrainMetadata();
@@ -108,7 +108,7 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
                 serializedUpdateAndDrainQueryMetadata.decomposedqueryplanversion(),
                 serializedUpdateAndDrainQueryMetadata.numberofsources());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
         } else if (reconfigurationMetaData.details().Is<SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata>()) {
             auto serializedUpdateQueryMetadata = SerializableReconfigurationMetadata_SerializableUpdateQueryMetadata();
             reconfigurationMetaData.details().UnpackTo(&serializedUpdateQueryMetadata);
@@ -118,7 +118,7 @@ void ReconfigurationMarkerSerializationUtil::deserialize(
                                                       DecomposedQueryId(serializedUpdateQueryMetadata.decomposedqueryid()),
                                                       serializedUpdateQueryMetadata.decomposedqueryplanversion());
             auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-            reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+            reconfigurationMarker->addReconfigurationEvent(DecomposedQueryId(key), markerEvent);
         }
     }
 }

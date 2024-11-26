@@ -28,6 +28,11 @@
 #include <queue>
 #include <unordered_map>
 
+namespace NES {
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+}// namespace NES
+
 namespace NES::Runtime {
 
 class AbstractBufferProvider;
@@ -174,13 +179,16 @@ class WorkerContext {
     /**
      * @brief removes a registered network channel with a termination type
      * @param id of the operator that we want to store the output channel
-     * @param type the termination type
+     * @param terminationType the termination type
      * @param currentMessageSequenceNumber represents the total number of data buffer messages sent
+     * @param reconfigurationMarker an optional containing the reconfiguration marker if this channel is closed as part of a
+     * reconfiguration
      */
     bool releaseNetworkChannel(OperatorId id,
-                               Runtime::QueryTerminationType type,
+                               Runtime::QueryTerminationType terminationType,
                                uint16_t sendingThreadCount,
-                               uint64_t currentMessageSequenceNumber);
+                               uint64_t currentMessageSequenceNumber,
+                               const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker);
 
     /**
      * @brief This stores a network channel for an operator

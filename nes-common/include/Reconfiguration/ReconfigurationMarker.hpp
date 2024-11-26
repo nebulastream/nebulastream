@@ -17,7 +17,6 @@
 
 #include <Reconfiguration/ReconfigurationMarkerEvent.hpp>
 #include <optional>
-#include <string>
 #include <unordered_map>
 
 namespace NES {
@@ -50,25 +49,25 @@ class ReconfigurationMarker {
 
     /**
      * @brief Get the reconfiguration marker event
-     * @param key : the id for which the reconfiguration marker needs to be defined
+     * @param decomposedQueryId : the id for which the reconfiguration marker needs to be defined
      * @return optional immutable reconfiguration marker event
      */
-    std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(const std::string& key);
+    std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(DecomposedQueryId decomposedQueryId) const;
 
     /**
      * @brief Add a reconfiguration marker event
-     * @param key : key identifying the decomposed query plan
+     * @param decomposedQueryId : key identifying the decomposed query plan
      * @param reconfigurationEvent : the reconfiguration marker event
      */
-    void addReconfigurationEvent(const std::string& key, ReconfigurationMarkerEventPtr reconfigurationEvent);
+    void addReconfigurationEvent(DecomposedQueryId decomposedQueryId, const ReconfigurationMarkerEventPtr reconfigurationEvent);
 
     /**
      * @brief Get all reconfiguration marker events defined in the reconfiguration marker
      */
-    const std::unordered_map<std::string, ReconfigurationMarkerEventPtr>& getAllReconfigurationMarkerEvents() const;
+    const std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr>& getAllReconfigurationMarkerEvents() const;
 
   private:
-    std::unordered_map<std::string, ReconfigurationMarkerEventPtr> reconfigurationEvents;
+    std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr> reconfigurationEvents;
 };
 
 }// namespace NES

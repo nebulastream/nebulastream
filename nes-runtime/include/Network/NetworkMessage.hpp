@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
 
 #include <Network/ChannelId.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Common.hpp>
@@ -158,9 +159,11 @@ class EndOfStreamMessage : public ExchangeMessage {
                                 ChannelType channelType,
                                 Runtime::QueryTerminationType terminationType,
                                 uint16_t numSendingThreads,
-                                uint64_t maxMessageSequenceNumber)
+                                uint64_t maxMessageSequenceNumber,
+                                uint16_t reconfiguraionEventCount = 0)
         : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType),
-          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber) {}
+          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber),
+          reconfigurationEventCount(reconfiguraionEventCount) {}
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -172,11 +175,41 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint64_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
 
+    [[nodiscard]] uint16_t getReconfigurationEventCount() const { return reconfigurationEventCount; }
+
   private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
     uint16_t numSendingThreads;
     uint64_t maxMessageSequenceNumber;
+    uint16_t reconfigurationEventCount;
+};
+
+/**
+ * @brief This message contains a reconfiguratin event which is propagated along the data stream
+ */
+class ReconfigurationEventMessage {
+  public:
+    ReconfigurationEventMessage(DecomposedQueryId key,
+                                QueryState queryState,
+                                ReconfigurationMetadataType metadataType,
+                                uint16_t numberOfSources,
+                                WorkerId workerId,
+                                SharedQueryId sharedQueryId,
+                                DecomposedQueryId decomposedQueryId,
+                                DecomposedQueryPlanVersion decomposedQueryPlanVersion)
+        : key(key), queryState(queryState), metadataType(metadataType), numberOfSources(numberOfSources), workerId(workerId),
+          sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId),
+          decomposedQueryPlanVersion(decomposedQueryPlanVersion) {}
+
+    DecomposedQueryId key;
+    QueryState queryState;
+    ReconfigurationMetadataType metadataType;
+    uint16_t numberOfSources;
+    WorkerId workerId;
+    SharedQueryId sharedQueryId;
+    DecomposedQueryId decomposedQueryId;
+    DecomposedQueryPlanVersion decomposedQueryPlanVersion;
 };
 
 /**

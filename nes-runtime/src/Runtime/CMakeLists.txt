@@ -39,6 +39,8 @@ add_source_files(nes-runtime
         ThreadPool.cpp
         Task.cpp
         QueryStatistics.cpp
+        QueryTerminationType.cpp
+        ReconfigurationType.cpp
 )
 
 add_subdirectory(Profiler)

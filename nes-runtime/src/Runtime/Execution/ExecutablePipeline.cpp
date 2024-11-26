@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -201,6 +202,18 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
             context.setObjectRefCnt(this, refCnt);
             break;
         }
+        case ReconfigurationType::ReconfigurationMarker: {
+            auto marker = task.getUserData<ReconfigurationMarkerPtr>();
+            auto event = marker->getReconfigurationEvent(decomposedQueryId);
+            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+
+            if (!(event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>())) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
+
+            //todo #5119: What has to be done when the reconfiguration event is not of type drain?
+        }
         case ReconfigurationType::FailEndOfStream:
         case ReconfigurationType::HardEndOfStream:
         case ReconfigurationType::SoftEndOfStream: {
@@ -217,12 +230,108 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     }
 }
 
+void ExecutablePipeline::propagateReconfiguration(ReconfigurationMessage& task) {
+    auto terminationType = reconfigurationTypeToTerminationType(task.getType());
+
+    // do not change the order here
+    // first, stop and drain handlers, if necessary
+    //todo #4282: drain without stopping for VersionDrainEvent
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->stop(terminationType, pipelineContext);
+    }
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->postReconfigurationCallback(task);
+    }
+    // second, stop pipeline, if not stopped yet
+    stop(terminationType);
+    // finally, notify query manager
+    queryManager->notifyPipelineCompletion(decomposedQueryId,
+                                           inherited0::shared_from_this<ExecutablePipeline>(),
+                                           terminationType);
+    //extract marker from user data
+    auto marker = task.getUserData<ReconfigurationMarkerPtr>();
+
+    for (const auto& successorPipeline : successorPipelines) {
+        if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe, marker);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got EndOfStream  "
+                      "with nextPipeline",
+                      decomposedQueryId,
+                      (*pipe)->getPipelineId());
+        } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
+            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink, marker);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
+                      "nextPipeline",
+                      decomposedQueryId,
+                      (*sink)->toString());
+        }
+    }
+}
+
+void ExecutablePipeline::propagateEndOfStream(ReconfigurationMessage& task) {
+    auto terminationType = reconfigurationTypeToTerminationType(task.getType());
+
+    // do not change the order here
+    // first, stop and drain handlers, if necessary
+    //todo #4282: drain without stopping for VersionDrainEvent
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->stop(terminationType, pipelineContext);
+    }
+    for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->postReconfigurationCallback(task);
+    }
+    // second, stop pipeline, if not stopped yet
+    stop(terminationType);
+    // finally, notify query manager
+    queryManager->notifyPipelineCompletion(decomposedQueryId,
+                                           inherited0::shared_from_this<ExecutablePipeline>(),
+                                           terminationType);
+
+    for (const auto& successorPipeline : successorPipelines) {
+        if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got EndOfStream  "
+                      "with nextPipeline",
+                      decomposedQueryId,
+                      (*pipe)->getPipelineId());
+        } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
+            auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink);
+            queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
+            NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
+                      "nextPipeline",
+                      decomposedQueryId,
+                      (*sink)->toString());
+        }
+    }
+}
+
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
     NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: {} stage id: {}",
               decomposedQueryId,
               pipelineId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
+        case ReconfigurationType::ReconfigurationMarker: {
+            //todo #5119: handle non shutdown cases here?
+            auto prevProducerCounter = activeProducers.fetch_sub(1);
+            if (prevProducerCounter == 1) {//all producers sent EOS
+                NES_DEBUG("Reconfiguration of pipeline belonging to subplanId:{} stage id:{} reached prev=1",
+                          decomposedQueryId,
+                          pipelineId);
+                propagateReconfiguration(task);
+            } else {
+                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: {} stage id: {} but refCount was {} "
+                          "and now is {}",
+                          decomposedQueryId,
+                          pipelineId,
+                          (prevProducerCounter),
+                          (prevProducerCounter - 1));
+            }
+            break;
+        }
         case ReconfigurationType::FailEndOfStream: {
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
@@ -262,44 +371,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 NES_DEBUG("Reconfiguration of pipeline belonging to subplanId:{} stage id:{} reached prev=1",
                           decomposedQueryId,
                           pipelineId);
-                auto terminationType = task.getType() == Runtime::ReconfigurationType::SoftEndOfStream
-                    ? Runtime::QueryTerminationType::Graceful
-                    : Runtime::QueryTerminationType::HardStop;
-
-                // do not change the order here
-                // first, stop and drain handlers, if necessary
-                //todo #4282: drain without stopping for VersionDrainEvent
-                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    operatorHandler->stop(terminationType, pipelineContext);
-                }
-                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    operatorHandler->postReconfigurationCallback(task);
-                }
-                // second, stop pipeline, if not stopped yet
-                stop(terminationType);
-                // finally, notify query manager
-                queryManager->notifyPipelineCompletion(decomposedQueryId,
-                                                       inherited0::shared_from_this<ExecutablePipeline>(),
-                                                       terminationType);
-
-                for (const auto& successorPipeline : successorPipelines) {
-                    if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *pipe);
-                        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
-                        NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: {} stage id: {} got EndOfStream  "
-                                  "with nextPipeline",
-                                  decomposedQueryId,
-                                  (*pipe)->getPipelineId());
-                    } else if (auto* sink = std::get_if<DataSinkPtr>(&successorPipeline)) {
-                        auto newReconf = ReconfigurationMessage(sharedQueryId, decomposedQueryId, task.getType(), *sink);
-                        queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryId, newReconf, false);
-                        NES_DEBUG("Going to reconfigure next sink belonging to subplanId: {} sink id: {} got EndOfStream  with "
-                                  "nextPipeline",
-                                  decomposedQueryId,
-                                  (*sink)->toString());
-                    }
-                }
-
+                propagateEndOfStream(task);
             } else {
                 NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: {} stage id: {} but refCount was {} "
                           "and now is {}",

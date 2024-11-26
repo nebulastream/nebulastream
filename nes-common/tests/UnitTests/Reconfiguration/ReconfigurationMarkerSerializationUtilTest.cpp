@@ -44,23 +44,23 @@ TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerializ
     auto reconfigurationMetaData1 = std::make_shared<UpdateQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1);
     auto reconfigurationMarkerEvent1 =
         ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_REDEPLOYMENT, reconfigurationMetaData1);
-    auto key1 = "k1";
-    originalReconfigurationMarker->addReconfigurationEvent(key1, reconfigurationMarkerEvent1);
+    DecomposedQueryId decomposedQueryId(1);
+    originalReconfigurationMarker->addReconfigurationEvent(decomposedQueryId, reconfigurationMarkerEvent1);
 
     // reconfiguration metadata 2
     auto reconfigurationMetaData2 = std::make_shared<DrainQueryMetadata>(1);
     auto reconfigurationMarkerEvent2 =
         ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_MIGRATION, reconfigurationMetaData2);
-    auto key2 = "k2";
-    originalReconfigurationMarker->addReconfigurationEvent(key2, reconfigurationMarkerEvent2);
+    DecomposedQueryId decomposedQueryId2(2);
+    originalReconfigurationMarker->addReconfigurationEvent(decomposedQueryId2, reconfigurationMarkerEvent2);
 
     // reconfiguration metadata 3
     auto reconfigurationMetaData3 =
         std::make_shared<UpdateAndDrainQueryMetadata>(WorkerId(1), SharedQueryId(1), DecomposedQueryId(1), 1, 1);
     auto reconfigurationMarkerEvent3 =
         ReconfigurationMarkerEvent::create(QueryState::MARKED_FOR_MIGRATION, reconfigurationMetaData3);
-    auto key3 = "k3";
-    originalReconfigurationMarker->addReconfigurationEvent(key3, reconfigurationMarkerEvent3);
+    DecomposedQueryId decomposedQueryId3(3);
+    originalReconfigurationMarker->addReconfigurationEvent(decomposedQueryId3, reconfigurationMarkerEvent3);
 
     // serialize and deserialize reconfiguration marker
     ReconfigurationMarkerRequest request;
@@ -84,7 +84,8 @@ TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerializ
     }
 
     // Validate if reconfiguration event for key 1 got properly serialized and deserialized
-    const auto& deserializedReconfigurationEvent1Optional1 = deserializedReconfigurationMarker->getReconfigurationEvent(key1);
+    const auto& deserializedReconfigurationEvent1Optional1 =
+        deserializedReconfigurationMarker->getReconfigurationEvent(decomposedQueryId);
     const auto& deserializedReconfigurationMetadata1 = deserializedReconfigurationEvent1Optional1.value();
     EXPECT_EQ(reconfigurationMarkerEvent1->queryState, deserializedReconfigurationMetadata1->queryState);
     EXPECT_EQ(reconfigurationMarkerEvent1->reconfigurationMetadata->as<UpdateQueryMetadata>()->workerId,
@@ -98,14 +99,16 @@ TEST_F(ReconfigurationMarkerSerializationUtilTest, reconfigurationMarkerSerializ
         deserializedReconfigurationMetadata1->reconfigurationMetadata->as<UpdateQueryMetadata>()->decomposedQueryPlanVersion);
 
     // Validate if reconfiguration event for key 2 got properly serialized and deserialized
-    const auto& deserializedReconfigurationEvent1Optional2 = deserializedReconfigurationMarker->getReconfigurationEvent(key2);
+    const auto& deserializedReconfigurationEvent1Optional2 =
+        deserializedReconfigurationMarker->getReconfigurationEvent(decomposedQueryId2);
     const auto& deserializedReconfigurationMetadata2 = deserializedReconfigurationEvent1Optional2.value();
     EXPECT_EQ(reconfigurationMarkerEvent2->queryState, deserializedReconfigurationMetadata2->queryState);
     EXPECT_EQ(reconfigurationMarkerEvent2->reconfigurationMetadata->as<DrainQueryMetadata>()->numberOfSources,
               deserializedReconfigurationMetadata2->reconfigurationMetadata->as<DrainQueryMetadata>()->numberOfSources);
 
     // Validate if reconfiguration event for key 3 got properly serialized and deserialized
-    const auto& deserializedReconfigurationEvent1Optional3 = deserializedReconfigurationMarker->getReconfigurationEvent(key3);
+    const auto& deserializedReconfigurationEvent1Optional3 =
+        deserializedReconfigurationMarker->getReconfigurationEvent(decomposedQueryId3);
     const auto& deserializedReconfigurationMetadata3 = deserializedReconfigurationEvent1Optional3.value();
     EXPECT_EQ(reconfigurationMarkerEvent3->queryState, deserializedReconfigurationMetadata3->queryState);
     EXPECT_EQ(reconfigurationMarkerEvent3->reconfigurationMetadata->as<UpdateAndDrainQueryMetadata>()->workerId,

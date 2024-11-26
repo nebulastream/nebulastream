@@ -200,6 +200,18 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
   private:
+    /**
+     * @brief Propgates a reconfiguration downstream
+     * @param task: the reconfiguraion message to propagate
+     */
+    void propagateReconfiguration(ReconfigurationMessage& task);
+
+    /**
+     * @brief Propgates an end of stream downstream
+     * @param task: the EoS message to propagate
+     */
+    void propagateEndOfStream(ReconfigurationMessage& task);
+
     const PipelineId pipelineId;
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;

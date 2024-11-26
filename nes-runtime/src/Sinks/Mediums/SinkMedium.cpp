@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -79,6 +80,20 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
         case Runtime::ReconfigurationType::HardEndOfStream: {
             terminationType = Runtime::QueryTerminationType::HardStop;
+            break;
+        }
+        case Runtime::ReconfigurationType::ReconfigurationMarker: {
+            auto marker = message.getUserData<ReconfigurationMarkerPtr>();
+            auto event = marker->getReconfigurationEvent(decomposedQueryId);
+            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+
+            if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
+
+            //todo #5119: handle other cases
+            terminationType = Runtime::reconfigurationTypeToTerminationType(message.getType());
             break;
         }
         default: {

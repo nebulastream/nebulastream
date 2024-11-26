@@ -20,8 +20,9 @@
 #include <stdint.h>
 
 namespace NES::Runtime {
+enum class ReconfigurationType : uint8_t;
 
-enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Invalid };
+enum class QueryTerminationType : uint8_t { Graceful = 0, HardStop, Failure, Reconfiguration, Invalid };
 
 template<typename O = std::ostream>
 static O& operator<<(O& os, const QueryTerminationType& type) {
@@ -29,9 +30,12 @@ static O& operator<<(O& os, const QueryTerminationType& type) {
         case QueryTerminationType::Graceful: return os << "Graceful";
         case QueryTerminationType::HardStop: return os << "HardStop";
         case QueryTerminationType::Failure: return os << "Failure";
+        case QueryTerminationType::Reconfiguration: return os << "Reconfiguration";
         default: return os << "Invalid";
     }
 }
+
+ReconfigurationType terminationTypeToReconfigurationType(QueryTerminationType terminationType);
 
 }// namespace NES::Runtime
 

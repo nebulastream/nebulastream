@@ -21,6 +21,8 @@
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES {
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 namespace Network {
 class NodeLocation;
 }
@@ -61,6 +63,14 @@ class DataEmitter : public Runtime::RuntimeEventListener {
      * @brief start a previously scheduled new version for this data emitter
      */
     virtual bool startNewVersion() { return false; };
+
+    /**
+     * @brief check if a reconfiguration marker contains an event for this data emitter. If so, trigger the reconfiguration and
+     * propagate the marker downstream.
+     * @param marker a marker containing a set of reconfiguration events
+     * @return true if a reconfiguration was triggered, false if the marker did not contain any event to be handled by this data emitter
+     */
+    virtual bool insertReconfigurationMarker(ReconfigurationMarkerPtr) { return false; };
 };
 }// namespace NES
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

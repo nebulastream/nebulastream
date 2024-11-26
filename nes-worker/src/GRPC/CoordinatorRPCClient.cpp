@@ -629,6 +629,10 @@ bool CoordinatorRPCClient::notifySourceStopTriggered(SharedQueryId sharedQueryId
                                                      DecomposedQueryId decomposedQueryId,
                                                      OperatorId sourceId,
                                                      Runtime::QueryTerminationType queryTermination) {
+    if (queryTermination == Runtime::QueryTerminationType::Reconfiguration) {
+        //todo #5133: implement separate call to inform coordinator of termination by reconfig
+        return true;
+    }
     NES_ASSERT2_FMT(queryTermination == Runtime::QueryTerminationType::Graceful, "Wrong termination requested");
 
     //Build request
