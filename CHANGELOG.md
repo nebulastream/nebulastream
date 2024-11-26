@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.197](https://github.com/nebulastream/nebulastream/tree/v0.6.197) (2024-11-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.196...v0.6.197)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Implement skeleton for Meos plugin. [\#5135](https://github.com/nebulastream/nebulastream/issues/5135)
+
 ## [v0.6.196](https://github.com/nebulastream/nebulastream/tree/v0.6.196) (2024-11-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.195...v0.6.196)
