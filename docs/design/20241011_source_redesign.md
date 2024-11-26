@@ -11,25 +11,29 @@ Therefore, the current approach does not scale with an increasing number of sour
 Sources read data from external systems or devices and write them into buffers provided by the NES `BufferManager`.
 Precisely, local buffer providers maintain a fixed-size buffer pool per source. 
 If the available memory of the system is exhausted by the number of sources, potentially all available memory will be taken by the sources.
-As an example, if we have 100 buffers in the system and 10 sources.
+As an example, say we have 100 buffers in the system and 10 sources.
 If each source receives a local buffer pool of 10 buffers, this can cause a deadlock, since query processing cannot proceed without buffers (**P2**).
 
-Furthermore, this static assignment of buffers so sources is highly inflexible with respect to the actual requirements of the sources at runtime (**P3**).
+Furthermore, this static assignment of buffers to sources is highly inflexible with respect to the actual requirements of the sources at runtime (**P3**).
 For example, a source might be idle for a long time, while another source is producing data at a high rate.
 
 # Goals
+## G1: Scalability, adresses P1
 A single node worker should be able to handle thousands of concurrent sources as efficiently as possible.
 Slow disk or network I/O can be the main bottleneck during query execution (this may be out of the system's control).
 However, adding more sources should impact existing sources or CPU-bound operations as little as possible. 
 Therefore, we want to avoid stalls due to CPU oversubscription or threads busy-waiting on data to become ready.
-Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, but we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as short as possible.
-(**G1, scalability**, addresses P1).
+Even though devices like the disk or network card are limited in the bandwidth they can provide with regard to concurrent access, we can hide these latencies and allow the system to use these resources more efficiently by accessing them asynchronously, blocking the CPU as little as possible.
 
+## G2: Deadlock Prevention, addresses P2
+The `BufferManager` should have separate pools for sources and processing, removing potential deadlocks due to sources taking all buffers.
 
-The `BufferManager` should have separate pools for sources and processing, removing potential deadlocks due to sources taking all buffers (**G2, deadlock prevention**, addresses P2).
+## G3: Fairness and demand-based buffer distribution, addresses P3
 Moreover, there should be a centralized `BufferManager` for just the sources. 
-It can be aware of the sources and their requirements holds the information it needs to facilitate fairness and maximum efficiency.
-In particular, it needs to take care of flow control and speed differences between different sources to ensure that a) buffering is possible under high load of a particular source while b) facilitating fairness such that each source receives a single buffer at a time to make progress for queries that depend on that source (**G3, fairness and demand-based buffer distribution**, addresses P3).
+It can be aware of the sources and their requirements by storing the state it needs to facilitate fairness and maximum efficiency.
+In particular, it needs to take care of flow control and speed differences between different sources to ensure that:
+1) buffering is possible under high load of a particular source while 
+2) facilitating fairness such that each source receives a single buffer at a time to make progress.
 
 In addition, the `BufferManager` should be extended to expose an asynchronous interface for sources to use.
 Our goal is to get rid of blocking operations within source threads wherever possible.
@@ -37,20 +41,24 @@ We propose a simple policy and provide a PoC implementation to showcase this.
 
 The following three goals are additional goals that do not address specific problems in the current implementation, but are still important with respect to usability and maintainability.
 
+## G4: Simplicity and Decomposition
 The implementation of new sources should be as easy as possible by providing a small, concise interface that should closely match the current interface.
 Sources will still be able to setup (open resources), fill a raw byte buffer, and close resources again.
 This complements with the [removal of parsing from the sources](https://github.com/nebulastream/nebulastream-public/pull/492).
-A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device **(G4, simplicity and decomposition**).
+A single source should be easy to digest and contain only the state necessary to manage the connection to an external system/device.
 
+## G5: Non-invasiveness
 The implementation should conform to the past effort of refactoring the [description and construction of sources](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240702_sources_and_sinks.md).
 We want this redesign to not impact the construction of sources at all, we aim to only redesign the execution model.
-The impact on the rest of the codebase should be minimal (**G5, non-invasiveness**).
+The impact on the rest of the codebase should be minimal.
 We do not want the `QueryEngine` that manages sources to know or depend on the internals of the execution model of the sources.
 
+## G6: Fault Transparency
 Errors should be handled transparently as described in the [DD on error handling](https://github.com/nebulastream/nebulastream-public/blob/main/docs/design/20240711_error_handling.md).
-Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component (**G6, fault transparency**).
+Every possible error regarding I/O operations should be handled appropriately by trying to recover from it if possible, or emitting the error to a higher-level component.
 
-It should still be possible to implement new sources with the current threading model as a fallback/baseline **(G7, backwards compatibility)**.
+## G7: Backwards Compatibility
+It should still be possible to implement new sources with the current threading model as a fallback/baseline.
 
 # Non-Goals
 - **NG1**: a complete vision or implementation on how the sources interact with the `BufferManager`, and what policies the `BufferManager` should implement to facilitate fairness and performance. We only provide a PoC here. For further details, see the [BM spilling & redesign DD](https://db.in.tum.de/~fent/papers/coroutines.pdf?lang=de)
@@ -87,37 +95,37 @@ At the same time, threads that do blocking I/O calls (e.g., asking for a disk pa
 ## Async I/O
 If we have a separate thread pool for I/O operations, we need to define operations and decide how to schedule them on this pool.
 With the assumption that we primarily do I/O when dealing with sources, we are **waiting** for something to happen in the background for most of the time.
-At some point, each source calls a client library to interact with the external system like `requestData()` and then blocks during this call.
+At some point, each source calls a client library to interact with the external system, like `requestData()`, and then blocks during this call.
 The CPU does not have any insight information on what we are waiting on, so if we are unlucky and the CPU does not give another thread a time slice, we block the CPU with our I/O.
 
 An improvement to this would be to to put the thread to sleep by using mechanisms like `std::future` and have another thread run while we wait on the I/O to complete.
 However, the calling thread would still be occupied and therefore is not free to use for other tasks.
 If we assume a limited pool of threads, which we strive to have, we could still end up in the situation where all available I/O threads are sleeping, waiting for blocking I/O to complete.
-During this time, no other I/O tasks can make progress.
+During this time, no other I/O operations can make progress.
 
 It would be nice to have a mechanism to pause/resume a function waiting for external I/O **without** occupying a thread while waiting for data to arrive.
-That's what async I/O gives us, and an elegant way to implement it using modern C++ are coroutines.
+That is what async I/O gives us, and an elegant way to implement it using modern C++ are coroutines.
 They enable us to suspend and resume running functions while **preserving** their state.
 Internally, the compiler rewrites coroutines to state machines to make this work.
 C++20 introduced three new keywords, namely `co_await`, `co_yield` and `co_return`.
-`co_await` pauses execution and awaits another coroutine that is called (lower-level code), `co_yield` yields a value to the caller without returning to the caller (think python generators), `co_return` signals termination of the coroutine with an optional return value.
+`co_await` pauses/suspends execution and awaits another coroutine that is called (lower-level code), `co_yield` yields a value to the caller without returning to the caller (think python generators), `co_return` signals termination of the coroutine with an optional return value.
 Coroutines provide an elegant way to implement async I/O while allowing it to look like sequential execution.
 Before coroutines existed, one had to use chains of callbacks that were invoked when asynchronous operations returned to the calling function.
-Utilizing these mechanisms of pausing/resuming execution, we are now able to wait for external events to happen in the background, without occupying a thread (like a TCP socket filling a buffer, or a disk page to be copied into memory).
+Utilizing these mechanisms of suspending/resuming execution, we are now able to wait for external events to happen in the background, without occupying a thread (like a TCP socket filling a buffer, or a disk page to be copied into memory).
 
 An important thing to note is that we should avoid running blocking operations by yielding control regularly.
 Otherwise, we block a thread, possibly preventing other async operations from making progress.
-For this reason, the efforts to move data parsing (which might be CPU-intensive) from the sources and async I/O go hand in hand.
+For this reason, the efforts to remove data parsing (which might be CPU-intensive) from the sources and async I/O go hand in hand.
 Currently, sources read external data into the system while additionally parsing that data to the schema of the logical source.
 This mixes up I/O logic with data parsing and therefore violates basic principles like the separation of concerns. 
-If we follow the guideline and isolate I/O-bound operations properly from CPU-bound operations, an enormous amount of concurrent tasks can be scheduled on relatively few threads. 
+If we follow the guideline and isolate I/O-bound operations properly from CPU-bound operations, an enormous amount of concurrent I/O operations can be scheduled on relatively few threads. 
 
 The ongoing I/O operations can be wrapped into coroutines that represent tasks that drive the sources' progress.
 An async runtime manages these ongoing tasks.
 It can run with a fixed-size thread pool or even just a single thread and it polls tasks that are ready to make progress.
 How does it know what operations (coroutines) are ready to be resumed and make progress?
 Typically, this is done via syscalls like `epoll`. 
-They allow the kernel to notify the asynchronous runtime (`boost::asio::io_context`) when something happened on a file descriptor (i.e., data has arrived), queueing an event together with the coroutine to be picked up by a thread and resumed.
+They allow the kernel to notify the asynchronous runtime (`boost::asio::io_context`) when something happened on a file descriptor (i.e., data has arrived), queueing an event together with the coroutine frame (storing the state and suspend point) to be picked up by a thread and resumed.
 We do not rely on busy-waiting, nor do we need a timer or regularly wake up to check if something is ready.
 
 When resumed, we can deal with the arrived data, e.g., by giving it out to other components for further processing.
@@ -183,10 +191,10 @@ The proposed solution depends on these key design decisions:
 2. We introduce a centralized `AsyncSourceExecutor` that drives the execution of all asynchronous sources on a thread pool (G1).
 3. We allow synchronous/blocking sources to keep existing and run them in the current thread-per-source execution model as a fallback (G7).
 Both synchronous and asynchronous sources expose the same interface to the `QueryEngine`, so it does not deal with the different execution models.
-4. We have a single separate the I/O buffer pool shared among sources to prevent deadlocks (G2).
-5. A local `BufferManager` maintains the buffer pool for the sources and exposes an asynchronous interface to prevent blocking I/O threads.
-6. To prevent high tail latencies, we allow the user to configure timeouts on a per-source basis. 
+4. To prevent high tail latencies, we allow the user to configure timeouts on a per-source basis. 
 When the timeout expires, a pending asynchronous operation is cancelled. 
+5. We have a separate I/O buffer pool shared among sources to prevent deadlocks (G2).
+6. A local `BufferManager` maintains the buffer pool for the sources and exposes an asynchronous interface to prevent blocking I/O threads.
 7. We implement a simple policy for fairness and demand-based buffer distribution among sources despite contention (G3).
 
 ## Async I/O Library
@@ -372,7 +380,7 @@ classDiagram
     }
 ```
 
-The sources' implementations will be very simple, requiring only logic to open/close resources and fill a single buffer with data (G4):
+The source implementations will be very simple, requiring only logic to open/close resources and fill a single buffer with data (G4):
 ```cpp
 class TCPSource : public Source
 {
@@ -432,10 +440,10 @@ On a high level, deadlocks occur if there are cyclic dependencies on a specific 
 In our case, producers (sources) and consumers (successor pipelines) of data depend on buffers to make progress.
 If a consumer acquires all buffers to store internal state of e.g., pending windows, the corresponding source can not acquire a buffer anymore. 
 Consequently, no new data can be produced for the operator to trigger the window and release its buffers.
-Similarly, when sources take all buffers, the downstream tasks are blocked and cannot release buffers, leading to a deadlock.
+Similarly, when sources take all buffers, the downstream tasks are blocked and can not release buffers, leading to a deadlock.
 In our producer/consumer relationship between sources and successor pipelines, deadlocks need to be avoided (G2). 
-By separating an source pool from processing pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
-A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG4).
+By separating a source buffer pool from processing pools, we avoid the deadlock problem between sources and their consumer pipelines (P2).
+A redistribution of these pools based on the requirements of I/O and processing is an optimization that could be applied at a later point (NG1).
 
 ### Flow Control
 For flow control (handling speed differences between producer and consumer, and among different producers), the following questions arise with respect to buffers:
@@ -451,6 +459,7 @@ Global timeouts are not suitable as each query might have different latency requ
 Instead, we let the user set a timeout on a per-source basis.
 If no timeout is provided, the source will wait indefinitely for a buffer to be filled.
 A disadvantage of this approach is that the timeout set only reflects on the maximum latency of the source and might not translate to query latency, which most users are interested in.
+Furthermore, the timeout logic adds overhead to the asynchronous runtime because for each async read operation, an additional timeout needs to be submitted and checked.
 An advantage is that the source is autonomous and no external components need to be involved. 
 
 As a first baseline, we implement the timeout-based approach.
@@ -531,14 +540,14 @@ awaitable<RawBuffer> AsyncSourceRunner::acquireBuffer()
 Speed differences among sources can be defined as differences in buffer requests per unit time.
 When downstream tasks are overall reading and thus releasing the buffers faster than the sources can fill new buffers, case 1) applies (slow source, fast downstream) and the speed differences do not lead to contention for buffers. 
 By contrast, when a source is producing and thus requesting buffers at a faster rate than downstream tasks can release them, case 2) applies (fast source, slow downstream).
-In a temporary case, enough buffers are available (buffering), and the buffer manager happily give them out to fast producers.
+In a temporary case, enough buffers are available (buffering), and the buffer manager will happily give them out to fast producers.
 This is not possible in the current implementation of source-local buffer pools that can not be redistributed.
 In the new implementation, we will have a source buffer pool that can be shared among all sources.
 In this scenario, the available buffers will be automatically be distributed relative to the demand.
 With the separation of a single source pool and N processing pools, we prevent fast sources from stealing resources from the processing pipelines.
 
 ### Fairness of Distribution
-With this model, problems arise when a single or few sources take so many buffers such that the majority are impacted and have buffer requests denied, preventing them from making progress.
+With this model of a shared pool for sources, problems arise when a single or few sources take so many buffers such that the majority are impacted and have buffer requests denied, preventing them from making progress.
 
 In general, we want to guarantee **a single buffer available to fill in the background** for as many sources as possible. 
 This is required to effectively utilize async I/O.
@@ -554,13 +563,13 @@ With the timeout-based approach, the source would have to poll the `BufferManage
 
 ### Asynchronous Interface
 Currently, each source has a local `BufferProvider` that maintains a pool of buffers only for this source. 
-The `SourceThread` uses this provider to call `getBufferBlocking` repeatedly in the running thread routine.
+The `SourceThread` uses this provider to call `getBufferBlocking()` repeatedly in the running thread routine.
 This call blocks until a buffer becomes available, which we want to avoid on I/O threads.
-Therefore, we use the non-blocking alternative available called `getBufferNoBlocking`, which returns an `std::optional`.
+Therefore, we use the non-blocking alternative available called `getBufferNoBlocking()`, which returns an `std::optional`.
 In this case we do not block, but the source still requires a buffer to make progress, so we go to sleep without blocking the I/O runtime.
 The timeout is arbitrary and needs to be set explicitly at compile-time, which is not ideal.
 
-A future alternative is to extend the asynchronous behavior across the boundaries of the sources and integrate an event-based mechanism into the `BufferManager`.
+A future alternative is to extend the asynchronous behavior beyond the boundaries of the sources and integrate an event-based mechanism into the `BufferManager`.
 The following example shows in simplified pseudocode how this could look like.
 Note that this is simplified and ignores aspects like locking, error handling, etc.
 ```cpp
@@ -634,13 +643,8 @@ However, it is a low-level interface and has limited support in `boost::asio`, a
 Also, it is not portable to other operating systems and requires Linux kernel 5.1 or newer.
 
 # Open Questions
-## Urgent
 - How to handle the PR, split up into execution model, implementation of specific sources and the `BufferManager` changes?
 - How to model external systems to test specific sources?
-
-## Non-Urgent
-- How to deal with source sharing? Are there special considerations?
-- How to deal with internal sources?
 
 
 # Sources (no pun intended) and Further Reading
