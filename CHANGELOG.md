@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.196](https://github.com/nebulastream/nebulastream/tree/v0.6.196) (2024-11-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.195...v0.6.196)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Propagate reconfiguration markers through decomposed query plans [\#5047](https://github.com/nebulastream/nebulastream/issues/5047)
+
 ## [v0.6.195](https://github.com/nebulastream/nebulastream/tree/v0.6.195) (2024-11-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.194...v0.6.195)
