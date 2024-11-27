@@ -19,7 +19,6 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -47,7 +46,7 @@ std::string LogicalInferModelOperator::toString() const
 
 OperatorPtr LogicalInferModelOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
+    auto copy = std::make_shared<LogicalInferModelOperator>(model, inputFields, outputFields, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);

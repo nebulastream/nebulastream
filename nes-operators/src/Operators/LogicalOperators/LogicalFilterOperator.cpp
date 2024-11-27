@@ -13,13 +13,12 @@
 */
 
 #include <utility>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
 
 namespace NES
 {
@@ -77,7 +76,7 @@ bool LogicalFilterOperator::inferSchema()
 
 OperatorPtr LogicalFilterOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->deepCopy(), id);
+    auto copy = std::make_shared<LogicalSelectionOperator>(predicate->deepCopy(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -142,4 +141,5 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
 
     return fieldsInPredicate;
 }
+
 }

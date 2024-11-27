@@ -17,7 +17,6 @@ add_source_files(nes-operators
         LogicalMapOperator.cpp
         LogicalInferModelOperator.cpp
         LogicalUnionOperator.cpp
-        LogicalOperatorFactory.cpp
         LogicalBatchJoinOperator.cpp
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp

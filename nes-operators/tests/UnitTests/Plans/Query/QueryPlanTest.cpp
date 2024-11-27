@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <API/Query.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -37,7 +37,7 @@ public:
 TEST_F(QueryPlanTest, testHasOperator)
 {
     const QueryPlanPtr queryPlan = std::make_shared<QueryPlan>();
-    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
+    const std::shared_ptr<LogicalOperator> op1 = std::make_shared<SourceNameLogicalOperator>("test_source", getNextOperatorId());
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
 
@@ -48,9 +48,9 @@ TEST_F(QueryPlanTest, testHasOperator)
 
 TEST_F(QueryPlanTest, testLeafOperators)
 {
-    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
+    const std::shared_ptr<LogicalOperator> op1 = std::make_shared<SourceNameLogicalOperator>("test_source", getNextOperatorId());
     const QueryPlanPtr queryPlan = QueryPlan::create(op1);
-    const LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator("print_sink");
+    auto op2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<OperatorPtr> leafOptrs = queryPlan->getLeafOperators();
