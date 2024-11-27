@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
