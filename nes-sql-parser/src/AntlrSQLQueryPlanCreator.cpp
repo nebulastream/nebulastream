@@ -40,6 +40,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
@@ -465,7 +466,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
 
     for (auto& whereExpr : helper.getWhereClauses())
     {
-        queryPlan = QueryPlanBuilder::addFilter(whereExpr, queryPlan);
+        queryPlan = QueryPlanBuilder::addSelection(whereExpr, queryPlan);
     }
 
     for (const auto& mapExpr : helper.mapBuilder)
@@ -484,7 +485,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
     {
         for (auto& havingExpr : helper.getHavingClauses())
         {
-            queryPlan = QueryPlanBuilder::addFilter(havingExpr, queryPlan);
+            queryPlan = QueryPlanBuilder::addSelection(havingExpr, queryPlan);
         }
     }
     helpers.pop();

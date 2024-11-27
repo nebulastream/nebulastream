@@ -17,11 +17,11 @@
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -34,11 +34,11 @@
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -119,13 +119,13 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (Util::instanceOf<LogicalFilterOperator>(operatorNode))
+    if (Util::instanceOf<LogicalSelectionOperator>(operatorNode))
     {
-        auto filterOperator = NES::Util::as<LogicalFilterOperator>(operatorNode);
-        auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(
+        auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
+        auto PhysicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
             filterOperator->getInputSchema(), filterOperator->getOutputSchema(), filterOperator->getPredicate());
-        physicalFilterOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-        operatorNode->replace(physicalFilterOperator);
+        PhysicalSelectionOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+        operatorNode->replace(PhysicalSelectionOperator);
     }
     else if (NES::Util::instanceOf<WindowOperator>(operatorNode))
     {

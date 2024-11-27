@@ -28,6 +28,7 @@
 #include <ErrorHandling.hpp>
 
 using namespace NES;
+using namespace std::string_literals;
 
 /// This test checks for the correctness of the SQL queries created by the Antlr SQL Parsing Service.
 class AntlrSQLQueryParserTest : public Testing::BaseUnitTest
@@ -76,13 +77,13 @@ TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
     {
         const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print"s;
-        const auto internalLogicalQuery = Query::from("StreamName").filter(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
+        const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
     {
         const auto inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print"s;
-        const auto internalLogicalQuery = Query::from("StreamName").filter(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
+        const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
     }
 
@@ -200,7 +201,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId1234"))
                                         .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Days(9876), Milliseconds(3)))
-                                        .filter(Attribute("field") > 0)
+                                        .selection(Attribute("field") > 0)
                                         .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
@@ -211,7 +212,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId1234"))
                                             .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
-                                            .filter(Attribute("field") > 1234)
+                                            .selection(Attribute("field") > 1234)
                                             .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
     }
@@ -229,7 +230,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterW
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId"))
                                         .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Days(9876), Milliseconds(3)))
-                                        .filter(Attribute("field") > 0)
+                                        .selection(Attribute("field") > 0)
                                         .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
@@ -240,7 +241,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterW
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
                                             .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
-                                            .filter(Attribute("field") > 1234)
+                                            .selection(Attribute("field") > 1234)
                                             .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
     }
@@ -258,7 +259,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterA
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId"))
                                         .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
-                                        .filter(Attribute("tweets2.field") > 0)
+                                        .selection(Attribute("tweets2.field") > 0)
                                         .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
@@ -269,7 +270,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterA
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
                                             .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
-                                            .filter(Attribute("purchases2.field") > 1234)
+                                            .selection(Attribute("purchases2.field") > 1234)
                                             .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
     }
@@ -557,7 +558,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id"))
                                     .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
-                                    .filter(Attribute("field") >= 23 && Attribute("field2") <= 12)
+                                    .selection(Attribute("field") >= 23 && Attribute("field2") <= 12)
                                     .map(Attribute("userId2") = Attribute("id2") + 1)
                                     .project(Attribute("userId2"))
                                     .sink("PRINT");
@@ -571,7 +572,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))
                                         .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
-                                        .filter(Attribute("field") >= 23 || Attribute("field2") <= 12)
+                                        .selection(Attribute("field") >= 23 || Attribute("field2") <= 12)
                                         .map(Attribute("userId2") = Attribute("id2") + 1)
                                         .project(Attribute("userId2"))
                                         .sink("PRINT");
@@ -841,7 +842,7 @@ TEST(SQLParsingServiceTest, havingClauseTest)
     Query query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
                       .apply(Sum(Attribute("f2"))->as(Attribute("sum_f2")))
-                      .filter(Attribute("sum_f2") > 5)
+                      .selection(Attribute("sum_f2") > 5)
                       .sink("PRINT");
     ;
 
@@ -854,7 +855,7 @@ TEST(SQLParsingServiceTest, subQueryTest)
 
     std::string inputQuery = "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto query = Query::from("subStream").project(Attribute("f1")).filter(Attribute("f1") > 1).filter(Attribute("f1") < 5).sink("PRINT");
+    auto query = Query::from("subStream").project(Attribute("f1")).selection(Attribute("f1") > 1).selection(Attribute("f1") < 5).sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 

@@ -35,7 +35,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
     {
-        auto visitingOp = NES::Util::as<Operator>(*itr);
+        auto visitingOp = NES::Util::as<LogicalOperator>(*itr);
         if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized
@@ -94,7 +94,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     ///set properties of the query plan
     QueryId queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryId, INVALID_WORKER_NODE_ID, rootOperators);
+    auto decomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, INVALID_WORKER_NODE_ID, rootOperators);
     if (serializableDecomposedQueryPlan->has_state())
     {
         auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());

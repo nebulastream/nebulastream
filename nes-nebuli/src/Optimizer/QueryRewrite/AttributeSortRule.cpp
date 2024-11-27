@@ -30,8 +30,8 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,16 +48,16 @@ AttributeSortRulePtr AttributeSortRule::create()
 
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 {
-    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
-    for (auto const& filterOperator : filterOperators)
+    auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    for (auto const& selectionOperator : selectionOperators)
     {
-        auto predicate = filterOperator->getPredicate();
+        auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
-        auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
-        updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
+        auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
+        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
         Util::as_if<LogicalOperator>(updatedFilter)
-            ->setOutputSchema(Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
-        filterOperator->replace(updatedFilter);
+            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->copy());
+        selectionOperator->replace(updatedFilter);
     }
 
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
@@ -65,7 +65,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
-        auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapFunction);
+        auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
         Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);

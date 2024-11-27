@@ -20,12 +20,12 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 /**
- * @brief Physical Filter operator.
+ * @brief Physical selection operator.
  */
-class PhysicalFilterOperator : public PhysicalUnaryOperator
+class PhysicalSelectionOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate);
+    PhysicalSelectionOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate);
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function);

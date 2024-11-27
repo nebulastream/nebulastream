@@ -377,7 +377,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& filter(NodeFunctionPtr const& filterFunction);
+    Query& selection(NodeFunctionPtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.

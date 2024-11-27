@@ -13,42 +13,43 @@
 */
 #include <sstream>
 #include <utility>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate)
+PhysicalSelectionOperator::PhysicalSelectionOperator(
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr predicate)
     : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), predicate(std::move(predicate))
 {
 }
 
-PhysicalOperatorPtr
-PhysicalFilterOperator::create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
+PhysicalOperatorPtr PhysicalSelectionOperator::create(
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function)
 {
-    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, function);
+    return std::make_shared<PhysicalSelectionOperator>(id, inputSchema, outputSchema, function);
 }
 
-NodeFunctionPtr PhysicalFilterOperator::getPredicate()
+NodeFunctionPtr PhysicalSelectionOperator::getPredicate()
 {
     return predicate;
 }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function)
+PhysicalOperatorPtr PhysicalSelectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function)
 {
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(function));
 }
 
-std::string PhysicalFilterOperator::toString() const
+std::string PhysicalSelectionOperator::toString() const
 {
     std::stringstream out;
     out << std::endl;
-    out << "PhysicalFilterOperator:\n";
+    out << "PhysicalSelectionOperator:\n";
     out << PhysicalUnaryOperator::toString();
     return out.str();
 }
 
-OperatorPtr PhysicalFilterOperator::copy()
+OperatorPtr PhysicalSelectionOperator::copy()
 {
     auto result = create(id, inputSchema, outputSchema, getPredicate());
     result->addAllProperties(properties);
