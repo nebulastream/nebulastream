@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <utility>

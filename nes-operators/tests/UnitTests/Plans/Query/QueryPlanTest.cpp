@@ -14,11 +14,13 @@
 
 #include <iostream>
 #include <API/Query.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-
 #include <BaseIntegrationTest.hpp>
 
 using namespace NES;

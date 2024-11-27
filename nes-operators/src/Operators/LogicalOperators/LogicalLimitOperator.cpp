@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Util/Common.hpp>

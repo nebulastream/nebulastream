@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>

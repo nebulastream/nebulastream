@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-
 #include <filesystem>
+#include <memory>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
