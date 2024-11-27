@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstring>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
@@ -33,7 +33,7 @@ public:
      * @param tupleBuffer
      * @param capacity
      */
-    MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, uint64_t capacity);
+    MemoryLayoutTupleBuffer(Memory::PinnedBuffer tupleBuffer, uint64_t capacity);
 
     virtual ~MemoryLayoutTupleBuffer() = default;
 
@@ -53,10 +53,10 @@ public:
      * @brief This methods returns a reference to the associated buffer
      * @return
      */
-    Memory::TupleBuffer getTupleBuffer();
+    Memory::PinnedBuffer getTupleBuffer();
 
 protected:
-    Memory::TupleBuffer tupleBuffer;
+    Memory::PinnedBuffer tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };

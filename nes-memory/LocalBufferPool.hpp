@@ -21,6 +21,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Runtime/DataSegment.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES::Memory
@@ -40,7 +41,7 @@ public:
      */
     explicit LocalBufferPool(
         const std::shared_ptr<BufferManager>& bufferManager,
-        std::deque<detail::MemorySegment*>& availableBuffers,
+        std::deque<detail::DataSegment<detail::InMemoryLocation>>& availableBuffers,
         size_t numberOfReservedBuffers);
     ~LocalBufferPool() override;
 
@@ -53,13 +54,13 @@ public:
     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
     * @return a new buffer
     */
-    TupleBuffer getBufferBlocking() override;
+    PinnedBuffer getBufferBlocking() override;
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
-    std::optional<TupleBuffer> getBufferNoBlocking() override;
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) override;
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<PinnedBuffer> getBufferNoBlocking() override;
+    std::optional<PinnedBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) override;
+    std::optional<PinnedBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers
@@ -70,20 +71,35 @@ public:
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* memSegment) override;
+    void recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment) override;
 
     /**
      * @brief This calls is not supported and raises Runtime error
      * @param buffer
      */
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
+    void recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&& buffer) override;
+
+    /**
+     * @brief Recycle a pooled buffer that is might be exclusive to the pool
+     * @param buffer
+     */
+    bool recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&& memSegment) override;
+
+    /**
+     * @brief This calls is not supported and raises Runtime error
+     * @param buffer
+     */
+    bool recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) override;
 
     virtual BufferManagerType getBufferManagerType() const override;
 
 private:
     std::shared_ptr<BufferManager> bufferManager;
 
-    folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
+    folly::MPMCQueue<detail::DataSegment<detail::InMemoryLocation>> exclusiveBuffers;
+    mutable std::mutex allBuffersMutex;
+    //TODO erase and shrink allBuffers periodically
+    std::vector<detail::BufferControlBlock*> allBuffers;
     std::atomic<uint32_t> exclusiveBufferCount;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     std::vector<detail::MemorySegment*> allSegments;

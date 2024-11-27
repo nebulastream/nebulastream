@@ -31,7 +31,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -125,7 +125,7 @@ using Queue = folly::MPMCQueue<Task>;
 struct DefaultPEC final : Execution::PipelineExecutionContext
 {
     std::vector<std::shared_ptr<Execution::OperatorHandler>>* operatorHandlers = nullptr;
-    std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::function<void(const Memory::PinnedBuffer& tb, ContinuationPolicy)> handler;
     std::shared_ptr<Memory::AbstractBufferProvider> bm;
     size_t numberOfThreads;
     WorkerThreadId threadId;
@@ -136,15 +136,15 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
         WorkerThreadId threadId,
         PipelineId pipelineId,
         std::shared_ptr<Memory::AbstractBufferProvider> bm,
-        std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler)
+        std::function<void(const Memory::PinnedBuffer& tb, ContinuationPolicy)> handler)
         : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId), pipelineId(pipelineId)
     {
     }
 
     [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
-    Memory::TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
+    Memory::PinnedBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
-    void emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { handler(buffer, policy); }
+    void emitBuffer(const Memory::PinnedBuffer& buffer, ContinuationPolicy policy) override { handler(buffer, policy); }
     std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineId() const override { return pipelineId; }
     std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
@@ -223,7 +223,7 @@ public:
     void emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
-        Memory::TupleBuffer buffer,
+        Memory::PinnedBuffer buffer,
         onComplete complete,
         onFailure failure) override
     {
@@ -343,7 +343,7 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
             this->threadId,
             pipeline->id,
             pool.bufferProvider,
-            [&](const Memory::TupleBuffer& tupleBuffer, auto)
+            [&](const Memory::PinnedBuffer& tupleBuffer, auto)
             {
                 ENGINE_LOG_DEBUG(
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
@@ -423,7 +423,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
         this->threadId,
         stopPipeline.pipeline->id,
         pool.bufferProvider,
-        [&](const Memory::TupleBuffer& tupleBuffer, auto)
+        [&](const Memory::PinnedBuffer& tupleBuffer, auto)
         {
             if (terminating)
             {

@@ -19,7 +19,6 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/function.hpp>
@@ -48,25 +47,25 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
 {
 }
 
-Memory::TupleBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
+Memory::PinnedBuffer* allocateBufferProxy(PipelineExecutionContext* pec)
 {
     PRECONDITION(pec, "pipeline execution context should not be null");
     /// We allocate a new tuple buffer for the runtime.
-    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    /// As we can only return it to operator code as a ptr we create a new PinnedBuffer on the heap.
     /// This increases the reference counter in the buffer.
     /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
     auto buffer = pec->allocateTupleBuffer();
-    auto* tb = new Memory::TupleBuffer(buffer);
+    auto* tb = new Memory::PinnedBuffer(buffer);
     return tb;
 }
 
-nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer() const
+nautilus::val<Memory::PinnedBuffer*> ExecutionContext::allocateBuffer() const
 {
     auto bufferPtr = nautilus::invoke(allocateBufferProxy, pipelineContext);
     return bufferPtr;
 }
 
-void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tb)
+void emitBufferProxy(PipelineExecutionContext* pipelineCtx, Memory::PinnedBuffer* tb)
 {
     NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
 

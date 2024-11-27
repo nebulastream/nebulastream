@@ -21,7 +21,7 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -30,17 +30,17 @@
 namespace NES::Memory::MemoryLayouts
 {
 
-std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
+std::string readVarSizedData(const Memory::PinnedBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
-    const auto stringSize = *childBuffer.getBuffer<uint32_t>();
+    const auto stringSize = *childBuffer->getBuffer<uint32_t>();
     std::string varSizedData(stringSize, '\0');
-    std::memcpy(varSizedData.data(), childBuffer.getBuffer<char>() + sizeof(uint32_t), stringSize);
+    std::memcpy(varSizedData.data(), childBuffer->getBuffer<char>() + sizeof(uint32_t), stringSize);
     return varSizedData;
 }
 
 std::optional<uint32_t>
-writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
+writeVarSizedData(const Memory::PinnedBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider)
 {
     const auto valueLength = value.length();
     auto childBuffer = bufferProvider.getUnpooledBuffer(valueLength + sizeof(uint32_t));
@@ -49,7 +49,7 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
         std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.data(), valueLength);
-        return buffer.storeChildBuffer(childBufferVal);
+        return buffer.storeReturnChildIndex(std::move(childBufferVal));
     }
     return {};
 }

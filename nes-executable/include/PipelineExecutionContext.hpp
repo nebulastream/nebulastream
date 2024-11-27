@@ -19,7 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -35,8 +35,8 @@ public:
     };
 
     virtual ~PipelineExecutionContext() = default;
-    virtual void emitBuffer(const Memory::TupleBuffer&, ContinuationPolicy) = 0;
-    virtual Memory::TupleBuffer allocateTupleBuffer() = 0;
+    virtual void emitBuffer(const Memory::PinnedBuffer&, ContinuationPolicy) = 0;
+    virtual Memory::PinnedBuffer allocateTupleBuffer() = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const = 0;

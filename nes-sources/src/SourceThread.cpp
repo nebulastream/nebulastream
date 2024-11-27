@@ -56,7 +56,7 @@ SourceThread::SourceThread(
 
 namespace detail
 {
-void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory::TupleBuffer& buffer)
+void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory::PinnedBuffer& buffer)
 {
     /// set the origin id for this source
     buffer.setOriginId(originId);
@@ -77,7 +77,7 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, Memory:
         buffer.isLastChunk());
 }
 
-using EmitFn = std::function<void(Memory::TupleBuffer, bool addBufferMetadata)>;
+using EmitFn = std::function<void(Memory::PinnedBuffer, bool addBufferMetadata)>;
 void threadSetup(OriginId originId)
 {
     setThreadName(fmt::format("DataSrc-{}", originId));
@@ -165,7 +165,7 @@ void dataSourceThread(
     }
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
+    const EmitFn dataEmit = [&](Memory::PinnedBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {

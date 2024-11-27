@@ -18,15 +18,18 @@
 #include <deque>
 #include <memory>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <LocalBufferPool.hpp>
 #include <TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
 LocalBufferPool::LocalBufferPool(
-    const std::shared_ptr<BufferManager>& bufferManager, std::deque<detail::MemorySegment*>& buffers, const size_t numberOfReservedBuffers)
+    const std::shared_ptr<BufferManager>& bufferManager,
+    std::deque<detail::DataSegment<detail::InMemoryLocation>>& buffers,
+   const size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
     , exclusiveBuffers(numberOfReservedBuffers)
     , exclusiveBufferCount(numberOfReservedBuffers)
@@ -35,12 +38,9 @@ LocalBufferPool::LocalBufferPool(
     PRECONDITION(this->bufferManager, "Invalid buffer manager");
     while (!buffers.empty())
     {
-        auto* memSegment = buffers.front();
+        auto memSegment = buffers.front();
         buffers.pop_front();
-        INVARIANT(memSegment, "null memory segment");
-        memSegment->controlBlock->resetBufferRecycler(this);
-        INVARIANT(memSegment->isAvailable(), "Buffer not available");
-
+        INVARIANT(memSegment.getLocation().getPtr(), "null memory segment");
         exclusiveBuffers.write(memSegment);
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         allSegments.emplace_back(memSegment);
@@ -85,12 +85,12 @@ void LocalBufferPool::destroy()
 
     NES_DEBUG("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
 
-    detail::MemorySegment* memSegment = nullptr;
+    detail::DataSegment<detail::InMemoryLocation> memSegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
     while (exclusiveBuffers.read(memSegment))
     {
         /// return exclusive buffers to the global pool
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
-        bufferManager->recyclePooledBuffer(memSegment);
+        // memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+        bufferManager->recyclePooledSegment(std::move(memSegment));
     }
     bufferManager.reset();
 }
@@ -101,7 +101,7 @@ size_t LocalBufferPool::getAvailableBuffers() const
     return qSize > 0 ? qSize : 0;
 }
 
-TupleBuffer LocalBufferPool::getBufferBlocking()
+PinnedBuffer LocalBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment;
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
@@ -118,20 +118,30 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
     }
 }
 
-void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
+void LocalBufferPool::recyclePooledSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment)
 {
-    PRECONDITION(memSegment, "null memory segment");
-    INVARIANT(
-        memSegment->isAvailable(),
-        "Recycling buffer callback invoked on used memory segment refcnt={}",
-        memSegment->controlBlock->getReferenceCount());
+    INVARIANT(memSegment.getLocation().getPtr(), "null memory segment");
+    // if (!memSegment->isAvailable())
+    // {
+    //     NES_THROW_RUNTIME_ERROR(
+    //         "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
+    // }
     exclusiveBuffers.write(memSegment);
     exclusiveBufferCount.fetch_add(1);
 }
 
-void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)
+void LocalBufferPool::recycleUnpooledSegment(detail::DataSegment<detail::InMemoryLocation>&&)
 {
-    throw UnsupportedOperation("This function is not supported");
+    throw UnsupportedOperation("Recycling unpoooled segments is not supported");
+}
+
+bool LocalBufferPool::recyclePooledSegment(detail::DataSegment<detail::OnDiskLocation>&&)
+{
+    throw UnsupportedOperation("Recycling pooled on disk segments is not supported");
+}
+bool LocalBufferPool::recycleUnpooledSegment(detail::DataSegment<detail::OnDiskLocation>&&)
+{
+    throw UnsupportedOperation("Recycling unpooled on disk segments is not supported");
 }
 size_t LocalBufferPool::getBufferSize() const
 {
@@ -148,27 +158,35 @@ size_t LocalBufferPool::getNumOfUnpooledBuffers() const
     return bufferManager->getNumOfUnpooledBuffers();
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
+std::optional<PinnedBuffer> LocalBufferPool::getBufferNoBlocking()
 {
-    throw UnsupportedOperation("This function is not supported here");
+    detail::DataSegment<detail::InMemoryLocation> inMemorySegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
+    if (exclusiveBuffers.read(inMemorySegment))
+    {
+        const auto controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        std::unique_lock const lock{allBuffersMutex};
+        allBuffers.push_back(controlBlock);
+        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
+    }
+    return std::nullopt;
 }
-std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(const std::chrono::milliseconds timeout)
+std::optional<PinnedBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
 {
     const auto now = std::chrono::steady_clock::now();
-    detail::MemorySegment* memSegment;
-    if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
+    detail::DataSegment<detail::InMemoryLocation> inMemorySegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
+    if (exclusiveBuffers.tryReadUntil(now + timeout, inMemorySegment))
     {
-        if (memSegment->controlBlock->prepare())
-        {
-            exclusiveBufferCount.fetch_sub(1);
-            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-        }
-        throw InvalidRefCountForBuffer();
+        //TODO use buffer count correctly
+        exclusiveBufferCount.fetch_sub(1);
+        auto *const controlBlock = new detail::BufferControlBlock{inMemorySegment, this};
+        std::unique_lock const lock{allBuffersMutex};
+        allBuffers.push_back(controlBlock);
+        return PinnedBuffer(controlBlock, inMemorySegment, detail::ChildOrMainDataKey::MAIN());
     }
     return std::nullopt;
 }
 
-std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(const size_t size)
+std::optional<PinnedBuffer> LocalBufferPool::getUnpooledBuffer(const size_t size)
 {
     return bufferManager->getUnpooledBuffer(size);
 }

@@ -24,7 +24,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -51,7 +50,7 @@ struct ExecutionContext final
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
-    [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<Memory::PinnedBuffer*> allocateBuffer() const;
 
 
     /// Emit a record buffer to the successor pipeline(s) or sink(s)

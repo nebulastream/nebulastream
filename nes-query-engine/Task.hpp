@@ -21,7 +21,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <InstantiatedQueryPlan.hpp>
 #include <Interfaces.hpp>
@@ -66,7 +66,7 @@ struct WorkTask : BaseTask
         QueryId queryId,
         PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
-        Memory::TupleBuffer buf,
+        Memory::PinnedBuffer buf,
         WorkEmitter::onComplete complete,
         WorkEmitter::onFailure failure)
         : BaseTask(queryId, std::move(complete), std::move(failure))
@@ -79,7 +79,7 @@ struct WorkTask : BaseTask
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
     PipelineId pipelineId = INVALID<PipelineId>;
-    Memory::TupleBuffer buf;
+    Memory::PinnedBuffer buf;
 };
 
 struct StartPipelineTask : BaseTask

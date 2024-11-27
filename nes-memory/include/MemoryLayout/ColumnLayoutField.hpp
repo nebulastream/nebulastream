@@ -16,7 +16,7 @@
 
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -44,7 +44,7 @@ public:
      * @return field handler
      */
     static inline ColumnLayoutField<T, boundaryChecks>
-    create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
+    create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::PinnedBuffer& buffer);
 
     /**
      * Creates a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
@@ -55,7 +55,7 @@ public:
      * @return field handler via a fieldName and a layoutBuffer
      */
     static inline ColumnLayoutField<T, boundaryChecks>
-    create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer);
+    create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::PinnedBuffer& buffer);
 
     /**
      * Accesses the value of this field for a specific record.
@@ -78,7 +78,7 @@ private:
 
 template <class T, bool boundaryChecks>
 inline ColumnLayoutField<T, boundaryChecks>
-ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
+ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, Memory::PinnedBuffer& buffer)
 {
     INVARIANT(
         boundaryChecks && fieldIndex < layout->getSchema()->getFieldCount(),
@@ -95,7 +95,7 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
 
 template <class T, bool boundaryChecks>
 ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::create(
-    const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::TupleBuffer& buffer)
+    const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, Memory::PinnedBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value())

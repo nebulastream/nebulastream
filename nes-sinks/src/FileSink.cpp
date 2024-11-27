@@ -23,7 +23,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sinks/FileSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -98,7 +98,7 @@ void FileSink::start(Runtime::Execution::PipelineExecutionContext&)
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
-void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
+void FileSink::execute(const Memory::PinnedBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");

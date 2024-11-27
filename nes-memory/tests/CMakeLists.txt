@@ -13,3 +13,13 @@
 add_library(nes-memory-test-utils TestUtils/MemoryTestUtils.cpp)
 target_include_directories(nes-memory-test-utils PUBLIC TestUtils)
 target_link_libraries(nes-memory-test-utils PUBLIC nes-memory)
+
+
+function(add_nes_memory_test)
+    add_nes_test(${ARGN})
+    target_link_libraries(${ARGV0} nes-memory)
+    target_include_directories(${ARGV0} PRIVATE ..)
+endfunction()
+
+add_nes_memory_test(buffer_manager_test "BufferManagerTest.cpp")
+add_nes_memory_test(buffer_test "BufferTest.cpp")

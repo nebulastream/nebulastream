@@ -12,13 +12,17 @@
     limitations under the License.
 */
 
+#include "TupleBufferImpl.hpp"
+#include <utility>
 #include <cstdint>
+
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/BufferRecycler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <TupleBufferImpl.hpp>
 #include <magic_enum.hpp>
+#include <magic_enum_iostream.hpp>
+#include "Runtime/DataSegment.hpp"
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <mutex>
@@ -36,101 +40,57 @@ namespace detail
 /// ------------------ Core Mechanism for Buffer recycling ----------------------
 /// -----------------------------------------------------------------------------
 
-MemorySegment::MemorySegment(const MemorySegment& other) = default;
 
-MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
-
-MemorySegment::MemorySegment(
-    uint8_t* ptr,
-    const uint32_t size,
-    BufferRecycler* recycler,
-    std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-    uint8_t* controlBlock)
-    : size(size)
+BufferControlBlock::BufferControlBlock(const DataSegment<InMemoryLocation>& inMemorySegment, BufferRecycler* recycler)
+    : data(static_cast<DataSegment<DataLocation>>(inMemorySegment)), owningBufferRecycler(recycler)
 {
-    this->controlBlock = new (controlBlock) BufferControlBlock(this, recycler, std::move(recycleFunction));
-    this->ptr = ptr;
-    INVARIANT(this->ptr, "invalid pointer");
-    INVARIANT(this->size, "invalid size={}", this->size);
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    /// store the current thread that owns the buffer and track which function obtained the buffer
+    std::unique_lock lock(owningThreadsMutex);
+    ThreadOwnershipInfo info;
+    fillThreadOwnershipInfo(info.threadName, info.callstack);
+    owningThreads[std::this_thread::get_id()].emplace_back(info);
+#endif
 }
 
-MemorySegment::MemorySegment(
-    uint8_t* ptr,
-    const uint32_t size,
-    BufferRecycler* recycler,
-    std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-    bool)
-    : ptr(ptr), size(size)
+BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) : data(that.data.load())
 {
-    INVARIANT(this->ptr, "invalid pointer");
-    INVARIANT(this->size, "invalid size={}", this->size);
-    controlBlock.reset(
-        new BufferControlBlock(this, recycler, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
-    controlBlock->prepare();
-}
-
-MemorySegment::~MemorySegment()
-{
-    if (ptr)
-    {
-        /// XXX: If we want to make `release` noexcept as we discussed, we need to make sure that the
-        ///      MemorySegment is noexcept destructible. I therefore transformed this error into an assertion
-        ///      (I also consider this to be consistent with our handeling of the referenceCount in
-        ///      the release function in general. Do you agree?).
-        {
-            const auto refCnt = controlBlock->getReferenceCount();
-            INVARIANT(refCnt == 0, "invalid reference counter {} on mem segment dtor", refCnt);
-        }
-
-        /// Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
-        /// have to call the destructor, as the memory segment that contains the controlBlock is managed separately.
-        if (controlBlock.tag() == magic_enum::enum_integer(MemorySegmentType::Wrapped))
-        {
-            delete controlBlock.get();
-        }
-        else
-        {
-            controlBlock->~BufferControlBlock();
-        }
-
-        std::exchange(controlBlock, nullptr);
-        std::exchange(ptr, nullptr);
-    }
-}
-
-BufferControlBlock::BufferControlBlock(
-    MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback))
-{
-    /// nop
-}
-
-BufferControlBlock::BufferControlBlock(const BufferControlBlock& that)
-{
-    referenceCounter.store(that.referenceCounter.load());
+    pinnedCounter.store(that.pinnedCounter.load());
+    dataCounter.store(that.dataCounter.load());
     numberOfTuples = that.numberOfTuples;
     creationTimestamp = that.creationTimestamp;
-    recycleCallback = that.recycleCallback;
-    owner = that.owner;
     watermark = that.watermark;
     originId = that.originId;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    /// store the current thread that owns the buffer and track which function obtained the buffer
+    std::unique_lock lock(owningThreadsMutex);
+    ThreadOwnershipInfo info;
+    fillThreadOwnershipInfo(info.threadName, info.callstack);
+    owningThreads[std::this_thread::get_id()].emplace_back(info);
+#endif
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that)
 {
-    referenceCounter.store(that.referenceCounter.load());
+    pinnedCounter.store(that.pinnedCounter.load());
     numberOfTuples = that.numberOfTuples;
-    recycleCallback = that.recycleCallback;
-    owner = that.owner;
+    data = that.data.load();
     watermark = that.watermark;
     creationTimestamp = that.creationTimestamp;
     originId = that.originId;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    /// store the current thread that owns the buffer and track which function obtained the buffer
+    std::unique_lock lock(owningThreadsMutex);
+    ThreadOwnershipInfo info;
+    fillThreadOwnershipInfo(info.threadName, info.callstack);
+    owningThreads[std::this_thread::get_id()].emplace_back(info);
+#endif
     return *this;
 }
 
-MemorySegment* BufferControlBlock::getOwner() const
+DataSegment<DataLocation> BufferControlBlock::getData() const
 {
-    return owner;
+    return data;
 }
 
 void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
@@ -140,15 +100,6 @@ void BufferControlBlock::resetBufferRecycler(BufferRecycler* recycler)
     INVARIANT(recycler != oldRecycler, "invalid recycler");
 }
 
-void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, BufferRecycler*)>&& func) noexcept
-{
-    auto oldRecycleCallback = this->recycleCallback;
-    recycleCallback = [oldRecycleCallback, func](MemorySegment* memorySegment, BufferRecycler* bufferRecycler)
-    {
-        func(memorySegment, bufferRecycler);
-        oldRecycleCallback(memorySegment, bufferRecycler);
-    };
-}
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 /**
@@ -166,34 +117,24 @@ void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& calls
     callstack = cpptrace::raw_trace::current(1);
 }
 #endif
-bool BufferControlBlock::prepare()
-{
-    int32_t expected = 0;
-#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer and track which function obtained the buffer
-    std::unique_lock lock(owningThreadsMutex);
-    ThreadOwnershipInfo info;
-    fillThreadOwnershipInfo(info.threadName, info.callstack);
-    owningThreads[std::this_thread::get_id()].emplace_back(info);
-#endif
-    if (referenceCounter.compare_exchange_strong(expected, 1))
-    {
-        return true;
-    }
-    NES_ERROR("Invalid reference counter: {}", expected);
-    return false;
-}
 
-BufferControlBlock* BufferControlBlock::retain()
+BufferControlBlock* BufferControlBlock::pinnedRetain()
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    /// store the current thread that owns the buffer (shared) and track which function increased the coutner of the buffer
+    /// store the current thread that owns the buffer (shared) and track which function increased the counter of the buffer
     std::unique_lock lock(owningThreadsMutex);
     ThreadOwnershipInfo info;
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
-    referenceCounter++;
+
+    //Spin over pinnedCounter, only increase it by one if it is 0 or more, because -1 means the data segment is being modified
+    //and might become invalid
+    int32_t old;
+    do
+    {
+        old = pinnedCounter.load();
+    } while (old < 0 || !pinnedCounter.compare_exchange_weak(old, old + 1));
     return this;
 }
 
@@ -201,37 +142,79 @@ BufferControlBlock* BufferControlBlock::retain()
 void BufferControlBlock::dumpOwningThreadInfo()
 {
     std::unique_lock lock(owningThreadsMutex);
-    NES_FATAL_ERROR("Buffer {} has {} live references", fmt::ptr(getOwner()), referenceCounter.load());
+    NES_FATAL_ERROR("Buffer {} has {} live references", fmt::ptr(getData()), referenceCounter.load());
     for (auto& item : owningThreads)
     {
         for (auto& v : item.second)
         {
             NES_FATAL_ERROR(
-                "Thread {} has buffer {} requested on callstack: {}",
-                v.threadName,
-                fmt::ptr(getOwner()),
-                v.callstack.resolve().to_string());
+                "Thread {} has buffer {} requested on callstack: {}", v.threadName, fmt::ptr(getData()), v.callstack.resolve().to_string());
         }
     }
 }
 #endif
 
-int32_t BufferControlBlock::getReferenceCount() const noexcept
+int32_t BufferControlBlock::getPinnedReferenceCount() const noexcept
 {
-    return referenceCounter.load();
+    return pinnedCounter.load();
 }
 
-bool BufferControlBlock::release()
+int32_t BufferControlBlock::getDataReferenceCount() const noexcept
 {
-    if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
+    return dataCounter.load();
+}
+
+bool BufferControlBlock::pinnedRelease()
+{
+    if (uint32_t const prevRefCnt = pinnedCounter.fetch_sub(1); prevRefCnt == 1)
     {
         numberOfTuples = 0;
-        for (auto&& child : children)
+        //TODO mark as spillable
+        //      NES_ASSERT(!dataInMemory, "Buffer with pinned references was not in memory");
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
-            child->controlBlock->release();
+            std::unique_lock lock(owningThreadsMutex);
+            owningThreads.clear();
+        }
+#endif
+        return true;
+    }
+    else
+    {
+        INVARIANT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
+    }
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    {
+        std::unique_lock lock(owningThreadsMutex);
+        auto& v = owningThreads[std::this_thread::get_id()];
+        if (!v.empty())
+        {
+            v.pop_front();
+        }
+    }
+#endif
+    return false;
+}
+BufferControlBlock* BufferControlBlock::dataRetain()
+{
+    dataCounter++;
+    return this;
+}
+bool BufferControlBlock::dataRelease()
+{
+    if (uint32_t const prevRefCnt = dataCounter.fetch_sub(1); prevRefCnt == 1)
+    {
+        std::unique_lock childLock{childMutex};
+        numberOfTuples = 0;
+        auto* bufferRecycler = owningBufferRecycler.load();
+        auto const emptySegment = DataSegment<DataLocation>{};
+        for (auto& child : children)
+        {
+            //TODO add flag for unpooled into segment
+            bufferRecycler->recyclePooledSegment(std::exchange(child, emptySegment));
         }
         children.clear();
-        recycleCallback(owner, owningBufferRecycler.load());
+        bufferRecycler->recyclePooledSegment(data.exchange(emptySegment));
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
             std::unique_lock lock(owningThreadsMutex);
@@ -256,7 +239,6 @@ bool BufferControlBlock::release()
 #endif
     return false;
 }
-
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, cpptrace::raw_trace&& callstack)
     : threadName(threadName), callstack(callstack)
@@ -271,7 +253,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 #endif
 
 /// -----------------------------------------------------------------------------
-/// ------------------ Utility functions for TupleBuffer ------------------------
+/// ------------------ Utility functions for PinnedBuffer ------------------------
 /// -----------------------------------------------------------------------------
 
 uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
@@ -344,27 +326,109 @@ void BufferControlBlock::setOriginId(const OriginId originId)
     this->originId = originId;
 }
 
-/// -----------------------------------------------------------------------------
-/// ------------------ VarLen fields support for TupleBuffer --------------------
-/// -----------------------------------------------------------------------------
-
-uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
+bool BufferControlBlock::swapDataSegment(DataSegment<DataLocation>& segment) noexcept
 {
-    control->retain();
-    children.emplace_back(control->owner);
-    return children.size() - 1;
+    auto zero = 0;
+    auto minusOne = -1;
+    if (pinnedCounter.compare_exchange_strong(zero, -1))
+    {
+        data.store(segment);
+        //Increase back up again
+        INVARIANT(
+            pinnedCounter.compare_exchange_strong(minusOne, 0),
+            "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
+            minusOne);
+        return true;
+    }
+    return false;
 }
 
-bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const
+bool BufferControlBlock::swapChild(DataSegment<DataLocation>& segment, ChildKey key) noexcept
 {
-    PRECONDITION(index < children.size(), "Index={} is out of range={}", index, children.size());
+    auto zero = 0;
+    auto minusOne = -1;
+    if (pinnedCounter.compare_exchange_strong(zero, -1))
+    {
+        children[key] = segment;
+        //Increase back up again
+        INVARIANT(
+            pinnedCounter.compare_exchange_strong(minusOne, 0),
+            "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
+            minusOne);
+        return true;
+    }
+    return false;
+}
+/// -----------------------------------------------------------------------------
+/// ------------------ VarLen fields support for PinnedBuffer --------------------
+/// -----------------------------------------------------------------------------
 
-    auto* child = children[index];
-    control = child->controlBlock->retain();
-    ptr = child->ptr;
-    size = child->size;
+std::optional<DataSegment<DataLocation>> BufferControlBlock::stealDataSegment()
+{
+    DataSegment<DataLocation> dataSegment = data;
+    int zero = 0;
+    int32_t one = 1;
+    if (!pinnedCounter.compare_exchange_strong(zero, -1))
+    {
+        return std::nullopt;
+    }
+    if (!dataCounter.compare_exchange_strong(one, 0))
+    {
+        return std::nullopt;
+    }
+    data.store(DataSegment<DataLocation>{});
+    int minusOne = -1;
+    INVARIANT(
+        pinnedCounter.compare_exchange_strong(minusOne, 0),
+        "Concurrent modification of BCBs data segment, expected counter to be -1, was {}",
+        minusOne);
+    return dataSegment;
+}
 
-    return true;
+bool BufferControlBlock::deleteChild(DataSegment<DataLocation>&& child)
+{
+    std::unique_lock writeLock{childMutex};
+    if (std::erase(children, child) != 0)
+    {
+        owningBufferRecycler.load()->recycleUnpooledSegment(std::move(child));
+        return true;
+    }
+    return false;
+}
+ChildKey BufferControlBlock::registerChild(const DataSegment<DataLocation>& child) noexcept
+{
+    std::unique_lock writeLock{childMutex};
+    children.emplace_back(child);
+    return ChildKey{children.size() - 1};
+}
+
+std::optional<ChildKey> BufferControlBlock::findChild(const DataSegment<DataLocation>& childToFind) noexcept
+{
+    std::shared_lock readLock{childMutex};
+    for (auto child = children.begin(); child != children.end(); ++child)
+    {
+        if ((*child) == childToFind)
+        {
+            return child - children.begin();
+        }
+    }
+    return std::nullopt;
+}
+std::optional<DataSegment<DataLocation>> BufferControlBlock::getChild(ChildKey index) const noexcept
+{
+    std::shared_lock readLock{childMutex};
+    if (index < children.size())
+    {
+        return children[index];
+    }
+    return std::nullopt;
+}
+
+bool BufferControlBlock::unregisterChild(DataSegment<DataLocation>& child) noexcept
+{
+    std::unique_lock writeLock{childMutex};
+    //Not thread safe
+    return std::erase(children, child) != 0;
 }
 }
 }

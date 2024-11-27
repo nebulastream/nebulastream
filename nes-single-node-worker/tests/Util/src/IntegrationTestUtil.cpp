@@ -45,7 +45,7 @@
 namespace NES::IntegrationTestUtil
 {
 
-[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
+[[maybe_unused]] std::vector<Memory::PinnedBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const std::shared_ptr<Schema>& schema,
     Memory::AbstractBufferProvider& bufferProvider,
@@ -53,7 +53,7 @@ namespace NES::IntegrationTestUtil
     const std::string& timestampFieldName,
     bool skipFirstLine)
 {
-    std::vector<Memory::TupleBuffer> recordBuffers;
+    std::vector<Memory::PinnedBuffer> recordBuffers;
     INVARIANT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile {} does not exist", csvFile);
 
     /// Creating everything for the csv parser
