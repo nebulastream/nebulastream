@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
 #include <API/Query.hpp>
@@ -84,7 +86,7 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 }
 
 JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared_ptr<NodeFunction> joinFunction)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(joinFunction)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(std::move(joinFunction))
 {
 }
 
@@ -102,7 +104,7 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-Query& Join::where(const std::shared_ptr<NodeFunction> joinFunction) const
+Query& Join::where(const std::shared_ptr<NodeFunction>& joinFunction) const
 {
     return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
@@ -257,7 +259,7 @@ Query Query::from(const std::string& logicalSourceName)
     return Query(queryPlan);
 }
 
-Query& Query::project(std::vector<std::shared_ptr<NodeFunction>> functions)
+Query& Query::project(const std::vector<std::shared_ptr<NodeFunction>>& functions)
 {
     NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(functions, this->queryPlan);
@@ -271,14 +273,15 @@ Query& Query::unionWith(const Query& subQuery)
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, std::shared_ptr<NodeFunction> joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::joinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, std::shared_ptr<NodeFunction> joinFunction)
+Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction)
 {
     NES_DEBUG("Query: add Batch Join Operator to Query");
     if (NES::Util::as<NodeFunctionEquals>(joinFunction))
@@ -295,14 +298,16 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, std::shared_ptr<NodeFuncti
     return *this;
 }
 
-Query& Query::andWith(const Query& subQueryRhs, std::shared_ptr<NodeFunction> joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::andWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(const Query& subQueryRhs, std::shared_ptr<NodeFunction> joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::seqWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
@@ -356,7 +361,7 @@ QueryPlanPtr Query::getQueryPlan() const
 }
 
 ///
-Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(std::shared_ptr<NodeFunction> joinFunction)
+Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(const std::shared_ptr<NodeFunction>& joinFunction)
 {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;

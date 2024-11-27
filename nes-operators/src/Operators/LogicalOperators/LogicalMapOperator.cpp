@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Util/Common.hpp>

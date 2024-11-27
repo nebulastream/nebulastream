@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <memory>
 #include <queue>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>

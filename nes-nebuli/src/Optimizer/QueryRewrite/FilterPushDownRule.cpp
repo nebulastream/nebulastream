@@ -13,6 +13,7 @@
 */
 
 #include <queue>
+#include <set>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
@@ -68,7 +69,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan)
     try
     {
         NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
-        for (LogicalSelectionOperatorPtr filterOperator : filterOperators)
+        for (const LogicalSelectionOperatorPtr& filterOperator : filterOperators)
         {
             /// method calls itself recursively until it can not push the filter further down(upstream).
             pushDownFilter(filterOperator, filterOperator->getChildren()[0], filterOperator);
@@ -85,6 +86,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan)
 }
 
 void FilterPushDownRule::pushDownFilter(LogicalSelectionOperatorPtr filterOperator, NodePtr curOperator, NodePtr parOperator)
+
 {
     if (NES::Util::instanceOf<LogicalProjectionOperator>(curOperator))
     {
@@ -120,7 +122,7 @@ void FilterPushDownRule::pushDownFilter(LogicalSelectionOperatorPtr filterOperat
 }
 
 void FilterPushDownRule::pushFilterBelowJoin(
-    LogicalSelectionOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NES::NodePtr parentOperator)
+    LogicalSelectionOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator)
 {
     /// we might be able to push the filter to both branches of the join, and we check this first.
     bool pushed = pushFilterBelowJoinSpecialCase(filterOperator, joinOperator);

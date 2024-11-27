@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Functions/Functions.hpp>
@@ -26,6 +27,7 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>

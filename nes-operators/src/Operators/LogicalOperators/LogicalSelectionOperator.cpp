@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
@@ -23,8 +27,8 @@
 namespace NES
 {
 
-LogicalSelectionOperator::LogicalSelectionOperator(NodeFunctionPtr const& predicate, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), predicate(predicate)
+LogicalSelectionOperator::LogicalSelectionOperator(NodeFunctionPtr predicate, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), predicate(std::move(predicate))
 {
 }
 

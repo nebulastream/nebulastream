@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <Functions/NodeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
 namespace NES
@@ -26,7 +28,7 @@ namespace NES
 class LogicalSelectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalSelectionOperator(NodeFunctionPtr const&, OperatorId id);
+    explicit LogicalSelectionOperator(NodeFunctionPtr, OperatorId id);
     ~LogicalSelectionOperator() override = default;
 
     /**

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <set>
+#include <vector>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>

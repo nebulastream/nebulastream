@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
