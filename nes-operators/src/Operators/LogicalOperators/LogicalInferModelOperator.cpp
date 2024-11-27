@@ -142,7 +142,7 @@ bool LogicalInferModelOperator::inferSchema()
 void LogicalInferModelOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
     ///Infer query signatures for child operators
     for (const auto& child : children)

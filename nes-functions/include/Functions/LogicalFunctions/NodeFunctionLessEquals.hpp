@@ -24,10 +24,11 @@ public:
     ~NodeFunctionLessEquals() override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionLessEquals(NodeFunctionLessEquals* other);
+
+    [[nodiscard]] std::string toString() const override;
 };
 }

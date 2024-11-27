@@ -216,7 +216,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
 
     NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     auto op = std::make_shared<LogicalJoinOperator>(joinDefinition, getNextOperatorId());
-    NES_INFO("Created join {}", op->toString(), Util::as<LogicalJoinOperator>(op)->getJoinDefinition()->getWindowType()->toString());
+    NES_INFO("Created join {}", *op, Util::as<LogicalJoinOperator>(op)->getJoinDefinition()->getWindowType()->toString());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }

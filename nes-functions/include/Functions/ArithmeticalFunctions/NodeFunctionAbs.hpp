@@ -26,7 +26,6 @@ public:
     ~NodeFunctionAbs() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
@@ -35,6 +34,9 @@ public:
      */
     void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit NodeFunctionAbs(NodeFunctionAbs* other);

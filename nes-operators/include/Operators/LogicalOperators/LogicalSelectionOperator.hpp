@@ -51,7 +51,6 @@ public:
      */
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
 
     /**
     * @brief infers the input and output schema of this operator depending on its child.
@@ -68,6 +67,9 @@ public:
      * @return a vector containing every attribute name that is accessed by the predicate
      */
     std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
+
+protected:
+    std::string toString() const override;
 
 private:
     NodeFunctionPtr predicate;
