@@ -33,7 +33,6 @@ public:
         std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
         std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
-    std::string toString() const override;
     OperatorPtr copy() override;
     std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> getNautilusPipeline();
 
@@ -42,6 +41,9 @@ public:
      * @return operator handler
      */
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
+
+protected:
+    std::string toString() const override;
 
 private:
     NautilusPipelineOperator(
