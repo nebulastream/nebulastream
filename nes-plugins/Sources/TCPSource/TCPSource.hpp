@@ -28,7 +28,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -168,7 +168,7 @@ public:
     TCPSource(TCPSource&&) = delete;
     TCPSource& operator=(TCPSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    size_t fillTupleBuffer(NES::Memory::PinnedBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     /// Open TCP connection.
     void open() override;
@@ -181,7 +181,7 @@ public:
 
 private:
     bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    bool fillBuffer(NES::Memory::PinnedBuffer& tupleBuffer, size_t& numReceivedBytes);
 
     int connection = -1;
     int sockfd = -1;

@@ -20,7 +20,7 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 
 namespace NES::Nautilus::Interface
@@ -83,8 +83,8 @@ public:
 private:
     friend class ChainedHashMapRef;
 
-    Memory::TupleBuffer entrySpace;
-    std::vector<Memory::TupleBuffer> storageSpace;
+    Memory::PinnedBuffer entrySpace;
+    std::vector<Memory::PinnedBuffer> storageSpace;
     uint64_t numberOfTuples; /// Number of entries in the hash map
     uint64_t pageSize; /// Size of one storage page in bytes
     uint64_t entrySize; /// Size of one entry: sizeof(ChainedHashMapEntry) + keySize + valueSize

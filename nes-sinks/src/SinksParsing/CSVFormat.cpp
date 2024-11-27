@@ -23,7 +23,7 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <SinksParsing/CSVFormat.hpp>
 #include <Util/Common.hpp>
 #include <Util/Overloaded.hpp>
@@ -69,12 +69,12 @@ std::string CSVFormat::getFormattedSchema() const
 }
 
 
-std::string CSVFormat::getFormattedBuffer(const Memory::TupleBuffer& inputBuffer)
+std::string CSVFormat::getFormattedBuffer(const Memory::PinnedBuffer& inputBuffer)
 {
     return tupleBufferToFormattedCSVString(inputBuffer, formattingContext);
 }
 
-std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext)
+std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::PinnedBuffer tbuffer, const FormattingContext& formattingContext)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

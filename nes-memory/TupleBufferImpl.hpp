@@ -16,12 +16,17 @@
 
 #include <atomic>
 #include <chrono>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
 #include <functional>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferPrimitives.hpp>
+#include <Runtime/DataSegment.hpp>
 #include <Time/Timestamp.hpp>
-#include <TaggedPointer.hpp>
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     #include <deque>
     #include <mutex>
@@ -30,38 +35,29 @@
     #include <cpptrace.hpp>
 #endif
 
+
 namespace NES::Memory
 {
+
+namespace detail
+{
+class ChildOrMainDataKey;
+}
 class BufferManager;
 class LocalBufferPool;
-class TupleBuffer;
+class PinnedBuffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
 
 static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
 
 
-/**
- * @brief Computes aligned buffer size based on original buffer size and alignment
- */
-constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
-{
-    if (bufferSize % withAlignment)
-    {
-        /// make sure that each buffer is a multiple of the alignment
-        return bufferSize + (withAlignment - bufferSize % withAlignment);
-    }
-    return bufferSize;
-}
 
 namespace detail
 {
 
-class MemorySegment;
-
 #define PLACEHOLDER_LIKELY(cond) (cond) [[likely]]
 #define PLACEHOLDER_UNLIKELY(cond) (cond) [[unlikely]]
-
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
  * MemorySegment/TupleBuffer. In particular, it stores the atomic reference counter that tracks how many
@@ -72,24 +68,52 @@ class MemorySegment;
  */
 class alignas(64) BufferControlBlock
 {
+    friend BufferManager;
+
 public:
-    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
+    ///Creates a BufferControlBlock around a raw memory address
+    explicit BufferControlBlock(
+        const DataSegment<InMemoryLocation>&,
+        BufferRecycler* recycler); //, std::function<void(DataSegment<DataLocation>&&, BufferRecycler*)>&& recycleCallback);
 
-    [[nodiscard]] MemorySegment* getOwner() const;
 
-    /// This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
-    /// reference counter is zero. If that's not the case, an exception is thrown.
-    /// Returns true if the mem segment can be used to create a TupleBuffer.
-    bool prepare(const std::shared_ptr<BufferRecycler>& recycler);
+    BufferControlBlock(const BufferControlBlock&) = delete;
 
-    /// Increase the reference counter by one.
-    BufferControlBlock* retain();
+    BufferControlBlock& operator=(const BufferControlBlock&) = delete;
 
-    [[nodiscard]] int32_t getReferenceCount() const noexcept;
+    [[nodiscard]] DataSegment<DataLocation> getData() const;
+    void resetBufferRecycler(BufferRecycler* recycler);
 
-    /// Decrease the reference counter by one
+    /// Increase the pinned reference counter by one.
+    BufferControlBlock* pinnedRetain();
+
+
+    /// Increase the data reference counter by one.
+    BufferControlBlock* dataRetain();
+
+    [[nodiscard]] int32_t getPinnedReferenceCount() const noexcept;
+    [[nodiscard]] int32_t getDataReferenceCount() const noexcept;
+
+    /// Decrease the pinned reference counter by one
+    /// Returns true if 0 is reached and the buffers memory is marked for spilling
+    bool pinnedRelease();
+
+    /// Decrease the data reference counter by one
     /// Returns true if 0 is reached and the buffer is recycled
-    bool release();
+    bool dataRelease();
+
+
+    template <bool pinned>
+    RefCountedBCB<pinned> getCounter() noexcept;
+
+    RepinBCBLock startRepinning() noexcept;
+    std::optional<SpillBCBLock> startSpilling() noexcept;
+
+    ///Resets everything to a state as if this was a BCB for a newly created pinned buffer.
+    ///Ensure that you pinned the BCB when you had the lock from startRepinning, otherwise the segments could get spilled again
+    void markRepinningDone() noexcept;
+
+
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
     [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
@@ -104,15 +128,63 @@ public:
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Runtime::Timestamp timestamp);
     [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
-    [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
-    [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
-    [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
+
+    bool swapSegment(DataSegment<DataLocation>&, ChildOrMainDataKey key) noexcept;
+    bool swapDataSegment(DataSegment<DataLocation>& segment) noexcept;
+    bool swapChild(DataSegment<DataLocation>&, ChildKey key) noexcept;
+
+    bool swapSegment(DataSegment<DataLocation>& segment, ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) noexcept;
+    bool swapDataSegment(DataSegment<DataLocation>& segment, std::unique_lock<std::shared_mutex>& lock) noexcept;
+    bool swapChild(DataSegment<DataLocation>& segment, ChildKey key, std::unique_lock<std::shared_mutex>& lock) noexcept;
+
+    // bool swapSegment(DataSegment<DataLocation>&, ChildOrMainDataKey) noexcept;
+    // bool swapDataSegment(DataSegment<DataLocation>& segment) noexcept;
+    // bool swapChild(DataSegment<DataLocation>&, ChildKey) noexcept;
+
+    ///@brief Unregisters a child data segment.
+    ///@return whether the passed data segment was a child of this node
+    bool unregisterChild(ChildKey child) noexcept;
+    bool unregisterChild(ChildKey child, std::unique_lock<std::shared_mutex>& lock) noexcept;
+
+    ///@brief Registers the data segment as a child of this BCB.
+    ///@return true when the passed data segment is a new child, false if it was already registerd
+    ChildKey registerChild(const DataSegment<DataLocation>& child) noexcept;
+    ChildKey registerChild(const DataSegment<DataLocation>& child, std::unique_lock<std::shared_mutex>& lock) noexcept;
+    std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child) noexcept;
+    std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child, std::shared_lock<std::shared_mutex>& lock) noexcept;
+    std::optional<ChildKey> findChild(const DataSegment<DataLocation>& child, std::unique_lock<std::shared_mutex>& lock) noexcept;
+
+    ///@brief Deletes a child data segment, the data is not accessible afterward anymore
+    ///@return whether the argument was a child. If false, child remains valid.
+    // bool deleteChild(DataSegment<DataLocation>&& child);
+
+    ///@brief Self-destructs this BCB if there is only one owner left
+    ///@return the owned data segment if self-destructed, nullopt otherwise
+    std::optional<DataSegment<DataLocation>> stealDataSegment();
+    std::optional<DataSegment<DataLocation>> stealDataSegment(std::unique_lock<std::shared_mutex>& lock);
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers() const noexcept;
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers(std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    [[nodiscard]] uint32_t getNumberOfChildrenBuffers(std::unique_lock<std::shared_mutex>& lock) const noexcept;
+
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key) const noexcept;
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key, std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    std::optional<DataSegment<DataLocation>> getChild(ChildKey key, std::unique_lock<std::shared_mutex>& lock) const noexcept;
+
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key) const noexcept;
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, std::shared_lock<std::shared_mutex>& lock) const noexcept;
+    std::optional<DataSegment<DataLocation>> getSegment(ChildOrMainDataKey key, std::unique_lock<std::shared_mutex>& lock) const noexcept;
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
 #endif
 
 private:
-    std::atomic<int32_t> referenceCounter = 0;
+    //>= 1 buffer is pinned
+    //== 0 buffer is unpinned and could be spilled at any point
+    //== -1 buffers data segment is getting switched out, will be set to 0 afterward
+    std::atomic<int32_t> pinnedCounter = 0;
+    //Once the data counter has zero, it is not going to increase again
+    std::atomic<int32_t> dataCounter = 0;
     uint32_t numberOfTuples = 0;
     Runtime::Timestamp watermark = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
@@ -120,12 +192,27 @@ private:
     bool lastChunk = true;
     Runtime::Timestamp creationTimestamp = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
-    std::vector<MemorySegment*> children;
 
-public:
-    MemorySegment* owner;
-    std::shared_ptr<BufferRecycler> owningBufferRecycler = nullptr;
-    std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
+    mutable std::shared_mutex segmentMutex;
+    ///Not thread safe
+    ///Max size is max uint32 - 2.
+    ///When accessing, make sure to use the the index stored in the buffers - 2.
+    ///See ChildKey and ChildOrMainDataKey
+    std::vector<DataSegment<DataLocation>> children{};
+    ///Not thread safe, to be used in second chance to avoid initiating spilling for the same segment multiple times
+    ///Unknown indicates that no spilling was attempted yet, >= 2 indicates that for up to (inclusive) that child spilling was initiated,
+    ///Main indicates spilling was initiated for all children and the main data segment.
+    std::atomic<ChildOrMainDataKey> skipSpillingUpTo = ChildOrMainDataKey::UNKNOWN();
+
+    std::atomic<ChildOrMainDataKey> isSpilledUpTo = ChildOrMainDataKey::UNKNOWN();
+
+    std::atomic<DataSegment<DataLocation>> data{};
+    std::atomic<BufferRecycler*> owningBufferRecycler{};
+    //std::function<void(DataSegment<InMemoryLocation>&, BufferRecycler*)> recycleCallback;
+
+    //False means second chance was not at the buffer yet, true means it was seen already and gets evicted next time its seen.
+    std::atomic_flag clockReference = false;
+    std::atomic_flag isRepinning = false;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 private:
@@ -158,84 +245,6 @@ private:
 };
 static_assert(sizeof(BufferControlBlock) % 64 == 0);
 static_assert(alignof(BufferControlBlock) % 64 == 0);
-/**
- * @brief The MemorySegment is a wrapper around a pointer to allocated memory of size bytes and a control block
- * (@see class BufferControlBlock). The MemorySegment is intended to be used **only** in the BufferManager.
- * The BufferManager is the only class that can store MemorySegments. A MemorySegment has no clue of what it's stored
- * inside its allocated memory and has no way to expose the pointer to outside world.
- * The public companion of a MemorySegment is the TupleBuffer, which can "leak" the pointer to the outside world.
- *
- * Reminder: this class should be header-only to help inlining
- *
- */
-class MemorySegment
-{
-    friend class NES::Memory::TupleBuffer;
-    friend class NES::Memory::LocalBufferPool;
-    friend class NES::Memory::FixedSizeBufferPool;
-    friend class NES::Memory::BufferManager;
-    friend class NES::Memory::detail::BufferControlBlock;
-
-    enum class MemorySegmentType : uint8_t
-    {
-        Native = 0,
-        Wrapped = 1
-    };
-
-public:
-    MemorySegment(const MemorySegment& other);
-
-    MemorySegment& operator=(const MemorySegment& other);
-
-    MemorySegment() noexcept = default;
-
-    explicit MemorySegment(
-        uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, uint8_t* controlBlock);
-
-    ~MemorySegment();
-
-    uint8_t* getPointer() const { return ptr; }
-
-private:
-    /**
-     * @brief Private constructor for the memory Segment
-     * @param ptr
-     * @param size of the segment
-     * @param recycler
-     * @param recycleFunction
-     */
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
-
-    /**
-     * @return true if the segment has a reference counter equals to zero
-     */
-    bool isAvailable() { return controlBlock->getReferenceCount() == 0; }
-
-    /**
-     * @brief The size of the memory segment
-     * @return
-     */
-    [[nodiscard]] uint32_t getSize() const { return size; }
-
-    /*
-
-     Layout of the mem segment (padding might be added differently depending on the compiler in-use).
-     +--------------------------------+-----------+-------------------+----------------------+
-     | pointer to control block  (8b) | size (4b) | likely 4b padding | pointer to data (8b) |
-     +------------+-------------------+-----------+-------------------+---------+------------+
-                  |                                                    |
-     +------------+                +-----------------------------------+
-     |                             |
-     v                             v
-     +----------------------------+------------------------------------------------------+
-     | control block (fixed size) |    data region (variable size)                       |
-     +----------------------------+------------------------------------------------------+
-     */
-
-    uint8_t* ptr{nullptr};
-    uint32_t size{0};
-    TaggedPointer<BufferControlBlock> controlBlock{nullptr};
-};
 
 }
 }

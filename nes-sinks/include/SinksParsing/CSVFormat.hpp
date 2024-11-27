@@ -19,7 +19,7 @@
 #include <variant>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/ostream.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -48,10 +48,10 @@ public:
     std::string getFormattedSchema() const;
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
-    std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
+    std::string getFormattedBuffer(const Memory::PinnedBuffer& inputBuffer);
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext);
+    static std::string tupleBufferToFormattedCSVString(Memory::PinnedBuffer tbuffer, const FormattingContext& formattingContext);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 

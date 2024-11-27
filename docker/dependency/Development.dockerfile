@@ -5,7 +5,7 @@ FROM nebulastream/nes-development-dependency:${TAG}
 ARG ANTLR4_VERSION=4.13.2
 
 RUN apt update -y \
-    && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq -y
+    && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq valgrind -y
 
 # As clang-tidy-diff is not available in the apt repository, we need download it from the github repo and install it
 ADD --checksum=sha256:ec28c743ce3354df22b52db59feeac2d98556b8fc81cb7c1a877f3a862ae5726 --chmod=755 \

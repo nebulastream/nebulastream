@@ -13,6 +13,7 @@ usage() {
 # If set we built rebuilt all docker images locally
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
+SANITIZER=NONE
 STDLIB=""
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -27,6 +28,12 @@ while [[ "$#" -gt 0 ]]; do
         --libstdcxx)
             echo "Set the standard library to libstdcxx"
             STDLIB=libstdcxx
+            shift
+            ;;
+        --sanitizer)
+            echo "Set the standard library to libcxx"
+            shift
+            SANITIZER=$1
             shift
             ;;
         --libcxx)
@@ -44,6 +51,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+echo "Using Sanitizer ${SANITIZER}"
 # Check if the standard library is set, otherwise prompt the user
 if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
   echo "Please choose a standard library implementation:"
@@ -118,6 +126,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
           --build-arg TAG=local \
           --build-arg STDLIB=${STDLIB} \
           --build-arg ARCH=${ARCH} \
+          --build-arg ENABLE_SANITIZER=${SANITIZER} \
           -t nebulastream/nes-development-dependency:local .
 
   docker build -f docker/dependency/Development.dockerfile \

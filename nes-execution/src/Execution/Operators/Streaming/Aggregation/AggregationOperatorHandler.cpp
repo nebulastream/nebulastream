@@ -28,7 +28,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -95,7 +95,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// - a new hashmap for the probe operator, so that we are not overwriting the thread local hashmaps
         /// - size of EmittedAggregationWindow
         const auto neededBufferSize = sizeof(EmittedAggregationWindow) + (allHashMaps.size() * sizeof(Interface::HashMap*));
-        Memory::TupleBuffer tupleBuffer;
+        Memory::PinnedBuffer tupleBuffer;
         if (pipelineCtx->getBufferManager()->getBufferSize() >= neededBufferSize)
         {
             tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();

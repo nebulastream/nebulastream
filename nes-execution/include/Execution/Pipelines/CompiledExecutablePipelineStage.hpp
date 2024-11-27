@@ -19,7 +19,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <options.hpp>
@@ -38,17 +38,17 @@ public:
         std::vector<std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
-    void execute(const Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
+    void execute(const Memory::PinnedBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
 protected:
     std::ostream& toString(std::ostream& os) const override;
 
 private:
-    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::PinnedBuffer*, const Arena*>
     compilePipeline() const;
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::TupleBuffer*, const Arena*> compiledPipelineFunction;
+    nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const Memory::PinnedBuffer*, const Arena*> compiledPipelineFunction;
     std::vector<std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };

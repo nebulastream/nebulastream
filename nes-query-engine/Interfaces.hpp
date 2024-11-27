@@ -16,7 +16,7 @@
 #include <functional>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <Task.hpp>
 
@@ -44,7 +44,7 @@ public:
     virtual bool emitWork(
         QueryId,
         const std::shared_ptr<RunningQueryPlanNode>& target,
-        Memory::TupleBuffer,
+        Memory::PinnedBuffer,
         BaseTask::onComplete,
         BaseTask::onFailure,
         bool potentiallyProcessTheWorkInPlace)

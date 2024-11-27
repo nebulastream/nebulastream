@@ -19,7 +19,7 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Nautilus::Interface
@@ -56,7 +56,7 @@ void PagedVector::copyFrom(const PagedVector& other)
     pages.insert(pages.end(), other.pages.begin(), other.pages.end());
 }
 
-const Memory::TupleBuffer& PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
+const Memory::PinnedBuffer& PagedVector::getTupleBufferForEntry(const uint64_t entryPos) const
 {
     auto bufferPos = entryPos;
     for (const auto& page : pages)
@@ -100,12 +100,12 @@ uint64_t PagedVector::getTotalNumberOfEntries() const
     return totalNumEntries;
 }
 
-const Memory::TupleBuffer& PagedVector::getLastPage() const
+const Memory::PinnedBuffer& PagedVector::getLastPage() const
 {
     return pages.back();
 }
 
-const Memory::TupleBuffer& PagedVector::getFirstPage() const
+const Memory::PinnedBuffer& PagedVector::getFirstPage() const
 {
     return pages.front();
 }

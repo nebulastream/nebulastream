@@ -24,7 +24,7 @@
 #include <API/Schema.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -158,7 +158,7 @@ class DynamicTuple
 {
 public:
     /// Each tuple contains the index, to the memory layout and to the tuple buffer.
-    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::PinnedBuffer buffer);
 
     /// @throws CannotAccessBuffer if field index is invalid
     DynamicField operator[](std::size_t fieldIndex) const;
@@ -182,7 +182,7 @@ public:
 private:
     uint64_t tupleIndex;
     std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    Memory::PinnedBuffer buffer;
 };
 
 /**
@@ -226,9 +226,9 @@ private:
 class TestTupleBuffer
 {
 public:
-    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
+    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::PinnedBuffer buffer);
 
-    static TestTupleBuffer createTestTupleBuffer(const Memory::TupleBuffer& buffer, const std::shared_ptr<Schema>& schema);
+    static TestTupleBuffer createTestTupleBuffer(const Memory::PinnedBuffer& buffer, const std::shared_ptr<Schema>& schema);
 
     /// Gets the number of tuples a tuple buffer with this memory layout could occupy.
     [[nodiscard]] uint64_t getCapacity() const;
@@ -242,7 +242,7 @@ public:
     /// @throws CannotAccessBuffer if index is larger then buffer capacity
     DynamicTuple operator[](std::size_t tupleIndex) const;
 
-    Memory::TupleBuffer getBuffer();
+    Memory::PinnedBuffer getBuffer();
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.
@@ -415,7 +415,7 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<Memory::TupleBuffer::NestedTupleBufferKey>();
+                auto childBufferIdx = (*this)[recordIndex][I].read<size_t>();
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
             }
             else
@@ -430,7 +430,7 @@ private:
     }
 
     std::shared_ptr<MemoryLayout> memoryLayout;
-    Memory::TupleBuffer buffer;
+    Memory::PinnedBuffer buffer;
 };
 
 }

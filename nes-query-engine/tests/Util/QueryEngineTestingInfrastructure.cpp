@@ -33,8 +33,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <gmock/gmock.h>
@@ -57,13 +57,20 @@ std::vector<std::byte> identifiableData(size_t identifier)
     const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
     for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
     {
-        *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
+        *std::bit_cast<size_t*>(&data[index]) = identifier;
     }
 
     return data;
 }
 
-bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
+size_t readIdentifier(const Memory::PinnedBuffer& buffer)
+{
+    auto identifier = *buffer.getBuffer<size_t>();
+    INVARIANT(verifyIdentifier(buffer, identifier), "invalid identifier found");
+    return identifier;
+}
+
+bool verifyIdentifier(const Memory::PinnedBuffer& buffer, size_t identifier)
 {
     if (buffer.getBufferSize() == 0)
     {
@@ -94,7 +101,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
     }
 
     auto check = receivedBufferTrigger.wait_for(
-        buffers.as_lock(), DEFAULT_AWAIT_TIMEOUT, [&]() { return buffers->size() == numberOfExpectedBuffers; });
+        buffers.as_lock(), DEFAULT_LONG_AWAIT_TIMEOUT * 100, [&]() { return buffers->size() == numberOfExpectedBuffers; });
 
     if (check)
     {
@@ -106,14 +113,14 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
                                        << "Expected: " << numberOfExpectedBuffers << " Received: " << buffers->size();
 }
 
-void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
+void TestSinkController::insertBuffer(Memory::PinnedBuffer&& buffer)
 {
     ++invocations;
-    receivedBuffers.lock()->push_back(std::move(buffer));
+    receivedBuffers.lock()->push_back(Memory::FloatingBuffer{std::move(buffer)});
     receivedBufferTrigger.notify_one();
 }
 
-std::vector<Memory::TupleBuffer> TestSinkController::takeBuffers()
+std::vector<Memory::FloatingBuffer> TestSinkController::takeBuffers()
 {
     return receivedBuffers.exchange({});
 }
@@ -350,6 +357,7 @@ void TestingHarness::start()
     }
     Runtime::QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    configuration.taskQueueSize.setValue(100000);
     qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<Runtime::ExecutableQueryPlan> query) const

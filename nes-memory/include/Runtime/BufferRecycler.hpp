@@ -13,30 +13,51 @@
 */
 
 #pragma once
+#include <Runtime/DataSegment.hpp>
 
 namespace NES::Memory
 {
-namespace detail
-{
-class MemorySegment;
-}
 /**
  * @brief Interface for buffer recycling mechanism
  */
 class BufferRecycler
 {
 public:
+    //Templated virtual member function are not a thing yet, so we just spell out the variants manually :(
+
+
     /**
      * @brief Interface method for pooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recyclePooledBuffer(detail::MemorySegment* buffer) = 0;
+    virtual bool recycleSegment(detail::DataSegment<detail::DataLocation>&& buffer)
+    {
+        //Better would be a visitor pattern in DataSegment like in std::variant
+        if (auto inMemorySegment = buffer.get<detail::InMemoryLocation>())
+        {
+            recycleSegment(std::move(*inMemorySegment));
+            return true;
+        }
+        else
+        {
+            auto onDiskSegment = buffer.get<detail::OnDiskLocation>();
+            return recycleSegment(std::move(*onDiskSegment));
+        }
+    };
 
     /**
-     * @brief Interface method for unpooled buffer recycling
+     * @brief Interface method for pooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
+    virtual void recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& buffer) = 0;
+
+
+    /**
+     * @brief Interface method for pooled buffer recycling
+     * @param buffer the buffer to recycle
+     */
+    virtual bool recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) = 0;
+
 };
 
 }
