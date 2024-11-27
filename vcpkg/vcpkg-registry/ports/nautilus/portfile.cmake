@@ -1,8 +1,8 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF 4b3acf624d8f18d9c0c6d68324318b9970cb9674
-        SHA512 0d89cdbafdd18202703fb0ecb3dafc16f9da2575d957b98701669f134c24034b1282d3b31427ff724eceb4ec48006dfb51a2049d3b7e91a73dc57e68eeabae0f
+		REF a48e9513def6000b49717a5e8dce954511b1e649
+        SHA512 a343ad0e5d3babb1ed071eede64ea2047871f6f139adc094ae43b0fbff5cd950be9c62871ee7cf5068d5e56f05d7647ccdccef29107cfdd4ddc201d9d2c82971
 		PATCHES
 )
 
