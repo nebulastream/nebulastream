@@ -14,7 +14,6 @@
 
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -89,7 +88,7 @@ bool LogicalUnionOperator::inferSchema()
 
 OperatorPtr LogicalUnionOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createUnionOperator(id);
+    auto copy = std::make_shared<LogicalUnionOperator>(id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);

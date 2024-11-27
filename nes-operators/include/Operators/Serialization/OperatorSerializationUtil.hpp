@@ -21,7 +21,6 @@
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -52,12 +51,11 @@ class OperatorSerializationUtil
 {
 public:
     /// Serializes an operator node and all its children to a SerializableOperator object.
-    static SerializableOperator serializeOperator(const OperatorPtr& operatorNode);
-
+    static SerializableOperator serializeOperator(const std::shared_ptr<LogicalOperator>& operatorNode);
 
     /// Deserializes the input SerializableOperator only
     /// Note: This method will not deserialize its children
-    static OperatorPtr deserializeOperator(SerializableOperator serializedOperator);
+    static std::shared_ptr<LogicalOperator> deserializeOperator(SerializableOperator serializedOperator);
 
     static void serializeSourceOperator(SourceDescriptorLogicalOperator& sourceOperator, SerializableOperator& serializedOperator);
 
@@ -69,30 +67,16 @@ public:
 
     static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeFilterOperator(const SerializableOperator_FilterDetails& filterDetails);
-
     static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator);
-
-    static LogicalUnaryOperatorPtr deserializeProjectionOperator(const SerializableOperator_ProjectionDetails& projectionDetails);
 
     static void serializeMapOperator(const LogicalMapOperator& mapOperator, SerializableOperator& serializedOperator);
 
-    static LogicalUnaryOperatorPtr deserializeMapOperator(const SerializableOperator_MapDetails& mapDetails);
-
     static void serializeWindowOperator(const WindowOperator& windowOperator, SerializableOperator& serializedOperator);
-
-    static LogicalUnaryOperatorPtr
-    deserializeWindowOperator(const SerializableOperator_WindowDetails& windowDetails, OperatorId operatorId);
 
     static void serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator);
 
-    static LogicalJoinOperatorPtr deserializeJoinOperator(const SerializableOperator_JoinDetails& joinDetails, OperatorId operatorId);
-
     static void
     serializeBatchJoinOperator(const Experimental::LogicalBatchJoinOperator& joinOperator, SerializableOperator& serializedOperator);
-
-    static Experimental::LogicalBatchJoinOperatorPtr
-    deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
 
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
@@ -108,14 +92,8 @@ public:
 
     static void serializeLimitOperator(const LogicalLimitOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
 
-
-    static LogicalUnaryOperatorPtr deserializeLimitOperator(const SerializableOperator_LimitDetails& limitDetails);
-
     static void serializeWatermarkAssignerOperator(
         const WatermarkAssignerLogicalOperator& watermarkAssignerOperator, SerializableOperator& serializedOperator);
-
-    static LogicalUnaryOperatorPtr
-    deserializeWatermarkAssignerOperator(const SerializableOperator_WatermarkStrategyDetails& watermarkStrategyDetails);
 
     static void serializeWatermarkStrategyDescriptor(
         const Windowing::WatermarkStrategyDescriptor& watermarkStrategyDescriptor,
@@ -130,7 +108,5 @@ public:
 
     static void
     serializeInferModelOperator(const InferModel::LogicalInferModelOperator& inferModel, SerializableOperator& serializedOperator);
-
-    static LogicalUnaryOperatorPtr deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails);
 };
 }

@@ -17,7 +17,6 @@
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Windowing.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Types/SlidingWindow.hpp>

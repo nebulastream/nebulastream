@@ -15,7 +15,6 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -63,7 +62,7 @@ bool SourceNameLogicalOperator::inferSchema()
 
 OperatorPtr SourceNameLogicalOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id);
+    auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
