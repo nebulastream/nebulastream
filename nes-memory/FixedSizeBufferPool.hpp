@@ -41,11 +41,13 @@ public:
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive buffers
+     * @param deallocator functor to free memory that was not a preAllocatedBlock (previously "unpooled" segments)
      */
     explicit FixedSizeBufferPool(
         const std::shared_ptr<BufferManager>& bufferManager,
-        std::deque<detail::MemorySegment*>& availableBuffers,
-        size_t numberOfReservedBuffers);
+        std::deque<detail::DataSegment<detail::InMemoryLocation>>&& availableBuffers,
+        size_t numberOfReservedBuffers,
+        const std::function<void(detail::DataSegment<detail::InMemoryLocation>&&)>& deallocator);
 
     ~FixedSizeBufferPool() override;
 
@@ -58,7 +60,7 @@ public:
     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
     * @return a new buffer
     */
-    TupleBuffer getBufferBlocking() override;
+    PinnedBuffer getBufferBlocking() override;
 
     /**
      * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
@@ -66,12 +68,13 @@ public:
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override;
+    std::optional<PinnedBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override;
     size_t getBufferSize() const override;
+    RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
-    std::optional<TupleBuffer> getBufferNoBlocking() override;
-    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
+    std::optional<PinnedBuffer> getBufferNoBlocking() override;
+    std::optional<PinnedBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers
@@ -82,13 +85,14 @@ public:
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recyclePooledBuffer(detail::MemorySegment* memSegment) override;
+    void recycleSegment(detail::DataSegment<detail::InMemoryLocation>&& memSegment) override;
 
     /**
-     * @brief This calls is not supported and raises Runtime error
+     * @brief Recycle a pooled buffer that is might be exclusive to the pool
      * @param buffer
      */
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
+    bool recycleSegment(detail::DataSegment<detail::OnDiskLocation>&& buffer) override;
+
 
     virtual BufferManagerType getBufferManagerType() const override;
 
@@ -96,9 +100,13 @@ public:
 
 private:
     std::shared_ptr<BufferManager> bufferManager;
+    const std::function<void(detail::DataSegment<detail::InMemoryLocation>)> deallocator;
 
-    folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
+    folly::MPMCQueue<detail::DataSegment<detail::InMemoryLocation>> exclusiveBuffers;
     [[maybe_unused]] size_t numberOfReservedBuffers;
+    mutable std::mutex allBuffersMutex;
+    //TODO erase and shrink allBuffers periodically
+    std::vector<detail::BufferControlBlock*> allBuffers;
     mutable std::mutex mutex;
     std::condition_variable cvar;
     std::atomic<bool> isDestroyed;

@@ -11,16 +11,28 @@
 # limitations under the License.
 
 add_subdirectory(MemoryLayout)
+#add_subdirectory(tests)
 
 add_library(nes-memory
+        DataSegment.cpp
         BufferManager.cpp
         TupleBufferImpl.cpp
-        TupleBuffer.cpp
+        PinnedBuffer.cpp
         NesDefaultMemoryAllocator.cpp
         FixedSizeBufferPool.cpp
-        TaggedPointer.cpp
+        LocalBufferPool.cpp
         TestTupleBuffer.cpp
         ${MEMORY_LAYOUT_SOURCES}
+        FloatingBuffer.cpp
+        BufferManagerImpl.cpp
+        BufferFiles.cpp
+        BufferPrimitives.cpp
+        BufferManagerPromise.cpp
+        include/Runtime/BufferManagerPromise.hpp
+        BufferManagerFuture.cpp
+        include/Runtime/BufferManagerFuture.hpp
+        BufferManagerCoroCore.cpp
+        include/Runtime/BufferManagerCoroCore.hpp
 )
 
 target_include_directories(nes-memory
@@ -30,6 +42,10 @@ target_include_directories(nes-memory
         PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
+find_package(PkgConfig)
+pkg_check_modules(liburing REQUIRED IMPORTED_TARGET GLOBAL liburing)
 find_package(folly REQUIRED)
-target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
+
+target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly -latomic)
+target_link_libraries(nes-memory PRIVATE PkgConfig::liburing)
 add_tests_if_enabled(tests)

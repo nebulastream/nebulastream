@@ -15,11 +15,11 @@
 #include <cstdint>
 #include <utility>
 #include <MemoryLayout/MemoryLayoutTupleBuffer.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Memory::MemoryLayouts
 {
-MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, const uint64_t capacity)
+MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::PinnedBuffer tupleBuffer, const uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity)
 {
 }
@@ -31,7 +31,7 @@ uint64_t MemoryLayoutTupleBuffer::getNumberOfRecords() const
 {
     return numberOfRecords;
 }
-Memory::TupleBuffer MemoryLayoutTupleBuffer::getTupleBuffer()
+Memory::PinnedBuffer MemoryLayoutTupleBuffer::getTupleBuffer()
 {
     return tupleBuffer;
 }

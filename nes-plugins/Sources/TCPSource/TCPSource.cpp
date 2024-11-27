@@ -31,7 +31,7 @@
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
@@ -199,7 +199,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token&)
+size_t TCPSource::fillTupleBuffer(NES::Memory::PinnedBuffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
@@ -217,7 +217,7 @@ size_t TCPSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const s
     }
 }
 
-bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool TCPSource::fillBuffer(NES::Memory::PinnedBuffer& tupleBuffer, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;

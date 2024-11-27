@@ -66,9 +66,7 @@ protected:
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
     static VarVal storeValue(
-        const std::shared_ptr<PhysicalType>& type,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<int8_t*>& fieldReference,
+        const std::shared_ptr<PhysicalType>& type, const RecordBuffer& recordBuffer, nautilus::val<int8_t*>& fieldReference,
         VarVal value);
 
     [[nodiscard]] static bool

@@ -30,7 +30,7 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
@@ -91,8 +91,8 @@ struct Arena
     }
 
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    std::vector<Memory::TupleBuffer> fixedSizeBuffers;
-    std::vector<Memory::TupleBuffer> unpooledBuffers;
+    std::vector<Memory::PinnedBuffer> fixedSizeBuffers;
+    std::vector<Memory::PinnedBuffer> unpooledBuffers;
     size_t lastAllocationSize{0};
     size_t currentOffset{0};
 };
@@ -168,7 +168,7 @@ struct ExecutionContext final
     [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
     /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
     /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
-    [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<Memory::PinnedBuffer*> allocateBuffer() const;
 
     /// Use allocateMemory if you want to allocate memory that lives for one pipeline invocation, i.e., tuple buffer lifetime.
     /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.

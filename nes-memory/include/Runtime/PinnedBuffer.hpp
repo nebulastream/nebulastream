@@ -14,19 +14,21 @@
 
 #pragma once
 
-#include <atomic>
+
 #include <cstddef>
 #include <cstdint>
-#include <functional>
-#include <memory>
-#include <ostream>
-#include <sstream>
+#include <future>
 #include <string>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferPrimitives.hpp>
+#include <Runtime/DataSegment.hpp>
 #include <Time/Timestamp.hpp>
-#include "BufferRecycler.hpp"
+#include <type_traits>
 
+namespace NES::Memory::detail
+{
+}
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
 /// TODO: switch to std::ispow2 when we use C++2a.
@@ -35,6 +37,8 @@ static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
 namespace NES::Memory
 {
+class FloatingBuffer;
+
 namespace detail
 {
 class BufferControlBlock;
@@ -63,73 +67,67 @@ class MemorySegment;
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBuffer
+class PinnedBuffer
 {
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class FixedSizeBufferPool;
     friend class LocalBufferPool;
-    friend class detail::MemorySegment;
+    friend class FloatingBuffer;
 
-    [[nodiscard]] explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
-        : controlBlock(controlBlock), ptr(ptr), size(size)
-    {
-        /// nop
-    }
+    //[[nodiscard]] explicit PinnedBuffer(detail::BufferControlBlock* controlBlock) noexcept;
+    [[nodiscard]] explicit PinnedBuffer(
+        detail::BufferControlBlock* controlBlock, detail::DataSegment<detail::InMemoryLocation> segment, detail::ChildOrMainDataKey childOrMainData) noexcept;
 
 public:
-    ///@brief This is the logical identifier of a child tuple buffer
-    using NestedTupleBufferKey = uint32_t;
 
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
-    [[nodiscard]] TupleBuffer() noexcept = default;
+    [[nodiscard]] PinnedBuffer() noexcept = default;
 
     /**
      * @brief Interprets the void* as a pointer to the content of tuple buffer
      * @note if bufferPointer is not pointing to the begin of an data buffer the behavior of this function is undefined.
+     * @note also, make sure that the buffers data is indeed in memory and not spilled
      * @param bufferPointer
      * @return TupleBuffer
      */
-    [[maybe_unused]] static TupleBuffer reinterpretAsTupleBuffer(void* bufferPointer);
-
+    // [[maybe_unused]] static PinnedBuffer reinterpretAsTupleBuffer(void* bufferPointer);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(const TupleBuffer& other) noexcept;
+    [[nodiscard]] PinnedBuffer(PinnedBuffer const& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+    [[nodiscard]] PinnedBuffer(PinnedBuffer&& other) noexcept : controlBlock(other.controlBlock), dataSegment(other.dataSegment), childOrMainData(other.childOrMainData)
     {
         other.controlBlock = nullptr;
-        other.ptr = nullptr;
-        other.size = 0;
+        other.dataSegment = detail::DataSegment{detail::InMemoryLocation{nullptr}, 0};
+        other.childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
     }
 
+    // /// @brief repins a buffer that might got spilled. Can block and repinning should be done from one thread only.
+    // [[nodiscard]] explicit PinnedBuffer(FloatingBuffer&& other) noexcept;
+
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
+    PinnedBuffer& operator=(PinnedBuffer const& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
-    TupleBuffer& operator=(TupleBuffer&& other) noexcept;
+    PinnedBuffer& operator=(PinnedBuffer&& other) noexcept;
 
     /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
-    TupleBuffer* operator&() = delete;
+    PinnedBuffer* operator&() = delete;
 
     /// @brief Return if this is not valid.
-    [[nodiscard]] auto operator!() const noexcept -> bool { return ptr == nullptr; }
+    [[nodiscard]] auto operator!() const noexcept -> bool { return dataSegment.getLocation().getPtr() == nullptr; }
 
     /// @brief release the resource if necessary.
-    ~TupleBuffer() noexcept;
+    ~PinnedBuffer() noexcept;
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
+    friend void swap(PinnedBuffer& lhs, PinnedBuffer& rhs) noexcept;
 
-    /// @brief Increases the internal reference counter by one and return this.
-    TupleBuffer& retain() noexcept;
-
-    /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
-    void release() noexcept;
 
     int8_t* getBuffer() noexcept;
 
@@ -139,7 +137,7 @@ public:
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
-        return reinterpret_cast<T*>(ptr);
+        return reinterpret_cast<T*>(dataSegment.getLocation().getPtr());
     }
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
@@ -148,14 +146,17 @@ public:
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
-        return reinterpret_cast<const T*>(ptr);
+        return reinterpret_cast<const T*>(dataSegment.getLocation().getPtr());
     }
 
     [[nodiscard]] uint32_t getReferenceCounter() const noexcept;
 
+    [[nodiscard]] bool isValid() const noexcept;
+
+
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept;
+    friend std::ostream& operator<<(std::ostream& os, const PinnedBuffer& buff) noexcept;
 
     /// @brief get the buffer's size.
     [[nodiscard]] uint64_t getBufferSize() const noexcept;
@@ -204,21 +205,26 @@ public:
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     void setOriginId(OriginId id) noexcept;
 
-    ///@brief attach a child tuple buffer to the parent. the child tuple buffer is then identified via NestedTupleBufferKey
-    [[nodiscard]] NestedTupleBufferKey storeChildBuffer(TupleBuffer& buffer) const noexcept;
+    ///@brief attach the content of a buffer to the parent.
+    ///Invalidates the passed PinnedBuffer.
+    ///@return a tuple buffer to the same data, but as a child of this buffer
+    [[nodiscard]] std::optional<PinnedBuffer> storeReturnAsChildBuffer(PinnedBuffer&& buffer) const noexcept;
+
+    std::optional<ChildKey> storeReturnChildIndex(PinnedBuffer&& other) const noexcept;
+
+    [[nodiscard]] std::optional<PinnedBuffer> loadChildBuffer(const int8_t* ptr, uint32_t size) const noexcept;
+
 
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
-    [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
+    [[nodiscard]] std::optional<PinnedBuffer> loadChildBuffer(ChildKey bufferIndex) const;
+
+    // [[nodiscard]] bool deleteChild(PinnedBuffer&& child) noexcept;
+    // [[nodiscard]] bool deleteChild(const int8_t* oldbuffer, uint32_t size) const noexcept;
+
+    bool stealChild(const PinnedBuffer* oldParent, const int8_t* child, uint32_t size) const;
 
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept;
 
-    /**
-     * @brief returns true if there is enought space to write
-     * @param used space
-     * @param needed space
-     * @return TupleBuffer
-     */
-    bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
 private:
     /**
@@ -227,9 +233,13 @@ private:
     [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
     detail::BufferControlBlock* controlBlock = nullptr;
-    uint8_t* ptr = nullptr;
-    uint32_t size = 0;
+    detail::DataSegment<detail::InMemoryLocation> dataSegment;
+    ///If == 0, then this floating buffer refers to the main data segment stored in the BCB.
+    ///If == 1, then its unknown what this refer to, please search throught the children vector in the BCB.
+    ///If > 1, then childOrMainData - 2 is the index of the child buffer in the BCB that this floating buffer belongs to.
+    detail::ChildOrMainDataKey childOrMainData = detail::ChildOrMainDataKey::UNKNOWN();
 };
+
 
 /**
  * @brief This method determines the control block based on the ptr to the data region and decrements the reference counter.
@@ -245,11 +255,24 @@ private:
  * @return T+
  */
 template <typename T>
-T* allocateWithin(TupleBuffer& buffer)
+T* allocateWithin(PinnedBuffer& buffer)
 {
     auto ptr = new (buffer.getBuffer()) T();
     buffer.setNumberOfTuples(1);
     return ptr;
 };
 
+//For now I'm not sure if I'd want to try to fit this into std::future, wait is not const
+class FuturePinnedBuffer
+{
+private:
+    std::promise<detail::DataSegment<detail::InMemoryLocation>> futureInMemorySegment;
+
+public:
+    void wait();
+};
+
+
+static_assert(std::is_copy_constructible_v<PinnedBuffer>);
+static_assert(std::is_assignable_v<PinnedBuffer, PinnedBuffer>);
 }

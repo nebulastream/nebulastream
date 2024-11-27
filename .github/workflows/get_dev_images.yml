@@ -90,6 +90,10 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
+        sanitizer: [ 'Address', "Thread", "Undefined", null ]
+        exclude:
+          - arch: arm64
+            stdlib: 'libstdcxx'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,15 +122,16 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}},mode=max
+          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
           build-args: |
             TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
             ARCH=${{matrix.arch}}
             STDLIB=${{matrix.stdlib}}
+            ENABLE_SANITIZER=${{matrix.sanitizer || 'None' }}
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
           context: .
           file: docker/dependency/Dependency.dockerfile
@@ -134,20 +139,20 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}},mode=max
+          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
           context: .
           file: docker/dependency/Development.dockerfile
       - name: Build CI Image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+          tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer || 'None' }}
           context: .
           file: docker/dependency/DevelopmentCI.dockerfile
   merge-dev-images:
@@ -171,23 +176,46 @@ jobs:
         with:
           version: v0.10.0
       - name: Combine Manifests
+        shell: bash
+        # This script creates and tags Docker images for the NebulaStream development environment:
+        # 1. Creates multi-arch (x64 + arm64) base development images
+        # 2. For each standard library (libstdcxx, libcxx) and sanitizer (Address, Undefined, Thread, Node) combination:
+        #    - Creates both development and development-dependency variants
+        #    - Tags each image with both the dependency hash and branch name
+        #   E.g., `nebulastream/nes-development:<branch-name>-libstdcxx-Address`
+        # 3. Creates default development images using the libcxx-None configuration
         run: |
           docker buildx imagetools create -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }} \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
           
           for image_tag in development-dependency development ci; do
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }} \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+            
+            for sanitizer in None Address Thread Undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-$sanitizer\
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
           
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
           
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libstdcxx 
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libstdcxx-$sanitizer 
+            done
+          
+            # default image without sanitizer
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}\
+              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-None
+          
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer 
+              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-None
+          
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
+              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-None
+          
+          
           done
       - name: Combine Manifests for branch specific docker image
         if: ${{ inputs.branch-name != '' }}
@@ -197,14 +225,26 @@ jobs:
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
           
           for image_tag in development-dependency development ci; do
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
           
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx
+            for sanitizer in None Address Thread Undefined; do
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
           
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx \
-              nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx 
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-arm64-libcxx-$sanitizer
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-$sanitizer \
+                nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-x64-libstdcxx-$sanitizer
+            done
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
+                  nebulastream/nes-$image_tag:${{ inputs.branch-name }}-None
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
+                  nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-None
+          
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
+                  nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-None
           done
