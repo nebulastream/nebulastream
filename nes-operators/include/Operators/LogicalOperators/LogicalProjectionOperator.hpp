@@ -34,11 +34,13 @@ public:
 
     [[nodiscard]] bool equal(std::shared_ptr<Node> const& rhs) const override;
     [[nodiscard]] bool isIdentical(std::shared_ptr<Node> const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     void inferStringSignature() override;
 
     bool inferSchema() override;
     OperatorPtr copy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     std::vector<std::shared_ptr<NodeFunction>> functions;

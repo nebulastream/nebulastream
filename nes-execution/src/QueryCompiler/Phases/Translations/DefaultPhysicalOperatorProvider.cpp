@@ -161,7 +161,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
     }
     else
     {
-        throw UnknownLogicalOperator("Operator: {}", operatorNode->toString());
+        throw UnknownLogicalOperator("Operator: {}", *operatorNode);
     }
 }
 
@@ -169,7 +169,8 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
 {
     PRECONDITION(
         NES::Util::instanceOf<LogicalUnionOperator>(operatorNode) || NES::Util::instanceOf<LogicalJoinOperator>(operatorNode),
-        operatorNode->toString() + " is no binaryOperator")
+        "{} is no binaryOperator",
+        *operatorNode)
     if (NES::Util::instanceOf<LogicalUnionOperator>(operatorNode))
     {
         lowerUnionOperator(operatorNode);
@@ -226,7 +227,7 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
 OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(
     const LogicalJoinOperatorPtr& joinOperator, SchemaPtr outputSchema, std::vector<OperatorPtr> children)
 {
-    PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", joinOperator->toString());
+    PRECONDITION(!children.empty(), "There should be at least one child for the join operator {}", *joinOperator);
 
     if (children.size() > 1)
     {

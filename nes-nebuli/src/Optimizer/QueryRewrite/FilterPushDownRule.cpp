@@ -404,7 +404,7 @@ void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
     const LogicalSelectionOperatorPtr& filterOperator, const LogicalMapOperatorPtr& mapOperator, const std::string& fieldName)
 {
     NES_TRACE("Substitute filter predicate's field access function with map transformation.");
-    NES_TRACE("Current map transformation: {}", mapOperator->getMapFunction()->toString());
+    NES_TRACE("Current map transformation: {}", *mapOperator->getMapFunction());
     const NodeFunctionFieldAssignmentPtr mapFunction = mapOperator->getMapFunction();
     const NodeFunctionPtr mapTransformation = mapFunction->getAssignment();
     std::vector<NodeFunctionFieldAccessPtr> filterAccessFunctions = getFilterAccessFunctions(filterOperator->getPredicate());

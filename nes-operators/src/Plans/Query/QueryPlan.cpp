@@ -65,13 +65,12 @@ std::vector<std::shared_ptr<SinkLogicalOperator>> QueryPlan::getSinkOperators() 
 
 void QueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
 {
-    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
         if (!rootOperator->addParent(operatorNode))
         {
-            NES_THROW_RUNTIME_ERROR(
-                "QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
+            NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
         }
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
@@ -217,7 +216,7 @@ void QueryPlan::addRootOperator(const OperatorPtr& newRootOperator)
 
 void QueryPlan::removeAsRootOperator(OperatorPtr root)
 {
-    NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());
+    NES_DEBUG("QueryPlan: removing operator {} as root operator.", *root);
     auto found = std::find_if(
         rootOperators.begin(),
         rootOperators.end(),
@@ -225,8 +224,7 @@ void QueryPlan::removeAsRootOperator(OperatorPtr root)
     if (found != rootOperators.end())
     {
         NES_DEBUG(
-            "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan.",
-            root->toString());
+            "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan. {}", *root);
         rootOperators.erase(found);
     }
 }

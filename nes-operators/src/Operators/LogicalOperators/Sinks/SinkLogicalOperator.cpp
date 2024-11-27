@@ -77,7 +77,7 @@ OperatorPtr SinkLogicalOperator::copy()
 void SinkLogicalOperator::inferStringSignature()
 {
     const OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)

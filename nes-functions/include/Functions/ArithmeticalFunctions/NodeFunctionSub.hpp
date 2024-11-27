@@ -24,13 +24,15 @@ public:
     ~NodeFunctionSub() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this function node.
     * @return NodeFunctionPtr
     */
     NodeFunctionPtr deepCopy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit NodeFunctionSub(NodeFunctionSub* other);

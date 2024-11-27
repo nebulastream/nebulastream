@@ -97,7 +97,7 @@ OperatorPtr LogicalSelectionOperator::copy()
 void LogicalSelectionOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
 
     ///Infer query signatures for child operators

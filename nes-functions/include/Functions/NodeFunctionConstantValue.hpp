@@ -36,13 +36,14 @@ public:
     /// @param schema
     void inferStamp(SchemaPtr schema) override;
 
-    std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
+
+    std::string toString() const override;
 
 private:
     explicit NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value);

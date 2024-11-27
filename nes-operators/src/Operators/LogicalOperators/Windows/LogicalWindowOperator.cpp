@@ -155,7 +155,7 @@ bool LogicalWindowOperator::inferSchema()
 void LogicalWindowOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -172,7 +172,7 @@ void LogicalWindowOperator::inferStringSignature()
         signatureStream << "WINDOW-BY-KEY(";
         for (const auto& key : windowDefinition->getKeys())
         {
-            signatureStream << key->toString() << ",";
+            signatureStream << *key << ",";
         }
     }
     else

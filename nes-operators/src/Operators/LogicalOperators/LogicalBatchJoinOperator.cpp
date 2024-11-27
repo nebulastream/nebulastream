@@ -165,7 +165,7 @@ bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const
 void LogicalBatchJoinOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -174,8 +174,8 @@ void LogicalBatchJoinOperator::inferStringSignature()
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
-    signatureStream << "BATCHJOIN(LEFT-KEY=" << batchJoinDefinition->getBuildJoinKey()->toString() << ",";
-    signatureStream << "RIGHT-KEY=" << batchJoinDefinition->getProbeJoinKey()->toString() << ",";
+    signatureStream << "BATCHJOIN(LEFT-KEY=" << *batchJoinDefinition->getBuildJoinKey() << ",";
+    signatureStream << "RIGHT-KEY=" << *batchJoinDefinition->getProbeJoinKey() << ",";
 
     auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();

@@ -41,7 +41,6 @@ public:
      */
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
 
     /**
     * @brief Infers the input and output schema of this operator depending on its child.
@@ -52,6 +51,9 @@ public:
     bool inferSchema() override;
     OperatorPtr copy() override;
     void inferStringSignature() override;
+
+protected:
+    std::string toString() const override;
 
 private:
     uint64_t limit;

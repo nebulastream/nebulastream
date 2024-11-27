@@ -26,7 +26,6 @@ public:
     LogicalWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition, OperatorId id);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
     OperatorPtr copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
@@ -36,6 +35,9 @@ public:
      * @return a vector containing the key names used in the aggregation
      */
     std::vector<std::string> getGroupByKeyNames() const;
+
+protected:
+    std::string toString() const override;
 };
 
 }

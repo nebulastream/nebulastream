@@ -57,13 +57,14 @@ public:
     void inferStamp(SchemaPtr schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const final;
-    [[nodiscard]] std::string toString() const final;
 
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionCase(NodeFunctionCase* other);
+
+    [[nodiscard]] std::string toString() const final;
 };
 
 }
