@@ -30,7 +30,6 @@ public:
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     /**
      * @brief Infers the stamp of this logical AND function node.
      * We assume that both children of an and function are predicates.
@@ -40,6 +39,9 @@ public:
     void inferStamp(SchemaPtr schema) override;
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit NodeFunctionAnd(NodeFunctionAnd* other);

@@ -24,7 +24,6 @@ public:
     ~NodeFunctionMod() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Determine returned datatype (-> UInt64/Double/NodeFunction Throw exception for invalid inputs). Override ArithmeticalBinary::inferStamp to tighten bounds.
@@ -35,6 +34,9 @@ public:
      */
     void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit NodeFunctionMod(NodeFunctionMod* other);

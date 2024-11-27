@@ -61,7 +61,7 @@ namespace NES
 
 SerializableOperator OperatorSerializationUtil::serializeOperator(const std::shared_ptr<LogicalOperator>& operatorNode)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize operator {}", operatorNode->toString());
+    NES_TRACE("OperatorSerializationUtil:: serialize operator {}", *operatorNode);
     auto serializedOperator = SerializableOperator();
     if (NES::Util::instanceOf<SourceDescriptorLogicalOperator>(operatorNode))
     {
@@ -134,7 +134,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     }
     else
     {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", operatorNode->toString());
+        NES_FATAL_ERROR("OperatorSerializationUtil: could not serialize this operator: {}", *operatorNode);
     }
 
     /// serialize input schema
@@ -174,7 +174,7 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
         }
     }
 
-    NES_TRACE("OperatorSerializationUtil:: serialize {} to {}", operatorNode->toString(), serializedOperator.details().type_url());
+    NES_TRACE("OperatorSerializationUtil:: serialize {} to {}", *operatorNode, serializedOperator.details().type_url());
     return serializedOperator;
 }
 
@@ -670,7 +670,7 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         }
         unaryOperator->setInputOriginIds(originIds);
     }
-    NES_TRACE("OperatorSerializationUtil:: de-serialize {} to {}", serializedOperator.DebugString(), operatorNode->toString());
+    NES_TRACE("OperatorSerializationUtil:: de-serialize {} to {}", serializedOperator.DebugString(), *operatorNode);
     return operatorNode;
 }
 

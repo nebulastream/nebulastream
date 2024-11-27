@@ -216,7 +216,7 @@ bool LogicalJoinOperator::equal(NodePtr const& rhs) const
 void LogicalJoinOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalJoinOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalJoinOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalJoinOperator: Join should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)

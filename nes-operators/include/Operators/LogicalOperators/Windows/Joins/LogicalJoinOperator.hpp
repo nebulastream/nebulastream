@@ -38,7 +38,6 @@ public:
     Join::LogicalJoinDescriptorPtr getJoinDefinition() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     OperatorPtr copy() override;
@@ -71,6 +70,9 @@ public:
      * @param windowEndFieldName
      */
     void setWindowStartEndKeyFieldName(std::string_view windowStartFieldName, std::string_view windowEndFieldName);
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     const Join::LogicalJoinDescriptorPtr joinDefinition;

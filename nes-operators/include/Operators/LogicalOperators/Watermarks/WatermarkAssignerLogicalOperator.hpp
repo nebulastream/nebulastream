@@ -38,11 +38,12 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
 
-    [[nodiscard]] std::string toString() const override;
-
     OperatorPtr copy() override;
     bool inferSchema() override;
     void inferStringSignature() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;

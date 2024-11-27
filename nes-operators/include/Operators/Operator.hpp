@@ -83,12 +83,12 @@ public:
 
     virtual std::vector<OriginId> getOutputOriginIds() const = 0;
 
-    std::string toString() const override;
-
 protected:
     OperatorPtr getDuplicateOfParent(const OperatorPtr& operatorNode);
 
     OperatorPtr getDuplicateOfChild(const OperatorPtr& operatorNode);
+
+    std::string toString() const override;
 
     OperatorId id;
 

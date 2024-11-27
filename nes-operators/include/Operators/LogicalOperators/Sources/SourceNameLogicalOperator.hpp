@@ -34,7 +34,6 @@ public:
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     void inferStringSignature() override;
     OperatorPtr copy() override;
     void inferInputOrigins() override;
@@ -42,6 +41,9 @@ public:
     [[nodiscard]] std::string getLogicalSourceName() const;
     [[nodiscard]] std::shared_ptr<Schema> getSchema() const;
     void setSchema(std::shared_ptr<Schema> schema);
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     std::string logicalSourceName;
