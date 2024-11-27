@@ -31,14 +31,14 @@ class PhysicalOperator : public virtual Operator
 protected:
     explicit PhysicalOperator(OperatorId id);
 
-public:
-    ~PhysicalOperator() noexcept = default;
-
     /**
      * @brief returns the string representation of the class
      * @return the string representation of the class
      */
     std::string toString() const;
+
+public:
+    ~PhysicalOperator() noexcept = default;
 };
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 }

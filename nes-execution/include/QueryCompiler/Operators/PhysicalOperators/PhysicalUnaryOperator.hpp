@@ -27,10 +27,10 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 
+    std::string toString() const override;
+
 public:
     ~PhysicalUnaryOperator() noexcept override = default;
-
-    std::string toString() const override;
 };
 
 }

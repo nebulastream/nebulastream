@@ -30,13 +30,13 @@ public:
         OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
     const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
 
+protected:
     /**
      * @brief returns the string representation of the class
      * @return the string representation of the class
      */
     std::string toString() const override;
 
-protected:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 }
