@@ -19,7 +19,7 @@
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -43,18 +43,18 @@ public:
     void copyFrom(const PagedVector& other);
 
     /// Returns a pointer to the tuple buffer that contains the entry at the given position.
-    [[nodiscard]] const Memory::TupleBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
+    [[nodiscard]] const Memory::PinnedBuffer& getTupleBufferForEntry(uint64_t entryPos) const;
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
     [[nodiscard]] uint64_t getBufferPosForEntry(uint64_t entryPos) const;
 
     /// Iterates over all pages and sums up the number of tuples.
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const;
-    [[nodiscard]] const Memory::TupleBuffer& getLastPage() const;
-    [[nodiscard]] const Memory::TupleBuffer& getFirstPage() const;
+    [[nodiscard]] const Memory::PinnedBuffer& getLastPage() const;
+    [[nodiscard]] const Memory::PinnedBuffer& getFirstPage() const;
     [[nodiscard]] uint64_t getNumberOfPages() const;
 
 private:
-    std::vector<Memory::TupleBuffer> pages;
+    std::vector<Memory::PinnedBuffer> pages;
 };
 
 }

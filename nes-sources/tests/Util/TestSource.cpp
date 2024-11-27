@@ -30,7 +30,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
@@ -43,7 +43,7 @@ namespace
 {
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds IMMEDIATELY = std::chrono::milliseconds(0);
-constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 4;
+constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 64;
 }
 
 template <typename QueueType, typename Args>
@@ -56,7 +56,7 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
         {
             return true;
         }
-        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), std::forward<Args>(args)))
+        if (queue.tryWriteUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1000000), std::forward<Args>(args)))
         {
             return true;
         }
@@ -66,10 +66,10 @@ bool tryIngestionUntil(QueueType& queue, Args&& args, std::function<bool()> cond
 }
 
 void NES::Sources::NoOpInputFormatter::parseTupleBufferRaw(
-    const Memory::TupleBuffer& tbRaw,
+    const Memory::PinnedBuffer& tbRaw,
     Memory::AbstractBufferProvider& bufferProvider,
     size_t,
-    const std::function<void(Memory::TupleBuffer& buffer, bool addBufferMetaData)>& emitFunction)
+    const std::function<void(Memory::PinnedBuffer& buffer, bool addBufferMetaData)>& emitFunction)
 {
     auto newBuffer = Testing::copyBuffer(tbRaw, bufferProvider);
     emitFunction(newBuffer, true);
@@ -142,7 +142,7 @@ void NES::Sources::TestSourceControl::failDuringClose(std::chrono::milliseconds 
     fail_during_close_duration = blockFor;
     fail_during_close = true;
 }
-size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::PinnedBuffer& tupleBuffer, const std::stop_token& stopToken)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
@@ -166,7 +166,6 @@ size_t NES::Sources::TestSource::fillTupleBuffer(NES::Memory::TupleBuffer& tuple
             },
             [](TestSourceControl::Data data)
             {
-                NES_DEBUG("Test Source is injecting data");
                 return std::optional(data);
             },
             [](TestSourceControl::EoS) -> std::optional<TestSourceControl::Data>

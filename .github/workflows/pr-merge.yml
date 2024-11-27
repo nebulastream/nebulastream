@@ -39,7 +39,14 @@ jobs:
           docker buildx imagetools create -t nebulastream/nes-development-dependency:latest-libstdcxx nebulastream/nes-development-dependency:${{ github.head_ref }}-libstdcxx
           docker buildx imagetools create -t nebulastream/nes-development:latest nebulastream/nes-development:${{ github.head_ref }}
           docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx nebulastream/nes-development:${{ github.head_ref }}-libstdcxx
-
+# Sanitized Development Images.
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libcxx-Thread nebulastream/nes-development:${{ github.head_ref }}-libcxx-Thread
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libcxx-Address nebulastream/nes-development:${{ github.head_ref }}-libcxx-Address
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libcxx-Undefined nebulastream/nes-development:${{ github.head_ref }}-libcxx-Undefined
+          
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx-Thread nebulastream/nes-development:${{ github.head_ref }}-libstdcxx-Thread
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx-Address nebulastream/nes-development:${{ github.head_ref }}-libstdcxx-Address
+          docker buildx imagetools create -t nebulastream/nes-development:latest-libstdcxx-Undefined nebulastream/nes-development:${{ github.head_ref }}-libstdcxx-Undefined
           # Arm64 Cache Images
           docker buildx imagetools create -t nebulastream/nes-development-base-cache:latest-arm64 nebulastream/nes-development-base-cache:${{ github.head_ref }}-arm64
           docker buildx imagetools create -t nebulastream/nes-development-dependency-cache:latest-arm64 nebulastream/nes-development-dependency-cache:${{ github.head_ref }}-arm64-libcxx

@@ -133,7 +133,9 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
     }
 
     auto buffers = sinkCtrl->takeBuffers();
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+
+    EXPECT_TRUE(verifyIdentifier(
+        std::get<Memory::PinnedBuffer>(test.bm->repinBuffer(std::move(buffers[0])).waitUntilDone()), NUMBER_OF_TUPLES_PER_BUFFER));
     test.stop();
 
     EXPECT_TRUE(ctrl->waitUntilDestroyed());
@@ -192,7 +194,8 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_EQ(buffers.size(), 4);
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(
+        std::get<Memory::PinnedBuffer>(test.bm->repinBuffer(std::move(buffers[0])).waitUntilDone()), NUMBER_OF_TUPLES_PER_BUFFER));
 }
 
 /// System Stop: Meaning the Query was stopped internally from the query manager via the stop query
@@ -249,7 +252,8 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_GE(buffers.size(), 1) << "Expected at least one buffer";
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(
+        std::get<Memory::PinnedBuffer>(test.bm->repinBuffer(std::move(buffers[0])).waitUntilDone()), NUMBER_OF_TUPLES_PER_BUFFER));
 }
 
 TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
@@ -290,7 +294,8 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
 
     auto buffers = sinkCtrl->takeBuffers();
     EXPECT_GE(buffers.size(), 1) << "Expected at least one buffer";
-    EXPECT_TRUE(verifyIdentifier(buffers[0], NUMBER_OF_TUPLES_PER_BUFFER));
+    EXPECT_TRUE(verifyIdentifier(
+        std::get<Memory::PinnedBuffer>(test.bm->repinBuffer(std::move(buffers[0])).waitUntilDone()), NUMBER_OF_TUPLES_PER_BUFFER));
 }
 
 /// Shutdown of the Query Engine will `HardStop` all query plans.
@@ -493,10 +498,10 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
 
 TEST_F(QueryEngineTest, singleQueryWithManySources)
 {
-    constexpr size_t numberOfSources = 100;
-    constexpr size_t numberOfBuffersBeforeTermination = 1000;
+    constexpr size_t numberOfSources = 64;
+    constexpr size_t numberOfBuffersBeforeTermination = 10000;
 
-    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources);
+    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfSources + 20);
     auto builder = test.buildNewQuery();
     std::vector<QueryPlanBuilder::identifier_t> sources;
     for (size_t i = 0; i < numberOfSources; i++)
@@ -526,10 +531,22 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
     test.start();
     {
         test.startQuery(std::move(query));
-        DataGenerator dataGenerator;
+        DataGenerator<NeverFailPolicy, numberOfBuffersBeforeTermination> dataGenerator;
         dataGenerator.start(std::move(sourcesCtrls));
-        sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination);
+        EXPECT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffers(numberOfBuffersBeforeTermination));
         dataGenerator.stop();
+
+        auto uniqueIdentifier
+            = sinkCtrl->takeBuffers()
+            | std::views::transform(
+                  [&](auto& buffer)
+                  {
+                      Memory::FloatingBuffer floating{buffer};
+                      return readIdentifier(std::get<Memory::PinnedBuffer>(test.bm->repinBuffer(std::move(floating)).waitUntilDone()));
+                  })
+            | ranges::to<std::unordered_set>();
+
+        EXPECT_EQ(uniqueIdentifier.size(), numberOfBuffersBeforeTermination);
 
         ASSERT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
     }
@@ -968,27 +985,29 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
 
     /// Count number of completed non-sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Runtime::Event event)
-            {
-                const auto& completion = std::get<Runtime::TaskExecutionComplete>(event);
-                if (completion.pipelineId != test.pipelineIds.at(sink))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Runtime::Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& completion = std::get<Runtime::TaskExecutionComplete>(event);
+                    if (completion.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
 
     /// Count number of expired Non-Sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Runtime::Event event)
-            {
-                const auto& expired = std::get<Runtime::TaskExpired>(event);
-                if (expired.pipelineId != test.pipelineIds.at(sink))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Runtime::Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& expired = std::get<Runtime::TaskExpired>(event);
+                    if (expired.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
 
     test.start();
     {

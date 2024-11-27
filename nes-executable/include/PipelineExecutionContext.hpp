@@ -19,7 +19,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/PinnedBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -37,13 +37,13 @@ public:
     virtual ~PipelineExecutionContext() = default;
 
     /// Returns success, if the buffer was emitted successfully.
-    virtual bool emitBuffer(const Memory::TupleBuffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
+    virtual bool emitBuffer(const Memory::PinnedBuffer& buffer) { return emitBuffer(buffer, ContinuationPolicy::POSSIBLE); };
 
     /// Please be aware of how you are setting the continuation policy, as this will/can lead to deadlocks and no progress in our system.
     /// We advise to use ContinuationPolicy::POSSIBLE, as this will ensure no deadlock arising.
     /// Returns success, if the buffer was emitted successfully.
-    virtual bool emitBuffer(const Memory::TupleBuffer&, ContinuationPolicy) = 0;
-    virtual Memory::TupleBuffer allocateTupleBuffer() = 0;
+    virtual bool emitBuffer(const Memory::PinnedBuffer&, ContinuationPolicy) = 0;
+    virtual Memory::PinnedBuffer allocateTupleBuffer() = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
     [[nodiscard]] virtual std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const = 0;
