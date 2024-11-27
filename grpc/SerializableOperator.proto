@@ -147,9 +147,9 @@ message SerializableOperator {
   message BroadcastDetails{}
 
   /**
-   Filter Details contains properties for the filter operator, such as the filter predicate function
+   Selection Details contains properties for the selection operator, such as the selection predicate function
    */
-  message FilterDetails {
+  message SelectionDetails {
     SerializableFunction predicate = 1;
     float selectivity = 2;
   }

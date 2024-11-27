@@ -23,11 +23,11 @@ namespace NES
 /**
  * @brief Filter operator, which contains an function as a predicate.
  */
-class LogicalFilterOperator : public LogicalUnaryOperator
+class LogicalSelectionOperator : public LogicalUnaryOperator
 {
 public:
-    explicit LogicalFilterOperator(NodeFunctionPtr const&, OperatorId id);
-    ~LogicalFilterOperator() override = default;
+    explicit LogicalSelectionOperator(NodeFunctionPtr const&, OperatorId id);
+    ~LogicalSelectionOperator() override = default;
 
     /**
    * @brief get the filter predicate.
@@ -71,5 +71,5 @@ private:
     NodeFunctionPtr predicate;
     float selectivity = 1.0f;
 };
-using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
 }

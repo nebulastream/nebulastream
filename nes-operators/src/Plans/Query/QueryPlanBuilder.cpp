@@ -73,14 +73,14 @@ QueryPlanPtr QueryPlanBuilder::addRename(std::string const& newSourceName, Query
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan)
+QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan)
 {
-    NES_TRACE("QueryPlanBuilder: add filter operator to query plan");
-    if (!filterFunction->getNodesByType<NodeFunctionFieldRename>().empty())
+    NES_TRACE("QueryPlanBuilder: add selection operator to query plan");
+    if (!selectionFunction->getNodesByType<NodeFunctionFieldRename>().empty())
     {
-        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Filter predicate cannot have a FieldRenameFunction");
+        NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Selection predicate cannot have a FieldRenameFunction");
     }
-    OperatorPtr op = std::make_shared<LogicalFilterOperator>(filterFunction, getNextOperatorId());
+    OperatorPtr op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

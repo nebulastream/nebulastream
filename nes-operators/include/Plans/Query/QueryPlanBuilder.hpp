@@ -53,13 +53,13 @@ public:
     static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
 
     /**
-     * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
-     * exemplary usage would be: filter(Attribute("f1" < 10))
-     * @param filterFunction as function node containing the predicate
-     * @param queryPlanPtr the queryPlan the filter node is added to
+     * @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
+     * exemplary usage would be: selection(Attribute("f1" < 10))
+     * @param selectionFunction as function node containing the predicate
+     * @param queryPlanPtr the queryPlan the selection node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.

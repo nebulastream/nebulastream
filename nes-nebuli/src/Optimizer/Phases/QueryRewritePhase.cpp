@@ -23,7 +23,6 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/PredicateReorderingRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
-#include <Optimizer/QueryRewrite/RedundancyEliminationRule.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
@@ -44,7 +43,6 @@ QueryRewritePhase::QueryRewritePhase()
     filterMergeRule = FilterMergeRule::create();
     filterPushDownRule = FilterPushDownRule::create();
     filterSplitUpRule = FilterSplitUpRule::create();
-    redundancyEliminationRule = RedundancyEliminationRule::create();
     predicateReorderingRule = PredicateReorderingRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();

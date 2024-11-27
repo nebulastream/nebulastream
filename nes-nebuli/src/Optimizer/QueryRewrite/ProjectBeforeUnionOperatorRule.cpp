@@ -81,7 +81,7 @@ ProjectBeforeUnionOperatorRule::constructProjectOperator(const SchemaPtr& source
         projectFunctions.push_back(fieldRenameFunction);
     }
     /// Create Projection operator
-    return LogicalOperatorFactory::createProjectionOperator(projectFunctions);
+    return std::make_shared<LogicalProjectionOperator>(projectFunctions, getNextOperatorId());
 }
 
 }
