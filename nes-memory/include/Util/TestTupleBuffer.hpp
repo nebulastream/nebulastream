@@ -416,7 +416,7 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<Memory::TupleBuffer::NestedTupleBufferKey>();
+                auto childBufferIdx = (*this)[recordIndex][I].read<size_t>();
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
             }
             else

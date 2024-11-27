@@ -241,6 +241,7 @@ void ChainedHashMap::clear() noexcept
 
     /// Releasing all memory
     storageSpace.clear();
+    entrySpace = Memory::TupleBuffer{};
 }
 
 }

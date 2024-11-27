@@ -439,9 +439,10 @@ CSVInputFormatter::CSVInputFormatter(const Schema& schema, std::string tupleDeli
                     auto& childBufferVal = childBuffer.value();
                     *childBufferVal.getBuffer<uint32_t>() = valueLength;
                     std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), inputString.data(), valueLength);
-                    const auto index = tupleBufferFormatted.storeChildBuffer(childBufferVal);
+                    const auto index = tupleBufferFormatted.storeReturnChildIndex(std::move(*childBuffer));
+                    INVARIANT(index, "Failed to store child buffer in CSV input formatter");
                     auto* childBufferIndexPointer = reinterpret_cast<uint32_t*>(fieldPointer);
-                    *childBufferIndexPointer = index;
+                    *childBufferIndexPointer = index->getNum();
                 });
         }
     }

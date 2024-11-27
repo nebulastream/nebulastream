@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
 
@@ -34,7 +35,7 @@ class VariableSizedData
 public:
     /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
     explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
-    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
+    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData, const nautilus::val<Memory::TupleBuffer*>& pointerToPinnedBuffer);
     VariableSizedData(const VariableSizedData& other);
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
@@ -53,6 +54,8 @@ public:
     /// Returns the pointer to the variable sized data, this means the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getReference() const;
 
+    [[nodiscard]] nautilus::val<int8_t*> getPinnedBuffer() const;
+
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
     friend nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
@@ -68,6 +71,7 @@ public:
 private:
     nautilus::val<uint32_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
+    nautilus::val<Memory::TupleBuffer*> ptrToPinnedBuffer;
 };
 
 

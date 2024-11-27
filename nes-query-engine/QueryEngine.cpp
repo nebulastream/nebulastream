@@ -33,6 +33,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManagerFuture.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -227,6 +228,18 @@ public:
         };
     }
 
+    void writeToTaskQueue(Task& task)
+    {
+        if (taskQueueHead.size() < static_cast<long long>(taskQueueHead.capacity() / 2))
+        {
+            taskQueueHead.blockingWrite(std::move(task));
+        }
+        else
+        {
+            taskQueueTail.blockingWrite(std::move(task));
+        }
+    }
+
     bool emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
@@ -326,8 +339,10 @@ public:
         : listener(std::move(listener))
         , statistic(std::move(std::move(stats)))
         , bufferProvider(std::move(bufferProvider))
-        , admissionQueue(admissionQueueSize)
-        , internalTaskQueue(internalTaskQueueSize)
+        // , taskQueueHead(taskQueueSize * 0.1)
+        , taskQueueHead(internalTaskQueueSize * 0.1)
+        , taskQueueTail(internalTaskQueueSize * 0.9)
+    , admissionQueue(admissionQueueSize)
     {
     }
 
@@ -415,13 +430,9 @@ private:
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
-
+    detail::Queue taskQueueHead;
+    detail::Queue taskQueueTail;
     detail::Queue admissionQueue;
-    detail::Queue internalTaskQueue;
-
-    /// Class Invariant: numberOfThreads == pool.size().
-    /// We don't want to expose the vector directly to anyone, as this would introduce a race condition.
-    /// The number of threads is only available via the atomic.
     std::vector<std::jthread> pool;
     std::atomic<int32_t> numberOfThreads_;
 
@@ -469,6 +480,16 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                         return pool.emitWork(task.queryId, successor, tupleBuffer, {}, {}, continuationPolicy);
                     });
             });
+
+        // INVARIANT(std::holds_alternative<Memory::RepinBufferFuture>(task.buf), "Dequeued work task contained floating buffer");
+        // auto repinResult = std::get<Memory::RepinBufferFuture>(task.buf).waitUntilDone();
+        // if (std::holds_alternative<Memory::detail::CoroutineError>(repinResult))
+        // {
+        //     ENGINE_LOG_ERROR("Failed to repin buffer, skipping work task {}", taskId);
+        //     return false;
+        // }
+        // const auto buffer = std::get<Memory::TupleBuffer>(repinResult);
+
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
@@ -650,6 +671,29 @@ void ThreadPool::addThread()
             WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
             {
+                // {
+                //     Task toMoveTask;
+                //     if (taskQueueTail.read(toMoveTask))
+                //     {
+                //         if (std::holds_alternative<WorkTask>(toMoveTask))
+                //         {
+                //             std::get<WorkTask>(toMoveTask).buf = bufferProvider->repinBuffer(
+                //                 std::move(std::get<Memory::FloatingBuffer>(std::get<WorkTask>(toMoveTask).buf)));
+                //         }
+                //         if (!taskQueueHead.tryWriteUntil(
+                //                 std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50), std::move(toMoveTask)))
+                //         {
+                //             ENGINE_LOG_ERROR("Could not enqueue repinned worker task into task queue head");
+                //         }
+                //     }
+                // }
+                // Task task;
+                // /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
+                // if (!taskQueueHead.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(10), task))
+                // {
+                //     continue;
+                // }
+
                 Task task;
                 /// This timeout controls how often a thread needs to wake up from polling on the TaskQueue to check the stopToken
                 const auto shallPickTaskFromAdmissionQueue = internalTaskQueue.size() < ((static_cast<ssize_t>(numberOfThreads())) * 3);
@@ -684,6 +728,48 @@ void ThreadPool::addThread()
             WorkerThread terminatingWorker{*this, true};
             while (true)
             {
+
+                // {
+                //     Task toMoveTask;
+                //     if (taskQueueTail.readIfNotEmpty(toMoveTask))
+                //     {
+                //         std::visit(
+                //             [&](auto&& task)
+                //             {
+                //                 using T = std::decay_t<decltype(task)>;
+                //                 if constexpr (std::is_same_v<T, WorkTask>)
+                //                 {
+                //                     ENGINE_LOG_WARNING(
+                //                         "Dropped work task from tail task queue for {}-{} during termination",
+                //                         task.queryId,
+                //                         task.pipelineId);
+                //                 }
+                //                 else if constexpr (std::is_same_v<T, StartPipelineTask>)
+                //                 {
+                //                     ENGINE_LOG_WARNING(
+                //                         "Dropped start pipeline task from tail task queue for {}-{} during termination",
+                //                         task.queryId,
+                //                         task.pipelineId);
+                //                 }
+                //                 else
+                //                 {
+                //                     if (!taskQueueHead.tryWriteUntil(
+                //                             std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(50), std::move(task)))
+                //                     {
+                //                         ENGINE_LOG_ERROR("Could not enqueue repinned worker task into task queue head");
+                //                     }
+                //                 }
+                //             },
+                //             toMoveTask);
+                //         {
+                //         }
+                //     }
+                // }
+                // Task task;
+                // if (!taskQueueHead.readIfNotEmpty(task))
+                // {
+                //     break;
+                // }
                 Task task;
                 if (!internalTaskQueue.readIfNotEmpty(task))
                 {

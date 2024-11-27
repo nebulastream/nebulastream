@@ -49,13 +49,13 @@ uint32_t storeAssociatedTextValueProxy(
     auto buffer = bufferProvider->getUnpooledBuffer(totalVariableSize);
     INVARIANT(buffer.has_value(), "Cannot allocate unpooled buffer of size {}", totalVariableSize);
     std::memcpy(buffer.value().getBuffer<int8_t>(), textValue, totalVariableSize);
-    return tupleBuffer->storeChildBuffer(buffer.value());
+    return tupleBuffer->storeReturnChildIndex(std::move(buffer.value())).value();
 }
 
 const uint8_t* loadAssociatedTextValue(const Memory::TupleBuffer* tupleBuffer, const uint32_t childIndex)
 {
     auto childBuffer = tupleBuffer->loadChildBuffer(childIndex);
-    return childBuffer.getBuffer<uint8_t>();
+    return childBuffer.value().getBuffer<uint8_t>();
 }
 }
 
@@ -68,7 +68,7 @@ VarVal TupleBufferMemoryProvider::loadValue(
     }
     const auto childIndex = Nautilus::Util::readValueFromMemRef<uint32_t>(fieldReference);
     const auto textPtr = invoke(loadAssociatedTextValue, recordBuffer.getReference(), childIndex);
-    return VariableSizedData(textPtr);
+    return VariableSizedData(textPtr, recordBuffer.getReference());
 }
 
 

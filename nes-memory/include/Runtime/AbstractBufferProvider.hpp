@@ -17,6 +17,8 @@
 #include <cstddef>
 #include <optional>
 #include <vector>
+#include <Runtime/BufferManagerFuture.hpp>
+#include <Runtime/FloatingBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 /// This enum reflects the different types of buffer managers in the system
@@ -52,6 +54,11 @@ public:
 
     virtual TupleBuffer getBufferBlocking() = 0;
 
+    virtual RepinBufferFuture repinBuffer(FloatingBuffer&&) noexcept = 0;
+    /**
+     * @brief Returns a new TupleBuffer wrapped in an optional or an invalid option if there is no buffer.
+     * @return a new buffer
+     */
     virtual std::optional<TupleBuffer> getBufferNoBlocking() = 0;
 
     virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;

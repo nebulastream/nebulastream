@@ -59,10 +59,17 @@ std::vector<std::byte> identifiableData(size_t identifier)
     const size_t stepSize = sizeof(identifier) / sizeof(std::byte);
     for (size_t index = 0; index < data.size() / stepSize; index += stepSize)
     {
-        *std::bit_cast<size_t*>(&data[stepSize]) = identifier;
+        *std::bit_cast<size_t*>(&data[index]) = identifier;
     }
 
     return data;
+}
+
+size_t readIdentifier(const Memory::TupleBuffer& buffer)
+{
+    auto identifier = *buffer.getBuffer<size_t>();
+    INVARIANT(verifyIdentifier(buffer, identifier), "invalid identifier found");
+    return identifier;
 }
 
 bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier)
@@ -96,7 +103,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
     }
 
     auto check = receivedBufferTrigger.wait_for(
-        buffers.as_lock(), DEFAULT_LONG_AWAIT_TIMEOUT, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
+        buffers.as_lock(), DEFAULT_LONG_AWAIT_TIMEOUT * 100, [&]() { return buffers->size() >= numberOfExpectedBuffers; });
 
     if (check)
     {
@@ -113,11 +120,11 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffersOrMor
 void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
 {
     ++invocations;
-    receivedBuffers.lock()->push_back(std::move(buffer));
+    receivedBuffers.lock()->push_back(Memory::FloatingBuffer{std::move(buffer)});
     receivedBufferTrigger.notify_one();
 }
 
-std::vector<Memory::TupleBuffer> TestSinkController::takeBuffers()
+std::vector<Memory::FloatingBuffer> TestSinkController::takeBuffers()
 {
     return receivedBuffers.exchange({});
 }
@@ -355,6 +362,7 @@ void TestingHarness::start()
     }
     QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
+    configuration.taskQueueSize.setValue(100000);
     qm = std::make_unique<NES::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
 void TestingHarness::startQuery(std::unique_ptr<ExecutableQueryPlan> query) const

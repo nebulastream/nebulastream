@@ -67,7 +67,7 @@ namespace NES::Testing
 {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
-static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 300;
+static constexpr size_t NUMBER_OF_BUFFERS_PER_SOURCE = 64;
 static constexpr size_t NUMBER_OF_THREADS = 2;
 static constexpr size_t LARGE_NUMBER_OF_THREADS = 8;
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(1000);
@@ -75,6 +75,7 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::mi
 
 /// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
 std::vector<std::byte> identifiableData(size_t identifier);
+size_t readIdentifier(const Memory::TupleBuffer& buffer);
 bool verifyIdentifier(const Memory::TupleBuffer& buffer, size_t identifier);
 
 
@@ -266,6 +267,8 @@ struct TestPipeline final : ExecutablePipelineStage
         {
             throw Exception("I should throw here.", 9999);
         }
+        auto outputBuffer = copyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         pipelineExecutionContext.emitBuffer(inputTupleBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 
@@ -283,7 +286,7 @@ struct TestSinkController
 
     void insertBuffer(Memory::TupleBuffer&& buffer);
 
-    std::vector<Memory::TupleBuffer> takeBuffers();
+    std::vector<Memory::FloatingBuffer> takeBuffers();
 
     testing::AssertionResult waitForInitialization(std::chrono::milliseconds timeout) const { return waitForFuture(setup_future, timeout); }
     testing::AssertionResult waitForDestruction(std::chrono::milliseconds timeout) const
@@ -295,7 +298,7 @@ struct TestSinkController
     std::atomic<size_t> invocations = 0;
 
 private:
-    folly::Synchronized<std::vector<Memory::TupleBuffer>, std::mutex> receivedBuffers;
+    folly::Synchronized<std::vector<Memory::FloatingBuffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;
     std::promise<void> setup;
     std::promise<void> shutdown;
@@ -483,10 +486,10 @@ struct FailAfter
     }
 };
 
-template <typename FailPolicy = NeverFailPolicy>
+template <typename FailPolicy = NeverFailPolicy, size_t StopAfter = 0>
 struct DataThread
 {
-    constexpr static auto DEFAULT_DATA_GENERATOR_INTERVAL = std::chrono::milliseconds(10);
+    constexpr static auto DEFAULT_DATA_GENERATOR_INTERVAL = std::chrono::milliseconds(0);
     constexpr static size_t SEED = 0xDEADBEEF;
     void operator()(const std::stop_token& stopToken)
     {
@@ -499,6 +502,14 @@ struct DataThread
 
         while (!stopToken.stop_requested())
         {
+            if constexpr (StopAfter != 0)
+            {
+                if (identifier == StopAfter)
+                {
+                    break;
+                }
+            }
+
             if (auto source = failPolicy())
             {
                 ASSERT_TRUE(sources[*source]->injectError("Error"));
@@ -534,7 +545,7 @@ private:
     size_t failAfterBuffers = 0;
 };
 
-template <typename FailurePolicy = NeverFailPolicy>
+template <typename FailurePolicy = NeverFailPolicy, size_t StopAfter = 0>
 class DataGenerator
 {
     std::jthread thread;
@@ -542,7 +553,7 @@ class DataGenerator
 public:
     void start(std::vector<std::shared_ptr<Sources::TestSourceControl>> sources)
     {
-        thread = std::jthread(DataThread<FailurePolicy>{std::move(sources)});
+        thread = std::jthread(DataThread<FailurePolicy, StopAfter>{std::move(sources)});
     }
 
     void stop() { thread = std::jthread(); }

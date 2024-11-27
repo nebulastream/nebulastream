@@ -77,23 +77,30 @@ void DynamicTuple::writeVarSized(
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
         std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.c_str(), valueLength);
-        auto index = buffer.storeChildBuffer(childBufferVal);
-        std::visit(
-            [this, index](const auto& key)
-            {
-                if constexpr (
-                    std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
-                    || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
+        auto index = buffer.storeReturnChildIndex(std::move(*childBuffer));
+        if (index)
+        {
+            std::visit(
+                [this, index](const auto& key)
                 {
-                    (*this)[key].write(index);
-                }
-                else
-                {
-                    PRECONDITION(
+                    if constexpr (
+                        std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
+                        || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
+                    {
+                        (*this)[key].write(index->getNum());
+                    }
+                    else
+                    {
+                        PRECONDITION(
                         false, "We expect either a uint64_t or a std::string to access a DynamicField, but got: {}", typeid(key).name());
-                }
-            },
-            field);
+                    }
+                },
+                field);
+        }
+        else
+        {
+            NES_ERROR("Could not attach to child buffer string {}", value);
+        }
     }
     else
     {
@@ -110,7 +117,7 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
                 std::is_convertible_v<std::decay_t<decltype(key)>, std::size_t>
                 || std::is_convertible_v<std::decay_t<decltype(key)>, std::string>)
             {
-                auto index = (*this)[key].template read<Memory::TupleBuffer::NestedTupleBufferKey>();
+                auto index = (*this)[key].template read<size_t>();
                 return readVarSizedData(this->buffer, index);
             }
             else
@@ -132,7 +139,7 @@ std::string DynamicTuple::toString(const Schema& schema) const
         DynamicField currentField = this->operator[](i);
         if (dataType.isType(DataType::Type::VARSIZED))
         {
-            const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
+            const auto index = currentField.read<size_t>();
             const auto string = readVarSizedData(buffer, index);
             ss << string << fieldEnding;
         }

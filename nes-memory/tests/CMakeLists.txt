@@ -19,3 +19,13 @@ target_link_libraries(buffer-test nes-memory nes-memory-test-utils)
 
 add_nes_test(unpooled-buffer-test UnpooledBufferTests.cpp)
 target_link_libraries(unpooled-buffer-test nes-memory nes-memory-test-utils)
+
+
+function(add_nes_memory_test)
+    add_nes_test(${ARGN})
+    target_link_libraries(${ARGV0} nes-memory)
+    target_include_directories(${ARGV0} PRIVATE ..)
+endfunction()
+
+add_nes_memory_test(buffer_manager_test "BufferManagerTest.cpp")
+add_nes_memory_test(buffer_test "BufferTest.cpp")

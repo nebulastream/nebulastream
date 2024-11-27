@@ -32,9 +32,9 @@ namespace NES::Memory::MemoryLayouts
 std::string readVarSizedData(const Memory::TupleBuffer& buffer, const uint64_t childBufferIdx)
 {
     auto childBuffer = buffer.loadChildBuffer(childBufferIdx);
-    const auto stringSize = *childBuffer.getBuffer<uint32_t>();
+    const auto stringSize = *childBuffer->getBuffer<uint32_t>();
     std::string varSizedData(stringSize, '\0');
-    std::memcpy(varSizedData.data(), childBuffer.getBuffer<char>() + sizeof(uint32_t), stringSize);
+    std::memcpy(varSizedData.data(), childBuffer->getBuffer<char>() + sizeof(uint32_t), stringSize);
     return varSizedData;
 }
 
@@ -48,7 +48,7 @@ writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view valu
         auto& childBufferVal = childBuffer.value();
         *childBufferVal.getBuffer<uint32_t>() = valueLength;
         std::memcpy(childBufferVal.getBuffer<char>() + sizeof(uint32_t), value.data(), valueLength);
-        return buffer.storeChildBuffer(childBufferVal);
+        return buffer.storeReturnChildIndex(std::move(childBufferVal));
     }
     return {};
 }

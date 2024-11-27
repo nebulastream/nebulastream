@@ -19,7 +19,7 @@
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus::Interface
 {

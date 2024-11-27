@@ -45,9 +45,9 @@ Memory::TupleBuffer copyBuffer(const Memory::TupleBuffer& buffer, Memory::Abstra
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildrenBuffer(); ++childIdx)
     {
-        auto childBuffer = buffer.loadChildBuffer(childIdx);
+        auto childBuffer = *buffer.loadChildBuffer(childIdx);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
-        auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
+        auto ret = copiedBuffer.storeReturnChildIndex(std::move(copiedChildBuffer));
         INVARIANT(
             ret == childIdx,
             "Child buffer index: {}, does not match index: {}",
