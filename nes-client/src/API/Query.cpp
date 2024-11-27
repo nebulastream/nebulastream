@@ -181,7 +181,7 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
     NES_DEBUG("FunctionItem for Left Source {}", sourceNameLeft);
     NES_DEBUG("FunctionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, joinFunction, windowType)
-        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
+        .selection(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
@@ -224,19 +224,19 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const
         {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-                .filter(Attribute("Count") >= minOccurrences);
+                .selection(Attribute("Count") >= minOccurrences);
         }
 
         if (minOccurrences == 0)
         {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-                .filter(Attribute("Count") == maxOccurrences);
+                .selection(Attribute("Count") == maxOccurrences);
         }
 
         return originalQuery.window(windowType)
             .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-            .filter(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
+            .selection(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
     }
 
     return originalQuery;
@@ -316,10 +316,10 @@ Query& Query::orWith(const Query& subQueryRhs)
     return *this;
 }
 
-Query& Query::filter(const std::shared_ptr<NodeFunction>& filterFunction)
+Query& Query::selection(const std::shared_ptr<NodeFunction>& selectionFunction)
 {
-    NES_DEBUG("Query: add filter operator to query");
-    this->queryPlan = QueryPlanBuilder::addFilter(filterFunction, this->queryPlan);
+    NES_DEBUG("Query: add selection operator to query");
+    this->queryPlan = QueryPlanBuilder::addSelection(selectionFunction, this->queryPlan);
     return *this;
 }
 

@@ -16,51 +16,51 @@
 #include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
 
-LogicalFilterOperator::LogicalFilterOperator(NodeFunctionPtr const& predicate, OperatorId id)
+LogicalSelectionOperator::LogicalSelectionOperator(NodeFunctionPtr const& predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(predicate)
 {
 }
 
-NodeFunctionPtr LogicalFilterOperator::getPredicate() const
+NodeFunctionPtr LogicalSelectionOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalFilterOperator::setPredicate(NodeFunctionPtr newPredicate)
+void LogicalSelectionOperator::setPredicate(NodeFunctionPtr newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
-bool LogicalFilterOperator::isIdentical(NodePtr const& rhs) const
+bool LogicalSelectionOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && NES::Util::as<LogicalFilterOperator>(rhs)->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalSelectionOperator>(rhs)->getId() == id;
 }
 
-bool LogicalFilterOperator::equal(NodePtr const& rhs) const
+bool LogicalSelectionOperator::equal(NodePtr const& rhs) const
 {
-    if (NES::Util::instanceOf<LogicalFilterOperator>(rhs))
+    if (NES::Util::instanceOf<LogicalSelectionOperator>(rhs))
     {
-        auto filterOperator = NES::Util::as<LogicalFilterOperator>(rhs);
+        auto filterOperator = NES::Util::as<LogicalSelectionOperator>(rhs);
         return predicate->equal(filterOperator->predicate);
     }
     return false;
 };
 
-std::string LogicalFilterOperator::toString() const
+std::string LogicalSelectionOperator::toString() const
 {
     std::stringstream ss;
     ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
     return ss.str();
 }
 
-bool LogicalFilterOperator::inferSchema()
+bool LogicalSelectionOperator::inferSchema()
 {
     if (!LogicalUnaryOperator::inferSchema())
     {
@@ -74,7 +74,7 @@ bool LogicalFilterOperator::inferSchema()
     return true;
 }
 
-OperatorPtr LogicalFilterOperator::copy()
+OperatorPtr LogicalSelectionOperator::copy()
 {
     auto copy = std::make_shared<LogicalSelectionOperator>(predicate->deepCopy(), id);
     copy->setInputOriginIds(inputOriginIds);
@@ -90,11 +90,11 @@ OperatorPtr LogicalFilterOperator::copy()
     return copy;
 }
 
-void LogicalFilterOperator::inferStringSignature()
+void LogicalSelectionOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalFilterOperator: Inferring String signature for {}", operatorNode->toString());
-    NES_ASSERT(!children.empty(), "LogicalFilterOperator: Filter should have children");
+    NES_TRACE("LogicalSelectionOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_ASSERT(!children.empty(), "LogicalSelectionOperator: Filter should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -111,18 +111,18 @@ void LogicalFilterOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-float LogicalFilterOperator::getSelectivity() const
+float LogicalSelectionOperator::getSelectivity() const
 {
     return selectivity;
 }
-void LogicalFilterOperator::setSelectivity(float newSelectivity)
+void LogicalSelectionOperator::setSelectivity(float newSelectivity)
 {
     selectivity = newSelectivity;
 }
 
-std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredicate() const
+std::vector<std::string> LogicalSelectionOperator::getFieldNamesUsedByFilterPredicate() const
 {
-    NES_TRACE("LogicalFilterOperator: Find all field names used in filter operator");
+    NES_TRACE("LogicalSelectionOperator: Find all field names used in filter operator");
 
     ///vector to save the names of all the fields that are used in this predicate
     std::vector<std::string> fieldsInPredicate;

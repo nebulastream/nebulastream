@@ -228,7 +228,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return DecomposedQueryPlan::create(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)

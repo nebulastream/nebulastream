@@ -17,11 +17,11 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -42,7 +42,7 @@ class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
 class SerializableOperator_CEPIterationDetails;
 class SerializableOperator_ProjectionDetails;
-class SerializableOperator_FilterDetails;
+class SerializableOperator_SelectionDetails;
 class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
 
@@ -65,7 +65,7 @@ public:
 
     static LogicalUnaryOperatorPtr deserializeSinkOperator(const SerializableOperator_SinkLogicalOperator& sinkDetails);
 
-    static void serializeFilterOperator(const LogicalFilterOperator& filterOperator, SerializableOperator& serializedOperator);
+    static void serializeSelectionOperator(const LogicalSelectionOperator& selectionOperator, SerializableOperator& serializedOperator);
 
     static void serializeProjectionOperator(const LogicalProjectionOperator& projectionOperator, SerializableOperator& serializedOperator);
 

@@ -30,8 +30,8 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -56,7 +56,7 @@ QueryPlanPtr RedundancyEliminationRule::apply(QueryPlanPtr queryPlan)
 {
     NES_INFO("Applying RedundancyEliminationRule to query {}", queryPlan->toString());
     NES_DEBUG("Applying rule to filter operators");
-    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
+    auto filterOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
     for (auto& filter : filterOperators)
     {
         const NodeFunctionPtr filterPredicate = filter->getPredicate();

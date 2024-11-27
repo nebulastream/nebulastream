@@ -1,6 +1,6 @@
-# name: filter/Filter_Equals.test
-# description: Simple filter tests
-# groups: [Filter]
+# name: selection/Selection_Equals.test
+# description: Simple selection tests
+# groups: [Selection]
 
 Source window UINT64 id UINT64 value UINT64 timestamp
 1,1,1000

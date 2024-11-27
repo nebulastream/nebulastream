@@ -24,8 +24,8 @@ namespace NES
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class LogicalFilterOperator;
-using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
+class LogicalSelectionOperator;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
 }
 
 namespace NES::Optimizer

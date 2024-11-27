@@ -15,7 +15,7 @@ add_source_files(nes-execution
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp
-        PhysicalFilterOperator.cpp
+        PhysicalSelectionOperator.cpp
         PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
