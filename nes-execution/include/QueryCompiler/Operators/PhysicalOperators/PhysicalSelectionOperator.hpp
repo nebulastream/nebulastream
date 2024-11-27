@@ -29,9 +29,11 @@ public:
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionPtr& function);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionPtr function);
-    std::string toString() const override;
     OperatorPtr copy() override;
     NodeFunctionPtr getPredicate();
+
+protected:
+    std::string toString() const override;
 
 private:
     NodeFunctionPtr predicate;

@@ -106,7 +106,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     size_t bufferSize,
     std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
 {
-    NES_INFO("Lower node:{} to NautilusOperator.", operatorNode->toString());
+    NES_INFO("Lower node:{} to NautilusOperator.", *operatorNode);
     if (NES::Util::instanceOf<PhysicalOperators::PhysicalScanOperator>(operatorNode))
     {
         auto scan = lowerScan(operatorNode, bufferSize);
@@ -211,7 +211,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         }
     }
 
-    throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", operatorNode->toString()));
+    throw UnknownPhysicalOperator(fmt::format("Cannot lower {}", *operatorNode));
 }
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
