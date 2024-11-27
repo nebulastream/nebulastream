@@ -182,7 +182,8 @@ void DefaultPipeliningPhase::process(
     PRECONDITION(
         Util::instanceOf<PhysicalOperators::PhysicalOperator>(currentOperator)
             or Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator) or Util::instanceOf<SinkLogicalOperator>(currentOperator),
-        "expected a PhysicalOperator, but got " + currentOperator->toString());
+        "expected a PhysicalOperator, but got {}",
+        *currentOperator);
 
     /// Depending on the operator we apply different pipelining strategies
     if (Util::instanceOf<SourceDescriptorLogicalOperator>(currentOperator))

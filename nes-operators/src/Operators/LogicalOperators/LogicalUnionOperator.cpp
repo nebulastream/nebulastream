@@ -118,7 +118,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 void LogicalUnionOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)

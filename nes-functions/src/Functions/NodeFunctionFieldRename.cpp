@@ -57,7 +57,7 @@ std::string NodeFunctionFieldRename::getNewFieldName() const
 std::string NodeFunctionFieldRename::toString() const
 {
     auto node = getOriginalField();
-    return "FieldRenameFunction(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
+    return "FieldRenameFunction(" + fmt::format("{}", *node) + " => " + newFieldName + " : " + stamp->toString() + ")";
 }
 
 void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)

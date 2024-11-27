@@ -81,7 +81,7 @@ bool LogicalMapOperator::inferSchema()
 std::string LogicalMapOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << mapFunction->toString() << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
     return ss.str();
 }
 
@@ -111,7 +111,7 @@ void LogicalMapOperator::inferStringSignature()
     /// Infer signature for this operator.
     std::stringstream signatureStream;
     auto childSignature = child->getHashBasedSignature();
-    signatureStream << "MAP(" + mapFunction->toString() + ")." << *childSignature.begin()->second.begin();
+    signatureStream << "MAP(" << *mapFunction << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());

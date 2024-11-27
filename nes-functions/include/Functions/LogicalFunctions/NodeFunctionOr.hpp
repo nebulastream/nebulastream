@@ -30,7 +30,6 @@ public:
     */
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     /**
      * @brief Infers the stamp of this logical OR function node.
      * We assume that both children of an OR function are predicates.
@@ -43,5 +42,7 @@ public:
 
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);
+
+    [[nodiscard]] std::string toString() const override;
 };
 }

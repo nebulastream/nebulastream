@@ -49,7 +49,7 @@ std::string PhysicalMapOperator::toString() const
     out << PhysicalUnaryOperator::toString();
     if (mapFunction != nullptr)
     {
-        out << "mapFunction: " << mapFunction->toString();
+        out << "mapFunction: " << *mapFunction;
     }
     out << std::endl;
     return out.str();

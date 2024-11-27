@@ -41,11 +41,13 @@ public:
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     void inferStringSignature() override;
     OperatorPtr copy() override;
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     const std::shared_ptr<Sources::SourceDescriptor> sourceDescriptor;

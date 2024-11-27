@@ -33,7 +33,6 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    std::string toString() const override;
 
     const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
 
@@ -42,5 +41,8 @@ public:
 
     std::string sinkName;
     std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+
+protected:
+    std::string toString() const override;
 };
 }

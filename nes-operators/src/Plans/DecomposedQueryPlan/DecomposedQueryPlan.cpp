@@ -176,13 +176,12 @@ bool DecomposedQueryPlan::replaceRootOperator(const OperatorPtr& oldRoot, const 
 
 void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
 {
-    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
         if (!rootOperator->addParent(operatorNode))
         {
-            NES_THROW_RUNTIME_ERROR(
-                "QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
+            NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator {} as partent to {}", *operatorNode, *rootOperator);
         }
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
