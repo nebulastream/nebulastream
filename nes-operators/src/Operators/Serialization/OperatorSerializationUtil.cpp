@@ -818,7 +818,7 @@ OperatorSerializationUtil::deserializeJoinOperator(const SerializableOperator_Jo
         NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
     }
 
-    LogicalOperatorPtr ptr;
+    std::shared_ptr<LogicalOperator> ptr;
     const auto serializedJoinFunction = joinDetails.joinfunction();
     const auto joinFunction = Util::as<NodeFunctionBinary>(FunctionSerializationUtil::deserializeFunction(serializedJoinFunction));
 
@@ -1183,8 +1183,8 @@ void OperatorSerializationUtil::serializeInferModelOperator(
 LogicalUnaryOperatorPtr
 OperatorSerializationUtil::deserializeInferModelOperator(const SerializableOperator_InferModelDetails& inferModelDetails)
 {
-    std::vector<NodeFunctionPtr> inputFields;
-    std::vector<NodeFunctionPtr> outputFields;
+    std::vector<std::shared_ptr<NodeFunction>> inputFields;
+    std::vector<std::shared_ptr<NodeFunction>> outputFields;
 
     for (const auto& serializedInputField : inferModelDetails.inputfields())
     {

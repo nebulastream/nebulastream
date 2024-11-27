@@ -27,16 +27,6 @@
 namespace NES
 {
 
-DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId)
-{
-    return std::make_shared<DecomposedQueryPlan>(queryId, workerId);
-}
-
-DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
-{
-    return std::make_shared<DecomposedQueryPlan>(queryId, workerId, rootOperators);
-}
-
 DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : queryId(queryId), workerId(workerId)
 {
 }
@@ -298,7 +288,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
     operatorIdToOperatorMap.clear();
 
     /// Create the duplicated decomposed query plan
-    auto copiedDecomposedQueryPlan = DecomposedQueryPlan::create(queryId, workerId, duplicateRootOperators);
+    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, workerId, duplicateRootOperators);
     copiedDecomposedQueryPlan->setState(currentState);
     return copiedDecomposedQueryPlan;
 }

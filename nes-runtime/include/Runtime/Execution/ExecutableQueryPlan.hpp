@@ -18,6 +18,7 @@
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryManager.hpp>

@@ -15,9 +15,9 @@
 #include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/FunctionSerializationUtil.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -87,7 +87,7 @@ std::string LogicalMapOperator::toString() const
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
+    auto copy = std::make_shared<LogicalMapOperator>(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -117,4 +117,5 @@ void LogicalMapOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
 }

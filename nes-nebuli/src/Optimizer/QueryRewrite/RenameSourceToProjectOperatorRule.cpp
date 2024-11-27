@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -63,7 +63,7 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
         projectionAttributes.push_back(fieldRenameFunction);
     }
     /// Construct a new project operator
-    auto projectOperator = LogicalOperatorFactory::createProjectionOperator(projectionAttributes);
+    auto projectOperator = std::make_shared<LogicalProjectionOperator>(projectionAttributes, getNextOperatorId());
     return projectOperator;
 }
 

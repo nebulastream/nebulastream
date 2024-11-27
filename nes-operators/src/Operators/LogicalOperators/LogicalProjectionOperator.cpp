@@ -18,8 +18,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -133,7 +133,7 @@ OperatorPtr LogicalProjectionOperator::copy()
     {
         copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
     }
-    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionFunctions, id);
+    auto copy = std::make_shared<LogicalProjectionOperator>(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

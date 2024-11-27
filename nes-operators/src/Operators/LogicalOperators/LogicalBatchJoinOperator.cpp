@@ -17,7 +17,6 @@
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -144,7 +143,7 @@ bool LogicalBatchJoinOperator::inferSchema()
 
 OperatorPtr LogicalBatchJoinOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDefinition, id);
+    auto copy = std::make_shared<LogicalBatchJoinOperator>(batchJoinDefinition, id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);

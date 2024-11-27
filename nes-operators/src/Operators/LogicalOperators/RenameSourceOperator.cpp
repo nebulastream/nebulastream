@@ -14,7 +14,6 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -75,7 +74,7 @@ std::string RenameSourceOperator::getNewSourceName() const
 
 OperatorPtr RenameSourceOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createRenameSourceOperator(newSourceName, id);
+    auto copy = std::make_shared<RenameSourceOperator>(newSourceName, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
