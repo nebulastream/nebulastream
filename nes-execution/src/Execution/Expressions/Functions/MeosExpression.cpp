@@ -69,13 +69,13 @@ double meosT(double lon, double lat, int t) {
 
     if (eintersects_tpoint_geo((const Temporal *)inst, geom)){
         NES_INFO("Intersects");
-        return true;
+        return 1;
     } else {
         NES_INFO("Does not intersect");
-        return false;
+        return 0;
     }
 
-    return true;
+    return 1;
 }
 
 Value<> MeosExpression::execute(NES::Nautilus::Record& record) const {

@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_nes_integration_test(meos-speedAgregation "MeosSpeedAgregation.cpp")
-add_nes_integration_test(meos-intersection "MeosIntersection.cpp")
+add_nes_integration_test(meos-intersection "MeosIntersectionThresold.cpp")
 add_nes_integration_test(meos-trajectoryInputation "MeosTrajectoryInputation.cpp")
 
 

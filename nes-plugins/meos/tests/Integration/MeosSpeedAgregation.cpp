@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include "API/Expressions/ArithmeticalExpressions.hpp"
-#include "API/Windowing.hpp"
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
