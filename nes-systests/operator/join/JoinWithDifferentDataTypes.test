@@ -28,7 +28,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i8_s1 = i8
                                                       i8_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,1,1,1,1,1,1,1,1,1.000000,1.000000,500
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,1,1,1,1,1,1,1,1,1.0,1.0,500
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with ingestion time
@@ -38,7 +38,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i16_s1 = i
                                                       i16_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,2,2,2,2,2,2,2,2,2.000000,2.000000,501
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,2,2,2,2,2,2,2,2,2.0,2.0,501
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -48,7 +48,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i32_s1 = i
                                                       i32_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,3,3,3,3,3,3,3,3,3.000000,3.000000,502
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,3,3,3,3,3,3,3,3,3.0,3.0,502
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -58,7 +58,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON i64_s1 = i
                                                       i64_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,4,4,4,4,4,4,4,4,4.000000,4.000000,503
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,4,4,4,4,4,4,4,4,4.0,4.0,503
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -68,7 +68,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u8_s1 = i8
                                                       u8_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,5,5,5,5,5,5,5,5,5.000000,5.000000,504
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,5,5,5,5,5,5,5,5,5.0,5.0,504
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -78,7 +78,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u16_s1 = i
                                                       u16_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,6,6,6,6,6,6,6,6,6.000000,6.000000,505
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,6,6,6,6,6,6,6,6,6.0,6.0,505
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -88,7 +88,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u32_s1 = i
                                                       u32_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,7,7,7,7,7,7,7,7,7.000000,7.000000,506
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,7,7,7,7,7,7,7,7,7.0,7.0,506
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -98,7 +98,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON u64_s1 = i
                                                       u64_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,8,8,8,8,8,8,8,8,8.000000,8.000000,507
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,8,8,8,8,8,8,8,8,8.0,8.0,507
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
 SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f32_s1 = i8_s2 and f32_s1 = i16_s2 and f32_s1 = i32_s2 and
@@ -107,7 +107,7 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f32_s1 = i
                                                       f32_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,9,9,9,9,9,9,9,9,9.000000,9.000000,508
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,9,9,9,9,9,9,9,9,9.0,9.0,508
 
 
 # Check if different numeric types support the equals operation for a tumbling stream with event time
@@ -117,4 +117,4 @@ SELECT * FROM (SELECT * FROM stream1) JOIN (SELECT * FROM stream2) ON f64_s1 = i
                                                       f64_s1 = f64_s2
   WINDOW TUMBLING (ts, size 1 sec) INTO sinkStream1Stream2
 ----
-0,1000,1,2,3,4,5,6,7,8,9.000000,10.000000,100,10,10,10,10,10,10,10,10,10.000000,10.000000,509
+0,1000,1,2,3,4,5,6,7,8,9.0,10.0,100,10,10,10,10,10,10,10,10,10.0,10.0,509
