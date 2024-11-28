@@ -28,6 +28,7 @@ namespace NES::Sinks::SinkGeneratedRegistrar
 
 std::unique_ptr<Sink> RegisterPrintSink(const SinkDescriptor&);
 std::unique_ptr<Sink> RegisterFileSink(const SinkDescriptor&);
+std::unique_ptr<Sink> RegisterChecksumSink(QueryId, const SinkDescriptor&);
 
 }
 
@@ -39,6 +40,7 @@ inline void Registrar<Sinks::SinkRegistry, Sinks::SinkRegistrySignature>::regist
     using namespace NES::Sinks::SinkGeneratedRegistrar;
     registry.registerPlugin("Print", RegisterPrintSink);
     registry.registerPlugin("File", RegisterFileSink);
+    registry.registerPlugin("Checksum", RegisterChecksumSink);
 }
 
 }

@@ -27,6 +27,7 @@ namespace NES::Sinks::SinkValidationGeneratedRegistrar
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&&);
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterSinkValidationChecksum(std::unordered_map<std::string, std::string>&&);
 
 }
 
@@ -39,5 +40,6 @@ inline void Registrar<Sinks::SinkValidationRegistry, Sinks::SinkValidationRegist
     using namespace NES::Sinks::SinkValidationGeneratedRegistrar;
     registry.registerPlugin("Print", RegisterSinkValidationPrint);
     registry.registerPlugin("File", RegisterSinkValidationFile);
+    registry.registerPlugin("Checksum", RegisterSinkValidationChecksum);
 }
 }
