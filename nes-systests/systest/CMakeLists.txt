@@ -12,6 +12,11 @@
 
 add_subdirectory(src)
 
+include(ExternalData)
+set(ExternalData_URL_TEMPLATES
+    "https://github.com/ls-1801/benchmark-data/releases/download/v1/%(algo)_%(hash)"
+)
+
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
@@ -30,17 +35,28 @@ add_executable(systest src/SystestStarter.cpp)
 target_compile_definitions(systest PRIVATE
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
         TEST_DISCOVER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../"
-        TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
+        TEST_DATA_DIR="${CMAKE_CURRENT_BINARY_DIR}/../testdata"
 )
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-add_test(systest_interpreter systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=10000)
+ExternalData_Add_Test(TEST_DATA
+        NAME systest_interpreter
+        COMMAND systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=INTERPRETER --worker.numberOfBuffersInGlobalBufferManager=10000)
 if (NOT CODE_COVERAGE)
-    add_test(systest_compiler systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=10000)
+    ExternalData_Add_Test(TEST_DATA
+            NAME systest_compiler
+            COMMAND systest -n 100 --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler --exclude-groups large --data DATA{../testdata/,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfBuffersInGlobalBufferManager=10000)
 endif (NOT CODE_COVERAGE)
+
+if (ENABLE_LARGE_TESTS)
+    ExternalData_Add_Test(TEST_DATA
+            NAME systest_large
+            COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER)
+endif ()
+ExternalData_Add_Target(TEST_DATA)
 
 # We wish to run all join tests with a small, medium and large page size while also setting the threads to 1, 2, 4 for the worker
 set(workerThreads 1 2 4 8)

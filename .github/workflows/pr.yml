@@ -44,6 +44,14 @@ jobs:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       ref: ${{ github.event.pull_request.head.ref }}
 
+  large-tests:
+    needs: [ get-dev-images ]
+    name: "Run large scale tests"
+    uses: ./.github/workflows/large_test.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      ref: ${{ github.event.pull_request.head.ref }}
+
   clang-tidy-report:
     needs: [ get-dev-images ]
     name: "Run clang tidy report"
