@@ -1,0 +1,13 @@
+# name: join/NexmarkQ8.test
+# description: Test join operator with nexmark q8
+# groups: [Join, Nexmark, large]
+
+# Source definitions
+SourceCSV bid UINT64 timestamp INT32 auction INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/bid.csv
+SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/auction_modified.csv
+
+#Query 8
+
+SELECT start, end, timestamp, auction, bidder, datetime, price, initialbid, reserve, expires, seller, category FROM (SELECT * FROM bid) INNER JOIN (SELECT * FROM auction) ON auction = id WINDOW TUMBLING (timestamp, size 100 sec) INTO CHECKSUM;
+----
+17210624,84318969243
