@@ -10,5 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_tests_if_enabled(systest)
-add_subdirectory(checksum)
+add_executable(checksum ChecksumStarter.cpp)
+find_package(argparse CONFIG REQUIRED)
+target_link_libraries(checksum PRIVATE argparse::argparse)
