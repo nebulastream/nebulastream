@@ -75,7 +75,7 @@ jobs:
     name: "Build Dev Images"
     needs: [ detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
     strategy:
       fail-fast: false
       matrix:
