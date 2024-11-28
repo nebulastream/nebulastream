@@ -14,6 +14,7 @@ add_subdirectory(SinksParsing)
 
 add_source_files(nes-sinks
         SinkDescriptor.cpp
+        ChecksumSink.cpp
         Sink.cpp
         SinkProvider.cpp
 )
