@@ -13,10 +13,9 @@
 */
 
 #include <memory>
-#include <sstream>
 #include <string>
 #include <utility>
-#include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -95,9 +94,9 @@ std::string BasicPhysicalType::convertRawToString(const void* data) const noexce
         case UINT_64:
             return std::to_string(*static_cast<const uint64_t*>(data));
         case FLOAT:
-            return std::to_string(*static_cast<const float*>(data));
+            return Util::formatFloat(*static_cast<const float*>(data));
         case DOUBLE:
-            return std::to_string(*static_cast<const double*>(data));
+            return Util::formatFloat(*static_cast<const double*>(data));
         case BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case CHAR:

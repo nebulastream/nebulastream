@@ -14,7 +14,8 @@
 
 #include <algorithm>
 #include <cctype>
-#include <iterator>
+#include <concepts>
+#include <cstddef>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -22,6 +23,7 @@
 #include <string_view>
 #include <Util/Ranges.hpp>
 #include <Util/Strings.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Util
@@ -54,6 +56,27 @@ std::optional<bool> from_chars<bool>(std::string_view input)
     }
     return {};
 }
+
+std::string formatFloat(std::floating_point auto value)
+{
+    std::string formatted = fmt::format("{:.6f}", value);
+    const size_t decimalPos = formatted.find('.');
+    if (decimalPos == std::string_view::npos)
+    {
+        return formatted;
+    }
+
+    const size_t lastNonZero = formatted.find_last_not_of('0');
+    if (lastNonZero == decimalPos)
+    {
+        return formatted.substr(0, decimalPos + 2);
+    }
+
+    return formatted.substr(0, lastNonZero + 1);
+}
+/// explicit instantiations
+template std::string formatFloat(float);
+template std::string formatFloat(double);
 
 template <>
 std::optional<double> from_chars<double>(std::string_view input)
@@ -159,6 +182,17 @@ std::string_view trimWhiteSpaces(const std::string_view input)
     const auto start = input.find_first_not_of(" \t\n\r");
     const auto end = input.find_last_not_of(" \t\n\r");
     return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
+}
+
+std::string_view trimCharsRight(std::string_view input, char character)
+{
+    const std::size_t lastNotC = input.find_last_not_of(character);
+    if (lastNotC == std::string_view::npos)
+    {
+        return std::string_view{};
+    }
+    input.remove_suffix(input.size() - lastNotC - 1);
+    return input;
 }
 
 }
