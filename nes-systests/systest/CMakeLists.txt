@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_subdirectory(src)
+add_subdirectory(checksum)
 
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
