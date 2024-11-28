@@ -13,9 +13,16 @@
 */
 
 #pragma once
+#include <cstddef>
+#include <memory>
+#include <ostream>
+#include <variant>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <fmt/ostream.h>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::Sinks
 {
@@ -23,7 +30,18 @@ namespace NES::Sinks
 class CSVFormat
 {
 public:
-    CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp = false);
+    /// Stores precalculated offsets based on the input schema.
+    /// The CSVFormat class constructs the formatting context during its construction and stores it as a member to speed up
+    /// the acutal formatting.
+    struct FormattingContext
+    {
+        size_t schemaSizeInBytes{};
+        std::vector<size_t> offsets;
+        std::vector<std::variant<std::shared_ptr<VariableSizedDataPhysicalType>, std::shared_ptr<BasicPhysicalType>>> physicalTypes;
+    };
+
+    CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp);
+    explicit CSVFormat(std::shared_ptr<Schema> schema);
     virtual ~CSVFormat() noexcept = default;
 
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
@@ -33,11 +51,12 @@ public:
     std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const std::shared_ptr<Schema>& schema);
+    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
 private:
+    FormattingContext formattingContext;
     std::shared_ptr<Schema> schema;
     bool addTimestamp;
 };
