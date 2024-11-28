@@ -17,6 +17,7 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES::Configuration
@@ -30,6 +31,8 @@ public:
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `readConfiguration()`
     Configurations::StringOption testsDiscoverDir
         = {"testsDiscoverDir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
+    Configurations::StringOption testDataDir
+        = {"testDataDir", TEST_DATA_DIR, "Directory to lookup test data files in. Default: " TEST_DATA_DIR};
     Configurations::StringOption directlySpecifiedTestFiles
         = {"directlySpecifiedTestFiles",
            "",
@@ -42,7 +45,8 @@ public:
         = {"workingDir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
     Configurations::BoolOption randomQueryOrder = {"randomQueryOrder", "false", "run queries in random order"};
     Configurations::UIntOption numberConcurrentQueries = {"numberConcurrentQueries", "6", "number of maximal concurrently running queries"};
-    Configurations::StringOption testGroup = {"testGroup", "", "test group to run"};
+    Configurations::SequenceOption<Configurations::StringOption> testGroups = {"testGroups", "test groups to run"};
+    Configurations::SequenceOption<Configurations::StringOption> excludeGroups = {"excludeGroups", "test groups to exclude"};
     Configurations::StringOption workerConfig = {"workerConfig", "", "used worker config file (.yaml)"};
     Configurations::StringOption queryCompilerConfig = {"queryCompilerConfig", "", "used query compiler config file (.yaml)"};
     Configurations::StringOption grpcAddressUri
@@ -66,7 +70,9 @@ protected:
             &workingDir,
             &randomQueryOrder,
             &numberConcurrentQueries,
-            &testGroup,
+            &testGroups,
+            &testDataDir,
+            &excludeGroups,
             &grpcAddressUri};
     }
 };
