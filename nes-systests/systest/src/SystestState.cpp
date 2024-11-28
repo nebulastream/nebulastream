@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <ostream>
 #include <ranges>
+#include <unordered_set>
+#include <utility>
 #include <vector>
+#include <fmt/ranges.h> ///NOLINT: required by fmt
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 
@@ -50,9 +54,9 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir)
+void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name());
+    auto loadedPlans = loadFromSLTFile(testfile.file, workingDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
@@ -109,7 +113,7 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) {};
 
-std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir)
+std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir)
 {
     std::vector<Query> queries;
     uint64_t loadedFiles = 0;
@@ -118,7 +122,7 @@ std::vector<Query> loadQueries(TestFileMap& testmap, const std::filesystem::path
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
         try
         {
-            loadQueriesFromTestFile(testfile, workingDir);
+            loadQueriesFromTestFile(testfile, workingDir, testDataDir);
             for (auto& query : testfile.queries)
             {
                 queries.emplace_back(std::move(query));
@@ -194,30 +198,35 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         }
     }
 
-    if (not config.testGroup.getValue().empty()) /// load specific test group
-    {
-        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
-        auto testFileExtension = config.testFileExtension.getValue();
-        auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
-
-        auto groupname = config.testGroup.getValue();
-
-        TestFileMap resultMap;
-
-        for (const auto& [testname, testfile] : testMap)
-        {
-            for (const auto& groups : testfile.groups | std::views::filter([&groupname](auto& groups) { return groups == groupname; }))
-            {
-                resultMap.emplace(testname, testfile);
-            }
-        }
-        return resultMap;
-    }
-
-    /// laod from test dir
     auto testsDiscoverDir = config.testsDiscoverDir.getValue();
     auto testFileExtension = config.testFileExtension.getValue();
-    return discoverTestsRecursively(testsDiscoverDir, testFileExtension);
+    auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
+
+    auto includedGroupsVector = config.testGroups.getValues();
+    auto excludedGroupsVector = config.excludeGroups.getValues();
+    std::unordered_set<std::string> includedGroups(includedGroupsVector.begin(), includedGroupsVector.end());
+    std::unordered_set<std::string> excludedGroups(excludedGroupsVector.begin(), excludedGroupsVector.end());
+
+    std::erase_if(
+        testMap,
+        [&](const auto& nameAndFile)
+        {
+            const auto& [name, testFile] = nameAndFile;
+            if (!includedGroups.empty())
+            {
+                if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(group); }))
+                {
+                    return true;
+                }
+            }
+            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(group); }))
+            {
+                return true;
+            }
+            return false;
+        });
+
+    return testMap;
 }
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)

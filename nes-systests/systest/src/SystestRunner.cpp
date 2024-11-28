@@ -44,16 +44,19 @@
 namespace NES::Systest
 {
 
-std::vector<LoadedQueryPlan>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& workingDir, const std::string& testFileName)
+std::vector<LoadedQueryPlan> loadFromSLTFile(
+    const std::filesystem::path& testFilePath,
+    const std::filesystem::path& workingDir,
+    const std::string& testFileName,
+    const std::string& testDataDir)
 {
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
     SystestParser parser{};
     std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
-        {"CHECKSUM", {{BasicType::UINT64, "S$Count"}, {BasicType::UINT64, "S$Checksum"}}}};
+        {"CHECKSUM", {{DataTypeFactory::createUInt64(), "S$Count"}, {DataTypeFactory::createUInt64(), "S$Checksum"}}}};
 
-    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
+    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
