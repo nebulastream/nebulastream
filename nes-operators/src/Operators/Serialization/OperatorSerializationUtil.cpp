@@ -52,6 +52,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <google/protobuf/json/json.h>
 #include <ErrorHandling.hpp>
 #include <SerializableOperator.pb.h>
