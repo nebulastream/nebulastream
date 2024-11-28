@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <fmt/ostream.h>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sinks
 {
@@ -23,6 +24,13 @@ namespace NES::Sinks
 class CSVFormat
 {
 public:
+    struct FormattingContext
+    {
+        size_t schemaSizeInBytes;
+        std::vector<size_t> offsets;
+        std::vector<std::pair<std::shared_ptr<PhysicalType>, bool>> physicalTypes;
+    };
+
     CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp = false);
     virtual ~CSVFormat() noexcept = default;
 
@@ -33,11 +41,12 @@ public:
     std::string getFormattedBuffer(const Memory::TupleBuffer& inputBuffer);
 
     /// Reads a TupleBuffer and uses the supplied 'schema' to format it to CSV. Returns result as a string.
-    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
+    static std::string tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuffer, const FormattingContext& formattingContext);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVFormat& format);
 
 private:
+    FormattingContext formattingContext;
     std::shared_ptr<Schema> schema;
     bool addTimestamp;
 };
