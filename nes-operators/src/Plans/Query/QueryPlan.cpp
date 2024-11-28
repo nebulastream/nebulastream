@@ -68,10 +68,8 @@ void QueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
     NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
-        if (!rootOperator->addParent(operatorNode))
-        {
-            NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
-        }
+        const auto result = rootOperator->addParent(operatorNode);
+        PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
     clearRootOperators();

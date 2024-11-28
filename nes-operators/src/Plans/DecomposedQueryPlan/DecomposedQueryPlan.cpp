@@ -23,6 +23,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
@@ -179,10 +180,8 @@ void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNod
     NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
-        if (!rootOperator->addParent(operatorNode))
-        {
-            NES_THROW_RUNTIME_ERROR("QueryPlan: Unable to add operator {} as partent to {}", *operatorNode, *rootOperator);
-        }
+        const auto result = rootOperator->addParent(operatorNode);
+        INVARIANT(result, "QueryPlan: Unable to add operator {} as parent to {}", *operatorNode, *rootOperator);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
     rootOperators.clear();
