@@ -39,6 +39,7 @@
 #include <SystestResultCheck.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Systest
 {
@@ -49,10 +50,10 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
     std::vector<LoadedQueryPlan> plans{};
     CLI::QueryConfig config{};
     SystestParser parser{};
-    std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema;
+    std::unordered_map<std::string, SystestParser::Schema> sinkNamesToSchema{
+        {"CHECKSUM", {{BasicType::UINT64, "S$Count"}, {BasicType::UINT64, "S$Checksum"}}}};
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
-
     if (!parser.loadFile(testFilePath))
     {
         throw TestException("Could not successfully load test file://{}", testFilePath.string());
@@ -174,6 +175,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 }
                 return trimmedSinkName;
             }();
+
             if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
             {
                 throw UnknownSinkType("Failed to find sink name <{}>", sinkName);
@@ -186,11 +188,20 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
 
             /// Adding the sink to the sink config, such that we can create a fully specified query plan
             const auto resultFile = Query::resultFile(workingDir, testFileName, currentQueryNumber);
-            auto sinkCLI = CLI::Sink{
-                sinkForQuery,
-                "File",
-                {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
-            config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+
+            if (sinkName == "CHECKSUM")
+            {
+                auto sink = CLI::Sink{sinkName, "Checksum", {std::make_pair("filePath", resultFile)}};
+                config.sinks.emplace(sinkForQuery, std::move(sink));
+            }
+            else
+            {
+                auto sinkCLI = CLI::Sink{
+                    sinkForQuery,
+                    "File",
+                    {std::make_pair("inputFormat", "CSV"), std::make_pair("filePath", resultFile), std::make_pair("append", "false")}};
+                config.sinks.emplace(sinkForQuery, std::move(sinkCLI));
+            }
 
             config.query = query;
             auto plan = createFullySpecifiedQueryPlan(config);
