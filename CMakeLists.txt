@@ -57,6 +57,7 @@ option(NES_USE_CCACHE "Use ccache if available" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 option(NES_USE_KAFKA "Build with Kafka support" OFF)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
+option(NES_USE_MQTT "Build with MQTT support" ON)
 
 #toggle GPU runtime and test
 option(NES_USE_GPU "Build with GPU acceleration" OFF)
@@ -690,29 +691,6 @@ if (NES_USE_GPU)
     set(NES_TEST_TIMEOUT 300)
     add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 endif ()
-
-
-# if (USE_MEOS)
-#     message(STATUS "Building with MEOS support")
-#     # Detect the platform
-#     if (APPLE)
-#         message(STATUS "Building on macOS")
-#         # Set the include and library directories for Homebrew (macOS)
-#         set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
-#         set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
-#         set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
-#         set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
-#         include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
-#         link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
-
-#     else()
-#         message(STATUS "Building on Linux")
-
-#         # Default behavior for Linux
-#         find_package(meos REQUIRED)
-#         include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
-#     endif()
-# endif()
 
 message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
 install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
