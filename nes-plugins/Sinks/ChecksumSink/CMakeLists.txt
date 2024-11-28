@@ -11,10 +11,8 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(Checksum Sink nes-sinks-registry checksum_sink_plugin ChecksumSink.cpp)
+add_plugin_as_library(Checksum SinkValidation nes-sinks-registry checksum_sink_validation_plugin ChecksumSink.cpp)
 
-# NOTE: Since these plugins are part of the main NebulaStream repo,
-#       we apply the same care and test coverage requirements to these plugins that we apply to the rest of the system.
-
-# activate optional plugins and add the path "THE/PATH" to the build (adding all dependencies of the optional plugin)
-activate_optional_plugin("Sources/TCPSource" ON)
-activate_optional_plugin("Sinks/ChecksumSink" ON)
+target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
+target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
