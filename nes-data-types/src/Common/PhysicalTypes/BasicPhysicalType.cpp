@@ -64,6 +64,22 @@ uint64_t BasicPhysicalType::size() const
     return -1;
 }
 
+namespace
+{
+std::string formatFloat(std::floating_point auto value)
+{
+    // Check if it's a whole number and append ".0" manually if needed
+    if (std::fmod(value, 1.0) == 0.0)
+    {
+        return fmt::format("{:.1f}", value); // Force .0 for whole numbers
+    }
+    else
+    {
+        return fmt::format("{:.6g}", value); // Up to 6 significant digits
+    }
+};
+}
+
 std::string BasicPhysicalType::convertRawToString(void const* data) const noexcept
 {
     if (!data)
@@ -90,9 +106,9 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case UINT_64:
             return std::to_string(*reinterpret_cast<uint64_t const*>(data));
         case FLOAT:
-            return std::to_string(*reinterpret_cast<float const*>(data));
+            return formatFloat(*reinterpret_cast<float const*>(data));
         case DOUBLE:
-            return std::to_string(*reinterpret_cast<double const*>(data));
+            return formatFloat(*reinterpret_cast<double const*>(data));
         case BOOLEAN:
             return std::to_string(*reinterpret_cast<bool const*>(data));
         case CHAR:
