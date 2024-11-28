@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.199](https://github.com/nebulastream/nebulastream/tree/v0.6.199) (2024-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.198...v0.6.199)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add MQTT Sink to NES PSL Parsers  [\#5122](https://github.com/nebulastream/nebulastream/issues/5122)
+
 ## [v0.6.198](https://github.com/nebulastream/nebulastream/tree/v0.6.198) (2024-11-26)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.197...v0.6.198)
