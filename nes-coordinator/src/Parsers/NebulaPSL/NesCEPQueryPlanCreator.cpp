@@ -90,7 +90,9 @@ void NesCEPQueryPlanCreator::exitWhereExp(NesCEPParser::WhereExpContext* context
 
 // WITHIN clause
 void NesCEPQueryPlanCreator::exitInterval(NesCEPParser::IntervalContext* cxt) {
-    NES_DEBUG("NesCEPQueryPlanCreator : exitInterval:  {}", cxt->getText());
+    NES_DEBUG("NesCEPQueryPlanCreator : exitInterval with : time {} timeUnit: {}",
+              cxt->getStart()->getText(),
+              cxt->intervalType()->getText());
     // get window definitions
     std::string timeUnit = cxt->intervalType()->getText();
     int32_t time = std::stoi(cxt->getStart()->getText());
@@ -104,31 +106,66 @@ void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext
     pattern.addProjectionField(attributeField);
 }
 
-void NesCEPQueryPlanCreator::enterSink(NesCEPParser::SinkContext* context) {
+void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* context) {
+    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", context->getText())
+    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", context->parameters()->parameter().at(0)->getText())
     // collect specified sinks
     std::string sinkType = context->sinkType()->getText();
+    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", sinkType)
     SinkDescriptorPtr sinkDescriptor;
 
-    if (sinkType == "Print") {
-        sinkDescriptor = NES::PrintSinkDescriptor::create();
+    if (sinkType == "FILE") {
+        // get fileName
+        if (context->parameters()->parameter().at(0)->getText() == "fileName") {
+            sinkDescriptor = NES::FileSinkDescriptor::create(context->parameters()->value(0)->getText());
+            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for File Sink with name : {}",
+                      context->parameters()->value(0)->getText());
+        } else {
+            NES_THROW_RUNTIME_ERROR("Unknown parameter(s) for FileSink {}", context->parameters()->getText());
+        }
+    } else if (sinkType == "MQTT") {
+        // get topic and address
+        NES_DEBUG("NesCEPQueryPlanCreator : number of parameters : {}", context->parameters()->parameter().size());
+        if (context->parameters()->parameter().size() == 2) {
+            if (context->parameters()->parameter().at(0)->getStart()->getText() == "address") {
+                sinkDescriptor = NES::MQTTSinkDescriptor::create(context->parameters()->value(0)->getText(),
+                                                                 context->parameters()->value(1)->getText());
+            } else {
+                sinkDescriptor = NES::MQTTSinkDescriptor::create(context->parameters()->value(1)->getText(),
+                                                                 context->parameters()->value(0)->getText());
+            }
+            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for File Sink with name : {}",
+                      context->parameters()->value(0)->getText());
+        } else {
+            NES_THROW_RUNTIME_ERROR("Unknown parameter(s) for MQTTSink {}", context->parameters()->getText());
+        }
+
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unknown sink was specified");
     }
-    if (sinkType == "File") {
-        sinkDescriptor = NES::FileSinkDescriptor::create(context->NAME()->getText());
-    }
-    if (sinkType == "MQTT") {
-        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
-    }
-    if (sinkType == "Network") {
-        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
-    }
-    if (sinkType == "NullOutput") {
-        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
-    }
+
     pattern.addSink(sinkDescriptor);
-    NesCEPBaseListener::enterSink(context);
+    NesCEPBaseListener::exitSinkWithParameters(context);
 }
 
-void NesCEPQueryPlanCreator::exitSinkList(NesCEPParser::SinkListContext* context) { NesCEPBaseListener::exitSinkList(context); }
+void NesCEPQueryPlanCreator::enterSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* context) {
+    // collect specified sinks
+    std::string sinkType = context->sinkType()->getText();
+    NES_DEBUG("NesCEPQueryPlanCreator : found Sink Type: {}", sinkType)
+    SinkDescriptorPtr sinkDescriptor;
+
+    if (sinkType == "PRINT") {
+        sinkDescriptor = NES::PrintSinkDescriptor::create();
+    } else if (sinkType == "NETWORK") {
+        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+    } else if (sinkType == "NULLOUTPUT") {
+        sinkDescriptor = NES::NullOutputSinkDescriptor::create();
+    } else {
+        NES_THROW_RUNTIME_ERROR("Unkown sink was specified");
+    }
+    pattern.addSink(sinkDescriptor);
+    NesCEPBaseListener::exitSinkWithoutParameters(context);
+}
 
 void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* context) {
     NES_DEBUG("NesCEPQueryPlanCreator : enterQuantifiers: {}", context->getText())

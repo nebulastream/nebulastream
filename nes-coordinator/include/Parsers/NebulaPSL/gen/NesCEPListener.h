@@ -54,9 +54,6 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterSinkList(NesCEPParser::SinkListContext* ctx) = 0;
     virtual void exitSinkList(NesCEPParser::SinkListContext* ctx) = 0;
 
-    virtual void enterSink(NesCEPParser::SinkContext* ctx) = 0;
-    virtual void exitSink(NesCEPParser::SinkContext* ctx) = 0;
-
     virtual void enterListEvents(NesCEPParser::ListEventsContext* ctx) = 0;
     virtual void exitListEvents(NesCEPParser::ListEventsContext* ctx) = 0;
 
@@ -156,6 +153,9 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterAggregation(NesCEPParser::AggregationContext* ctx) = 0;
     virtual void exitAggregation(NesCEPParser::AggregationContext* ctx) = 0;
 
+    virtual void enterValue(NesCEPParser::ValueContext* ctx) = 0;
+    virtual void exitValue(NesCEPParser::ValueContext* ctx) = 0;
+
     virtual void enterAttribute(NesCEPParser::AttributeContext* ctx) = 0;
     virtual void exitAttribute(NesCEPParser::AttributeContext* ctx) = 0;
 
@@ -182,6 +182,27 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
 
     virtual void enterMathOperator(NesCEPParser::MathOperatorContext* ctx) = 0;
     virtual void exitMathOperator(NesCEPParser::MathOperatorContext* ctx) = 0;
+
+    virtual void enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* ctx) = 0;
+    virtual void exitSinkWithParameters(NesCEPParser::SinkWithParametersContext* ctx) = 0;
+
+    virtual void enterSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* ctx) = 0;
+    virtual void exitSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* ctx) = 0;
+
+    virtual void enterParameters(NesCEPParser::ParametersContext* ctx) = 0;
+    virtual void exitParameters(NesCEPParser::ParametersContext* ctx) = 0;
+
+    virtual void enterParameter(NesCEPParser::ParameterContext* ctx) = 0;
+    virtual void exitParameter(NesCEPParser::ParameterContext* ctx) = 0;
+
+    virtual void enterFileName(NesCEPParser::FileNameContext* ctx) = 0;
+    virtual void exitFileName(NesCEPParser::FileNameContext* ctx) = 0;
+
+    virtual void enterTopic(NesCEPParser::TopicContext* ctx) = 0;
+    virtual void exitTopic(NesCEPParser::TopicContext* ctx) = 0;
+
+    virtual void enterAddress(NesCEPParser::AddressContext* ctx) = 0;
+    virtual void exitAddress(NesCEPParser::AddressContext* ctx) = 0;
 };
 
 }// namespace NES::Parsers

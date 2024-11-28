@@ -3,6 +3,7 @@
 
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPBASELISTENER_H_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPBASELISTENER_H_
+#pragma once
 
 #include <Parsers/NebulaPSL/gen/NesCEPListener.h>
 #include <antlr4-runtime.h>
@@ -54,9 +55,6 @@ class NesCEPBaseListener : public NesCEPListener {
 
     virtual void enterSinkList(NesCEPParser::SinkListContext* /*ctx*/) override {}
     virtual void exitSinkList(NesCEPParser::SinkListContext* /*ctx*/) override {}
-
-    virtual void enterSink(NesCEPParser::SinkContext* /*ctx*/) override {}
-    virtual void exitSink(NesCEPParser::SinkContext* /*ctx*/) override {}
 
     virtual void enterListEvents(NesCEPParser::ListEventsContext* /*ctx*/) override {}
     virtual void exitListEvents(NesCEPParser::ListEventsContext* /*ctx*/) override {}
@@ -157,6 +155,9 @@ class NesCEPBaseListener : public NesCEPListener {
     virtual void enterAggregation(NesCEPParser::AggregationContext* /*ctx*/) override {}
     virtual void exitAggregation(NesCEPParser::AggregationContext* /*ctx*/) override {}
 
+    virtual void enterValue(NesCEPParser::ValueContext* /*ctx*/) override {}
+    virtual void exitValue(NesCEPParser::ValueContext* /*ctx*/) override {}
+
     virtual void enterAttribute(NesCEPParser::AttributeContext* /*ctx*/) override {}
     virtual void exitAttribute(NesCEPParser::AttributeContext* /*ctx*/) override {}
 
@@ -183,6 +184,27 @@ class NesCEPBaseListener : public NesCEPListener {
 
     virtual void enterMathOperator(NesCEPParser::MathOperatorContext* /*ctx*/) override {}
     virtual void exitMathOperator(NesCEPParser::MathOperatorContext* /*ctx*/) override {}
+
+    virtual void enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* /*ctx*/) override {}
+    virtual void exitSinkWithParameters(NesCEPParser::SinkWithParametersContext* /*ctx*/) override {}
+
+    virtual void enterSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* /*ctx*/) override {}
+    virtual void exitSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* /*ctx*/) override {}
+
+    virtual void enterParameters(NesCEPParser::ParametersContext* /*ctx*/) override {}
+    virtual void exitParameters(NesCEPParser::ParametersContext* /*ctx*/) override {}
+
+    virtual void enterParameter(NesCEPParser::ParameterContext* /*ctx*/) override {}
+    virtual void exitParameter(NesCEPParser::ParameterContext* /*ctx*/) override {}
+
+    virtual void enterFileName(NesCEPParser::FileNameContext* /*ctx*/) override {}
+    virtual void exitFileName(NesCEPParser::FileNameContext* /*ctx*/) override {}
+
+    virtual void enterTopic(NesCEPParser::TopicContext* /*ctx*/) override {}
+    virtual void exitTopic(NesCEPParser::TopicContext* /*ctx*/) override {}
+
+    virtual void enterAddress(NesCEPParser::AddressContext* /*ctx*/) override {}
+    virtual void exitAddress(NesCEPParser::AddressContext* /*ctx*/) override {}
 
     virtual void enterEveryRule(antlr4::ParserRuleContext* /*ctx*/) override {}
     virtual void exitEveryRule(antlr4::ParserRuleContext* /*ctx*/) override {}
