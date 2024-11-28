@@ -37,8 +37,11 @@ static constexpr auto padSizeQueryNumber = 2;
 static constexpr auto padSizeQueryCounter = 3;
 
 /// Load query plan objects by parsing an SLT file for queries and lowering it
-[[nodiscard]] std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName);
+[[nodiscard]] std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> loadFromSLTFile(
+    const std::filesystem::path& testFilePath,
+    const std::filesystem::path& resultDir,
+    const std::string& testFileName,
+    const std::string& testDataDir);
 
 /// Run queries locally ie not on single-node-worker in a separate process
 /// @return false if one query result is incorrect

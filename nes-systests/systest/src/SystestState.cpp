@@ -17,6 +17,8 @@
 #include <ostream>
 #include <ranges>
 #include <vector>
+#include <fmt/ranges.h>
+#include <fmt/std.h>
 #include <SystestState.hpp>
 
 namespace NES::Systest
@@ -49,9 +51,9 @@ TestFileMap discoverTestsRecursively(const std::filesystem::path& path, const st
     return testFiles;
 }
 
-void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir)
+void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& resultDir, const std::string& testDataDir)
 {
-    auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
+    auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name(), testDataDir);
     uint64_t queryIdInFile = 0;
     for (const auto& plan : loadedPlans)
     {
@@ -106,14 +108,14 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
     , onlyEnableQueriesWithTestQueryNumber(std::move(onlyEnableQueriesWithTestQueryNumber))
     , groups(readGroups(*this)) {};
 
-std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir)
+std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir, const std::filesystem::path& testDataDir)
 {
     std::vector<Query> queries;
 
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;
-        loadQueriesFromTestFile(testfile, resultDir);
+        loadQueriesFromTestFile(testfile, resultDir, testDataDir);
         for (auto& query : testfile.queries)
         {
             queries.emplace_back(std::move(query));
@@ -175,30 +177,37 @@ TestFileMap loadTestFileMap(const Configuration::SystestConfiguration& config)
         }
     }
 
-    if (not config.testGroup.getValue().empty()) /// load specific test group
-    {
-        auto testsDiscoverDir = config.testsDiscoverDir.getValue();
-        auto testFileExtension = config.testFileExtension.getValue();
-        auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
-
-        auto groupname = config.testGroup.getValue();
-
-        TestFileMap resultMap;
-
-        for (const auto& [testname, testfile] : testMap)
-        {
-            for (const auto& groups : testfile.groups | std::views::filter([&groupname](auto& groups) { return groups == groupname; }))
-            {
-                resultMap.emplace(testname, testfile);
-            }
-        }
-        return resultMap;
-    }
-
-    /// laod from test dir
     auto testsDiscoverDir = config.testsDiscoverDir.getValue();
     auto testFileExtension = config.testFileExtension.getValue();
-    return discoverTestsRecursively(testsDiscoverDir, testFileExtension);
+    auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
+
+    auto includedGroupsVector = config.testGroups.getValues();
+    auto excludedGroupsVector = config.excludeGroups.getValues();
+    std::unordered_set<std::string> includedGroups(includedGroupsVector.begin(), includedGroupsVector.end());
+    std::unordered_set<std::string> excludedGroups(excludedGroupsVector.begin(), excludedGroupsVector.end());
+
+    std::erase_if(
+        testMap,
+        [&](const auto& p)
+        {
+            const auto& [name, testFile] = p;
+            if (!includedGroups.empty())
+            {
+                if (std::ranges::none_of(testFile.groups, [&](const auto& g) { return includedGroups.contains(g); }))
+                {
+                    std::cout << fmt::format("Skipping {} because it is not part of the {:} groups", name, includedGroups) << '\n';
+                    return true;
+                }
+            }
+            if (std::ranges::any_of(testFile.groups, [&](const auto& g) { return excludedGroups.contains(g); }))
+            {
+                std::cout << fmt::format("Skipping {} because it is part of the {:} excluded groups", name, excludedGroups) << '\n';
+                return true;
+            }
+            return false;
+        });
+
+    return testMap;
 }
 
 std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)

@@ -34,8 +34,11 @@
 
 namespace NES::Systest
 {
-std::vector<std::pair<DecomposedQueryPlanPtr, std::string>>
-loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem::path& resultDir, const std::string& testFileName)
+std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> loadFromSLTFile(
+    const std::filesystem::path& testFilePath,
+    const std::filesystem::path& resultDir,
+    const std::string& testFileName,
+    const std::string& testDataDir)
 {
     std::vector<std::pair<DecomposedQueryPlanPtr, std::string>> plans{};
     CLI::QueryConfig config{};
@@ -71,7 +74,6 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
              substitute = sinkName;
          }});
 
-    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
     parser.registerSubstitutionRule(
         {"CHECKSUM",
          [&](std::string& substitute)
@@ -98,6 +100,8 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
              config.sinks.emplace(sinkName, std::move(sink));
              substitute = sinkName;
          }});
+
+    parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = testDataDir; }});
 
     if (!parser.loadFile(testFilePath))
     {
