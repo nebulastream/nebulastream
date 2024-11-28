@@ -16,10 +16,12 @@
 #include <cctype>
 #include <chrono>
 #include <filesystem>
+#include <format>
 #include <iostream>
 #include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
+#include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/chrono.h>
@@ -28,7 +30,6 @@
 #include <folly/MPMCQueue.h>
 #include <google/protobuf/text_format.h>
 #include <ErrorHandling.hpp>
-#include <SingleNodeWorker.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestState.hpp>
 
@@ -45,13 +46,17 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     program.add_argument("-t", "--testLocation")
         .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
               "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
-    program.add_argument("-g", "--group").help("run a specific test group");
+    program.add_argument("-g", "--groups").help("run a specific test groups").nargs(nargs_pattern::at_least_one);
+    program.add_argument("-e", "--exclude-groups").help("ignore groups, takes precedence over -g").nargs(nargs_pattern::at_least_one);
 
     /// list queries
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
 
     /// debug mode
     program.add_argument("-d", "--debug").flag().help("dump the query plan and enable debug logging");
+
+    /// input data
+    program.add_argument("--data").help("path to the directory where input CSV files are stored");
 
     /// configs
     program.add_argument("-w", "--workerConfig").help("load worker config file (.yaml)");
@@ -86,6 +91,11 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
     if (program.is_used("-d"))
     {
         Logger::setupLogging("systest.log", LogLevel::LOG_DEBUG);
+    }
+
+    if (program.is_used("--data"))
+    {
+        config.testDataDir = program.get<std::string>("--data");
     }
 
     if (program.is_used("--testLocation"))
@@ -143,26 +153,20 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
 
     if (program.is_used("-g"))
     {
-        auto testMap = loadTestFileMap(config);
-
-        auto expectedGroup = program.get<std::string>("-g");
-        std::erase_if(expectedGroup, isspace);
-
-        auto found = std::any_of(
-            testMap.begin(),
-            testMap.end(),
-            [&expectedGroup](const auto& testfilePair)
-            {
-                const auto& testfile = testfilePair.second;
-                const auto& groups = testfile.groups;
-                return std::any_of(groups.begin(), groups.end(), [&expectedGroup](const auto& group) { return group == expectedGroup; });
-            });
-        if (!found)
+        auto expectedGroups = program.get<std::vector<std::string>>("-g");
+        for (const auto& expectedGroup : expectedGroups)
         {
-            std::cerr << "Unknown group '" << expectedGroup << "'!" << std::endl;
-            std::exit(1);
+            config.testGroups.add(expectedGroup);
         }
-        config.testGroup = expectedGroup;
+    }
+
+    if (program.is_used("--exclude-groups"))
+    {
+        auto excludedGroups = program.get<std::vector<std::string>>("--exclude-groups");
+        for (const auto& excludedGroup : excludedGroups)
+        {
+            config.excludeGroups.add(excludedGroup);
+        }
     }
 
     if (program.is_used("--shuffle"))
@@ -290,8 +294,8 @@ int main(int argc, const char** argv)
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto testMap = Systest::loadTestFileMap(config);
-        const auto queries = loadQueries(testMap, config.workingDir.getValue());
-        std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
+        const auto queries = loadQueries(testMap, config.workingDir.getValue(), config.testDataDir.getValue());
+        std::cout << std::format("Running a total of {} queries.", queries.size()) << '\n';
         if (queries.empty())
         {
             std::stringstream outputMessage;
