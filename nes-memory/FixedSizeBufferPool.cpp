@@ -96,15 +96,12 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(const std::
 TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment;
-    auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
-    if (buffer.has_value())
+    exclusiveBuffers.blockingRead(memSegment);
+    if (memSegment->controlBlock->prepare())
     {
-        return buffer.value();
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
-    else
-    {
-        throw BufferAllocationFailure("FixedSizeBufferPool could not allocate buffer before timeout: {}", GET_BUFFER_TIMEOUT);
-    }
+    throw InvalidRefCountForBuffer();
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
