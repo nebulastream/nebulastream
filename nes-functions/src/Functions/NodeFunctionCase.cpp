@@ -48,7 +48,7 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
     INVARIANT(
-        NES::Util::instanceOf<Undefined>(defaultExp->getStamp()),
+        !NES::Util::instanceOf<Undefined>(defaultExp->getStamp()),
         "Error during stamp inference. Right type must be defined, but was: {}",
         defaultExp->getStamp()->toString());
 
@@ -57,12 +57,12 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
         elem->inferStamp(schema);
         ///all elements in whenChildren must be Whens
         INVARIANT(
-            !NES::Util::instanceOf<NodeFunctionWhen>(elem),
+            NES::Util::instanceOf<NodeFunctionWhen>(elem),
             "Error during stamp inference. All functions in when function vector must be when functions, but {} is not a when function.",
             *elem);
         ///all elements must have same stamp as defaultExp value
         INVARIANT(
-            !defaultExp->getStamp()->equals(elem->getStamp()),
+            defaultExp->getStamp()->equals(elem->getStamp()),
             "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element {} has: {}. Right "
             "was: {}",
             *elem,

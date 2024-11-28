@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <memory>
 #include <queue>
+#include <unordered_set>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
