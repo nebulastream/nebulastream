@@ -72,6 +72,32 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
          }});
 
     parser.registerSubstitutionRule({"TESTDATA", [&](std::string& substitute) { substitute = std::string(TEST_DATA_DIR); }});
+    parser.registerSubstitutionRule(
+        {"CHECKSUM",
+         [&](std::string& substitute)
+         {
+             /// For system level tests, a single file can hold arbitrary many tests. We need to generate a unique sink name for
+             /// every test by counting up a static query number. We then emplace the unique sinks in the global (per test file) query config.
+             static size_t currentQueryNumber = 0;
+             static std::string currentTestFileName = "";
+
+             /// We reset the current query number once we see a new test file
+             if (currentTestFileName != testFileName)
+             {
+                 currentTestFileName = testFileName;
+                 currentQueryNumber = 0;
+             }
+             else
+             {
+                 ++currentQueryNumber;
+             }
+
+             const std::string sinkName = testFileName + "_" + std::to_string(currentQueryNumber);
+             const auto resultFile = resultDir / (sinkName + ".csv");
+             auto sink = CLI::Sink{sinkName, "Checksum", {std::make_pair("filePath", resultFile)}};
+             config.sinks.emplace(sinkName, std::move(sink));
+             substitute = sinkName;
+         }});
 
     if (!parser.loadFile(testFilePath))
     {
