@@ -13,10 +13,10 @@
 */
 #include <memory>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
