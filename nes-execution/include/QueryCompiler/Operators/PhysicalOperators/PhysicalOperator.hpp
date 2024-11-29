@@ -35,10 +35,10 @@ protected:
      * @brief returns the string representation of the class
      * @return the string representation of the class
      */
-    std::string toString() const;
+    std::string toString() const override;
 
 public:
-    ~PhysicalOperator() noexcept = default;
+    ~PhysicalOperator() noexcept override = default;
 };
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 }
