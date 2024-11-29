@@ -23,8 +23,7 @@ jobs:
   check-format:
     runs-on: [ self-hosted, linux, Build ]
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
-      # TODO #401 Investigate rootless docker containers
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
       options: --user root
       env:
         GH_TOKEN: ${{ github.token }}
@@ -39,5 +38,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: ${{ steps.increment.outputs.result }}
+          ref: ${{ inputs.head_sha }}
       - name: Check Format
         run: ./scripts/format.sh
