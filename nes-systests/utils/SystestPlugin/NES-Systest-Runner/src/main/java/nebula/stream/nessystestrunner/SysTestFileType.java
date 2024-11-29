@@ -22,13 +22,13 @@ public class SysTestFileType extends LanguageFileType {
     @NotNull
     @Override
     public String getDescription() {
-        return "System Test File for NEs-SysTest-Runner";
+        return "System Test File for NES-SysTest-Runner";
     }
 
     @NotNull
     @Override
     public String getDefaultExtension() {
-        return "test";
+        return "test,test_disabled,test.disabled";
     }
 
     @Nullable
