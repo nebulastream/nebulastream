@@ -12,21 +12,27 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
 
 namespace NES::QueryCompilation
 {
 
-QueryCompiler::QueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory)
-    : options(std::move(options))
+QueryCompiler::QueryCompiler(
+    const std::shared_ptr<QueryCompilerOptions>& options, const std::shared_ptr<Phases::PhaseFactory>& phaseFactory)
+    : options(options)
     , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
@@ -35,7 +41,7 @@ QueryCompiler::QueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std:
 {
 }
 
-std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(QueryCompilationRequestPtr request, QueryId queryId)
+std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(const QueryCompilationRequestPtr& request, QueryId queryId)
 {
     NES_INFO("Compile Query with Nautilus");
     /// For now we have to override the id here as it should not be set by the client
