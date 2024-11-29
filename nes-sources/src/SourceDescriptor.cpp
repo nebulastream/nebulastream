@@ -13,10 +13,12 @@
 */
 
 #include <ostream>
-#include <sstream>
-#include <API/Schema.hpp>
-#include <Sources/SourceDescriptor.hpp>
+
 #include <fmt/format.h>
+
+#include "API/Schema.hpp"
+#include "Sources/SourceDescriptor.hpp"
+
 namespace NES::Sources
 {
 

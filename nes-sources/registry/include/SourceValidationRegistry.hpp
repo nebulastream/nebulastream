@@ -16,8 +16,9 @@
 
 #include <string>
 #include <unordered_map>
-#include <Configurations/Descriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+
+#include "Configurations/Descriptor.hpp"
+#include "Util/PluginRegistry.hpp"
 
 namespace NES::Sources
 {

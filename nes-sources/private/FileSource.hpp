@@ -14,26 +14,27 @@
 
 #pragma once
 
-#include <atomic>
-#include <cstddef>
-#include <fstream>
-#include <memory>
+#include <cstdint>
 #include <optional>
-#include <stop_token>
 #include <string>
-#include <string_view>
 #include <unordered_map>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
+
+#include "boost/asio/awaitable.hpp"
+#include "boost/asio/io_context.hpp"
+#include "boost/asio/posix/stream_descriptor.hpp"
+
+#include "Sources/Source.hpp"
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES::Sources
 {
 
+namespace asio = boost::asio;
+
 class FileSource final : public Source
 {
 public:
-    static constexpr std::string_view NAME = "File";
+    static inline const std::string NAME = "File";
 
     explicit FileSource(const SourceDescriptor& sourceDescriptor);
     ~FileSource() override = default;
@@ -43,26 +44,26 @@ public:
     FileSource(FileSource&&) = delete;
     FileSource& operator=(FileSource&&) = delete;
 
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    asio::awaitable<InternalSourceResult> fillBuffer(ByteBuffer& buffer) override;
 
     /// Open file socket.
-    void open() override;
+    asio::awaitable<void> open(asio::io_context& ioc) override;
     /// Close file socket.
-    void close() override;
+    asio::awaitable<void> close(asio::io_context& ioc) override;
 
     /// validates and formats a string to string configuration
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string> config);
+    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    std::ifstream inputFile;
-    std::string filePath;
-    std::atomic<size_t> totalNumBytesRead;
+    const std::string filePath;
+    std::optional<int32_t> fileDescriptor;
+    std::optional<asio::posix::stream_descriptor> fileStream;
 };
 
-struct ConfigParametersCSV
+struct ConfigParametersFile
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {

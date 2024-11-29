@@ -15,9 +15,10 @@
 #pragma once
 
 #include <string>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
+
+#include "Sources/Source.hpp"
+#include "Sources/SourceDescriptor.hpp"
+#include "Util/PluginRegistry.hpp"
 
 namespace NES::Sources
 {

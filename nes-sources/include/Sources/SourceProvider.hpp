@@ -14,11 +14,12 @@
 #pragma once
 
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/SourceReturnType.hpp>
+
+#include "Identifiers/Identifiers.hpp"
+#include "Runtime/AbstractBufferProvider.hpp"
+#include "SourceDescriptor.hpp"
+#include "SourceRunner.hpp"
+#include "Sources/SourceReturnType.hpp"
 
 namespace NES::Sources
 {
@@ -36,8 +37,11 @@ public:
     static std::unique_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    static std::unique_ptr<SourceHandle>
-    lower(OriginId originId, const SourceDescriptor& sourceDescriptor, std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool);
+    static std::unique_ptr<SourceRunner> lower(
+        OriginId originId,
+        const SourceDescriptor& sourceDescriptor,
+        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
+        SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;
 };
