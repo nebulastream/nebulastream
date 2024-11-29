@@ -19,9 +19,9 @@ jobs:
   clang-tidy-full:
     runs-on: [ self-hosted, linux, Build ]
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
     steps:
       - uses: actions/checkout@v4
         with:
