@@ -15,13 +15,13 @@
 #include <memory>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
