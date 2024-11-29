@@ -13,8 +13,8 @@ on:
         description: "ref of the branch"
 
 jobs:
-  build-and-test-linux:
-    name: "Build and test ${{matrix.arch}} with ${{matrix.stdlib}}"
+  build-and-test-arm:
+    name: "Build and test arm64 with ${{matrix.stdlib}}"
     container:
       image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
       volumes:
@@ -25,11 +25,10 @@ jobs:
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    runs-on: [ self-hosted, linux, Build, arm64 ]
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x64, arm64 ]
         stdlib: [ 'libstdcxx', 'libcxx' ]
     steps:
       - uses: actions/checkout@v4
@@ -41,10 +40,28 @@ jobs:
         run: cmake --build build -j -- -k 0
       - name: Run Tests
         # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
-        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !github.event.act }}
+        run: ctest --test-dir build -j --output-on-failure --timeout 600
+
+  build-and-test-x64:
+    name: "Build and test x64 with ${{matrix.stdlib}}"
+    container:
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+    timeout-minutes: 40
+    runs-on: arc-large
+    strategy:
+      fail-fast: false
+      matrix:
+        stdlib: [ 'libstdcxx', 'libcxx' ]
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}.xml
-          path: /junit.xml
+          ref: ${{ inputs.ref }}
+      - name: show env
+        run: printenv
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        # timeout of 100 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        run: ctest --test-dir build -j --output-on-failure --timeout 100

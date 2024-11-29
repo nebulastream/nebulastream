@@ -34,15 +34,9 @@ jobs:
 
   build-code-coverage-ref:
     container:
-      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
+      image: nebulastream/nes-ci:${{ inputs.base_dev_image_tag }}
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: arc-large
     strategy:
       fail-fast: false
       matrix:
@@ -57,9 +51,6 @@ jobs:
         with:
           path: /tmp/cache/ref-coverage.lcov
           key: ${{ matrix.platform }}-ref-cov-${{ inputs.base_sha }}
-      - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        uses:
-          AutoModality/action-clean@v1
       - name: Checkout Base Branch
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v4
@@ -82,14 +73,8 @@ jobs:
   build-code-coverage-pr-branch:
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: arc-large
     strategy:
       fail-fast: false
       matrix:
@@ -165,7 +150,7 @@ jobs:
         with:
           name: ${{ matrix.platform }}-pr-cov-${{ inputs.head_sha }}.info
           path: /tmp/cache/pr-coverage.lcov
-  
+
 
   # For now, we build the code coverage for x64 only
   build-code-coverage:
@@ -173,10 +158,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: arc-small
     strategy:
       fail-fast: false
       matrix:
@@ -207,10 +190,8 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: arc-small
     strategy:
       fail-fast: false
       matrix:

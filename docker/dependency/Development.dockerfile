@@ -18,7 +18,7 @@ RUN apt-get update && \
         apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils -y
 
 # The vcpkg port of antlr requires the jar to be available somewhere
-ADD --checksum=sha256:bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487 \
+ADD --checksum=sha256:bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487 --chmod=666 \
   https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar /opt/antlr-${ANTLR4_VERSION}-complete.jar
 
 RUN git clone https://github.com/aras-p/ClangBuildAnalyzer.git \

@@ -17,7 +17,7 @@ on:
 
 jobs:
   compile-time-regression:
-    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
+    runs-on: arc-large
     container:
       image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
     steps:
