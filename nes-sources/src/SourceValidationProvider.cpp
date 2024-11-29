@@ -16,9 +16,10 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <Configurations/Descriptor.hpp>
-#include <ErrorHandling.hpp>
-#include <SourceValidationRegistry.hpp>
+
+#include "Configurations/Descriptor.hpp"
+#include "ErrorHandling.hpp"
+#include "SourceValidationRegistry.hpp"
 
 namespace NES::Sources::SourceValidationProvider
 {

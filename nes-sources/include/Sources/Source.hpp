@@ -14,20 +14,39 @@
 
 #pragma once
 
-#include <cstddef>
-#include <string>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <fmt/ostream.h>
+#include "boost/asio/awaitable.hpp"
+#include "boost/asio/io_context.hpp"
+#include "boost/system/system_error.hpp"
+
+#include "Runtime/TupleBuffer.hpp"
 
 namespace NES::Sources
 {
 
-/// Source is the interface for all sources that read data into TupleBuffers.
-/// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
-/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
+namespace asio = boost::asio;
+
+using ByteBuffer = NES::Memory::TupleBuffer;
+
+/// Source is the interface for all sources that read data into buffers.
 class Source
 {
 public:
+    struct EoS
+    {
+    };
+
+    struct Continue
+    {
+    };
+
+    struct Error
+    {
+        boost::system::system_error error;
+    };
+
+    using InternalSourceResult = std::variant<Continue, EoS, Error>;
+
     Source() = default;
     virtual ~Source() = default;
 
@@ -36,14 +55,12 @@ public:
     Source(Source&&) = delete;
     Source& operator=(Source&&) = delete;
 
-    /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
-    /// @return the number of bytes read
-    virtual size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) = 0;
+    virtual asio::awaitable<InternalSourceResult> fillBuffer(ByteBuffer& buffer) = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.
-    virtual void open() = 0;
+    virtual asio::awaitable<void> open(asio::io_context& ioc) = 0;
     /// If applicable, closes a connection, e.g., a socket connection.
-    virtual void close() = 0;
+    virtual asio::awaitable<void> close(asio::io_context& ioc) = 0;
 
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 

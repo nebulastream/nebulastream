@@ -15,7 +15,8 @@
 
 #include <string>
 #include <unordered_map>
-#include <Configurations/Descriptor.hpp>
+
+#include "Configurations/Descriptor.hpp"
 
 namespace NES::Sources::SourceValidationProvider
 {

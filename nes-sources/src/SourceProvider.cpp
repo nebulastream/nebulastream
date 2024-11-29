@@ -13,12 +13,13 @@
 */
 
 #include <memory>
-#include <InputFormatters/InputFormatterProvider.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/SourceProvider.hpp>
-#include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
+
+#include "ErrorHandling.hpp"
+#include "InputFormatters/InputFormatterProvider.hpp"
+#include "SourceRegistry.hpp"
+#include "SourceRunner.hpp"
+#include "Sources/SourceDescriptor.hpp"
+#include "Sources/SourceProvider.hpp"
 
 namespace NES::Sources
 {
@@ -28,7 +29,7 @@ std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
     return std::make_unique<SourceProvider>();
 }
 
-std::unique_ptr<SourceHandle> SourceProvider::lower(
+std::unique_ptr<SourceRunner> SourceProvider::lower(
     OriginId originId,
     const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
@@ -45,7 +46,7 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
     auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
-        return std::make_unique<SourceHandle>(
+        return std::make_unique<SourceRunner>(
             std::move(originId),
             std::move(bufferPool),
             std::move(emitFunction),

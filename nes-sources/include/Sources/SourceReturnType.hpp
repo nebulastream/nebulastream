@@ -15,13 +15,16 @@
 #pragma once
 
 #include <variant>
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <ErrorHandling.hpp>
+
+#include "ErrorHandling.hpp"
+#include "Identifiers/Identifiers.hpp"
+#include "Runtime/TupleBuffer.hpp"
 
 namespace NES::Sources::SourceReturnType
 {
-/// Todo #237: Improve error handling in sources
+
+using ByteBuffer = NES::Memory::TupleBuffer;
+
 struct Error
 {
     Exception ex;
@@ -29,12 +32,13 @@ struct Error
 
 struct Data
 {
-    NES::Memory::TupleBuffer buffer;
+    ByteBuffer buffer;
 };
 
 struct EoS
 {
 };
+
 struct Stopped
 {
 };
