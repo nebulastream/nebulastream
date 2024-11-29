@@ -13,7 +13,9 @@
 */
 #pragma once
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -21,13 +23,15 @@ namespace NES::QueryCompilation
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<class LowerPhysicalToNautilusOperators>;
 using NautilusCompilationPhasePtr = std::shared_ptr<class NautilusCompilationPhase>;
 
-class NautilusQueryCompiler : public QueryCompiler
+class QueryCompiler
+
 {
 public:
-    NautilusQueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory);
-    std::shared_ptr<QueryCompilationResult> compileQuery(QueryCompilationRequestPtr request, QueryId queryId) override;
+    QueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory);
+    std::shared_ptr<QueryCompilationResult> compileQuery(QueryCompilationRequestPtr request, QueryId queryId);
 
 protected:
+    std::shared_ptr<QueryCompilerOptions> options;
     LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;
     NautilusCompilationPhasePtr compileNautilusPlanPhase;

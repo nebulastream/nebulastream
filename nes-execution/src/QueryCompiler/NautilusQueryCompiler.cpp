@@ -13,28 +13,20 @@
 */
 
 #include <utility>
-#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
-#include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
-#include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {
 
-NautilusQueryCompiler::NautilusQueryCompiler(
-    std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory)
-    : QueryCompiler(options)
+QueryCompiler::QueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory)
+    : options(std::move(options))
     , lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options))
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
@@ -43,13 +35,13 @@ NautilusQueryCompiler::NautilusQueryCompiler(
 {
 }
 
-std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(QueryCompilationRequestPtr request, QueryId queryId)
+std::shared_ptr<QueryCompilationResult> QueryCompiler::compileQuery(QueryCompilationRequestPtr request, QueryId queryId)
 {
     NES_INFO("Compile Query with Nautilus");
     /// For now we have to override the id here as it should not be set by the client
     request->getDecomposedQueryPlan()->setQueryId(queryId);
 
-    Timer timer("NautilusQueryCompiler");
+    Timer timer("QueryCompiler");
     /// Uncomment these dumb informations for debugging purposes. They are be quite intrusive.
     auto query = fmt::format("{}", queryId);
     /// create new context for handling debug output
