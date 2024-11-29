@@ -54,7 +54,7 @@ endif (NOT CODE_COVERAGE)
 if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA
             NAME systest_large
-            COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER)
+            COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler --data DATA{../testdata/,RECURSE:,REGEX:.*} -- --worker.queryCompiler.nautilusBackend=COMPILER --worker.numberOfWorkerThreads=10 --worker.numberOfBuffersInGlobalBufferManager=100000)
 endif ()
 ExternalData_Add_Target(TEST_DATA)
 
