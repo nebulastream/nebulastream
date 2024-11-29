@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
@@ -27,8 +29,8 @@ class QueryCompiler
 
 {
 public:
-    QueryCompiler(std::shared_ptr<QueryCompilerOptions> options, std::shared_ptr<Phases::PhaseFactory> phaseFactory);
-    std::shared_ptr<QueryCompilationResult> compileQuery(QueryCompilationRequestPtr request, QueryId queryId);
+    QueryCompiler(const std::shared_ptr<QueryCompilerOptions>& options, const std::shared_ptr<Phases::PhaseFactory>& phaseFactory);
+    std::shared_ptr<QueryCompilationResult> compileQuery(const QueryCompilationRequestPtr& request, QueryId queryId);
 
 protected:
     std::shared_ptr<QueryCompilerOptions> options;
