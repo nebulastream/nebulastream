@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 )
 public class PluginSettings implements PersistentStateComponent<PluginSettings> {
     private String pathSetting = "";
+    private boolean dockerCommandCheckBox;
+    private String dockerCommand = "";
+    private String dockerTestFilePath = "";
 
     public static PluginSettings getInstance() {
         return ServiceManager.getService(PluginSettings.class);
@@ -27,6 +30,9 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     @Override
     public void loadState(@NotNull PluginSettings state) {
         this.pathSetting = state.pathSetting;
+        this.dockerCommand = state.dockerCommand;
+        this.dockerCommandCheckBox = state.dockerCommandCheckBox;
+        this.dockerTestFilePath = state.dockerTestFilePath;
     }
 
     public String getPathSetting() {
@@ -36,4 +42,29 @@ public class PluginSettings implements PersistentStateComponent<PluginSettings> 
     public void setPathSetting(String pathSetting) {
         this.pathSetting = pathSetting;
     }
+
+    public String getDockerCommand() {
+        return dockerCommand;
+    }
+
+    public void setDockerCommand(String dockerCommand) {
+        this.dockerCommand = dockerCommand;
+    }
+
+    public boolean getDockerCommandCheckBox() {
+        return dockerCommandCheckBox;
+    }
+
+    public void setDockerCommandCheckBox(boolean dockerCommandCheckBox) {
+        this.dockerCommandCheckBox = dockerCommandCheckBox;
+    }
+
+    public String getDockerTestFilePath() {
+        return dockerTestFilePath;
+    }
+
+    public void setDockerTestFilePath(String dockerTestFilePath) {
+        this.dockerTestFilePath = dockerTestFilePath;
+    }
+
 }

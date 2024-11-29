@@ -27,6 +27,6 @@
         <applicationConfigurable id="SysTestRunnerSettings" instance="nebula.stream.nessystestrunner.PluginSettingsConfigurable" displayName="NES-Systest-Runner" groupId="tools"/>
         <applicationService serviceImplementation="nebula.stream.nessystestrunner.PluginSettings"/>
         <codeInsight.lineMarkerProvider language="SysTestLanguage" implementationClass="nebula.stream.nessystestrunner.SysTestLineMarkerProvider"/>
-        <fileType name="Test File" language="SysTestLanguage" implementationClass="nebula.stream.nessystestrunner.SysTestFileType" extensions="test"/>
+        <fileType name="System Test File" language="SysTestLanguage" implementationClass="nebula.stream.nessystestrunner.SysTestFileType" extensions="test;test_disabled;test.disabled"/>
     </extensions>
 </idea-plugin>
