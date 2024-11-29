@@ -15,6 +15,8 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
@@ -107,6 +109,12 @@ LogicalBinaryOperatorPtr
 LogicalOperatorFactory::createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDescriptorPtr& batchJoinDefinition,
                                                 OperatorId id) {
     return std::make_shared<Experimental::LogicalBatchJoinOperator>(batchJoinDefinition, id);
+}
+
+LogicalBinaryOperatorPtr
+LogicalOperatorFactory::createIntervalJoinOperator(const Join::LogicalIntervalJoinDescriptorPtr& intervalJoinDefinition,
+                                                   OperatorId id) {
+    return std::make_shared<LogicalIntervalJoinOperator>(intervalJoinDefinition, id);
 }
 
 LogicalUnaryOperatorPtr

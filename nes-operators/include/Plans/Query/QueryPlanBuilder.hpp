@@ -15,10 +15,11 @@
 #ifndef NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 #define NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLANBUILDER_HPP_
 
+#include <API/TimeUnit.hpp>
+#include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <string>
-
 namespace NES {
 /**
  * This class adds the logical operators to the queryPlan and handles further conditions and updates on the updated queryPlan and its nodes, e.g.,
@@ -151,6 +152,34 @@ class QueryPlanBuilder {
                                      QueryPlanPtr rightQueryPlan,
                                      ExpressionNodePtr onProbeKey,
                                      ExpressionNodePtr onBuildKey);
+
+    /**
+     * @brief This method adds the interval join operator to a query
+     * @note In contrast to joinWith() and batchJoinWith(), intervalJoin() does require interval bounds to be specified.
+     * @note intervalJoin() does not work with windows.
+     * @param leftQueryPlan : the left query plan to combine by the join
+     * @param rightQueryPlan : the right query plan to combine by the join
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @param timeCharacteristic : to identify what should be used for the tuple timestamp
+     * @param lowerBound : the value of the lower bound of the interval
+     * @param lowerTimeUnit : TimeUnit describing the time unit of the lower bound
+     * @param lowerBoundInclusive : true if the lower bound is inclusive; false if it is exclusive
+     * @param upperBound :the value of the upper bound of the interval
+     * @param upperTimeUnit : TimeUnit describing the time unit of the upper bound
+     * @param upperBoundInclusive : true if the upper bound is inclusive; false if it is exclusive
+     * @return the updated queryPlan
+     */
+
+    static QueryPlanPtr addIntervalJoin(QueryPlanPtr leftQueryPlan,
+                                        QueryPlanPtr rightQueryPlan,
+                                        ExpressionNodePtr joinExpression,
+                                        Windowing::TimeCharacteristicPtr timeCharacteristic,
+                                        int64_t lowerBound,
+                                        Windowing::TimeUnit lowerTimeUnit,
+                                        bool lowerBoundInclusive,
+                                        int64_t upperBound,
+                                        Windowing::TimeUnit upperTimeUnit,
+                                        bool upperBoundInclusive);
     /**
      * @brief Adds the sink operator to the queryPlan.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.

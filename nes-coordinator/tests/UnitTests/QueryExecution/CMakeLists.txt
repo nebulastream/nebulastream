@@ -23,6 +23,7 @@ add_nes_unit_test(map-java-udf-query-execution-test "MapJavaUDFExecutionTest.cpp
 add_nes_unit_test(flatmap-java-udf-query-execution-test "FlatMapJavaUDFExecutionTest.cpp")
 add_nes_unit_test(map-python-udf-query-execution-test "MapPythonUDFExecutionTest.cpp")
 add_nes_unit_test(stream-join-execution-test "StreamJoinExecutionTest.cpp")
+add_nes_unit_test(stream-interval-join-execution-test "StreamIntervalJoinExecutionTest.cpp")
 add_nes_unit_test(stream-join-shared-execution-test "StreamJoinSharedExecutionTest.cpp")
 add_nes_unit_test(count-min-build-execution-test "CountMinBuildExecutionTest.cpp")
 add_nes_unit_test(hyper-log-log-build-execution-test "HyperLogLogBuildExecutionTest.cpp")

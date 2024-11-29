@@ -60,6 +60,7 @@ class KeyedSlice {
     inline std::unique_ptr<Nautilus::Interface::ChainedHashMap>& getState() { return state; }
 
     ~KeyedSlice();
+    KeyedSlice();
 
   private:
     uint64_t start;

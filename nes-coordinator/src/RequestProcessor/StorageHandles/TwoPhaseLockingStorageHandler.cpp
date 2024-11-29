@@ -189,4 +189,5 @@ Statistic::StatisticProbeHandlerPtr TwoPhaseLockingStorageHandler::getStatisticP
     }
     return statisticProbeHandler;
 }
+
 }// namespace NES::RequestProcessor

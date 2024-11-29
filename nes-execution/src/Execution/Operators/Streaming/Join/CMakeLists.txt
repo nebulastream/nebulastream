@@ -12,6 +12,7 @@
 
 add_subdirectory(NestedLoopJoin)
 add_subdirectory(HashJoin)
+add_subdirectory(IntervalJoin)
 
 add_source_files(nes-execution
         StreamJoinOperatorHandler.cpp

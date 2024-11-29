@@ -19,6 +19,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
@@ -186,6 +187,12 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
+     * @brief Lowers a interval join operator
+     * @param operatorNode
+     */
+    void lowerIntervalJoinOperator(const LogicalOperatorPtr& operatorNode);
+
+    /**
      * @brief Lowers a statistic build operator
      * @param logicalStatisticWindowOperator
      */
@@ -198,7 +205,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
      * @param children the upstream operators
      */
     OperatorPtr
-    getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
+    getJoinBuildInputOperator(const LogicalOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
   private:
     // temporary solution to preserve state when recompiling shared query that is supposed to keep joinHandler of one of the queries before.
@@ -219,14 +226,34 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
 
     /**
-     * @brief Returns the left and right timestamp
+     * @brief Returns the left and right timestamp for the interval join; calls the getEventTimeTimestampLeftAndRight() function
+     * @param joinOperator
+     * @return {leftTimestampField, rightTimestampField}
+     */
+    [[nodiscard]] std::tuple<TimestampField, TimestampField>
+    getTimestampLeftAndRight(const std::shared_ptr<LogicalIntervalJoinOperator>& joinOperator) const;
+
+    /**
+     * @brief Returns the left and right timestamp for a windowed join; calls the getEventTimeTimestampLeftAndRight() function
      * @param joinOperator
      * @param windowType
-     * @return {
+     * @return {leftTimestampField, rightTimestampField}
      */
     [[nodiscard]] std::tuple<TimestampField, TimestampField>
     getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                              const Windowing::TimeBasedWindowTypePtr& windowType) const;
+
+    /**
+     * @brief gets the left and right timestamp field from the input schemas and time characteristic
+     * @param leftInputSchema
+     * @param rightInputSchema
+     * @param timeCharacteristic
+     * @return {leftTimestampField, rightTimestampField}
+     */
+    [[nodiscard]] std::tuple<TimestampField, TimestampField>
+    getEventTimeTimestampLeftAndRight(SchemaPtr leftInputSchema,
+                                      SchemaPtr rightInputSchema,
+                                      Windowing::TimeCharacteristicPtr timeCharacteristic) const;
 
     /**
      * @brief Lowers the stream hash join

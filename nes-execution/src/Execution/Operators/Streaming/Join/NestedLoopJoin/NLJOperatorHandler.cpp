@@ -31,8 +31,11 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
         dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
 
+        // Gets new empty pooled tupleBuffer from BufferPoolManager
         auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+        // Returns the buffer memory of the tuple buffer as an EmittedNLJWindowTriggerTask (containing information for a join window trigger)
         auto bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTriggerTask>();
+        // set information in buffer
         bufferMemory->leftSliceIdentifier = sliceLeft.getSliceIdentifier();
         bufferMemory->rightSliceIdentifier = sliceRight.getSliceIdentifier();
         bufferMemory->windowInfo = windowInfo;
@@ -45,6 +48,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         tupleBuffer.setSequenceData({getNextSequenceNumber(), /*chunkNumber*/ 1, true});
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
+        // The tupleBuffer is emitted to the Query manager, where a new task is created for it
         pipelineCtx->dispatchBuffer(tupleBuffer);
         NES_INFO("Emitted leftSliceId {} (end {}) rightSliceId {} (end {}) with watermarkTs {} sequenceNumber {} originId {} for "
                  "no. left tuples "

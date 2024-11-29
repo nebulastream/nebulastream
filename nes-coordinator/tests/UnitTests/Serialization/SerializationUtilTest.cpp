@@ -42,6 +42,8 @@
 #include <Expressions/WhenExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
@@ -646,6 +648,19 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(join->equal(joinOperator));
+    }
+    //testing the interval join
+    {
+        NES_DEBUG("testing the interval join")
+        Join::LogicalIntervalJoinDescriptorPtr joinDef =
+            Join::LogicalIntervalJoinDescriptor::create((Attribute("key") == Attribute("key")),
+                                                        EventTime(Attribute("timeStamp")),
+                                                        4,
+                                                        5);
+        auto join = LogicalOperatorFactory::createIntervalJoinOperator(joinDef)->as<LogicalIntervalJoinOperator>();
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(join);
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(join->equal(deserializedOperator));
     }
     // cross join test
     {

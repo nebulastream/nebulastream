@@ -94,7 +94,7 @@ void PagedVectorVarSized::appendVarSizedDataPage() {
 uint64_t PagedVectorVarSized::storeText(const char* text, uint32_t length) {
     NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
     // create a new entry for the varSizedDataEntryMap
-    VarSizedDataEntryMapValue textMapValue(currVarSizedDataEntry, length, varSizedDataPages.size() - 1);
+    VarSizedDataEntryMapValue textMapValue{currVarSizedDataEntry, length, varSizedDataPages.size() - 1};
 
     // store the text in the varSizedDataPages
     while (length > 0) {

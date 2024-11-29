@@ -46,6 +46,10 @@ CrossJoinOperatorBuilder::CrossJoin Query::crossJoinWith(const Query& subQueryRh
     return CrossJoinOperatorBuilder::CrossJoin(subQueryRhs, *this);
 }
 
+IntervalJoinOperatorBuilder::IntervalJoin Query::intervalJoinWith(const Query& subQueryRhs) {
+    return IntervalJoinOperatorBuilder::IntervalJoin(subQueryRhs, *this);
+}
+
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
 
 CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
@@ -103,6 +107,56 @@ Query& CrossJoin::window(const Windowing::WindowTypePtr& windowType) const {
     return subQueryLhs.joinWith(subQueryRhs, joinExpressions, windowType);
 }
 }// namespace CrossJoinOperatorBuilder
+
+namespace IntervalJoinOperatorBuilder {
+
+JoinWhere IntervalJoin::where(ExpressionNodePtr joinExpression) const {
+    return JoinWhere(subQueryRhs, originalQuery, joinExpression);
+}
+
+IntervalJoin::IntervalJoin(const Query& subQueryRhs, Query& originalQuery)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpression)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinExpression(joinExpression) {}
+
+JoinLowerBound JoinWhere::lowerBound(Windowing::TimeCharacteristicPtr timeCharacteristic,
+                                     int64_t lowerBound,
+                                     NES::Windowing::TimeUnit lowerTimeUnit,
+                                     bool lowerBoundInclusive) const {
+    return JoinLowerBound(subQueryRhs,
+                          originalQuery,
+                          joinExpression,
+                          timeCharacteristic,
+                          lowerBound,
+                          lowerTimeUnit,
+                          lowerBoundInclusive);
+}
+
+JoinLowerBound::JoinLowerBound(const NES::Query& subQueryRhs,
+                               NES::Query& originalQuery,
+                               NES::ExpressionNodePtr joinExpression,
+                               Windowing::TimeCharacteristicPtr timeCharacteristic,
+                               int64_t lowerBound,
+                               NES::Windowing::TimeUnit lowerTimeUnit,
+                               bool lowerBoundInclusive)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinExpression(joinExpression),
+      timeCharacteristic(timeCharacteristic), lowerBound(lowerBound), lowerTimeUnit(lowerTimeUnit),
+      lowerBoundInclusive(lowerBoundInclusive) {}
+
+Query& JoinLowerBound::upperBound(int64_t upperBound, NES::Windowing::TimeUnit upperTimeUnit, bool upperBoundInclusive) const {
+    return originalQuery.intervalJoinWith(subQueryRhs,
+                                          joinExpression,
+                                          timeCharacteristic,
+                                          lowerBound,
+                                          lowerTimeUnit,
+                                          lowerBoundInclusive,
+                                          upperBound,
+                                          upperTimeUnit,
+                                          upperBoundInclusive);
+}
+
+}// namespace IntervalJoinOperatorBuilder
 
 namespace CEPOperatorBuilder {
 
@@ -287,6 +341,30 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpr
     } else {
         NES_THROW_RUNTIME_ERROR("Query:joinExpression has to be a EqualsExpressionNode");
     }
+    return *this;
+}
+
+Query& Query::intervalJoinWith(const NES::Query& subQueryRhs,
+                               NES::ExpressionNodePtr joinExpression,
+                               Windowing::TimeCharacteristicPtr timeCharacteristic,
+                               int64_t lowerBound,
+                               Windowing::TimeUnit lowerTimeUnit,
+                               bool lowerBoundInclusive,
+                               int64_t upperBound,
+                               Windowing::TimeUnit upperTimeUnit,
+                               bool upperBoundInclusive) {
+    NES_DEBUG("Query: add Interval Join Operator to Query");
+
+    this->queryPlan = QueryPlanBuilder::addIntervalJoin(this->queryPlan,
+                                                        subQueryRhs.getQueryPlan(),
+                                                        joinExpression,
+                                                        timeCharacteristic,
+                                                        lowerBound,
+                                                        lowerTimeUnit,
+                                                        lowerBoundInclusive,
+                                                        upperBound,
+                                                        upperTimeUnit,
+                                                        upperBoundInclusive);
     return *this;
 }
 

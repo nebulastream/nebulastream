@@ -544,6 +544,18 @@ message SerializableOperator{
   }
 
   /**
+    Interval Join Details contains properties for the interval join operator
+  */
+  message IntervalJoinDetails {
+    SerializableExpression joinExpression = 1;
+    SerializableExpression leftSchema = 2;
+    SerializableExpression rightSchema = 3;
+    TimeCharacteristic timeCharacteristic = 4;
+    int64 lowerBound = 5;
+    int64 upperBound = 6;
+  }
+
+  /**
     Information to serialize a Map operator with a Java UDF.
    */
   message MapJavaUdfDetails {

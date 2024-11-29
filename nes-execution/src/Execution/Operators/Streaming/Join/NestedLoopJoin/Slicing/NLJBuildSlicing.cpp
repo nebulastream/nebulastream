@@ -39,6 +39,7 @@ void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinS
 
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     // Get the local state
+    NES_DEBUG("Printing record: {}", record.toString());
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
@@ -49,13 +50,15 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal);
     }
 
-    // Write record to the pagedVector
+    //Gets the pagedVector reference for either the left slice or the right slice
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
                                                        localJoinState->sliceReference,
                                                        ctx.getWorkerThreadId(),
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
+
     Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    // Write record to the pagedVector
     pagedVectorVarSizedRef.writeRecord(record);
 }
 

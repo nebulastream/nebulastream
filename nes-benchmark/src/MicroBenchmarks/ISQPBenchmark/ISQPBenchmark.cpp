@@ -427,8 +427,8 @@ int main(int argc, const char* argv[]) {
         }
 
         //using thread pool to parallelize the compilation of string queries and string them in an array of query objects
-        const uint32_t numOfQueries = queries.size();
-        QueryPlanPtr queryObjects[numOfQueries];
+        uint32_t numOfQueries = queries.size();
+        std::vector<QueryPlanPtr> queryObjects(numOfQueries);
 
         auto cppCompiler = Compiler::CPPCompiler::create();
         auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();

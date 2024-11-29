@@ -20,6 +20,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
@@ -32,6 +33,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
+#include <limits>
 #include <utility>
 
 namespace NES {
@@ -265,6 +267,135 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(QueryPlanPtr leftQueryPlan,
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
+    leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
+    return leftQueryPlan;
+}
+
+QueryPlanPtr QueryPlanBuilder::addIntervalJoin(QueryPlanPtr leftQueryPlan,
+                                               QueryPlanPtr rightQueryPlan,
+                                               ExpressionNodePtr joinExpression,
+                                               Windowing::TimeCharacteristicPtr timeCharacteristic,
+                                               int64_t lowerBound,
+                                               Windowing::TimeUnit lowerTimeUnit,
+                                               bool lowerBoundInclusive,
+                                               int64_t upperBound,
+                                               Windowing::TimeUnit upperTimeUnit,
+                                               bool upperBoundInclusive) {
+    NES_DEBUG("Query: intervalJoinWith the subQuery to current query");
+
+    NES_ASSERT(timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime,
+               "IngestionTime is currently not supported for the intervalJoin");
+
+    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
+
+    NES_DEBUG("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
+    std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
+    auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
+    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
+        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
+            auto visitingOp = (*itr)->as<BinaryExpressionNode>();
+            if (visitedExpressions.contains(visitingOp)) {
+                // skip rest of the steps as the node found in already visited node list
+                continue;
+            } else {
+                visitedExpressions.insert(visitingOp);
+                auto onLeftKey = (*itr)->as<BinaryExpressionNode>()->getLeft();
+                auto onRightKey = (*itr)->as<BinaryExpressionNode>()->getRight();
+                NES_DEBUG("QueryPlanBuilder: Check if Expressions are FieldExpressions.");
+                auto leftKeyFieldAccess = checkExpression(onLeftKey, "leftSide");
+                auto rightQueryPlanKeyFieldAccess = checkExpression(onRightKey, "rightSide");
+            }
+        }
+    }
+
+    // check if query contain watermark assigner, and add if missing (as default behaviour)
+    leftQueryPlan = assignWatermark(leftQueryPlan,
+                                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                                        FieldAccessExpressionNode::create(timeCharacteristic->getField()->getName()),
+                                        Windowing::TimeMeasure(0),
+                                        timeCharacteristic->getTimeUnit()));
+
+    rightQueryPlan = assignWatermark(rightQueryPlan,
+                                     Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                                         FieldAccessExpressionNode::create(timeCharacteristic->getField()->getName()),
+                                         Windowing::TimeMeasure(0),
+                                         timeCharacteristic->getTimeUnit()));
+
+    /** converting lowerBound, lowerTimeUnit and lowerBoundType to the final lower bound in milliseconds analog for upper bound
+    a negative value for a bound indicates the bound being in the past*/
+
+    // checking whether the bounds exceed the min or max value of int64
+    auto lowerBoundExceedMax =
+        lowerBound > std::numeric_limits<int64_t>::max() / (int64_t) lowerTimeUnit.getMillisecondsConversionMultiplier();
+    auto lowerBoundExceedMin =
+        lowerBound < std::numeric_limits<int64_t>::min() / (int64_t) lowerTimeUnit.getMillisecondsConversionMultiplier();
+    auto upperBoundExceedMax =
+        upperBound > std::numeric_limits<int64_t>::max() / (int64_t) upperTimeUnit.getMillisecondsConversionMultiplier();
+    auto upperBoundExceedMin =
+        upperBound < std::numeric_limits<int64_t>::min() / (int64_t) upperTimeUnit.getMillisecondsConversionMultiplier();
+
+    // temporary assignment as a placeholder
+    auto lowerBoundInMS = lowerBound;
+    auto upperBoundInMS = upperBound;
+
+    // converting the lower bound
+    if (!lowerBoundExceedMax && !lowerBoundExceedMin) {
+        // converting the lower bound value and timeUnit to milliseconds
+        lowerBoundInMS = lowerBound * (int64_t) lowerTimeUnit.getMillisecondsConversionMultiplier();
+
+        // adding a milliseconds to the lower bound if the bound is exclusive
+        if (!lowerBoundInclusive) {
+            lowerBoundInMS = lowerBoundInMS + 1;
+        }
+    } else if (lowerBoundExceedMax) {
+        NES_INFO("lowerBound will exceed the max value of int after conversion to milliseconds from the given timeUnit so "
+                 "it's set to int.max")
+        lowerBoundInMS = std::numeric_limits<int64_t>::max();
+    } else if (lowerBoundExceedMin) {
+        NES_INFO("lowerBound will exceed the min value of int after conversion to milliseconds from the given timeUnit so "
+                 "it's set to int.min")
+        lowerBoundInMS = std::numeric_limits<int64_t>::min();
+    } else {
+        NES_DEBUG("QueryPlanBuilder: addIntervalJoin: Error in bound conversion")
+    }
+
+    // converting the upper bound
+    if (!upperBoundExceedMax && !upperBoundExceedMin) {
+        //converting the upper bound value and timeUnit to milliseconds
+        upperBoundInMS = upperBound * (int64_t) upperTimeUnit.getMillisecondsConversionMultiplier();
+
+        // subtracting a milliseconds to the upper bound if the bound is exclusive
+        if (!upperBoundInclusive) {
+            upperBoundInMS = upperBoundInMS - 1;
+        }
+    } else if (upperBoundExceedMax) {
+        NES_INFO("upperBound will exceed the max value of int after conversion to milliseconds from the given timeUnit so "
+                 "it's set to int.max")
+        upperBoundInMS = std::numeric_limits<int64_t>::max();
+    } else if (upperBoundExceedMin) {
+        NES_INFO("upperBound will exceed the min value of int after conversion to milliseconds from the given timeUnit so "
+                 "it's set to int.min")
+        upperBoundInMS = std::numeric_limits<int64_t>::min();
+    } else {
+        NES_DEBUG("QueryPlanBuilder: addIntervalJoin: Error in bound conversion")
+    }
+
+    // check if the lower and upper bound are valid
+    if (lowerBoundInMS > upperBoundInMS) {
+        if (NES::Logger::getInstance()->getCurrentLogLevel() == NES::LogLevel::LOG_DEBUG) {
+            NES_DEBUG("Query: IntervalJoin: the specified interval bounds are invalid");
+        } else {
+            NES_ERROR("Query: IntervalJoin: the specified interval bounds are invalid");
+            NES_THROW_RUNTIME_ERROR("the interval bounds specified for the interval join are invalid");
+        }
+    }
+
+    auto joinDefinition =
+        Join::LogicalIntervalJoinDescriptor::create(joinExpression, timeCharacteristic, lowerBoundInMS, upperBoundInMS);
+
+    NES_DEBUG("QueryPlanBuilder: add interval join operator to query plan");
+
+    auto op = LogicalOperatorFactory::createIntervalJoinOperator(joinDefinition);
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }

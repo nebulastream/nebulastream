@@ -33,6 +33,7 @@
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -49,6 +50,7 @@
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <limits>
 
 namespace NES {
 
@@ -72,6 +74,121 @@ class QueryAPITest : public Testing::BaseUnitTest {
         logicalSource = LogicalSource::create("test2", Schema::create());
     }
 };
+
+/**
+ * testing the interval join query for correct source and sink operator size
+ * also testing the calculating of the interval bounds and the equal() and isIdentical() function
+ */
+TEST_F(QueryAPITest, testIntervalJoin) {
+    NES_INFO("Started interval join test.");
+
+    // set up
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto printSinkDescriptor = PrintSinkDescriptor::create();
+    auto subQuery = Query::from("default_logical").filter(lessExpression);
+
+    // testing whether the lower and upper bound get calculated correctly
+    struct TestValues {
+        int64_t timeValue;
+        TimeUnit timeUnit;
+        bool boundInclusive;
+        int64_t expectedLowerBound;
+        int64_t expectedUpperBound;
+    };
+    std::vector<TestValues> queryOptions = {{1, Seconds(), true, 1000, 1000},
+                                            {1, Seconds(), false, 1001, 999},
+                                            {0, Seconds(), true, 0, 0},
+                                            {0, Seconds(), false, 1, -1},
+                                            {std::numeric_limits<int64_t>::max(),
+                                             Days(),
+                                             true,
+                                             std::numeric_limits<int64_t>::max(),
+                                             std::numeric_limits<int64_t>::max()},
+                                            {std::numeric_limits<int64_t>::min(),
+                                             Days(),
+                                             true,
+                                             std::numeric_limits<int64_t>::min(),
+                                             std::numeric_limits<int64_t>::min()},
+                                            {std::numeric_limits<int64_t>::max(),
+                                             Days(),
+                                             false,
+                                             std::numeric_limits<int64_t>::max(),
+                                             std::numeric_limits<int64_t>::max()},
+                                            {std::numeric_limits<int64_t>::min(),
+                                             Days(),
+                                             false,
+                                             std::numeric_limits<int64_t>::min(),
+                                             std::numeric_limits<int64_t>::min()},
+                                            {std::numeric_limits<int64_t>::max(),
+                                             Milliseconds(),
+                                             false,
+                                             std::numeric_limits<int64_t>::max() + 1,
+                                             std::numeric_limits<int64_t>::max() - 1},
+                                            {std::numeric_limits<int64_t>::min(),
+                                             Milliseconds(),
+                                             false,
+                                             std::numeric_limits<int64_t>::min() + 1,
+                                             std::numeric_limits<int64_t>::min() - 1}};
+
+    for (const auto& queryOption : queryOptions) {
+        // defining the query
+        auto query =
+            Query::from("default_logical")
+                .intervalJoinWith(subQuery)
+                .where(Attribute("id") == Attribute("id"))
+                .lowerBound(EventTime(Attribute("ts")), queryOption.timeValue, queryOption.timeUnit, queryOption.boundInclusive)
+                .upperBound(queryOption.timeValue, queryOption.timeUnit, queryOption.boundInclusive)
+                .sink(printSinkDescriptor);
+
+        // extracting the operator and from that the bounds
+        auto plan = query.getQueryPlan();
+        auto op = plan->getOperatorByType<LogicalIntervalJoinOperator>()[0];
+
+        auto lowerBound = op->getIntervalJoinDefinition()->getLowerBound();
+        auto upperBound = op->getIntervalJoinDefinition()->getUpperBound();
+
+        EXPECT_EQ(lowerBound, queryOption.expectedLowerBound);
+        EXPECT_EQ(upperBound, queryOption.expectedUpperBound);
+    }
+
+    // testing the isIdentical() and equal() function by creating two equal queries
+    auto queryOne = Query::from("default_logical")
+                        .intervalJoinWith(subQuery)
+                        .where(Attribute("id") == Attribute("id"))
+                        .lowerBound(EventTime(Attribute("ts")), 3, Seconds(), true)
+                        .upperBound(4, Seconds(), false)
+                        .sink(printSinkDescriptor);
+
+    // defining second query to check the equal function
+    auto queryTwo = Query::from("default_logical")
+                        .intervalJoinWith(subQuery)
+                        .where(Attribute("id") == Attribute("id"))
+                        .lowerBound(EventTime(Attribute("ts")), 3, Seconds())
+                        .upperBound(4, Seconds(), false)
+                        .sink(printSinkDescriptor);
+
+    // getting the first and second interval join operator
+    auto plan = queryOne.getQueryPlan();
+    auto secondPlan = queryTwo.getQueryPlan();
+
+    auto firstOP = plan->getOperatorByType<LogicalIntervalJoinOperator>()[0];
+    auto secondOp = secondPlan->getOperatorByType<LogicalIntervalJoinOperator>()[0];
+
+    // testing equal() and isIdentical() function
+    EXPECT_TRUE(firstOP->isIdentical(firstOP));
+    EXPECT_TRUE(firstOP->equal(secondOp));
+
+    // testing the source and sink operator for the correct size and type
+    const std::vector<SourceLogicalOperatorPtr> sourceOperators = plan->getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 2U);
+    SourceLogicalOperatorPtr sourceOperator = sourceOperators[0];
+    EXPECT_TRUE(sourceOperator->getSourceDescriptor()->instanceOf<LogicalSourceDescriptor>());
+    const std::vector<SinkLogicalOperatorPtr> sinkOperators = plan->getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1U);
+    SinkLogicalOperatorPtr sinkOperator = sinkOperators[0];
+    EXPECT_TRUE(sinkOperator->getSinkDescriptor()->instanceOf<SinkDescriptor>());
+}
 
 TEST_F(QueryAPITest, testQueryFilter) {
 

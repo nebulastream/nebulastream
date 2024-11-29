@@ -248,7 +248,7 @@ void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuff
                      });
 
         auto windowToSlicesLocked = this->windowToSlices.wlock();
-        windowToSlicesLocked->emplace(WindowInfo(windowStart, windowEnd), SlicesAndState(slicesInWindow, windowInfoState));
+        windowToSlicesLocked->emplace(WindowInfo(windowStart, windowEnd), SlicesAndState{slicesInWindow, windowInfoState});
     }
 }
 
