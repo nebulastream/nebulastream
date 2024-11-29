@@ -24,6 +24,7 @@ jobs:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
+      branch-name: ${{ github.head_ref }}
       ref: ${{ github.event.pull_request.head.sha }}
 
   check-format:
