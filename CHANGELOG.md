@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.200](https://github.com/nebulastream/nebulastream/tree/v0.6.200) (2024-11-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.199...v0.6.200)
+
+**Implemented enhancements:**
+
+- \[TASK\] Interval Join Support in NebulaStream  [\#4824](https://github.com/nebulastream/nebulastream/issues/4824)
+
 ## [v0.6.199](https://github.com/nebulastream/nebulastream/tree/v0.6.199) (2024-11-28)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.198...v0.6.199)
