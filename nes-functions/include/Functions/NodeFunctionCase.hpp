@@ -64,7 +64,7 @@ public:
 protected:
     explicit NodeFunctionCase(NodeFunctionCase* other);
 
-    [[nodiscard]] std::string toString() const final;
+    [[nodiscard]] std::string toString() const override;
 };
 
 }
