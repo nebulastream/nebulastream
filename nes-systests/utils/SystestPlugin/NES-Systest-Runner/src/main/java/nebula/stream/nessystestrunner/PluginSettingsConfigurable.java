@@ -24,19 +24,29 @@ public class PluginSettingsConfigurable implements Configurable {
     @Override
     public boolean isModified() {
         PluginSettings settings = PluginSettings.getInstance();
-        return !component.getPathText().equals(settings.getPathSetting());
+        boolean modified = !component.getPathText().equals(settings.getPathSetting()) ||
+                !component.getDockerCommandText().equals(settings.getDockerCommand()) ||
+                !component.getDockerTestFilePath().equals(settings.getDockerTestFilePath()) ||
+                component.getDockerCommandCheckBox() != settings.getDockerCommandCheckBox();
+        return modified;
     }
 
     @Override
     public void apply() {
         PluginSettings settings = PluginSettings.getInstance();
         settings.setPathSetting(component.getPathText());
+        settings.setDockerCommand(component.getDockerCommandText());
+        settings.setDockerTestFilePath(component.getDockerTestFilePath());
+        settings.setDockerCommandCheckBox(component.getDockerCommandCheckBox());
     }
 
     @Override
     public void reset() {
         PluginSettings settings = PluginSettings.getInstance();
         component.setPathText(settings.getPathSetting());
+        component.setDockerCommandField(settings.getDockerCommand());
+        component.setDockerTestFilePath(settings.getDockerTestFilePath());
+        component.setDockerCommandCheckBox(settings.getDockerCommandCheckBox());
     }
 
     @Override
