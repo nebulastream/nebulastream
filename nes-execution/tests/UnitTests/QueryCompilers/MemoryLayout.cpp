@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_set>
 #include <variant>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -813,24 +814,31 @@ public:
     {
         auto index = buffer.getNumberOfTuples();
         buffer.setNumberOfTuples(index + 1);
-        accessor->advance(index + 1);
+        accessor->advance(index);
         for (nautilus::static_val<size_t> i = 0; i < schema.fields.size(); ++i)
         {
             accessor->write(i, fields[i], bufferProvider);
         }
     }
 
-    std::vector<Nautilus::VarVal> at(nautilus::val<size_t> index)
+    std::vector<Nautilus::VarVal> at(nautilus::val<size_t> index, std::unordered_set<FieldName> projection)
     {
         std::vector<Nautilus::VarVal> result;
         result.reserve(schema.fields.size());
         accessor->advance(index);
         for (nautilus::static_val<size_t> i = 0; i < schema.fields.size(); ++i)
         {
+            if (!projection.empty() && !projection.contains(schema.fields[i].first))
+            {
+                continue;
+            }
+
             result.emplace_back((*accessor)[i]);
         }
         return result;
     }
+
+    std::vector<Nautilus::VarVal> at(nautilus::val<size_t> index) { return at(index, {}); }
 
     TupleBufferRef buffer;
     PhysicalSchema schema;
@@ -922,6 +930,7 @@ TEST_F(MemoryLayoutTest, DoesItCompile)
          std::make_pair<FieldName, PhysicalType>(FieldName("B"), PhysicalType{FixedSize{PhysicalScalarType{UInt8{}}, 4}}),
          std::make_pair<FieldName, PhysicalType>(FieldName("C"), PhysicalType{VariableSize{PhysicalScalarType{Char{}}}})}};
 
+
     nautilus::engine::Options options;
     options.setOption("engine.Compilation", true);
     nautilus::engine::NautilusEngine engine(options);
@@ -969,5 +978,88 @@ TEST_F(MemoryLayoutTest, DoesItCompile)
     char* c = fn(std::addressof(buffer), bm.get(), s.data(), s.size() + 1);
     std::cout << c << std::endl;
     std::cout << generate_hexdump(buffer.getBuffer<unsigned char>(), buffer.getBufferSize());
+}
+
+
+template <typename T>
+Nautilus::VarVal scalar(T t)
+{
+    return Nautilus::ScalarVarVal(nautilus::val<T>(t));
+}
+
+template <typename T>
+Nautilus::VarVal fixedSize(std::initializer_list<T> ts)
+{
+    std::vector<Nautilus::ScalarVarVal> nautilusTs;
+    for (const auto& t : ts)
+    {
+        nautilusTs.emplace_back(nautilus::val<T>(t));
+    }
+    return Nautilus::VarVal(Nautilus::FixedSizeVal(nautilusTs));
+}
+
+template <typename... T>
+Nautilus::VarVal fixedSize(T... t)
+{
+    return fixedSize({t...});
+}
+
+template <typename T>
+Nautilus::VarVal variableSize(T* t, size_t n)
+{
+    return Nautilus::VariableSizeVal(Nautilus::ScalarVarValPtr(nautilus::val<T*>(t)), n, n * sizeof(T));
+}
+
+TEST_F(MemoryLayoutTest, DoesItCompile2)
+{
+    auto bm = Memory::BufferManager::create();
+    PhysicalSchema inputSchema{
+        {std::make_pair<FieldName, PhysicalType>(FieldName("A"), PhysicalType{Scalar{PhysicalScalarType{UInt64{}}}}),
+         std::make_pair<FieldName, PhysicalType>(FieldName("B"), PhysicalType{FixedSize{PhysicalScalarType{UInt8{}}, 4}}),
+         std::make_pair<FieldName, PhysicalType>(FieldName("C"), PhysicalType{VariableSize{PhysicalScalarType{Char{}}}})}};
+
+    PhysicalSchema outputSchema{
+        {std::make_pair<FieldName, PhysicalType>(FieldName("B"), PhysicalType{FixedSize{PhysicalScalarType{UInt8{}}, 5}})}};
+
+    nautilus::engine::Options options;
+    options.setOption("engine.Compilation", true);
+    nautilus::engine::NautilusEngine engine(options);
+
+
+    auto project = engine.registerFunction(
+        std::function(
+            [&inputSchema, &outputSchema](
+                nautilus::val<NES::Memory::TupleBuffer*> inputBuffer,
+                nautilus::val<Memory::AbstractBufferProvider*> provider,
+                nautilus::val<NES::Memory::TupleBuffer*> outputBuffer)
+            {
+                TupleBufferRef inputBufferRef(inputBuffer);
+                MemoryAccessor inputAccessor(inputBufferRef, inputSchema);
+
+                TupleBufferRef outputBufferRef(outputBuffer);
+                MemoryAccessor outputAccessor(outputBufferRef, outputSchema);
+
+                for (nautilus::val<size_t> i = 0; i < inputBufferRef.getNumberOfTuples(); i++)
+                {
+                    auto record = inputAccessor.at(i, {FieldName("B")});
+                    outputAccessor.append(record, provider);
+                }
+            }));
+
+    auto buffer = bm->getBufferBlocking();
+    auto outputBuffer = bm->getBufferBlocking();
+
+    MemoryAccessor inputAccessor(TupleBufferRef(std::addressof(buffer)), inputSchema);
+
+    std::string s = "I am a long string";
+    inputAccessor.append({scalar<uint64_t>(1), fixedSize<uint8_t>({1, 2, 3, 4}), variableSize(s.data(), s.size() + 1)}, bm.get());
+    inputAccessor.append({scalar<uint64_t>(2), fixedSize<uint8_t>({1, 2, 3, 4}), variableSize(s.data(), s.size() + 1)}, bm.get());
+    inputAccessor.append({scalar<uint64_t>(3), fixedSize<uint8_t>({1, 2, 3, 4}), variableSize(s.data(), s.size() + 1)}, bm.get());
+
+
+    project(std::addressof(buffer), bm.get(), std::addressof(outputBuffer));
+
+    std::cout << generate_hexdump(buffer.getBuffer<unsigned char>(), 64);
+    std::cout << generate_hexdump(outputBuffer.getBuffer<unsigned char>(), 64);
 }
 }
