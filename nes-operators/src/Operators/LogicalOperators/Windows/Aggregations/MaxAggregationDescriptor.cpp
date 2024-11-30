@@ -55,7 +55,7 @@ void MaxAggregationDescriptor::inferStamp(Schema& schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
+    if (!isNumeric(onField->getStamp()))
     {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

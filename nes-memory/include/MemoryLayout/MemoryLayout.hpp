@@ -142,7 +142,7 @@ protected:
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<PhysicalType> physicalTypes;
-    std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
+    std::unordered_map<FieldName, uint64_t> nameFieldIndexMap;
 };
 
 using MemoryLayoutPtr = std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>;

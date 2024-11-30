@@ -16,7 +16,7 @@
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 NodeFunctionMul::NodeFunctionMul(DataType stamp) : NodeFunctionArithmeticalBinary(std::move(stamp), "Mul") {};

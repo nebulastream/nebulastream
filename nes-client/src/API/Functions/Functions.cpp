@@ -84,7 +84,7 @@ FunctionItem::FunctionItem(bool value)
 {
 }
 
-FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(NodeFunctionConstantValue::create(std::move(value)))
+FunctionItem::FunctionItem(ValueTypePtr value) : FunctionItem(NodeFunctionConstantValue::create(std::move(value), TODO))
 {
 }
 

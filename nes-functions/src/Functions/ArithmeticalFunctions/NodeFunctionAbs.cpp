@@ -40,8 +40,7 @@ void NodeFunctionAbs::inferStamp(Schema& schema)
     NodeFunctionArithmeticalUnary::inferStamp(schema);
     if(auto intType = stamp.getUnderlying<IntegerType>())
     {
-        intType->max = std::max(intType->max, intType->negativeMin ? -intType->min : intType->min);
-        intType->min = 0;
+        stamp = IntegerType{intType->range.abs()};
     }
     /// increase lower bound to 0
     NES_TRACE("NodeFunctionAbs: increased the lower bound of stamp to 0: {}", toString());

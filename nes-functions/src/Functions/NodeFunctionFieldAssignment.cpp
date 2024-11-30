@@ -14,13 +14,10 @@
 #include <memory>
 #include <sstream>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -76,12 +73,11 @@ void NodeFunctionFieldAssignment::inferStamp(Schema& schema)
 
     ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
-    if (existingField)
+    if (auto existingField = schema.find(fieldName))
     {
-        const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
-        field->updateFieldName(existingField->getName());
-        field->setStamp(stamp);
+        const auto stamp = getAssignment()->getStamp().commonType(field->getStamp());
+        field->updateFieldName(fieldName);
+        field->setStamp(*stamp);
     }
     else
     {

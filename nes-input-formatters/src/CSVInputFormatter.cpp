@@ -28,7 +28,6 @@
 #include <utility>
 #include <vector>
 #include <strings.h>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -41,9 +40,7 @@
 #include <CSVInputFormatter.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterRegistry.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <API/BasicPhysicalTypes.hpp>
 
 namespace NES::InputFormatters
 {

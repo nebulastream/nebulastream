@@ -16,8 +16,6 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 
 namespace NES
@@ -42,7 +40,7 @@ void NodeFunctionExp::inferStamp(Schema& schema)
     NodeFunctionArithmeticalUnary::inferStamp(schema);
 
     /// change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
-    stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
+    stamp = float64();
     NES_TRACE("NodeFunctionExp: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
 }
 

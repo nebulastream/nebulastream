@@ -15,8 +15,6 @@
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -61,12 +59,11 @@ void NodeFunctionOr::inferStamp(Schema& schema)
     /// check if children stamp is correct
     if (!getLeft()->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("OR Function Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
+        throw TypeInferenceException("OR Function Node: the stamp of left child must be boolean, but was: {}", getLeft()->getStamp());
     }
     if (!getRight()->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR(
-            "OR Function Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
+        throw TypeInferenceException("OR Function Node: the stamp of left child must be boolean, but was: {}", getRight()->getStamp());
     }
 }
 
@@ -81,8 +78,8 @@ bool NodeFunctionOr::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
-        && NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
+    return boolean() == (Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
+        && boolean() == (Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
 }
 
 

@@ -16,8 +16,6 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Undefined.hpp>
 namespace NES
 {
 NodeFunctionCase::NodeFunctionCase(DataType stamp) : NodeFunction(std::move(stamp), "Case")
@@ -46,11 +44,6 @@ void NodeFunctionCase::inferStamp(Schema& schema)
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
-    if (NES::Util::instanceOf<Undefined>(defaultExp->getStamp()))
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "Error during stamp inference. Right type must be defined, but was: {}", defaultExp->getStamp()->toString());
-    }
 
     for (auto elem : whenChildren)
     {
@@ -63,16 +56,19 @@ void NodeFunctionCase::inferStamp(Schema& schema)
                 + " is not a when function.");
         }
         ///all elements must have same stamp as defaultExp value
-        if (!defaultExp->getStamp()->equals(elem->getStamp()))
+        if (defaultExp->getStamp() != elem->getStamp())
         {
-            NES_THROW_RUNTIME_ERROR(
-                "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element "
-                + elem->toString() + " has: " + elem->getStamp()->toString() + ". Right was: " + defaultExp->getStamp()->toString());
+            TypeInferenceException(
+                "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element {} has: {}. "
+                "Right was: {}",
+                elem->toString(),
+                elem->getStamp(),
+                defaultExp->getStamp());
         }
     }
 
     stamp = defaultExp->getStamp();
-    NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp->toString());
+    NES_TRACE("NodeFunctionCase: we assigned the following stamp: {}", stamp);
 }
 
 void NodeFunctionCase::setChildren(std::vector<NodeFunctionPtr> const& whenExps, NodeFunctionPtr const& defaultExp)

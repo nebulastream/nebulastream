@@ -16,10 +16,6 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 
 
 namespace NES
@@ -43,18 +39,7 @@ void NodeFunctionSqrt::inferStamp(Schema& schema)
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);
 
-    if ((NES::Util::instanceOf<Integer>(stamp) && DataType::as<Integer>(stamp)->upperBound <= 0)
-        || (NES::Util::instanceOf<Float>(stamp) && DataType::as<Float>(stamp)->upperBound <= 0))
-    {
-        NES_ERROR("Log10NodeFunction: Non-positive DataType is passed into Log10 function. Arithmetic errors would occur at "
-                  "run-time.");
-    }
-
-    /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-
-    /// increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
+    stamp = float64();
     NES_TRACE("NodeFunctionSqrt: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
 }
 

@@ -103,12 +103,12 @@ template <typename T>
 std::optional<T> getUnderlying(const AggregateType& aggregateType)
 {
     return std::visit(
-        [](const auto& aggregate)
+        [](const auto& aggregate) -> std::optional<T>
         {
             return std::visit(
                 []<typename InnerType>(const InnerType& inner) -> std::optional<T>
                 {
-                    if constexpr (std::same_as<IntegerType, T>)
+                    if constexpr (std::same_as<InnerType, T>)
                     {
                         return inner;
                     }
@@ -117,7 +117,7 @@ std::optional<T> getUnderlying(const AggregateType& aggregateType)
                         return {};
                     }
                 },
-                aggregate);
+                aggregate.inner);
         },
         aggregateType);
 }
@@ -141,9 +141,9 @@ struct DataType
     DataType(IsAggregateType auto underlying) : underlying(std::move(underlying)) { }
 
     template <IsBasicType T>
-    std::optional<T> getUnderlying()
+    std::optional<T> getUnderlying() const
     {
-        return getUnderlying<T>(underlying);
+        return NES::getUnderlying<T>(underlying);
     }
     friend std::ostream& operator<<(std::ostream& os, const DataType& obj) { return os << obj.underlying; }
     AggregateType underlying;

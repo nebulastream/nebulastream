@@ -43,13 +43,13 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
-        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
-        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
-        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
-        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
+        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"), TODO);
+        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"), TODO);
+        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"), TODO);
+        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"), TODO);
+        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"), TODO);
+        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"), TODO);
+        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"), TODO);
 
         sourceOp1 = LogicalOperatorFactory::createSourceOperator("test_source_1");
         sourceOp2 = LogicalOperatorFactory::createSourceOperator("test_source_2");

@@ -36,7 +36,8 @@ Range Range::abs() const
     auto copy = *this;
     copy.negativeMin = false;
     copy.negativeMax = false;
-    copy.fixup();
+    copy.min = 0;
+    copy.max = std::max(min, max);
     return copy;
 }
 

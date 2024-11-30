@@ -157,7 +157,7 @@ NES::NodeFunctionPtr RedundancyEliminationRule::constantFolding(const NodeFuncti
             NES_DEBUG("Computed the result, which is equal to ", resultValue);
             NES_DEBUG("Creating a new constant function node with the result value");
             NodeFunctionPtr resultNodeFunction = NodeFunctionConstantValue::create(
-                DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(resultValue)));
+                DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(resultValue)), TODO);
             return resultNodeFunction;
         }
         else

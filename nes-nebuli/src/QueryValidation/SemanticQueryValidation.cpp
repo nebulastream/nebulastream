@@ -181,7 +181,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
                 auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-                if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
+                if (!isNumeric(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
                     && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
                 {
                     throw QueryInvalid(

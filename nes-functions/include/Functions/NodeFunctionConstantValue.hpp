@@ -31,10 +31,10 @@ public:
     /**
      * @brief Factory method to create a NodeFunctionConstantValue.
      */
-    static NodeFunctionPtr create(ValueTypePtr const& constantValue);
+    static NodeFunctionPtr create(DataType type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
-    ValueTypePtr getConstantValue() const;
+    std::string getConstantValue() const;
 
     /**
      * @brief On a constant value function infer stamp has not to perform any action as its result type is always constant.
@@ -57,9 +57,9 @@ protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
 
 private:
-    explicit NodeFunctionConstantValue(ValueTypePtr const& constantValue);
+    explicit NodeFunctionConstantValue(DataType const& constantValue, std::string value);
     /// Value of this function
-    ValueTypePtr constantValue;
+    std::string constantValue;
 };
 using NodeFunctionConstantValuePtr = std::shared_ptr<NodeFunctionConstantValue>;
 }

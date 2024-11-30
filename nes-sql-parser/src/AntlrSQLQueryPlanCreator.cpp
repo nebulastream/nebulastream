@@ -875,7 +875,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
         }
     }
     const auto valueType = std::make_shared<BasicValue>(dataType, context->getText());
-    auto constFunctionItem = FunctionItem(NodeFunctionConstantValue::create(valueType));
+    auto constFunctionItem = FunctionItem(NodeFunctionConstantValue::create(valueType, TODO));
     helper.functionBuilder.push_back(constFunctionItem);
     poppush(helper);
 }

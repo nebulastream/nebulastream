@@ -12,3 +12,8 @@
 
 
 add_nes_execution_test(function-provider-test "FunctionProviderTest.cpp")
+add_nes_test(memory-layout-test "MemoryLayout.cpp")
+find_package(spdlog REQUIRED)
+find_package(fmt REQUIRED)
+find_package(nautilus REQUIRED)
+target_link_libraries(memory-layout-test nes-data-types-ref nautilus::nautilus nes-memory)

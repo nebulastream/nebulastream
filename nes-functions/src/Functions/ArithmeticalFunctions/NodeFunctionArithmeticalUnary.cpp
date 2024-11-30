@@ -14,12 +14,11 @@
 
 #include <utility>
 
+#include <API/DataType.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 namespace NES
 {
 
@@ -46,10 +45,10 @@ void NodeFunctionArithmeticalUnary::inferStamp(Schema& schema)
 
     /// get stamp from child
     auto child_stamp = child->getStamp();
-    if (!NES::Util::instanceOf<Numeric>(child_stamp))
+    if (!isNumerical(child_stamp))
     {
         throw CannotInferSchema(
-            fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()->toString()));
+            fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()));
     }
 
     this->stamp = child_stamp;
@@ -77,7 +76,7 @@ bool NodeFunctionArithmeticalUnary::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp());
+    return isNumerical(Util::as<NodeFunction>(this->getChildren()[0])->getStamp());
 }
 
 }

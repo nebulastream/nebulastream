@@ -15,15 +15,13 @@
 #include <Functions/LogicalFunctions/NodeFunctionLogicalUnary.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES
 {
 
 NodeFunctionLogicalUnary::NodeFunctionLogicalUnary(std::string name)
-    : NodeFunctionUnary(DataTypeFactory::createBoolean(), std::move(name)), LogicalNodeFunction()
+    : NodeFunctionUnary(boolean(), std::move(name)), LogicalNodeFunction()
 {
 }
 

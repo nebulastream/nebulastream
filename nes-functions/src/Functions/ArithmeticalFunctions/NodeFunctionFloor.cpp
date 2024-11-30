@@ -16,8 +16,6 @@
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {
@@ -41,7 +39,7 @@ void NodeFunctionFloor::inferStamp(Schema& schema)
     NodeFunctionArithmeticalUnary::inferStamp(schema);
 
     /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
+    stamp = float64();
     NES_TRACE("NodeFunctionFloor: converted stamp to float: {}", toString());
 }
 

@@ -40,7 +40,6 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Functions/NodeFunctionWhen.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableFunction.pb.h>
@@ -161,7 +160,7 @@ NodeFunctionPtr FunctionSerializationUtil::deserializeFunction(const Serializabl
             auto serializedConstantValue = SerializableFunction_FunctionConstantValue();
             serializedFunction.details().UnpackTo(&serializedConstantValue);
             auto valueType = DataTypeSerializationUtil::deserializeDataValue(serializedConstantValue.value());
-            nodeFunctionPtr = NodeFunctionConstantValue::create(valueType);
+            nodeFunctionPtr = NodeFunctionConstantValue::create(valueType, TODO);
         }
         else if (serializedFunction.details().Is<SerializableFunction_FunctionFieldAccess>())
         {

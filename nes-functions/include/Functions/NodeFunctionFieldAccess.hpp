@@ -30,12 +30,12 @@ public:
     /**
     * @brief Create typed field read.
     */
-    static NodeFunctionPtr create(DataType stamp, std::string fieldName);
+    static NodeFunctionPtr create(DataType stamp, FieldName fieldName);
 
     /**
      * @brief Create untyped field read.
      */
-    static NodeFunctionPtr create(std::string fieldName);
+    static NodeFunctionPtr create(FieldName fieldName);
 
     std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
@@ -44,13 +44,13 @@ public:
      * @brief Get field name
      * @return field name
      */
-    std::string getFieldName() const;
+    FieldName getFieldName() const;
 
     /**
      * @brief Updated field name
      * @param fieldName : the new name of the field
      */
-    void updateFieldName(std::string fieldName);
+    void updateFieldName(FieldName fieldName);
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
@@ -70,11 +70,11 @@ public:
 protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
-    NodeFunctionFieldAccess(DataType stamp, std::string fieldName);
+    NodeFunctionFieldAccess(DataType stamp, FieldName fieldName);
     /**
      * @brief Name of the field want to access.
      */
-    std::string fieldName;
+    FieldName fieldName;
 };
 
 }

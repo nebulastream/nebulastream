@@ -16,8 +16,6 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/Boolean.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
@@ -59,7 +57,7 @@ void NodeFunctionNegate::inferStamp(Schema& schema)
     if (!child()->isPredicate())
     {
         throw CannotInferSchema(
-            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()->toString()));
+            fmt::format("Negate Function Node: the stamp of child must be boolean, but was: {}", child()->getStamp()));
     }
 }
 NodeFunctionPtr NodeFunctionNegate::deepCopy()
@@ -73,7 +71,7 @@ bool NodeFunctionNegate::validateBeforeLowering() const
     {
         return false;
     }
-    return NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(children[0])->getStamp());
+    return boolean() == Util::as<NodeFunction>(children[0])->getStamp();
 }
 
 }

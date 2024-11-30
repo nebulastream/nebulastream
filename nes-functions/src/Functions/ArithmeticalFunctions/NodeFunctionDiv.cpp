@@ -16,7 +16,6 @@
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 

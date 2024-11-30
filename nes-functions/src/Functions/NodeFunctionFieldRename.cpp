@@ -12,14 +12,14 @@
     limitations under the License.
 */
 #include <utility>
-#include <API/AttributeField.hpp>
+
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include "../../../nes-nebuli/private/QueryValidation/SemanticQueryValidation.hpp"
 
 namespace NES
 {
@@ -57,7 +57,7 @@ std::string NodeFunctionFieldRename::getNewFieldName() const
 std::string NodeFunctionFieldRename::toString() const
 {
     auto node = getOriginalField();
-    return "FieldRenameFunction(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
+    return fmt::format("FieldRenameFunction({} => {} : {}", getOriginalField(), newFieldName, stamp);
 }
 
 void NodeFunctionFieldRename::inferStamp(Schema& schema)
@@ -65,16 +65,7 @@ void NodeFunctionFieldRename::inferStamp(Schema& schema)
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema->getField(fieldName);
-    ///Detect if user has added attribute name separator
-    if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
-    {
-        if (!fieldAttribute)
-        {
-            throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
-        }
-        newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
-    }
+    auto fieldAttribute = schema[fieldName];
 
     if (fieldName == newFieldName)
     {
@@ -82,14 +73,15 @@ void NodeFunctionFieldRename::inferStamp(Schema& schema)
     }
     else
     {
-        auto newFieldAttribute = schema->getField(newFieldName);
-        if (newFieldAttribute)
+        auto newFieldAttribute = schema[newFieldName];
+        if (schema.try_add(newFieldName, fieldAttribute))
         {
-            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
+            throw FieldAlreadyExists("New field with name {} already exists in the schema {}", newFieldName, schema);
         }
     }
+    schema.erase(originalFieldName->getFieldName());
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute->getDataType();
+    stamp = fieldAttribute.type;
 }
 
 NodeFunctionPtr NodeFunctionFieldRename::deepCopy()

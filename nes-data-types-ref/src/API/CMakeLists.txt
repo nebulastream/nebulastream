@@ -12,5 +12,6 @@
 
 add_source_files(nes-data-types-ref
         DataType.cpp
+        Schema.cpp
 )
 
