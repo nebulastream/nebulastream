@@ -12,7 +12,7 @@
 
 
 add_nes_execution_test(function-provider-test "FunctionProviderTest.cpp")
-add_nes_test(memory-layout-test "MemoryLayout.cpp")
+add_nes_test(memory-layout-test "MemoryLayout.cpp" RowLayout.cpp VarVal.cpp CSVOutputFormatter.cpp)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 find_package(nautilus REQUIRED)
