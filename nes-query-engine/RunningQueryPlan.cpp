@@ -154,11 +154,12 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     WorkEmitter& emitter,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+    std::function<void(Exception)> unregisterWithError,
     CallbackRef planRef,
     CallbackRef setupCallback)
 {
     auto node = std::shared_ptr<RunningQueryPlanNode>(
-        new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(planRef)),
+        new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
         RunningQueryPlanNodeDeleter{emitter, queryId});
     emitter.emitPipelineStart(
         queryId,
@@ -180,11 +181,16 @@ RunningQueryPlanNode::~RunningQueryPlanNode()
 {
     assert(!requiresTermination && "Node was destroyed without termination. This should not happen");
 }
+void RunningQueryPlanNode::fail(Exception exception) const
+{
+    unregisterWithError(std::move(exception));
+}
 
 std::
     pair<std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>>, std::vector<std::weak_ptr<RunningQueryPlanNode>>> static createRunningNodes(
         QueryId queryId,
         InstantiatedQueryPlan& queryPlan,
+        std::function<void(Exception)> unregisterWithError,
         const CallbackRef& terminationCallbackRef,
         const CallbackRef& pipelineSetupCallbackRef,
         WorkEmitter& emitter)
@@ -211,6 +217,7 @@ std::
             emitter,
             std::move(successors),
             std::move(pipeline->stage),
+            unregisterWithError,
             terminationCallbackRef,
             pipelineSetupCallbackRef);
         pipelines.emplace_back(node);
@@ -253,7 +260,13 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
         std::move(terminationCallbackRef), [listener] { listener->onDestruction(); });
 
 
-    auto [sources, pipelines] = createRunningNodes(queryId, *runningPlan->qep, terminationCallbackRef, pipelineSetupCallbackRef, emitter);
+    auto [sources, pipelines] = createRunningNodes(
+        queryId,
+        *runningPlan->qep,
+        [listener](Exception exception) { listener->onFailure(exception); },
+        terminationCallbackRef,
+        pipelineSetupCallbackRef,
+        emitter);
     runningPlan->pipelines = std::move(pipelines);
 
 
