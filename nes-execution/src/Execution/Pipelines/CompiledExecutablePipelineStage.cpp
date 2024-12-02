@@ -68,7 +68,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
 uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    const auto pipelineExecutionContextRef = nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(&pipelineExecutionContext));
+    const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
     const auto workerContextRef = nautilus::val<int8_t*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);

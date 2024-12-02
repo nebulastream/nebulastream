@@ -100,7 +100,7 @@ namespace NES::IntegrationTestUtil
             tupleBuffer.setNumberOfTuples(tupleCount);
             tupleBuffer.setOriginId(OriginId(originId));
             tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
-            tupleBuffer.setWatermark(Timestamp(watermarkTS));
+            tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
             NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
@@ -115,7 +115,7 @@ namespace NES::IntegrationTestUtil
         tupleBuffer.setNumberOfTuples(tupleCount);
         tupleBuffer.setOriginId(OriginId(originId));
         tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
-        tupleBuffer.setWatermark(Timestamp(watermarkTS));
+        tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
         recordBuffers.emplace_back(tupleBuffer);
         NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }

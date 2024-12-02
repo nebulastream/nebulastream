@@ -20,6 +20,7 @@
 #include <sstream>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
 #include "TaggedPointer.hpp"
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <deque>
@@ -100,8 +101,8 @@ public:
     bool release();
     [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
     void setNumberOfTuples(uint64_t);
-    [[nodiscard]] Timestamp getWatermark() const noexcept;
-    void setWatermark(Timestamp watermark);
+    [[nodiscard]] Runtime::Timestamp getWatermark() const noexcept;
+    void setWatermark(Runtime::Timestamp watermark);
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
     void setSequenceNumber(SequenceNumber sequenceNumber);
     [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
@@ -110,8 +111,8 @@ public:
     void setLastChunk(bool lastChunk);
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
-    void setCreationTimestamp(Timestamp timestamp);
-    [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
+    void setCreationTimestamp(Runtime::Timestamp timestamp);
+    [[nodiscard]] Runtime::Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] uint32_t storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(uint16_t index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
     [[nodiscard]] uint32_t getNumberOfChildrenBuffer() const noexcept { return children.size(); }
@@ -122,11 +123,11 @@ public:
 private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    Timestamp watermark = INVALID_WATERMARK_TS_NUMBER;
+    Runtime::Timestamp watermark = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
-    Timestamp creationTimestamp = INITIAL_CREATION_TS_NUMBER;
+    Runtime::Timestamp creationTimestamp = Runtime::Timestamp(Runtime::Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;
 
