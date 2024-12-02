@@ -1,0 +1,111 @@
+From fbc38a924cb1b7f6f5a68aacb886a6c3b4210fd7 Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Mon, 2 Dec 2024 22:33:13 +0100
+Subject: [PATCH 1/1] fix-cxx23
+
+Signed-off-by: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+---
+ 0001-temp.patch | 91 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 91 insertions(+)
+ create mode 100644 0001-temp.patch
+
+diff --git a/0001-temp.patch b/0001-temp.patch
+new file mode 100644
+index 0000000000..d9c86d7d20
+--- /dev/null
++++ b/0001-temp.patch
+@@ -0,0 +1,91 @@
++From 73236bf4ffcf9522cc57ea3f4e4f859325fe22a6 Mon Sep 17 00:00:00 2001
++From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
++Date: Mon, 2 Dec 2024 22:28:32 +0100
++Subject: [PATCH 1/1] temp
++
++Signed-off-by: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
++---
++ src/core/telemetry/metrics.h | 60 ++++++++++++++++++------------------
++ 1 file changed, 30 insertions(+), 30 deletions(-)
++
++diff --git a/src/core/telemetry/metrics.h b/src/core/telemetry/metrics.h
++index 968534b792..6bf824c287 100644
++--- a/src/core/telemetry/metrics.h
+++++ b/src/core/telemetry/metrics.h
++@@ -360,6 +360,36 @@ class StatsPlugin {
++   //     absl::Span<absl::string_view> label_values) = 0;
++ };
++ 
+++// A metric callback that is registered with a stats plugin group.
+++class RegisteredMetricCallback {
+++ public:
+++  RegisteredMetricCallback(
+++      GlobalStatsPluginRegistry::StatsPluginGroup& stats_plugin_group,
+++      absl::AnyInvocable<void(CallbackMetricReporter&)> callback,
+++      std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle> metrics,
+++      Duration min_interval);
+++
+++  ~RegisteredMetricCallback();
+++
+++  // Invokes the callback.  The callback will report metric data via reporter.
+++  void Run(CallbackMetricReporter& reporter) { callback_(reporter); }
+++
+++  // Returns the set of metrics that this callback will modify.
+++  const std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle>&
+++  metrics() const {
+++    return metrics_;
+++  }
+++
+++  // Returns the minimum interval at which a stats plugin may invoke the
+++  // callback.
+++  Duration min_interval() const { return min_interval_; }
+++
+++ private:
+++  GlobalStatsPluginRegistry::StatsPluginGroup& stats_plugin_group_;
+++  absl::AnyInvocable<void(CallbackMetricReporter&)> callback_;
+++  std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle> metrics_;
+++  Duration min_interval_;
+++};
++ // A global registry of stats plugins. It has shared ownership to the registered
++ // stats plugins. This API is supposed to be used during runtime after the main
++ // function begins. This API is thread-safe.
++@@ -517,36 +547,6 @@ class GlobalStatsPluginRegistry {
++       ABSL_GUARDED_BY(mutex_);
++ };
++ 
++-// A metric callback that is registered with a stats plugin group.
++-class RegisteredMetricCallback {
++- public:
++-  RegisteredMetricCallback(
++-      GlobalStatsPluginRegistry::StatsPluginGroup& stats_plugin_group,
++-      absl::AnyInvocable<void(CallbackMetricReporter&)> callback,
++-      std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle> metrics,
++-      Duration min_interval);
++-
++-  ~RegisteredMetricCallback();
++-
++-  // Invokes the callback.  The callback will report metric data via reporter.
++-  void Run(CallbackMetricReporter& reporter) { callback_(reporter); }
++-
++-  // Returns the set of metrics that this callback will modify.
++-  const std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle>&
++-  metrics() const {
++-    return metrics_;
++-  }
++-
++-  // Returns the minimum interval at which a stats plugin may invoke the
++-  // callback.
++-  Duration min_interval() const { return min_interval_; }
++-
++- private:
++-  GlobalStatsPluginRegistry::StatsPluginGroup& stats_plugin_group_;
++-  absl::AnyInvocable<void(CallbackMetricReporter&)> callback_;
++-  std::vector<GlobalInstrumentsRegistry::GlobalInstrumentHandle> metrics_;
++-  Duration min_interval_;
++-};
++ 
++ template <typename... Args>
++ inline std::unique_ptr<RegisteredMetricCallback>
++-- 
++2.44.1
++
+-- 
+2.44.1
+
