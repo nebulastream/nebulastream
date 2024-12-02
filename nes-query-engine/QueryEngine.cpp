@@ -38,6 +38,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <folly/MPMCQueue.h>
+#include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <Executable.hpp>
 #include <InstantiatedQueryPlan.hpp>
@@ -48,8 +49,6 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
-
-#define QUERY_ENGINE_LOG NES_TRACE
 
 namespace NES::Runtime
 {
@@ -263,19 +262,19 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
 {
     if (terminating)
     {
-        QUERY_ENGINE_LOG("Skipped Task during termination");
+        ENGINE_LOG_DEBUG("Skipped Task during termination");
         return false;
     }
 
     auto const taskId = TaskId(pool.taskIdCounter++);
     if (auto pipeline = task.pipeline.lock())
     {
-        QUERY_ENGINE_LOG("Handle Task for pipeline {} of query {}. Tuples: {}", pipeline->id, task.queryId, task.buf.getNumberOfTuples());
+        ENGINE_LOG_DEBUG("Handle Task for pipeline {} of query {}. Tuples: {}", pipeline->id, task.queryId, task.buf.getNumberOfTuples());
         DefaultPEC pec(
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto)
             {
-                QUERY_ENGINE_LOG("Task emitted tuple buffer {}. Tuples: {}", task.queryId, tupleBuffer.getNumberOfTuples());
+                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}. Tuples: {}", task.queryId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
                     pool.statistic->onEvent(TaskEmit{threadId, taskId, pipeline->id, successor->id, task.queryId});
@@ -296,11 +295,11 @@ bool ThreadPool::Worker::operator()(const StartPipelineTask& startPipeline) cons
 {
     if (terminating)
     {
-        QUERY_ENGINE_LOG("Pipeline Setup was skipped during Termination");
+        ENGINE_LOG_DEBUG("Pipeline Setup was skipped during Termination");
         return false;
     }
 
-    QUERY_ENGINE_LOG("Setup Pipeline Task for Query {}", startPipeline.queryId);
+    ENGINE_LOG_DEBUG("Setup Pipeline Task for Query {}", startPipeline.queryId);
     if (auto pipeline = startPipeline.pipeline.lock())
     {
         DefaultPEC pec(
@@ -318,13 +317,13 @@ bool ThreadPool::Worker::operator()(const StartPipelineTask& startPipeline) cons
         return true;
     }
 
-    QUERY_ENGINE_LOG("Setup pipeline is expired");
+    ENGINE_LOG_DEBUG("Setup pipeline is expired");
     return false;
 }
 
 bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
 {
-    QUERY_ENGINE_LOG("Stop Pipeline Task for Query {}", stopPipeline.queryId);
+    ENGINE_LOG_DEBUG("Stop Pipeline Task for Query {}", stopPipeline.queryId);
     DefaultPEC pec(
         pool.bufferProvider,
         [&](const Memory::TupleBuffer& tupleBuffer, auto)
@@ -343,7 +342,7 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
                 pool.taskQueue.blockingWrite(WorkTask{stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {}});
             }
         });
-    QUERY_ENGINE_LOG("Stopping Pipeline");
+    ENGINE_LOG_DEBUG("Stopping Pipeline");
     stopPipeline.pipeline->stage->stop(pec);
     pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.pipeline->id, stopPipeline.queryId});
     return true;
@@ -351,7 +350,7 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
 
 bool ThreadPool::Worker::operator()(const StopQueryTask& stopQuery) const
 {
-    NES_INFO("Terminate Query Task for Query {}", stopQuery.queryId);
+    ENGINE_LOG_INFO("Terminate Query Task for Query {}", stopQuery.queryId);
     if (auto queryCatalog = stopQuery.catalog.lock())
     {
         queryCatalog->stopQuery(stopQuery.queryId);
@@ -363,7 +362,7 @@ bool ThreadPool::Worker::operator()(const StopQueryTask& stopQuery) const
 
 bool ThreadPool::Worker::operator()(StartQueryTask& startQuery) const
 {
-    NES_INFO("Start Query Task for Query {}", startQuery.queryId);
+    ENGINE_LOG_INFO("Start Query Task for Query {}", startQuery.queryId);
     if (auto queryCatalog = startQuery.catalog.lock())
     {
         queryCatalog->start(startQuery.queryId, std::move(startQuery.queryPlan), pool.listener, pool, pool);
@@ -377,7 +376,7 @@ bool ThreadPool::Worker::operator()(const StopSourceTask& stopSource) const
 {
     if (auto source = stopSource.target.lock())
     {
-        QUERY_ENGINE_LOG("Stop Source Task for Query {} Source {}", stopSource.queryId, source->getOriginId());
+        ENGINE_LOG_DEBUG("Stop Source Task for Query {} Source {}", stopSource.queryId, source->getOriginId());
         source->stop();
         return true;
     }
@@ -390,7 +389,7 @@ bool ThreadPool::Worker::operator()(const FailSourceTask& failSource) const
 {
     if (auto source = failSource.target.lock())
     {
-        QUERY_ENGINE_LOG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());
+        ENGINE_LOG_DEBUG("Fail Source Task for Query {} Source {}", failSource.queryId, source->getOriginId());
         source->fail(failSource.exception);
         return true;
     }
@@ -428,7 +427,7 @@ void ThreadPool::addThread()
                 }
             }
 
-            NES_INFO("Shutting down ThreadPool")
+            ENGINE_LOG_INFO("Shutting down ThreadPool")
             /// Worker in termination mode will emit further work and eventually clear the task queue and terminate.
             Worker terminatingWorker{WorkerThreadId(id), *this, true};
             while (true)
@@ -480,7 +479,7 @@ void QueryEngine::stop(QueryId queryId)
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<InstantiatedQueryPlan> qep)
 {
-    NES_INFO("Starting Query: {}", fmt::streamed(*qep));
+    ENGINE_LOG_INFO("Starting Query: {}", fmt::streamed(*qep));
     threadPool->taskQueue.blockingWrite(StartQueryTask{qep->queryId, std::move(qep), queryCatalog, {}, {}});
 }
 
@@ -506,7 +505,7 @@ void QueryCatalog::start(
 
         void onRunning() override
         {
-            QUERY_ENGINE_LOG("Query {} onRunning", queryId);
+            ENGINE_LOG_DEBUG("Query {} onRunning", queryId);
             listener->logQueryStatusChange(queryId, Execution::QueryStatus::Running);
             if (auto locked = state.lock())
             {
@@ -515,7 +514,7 @@ void QueryCatalog::start(
         }
         void onFailure(Exception exception) override
         {
-            QUERY_ENGINE_LOG("Query {} onFailure", queryId);
+            ENGINE_LOG_DEBUG("Query {} onFailure", queryId);
             if (auto locked = state.lock())
             {
                 auto successfulTransition = locked->transition(
@@ -546,7 +545,7 @@ void QueryCatalog::start(
         /// OnDestruction is called when the entire query graph is terminated.
         void onDestruction() override
         {
-            QUERY_ENGINE_LOG("Query {} onDestruction", queryId);
+            ENGINE_LOG_DEBUG("Query {} onDestruction", queryId);
             if (auto locked = state.lock())
             {
                 locked->transition(
@@ -565,7 +564,7 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Stopped};
                     });
-                QUERY_ENGINE_LOG("Query {} Stopped", queryId);
+                ENGINE_LOG_DEBUG("Query {} Stopped", queryId);
                 listener->logQueryStatusChange(queryId, Execution::QueryStatus::Stopped);
             }
             else
