@@ -692,7 +692,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminati
     {
         test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
     }
     test.stop();
@@ -719,7 +719,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermin
     {
         test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
         test.stopQuery(QueryId(1));
         /// Termination only happens after the source has failed so we have to wait at least as long
