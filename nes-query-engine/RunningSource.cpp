@@ -46,7 +46,7 @@ Sources::SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
-                        emitter.emitWork(queryId, successor, std::move(data.buffer), {}, {});
+                        emitter.emitWork(queryId, successor, data.buffer, {}, {});
                     }
                 },
                 [&](Sources::SourceReturnType::EoS) { controller.initializeSourceStop(queryId, sourceId, source); },
