@@ -122,5 +122,5 @@ INSTANTIATE_TEST_CASE_P(
     SingleNodeIntegrationTest,
     testing::Values(
         /// Todo 396: as soon as system level tests support multiple sources, we can get rid of the CSV integration tests
-        QueryTestParam{"qTwoSourcesCSVWithFilter", 62, 960 /*  2 * (SUM(0, 1, ..., 32) - 16) */}));
+        QueryTestParam{"qTwoCSVSourcesWithFilter", 62, 960 /*  2 * (SUM(0, 1, ..., 32) - 16) */}));
 }
