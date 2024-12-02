@@ -21,6 +21,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <EngineLogger.hpp>
 #include <Interfaces.hpp>
 #include <RunningQueryPlan.hpp>
 #include <RunningSource.hpp>
@@ -63,11 +64,11 @@ OriginId RunningSource::getOriginId() const
 }
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::unique_ptr<Sources::SourceHandle> pSource,
+    std::unique_ptr<Sources::SourceHandle> source,
     std::function<void()> unregister,
     std::function<void(Exception)> unregisterWithError)
     : successors(std::move(successors))
-    , source(std::move(pSource))
+    , source(std::move(source))
     , unregister(std::move(unregister))
     , unregisterWithError(std::move(unregisterWithError))
 {
@@ -84,7 +85,7 @@ std::shared_ptr<RunningSource> RunningSource::create(
 {
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(unregister), std::move(unregisterWithError)));
-    NES_DEBUG("Starting Running Source");
+    ENGINE_LOG_DEBUG("Starting Running Source");
     runningSource->source->start(emitFunction(queryId, runningSource, std::move(successors), controller, emitter));
     return runningSource;
 }
@@ -93,11 +94,11 @@ RunningSource::~RunningSource()
 {
     if (source)
     {
-        NES_DEBUG("Stopping Running Source");
+        ENGINE_LOG_DEBUG("Stopping Running Source");
         if (!source->stop())
         {
             /// Currently we do not have to recover from a source which could not be properly closed as all our queries are one-shot.
-            NES_WARNING("Could not gracefully stop source");
+            ENGINE_LOG_WARNING("Could not gracefully stop source");
         }
     }
 }
