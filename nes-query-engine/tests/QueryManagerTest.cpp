@@ -684,7 +684,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminati
     {
         test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
     }
     test.stop();
@@ -711,11 +711,205 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermin
     {
         test.startQuery(std::move(query));
         EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
-        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForInitialization());
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
         EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
         test.stopQuery(QueryId(1));
         /// Termination only happens after the source has failed so we have to wait at least as long
         EXPECT_TRUE(test.waitForQepTermination(QueryId(1), 2 * DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+}
+
+template <typename T>
+auto IsInRange(T lo, T hi)
+{
+    return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
+}
+
+TEST_F(QueryManagerTest, singleQueryWithPipelineFailure)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+
+    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
+    test.pipelineControls[pipeline]->failAfterNInvocations(2);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStart());
+        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+
+        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.sourceControls[source]->wasDestroyed());
+        EXPECT_THAT(test.pipelineControls[pipeline]->invocations.load(), IsInRange(3, 4));
+    }
+    test.stop();
+}
+
+
+TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessors)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline1 = builder.addPipeline({source});
+    auto pipeline2 = builder.addPipeline({source});
+    auto pipeline3 = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline1, pipeline2, pipeline3});
+
+    auto query = test.addNewQuery(std::move(builder));
+    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
+    test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectEoS();
+
+        EXPECT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffers(4 * 3));
+        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.sourceControls[source]->wasDestroyed());
+        EXPECT_TRUE(test.pipelineControls[pipeline1]->wasStopped());
+        EXPECT_TRUE(test.pipelineControls[pipeline2]->wasStopped());
+        EXPECT_TRUE(test.pipelineControls[pipeline3]->wasStopped());
+    }
+    test.stop();
+}
+
+TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline1 = builder.addPipeline({source});
+    auto pipeline2 = builder.addPipeline({source});
+    auto pipeline3 = builder.addPipeline({source});
+    auto sink = builder.addSink({pipeline1, pipeline2, pipeline3});
+
+    auto query = test.addNewQuery(std::move(builder));
+    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
+    test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        EXPECT_TRUE(test.sinkControls[sink]->waitForInitialization(DEFAULT_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        test.sourceControls[source]->injectError("I should fail here!");
+
+        EXPECT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffers(4 * 3));
+        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+        EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
+        EXPECT_FALSE(test.pipelineControls[pipeline1]->wasStopped());
+        EXPECT_FALSE(test.pipelineControls[pipeline2]->wasStopped());
+        EXPECT_FALSE(test.pipelineControls[pipeline3]->wasStopped());
+    }
+    test.stop();
+}
+
+TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
+{
+    constexpr size_t numberOfSources = 2;
+    constexpr size_t numberOfQueries = 10;
+    constexpr size_t failAfterNInvocations = 2;
+
+    TestingHarness test(LARGE_NUMBER_OF_THREADS, NUMBER_OF_BUFFERS_PER_SOURCE * numberOfQueries * numberOfSources);
+
+    std::vector<QueryPlanBuilder::identifier_t> sources;
+    std::vector<QueryPlanBuilder::identifier_t> pipelines;
+    std::vector<QueryPlanBuilder::identifier_t> sinks;
+    std::vector<std::unique_ptr<Runtime::InstantiatedQueryPlan>> queryPlans;
+    for (size_t i = 0; i < numberOfQueries; i++)
+    {
+        auto builder = test.buildNewQuery();
+        auto source1 = builder.addSource();
+        auto source2 = builder.addSource();
+        auto pipeline1 = builder.addPipeline({source1, source2});
+        auto pipeline2 = builder.addPipeline({source1, source2});
+        sources.push_back(source1);
+        sources.push_back(source2);
+        pipelines.push_back(pipeline1);
+        sinks.push_back(builder.addSink({pipeline1, pipeline2}));
+        queryPlans.push_back(test.addNewQuery(std::move(builder)));
+    }
+
+    std::vector<std::shared_ptr<Sources::TestSourceControl>> sourcesCtrls;
+    std::vector<std::shared_ptr<TestSinkController>> sinkCtrls;
+
+    /// Query 1 is terminated by an end of stream
+    sourcesCtrls.push_back(test.sourceControls[sources[0]]);
+    sourcesCtrls.push_back(test.sourceControls[sources[1]]);
+    sinkCtrls.push_back(test.sinkControls[sinks[0]]);
+    test.expectSourceTermination(QueryId(1), sources[0], Runtime::QueryTerminationType::Graceful);
+    test.expectSourceTermination(QueryId(1), sources[1], Runtime::QueryTerminationType::Graceful);
+    test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
+
+    /// Rest of the queries are failing due to pipeline errors on pipeline 1
+    for (size_t index = 1; const auto& query : queryPlans | std::ranges::views::drop(1))
+    {
+        test.pipelineControls[pipelines[index]]->failAfterNInvocations(failAfterNInvocations);
+        sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
+        sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
+        sinkCtrls.push_back(test.sinkControls[sinks[index]]);
+        test.expectQueryStatusEvents(
+            QueryId(1 + index), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
+        index++;
+    }
+
+    test.start();
+    {
+        /// instruct DataGenerator to emit failure for source 0 after 3 tuple buffer
+        DataGenerator dataGenerator;
+        dataGenerator.start(sourcesCtrls);
+
+        /// start all queries
+        for (QueryId::Underlying const qidGenerator = QueryId::INITIAL; auto& query : queryPlans)
+        {
+            auto queryId = query->queryId;
+            test.startQuery(std::move(query));
+            EXPECT_TRUE(test.waitForQepRunning(queryId, DEFAULT_AWAIT_TIMEOUT));
+        }
+
+        /// Expect all other queries to have failed
+        for (size_t queryId = 2; auto& query : queryPlans | std::ranges::views::drop(1))
+        {
+            EXPECT_TRUE(test.waitForQepTermination(QueryId(queryId), std::chrono::milliseconds(1000)));
+            queryId++;
+        }
+
+        /// Expect Query 1 to be terminated by end of stream.
+        EXPECT_FALSE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+
+        /// Externally stop all other queries via EoS from the datagenerator
+        dataGenerator.stop();
+        EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_AWAIT_TIMEOUT));
+    }
+
+    for (const auto& testSourceControl : sourcesCtrls)
+    {
+        EXPECT_TRUE(testSourceControl->waitUntilDestroyed());
     }
     test.stop();
 }

@@ -129,13 +129,17 @@ class TestPipelineController
 {
 public:
     std::atomic_size_t invocations;
-    std::atomic_bool stopped;
+    std::atomic<ssize_t> throwAfterNExecutions = -1;
+
     std::promise<void> setup;
     std::promise<void> stop;
     std::shared_future<void> setupFuture = setup.get_future().share();
     std::shared_future<void> stopFuture = stop.get_future().share();
-    [[nodiscard]] testing::AssertionResult waitForInitialization() const { return waitForFuture(setupFuture, DEFAULT_AWAIT_TIMEOUT); }
-    [[nodiscard]] testing::AssertionResult waitForTermination() const { return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult waitForStart() const { return waitForFuture(setupFuture, DEFAULT_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT); }
+    [[nodiscard]] testing::AssertionResult wasStarted() const { return waitForFuture(setupFuture, std::chrono::milliseconds(0)); }
+    [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
+    void failAfterNInvocations(ssize_t i) { throwAfterNExecutions = i; }
 };
 
 class TestPipeline final : public Runtime::Execution::ExecutablePipelineStage
@@ -156,7 +160,11 @@ public:
     void
     execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override
     {
-        controller->invocations++;
+        ++controller->invocations;
+        if (controller->throwAfterNExecutions.fetch_sub(1) == 1)
+        {
+            throw Exception("I should throw here.", 9999);
+        }
         pipelineExecutionContext.emitBuffer(inputTupleBuffer, Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     }
 

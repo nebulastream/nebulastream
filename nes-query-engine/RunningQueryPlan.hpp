@@ -111,6 +111,7 @@ struct RunningQueryPlanNode
         WorkEmitter& emitter,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+        std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef,
         CallbackRef setupCallback);
 
@@ -120,10 +121,17 @@ struct RunningQueryPlanNode
         PipelineId id,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<Execution::ExecutablePipelineStage> stage,
+        std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef)
-        : id(id), successors(std::move(successors)), stage(std::move(stage)), planRef(std::move(planRef))
+        : id(id)
+        , successors(std::move(successors))
+        , stage(std::move(stage))
+        , unregisterWithError(std::move(unregisterWithError))
+        , planRef(std::move(planRef))
     {
     }
+
+    void fail(Exception exception) const;
 
     PipelineId id;
 
@@ -131,6 +139,7 @@ struct RunningQueryPlanNode
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<Execution::ExecutablePipelineStage> stage;
 
+    std::function<void(Exception)> unregisterWithError;
     CallbackRef planRef;
 };
 

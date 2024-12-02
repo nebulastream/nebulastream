@@ -165,7 +165,23 @@ public:
     void emitWork(
         QueryId qid, std::weak_ptr<RunningQueryPlanNode> node, Memory::TupleBuffer buffer, onComplete complete, onFailure failure) override
     {
-        taskQueue.blockingWrite(WorkTask(qid, node, buffer, complete, failure));
+        taskQueue.blockingWrite(WorkTask(
+            qid,
+            node,
+            buffer,
+            complete,
+            [failure = std::move(failure), node](auto exception)
+            {
+                if (auto existingNode = node.lock())
+                {
+                    exception.what() += fmt::format(" In Pipeline: {}.", existingNode->id);
+                    existingNode->fail(exception);
+                }
+                if (failure)
+                {
+                    failure(exception);
+                }
+            }));
     }
 
     void emitPipelineStart(QueryId qid, std::weak_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
@@ -502,7 +518,7 @@ void QueryCatalog::start(
             QUERY_ENGINE_LOG("Query {} onFailure", queryId);
             if (auto locked = state.lock())
             {
-                locked->transition(
+                auto successfulTransition = locked->transition(
                     [](Starting&& starting)
                     {
                         RunningQueryPlan::dispose(std::move(starting.plan));
@@ -518,7 +534,13 @@ void QueryCatalog::start(
                         StoppingQueryPlan::dispose(std::move(stopping.plan));
                         return Terminated{Terminated::Failure};
                     });
-                listener->logQueryFailure(queryId, std::move(exception));
+
+                if (successfulTransition)
+                {
+                    exception.what() += fmt::format(" In Query {}.", queryId);
+                    ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
+                    listener->logQueryFailure(queryId, std::move(exception));
+                }
             }
         }
         /// OnDestruction is called when the entire query graph is terminated.
