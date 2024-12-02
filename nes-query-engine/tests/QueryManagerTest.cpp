@@ -67,10 +67,12 @@ TEST_F(QueryManagerTest, singleQueryWithShutdown)
     auto ctrl = test.sourceControls[source];
 
     /// Statistics. Note: No Pipeline Terminate and no QueryStop because engine shutdown does not gracefully terminate any query.
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_))).Times(4);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_))).Times(4);
+
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::PipelineStart(1),
+        ExpectStats::TaskExecutionStart(4),
+        ExpectStats::TaskExecutionComplete(4));
 
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
 
@@ -106,11 +108,12 @@ TEST_F(QueryManagerTest, singleQueryWithSystemShutdown)
     auto sinkCtrl = test.sinkControls[sink];
 
     /// Statistics. Note: No Pipeline Terminate and no QueryStop because engine shutdown does not gracefully terminate any query.
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_))).Times(8);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_))).Times(4);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_))).Times(8);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::TaskExecutionStart(8),
+        ExpectStats::TaskExecutionComplete(8),
+        ExpectStats::TaskEmit(4));
 
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
 
@@ -152,12 +155,14 @@ TEST_F(QueryManagerTest, singleQueryWithExternalStop)
 
     /// Statistics. Note: Pipelines are terminated because the query is gracefully stopped. The QueryTermination event is only emitted when
     /// query termination is requested via a system event, not via a source event.
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_))).Times(8);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_))).Times(4);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_))).Times(8);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_))).Times(2);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(0),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(2),
+        ExpectStats::TaskExecutionStart(8),
+        ExpectStats::TaskExecutionComplete(8),
+        ExpectStats::TaskEmit(4));
 
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Graceful);
@@ -204,14 +209,14 @@ TEST_F(QueryManagerTest, singleQueryWithSystemStop)
     /// Statistics.
     ///     Note: Pipelines are terminated because the query is gracefully stopped.
     ///           We expect a range of executed tasks between 8-10 because the query stop races with the 2nd-5th emit.
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_))).Times(::testing::Between(2, 10));
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_))).Times(::testing::Between(1, 5));
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
-        .Times(::testing::Between(2, 10));
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_))).Times(1);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(1),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(2),
+        ExpectStats::TaskExecutionStart(2, 10),
+        ExpectStats::TaskExecutionComplete(2, 10),
+        ExpectStats::TaskEmit(1, 5));
 
     test.start();
     {
@@ -301,11 +306,16 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesShutdown)
 
     /// Statistics.
     ///     Note: Pipelines are not terminated, due to system shutdown
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_))).Times(8);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_))).Times(4);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_))).Times(8);
+
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(0),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(0),
+        ExpectStats::TaskExecutionStart(8),
+        ExpectStats::TaskExecutionComplete(8),
+        ExpectStats::TaskEmit(4));
+
     test.start();
     {
         test.startQuery(std::move(query));
@@ -681,10 +691,16 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminati
 
     /// Statistics. 1 Query Start/Stop with 2 pipelines and 0 data emitted
     ///   Query Stop and Pipelines are not terminated due to engine shutdown
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_))).Times(0);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_))).Times(0);
+
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(0),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(0),
+        ExpectStats::TaskExecutionStart(0),
+        ExpectStats::TaskExecutionComplete(0),
+        ExpectStats::TaskEmit(0));
+
     test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running});
 
@@ -708,10 +724,15 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermin
     auto query = test.addNewQuery(std::move(builder));
 
     /// Statistics. 1 Query Start/Stop with 2 pipelines and 0 data emitted
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_))).Times(1);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_))).Times(2);
-    EXPECT_CALL(*test.stats, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_))).Times(1);
+    test.stats.expect(
+        ExpectStats::QueryStart(1),
+        ExpectStats::QueryStop(1),
+        ExpectStats::PipelineStart(2),
+        ExpectStats::PipelineStop(2),
+        ExpectStats::TaskExecutionStart(0),
+        ExpectStats::TaskExecutionComplete(0),
+        ExpectStats::TaskEmit(0));
+
     test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
     test.expectQueryStatusEvents(query->queryId, {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Stopped});
 
