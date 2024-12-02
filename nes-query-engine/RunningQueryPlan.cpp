@@ -29,6 +29,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <absl/functional/any_invocable.h>
+#include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -51,7 +52,7 @@ std::pair<CallbackOwner, CallbackRef> Callback::create(std::string context)
             {
                 if (!callback->callbacks.empty())
                 {
-                    NES_DEBUG("Triggering {} callbacks", context);
+                    ENGINE_LOG_DEBUG("Triggering {} callbacks", context);
                 }
                 for (auto& callbackFunction : callback->callbacks)
                 {
@@ -60,7 +61,7 @@ std::pair<CallbackOwner, CallbackRef> Callback::create(std::string context)
             }
             catch (const Exception& e)
             {
-                NES_ERROR("A Callback has thrown an exception. The callback chain has been aborted.\nException: {}", e);
+                ENGINE_LOG_ERROR("A Callback has thrown an exception. The callback chain has been aborted.\nException: {}", e);
             }
         }};
     return std::make_pair(CallbackOwner{std::move(context), ref}, CallbackRef{ref});
@@ -73,7 +74,7 @@ CallbackOwner& CallbackOwner::operator=(CallbackOwner&& other) noexcept
         std::scoped_lock const lock(ptr->mutex);
         if (!ptr->callbacks.empty())
         {
-            NES_DEBUG("Overwrite {} Callbacks", context);
+            ENGINE_LOG_DEBUG("Overwrite {} Callbacks", context);
         }
         ptr->callbacks.clear();
     }
@@ -87,7 +88,7 @@ CallbackOwner::~CallbackOwner()
 {
     if (auto ptr = owner.lock())
     {
-        NES_DEBUG("Disabling {} Callbacks", context);
+        ENGINE_LOG_DEBUG("Disabling {} Callbacks", context);
         std::scoped_lock const lock(ptr->mutex);
         ptr->callbacks.clear();
     }
@@ -135,16 +136,16 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
         emitter.emitPipelineStop(
             queryId,
             std::move(node),
-            [ptr, queryId = this->queryId]()
+            [ptr ENGINE_IF_LOG_TRACE(, queryId = this->queryId)]()
             {
-                NES_TRACE("Pipeline {}-{} was terminated", queryId, ptr->id);
+                ENGINE_LOG_TRACE("Pipeline {}-{} was terminated", queryId, ptr->id);
                 ptr->requiresTermination = false;
             },
             {});
     }
     else
     {
-        NES_TRACE("Skipping {}-{} Termination", queryId, ptr->id);
+        ENGINE_LOG_TRACE("Skipping {}-{} Termination", queryId, ptr->id);
     }
 }
 
@@ -164,11 +165,11 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        [queryId, pipelineId, setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
+        [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
         {
             if (auto node = weakRef.lock())
             {
-                NES_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
+                ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
                 node->requiresTermination = true;
             }
         },
@@ -327,7 +328,7 @@ void RunningQueryPlan::stopSource(OriginId oid)
 
 std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
-    NES_DEBUG("Soft Stopping Query Plan");
+    ENGINE_LOG_DEBUG("Soft Stopping Query Plan");
     /// By default the RunningQueryPlan dtor will disable pipeline termination. The Softstop should invoke all pipeline terminations.
     /// So we prevent the disabling the terminations by clearing all weak references to the pipelines before destroying the rqp.
     auto callback = runningQueryPlan->allPipelinesExpired.getRef();
@@ -345,13 +346,13 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
 
 std::unique_ptr<InstantiatedQueryPlan> StoppingQueryPlan::dispose(std::unique_ptr<StoppingQueryPlan> stoppingQueryPlan)
 {
-    NES_DEBUG("Disposing Stopping Query Plan");
+    ENGINE_LOG_DEBUG("Disposing Stopping Query Plan");
     return std::move(stoppingQueryPlan->plan);
 }
 
 std::unique_ptr<InstantiatedQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
-    NES_DEBUG("Disposing Running Query Plan");
+    ENGINE_LOG_DEBUG("Disposing Running Query Plan");
     runningQueryPlan->listeners.clear();
     runningQueryPlan->allPipelinesExpired = {};
     return std::move(runningQueryPlan->qep);
