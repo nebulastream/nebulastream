@@ -334,7 +334,7 @@ QueryId ISQPRequest::handleAddQueryRequest(NES::RequestProcessor::ISQPAddQueryEv
 
     auto queryPlan = addQueryEvent->getQueryPlan();
     auto queryPlacementStrategy = addQueryEvent->getPlacementStrategy();
-auto faultTolerance = addQueryEvent->getFaultTolerance();
+    auto faultTolerance = addQueryEvent->getFaultTolerance();
 
     // Set unique identifier and additional properties to the query
     auto queryId = PlanIdGenerator::getNextQueryId();

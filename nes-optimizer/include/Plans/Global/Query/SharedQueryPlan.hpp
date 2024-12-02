@@ -16,13 +16,13 @@
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
 #include <Identifiers/Identifiers.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 #include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
 #include <queue>
 #include <set>
 #include <vector>
-#include <Util/FaultToleranceType.hpp>
 
 namespace NES {
 
@@ -241,6 +241,7 @@ class SharedQueryPlan {
     [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
     [[nodiscard]] FaultToleranceType getFaultToleranceType() const;
+
   private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
@@ -283,7 +284,7 @@ class SharedQueryPlan {
     std::map<size_t, std::set<std::string>> hashBasedSignatures;
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::ChangeLogPtr changeLog;
- FaultToleranceType faultToleranceType;
+    FaultToleranceType faultToleranceType;
 };
 }// namespace NES
 

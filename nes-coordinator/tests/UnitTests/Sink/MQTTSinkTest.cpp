@@ -192,7 +192,8 @@ TEST_F(MQTTSinkTest, testMQTTClientCreation) {
                                    timeUnit,
                                    msgDelay,
                                    qualityOfService,
-                                   asynchronousClient, FaultToleranceType::NONE);
+                                   asynchronousClient,
+                                   FaultToleranceType::NONE);
     NES_INFO("{}", mqttSink->toString());
     ASSERT_FALSE(mqttSink->toString().empty());
 }

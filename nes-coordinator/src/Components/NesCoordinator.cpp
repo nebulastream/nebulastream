@@ -75,7 +75,8 @@ extern void Exceptions::installGlobalErrorListener(std::shared_ptr<ErrorListener
 NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfiguration)
     : coordinatorConfiguration(std::move(coordinatorConfiguration)), restIp(this->coordinatorConfiguration->restIp),
       restPort(this->coordinatorConfiguration->restPort), rpcIp(this->coordinatorConfiguration->coordinatorHost),
-      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring), numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
+      rpcPort(this->coordinatorConfiguration->rpcPort), enableMonitoring(this->coordinatorConfiguration->enableMonitoring),
+      numberOfBuffersPerEpoch(this->coordinatorConfiguration->numberOfBuffersPerEpoch) {
     NES_DEBUG("NesCoordinator() restIp={} restPort={} rpcIp={} rpcPort={}", restIp, restPort, rpcIp, rpcPort);
     setThreadName("NesCoordinator");
 
@@ -231,36 +232,36 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorHealthCheckService->startHealthCheck();
 
     statisticOutputThread = std::make_shared<std::thread>(([this]() {
-            NES_DEBUG("NesWorker: start statistic collection");
-            std::ofstream statisticsFile;
-            statisticsFile.open("coordinator.csv", std::ios::out);
-            if (statisticsFile.is_open()) {
-                statisticsFile << "timestamp,";
-                statisticsFile << "queryId,";
-                statisticsFile << "subPlanId,";
-                statisticsFile << "processedTasks,";
-                statisticsFile << "processedTuple,";
-                statisticsFile << "processedBuffers,";
-                statisticsFile << "processedWatermarks,";
-                statisticsFile << "latencyAVG,";
-                statisticsFile << "queueSizeAVG,";
-                statisticsFile << "availableGlobalBufferAVG,";
-                statisticsFile << "availableFixedBufferAVG\n";
-                while (isRunning) {
-                    auto ts = std::chrono::system_clock::now();
-                    auto timeNow = std::chrono::system_clock::to_time_t(ts);
-                    auto stats = worker->getNodeEngine()->getQueryStatistics(true);
-                    for (auto& query : stats) {
-                        statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
-                                       << query.getQueryStatisticsAsString() << "\n";
-                        statisticsFile.flush();
-                    }
-                    sleep(1);
+        NES_DEBUG("NesWorker: start statistic collection");
+        std::ofstream statisticsFile;
+        statisticsFile.open("coordinator.csv", std::ios::out);
+        if (statisticsFile.is_open()) {
+            statisticsFile << "timestamp,";
+            statisticsFile << "queryId,";
+            statisticsFile << "subPlanId,";
+            statisticsFile << "processedTasks,";
+            statisticsFile << "processedTuple,";
+            statisticsFile << "processedBuffers,";
+            statisticsFile << "processedWatermarks,";
+            statisticsFile << "latencyAVG,";
+            statisticsFile << "queueSizeAVG,";
+            statisticsFile << "availableGlobalBufferAVG,";
+            statisticsFile << "availableFixedBufferAVG\n";
+            while (isRunning) {
+                auto ts = std::chrono::system_clock::now();
+                auto timeNow = std::chrono::system_clock::to_time_t(ts);
+                auto stats = worker->getNodeEngine()->getQueryStatistics(true);
+                for (auto& query : stats) {
+                    statisticsFile << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << ","
+                                   << query.getQueryStatisticsAsString() << "\n";
+                    statisticsFile.flush();
                 }
+                sleep(1);
             }
-            NES_DEBUG("NesWorker: statistic collection end");
-            statisticsFile.close();
-        }));
+        }
+        NES_DEBUG("NesWorker: statistic collection end");
+        statisticsFile.close();
+    }));
 
     // Start placement amendment handler
     placementAmendmentHandler->start();

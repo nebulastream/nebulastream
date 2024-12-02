@@ -55,7 +55,8 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan, FaultToleranceT
     return queryPlan;
 }
 
-DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType) {
+DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan,
+                                                   FaultToleranceType faultToleranceType) {
 
     if (!sourceCatalog) {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");

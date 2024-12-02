@@ -158,6 +158,10 @@ bool TopologyNode::removeNodeProperty(const std::string& key) {
     return true;
 }
 
+std::vector<WorkerId> TopologyNode::getAlternativeNodeCandidateIds() { return alternativeNodeIds; }
+
+void TopologyNode::setAlternativeNodeCandidate(WorkerId node) { alternativeNodeIds.emplace_back(node); }
+
 void TopologyNode::addLinkProperty(WorkerId linkedNodeId, const LinkPropertyPtr& topologyLink) {
     linkProperties[linkedNodeId] = topologyLink;
 }

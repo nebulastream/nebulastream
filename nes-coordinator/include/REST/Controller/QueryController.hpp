@@ -165,8 +165,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
             std::string faultToleranceString = DEFAULT_TOLERANCE_TYPE;
             if (!validateFaultToleranceType(requestJson["faultTolerance"].get<std::string>())) {
                 std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + faultToleranceString
-+ ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
-                return errorHandler->handleError(Status::CODE_400, errorMessage);;
+                    + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
+                return errorHandler->handleError(Status::CODE_400, errorMessage);
+                ;
             }
             if (!validatePlacementStrategy(requestJson["placement"].get<std::string>())) {
                 std::string errorMessage = "Invalid Placement Strategy: " + requestJson["placement"].get<std::string>()
@@ -194,8 +195,7 @@ class QueryController : public oatpp::web::server::api::ApiController {
             NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= {}, strategyName= {}",
                       userQuery,
                       placementStrategyString);
-            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement,
-                                                                               faultToleranceMode);
+            QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(userQuery, placement, faultToleranceMode);
             //Prepare the response
             nlohmann::json response;
             response["queryId"] = queryId;
@@ -244,8 +244,9 @@ class QueryController : public oatpp::web::server::api::ApiController {
             if (context->contains("faultTolerance")) {
                 if (!validateFaultToleranceType(faultToleranceString = context->at("faultTolerance").value())) {
                     std::string errorMessage = "Invalid Fault Tolerance Strategy Type provided: " + faultToleranceString
-    + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
-                    return errorHandler->handleError(Status::CODE_400, errorMessage);;
+                        + ". Valid FaultTolerance Strategies are: 'UB', 'AS', 'CH', 'M'.";
+                    return errorHandler->handleError(Status::CODE_400, errorMessage);
+                    ;
                 } else {
                     faultToleranceString = context->at("faultTolerance").value();
                 }

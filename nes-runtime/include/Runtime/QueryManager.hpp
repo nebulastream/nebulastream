@@ -131,13 +131,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     */
     bool failExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& qep);
 
- /**
+    /**
 * @brief method to inject epoch barrier
 * @param epochBarrier
 * @param sourceOperatorId
 * @return bool indicating success
 */
- bool injectEpochBarrier(uint64_t epochBarrier, OperatorId sourceOperatorId);
+    bool injectEpochBarrier(uint64_t epochBarrier, OperatorId sourceOperatorId);
     /**
      * @brief process task from task queue
      * @param bool indicating if the thread pool is still running
@@ -230,11 +230,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
                                            const ReconfigurationMessage& reconfigurationMessage,
                                            bool blocking = false) = 0;
 
- /**
+    /**
      * @brief Returns the numberOfBuffersPerEpoch
      * @return numberOfBuffersPerEpoch
      */
- uint64_t getNumberOfBuffersPerEpoch() const;
+    uint64_t getNumberOfBuffersPerEpoch() const;
 
     /**
      * method to get the first buffer manger
@@ -286,7 +286,6 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     void notifyTaskFailure(Execution::SuccessorExecutablePipeline pipeline, const std::string& message);
 
-
     /**
      * @brief This method informs the QueryManager that a source has failed
      * @param source the failed source
@@ -316,21 +315,21 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
- /**
+    /**
      * @brief Triggers an epoch propagation for all network sinks
      * @param decomposedQueryId
      * @param epochBarrier timestamp that should be trimmed in the storage
      * @return true if successful
      */
- bool sendTrimmingReconfiguration(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier);
+    bool sendTrimmingReconfiguration(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier);
 
- /**
+    /**
   * @brief Triggers an epoch propagation for all network sinks
   * @param decomposedQueryId
   * @param epochBarrier timestamp that should be trimmed in the storage
   * @return true if successful
   */
- bool propagateEpochBackwards(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier);
+    bool propagateEpochBackwards(DecomposedQueryId decomposedQueryId, uint64_t epochBarrier);
 
     /**
      * @brief propagates a reconfiguration marker to all downstream operators of a source operator

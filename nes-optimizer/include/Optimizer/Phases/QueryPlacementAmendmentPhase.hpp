@@ -234,7 +234,7 @@ class QueryPlacementAmendmentPhase {
      * @param placementStrategy : name of the strategy
      * @return instance of type BaseOptimizer
      */
-    BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy);
+    BasePlacementStrategyPtr getStrategy(PlacementStrategy placementStrategy, FaultToleranceType faultTolerance);
 
     /**
      * @brief perform placement removal for all operators marked for deletion
@@ -263,7 +263,8 @@ class QueryPlacementAmendmentPhase {
                                  const std::set<LogicalOperatorPtr>& upstreamOperators,
                                  const std::set<LogicalOperatorPtr>& downstreamOperators,
                                  DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-                                 std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts, FaultToleranceType faultToleranceType);
+                                 std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
+                                 FaultToleranceType faultTolerance);
 
     /**
      * @brief Method to identify the location where reconfiguration marker needs to be pushed.

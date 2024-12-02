@@ -212,7 +212,7 @@ class ExplainRequest : public AbstractUniRequest {
     Optimizer::PlacementStrategy queryPlacementStrategy;
     z3::ContextPtr z3Context;
     QueryParsingServicePtr queryParsingService;
- FaultToleranceType faultToleranceType;
+    FaultToleranceType faultToleranceType;
 
     const int32_t ELEGANT_SERVICE_TIMEOUT = 3000;
 

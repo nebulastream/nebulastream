@@ -120,7 +120,8 @@ class Topology {
                             const uint16_t numberOfSlots,
                             std::map<std::string, std::any> workerProperties,
                             uint32_t bandwidthInMbps,
-                            uint32_t latencyInMs);
+                            uint32_t latencyInMs,
+                            WorkerId alternativeWorkerId = WorkerId(0));
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -254,6 +255,8 @@ class Topology {
     std::vector<TopologyNodePtr> findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
                                                  const std::vector<WorkerId>& destinationTopologyNodeIds);
 
+    std::vector<std::vector<TopologyNodePtr>> findAllPathsBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
+                                                                  const std::vector<WorkerId>& destinationTopologyNodeIds);
     /**
      * @brief Get topology nodes with the given radius of the geo location
      * @param center : the center geo location
@@ -450,6 +453,12 @@ class Topology {
      * @return next topology node id
      */
     WorkerId getNextWorkerId();
+
+    void findAllPathsDFS(const TopologyNodePtr& currentNode,
+                         const std::vector<TopologyNodePtr>& destinationNodes,
+                         std::set<WorkerId>& visited,
+                         std::vector<TopologyNodePtr>& currentPath,
+                         std::vector<std::vector<TopologyNodePtr>>& allPaths);
 
     std::vector<WorkerId> rootWorkerIds;
     std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;

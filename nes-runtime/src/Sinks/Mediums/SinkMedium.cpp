@@ -42,7 +42,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
                        DecomposedQueryPlanVersion decomposedQueryVersion,
                        FaultToleranceType faultToleranceType,
                        uint64_t numberOfOrigins,
-                        Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
+                       Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor)
     : sinkFormat(std::move(sinkFormat)), nodeEngine(std::move(nodeEngine)), activeProducers(numOfProducers),
       sharedQueryId(sharedQueryId), decomposedQueryId(decomposedQueryId), decomposedQueryVersion(decomposedQueryVersion),
       numberOfOrigins(numberOfOrigins), faultToleranceType(faultToleranceType), watermarkProcessor(std::move(watermarkProcessor)) {

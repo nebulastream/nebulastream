@@ -19,6 +19,7 @@
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Runtime/OpenCLDeviceInfo.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
@@ -93,7 +94,8 @@ WorkerId Topology::registerWorker(WorkerId workerId,
                                   const uint16_t numberOfSlots,
                                   std::map<std::string, std::any> workerProperties,
                                   uint32_t bandwidthInMbps,
-                                  uint32_t latencyInMs) {
+                                  uint32_t latencyInMs,
+                                  WorkerId alternativeWorkerid) {
 
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     NES_DEBUG(" topology before insert");
@@ -111,6 +113,8 @@ WorkerId Topology::registerWorker(WorkerId workerId,
     if (!workerIdToTopologyNode.contains(workerId)) {
         TopologyNodePtr newTopologyNode =
             TopologyNode::create(workerId, address, grpcPort, dataPort, numberOfSlots, workerProperties);
+        if (alternativeWorkerid.getRawValue())
+            newTopologyNode->setAlternativeNodeCandidate(alternativeWorkerid);
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         workerIdToTopologyNode[workerId] = newTopologyNode;
         NES_DEBUG(" register node");
@@ -442,6 +446,71 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
     NES_TRACE("Topology: Merge all found sub-graphs together to create a single sub graph and return the set of start nodes of "
               "the merged graph.");
     return mergeSubGraphs(startNodesOfGraph);
+}
+
+std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
+                                                                        const std::vector<WorkerId>& destinationTopologyNodeIds) {
+
+    std::vector<std::vector<TopologyNodePtr>> allPaths;
+
+    // Fetch the source and destination topology nodes (same as existing code)
+    std::vector<TopologyNodePtr> sourceTopologyNodes;
+    for (auto sourceTopologyNodeId : sourceTopologyNodeIds) {
+        auto readLockedTopologyNode = workerIdToTopologyNode.at(sourceTopologyNodeId).tryRLock();
+        if (!readLockedTopologyNode) {
+            NES_WARNING("Unable to acquire read lock on the topology node {} to process the find paths between request",
+                        sourceTopologyNodeId);
+            continue;
+        }
+        sourceTopologyNodes.emplace_back((*readLockedTopologyNode));
+    }
+
+    std::vector<TopologyNodePtr> destinationTopologyNodes;
+    for (auto destinationTopologyNodeId : destinationTopologyNodeIds) {
+        auto readLockedTopologyNode = workerIdToTopologyNode.at(destinationTopologyNodeId).tryRLock();
+        if (!readLockedTopologyNode) {
+            NES_WARNING("Unable to acquire read lock on the topology node {} to process the find paths between request",
+                        destinationTopologyNodeId);
+            continue;
+        }
+        destinationTopologyNodes.emplace_back((*readLockedTopologyNode));
+    }
+
+    // For each source node, find all paths to any of the destination nodes
+    for (const auto& sourceNode : sourceTopologyNodes) {
+        std::vector<TopologyNodePtr> currentPath;
+        std::set<WorkerId> visited;
+        findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths);
+    }
+
+    return allPaths;
+}
+
+void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
+                               const std::vector<TopologyNodePtr>& destinationNodes,
+                               std::set<WorkerId>& visited,
+                               std::vector<TopologyNodePtr>& currentPath,
+                               std::vector<std::vector<TopologyNodePtr>>& allPaths) {
+
+    visited.insert(currentNode->getId());
+    currentPath.push_back(currentNode);
+
+    // Check if currentNode is a destination node
+    if (std::any_of(destinationNodes.begin(), destinationNodes.end(), [&](const TopologyNodePtr& destNode) {
+            return destNode->getId() == currentNode->getId();
+        })) {
+        // Found a path; add a copy of currentPath to allPaths
+        allPaths.push_back(currentPath);
+    } else {
+        for (const auto& parentNode : currentNode->getParents()) {
+            if (visited.find(parentNode->as<TopologyNode>()->getId()) == visited.end()) {
+                findAllPathsDFS(parentNode->as<TopologyNode>(), destinationNodes, visited, currentPath, allPaths);
+            }
+        }
+    }
+
+    visited.erase(currentNode->getId());
+    currentPath.pop_back();
 }
 
 bool Topology::findAllDownstreamNodes(const WorkerId& startNode,

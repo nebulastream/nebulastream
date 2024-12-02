@@ -15,8 +15,8 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
 
-#include <memory>
 #include <Util/FaultToleranceType.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -90,7 +90,8 @@ class TypeInferencePhase {
      * @param decomposedQueryPlan the decomposed query plan
      * @param faultToleranceType fault tolerance type
      */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan,
+                                   FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
 
   private:
     /**
@@ -106,7 +107,8 @@ class TypeInferencePhase {
      */
     void performTypeInference(QueryId planId,
                               std::vector<SourceLogicalOperatorPtr> sourceOperators,
-                              std::vector<SinkLogicalOperatorPtr> sinkOperators, FaultToleranceType faultToleranceType);
+                              std::vector<SinkLogicalOperatorPtr> sinkOperators,
+                              FaultToleranceType faultToleranceType);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;

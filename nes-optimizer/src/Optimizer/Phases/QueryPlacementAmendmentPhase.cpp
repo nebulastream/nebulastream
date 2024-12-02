@@ -250,7 +250,8 @@ DeploymentUnit QueryPlacementAmendmentPhase::execute(const SharedQueryPlanPtr& s
                                     pinnedUpstreamOperators,
                                     pinnedDownStreamOperators,
                                     nextDecomposedQueryPlanVersion,
-                                    placementAdditionDeploymentContexts, faultToleranceType);
+                                    placementAdditionDeploymentContexts,
+                                    faultToleranceType);
 
             // Collect all deployment contexts returned by placement removal strategy
             for (const auto& [_, deploymentContext] : placementAdditionDeploymentContexts) {
@@ -502,13 +503,13 @@ void QueryPlacementAmendmentPhase::handlePlacementRemoval(NES::SharedQueryId sha
     }
 }
 
-void QueryPlacementAmendmentPhase::handlePlacementAddition(
-    Optimizer::PlacementStrategy placementStrategy,
-    SharedQueryId sharedQueryId,
-    const std::set<LogicalOperatorPtr>& upstreamOperators,
-    const std::set<LogicalOperatorPtr>& downstreamOperators,
-    DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
-    std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts, FaultToleranceType faultToleranceType) {
+void QueryPlacementAmendmentPhase::handlePlacementAddition(Optimizer::PlacementStrategy placementStrategy,
+                                                           SharedQueryId sharedQueryId,
+                                                           const std::set<LogicalOperatorPtr>& upstreamOperators,
+                                                           const std::set<LogicalOperatorPtr>& downstreamOperators,
+                                                           DecomposedQueryPlanVersion& nextDecomposedQueryPlanVersion,
+                                                           std::map<DecomposedQueryId, DeploymentContextPtr>& deploymentContexts,
+                                                           FaultToleranceType faultTolerance) {
 
     //1. Fetch all upstream pinned operators that are not removed
     std::set<LogicalOperatorPtr> pinnedUpstreamOperators;
@@ -528,11 +529,11 @@ void QueryPlacementAmendmentPhase::handlePlacementAddition(
 
     //3. Call placement addition strategy
     if (containsOperatorsForPlacement(pinnedDownStreamOperators)) {
-        auto placementAdditionStrategy = getStrategy(placementStrategy);
+        auto placementAdditionStrategy = getStrategy(placementStrategy, faultTolerance);
         auto placementAdditionResults = placementAdditionStrategy->updateGlobalExecutionPlan(sharedQueryId,
                                                                                              pinnedUpstreamOperators,
                                                                                              pinnedDownStreamOperators,
-                                                                                             nextDecomposedQueryPlanVersion, faultToleranceType);
+                                                                                             nextDecomposedQueryPlanVersion);
 
         // Collect all deployment contexts returned by placement removal strategy
         for (const auto& [decomposedQueryId, deploymentContext] : placementAdditionResults.deploymentContexts) {
@@ -580,7 +581,8 @@ void QueryPlacementAmendmentPhase::pinAllSinkOperators(const std::set<LogicalOpe
     }
 }
 
-BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStrategy placementStrategy) {
+BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStrategy placementStrategy,
+                                                                   FaultToleranceType faultTolerance) {
 
     auto plannerURL = coordinatorConfiguration->elegant.plannerServiceURL;
 
@@ -594,7 +596,8 @@ BasePlacementStrategyPtr QueryPlacementAmendmentPhase::getStrategy(PlacementStra
             return BottomUpStrategy::create(globalExecutionPlan,
                                             topology,
                                             typeInferencePhase,
-                                            coordinatorConfiguration->optimizer.placementAmendmentMode);
+                                            coordinatorConfiguration->optimizer.placementAmendmentMode,
+                                            faultTolerance);
         case PlacementStrategy::TopDown:
             return TopDownStrategy::create(globalExecutionPlan,
                                            topology,

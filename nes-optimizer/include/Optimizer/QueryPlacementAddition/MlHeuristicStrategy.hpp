@@ -45,7 +45,7 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief creates an Object of this class through a static create function
@@ -72,7 +72,8 @@ class MlHeuristicStrategy : public BasePlacementAdditionStrategy {
     void identifyPinningLocation(SharedQueryId sharedQueryId,
                                  const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                 PathInfo path);
 
     /**
      * @brief checks if the ratio of #sink_fields/#source_fields > 1/product of all selectivities

@@ -35,13 +35,14 @@ NullOutputSink::NullOutputSink(Runtime::NodeEnginePtr nodeEngine,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  faultToleranceType,
-                 numberOfOrigins) {
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)) {
     if (faultToleranceType == FaultToleranceType::UB) {
         updateWatermarkCallback = [this](Runtime::TupleBuffer& inputBuffer) {
             updateWatermark(inputBuffer);
         };
     }
-                 }
+}
 
 NullOutputSink::~NullOutputSink() = default;
 

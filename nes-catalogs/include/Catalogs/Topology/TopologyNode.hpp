@@ -176,6 +176,9 @@ class TopologyNode : public Node {
      */
     bool removeNodeProperty(const std::string& key);
 
+    std::vector<WorkerId> getAlternativeNodeCandidateIds();
+
+    void setAlternativeNodeCandidate(WorkerId node);
     /**
      * @brief add a new link property to the stored properties map
      * @param linkedTopologyNodeId topology node to which the property will be associated
@@ -219,6 +222,7 @@ class TopologyNode : public Node {
     uint32_t dataPort;
     uint16_t totalSlots;
     uint16_t occupiedSlots;
+    std::vector<WorkerId> alternativeNodeIds;
 
     /**
      * @brief A field to store a map of node properties

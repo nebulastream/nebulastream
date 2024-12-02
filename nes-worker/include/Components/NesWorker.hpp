@@ -254,12 +254,11 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool waitForConnect() const;
 
-
- /**
+    /**
   * @brief Method to get replicationLevel
   * @return replicationLevel
   */
- uint64_t getReplicationLevel();
+    uint64_t getReplicationLevel();
 
     void handleRpcs(WorkerRPCServer& service);
 

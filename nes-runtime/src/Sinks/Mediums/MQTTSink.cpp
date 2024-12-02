@@ -63,7 +63,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                  decomposedQueryVersion,
                  faultToleranceType,
                  numberOfOrigins,
-                 , std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       address(address), clientId(clientId), topic(topic), user(user), maxBufferedMessages(maxBufferedMessages),
       timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient),
       connected(false) {

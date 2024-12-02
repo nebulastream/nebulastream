@@ -54,7 +54,8 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
         auto rootOperatorId = rootOperator->getId();
         serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
         if (rootOperator->instanceOf<SinkLogicalOperator>())
-            serializableDecomposedQueryPlan->set_faulttolerance(static_cast<uint64_t>(rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->getFaultToleranceType()));
+            serializableDecomposedQueryPlan->set_faulttolerance(
+                static_cast<uint64_t>(rootOperator->as<SinkLogicalOperator>()->getSinkDescriptor()->getFaultToleranceType()));
     }
 
     //Serialize the sub query plan and query plan id

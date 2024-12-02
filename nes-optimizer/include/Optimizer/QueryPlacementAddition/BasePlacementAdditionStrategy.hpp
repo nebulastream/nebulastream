@@ -15,10 +15,10 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_BASEPLACEMENTADDITIONSTRATEGY_HPP_
 
-#include <Util/FaultToleranceType.hpp>
 #include <Configurations/Enums/PlacementAmendmentMode.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <chrono>
 #include <folly/Synchronized.h>
 #include <memory>
@@ -92,6 +92,10 @@ using PlacementMatrix = std::vector<std::vector<bool>>;
 using ComputedDecomposedQueryPlans = std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>>;
 using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
 
+struct PathInfo {
+    std::vector<WorkerId> workerNodeIdsInBFS;
+    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
+};
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -101,7 +105,8 @@ class BasePlacementAdditionStrategy {
     explicit BasePlacementAdditionStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmendmentMode placementAmendmentMode);
+                                           PlacementAmendmentMode placementAmendmentMode,
+                                           FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
     virtual ~BasePlacementAdditionStrategy();
 
@@ -117,7 +122,7 @@ class BasePlacementAdditionStrategy {
     virtual PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                               const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                               const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                              DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) = 0;
+                                                              DecomposedQueryPlanVersion querySubPlanVersion) = 0;
 
   protected:
     /**
@@ -155,7 +160,7 @@ class BasePlacementAdditionStrategy {
      */
     PlacementAdditionResult updateExecutionNodes(SharedQueryId sharedQueryId,
                                                  ComputedDecomposedQueryPlans& computedSubQueryPlans,
-                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE);
+                                                 DecomposedQueryPlanVersion decomposedQueryPlanVersion);
 
     /**
      * @brief Get the Topology node with the input id
@@ -164,6 +169,9 @@ class BasePlacementAdditionStrategy {
      */
     TopologyNodePtr getTopologyNode(WorkerId workerId);
 
+    bool lockTopologyNodes(const std::set<WorkerId>& nodesToLock);
+
+    void unlockAllLockedTopologyNodes();
     /**
      * @brief Get topology node where all children operators of the input operator are placed
      * @param operatorNode: the input operator
@@ -177,24 +185,24 @@ class BasePlacementAdditionStrategy {
      * This allows us to prevent deadlocks and starvation situation.
      * @return true if successful else false
      */
-    bool lockTopologyNodesInSelectedPath();
+    bool lockTopologyNodesInSelectedPath(PathInfo path);
 
     /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
      * We following an order inverse of the lock acquisition. This allows us to prevent starvation situation.
      * @return true if successful else false
      */
-    bool unlockTopologyNodesInSelectedPath();
+    bool unlockTopologyNodesInSelectedPath(PathInfo path);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;
     PathFinderPtr pathFinder;
     PlacementAmendmentMode placementAmendmentMode;
-    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
-    std::vector<WorkerId> workerNodeIdsInBFS;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
+    std::vector<PathInfo> pathsFound;
+    FaultToleranceType faultTolerance;
 
   private:
     /**
@@ -247,8 +255,8 @@ class BasePlacementAdditionStrategy {
      * @param topologyNodesWithDownStreamPinnedOperators : topology nodes hosting the pinned downstream operators
      * @return the upstream topology nodes of the selected path
      */
-    std::vector<TopologyNodePtr> findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
-                                          const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
+    std::vector<std::vector<TopologyNodePtr>> findPath(const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
+                                                       const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators);
 
   private:
     /**

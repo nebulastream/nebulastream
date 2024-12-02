@@ -48,6 +48,8 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 
 QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId) {}
 
+void QueryPlan::setFaultTolerance(FaultToleranceType faultToleranceType) { faultTolerance = faultToleranceType; }
+
 std::vector<SourceLogicalOperatorPtr> QueryPlan::getSourceOperators() const {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
     std::set<SourceLogicalOperatorPtr> sourceOperatorsSet;
@@ -285,10 +287,6 @@ Optimizer::PlacementStrategy QueryPlan::getPlacementStrategy() const { return pl
 
 void QueryPlan::setPlacementStrategy(Optimizer::PlacementStrategy placementStrategy) {
     this->placementStrategy = placementStrategy;
-}
-
-void QueryPlan::setFaultTolerance(FaultToleranceType faultTolerance) {
-    this->faultTolerance = faultTolerance;
 }
 
 FaultToleranceType QueryPlan::getFaultTolerance() const { return faultTolerance; }

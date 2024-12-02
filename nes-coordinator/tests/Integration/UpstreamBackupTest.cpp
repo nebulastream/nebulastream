@@ -143,12 +143,12 @@ TEST_F(UpstreamBackupTest, testTimestampWatermarkProcessor) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("UpstreamBackupTest: Submit query");
-    string query =
-        "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = "Query::from(\"window\").filter(Attribute(\"id\") < 100).sink(FileSinkDescriptor::create(\"" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::NONE);
+                                                                             Optimizer::PlacementStrategy::BottomUp,
+                                                                             FaultToleranceType::NONE);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
@@ -228,8 +228,8 @@ TEST_F(UpstreamBackupTest, testMessagePassingBetweenWorkers) {
         "Query::from(\"window\").sink(FileSinkDescriptor::create(\"" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query,
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::UB);
+                                                                             Optimizer::PlacementStrategy::BottomUp,
+                                                                             FaultToleranceType::UB);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     auto queryCatalog = crd->getQueryCatalog();
@@ -308,8 +308,8 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     auto query = Query::from("window").sink(NullOutputSinkDescriptor::create());
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(),
-                                                                    Optimizer::PlacementStrategy::BottomUp,
-                                                                    FaultToleranceType::UB);
+                                                                             Optimizer::PlacementStrategy::BottomUp,
+                                                                             FaultToleranceType::UB);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -323,7 +323,6 @@ TEST_F(UpstreamBackupTest, testUpstreamBackupTest) {
     NES_INFO("UpstreamBackupTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
 
     NES_INFO("UpstreamBackupTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

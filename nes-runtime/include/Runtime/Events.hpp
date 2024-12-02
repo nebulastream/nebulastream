@@ -93,14 +93,14 @@ class StartSourceEvent : public BaseEvent {
 };
 
 struct PropagateEpochEvent {
- explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
+    explicit PropagateEpochEvent(Runtime::EventType type, uint64_t timestamp) : type(type), timestamp(timestamp) {}
 
- Runtime::EventType getEventType() const { return type; }
+    Runtime::EventType getEventType() const { return type; }
 
- uint64_t timestampValue() const { return timestamp; }
+    uint64_t timestampValue() const { return timestamp; }
 
- Runtime::EventType type;
- uint64_t timestamp;
+    Runtime::EventType type;
+    uint64_t timestamp;
 };
 
 }// namespace NES::Runtime

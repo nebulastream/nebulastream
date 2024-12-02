@@ -166,11 +166,11 @@ class NetworkSource : public DataSource {
      */
     OperatorId getUniqueId() const;
 
- /**
+    /**
     * @brief This method returns nes partition
     * @return nesPartition
     */
- NesPartition getNesPartition() const;
+    NesPartition getNesPartition() const;
 
     /**
      * @brief set a new source descriptor to be applied once startNewVersion() is called

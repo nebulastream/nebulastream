@@ -20,8 +20,8 @@
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
-#include <Util/FaultToleranceType.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/FaultToleranceType.hpp>
 #include <string>
 
 namespace NES::Network {
@@ -54,7 +54,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
                          std::chrono::milliseconds waitTime,
                          uint8_t retryTimes,
                          uint64_t numberOfOrigins,
-                         DecomposedQueryPlanVersion version, FaultToleranceType faultToleranceType = FaultToleranceType::UB);
+                         DecomposedQueryPlanVersion version,
+                         FaultToleranceType faultToleranceType = FaultToleranceType::UB);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -168,7 +169,8 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
- bool hasTrimmed();
+    bool hasTrimmed();
+
   private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
@@ -206,16 +208,16 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     NodeLocation receiverLocation;
     Runtime::BufferManagerPtr bufferManager;
     NesPartition nesPartition;
- uint64_t bufferCount;
+    uint64_t bufferCount;
     std::atomic<uint64_t> messageSequenceNumber;
     size_t numOfProducers;
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
- std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
- std::function<void(uint64_t, Runtime::WorkerContext&)> deleteFromStorageCallback;
- std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
- bool trimmingStarted;
+    std::function<void(Runtime::TupleBuffer&, Runtime::WorkerContext& workerContext)> insertIntoStorageCallback;
+    std::function<void(uint64_t, Runtime::WorkerContext&)> deleteFromStorageCallback;
+    std::function<void(Runtime::TupleBuffer&)> sendPropagationCallback;
+    bool trimmingStarted;
 };
 }// namespace NES::Network
 #endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

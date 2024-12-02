@@ -226,15 +226,13 @@ class WorkerConfiguration : public BaseConfiguration {
     /**
      * @brief Enables the statistic output
      */
- BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output"};
+    BoolOption enableStatisticOutput = {ENABLE_STATISTIC_OUTPUT_CONFIG, "false", "Enable statistic output"};
 
+    UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, "0", "Lambda source"};
 
+    UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, "1024", "Number of buffers to produce"};
 
- UIntOption lambdaSource = {LAMBDA_SOURCE_CONFIG, "0", "Lambda source"};
-
- UIntOption numberOfBuffersToProduce = {NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, "1024", "Number of buffers to produce"};
-
- UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, "100", "Source gathering interval"};
+    UIntOption sourceGatheringInterval = {SOURCE_GATHERING_INTERVAL_CONFIG, "100", "Source gathering interval"};
 
     /**
      * @brief Sets configuration properties for the query compiler.
@@ -383,16 +381,16 @@ class WorkerConfiguration : public BaseConfiguration {
                 &nodeSpatialType,
                 &mobilityConfiguration,
                 &numberOfQueues,
-         &lambdaSource,
- &numberOfBuffersToProduce,
- &sourceGatheringInterval,
+                &lambdaSource,
+                &numberOfBuffersToProduce,
+                &sourceGatheringInterval,
                 &numberOfThreadsPerQueue,
                 &numberOfBuffersPerEpoch,
                 &queryManagerMode,
                 &enableSourceSharing,
                 &workerHealthCheckWaitTime,
                 &configPath,
-         &enableStatisticOutput,
+                &enableStatisticOutput,
                 &connectSinksAsync,
                 &connectSourceEventChannelsAsync,
 #ifdef TFDEF

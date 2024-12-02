@@ -33,7 +33,7 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceTypen = FaultToleranceType::NONE) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
     TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
@@ -57,14 +57,16 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
      */
     void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
                                  TopologyNodePtr candidateTopologyNode,
-                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators);
+                                 const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+                                 PathInfo path);
 
     /**
      * @brief Get topology node where all parent operators of the input operator are placed
      * @param candidateOperator: the input operator
      * @return vector of topology nodes where parent operator was placed or empty if not all parent operators are placed
      */
-    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr& candidateOperator);
+    std::vector<TopologyNodePtr> getTopologyNodesForDownStreamOperators(const LogicalOperatorPtr& candidateOperator,
+                                                                        PathInfo path);
 
     /**
      * @brief Get topology node where all children operators of the input operator are to be placed

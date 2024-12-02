@@ -217,18 +217,17 @@ class QueryPlan {
      */
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-
- /**
+    /**
  * @brief Set query fault tolerance strategy
  * @param PlacementStrategy: fault tolerance strategy
  */
- void setFaultTolerance(FaultToleranceType faultTolerance);
+    void setFaultTolerance(FaultToleranceType faultTolerance);
 
- /**
+    /**
   * @brief Get the fault tolerance strategy for the shared query plan
   * @return fault tolerance strategy
   */
- FaultToleranceType getFaultTolerance() const;
+    FaultToleranceType getFaultTolerance() const;
 
     /**
      * @brief Find all operators between given set of downstream and upstream operators
@@ -303,7 +302,7 @@ class QueryPlan {
     QueryState currentState;
     // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
- FaultToleranceType faultTolerance = FaultToleranceType::NONE;
+    FaultToleranceType faultTolerance = FaultToleranceType::NONE;
 };
 }// namespace NES
 #endif// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

@@ -48,7 +48,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType = FaultToleranceType::NONE) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost

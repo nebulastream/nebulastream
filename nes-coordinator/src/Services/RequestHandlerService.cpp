@@ -92,8 +92,8 @@ QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const std::string
 }
 
 QueryId RequestHandlerService::validateAndQueueAddQueryRequest(const QueryPlanPtr& queryPlan,
-const Optimizer::PlacementStrategy placementStrategy,
-FaultToleranceType faultTolerance) {
+                                                               const Optimizer::PlacementStrategy placementStrategy,
+                                                               FaultToleranceType faultTolerance) {
 
     auto addRequest = RequestProcessor::AddQueryRequest::create(queryPlan,
                                                                 placementStrategy,
@@ -107,8 +107,8 @@ FaultToleranceType faultTolerance) {
 }
 
 nlohmann::json RequestHandlerService::validateAndQueueExplainQueryRequest(const NES::QueryPlanPtr& queryPlan,
-const Optimizer::PlacementStrategy placementStrategy,
-FaultToleranceType faultTolerance) {
+                                                                          const Optimizer::PlacementStrategy placementStrategy,
+                                                                          FaultToleranceType faultTolerance) {
 
     auto explainRequest = RequestProcessor::ExplainRequest::create(queryPlan, placementStrategy, faultTolerance, 1, z3Context);
     asyncRequestExecutor->runAsync(explainRequest);

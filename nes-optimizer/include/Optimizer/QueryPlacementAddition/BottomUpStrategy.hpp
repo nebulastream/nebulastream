@@ -38,17 +38,21 @@ class BottomUpStrategy : public BasePlacementAdditionStrategy {
     static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
                                            const TopologyPtr& topology,
                                            const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmendmentMode placementAmendmentMode);
+                                           PlacementAmendmentMode placementAmendmentMode,
+                                           FaultToleranceType faultTolerance);
 
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+
+    TopologyNodePtr findCandidateTopologyNode(TopologyNodePtr startNode);
 
     explicit BottomUpStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                               const TopologyPtr& topology,
                               const TypeInferencePhasePtr& typeInferencePhase,
-                              PlacementAmendmentMode placementAmendmentMode);
+                              PlacementAmendmentMode placementAmendmentMode,
+                              FaultToleranceType faultTolerance);
 
   private:
     /**

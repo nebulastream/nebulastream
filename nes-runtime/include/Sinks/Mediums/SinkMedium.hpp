@@ -51,7 +51,7 @@ class SinkMedium : public Runtime::Reconfigurable {
                         uint32_t numOfProducers,
                         SharedQueryId sharedQueryId,
                         DecomposedQueryId decomposedQueryId,
-                        FaultToleranceType faultToleranceType = FaultToleranceType::NONE,
+                        FaultToleranceType faultToleranceType,
                         DecomposedQueryPlanVersion decomposedQueryVersion,
                         Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor = nullptr);
 
@@ -87,7 +87,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
- uint64_t getCurrentEpochBarrier();
+    uint64_t getCurrentEpochBarrier();
     /**
      * @brief get the id of the owning plan
      * @return sharedQueryId
@@ -143,11 +143,11 @@ class SinkMedium : public Runtime::Reconfigurable {
       */
     virtual SinkMediumTypes getSinkMediumType() = 0;
 
- /**
+    /**
   * @brief method to notify epoch termination
   * @return success
   */
- bool notifyEpochTermination(uint64_t epochBarrier) const;
+    bool notifyEpochTermination(uint64_t epochBarrier) const;
 
     /**
      * @brief
@@ -168,11 +168,11 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     OperatorId getOperatorId() const;
 
- /**
+    /**
      * @brief update watermark and propagate timestamp
      * @param inputBuffer
      */
- void updateWatermark(Runtime::TupleBuffer& inputBuffer);
+    void updateWatermark(Runtime::TupleBuffer& inputBuffer);
 
     /**
      * @brief Sets that sink is used for state migration
@@ -199,15 +199,15 @@ class SinkMedium : public Runtime::Reconfigurable {
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};
     std::recursive_mutex writeMutex;
- uint64_t bufferCount;
+    uint64_t bufferCount;
 
- std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
- std::function<void(uint64_t)> notifyEpochCallback;
+    std::function<void(Runtime::TupleBuffer&)> updateWatermarkCallback;
+    std::function<void(uint64_t)> notifyEpochCallback;
 
- Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
- uint64_t buffersPerEpoch;
- bool isWaiting;
- uint64_t currentTimestamp;
+    Windowing::MultiOriginWatermarkProcessorPtr watermarkProcessor;
+    uint64_t buffersPerEpoch;
+    bool isWaiting;
+    uint64_t currentTimestamp;
     bool migration{false};
 };
 

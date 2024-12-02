@@ -54,7 +54,7 @@ PlacementAdditionResult
 MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                               DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceType) {
+                                               DecomposedQueryPlanVersion querySubPlanVersion) {
     try {
         NES_DEBUG("Perform placement of the pinned and all their downstream operators.");
         // 1. Create copy of the query plan
@@ -75,7 +75,7 @@ MlHeuristicStrategy::updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
         addNetworkOperators(computedQuerySubPlans);
 
         // 6. update execution nodes
-        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion, faultToleranceType);
+        return updateExecutionNodes(sharedQueryId, computedQuerySubPlans, querySubPlanVersion);
     } catch (std::exception& ex) {
         throw Exceptions::QueryPlacementAdditionException(sharedQueryId, ex.what());
     }
@@ -85,29 +85,36 @@ void MlHeuristicStrategy::performOperatorPlacement(SharedQueryId sharedQueryId,
                                                    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
 
-    NES_DEBUG("Get the all source operators for performing the placement.");
-    for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
-        NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
+    for (const auto& path : pathsFound) {
+        NES_DEBUG("Get the all source operators for performing the placement.");
+        for (auto& pinnedUpStreamOperator : pinnedUpStreamOperators) {
+            NES_DEBUG("Get the topology node for source operator {} placement.", pinnedUpStreamOperator->toString());
 
-        auto workerId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
-        TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
+            auto workerId = std::any_cast<WorkerId>(pinnedUpStreamOperator->getProperty(PINNED_WORKER_ID));
+            TopologyNodePtr candidateTopologyNode = getTopologyNode(workerId);
 
-        // 1. If pinned up stream node was already placed then place all its downstream operators
-        if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
-            //Place all downstream nodes
-            for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
+            // 1. If pinned up stream node was already placed then place all its downstream operators
+            if (pinnedUpStreamOperator->getOperatorState() == OperatorState::PLACED) {
+                //Place all downstream nodes
+                for (auto& downStreamNode : pinnedUpStreamOperator->getParents()) {
+                    identifyPinningLocation(sharedQueryId,
+                                            downStreamNode->as<LogicalOperator>(),
+                                            candidateTopologyNode,
+                                            pinnedDownStreamOperators,
+                                            path);
+                }
+            } else {// 2. If pinned operator is not placed then start by placing the operator
+                if (candidateTopologyNode->getAvailableResources() == 0) {
+                    NES_ERROR("Unable to find resources on the physical node for placement of source operator");
+                    throw Exceptions::RuntimeException(
+                        "Unable to find resources on the physical node for placement of source operator");
+                }
                 identifyPinningLocation(sharedQueryId,
-                                        downStreamNode->as<LogicalOperator>(),
+                                        pinnedUpStreamOperator,
                                         candidateTopologyNode,
-                                        pinnedDownStreamOperators);
+                                        pinnedDownStreamOperators,
+                                        path);
             }
-        } else {// 2. If pinned operator is not placed then start by placing the operator
-            if (candidateTopologyNode->getAvailableResources() == 0) {
-                NES_ERROR("Unable to find resources on the physical node for placement of source operator");
-                throw Exceptions::RuntimeException(
-                    "Unable to find resources on the physical node for placement of source operator");
-            }
-            identifyPinningLocation(sharedQueryId, pinnedUpStreamOperator, candidateTopologyNode, pinnedDownStreamOperators);
         }
     }
     NES_DEBUG("Finished placing query operators into the global execution plan");
@@ -137,7 +144,8 @@ bool MlHeuristicStrategy::pushUpBasedOnFilterSelectivity(const LogicalOperatorPt
 void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
                                                   const LogicalOperatorPtr& logicalOperator,
                                                   TopologyNodePtr candidateTopologyNode,
-                                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators) {
+                                                  const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+                                                  PathInfo path) {
 
     if (logicalOperator->getOperatorState() == OperatorState::PLACED) {
         NES_DEBUG("Operator is already placed and thus skipping placement of this and its down stream operators.");
@@ -255,7 +263,8 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
             identifyPinningLocation(sharedQueryId,
                                     logicalOperator,
                                     candidateTopologyNode->getParents()[0]->as<TopologyNode>(),
-                                    pinnedDownStreamOperators);
+                                    pinnedDownStreamOperators,
+                                    path);
         }
         if (!canBePlacedHere) {
             NES_ERROR("Operator can not be placed on {}", candidateTopologyNode->getId());
@@ -300,7 +309,11 @@ void MlHeuristicStrategy::identifyPinningLocation(SharedQueryId sharedQueryId,
 
     NES_TRACE("Place further upstream operators.");
     for (const auto& parent : logicalOperator->getParents()) {
-        identifyPinningLocation(sharedQueryId, parent->as<LogicalOperator>(), candidateTopologyNode, pinnedDownStreamOperators);
+        identifyPinningLocation(sharedQueryId,
+                                parent->as<LogicalOperator>(),
+                                candidateTopologyNode,
+                                pinnedDownStreamOperators,
+                                path);
     }
 }
 

@@ -45,15 +45,20 @@ using ISQPAddQueryEventPtr = std::shared_ptr<ISQPAddQueryEvent>;
 class ISQPAddQueryEvent : public ISQPEvent {
 
   public:
-    static ISQPEventPtr create(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance = FaultToleranceType::NONE);
+    static ISQPEventPtr create(const QueryPlanPtr& queryPlan,
+                               Optimizer::PlacementStrategy placementStrategy,
+                               FaultToleranceType faultTolerance = FaultToleranceType::NONE);
 
-    ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance);
+    ISQPAddQueryEvent(const QueryPlanPtr& queryPlan,
+                      Optimizer::PlacementStrategy placementStrategy,
+                      FaultToleranceType faultTolerance);
 
     const QueryPlanPtr& getQueryPlan() const;
 
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
     FaultToleranceType getFaultTolerance() const;
+
   private:
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy placementStrategy;

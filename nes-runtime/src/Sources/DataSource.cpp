@@ -197,7 +197,7 @@ bool DataSource::fail() {
 }
 
 bool DataSource::injectEpochBarrier(uint64_t epochBarrier) const {
-    NES_DEBUG("DataSource::injectEpochBarrier received timestamp {}" , epochBarrier);
+    NES_DEBUG("DataSource::injectEpochBarrier received timestamp {}", epochBarrier);
     return queryManager->injectEpochBarrier(epochBarrier, this->operatorId);
 }
 

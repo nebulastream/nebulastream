@@ -24,13 +24,17 @@ namespace NES {
  */
 Operator::Operator(OperatorId id) : Operator(id, INVALID_STATISTIC_ID) {}
 
-Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId) {
+Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId), originalId(id) {
     NES_INFO("Creating Operator {}", id);
 }
 
 OperatorId Operator::getId() const { return id; }
 
+OperatorId Operator::getOriginalId() const { return originalId; }
+
 void Operator::setId(OperatorId id) { Operator::id = id; }
+
+void Operator::setOriginalId(OperatorId id) { Operator::originalId = id; }
 
 StatisticId Operator::getStatisticId() const { return statisticId; }
 

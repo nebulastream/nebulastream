@@ -241,8 +241,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     LocationServicePtr locationService;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
- uint64_t numberOfBuffersPerEpoch;
- std::shared_ptr<std::thread> statisticOutputThread;
+    uint64_t numberOfBuffersPerEpoch;
+    std::shared_ptr<std::thread> statisticOutputThread;
 
   public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;

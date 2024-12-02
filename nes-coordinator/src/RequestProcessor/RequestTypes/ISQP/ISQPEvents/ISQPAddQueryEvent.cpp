@@ -16,10 +16,15 @@
 
 namespace NES::RequestProcessor {
 
-ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance)
-    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy), faultToleranceType(faultTolerance) {}
+ISQPAddQueryEvent::ISQPAddQueryEvent(const QueryPlanPtr& queryPlan,
+                                     Optimizer::PlacementStrategy placementStrategy,
+                                     FaultToleranceType faultTolerance)
+    : ISQPEvent(ISQP_ADD_QUERY_EVENT_PRIORITY), queryPlan(queryPlan), placementStrategy(placementStrategy),
+      faultToleranceType(faultTolerance) {}
 
-ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy, FaultToleranceType faultTolerance) {
+ISQPEventPtr ISQPAddQueryEvent::create(const NES::QueryPlanPtr& queryPlan,
+                                       Optimizer::PlacementStrategy placementStrategy,
+                                       FaultToleranceType faultTolerance) {
     return std::make_shared<ISQPAddQueryEvent>(queryPlan, placementStrategy, faultTolerance);
 }
 

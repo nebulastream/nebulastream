@@ -72,7 +72,7 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                                  const z3::ContextPtr& z3Context,
                                  const QueryParsingServicePtr& queryParsingService,
                                  const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                                               FaultToleranceType faultTolerance)
+                                 FaultToleranceType faultTolerance)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -83,14 +83,15 @@ AddQueryRequest::AddQueryRequest(const std::string& queryString,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(queryParsingService), placementAmendmentHandler(placementAmendmentHandler), faultTolerance(faultTolerance) {}
+      z3Context(z3Context), queryParsingService(queryParsingService), placementAmendmentHandler(placementAmendmentHandler),
+      faultTolerance(faultTolerance) {}
 
 AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                                  const Optimizer::PlacementStrategy queryPlacementStrategy,
                                  const uint8_t maxRetries,
                                  const z3::ContextPtr& z3Context,
                                  const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                                               FaultToleranceType faultTolerance)
+                                 FaultToleranceType faultTolerance)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -101,7 +102,8 @@ AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
       queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(nullptr), placementAmendmentHandler(placementAmendmentHandler), faultTolerance(faultTolerance) {}
+      z3Context(z3Context), queryParsingService(nullptr), placementAmendmentHandler(placementAmendmentHandler),
+      faultTolerance(faultTolerance) {}
 
 AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const Optimizer::PlacementStrategy queryPlacementStrategy,
@@ -109,7 +111,7 @@ AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
                                            const z3::ContextPtr& z3Context,
                                            const QueryParsingServicePtr& queryParsingService,
                                            const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                                               FaultToleranceType faultTolerance) {
+                                           FaultToleranceType faultTolerance) {
     return std::make_shared<AddQueryRequest>(queryPlan,
                                              queryPlacementStrategy,
                                              maxRetries,
@@ -124,8 +126,13 @@ AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
                                            const uint8_t maxRetries,
                                            const z3::ContextPtr& z3Context,
                                            const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                                               FaultToleranceType faultTolerance) {
-    return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context, placementAmendmentHandler, faultTolerance);
+                                           FaultToleranceType faultTolerance) {
+    return std::make_shared<AddQueryRequest>(queryPlan,
+                                             queryPlacementStrategy,
+                                             maxRetries,
+                                             z3Context,
+                                             placementAmendmentHandler,
+                                             faultTolerance);
 }
 
 void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,

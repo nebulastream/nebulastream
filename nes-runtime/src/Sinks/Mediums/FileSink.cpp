@@ -46,7 +46,8 @@ FileSink::FileSink(SinkFormatPtr format,
                  decomposedQueryId,
                  decomposedQueryVersion,
                  faultToleranceType,
-                 numberOfOrigins),
+                 numberOfOrigins,
+                 std::make_unique<Windowing::MultiOriginWatermarkProcessor>(numberOfOrigins)),
       filePath(filePath), append(append) {}
 
 std::string FileSink::toString() const {

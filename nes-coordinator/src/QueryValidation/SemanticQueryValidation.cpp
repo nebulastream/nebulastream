@@ -76,38 +76,38 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan) {
     }
 }
 
-void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr& queryPlan) {
-    try {
-        // Creating a z3 context for the signature inference and the z3 solver
-        z3::ContextPtr context = std::make_shared<z3::context>();
-        auto signatureInferencePhase =
-            SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
-        z3::solver solver(*context);
-        signatureInferencePhase->execute(queryPlan);
-        auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
-
-        // Looping through all filter operators of the Query, checking for contradicting conditions.
-        for (const auto& filterOp : filterOperators) {
-            QuerySignaturePtr qsp = filterOp->getZ3Signature();
-
-            // Adding the conditions to the z3 SMT solver
-            z3::ExprPtr conditions = qsp->getConditions();
-            solver.add(*(qsp->getConditions()));
-            std::stringstream s;
-            s << solver;
-            NES_INFO("{}", s.str());
-            // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
-            if (solver.check() == z3::unsat) {
-                auto predicateStr = filterOp->getPredicate()->toString();
-                createExceptionForPredicate(predicateStr);
-            }
-        }
-    } catch (SignatureComputationException& ex) {
-        NES_WARNING("Unable to compute signature due to {}", ex.what());
-    } catch (std::exception& e) {
-        std::string errorMessage = e.what();
-        throw InvalidQueryException(errorMessage + "\n");
-    }
+void SemanticQueryValidation::advanceSemanticQueryValidation(const QueryPlanPtr&) {
+    // try {
+    // Creating a z3 context for the signature inference and the z3 solver
+    // z3::ContextPtr context = std::make_shared<z3::context>();
+    // auto signatureInferencePhase =
+    //     SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    // z3::solver solver(*context);
+    // signatureInferencePhase->execute(queryPlan);
+    // auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
+    //
+    // // Looping through all filter operators of the Query, checking for contradicting conditions.
+    // for (const auto& filterOp : filterOperators) {
+    //     QuerySignaturePtr qsp = filterOp->getZ3Signature();
+    //
+    //     // Adding the conditions to the z3 SMT solver
+    //     z3::ExprPtr conditions = qsp->getConditions();
+    //     solver.add(*(qsp->getConditions()));
+    //     std::stringstream s;
+    //     s << solver;
+    //     NES_INFO("{}", s.str());
+    //     // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
+    //     if (solver.check() == z3::unsat) {
+    //         auto predicateStr = filterOp->getPredicate()->toString();
+    //         createExceptionForPredicate(predicateStr);
+    //     }
+    // }
+    // } catch (SignatureComputationException& ex) {
+    //     NES_WARNING("Unable to compute signature due to {}", ex.what());
+    // } catch (std::exception& e) {
+    //     std::string errorMessage = e.what();
+    //     throw InvalidQueryException(errorMessage + "\n");
+    // }
 }
 
 void SemanticQueryValidation::createExceptionForPredicate(std::string& predicateString) {

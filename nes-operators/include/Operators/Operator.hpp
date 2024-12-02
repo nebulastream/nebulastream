@@ -56,6 +56,20 @@ class Operator : public Node {
     OperatorId getId() const;
 
     /**
+ * @brief gets the original operator id.
+ * Unique Identifier of the operator within a query.
+ * @return uint64_t
+ */
+    OperatorId getOriginalId() const;
+
+    /**
+* @brief sets the original operator id.
+* Unique Identifier of the operator within a query.
+* @return uint64_t
+*/
+    void setOriginalId(OperatorId operatorId);
+
+    /**
      * @brief Gets the statisticId of this operator for example to pass it down to the physical operator
      * @return StatisticId
      */
@@ -233,6 +247,7 @@ class Operator : public Node {
      * @brief Map of properties of the current node
      */
     OperatorProperties properties;
+    OperatorId originalId;
 };
 
 }// namespace NES
