@@ -13,15 +13,15 @@
 */
 
 #include <cstring>
+#include <deque>
 #include <iostream>
-#include <thread>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+#include <sys/types.h>
 #include <ErrorHandling.hpp>
 #include <FixedSizeBufferPool.hpp>
 #include <LocalBufferPool.hpp>
@@ -112,7 +112,7 @@ std::shared_ptr<BufferManager> BufferManager::create(
 
 BufferManager::~BufferManager()
 {
-    destroy();
+    BufferManager::destroy();
 }
 
 void BufferManager::initialize(uint32_t withAlignment)
@@ -244,7 +244,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
             {
                 if (it->free)
                 {
-                    auto* memSegment = (*it).segment.get();
+                    auto* memSegment = it->segment.get();
                     it->free = false;
                     if (memSegment->controlBlock->prepare())
                     {
@@ -391,12 +391,19 @@ void BufferManager::UnpooledBufferHolder::markFree()
     free = true;
 }
 
-std::shared_ptr<AbstractBufferProvider> BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers)
+std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers)
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_DEBUG("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
-    NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers"); ///TODO improve error
+
+    const ssize_t numberOfAvailableBuffers = availableBuffers.size();
+    if (numberOfAvailableBuffers < 0 || static_cast<size_t>(numberOfAvailableBuffers) < numberOfReservedBuffers)
+    {
+        NES_WARNING("Could not allocate LocalBufferPool with {} buffers", numberOfReservedBuffers);
+        return {};
+    }
+
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {
         detail::MemorySegment* memorySegment;
@@ -412,13 +419,18 @@ std::shared_ptr<AbstractBufferProvider> BufferManager::createLocalBufferPool(siz
     return ret;
 }
 
-std::shared_ptr<AbstractBufferProvider> BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)
+std::optional<std::shared_ptr<AbstractBufferProvider>> BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_ASSERT2_FMT(
-        (size_t)availableBuffers.size() >= numberOfReservedBuffers,
-        "BufferManager: Not enough buffers: " << availableBuffers.size() << "<" << numberOfReservedBuffers);
+
+    const ssize_t numberOfAvailableBuffers = availableBuffers.size();
+    if (numberOfAvailableBuffers < 0 || static_cast<size_t>(numberOfAvailableBuffers) < numberOfReservedBuffers)
+    {
+        NES_WARNING("Could not allocate FixedSizeBufferPool with {} buffers", numberOfReservedBuffers);
+        return {};
+    }
+
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {
         detail::MemorySegment* memorySegment;

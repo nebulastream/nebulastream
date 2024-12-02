@@ -164,14 +164,14 @@ public:
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
      */
-    std::shared_ptr<AbstractBufferProvider> createLocalBufferPool(size_t numberOfReservedBuffers) override;
+    std::optional<std::shared_ptr<AbstractBufferProvider>> createLocalBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
       * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
-      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+      * @return a fixed buffer manager with numberOfReservedBuffers exclusive buffer
       */
-    std::shared_ptr<AbstractBufferProvider> createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
+    std::optional<std::shared_ptr<AbstractBufferProvider>> createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
      * @brief Recycle a pooled buffer by making it available to others

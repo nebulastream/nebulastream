@@ -68,8 +68,6 @@ public:
     SourceThread& operator=(const SourceThread& other) = delete;
     SourceThread& operator=(SourceThread&& other) noexcept = delete;
 
-    ~SourceThread();
-
     /// clean up thread-local state for the source.
     void close();
 
@@ -87,8 +85,7 @@ public:
 
 protected:
     OriginId originId;
-    std::shared_ptr<NES::Memory::AbstractPoolProvider> localBufferManager;
-    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider{nullptr};
+    std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
     uint64_t numSourceLocalBuffers;
     std::unique_ptr<Source> sourceImplementation;
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
