@@ -33,7 +33,7 @@ class TopDownStrategy : public BasePlacementAdditionStrategy {
     PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
                                                       const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
                                                       const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion, FaultToleranceType faultToleranceTypen = FaultToleranceType::NONE) override;
+                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
 
   private:
     TopDownStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,

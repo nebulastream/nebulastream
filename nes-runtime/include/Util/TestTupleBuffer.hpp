@@ -310,16 +310,15 @@ class TestTupleBuffer {
      */
     void setNumberOfTuples(uint64_t value);
 
-  /**
+    /**
    * @brief set the creation timestamp in milliseconds
    */
-   void setCreationTimestampInMS(uint64_t value) const;
+    void setCreationTimestampInMS(uint64_t value) const;
 
-  /**
+    /**
    * @brief set watermark to a tuple buffer
    */
-  void setWatermark(uint64_t value) const;
-
+    void setWatermark(uint64_t value) const;
 
     /**
    * @brief set the creation timestamp in milliseconds
