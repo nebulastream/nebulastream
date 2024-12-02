@@ -17,6 +17,7 @@
 #include <Execution/Functions/Function.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Nautilus
 {

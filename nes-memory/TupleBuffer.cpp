@@ -131,15 +131,15 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
-Timestamp TupleBuffer::getWatermark() const noexcept
+Runtime::Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(Timestamp value) noexcept
+void TupleBuffer::setWatermark(Runtime::Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
+Runtime::Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
@@ -169,7 +169,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(Timestamp value) noexcept
+void TupleBuffer::setCreationTimestampInMS(Runtime::Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }

@@ -41,13 +41,7 @@ public:
     constexpr static T INITIAL = initial;
     constexpr static T INVALID = invalid;
 
-    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongType& lh, const NESStrongType& rh) noexcept
-    {
-        return lh.v <=> rh.v;
-    }
-    [[nodiscard]] friend constexpr bool operator==(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v == rh.v; }
-
-    [[nodiscard]] friend constexpr bool operator!=(const NESStrongType& lh, const NESStrongType& rh) noexcept { return lh.v != rh.v; }
+    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongType& lh, const NESStrongType& rh) noexcept = default;
 
     friend std::ostream& operator<<(std::ostream& os, const NESStrongType& t) { return os << t.getRawValue(); }
 

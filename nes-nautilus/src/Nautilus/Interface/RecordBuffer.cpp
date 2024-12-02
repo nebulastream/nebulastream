@@ -16,6 +16,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
 #include <nautilus/function.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 
 namespace NES::Nautilus
 {
@@ -79,12 +80,12 @@ nautilus::val<bool> RecordBuffer::isLastChunk()
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_isLastChunk, tupleBufferRef)};
 }
 
-nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
+nautilus::val<Runtime::Timestamp> RecordBuffer::getWatermarkTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getWatermark, tupleBufferRef)};
 }
 
-void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
+void RecordBuffer::setWatermarkTs(const nautilus::val<Runtime::Timestamp>& watermarkTs)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setWatermark, tupleBufferRef, watermarkTs);
 }
@@ -94,12 +95,12 @@ nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, tupleBufferRef)};
 }
 
-nautilus::val<Timestamp> RecordBuffer::getCreatingTs()
+nautilus::val<Runtime::Timestamp> RecordBuffer::getCreatingTs()
 {
     return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getCreationTimestampInMS, tupleBufferRef)};
 }
 
-void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)
+void RecordBuffer::setCreationTs(const nautilus::val<Runtime::Timestamp>& creationTs)
 {
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setCreationTimestampInMS, tupleBufferRef, creationTs);
 }

@@ -116,7 +116,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
         insertMultiplexOperatorsAfter(operatorNode);
     }
 
-    if (Util::instanceOf<LogicalSelectionOperator>(operatorNode))
+    if (NES::Util::instanceOf<LogicalSelectionOperator>(operatorNode))
     {
         auto filterOperator = NES::Util::as<LogicalSelectionOperator>(operatorNode);
         auto PhysicalSelectionOperator = PhysicalOperators::PhysicalSelectionOperator::create(
@@ -414,7 +414,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
 
-    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
+    auto timeBasedWindowType = NES::Util::as<Windowing::TimeBasedWindowType>(windowDefinition->getWindowType());
     auto windowOperatorProperties = WindowOperatorProperties(windowOperator, windowInputSchema, windowOutputSchema, windowDefinition);
 
     /// TODO this currently just mimics the old usage of the set of input origins.
@@ -426,7 +426,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
     operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
     /// if we have a sliding window and use slicing we have to create another slice merge operator
-    if (Util::instanceOf<Windowing::SlidingWindow>(timeBasedWindowType))
+    if (NES::Util::instanceOf<Windowing::SlidingWindow>(timeBasedWindowType))
     {
         auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
             getNextOperatorId(), windowInputSchema, windowOutputSchema, windowDefinition);
@@ -452,9 +452,9 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     /// handle if threshold window
     ///TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
     auto windowType = NES::Util::as<WindowOperator>(operatorNode)->getWindowDefinition()->getWindowType();
-    if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
+    if (NES::Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {
-        auto contentBasedWindowType = Util::as<Windowing::ContentBasedWindowType>(windowType);
+        auto contentBasedWindowType = NES::Util::as<Windowing::ContentBasedWindowType>(windowType);
         /// check different content-based window types
         if (contentBasedWindowType->getContentBasedSubWindowType()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
@@ -472,7 +472,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
             throw UnknownWindowType(windowDefinition->getWindowType()->toString());
         }
     }
-    else if (Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
+    else if (NES::Util::instanceOf<Windowing::TimeBasedWindowType>(windowType))
     {
         lowerTimeBasedWindowOperator(operatorNode);
     }

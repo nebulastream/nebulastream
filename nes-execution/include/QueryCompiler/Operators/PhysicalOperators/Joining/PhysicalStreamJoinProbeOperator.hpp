@@ -25,6 +25,7 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators

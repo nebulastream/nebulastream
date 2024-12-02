@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Operators
 struct WatermarkState final : OperatorState
 {
     explicit WatermarkState() = default;
-    nautilus::val<Timestamp> currentWatermark = INITIAL_WATERMARK_TS_NUMBER;
+    nautilus::val<Timestamp> currentWatermark = Runtime::Timestamp::INITIAL_VALUE;
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};

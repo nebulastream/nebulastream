@@ -20,6 +20,7 @@
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Common.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
