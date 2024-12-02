@@ -332,6 +332,6 @@ void TestingHarness::start()
     }
     Runtime::QueryEngineConfiguration configuration{};
     configuration.numberOfWorkerThreads.setValue(numberOfThreads);
-    qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->stats, this->status, this->bm);
+    qm = std::make_unique<NES::Runtime::QueryEngine>(configuration, this->statListener, this->status, this->bm);
 }
 }
