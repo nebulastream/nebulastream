@@ -53,15 +53,6 @@ SourceThread::SourceThread(
 {
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
-SourceThread::~SourceThread()
-{
-    NES_DEBUG("Source Thread Destroyed");
-    if (bufferProvider)
-    {
-        bufferProvider->destroy();
-    }
-}
-
 
 namespace detail
 {
@@ -163,12 +154,18 @@ void dataSourceThread(
     SourceReturnType::EmitFunction emit,
     OriginId originId,
     std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
+    std::optional<std::shared_ptr<Memory::AbstractBufferProvider>> bufferProvider)
 {
     threadSetup(originId);
+    if (!bufferProvider)
+    {
+        emit(originId, SourceReturnType::Error(CannotAllocateBuffer()));
+        result.set_exception(std::make_exception_ptr(CannotAllocateBuffer()));
+        return;
+    }
 
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    EmitFn const dataEmit = [&, sequenceNumber = static_cast<size_t>(0)](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
+    EmitFn const dataEmit = [&](Memory::TupleBuffer&& buffer, bool shouldAddMetadata)
     {
         if (shouldAddMetadata)
         {
@@ -179,7 +176,7 @@ void dataSourceThread(
 
     try
     {
-        result.set_value(dataSourceThreadRoutine(stopToken, *source, *bufferProvider, *inputFormatter, dataEmit));
+        result.set_value(dataSourceThreadRoutine(stopToken, *source, **bufferProvider, *inputFormatter, dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{});
@@ -205,7 +202,6 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     NES_DEBUG("SourceThread  {} : start source", originId);
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
-    this->bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
 
     std::jthread sourceThread(
         detail::dataSourceThread,
@@ -214,7 +210,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         std::move(inputFormatter),
-        this->bufferProvider);
+        localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers));
     thread = std::move(sourceThread);
     return true;
 }
