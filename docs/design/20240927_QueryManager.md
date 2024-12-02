@@ -171,8 +171,7 @@ memory and lifetime guarantees in a highly multithreaded scenario. We make heavy
 `shared_ptr` while allowing query cancellation via `weak_ptrs`. The reference counting can happen implicitly, reducing
 the risk of leaking references.
 
-We use reference counting to implement incremental query termination, where predecessor pipelines keep their successors
-alive until termination, incrementally terminating all pipelines of a query.
+We use reference counting to implement incremental query termination, where predecessor pipelines, or sources, keep their successors alive until termination, incrementally terminating all pipelines of a query.
 
 Lastly, we use callbacks to group source code relevant to a specific component that may run at different times in
 different contexts. For example, multiple scenarios could cause a `RunningQueryPlan` to be destroyed. However, we can
@@ -290,7 +289,7 @@ To an external user of the QueryEngine, we allow two Operations:
 ```mermaid
 classDiagram
     class QueryEngine {
-        +start(QueryId, InstantiatedQueryPlan)
+        +start(InstantiatedQueryPlan)
         +stop(QueryId)
     }
 ```
@@ -318,7 +317,7 @@ components (**G1**).
 ```mermaid
 classDiagram
     class QueryEngine {
-        +start(QueryId, InstantiatedQueryPlan, Options) QueryId
+        +start(InstantiatedQueryPlan, Options) QueryId
         +registerQueryStatusListener(QueryStatusListener)
         +registerStatisticListener(StatisticListener)
     }
@@ -332,8 +331,7 @@ options so they will be omitted.
 
 In the previous implementation of the QueryEngine the statistic collection has been integrated tightly into the
 QueryEngine. The new design decouples emitting the statistic events from handling them. The current prototype exposes
-`start`/`stop` events for a query as well as individual task execution. More sophisticated statistics can be built on
-top of these events, outside the `QueryEngine`.
+`start`/`stop` events for a query as well as individual task execution. Other components (than the QueryEngine) can build more sophisticated statistics on top of these events. For example, a component could keep track of all currently running queries, by monitoring the `start`/`stop` events.
 
 ```mermaid
 classDiagram
@@ -379,11 +377,12 @@ The construction of the RunningQueryPlan creates a DAG of `shared_ptrs`, where e
 holds a strong reference to all its successors. Additionally, each `RunningQueryPlanNode` (Node in the DAG) holds a
 reference to the `RunningQueryPlans` destruction callback.
 
-During construction of the `RunningQueryPlanNodes`, `StartPipeline` tasks will be emitted to the `Task Queue`, which are
-asynchronously handled by other working threads. Each `StartPipeline` task will call the `ExecutablePipelineStages`
-`start` method. Each `StartPipeline` tasks carries a `CallbackRef` for the `PipelineSetupCallback`. Once all
-`StartPipeline` tasks have been handled, the `PipelineSetupCallback` starts all sources and triggers the `onRunning`
-event on the registered QueryLifeCycleListener. The query is now running.
+The constructor of the `RunningQueryPlanNode` emits `StartPipeline` tasks to the `Task Queue`. 
+Worker threads asynchronously pick up and handle these `StartPipeline` tasks. 
+Each `StartPipeline` task calls the `start` method of the `ExecutablePipelineStage`. 
+Each `StartPipeline` task carries a `CallbackRef` for the `PipelineSetupCallback`. 
+Once the worker threads handled all `StartPipeline` tasks, the `PipelineSetupCallback` starts all sources and triggers the `onRunning` event on the registered QueryLifeCycleListener. 
+The query is now running.
 
 ```mermaid
 classDiagram
@@ -394,11 +393,8 @@ classDiagram
     }
 ```
 
-The worker thread responsible for starting the query (constructing the RunningQueryPlan) registers a
-QueryLifeCycleListener,
-which is used internally to move the Query between the `Starting`, `Running`, `Terminated` state. The emitted events
-from the QueryLifeCycleListener are further propagated to the global QueryStatusListener, which reports the status of
-all queries to outside of the query engine.
+The worker thread responsible for starting the query (constructing the RunningQueryPlan) registers a  QueryLifeCycleListener, which the `QueryEngine` uses internally to move the state of the Query between the `Starting`, `Running`, `Terminated` states. 
+The `QueryLifeCycleListener` further propagates its events to the global `QueryStatusListener`, which reports the status of all queries to the outside of the query engine.
 
 #### Stopping a Query
 
@@ -412,15 +408,15 @@ will terminate the source's internal thread which would cause a deadlock if the 
 source thread itself (**G2**).
 
 The `StopSource` task receives a weak reference to the `RunningSource`, if there was a second `StopSource` pending in
-the meantime the weak reference is invalidated and the `StopSource` task is discarded. If the weak reference is still
-valid, it is upgraded to a strong reference and the `RunningSources` unregister is called, which internally atomically
-removes the running source from the RunningQueryPlan. Even if multiple concurrent events cause removal of the source
-only one will succeed. Once the strong reference is destroyed the `RunningSource` will stop and destroy the underlying
-source implementation. The source holds a reference to all its successors within the `EmitFunction`.
+the meantime the weak reference is invalidated and the `StopSource` task is discarded. 
+If the weak reference is still valid, it is upgraded to a strong reference and the `RunningSources` unregister is called, which internally atomically removes the running source from the RunningQueryPlan. 
+Even if multiple concurrent events cause removal of the source only one will succeed. 
+Once the `StopSource` task destroyed its strong reference, the `RunningSource` stops and destroys the underlying source implementation. 
+The source holds a reference to all its successors in its `EmitFunction`.
 
-The mechanism for terminating all successor pipelines is described in more detail in a later section. For now it
-suffices to say that eventually all pipelines which no longer have predecessors will be terminated. If however a
-different source, which has not yet emitted its `EndOfStream` keeps them alive the query will continue running.
+The mechanism for terminating all successor pipelines is described in more detail in a later section.
+In general, garbage collection destroys and thereby terminates all pipelines when their reference count reaches zero, meaning they no longer have predecessors.
+If, however, a different source which has not yet emitted its `EndOfStream` keeps them alive, the query will continue to run.
 
 ##### System Stop
 
@@ -432,7 +428,7 @@ The RunningQueryPlan differentiates between 3 termination modes:
 
 1. Soft stopping the query:
 
-The RunningQueryPlan can be transitioned into a StoppingQueryPlan via:
+The `QueryEngine` can transition the RunningQueryPlan into a StoppingQueryPlan via:
 
 ```c++
 StoppingQueryPlan RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan>)
@@ -444,17 +440,15 @@ Every pipeline holds a reference to the `QueryTerminationCallback`, which ensure
 `RunningQueryPlan` is destroyed the `RunningQueryPlan` notifies the Query Engine via its `onDestruction` callback.
 
 However, for the mechanism to function, we need to keep the `CallbackOwner` alive, which is what the `StoppingQueryPlan`
-is doing. Once all `CallbackRefs` go out of scope, the `StoppingQueryPlan` is disposed.
+is doing.
+Once all `CallbackRefs` go out of scope and the reference count of `StoppingQueryPlan` reaches zero, the garbage collector disposes of it.
 
 2. Destructor:
 
-If a `RunningQueryPlan` goes out of scope without using the explicit `stop`/`dipose` the query will be stopped
-immediately
-without awaiting graceful pipeline termination. Internally the `CallbackOwner` is destroyed after all sources and their
-successors have been released, which will still emit events via the `QueryLifeCycleListener`.
-All `Pipeline` tasks only contain a `weak_ptr` to the `RunningQueryPlanNode`. A `RunningQueryPlan` can be safely dropped
-because every `Pipeline` task checks if its weak reference is still valid and skips the task if the reference is
-invalid.
+If a `RunningQueryPlan` goes out of scope without using the explicit `stop`/`dispose` the destructor of the `RunningQueryPlan` stops the query immediately without awaiting graceful pipeline termination. 
+Internally the destructor of the `RunningQueryPlan` destroys its `CallbackOwner` after releasing sources and their successors, which still emit events via the `QueryLifeCycleListener`.
+All `Pipeline` tasks only contain a `weak_ptr` to the `RunningQueryPlanNode`. 
+The `QueryEngine` safely drops a `RunningQueryPlan`, because every `Pipeline` task checks if its weak reference is still valid and skips the task if the reference is invalid.
 
 Right now the only scenario where the destructor is used is during query engine shutdown when the set of
 RunningQueryPlans is destroyed.
@@ -480,33 +474,32 @@ The RunningSource is responsible for constructing the EmitFunction which is used
 
 #### RunningQueryPlanNode
 
-`RunningQueryPlanNodes` are the connection from the `RunningQueryPlan` graph to the underlying executable pipeline
-stages.
-This class enables the ExecutableQueryPlan to be fully oblivious about the actual logic used for executing the
-QueryPlan. Previously, all runtime related logic have been placed in the `ExecutableQueryPlan` making it hard to use in
-tests.
+`RunningQueryPlanNodes` are the connection from the `RunningQueryPlan` graph to the underlying executable pipeline stages.
+This class enables the ExecutableQueryPlan to be fully oblivious to the actual logic used for executing the QueryPlan.
+Previously, we placed all runtime related logic in the `ExecutableQueryPlan` making it hard to use in tests.
 
 The `RunningQueryPlanNode` has two distinct phases. Initially during query start the RunningQueryPlan is
 constructed.
-`shared_ptr`s are used to implement the reference counting between successor and predecessor pipelines. As long as a
-predecessor exists its successor will be alive, **there can never be cycles in the query plan**.
-The RunningQueryPlan just grabs the graph at its roots (the sources). While the `RunningQueryPlan` still has references
-to all pipelines these references are weak and do not participate in the lifetime of the `RunningQueryPlanNode`s (**G3
-**).
+`shared_ptr`s are used to implement the reference counting between successor and predecessor pipelines. 
+As long as one predecessor exists the predecessor keeps its successors alive, **there can never be cycles in the query plan**.
+The RunningQueryPlan owns the graph by owning the roots(sources) of the graph.
+While the `RunningQueryPlan` has references to all pipelines these references are weak and do not participate in the lifetime of the `RunningQueryPlanNode`s (**G3**).
 
-If during initialization of the query plan the pipelines setup method was invoked, the `RunningQueryPlanNode` is
-marked as `requiresTermination`.
+## @ls-1801, please correct the sentence below
+If the `QueryEngine` invokes the setup method of the pipelines of a query plan, during initialization of that query plan, the `RunningQueryPlanNode` is marked as `requiresTermination`.
 This flag is checked during the destruction of the `shared_ptr` RunningQueryPlanNode if all its predecessors have been
 dropped.
+This flag is checked during the destruction of the `shared_ptr` of the RunningQueryPlanNode if all its predecessors have been dropped.
 
-This check happens in a custom deleter which is registered during `shared_ptr` creation. The deleter wraps the
-`RunningQueryPlanNode` in a
-`unique_ptr` (as it is now the only owner, otherwise the destructor would have not been called). If termination is
-required a `StopPipeline` task owning the `RunningQueryPlanNode` is emitted. The `RunningQueryPlanNode` still has a
-reference to all successors so all successors will still be alive.
+## @ls-1801, please correct the sentence below
+This check happens in a custom deleter which component X registers when creating the `shared_ptr` of component Y. 
+The deleter wraps the `RunningQueryPlanNode` in a `unique_ptr` (as it is now the only owner, otherwise the destructor would have not been called). 
+If a user requests or an internal event requires the termination of a query plan, the `QueryEngine` emits a `StopPipeline` task that owns the `RunningQueryPlanNode`. 
+The `RunningQueryPlanNode` still has a reference to all of its successors.
+So all the successors of the `RunningQueryPlanNode` are still alive.
 
-When the `StopPipeline` task is handled, the `RunningQueryPlanNode` is released (this time for sure), and all references
-to its successors are removed, which may cause them to be destroyed in the same way.
+When a worker thread handles the `StopPipeline` task, it releases the `RunningQueryPlanNode`.
+As a result, it removes all references to the successors of the `RunningQueryPlanNode`, which may destroy the successors in the same way.
 
 ```mermaid
 flowchart
