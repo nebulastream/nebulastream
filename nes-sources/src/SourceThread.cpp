@@ -165,6 +165,13 @@ void dataSourceThread(
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
 {
     threadSetup(originId);
+    if (!bufferProvider)
+    {
+        emit(originId, SourceReturnType::Error(CannotAllocateBuffer()));
+        result.set_exception(std::make_exception_ptr(CannotAllocateBuffer()));
+        return;
+    }
+
     EmitFn const dataEmit = [&, sequenceNumber = static_cast<size_t>(0)](Memory::TupleBuffer&& buffer, bool shouldAddMetadata) mutable
     {
         if (shouldAddMetadata)

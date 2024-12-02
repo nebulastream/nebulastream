@@ -416,9 +416,14 @@ std::shared_ptr<AbstractBufferProvider> BufferManager::createFixedSizeBufferPool
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
-    NES_ASSERT2_FMT(
-        (size_t)availableBuffers.size() >= numberOfReservedBuffers,
-        "BufferManager: Not enough buffers: " << availableBuffers.size() << "<" << numberOfReservedBuffers);
+
+    ssize_t numberOfAvailableBuffers = availableBuffers.size();
+    if (numberOfAvailableBuffers < 0 || static_cast<size_t>(numberOfAvailableBuffers) < numberOfReservedBuffers)
+    {
+        NES_WARNING("Could not allocate FixedSizeBufferPool with {} buffers", numberOfReservedBuffers);
+        return nullptr;
+    }
+
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {
         detail::MemorySegment* memorySegment;
