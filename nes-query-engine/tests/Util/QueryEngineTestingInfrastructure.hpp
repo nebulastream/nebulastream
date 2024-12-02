@@ -34,6 +34,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -86,6 +87,66 @@ public:
 
 /// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
 /// Note that the `Register` event will never be emitted by the `QueryEngine` as this is not handled by the `QueryEngine`
+struct ExpectStats
+{
+private:
+    std::shared_ptr<TestQueryStatisticListener> listener;
+
+#define STAT_TYPE(Name) \
+public: \
+    struct Name \
+    { \
+        size_t lower; \
+        size_t upper; \
+        Name(size_t lower, size_t upper) : lower(lower), upper(upper) \
+        { \
+        } \
+        Name(size_t exact) : lower(exact), upper(exact) \
+        { \
+        } \
+    }; \
+\
+private: \
+    void apply(Name v) \
+    { \
+        EXPECT_CALL(*listener, onEvent(::testing::VariantWith<Runtime::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
+    }
+    STAT_TYPE(QueryStart);
+    STAT_TYPE(QueryStop);
+    STAT_TYPE(PipelineStart);
+    STAT_TYPE(PipelineStop);
+    STAT_TYPE(TaskExecutionStart);
+    STAT_TYPE(TaskExecutionComplete);
+    STAT_TYPE(TaskEmit);
+
+public:
+    explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
+    {
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+    }
+
+    template <typename... Args>
+    void expect(Args... args)
+    {
+        (apply(args), ...);
+    }
+};
+
+/// Mock implementation for internal interfaces of the QueryEngine. These are used when verifying the behavior of internal
+/// components for the QueryEngine like the RunningQueryPlan.
 class QueryStatusListener final : public AbstractQueryStatusListener
 {
 public:
@@ -317,7 +378,8 @@ struct TestingHarness
     explicit TestingHarness();
 
     std::shared_ptr<Memory::BufferManager> bm = Memory::BufferManager::create();
-    std::shared_ptr<TestQueryStatisticListener> stats = std::make_shared<TestQueryStatisticListener>();
+    std::shared_ptr<TestQueryStatisticListener> statListener = std::make_shared<TestQueryStatisticListener>();
+    ExpectStats stats{statListener};
     std::shared_ptr<QueryStatusListener> status = std::make_shared<QueryStatusListener>();
     std::unique_ptr<Runtime::QueryEngine> qm;
     size_t numberOfThreads;
