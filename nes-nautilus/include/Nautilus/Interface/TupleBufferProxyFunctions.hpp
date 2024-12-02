@@ -50,17 +50,17 @@ inline void NES_Memory_TupleBuffer_setOriginId(Memory::TupleBuffer* tupleBuffer,
     tupleBuffer->setOriginId(OriginId(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getWatermark(const Memory::TupleBuffer* tupleBuffer)
+inline Runtime::Timestamp NES_Memory_TupleBuffer_getWatermark(const Memory::TupleBuffer* tupleBuffer)
 {
     return tupleBuffer->getWatermark();
 };
 
-inline void NES_Memory_TupleBuffer_setWatermark(Memory::TupleBuffer* tupleBuffer, const Timestamp value)
+inline void NES_Memory_TupleBuffer_setWatermark(Memory::TupleBuffer* tupleBuffer, const Runtime::Timestamp value)
 {
-    tupleBuffer->setWatermark(Timestamp(value));
+    tupleBuffer->setWatermark(Runtime::Timestamp(value));
 };
 
-inline Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const Memory::TupleBuffer* tupleBuffer)
+inline Runtime::Timestamp NES_Memory_TupleBuffer_getCreationTimestampInMS(const Memory::TupleBuffer* tupleBuffer)
 {
     return tupleBuffer->getCreationTimestampInMS();
 };
@@ -75,9 +75,9 @@ inline SequenceNumber NES_Memory_TupleBuffer_getSequenceNumber(const Memory::Tup
     return tupleBuffer->getSequenceNumber();
 }
 
-inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(Memory::TupleBuffer* tupleBuffer, const Timestamp value)
+inline void NES_Memory_TupleBuffer_setCreationTimestampInMS(Memory::TupleBuffer* tupleBuffer, const Runtime::Timestamp value)
 {
-    tupleBuffer->setCreationTimestampInMS(Timestamp(value));
+    tupleBuffer->setCreationTimestampInMS(Runtime::Timestamp(value));
 }
 
 inline void NES_Memory_TupleBuffer_setChunkNumber(Memory::TupleBuffer* tupleBuffer, const ChunkNumber chunkNumber)

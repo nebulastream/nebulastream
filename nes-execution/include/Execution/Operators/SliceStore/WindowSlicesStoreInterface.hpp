@@ -19,6 +19,8 @@
 #include <optional>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
+#include <Util/Execution.hpp>
 
 
 namespace NES::Runtime::Execution

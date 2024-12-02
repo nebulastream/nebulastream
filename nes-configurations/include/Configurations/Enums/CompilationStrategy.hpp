@@ -29,4 +29,9 @@ enum class CompilationStrategy : uint8_t
     /// Applies all compiler optimizations and inlines proxy functions.
     PROXY_INLINING
 };
+
+enum class StreamJoinStrategy : uint8_t
+{
+    NESTED_LOOP_JOIN
+  };
 }

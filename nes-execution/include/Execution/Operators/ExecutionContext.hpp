@@ -15,8 +15,6 @@
 #pragma once
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
-
-
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -25,6 +23,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/val_concepts.hpp>
 

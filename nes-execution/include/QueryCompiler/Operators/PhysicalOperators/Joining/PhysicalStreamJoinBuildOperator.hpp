@@ -24,6 +24,8 @@
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Util/Common.hpp>
 
+#include <Configurations/Enums/CompilationStrategy.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

@@ -19,6 +19,7 @@
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 
@@ -65,12 +66,12 @@ public:
 
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.
-    nautilus::val<Timestamp> getWatermarkTs();
-    void setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs);
+    nautilus::val<Runtime::Timestamp> getWatermarkTs();
+    void setWatermarkTs(const nautilus::val<Runtime::Timestamp>& watermarkTs);
 
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
-    nautilus::val<Timestamp> getCreatingTs();
-    void setCreationTs(const nautilus::val<Timestamp>& creationTs);
+    nautilus::val<Runtime::Timestamp> getCreatingTs();
+    void setCreationTs(const nautilus::val<Runtime::Timestamp>& creationTs);
 
     ~RecordBuffer() = default;
 

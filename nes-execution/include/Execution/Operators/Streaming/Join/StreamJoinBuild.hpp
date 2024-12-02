@@ -19,7 +19,7 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Util/Common.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

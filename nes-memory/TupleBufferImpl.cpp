@@ -284,12 +284,12 @@ void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples)
     this->numberOfTuples = numberOfTuples;
 }
 
-Timestamp BufferControlBlock::getWatermark() const noexcept
+Runtime::Timestamp BufferControlBlock::getWatermark() const noexcept
 {
     return watermark;
 }
 
-void BufferControlBlock::setWatermark(Timestamp watermark)
+void BufferControlBlock::setWatermark(Runtime::Timestamp watermark)
 {
     this->watermark = watermark;
 }
@@ -324,12 +324,12 @@ void BufferControlBlock::setLastChunk(bool lastChunk)
     this->lastChunk = lastChunk;
 }
 
-void BufferControlBlock::setCreationTimestamp(Timestamp timestamp)
+void BufferControlBlock::setCreationTimestamp(Runtime::Timestamp timestamp)
 {
     this->creationTimestamp = timestamp;
 }
 
-Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
+Runtime::Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
 {
     return creationTimestamp;
 }
