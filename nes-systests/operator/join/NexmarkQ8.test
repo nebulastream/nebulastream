@@ -3,8 +3,8 @@
 # groups: [Join, Nexmark, large]
 
 # Source definitions
-SourceCSV bid UINT64 timestamp INT32 auction INT32 bidder INT64 datetime FLOAT64 price TESTDATA/large/bid.csv
-SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/large/auction_modified.csv
+SourceCSV bid UINT64 timestamp INT32 auction INT32 bidder INT64 datetime FLOAT64 price TESTDATA/bid_small.csv
+SourceCSV auction UINT64 timestamp INT32 id INT32 initialbid INT32 reserve INT64 expires INT32 seller INT32 category TESTDATA/auction_small.csv
 
 #Query 8
 

@@ -23,7 +23,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -96,7 +96,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     bufferMemory->rightSliceEnd = sliceRight.getSliceEnd();
     bufferMemory->windowInfo = windowInfoAndSeqNumber.windowInfo;
 
-    pipelineCtx->dispatchBuffer(tupleBuffer);
+    pipelineCtx->emitBuffer(tupleBuffer, PipelineExecutionContext::ContinuationPolicy::NEVER);
     NES_INFO(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",

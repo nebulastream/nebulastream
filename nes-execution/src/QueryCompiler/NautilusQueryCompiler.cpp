@@ -71,7 +71,7 @@ std::shared_ptr<QueryCompilationResult> NautilusQueryCompiler::compileQuery(Quer
     addScanAndEmitPhase->apply(pipelinedQueryPlan);
     dumpHelper.dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan->toString());
     timer.snapshot("AfterAddScanAndEmitPhase");
-    auto bufferSize = 8192; /// TODO #403: This size should be a parameter to the query compiler
+    auto bufferSize = 4096; /// TODO #403: This size should be a parameter to the query compiler
     pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
     timer.snapshot("AfterToNautilusPlanPhase");
 

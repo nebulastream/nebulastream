@@ -127,18 +127,23 @@ struct DefaultPEC final : Execution::PipelineExecutionContext
     std::vector<std::shared_ptr<Execution::OperatorHandler>>* operatorHandlers = nullptr;
     std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler;
     std::shared_ptr<Memory::AbstractBufferProvider> bm;
+    size_t numberOfThreads;
+    WorkerThreadId threadId;
 
     DefaultPEC(
-        std::shared_ptr<Memory::AbstractBufferProvider> bm, std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler)
-        : handler(std::move(handler)), bm(std::move(bm))
+        size_t numberOfThreads,
+        WorkerThreadId threadId,
+        std::shared_ptr<Memory::AbstractBufferProvider> bm,
+        std::function<void(const Memory::TupleBuffer& tb, ContinuationPolicy)> handler)
+        : handler(std::move(handler)), bm(std::move(bm)), numberOfThreads(numberOfThreads), threadId(threadId)
     {
     }
 
-    [[nodiscard]] WorkerThreadId getId() const override { return WorkerThreadId(1); }
-    Memory::TupleBuffer allocateTupleBuffer() override { return bm->getBufferBlocking(); }
-    uint64_t getNumberOfWorkerThreads() override { return 1; }
+    [[nodiscard]] WorkerThreadId getId() const override { return threadId; }
+    Memory::TupleBuffer allocateTupleBuffer() const override { return bm->getBufferBlocking(); }
+    uint64_t getNumberOfWorkerThreads() const override { return numberOfThreads; }
     void emitBuffer(const Memory::TupleBuffer& buffer, ContinuationPolicy policy) override { handler(buffer, policy); }
-    std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() override { return bm; }
+    std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const override { return bm; }
     PipelineId getPipelineID() override { return INVALID<PipelineId>; }
     std::vector<std::shared_ptr<Execution::OperatorHandler>>& getOperatorHandlers() override
     {
@@ -195,21 +200,23 @@ public:
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
-        taskQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
-            {}});
+        taskQueue.blockingWrite(
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
+                {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
-        taskQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
-            {}});
+        taskQueue.blockingWrite(
+            StopSourceTask{
+                id,
+                std::move(source),
+                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
+                {}});
     }
 
     ThreadPool(
@@ -271,6 +278,8 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
     {
         ENGINE_LOG_DEBUG("Handle Task for pipeline {} of query {}. Tuples: {}", pipeline->id, task.queryId, task.buf.getNumberOfTuples());
         DefaultPEC pec(
+            pool.pool.size(),
+            this->threadId,
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto)
             {
@@ -303,6 +312,8 @@ bool ThreadPool::Worker::operator()(const StartPipelineTask& startPipeline) cons
     if (auto pipeline = startPipeline.pipeline.lock())
     {
         DefaultPEC pec(
+            pool.pool.size(),
+            this->threadId,
             pool.bufferProvider,
             [](const auto&, auto)
             {
@@ -325,6 +336,8 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
 {
     ENGINE_LOG_DEBUG("Stop Pipeline Task for Query {}", stopPipeline.queryId);
     DefaultPEC pec(
+        pool.pool.size(),
+        this->threadId,
         pool.bufferProvider,
         [&](const Memory::TupleBuffer& tupleBuffer, auto)
         {
@@ -339,7 +352,7 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.taskQueue.blockingWrite(WorkTask{stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {}});
+                pool.taskQueue.blockingWrite(WorkTask{stopPipeline.queryId, successor, tupleBuffer, [ref = successor] { }, {}});
             }
         });
     ENGINE_LOG_DEBUG("Stopping Pipeline");

@@ -16,7 +16,9 @@
 #include <ranges>
 #include <utility>
 #include <Execution/Operators/WindowBasedOperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <PipelineExecutionContext.hpp>
+
+#include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -44,13 +46,13 @@ void WindowBasedOperatorHandler::setBufferProvider(std::shared_ptr<Memory::Abstr
 }
 
 
-void WindowBasedOperatorHandler::start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t)
+void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
-    numberOfWorkerThreads = pipelineExecutionContext->getNumberOfWorkerThreads();
-    bufferProvider = pipelineExecutionContext->getBufferManager();
+    numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    bufferProvider = pipelineExecutionContext.getBufferManager();
 }
 
-void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContextPtr)
+void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
 }
 

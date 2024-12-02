@@ -35,8 +35,7 @@ class ChecksumSink : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(QueryId queryId, const SinkDescriptor& sinkDescriptor);
-    ~ChecksumSink() override;
+    explicit ChecksumSink(const SinkDescriptor& sinkDescriptor);
 
     ChecksumSink(const ChecksumSink&) = delete;
     ChecksumSink& operator=(const ChecksumSink&) = delete;
@@ -44,16 +43,14 @@ public:
     ChecksumSink& operator=(ChecksumSink&&) = delete;
 
     /// Opens file and writes schema to file, if the file is empty.
-    void open() override;
-    void close() override;
-
-    bool emitTupleBuffer(Memory::TupleBuffer& inputBuffer) override;
+    uint32_t start(Runtime::Execution::PipelineExecutionContext&) override;
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext&) override;
+    void execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&) override;
     static std::unique_ptr<Configurations::DescriptorConfig::Config>
     validateAndFormat(std::unordered_map<std::string, std::string>&& config);
 
 protected:
-    std::ostream& toString(std::ostream& str) const override;
-    [[nodiscard]] bool equals(const Sink& other) const override;
+    std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
 
 private:
     bool isOpen;
@@ -70,9 +67,10 @@ private:
 struct ConfigParametersChecksum
 {
     static inline const Configurations::DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        "filePath", std::nullopt, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(FILEPATH, config);
-        }};
+        "filePath",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return Configurations::DescriptorConfig::tryGet(FILEPATH, config); }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(FILEPATH);

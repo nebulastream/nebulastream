@@ -24,7 +24,7 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>

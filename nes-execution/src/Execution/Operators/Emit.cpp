@@ -15,12 +15,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -34,7 +32,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, uint64_t originId, uint64_t sequenceNumber)
+uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
     NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
@@ -43,14 +41,14 @@ uint64_t getNextChunkNumberProxy(void* operatorHandlerPtr, uint64_t originId, ui
     return chunkNumber;
 }
 
-bool isLastChunkProxy(void* operatorHandlerPtr, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk)
+bool isLastChunkProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool isLastChunk)
 {
     NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);
     return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(void* operatorHandlerPtr, uint64_t originId, uint64_t sequenceNumber)
+void removeSequenceStateProxy(void* operatorHandlerPtr, OriginId originId, SequenceNumber sequenceNumber)
 {
     NES_ASSERT2_FMT(operatorHandlerPtr != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<EmitOperatorHandler*>(operatorHandlerPtr);

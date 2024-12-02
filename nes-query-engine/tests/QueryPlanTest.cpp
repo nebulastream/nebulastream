@@ -133,9 +133,9 @@ concept RangeOf = std::ranges::range<R> && std::same_as<std::ranges::range_value
 struct TestPipelineExecutionContext : Execution::PipelineExecutionContext
 {
     MOCK_METHOD(WorkerThreadId, getId, (), (const, override));
-    MOCK_METHOD(Memory::TupleBuffer, allocateTupleBuffer, (), (override));
-    MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (override));
-    MOCK_METHOD(std::shared_ptr<Memory::AbstractBufferProvider>, getBufferManager, (), (override));
+    MOCK_METHOD(Memory::TupleBuffer, allocateTupleBuffer, (), (const, override));
+    MOCK_METHOD(uint64_t, getNumberOfWorkerThreads, (), (const, override));
+    MOCK_METHOD(std::shared_ptr<Memory::AbstractBufferProvider>, getBufferManager, (), (const, override));
     MOCK_METHOD(PipelineId, getPipelineID, (), (override));
     MOCK_METHOD(std::vector<std::shared_ptr<Execution::OperatorHandler>>&, getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, (std::vector<std::shared_ptr<Execution::OperatorHandler>>&), (override));

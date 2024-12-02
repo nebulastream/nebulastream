@@ -38,43 +38,15 @@
 namespace NES::Sinks
 {
 
-ChecksumSink::ChecksumSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
-    : Sink(queryId)
-    , isOpen(false)
+ChecksumSink::ChecksumSink(const SinkDescriptor& sinkDescriptor)
+    : isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILEPATH))
     , schemaSizeInBytes(sinkDescriptor.schema->getSchemaSizeInBytes())
     , formatter(std::make_unique<CSVFormat>(sinkDescriptor.schema))
 {
 }
-ChecksumSink::~ChecksumSink()
-{
-    try
-    {
-        ChecksumSink::close();
-    }
-    catch (...)
-    {
-        tryLogCurrentException();
-    }
-}
 
-
-std::ostream& ChecksumSink::toString(std::ostream& str) const
-{
-    str << fmt::format("ChecksumSink(filePathOutput: {})", outputFilePath);
-    return str;
-}
-bool ChecksumSink::equals(const Sink& other) const
-{
-    if (const auto* otherFileSink = dynamic_cast<const ChecksumSink*>(&other))
-    {
-        return (this->queryId == other.queryId) && (this->outputFilePath == otherFileSink->outputFilePath)
-            && (this->isOpen == otherFileSink->isOpen);
-    }
-    return false;
-}
-
-void ChecksumSink::open()
+uint32_t ChecksumSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Setting up checksum sink: {}", *this);
     if (std::filesystem::exists(outputFilePath.c_str()))
@@ -84,7 +56,7 @@ void ChecksumSink::open()
         {
             NES_ERROR("Could not remove existing output file: filePath={} ", outputFilePath);
             isOpen = false;
-            return;
+            return 0;
         }
     }
 
@@ -101,14 +73,16 @@ void ChecksumSink::open()
             outputFilePath,
             outputFileStream.is_open(),
             outputFileStream.good());
+        return 0;
     }
+    return 1;
 }
 
-void ChecksumSink::close()
+uint32_t ChecksumSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
     if (!isOpen)
     {
-        return;
+        return 0;
     }
 
     NES_INFO(
@@ -116,6 +90,7 @@ void ChecksumSink::close()
     outputFileStream << numberOfTuples << ", " << formattedChecksum << std::endl;
     outputFileStream.close();
     isOpen = false;
+    return 1;
 }
 
 namespace
@@ -130,7 +105,7 @@ size_t localChecksum(const Memory::TupleBuffer& buffer, size_t schemaSizeInBytes
     }
     return checksum;
 }
-size_t localFormattedChecksum(Memory::TupleBuffer& buffer, CSVFormat& formatter)
+size_t localFormattedChecksum(const Memory::TupleBuffer& buffer, CSVFormat& formatter)
 {
     std::string formatted = formatter.getFormattedBuffer(buffer);
     size_t checksum = 0;
@@ -142,13 +117,12 @@ size_t localFormattedChecksum(Memory::TupleBuffer& buffer, CSVFormat& formatter)
 }
 }
 
-bool ChecksumSink::emitTupleBuffer(Memory::TupleBuffer& inputBuffer)
+void ChecksumSink::execute(const Memory::TupleBuffer& inputBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     checksum += localChecksum(inputBuffer, schemaSizeInBytes);
     formattedChecksum += localFormattedChecksum(inputBuffer, *formatter);
     numberOfTuples += inputBuffer.getNumberOfTuples();
-    return true;
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config>
@@ -163,9 +137,9 @@ SinkValidationGeneratedRegistrar::RegisterSinkValidationChecksum(std::unordered_
     return ChecksumSink::validateAndFormat(std::move(sinkConfig));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterChecksumSink(const QueryId queryId, const SinkDescriptor& sinkDescriptor)
+std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterChecksumSink(const SinkDescriptor& sinkDescriptor)
 {
-    return std::make_unique<ChecksumSink>(queryId, sinkDescriptor);
+    return std::make_unique<ChecksumSink>(sinkDescriptor);
 }
 
 }

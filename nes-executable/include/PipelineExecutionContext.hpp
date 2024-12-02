@@ -37,9 +37,9 @@ public:
     virtual ~PipelineExecutionContext() = default;
     virtual void emitBuffer(const Memory::TupleBuffer&, ContinuationPolicy) = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
-    virtual Memory::TupleBuffer allocateTupleBuffer() = 0;
-    virtual uint64_t getNumberOfWorkerThreads() = 0;
-    virtual std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() = 0;
+    virtual Memory::TupleBuffer allocateTupleBuffer() const = 0;
+    virtual uint64_t getNumberOfWorkerThreads() const = 0;
+    virtual std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const = 0;
     virtual PipelineId getPipelineID() = 0;
 
     ///TODO: #30 Remove OperatorHandler from the pipeline execution context

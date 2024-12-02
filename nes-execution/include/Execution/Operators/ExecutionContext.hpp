@@ -52,9 +52,9 @@ struct ExecutionContext final
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex);
-    nautilus::val<WorkerThreadId> getWorkerThreadId();
-    nautilus::val<Memory::TupleBuffer*> allocateBuffer();
+    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
+    nautilus::val<WorkerThreadId> getWorkerThreadId() const;
+    nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
     const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
 
 

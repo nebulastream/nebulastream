@@ -17,7 +17,7 @@
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-
+#include <Runtime/BufferManager.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -39,8 +39,8 @@ public:
     /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
     void setWorkerThreads(const uint64_t numberOfWorkerThreads);
     void setBufferProvider(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
-    void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
-    void stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
+    void stop(Runtime::QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
 
@@ -58,7 +58,7 @@ protected:
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
-    uint64_t numberOfWorkerThreads;
+    std::atomic<uint64_t> numberOfWorkerThreads;
     const OriginId outputOriginId;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
 };
