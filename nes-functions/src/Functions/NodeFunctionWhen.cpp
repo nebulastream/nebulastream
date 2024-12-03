@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -21,6 +22,7 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -72,11 +74,10 @@ bool NodeFunctionWhen::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionWhen::toString() const
+std::ostream& NodeFunctionWhen::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "WHEN(" << *children[0] << "," << *children[1] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << fmt::format("WHEN({}, {})", *children.at(0), *children.at(1));
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionWhen::deepCopy()

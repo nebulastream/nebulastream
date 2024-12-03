@@ -34,7 +34,7 @@ public:
         std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers);
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 private:
     std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> operatorHandlers;

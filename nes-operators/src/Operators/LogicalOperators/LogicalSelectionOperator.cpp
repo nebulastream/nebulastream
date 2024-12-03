@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,6 +27,7 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -61,11 +63,14 @@ bool LogicalSelectionOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string LogicalSelectionOperator::toString() const
+std::ostream& LogicalSelectionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
-    return ss.str();
+    return os << fmt::format("FILTER(opId: {}, predicate: {})", id, *predicate);
+}
+
+std::ostream& LogicalSelectionOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("FILTER({:q})", *predicate);
 }
 
 bool LogicalSelectionOperator::inferSchema()

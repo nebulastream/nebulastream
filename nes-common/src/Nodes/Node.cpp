@@ -307,10 +307,10 @@ bool Node::replace(const std::shared_ptr<Node>& newNode, const std::shared_ptr<N
         }
         return true;
     }
-    NES_ERROR("Node: could not remove child from  old node: {}", oldNode->toString());
+    NES_ERROR("Node: could not remove child from  old node: {}", *oldNode);
 
     success = removeParent(oldNode);
-    NES_DEBUG("Node: remove parent old node: {}", oldNode->toString());
+    NES_DEBUG("Node: remove parent old node: {}", *oldNode);
     if (success)
     {
         parents.push_back(newNode);
@@ -320,7 +320,7 @@ bool Node::replace(const std::shared_ptr<Node>& newNode, const std::shared_ptr<N
         }
         return true; ///TODO: I think this is wrong
     }
-    NES_ERROR("Node: could not remove parent from  old node: {}", oldNode->toString());
+    NES_ERROR("Node: could not remove parent from  old node: {}", *oldNode);
 
     return false;
 }

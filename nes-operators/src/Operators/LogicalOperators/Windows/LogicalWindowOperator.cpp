@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+#include <ostream>
+#include <ranges>
 #include <sstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -28,6 +30,8 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 
@@ -40,18 +44,23 @@ LogicalWindowOperator::LogicalWindowOperator(
 {
 }
 
-std::string LogicalWindowOperator::toString() const
+std::ostream& LogicalWindowOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
     auto windowType = windowDefinition->getWindowType();
-    const auto windowAggregation = windowDefinition->getWindowAggregation();
-    ss << "WINDOW AGGREGATION(OP-" << id << ", ";
-    for (const auto& agg : windowAggregation)
-    {
-        ss << agg->toString() << ";";
-    }
-    ss << ") on window type: " << windowType->toString();
-    return ss.str();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    return os << fmt::format(
+               "WINDOW AGGREGATION({}, {}, window type: {})",
+               id,
+               fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->toString(); }), ", "),
+               windowType->toString());
+}
+
+std::ostream& LogicalWindowOperator::toQueryPlanString(std::ostream& os) const
+{
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    return os << fmt::format(
+               "WINDOW AGG({})",
+               fmt::join(std::views::transform(windowAggregation, [](const auto& agg) { return agg->getTypeAsString(); }), ", "));
 }
 
 bool LogicalWindowOperator::isIdentical(const std::shared_ptr<Node>& rhs) const

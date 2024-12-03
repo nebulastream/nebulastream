@@ -12,19 +12,17 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionRound.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
-
 
 namespace NES
 {
@@ -52,11 +50,10 @@ bool NodeFunctionRound::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionRound::toString() const
+std::ostream& NodeFunctionRound::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "ROUND(" << *children[0] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 1, "Cannot print function without exactly one child.");
+    return os << fmt::format("ROUND({})", *children.front());
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionRound::deepCopy()

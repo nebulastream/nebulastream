@@ -11,7 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
+#include <iterator>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
@@ -21,6 +24,8 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
@@ -134,18 +139,16 @@ bool NodeFunctionCase::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionCase::toString() const
+std::ostream& NodeFunctionCase::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "CASE({";
     std::vector<std::shared_ptr<NodeFunction>> left = getWhenChildren();
-    for (std::size_t i = 0; i < left.size() - 1; i++)
-    {
-        ss << *(left.at(i)) << ",";
-    }
-    ss << *(*(left.end() - 1)) << "}," << getDefaultExp();
-
-    return ss.str();
+    std::vector<std::string> leftStrs;
+    std::transform(
+        left.begin(),
+        left.end(),
+        std::back_inserter(leftStrs),
+        [](const std::shared_ptr<NodeFunction>& func) { return fmt::format("{}", *func); });
+    return os << fmt::format("CASE({{{}}}, defaultExp: )", fmt::join(leftStrs, ", "));
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionCase::deepCopy()

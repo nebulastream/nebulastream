@@ -12,14 +12,20 @@
     limitations under the License.
 */
 
-#include <cstdint>
+#include <algorithm>
+#include <deque>
 #include <iostream>
+#include <numeric>
+#include <optional>
+#include <ranges>
+#include <unordered_map>
 #include <vector>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {
@@ -48,7 +54,7 @@ void QueryConsoleDumpHandler::dumpHelper(
 void QueryConsoleDumpHandler::multilineDumpHelper(
     const std::shared_ptr<Node>& operationNode, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    std::vector<std::string> multiLineNodeString = {fmt::format("{}", *operationNode)};
+    std::vector<std::string> multiLineNodeString = {fmt::format("{:q}", *operationNode)};
     for (const std::string& line : multiLineNodeString)
     {
         for (auto i{0ULL}; i < indent * depth; ++i)

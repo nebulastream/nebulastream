@@ -14,9 +14,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include <memory>
 #include <ostream>
-#include <string>
+#include <sstream>
 #include <vector>
 #include <Util/Common.hpp>
 #include <fmt/base.h>
@@ -272,11 +273,15 @@ protected:
      */
     std::vector<std::shared_ptr<Node>> children;
 
-    /**
-     * @brief To string method for the current node.
-     * @return string
-     */
-    [[nodiscard]] virtual std::string toString() const = 0;
+    /// The usual string representation of the current node. Used by `operator<<`. Includes as much information about the node as possible.
+    [[nodiscard]] virtual std::ostream& toDebugString(std::ostream& os) const = 0;
+    /// Returns a shorter string representation for the current node. Accessed by setting the state of the current stream to
+    /// `VerbosityLevel::QueryPlan` (`ss << VerbosityLevel::QueryPlan << node`).
+    [[nodiscard]] virtual std::ostream& toQueryPlanString(std::ostream& os) const
+    {
+        os << VerbosityLevel::QueryPlan;
+        return toDebugString(os);
+    }
 
 private:
     /**
@@ -349,14 +354,59 @@ private:
 };
 inline std::ostream& operator<<(std::ostream& os, const Node& node)
 {
-    return os << node.toString();
+    switch (getVerbosityLevel(os))
+    {
+        case VerbosityLevel::Debug:
+        default:
+            return node.toDebugString(os);
+            break;
+        case VerbosityLevel::QueryPlan:
+            return node.toQueryPlanString(os);
+            break;
+    }
 }
 }
-/**
- * @brief Implements formatting via fmt::format("{}") for all classes inheriting from Node by using operator<<.
- */
+namespace fmt
+{
+/// Implements formatting via fmt::format("{}") for all classes inheriting from Node. Internally, the `operator<<`
+/// implementation is used.
+/// By putting a 'q' behind the ':' in the format string, you can print the Node with the `VerbosityLevel` `QueryPlan`:
+/// ```cpp
+/// auto _ = fmt::format("Node string with less noise: {:q}", *node);
+/// ```
+/// Any other characters behind the ':' are not supported and are ignored.
 template <typename T>
 requires(std::is_base_of_v<NES::Node, T>)
-struct fmt::formatter<T> : fmt::ostream_formatter
+struct formatter<T> : ostream_formatter
 {
+    /// This character changes the default `VerbosityLevel` from `Debug` to `QueryPlan`.
+    char queryPlanOptionCharacter = 'q';
+    bool isQueryPlan{false};
+    constexpr auto parse(fmt::format_parse_context& ctx)
+    {
+        /// Relies on std::ranges::find to find the first occurrence from the left.
+        const auto* pos = std::ranges::find(ctx, '}');
+        if (pos != ctx.end())
+        {
+            /// While it seems like ctx ends with `}`, the documentation states that it also contains everything afterwards. To be sure, we use pos to find `}`.
+            if (std::ranges::find(ctx.begin(), pos, queryPlanOptionCharacter) != ctx.end())
+            {
+                isQueryPlan = true;
+            }
+        }
+        return pos;
+    }
+    auto format(const T& node, format_context& ctx) const
+    {
+        if (isQueryPlan)
+        {
+            /// Look at the implementation of ostream_formatter in fmt/ostream to make this more efficient.
+            std::stringstream ss;
+            ss << NES::VerbosityLevel::QueryPlan;
+            ss << node;
+            return ostream_formatter::format(ss.str(), ctx);
+        }
+        return ostream_formatter::format(node, ctx);
+    }
 };
+}
