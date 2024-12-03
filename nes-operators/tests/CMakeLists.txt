@@ -17,6 +17,10 @@ include(ExternalProject)
 add_nes_unit_test(plan-iterator-test "UnitTests/Plans/Util/PlanIteratorTest.cpp")
 target_link_libraries(plan-iterator-test nes-client nes-operators nes-test-util)
 
+# QueryConsoleDumpHandlerTest
+add_nes_unit_test(query-console-dump-handler-test "UnitTests/Plans/Util/QueryConsoleDumpHandlerTest.cpp")
+target_link_libraries(query-console-dump-handler-test nes-client nes-operators nes-test-util)
+
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
 target_link_libraries(query-plan-tests nes-client nes-operators nes-test-util)

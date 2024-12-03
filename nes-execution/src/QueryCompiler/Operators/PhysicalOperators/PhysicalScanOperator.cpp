@@ -36,13 +36,16 @@ std::shared_ptr<PhysicalOperator> PhysicalScanOperator::create(OperatorId id, co
     return std::make_shared<PhysicalScanOperator>(id, outputSchema);
 }
 
-std::string PhysicalScanOperator::toString() const
+std::ostream& PhysicalScanOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalScanOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalScanOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalScanOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalScanOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalScanOperator::copy()

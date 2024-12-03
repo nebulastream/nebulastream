@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
@@ -49,11 +50,9 @@ bool NodeFunctionLess::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionLess::toString() const
+std::ostream& NodeFunctionLess::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "<" << *children[1];
-    return ss.str();
+    return os << *children[0] << " < " << *children[1];
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionLess::deepCopy()

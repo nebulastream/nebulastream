@@ -48,11 +48,9 @@ bool NodeFunctionCeil::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionCeil::toString() const
+std::ostream& NodeFunctionCeil::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "CEIL(" << *children[0] << ")";
-    return ss.str();
+    return os << "CEIL(" << *children[0] << ")";
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionCeil::deepCopy()

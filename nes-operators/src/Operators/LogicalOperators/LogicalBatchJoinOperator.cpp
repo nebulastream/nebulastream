@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -41,11 +42,14 @@ bool LogicalBatchJoinOperator::isIdentical(const std::shared_ptr<Node>& rhs) con
     return equal(rhs) && NES::Util::as<LogicalBatchJoinOperator>(rhs)->getId() == id;
 }
 
-std::string LogicalBatchJoinOperator::toString() const
+std::ostream& LogicalBatchJoinOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "BATCHJOIN(" << id << ")";
-    return ss.str();
+    return os << "BATCHJOIN(" << id << ")";
+}
+
+std::ostream& LogicalBatchJoinOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "BATCHJOIN";
 }
 
 std::shared_ptr<Join::Experimental::LogicalBatchJoinDescriptor> LogicalBatchJoinOperator::getBatchJoinDefinition() const

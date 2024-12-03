@@ -32,9 +32,9 @@ NautilusPipelineOperator::NautilusPipelineOperator(
 {
 }
 
-std::string NautilusPipelineOperator::toString() const
+std::ostream& NautilusPipelineOperator::toDebugString(std::ostream& os) const
 {
-    return "NautilusPipelineOperator";
+    return os << "NautilusPipelineOperator";
 }
 
 std::shared_ptr<Operator> NautilusPipelineOperator::copy()

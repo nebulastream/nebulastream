@@ -17,11 +17,37 @@
 #include <cstdint>
 #include <fstream>
 #include <iomanip>
+#include <ios>
 #include <numeric>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <Util/Common.hpp>
-#include <ErrorHandling.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <magic_enum.hpp>
+
+namespace NES
+{
+LogVerbosity::VerbosityLevel LogVerbosity::getVerbosityLevel(std::ostream& os)
+{
+    const auto value = os.iword(LogVerbosity::getIwordIndex());
+    const auto optional = magic_enum::enum_cast<VerbosityLevel>(value);
+    if (!optional.has_value())
+    {
+        NES_WARNING("Could not cast `{}` to VerbosityLevel. Will return {}", value, magic_enum::enum_name(VerbosityLevel::Debug));
+    }
+    return optional.value_or(VerbosityLevel::Debug);
+}
+void LogVerbosity::setVerbosityLevel(std::ostream& os, const LogVerbosity::VerbosityLevel& level)
+{
+    os.iword(LogVerbosity::getIwordIndex()) = magic_enum::enum_integer(level);
+}
+int LogVerbosity::getIwordIndex()
+{
+    static const int iwordIndex = std::ios_base::xalloc();
+    return iwordIndex;
+}
+}
 
 namespace NES::Util
 {

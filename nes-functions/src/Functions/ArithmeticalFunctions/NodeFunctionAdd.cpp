@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
@@ -52,11 +52,9 @@ bool NodeFunctionAdd::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionAdd::toString() const
+std::ostream& NodeFunctionAdd::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "+" << *children[1];
-    return ss.str();
+    return os << *children[0] << " + " << *children[1];
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionAdd::deepCopy()

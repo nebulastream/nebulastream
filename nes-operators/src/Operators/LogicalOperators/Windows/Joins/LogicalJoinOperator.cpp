@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <unordered_set>
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -30,6 +31,7 @@
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 
@@ -50,14 +52,20 @@ bool LogicalJoinOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
     return equal(rhs) && NES::Util::as<LogicalJoinOperator>(rhs)->getId() == id;
 }
 
-std::string LogicalJoinOperator::toString() const
+std::ostream& LogicalJoinOperator::toDebugString(std::ostream& os) const
 {
-    return fmt::format(
-        "Join({}, windowType = {}, joinFunction = {})",
-        id,
-        joinDefinition->getWindowType()->toString(),
-        *joinDefinition->getJoinFunction());
+    return os << fmt::format(
+               "Join({}, windowType = {}, joinFunction = {})",
+               id,
+               joinDefinition->getWindowType()->toString(),
+               *joinDefinition->getJoinFunction());
 }
+
+std::ostream& LogicalJoinOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << LogVerbosity::VerbosityLevel::QueryPlan << "Join(" << *joinDefinition->getJoinFunction() << ")";
+}
+
 
 std::shared_ptr<Join::LogicalJoinDescriptor> LogicalJoinOperator::getJoinDefinition() const
 {

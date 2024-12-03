@@ -52,7 +52,7 @@ public:
     ~PhysicalWindowOperator() override = default;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
     std::shared_ptr<Windowing::LogicalWindowDescriptor> windowDefinition;
     std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> windowHandler;

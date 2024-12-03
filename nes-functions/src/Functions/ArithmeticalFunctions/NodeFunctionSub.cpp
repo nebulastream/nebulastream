@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
@@ -49,11 +49,9 @@ bool NodeFunctionSub::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionSub::toString() const
+std::ostream& NodeFunctionSub::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "-" << *children[1];
-    return ss.str();
+    return os << *children[0] << " - " << *children[1];
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionSub::deepCopy()

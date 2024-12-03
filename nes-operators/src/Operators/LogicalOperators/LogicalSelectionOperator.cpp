@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -61,11 +62,14 @@ bool LogicalSelectionOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string LogicalSelectionOperator::toString() const
+std::ostream& LogicalSelectionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
-    return ss.str();
+    return os << "FILTER(opId: " << id << ": predicate: " << *predicate << ")";
+}
+
+std::ostream& LogicalSelectionOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << LogVerbosity::VerbosityLevel::QueryPlan << "FILTER(" << *predicate << ")";
 }
 
 bool LogicalSelectionOperator::inferSchema()

@@ -28,11 +28,8 @@ PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Sche
     UnaryOperator::setOutputSchema(std::move(outputSchema));
 }
 
-std::string PhysicalUnaryOperator::toString() const
+std::ostream& PhysicalUnaryOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << UnaryOperator::toString();
-    return out.str();
+    return UnaryOperator::toDebugString(os);
 }
-
 }

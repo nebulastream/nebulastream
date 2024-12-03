@@ -57,9 +57,9 @@ std::vector<std::shared_ptr<Runtime::Execution::OperatorHandler>> ExecutableOper
     return operatorHandlers;
 }
 
-std::string ExecutableOperator::toString() const
+std::ostream& ExecutableOperator::toDebugString(std::ostream& os) const
 {
-    return "ExecutableOperator";
+    return os << "ExecutableOperator";
 }
 
 std::shared_ptr<Operator> ExecutableOperator::copy()

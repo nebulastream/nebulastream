@@ -35,14 +35,18 @@ PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const st
 {
 }
 
-std::string PhysicalDemultiplexOperator::toString() const
+std::ostream& PhysicalDemultiplexOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalDemultiplexOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalDemultiplexOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
 }
+
+std::ostream& PhysicalDemultiplexOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalDemultiplexOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
+}
+
 
 std::shared_ptr<Operator> PhysicalDemultiplexOperator::copy()
 {

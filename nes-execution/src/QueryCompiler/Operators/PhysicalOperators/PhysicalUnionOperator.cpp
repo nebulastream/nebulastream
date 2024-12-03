@@ -48,12 +48,13 @@ PhysicalUnionOperator::PhysicalUnionOperator(
 {
 }
 
-std::string PhysicalUnionOperator::toString() const
+std::ostream& PhysicalUnionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalUnionOperator:\n";
-    return out.str();
+    return os << "\nPhysicalUnionOperator:\n";
+}
+std::ostream& PhysicalUnionOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "PhysicalUnionOperator";
 }
 std::shared_ptr<Operator> PhysicalUnionOperator::copy()
 {

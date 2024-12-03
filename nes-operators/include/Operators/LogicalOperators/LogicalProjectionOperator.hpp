@@ -42,7 +42,8 @@ public:
     std::shared_ptr<Operator> copy() override;
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     std::vector<std::shared_ptr<NodeFunction>> functions;

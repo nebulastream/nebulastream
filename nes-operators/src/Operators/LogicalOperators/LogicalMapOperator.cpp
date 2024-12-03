@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -82,11 +83,14 @@ bool LogicalMapOperator::inferSchema()
     return true;
 }
 
-std::string LogicalMapOperator::toString() const
+std::ostream& LogicalMapOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
-    return ss.str();
+    return os << "MAP(opId: " << id << ": predicate: " << *mapFunction << ")";
+}
+
+std::ostream& LogicalMapOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << LogVerbosity::VerbosityLevel::QueryPlan << "MAP(" << *mapFunction << ")";
 }
 
 std::shared_ptr<Operator> LogicalMapOperator::copy()
@@ -106,7 +110,7 @@ std::shared_ptr<Operator> LogicalMapOperator::copy()
 
 void LogicalMapOperator::inferStringSignature()
 {
-    NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
+    NES_TRACE("LogicalMapOperator: Inferring String signature for {}", *this);
     INVARIANT(children.size() == 1, "Map should have 1 child, but got: {}", children.size());
     ///Infer query signatures for child operator
     const auto child = NES::Util::as<LogicalOperator>(children[0]);

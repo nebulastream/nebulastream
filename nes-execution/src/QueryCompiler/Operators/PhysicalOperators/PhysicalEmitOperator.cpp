@@ -35,13 +35,16 @@ std::shared_ptr<PhysicalOperator> PhysicalEmitOperator::create(OperatorId id, co
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }
 
-std::string PhysicalEmitOperator::toString() const
+std::ostream& PhysicalEmitOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalEmitOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalEmitOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalEmitOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalEmitOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalEmitOperator::copy()

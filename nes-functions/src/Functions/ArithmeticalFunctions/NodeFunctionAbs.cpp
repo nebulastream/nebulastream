@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAbs.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
@@ -50,11 +51,9 @@ bool NodeFunctionAbs::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionAbs::toString() const
+std::ostream& NodeFunctionAbs::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "ABS(" << *children[0] << ")";
-    return ss.str();
+    return os << "ABS(" << *children[0] << ")";
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionAbs::deepCopy()

@@ -47,13 +47,16 @@ std::shared_ptr<Windowing::LogicalWindowDescriptor> PhysicalThresholdWindowOpera
     return windowDefinition;
 }
 
-std::string PhysicalThresholdWindowOperator::toString() const
+std::ostream& PhysicalThresholdWindowOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalThresholdWindowOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalThresholdWindowOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalThresholdWindowOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalThresholdWindowOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalThresholdWindowOperator::copy()

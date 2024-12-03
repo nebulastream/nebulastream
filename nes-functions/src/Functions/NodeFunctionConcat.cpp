@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
@@ -60,9 +61,9 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
     return concatNode;
 }
 
-std::string NodeFunctionConcat::toString() const
+std::ostream& NodeFunctionConcat::toDebugString(std::ostream& os) const
 {
-    return fmt::format("Concat({}, {})", *getLeft(), *getRight());
+    return os << fmt::format("Concat({}, {})", *getLeft(), *getRight());
 }
 
 }

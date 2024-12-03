@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
@@ -39,11 +40,14 @@ std::shared_ptr<Windowing::WatermarkStrategyDescriptor> WatermarkAssignerLogical
     return watermarkStrategyDescriptor;
 }
 
-std::string WatermarkAssignerLogicalOperator::toString() const
+std::ostream& WatermarkAssignerLogicalOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "WATERMARKASSIGNER(" << id << ")";
-    return ss.str();
+    return os << "WATERMARKASSIGNER(" << id << ")";
+}
+
+std::ostream& WatermarkAssignerLogicalOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "WATERMARKASSIGNER";
 }
 
 bool WatermarkAssignerLogicalOperator::isIdentical(const std::shared_ptr<Node>& rhs) const

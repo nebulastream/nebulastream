@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionSqrt.hpp>
@@ -52,11 +53,9 @@ bool NodeFunctionSqrt::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionSqrt::toString() const
+std::ostream& NodeFunctionSqrt::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "SQRT(" << *children[0] << ")";
-    return ss.str();
+    return os << "SQRT(" << *children[0] << ")";
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionSqrt::deepCopy()

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -54,11 +54,14 @@ bool NodeFunctionFieldAssignment::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionFieldAssignment::toString() const
+std::ostream& NodeFunctionFieldAssignment::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "NodeFunctionFieldAssignment(" << *children[0] << "=" << *children[1] << ")";
-    return ss.str();
+    return os << "NodeFunctionFieldAssignment(" << *children[0] << " = " << *children[1] << ")";
+}
+
+std::ostream& NodeFunctionFieldAssignment::toQueryPlanString(std::ostream& os) const
+{
+    return os << LogVerbosity::VerbosityLevel::QueryPlan << *children[0] << " = " << *children[1];
 }
 
 std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldAssignment::getField() const

@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -22,6 +23,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 
@@ -44,14 +46,18 @@ bool SinkLogicalOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string SinkLogicalOperator::toString() const
+std::ostream& SinkLogicalOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
-    ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
-    ss << ")";
-    return ss.str();
+    os << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
+    ((sinkDescriptor) ? (os << sinkDescriptor) : os << "(null))");
+    return os << ")";
 }
+
+std::ostream& SinkLogicalOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("SINK({})", sinkName);
+}
+
 bool SinkLogicalOperator::inferSchema()
 {
     const auto result = LogicalUnaryOperator::inferSchema();

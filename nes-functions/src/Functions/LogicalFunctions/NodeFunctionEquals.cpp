@@ -13,7 +13,7 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
@@ -54,11 +54,9 @@ bool NodeFunctionEquals::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionEquals::toString() const
+std::ostream& NodeFunctionEquals::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "==" << *children[1];
-    return ss.str();
+    return os << *children[0] << " == " << *children[1];
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionEquals::deepCopy()

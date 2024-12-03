@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionExp.hpp>
@@ -50,11 +51,9 @@ bool NodeFunctionExp::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionExp::toString() const
+std::ostream& NodeFunctionExp::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "EXP(" << *children[0] << ")";
-    return ss.str();
+    return os << "EXP(" << *children[0] << ")";
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionExp::deepCopy()

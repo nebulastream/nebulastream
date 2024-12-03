@@ -14,6 +14,7 @@
 
 #include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
@@ -49,11 +50,9 @@ bool NodeFunctionFloor::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionFloor::toString() const
+std::ostream& NodeFunctionFloor::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "FLOOR(" << *children[0] << ")";
-    return ss.str();
+    return os << "FLOOR(" << *children[0] << ")";
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionFloor::deepCopy()

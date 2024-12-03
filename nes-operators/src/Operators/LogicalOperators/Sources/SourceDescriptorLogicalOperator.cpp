@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
@@ -49,12 +49,14 @@ bool SourceDescriptorLogicalOperator::equal(const std::shared_ptr<Node>& rhs) co
     return false;
 }
 
-std::string SourceDescriptorLogicalOperator::toString() const
+std::ostream& SourceDescriptorLogicalOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
+    return os << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
+}
 
-    return ss.str();
+std::ostream& SourceDescriptorLogicalOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "SOURCE(" << sourceDescriptor << ")";
 }
 
 const Sources::SourceDescriptor& SourceDescriptorLogicalOperator::getSourceDescriptorRef() const

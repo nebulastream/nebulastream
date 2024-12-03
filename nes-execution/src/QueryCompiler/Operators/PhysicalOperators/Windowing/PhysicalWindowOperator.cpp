@@ -206,9 +206,9 @@ std::shared_ptr<Runtime::Execution::Operators::WindowBasedOperatorHandler> Physi
     return windowHandler;
 }
 
-std::string PhysicalWindowOperator::toString() const
+std::ostream& PhysicalWindowOperator::toDebugString(std::ostream& os) const
 {
-    return PhysicalUnaryOperator::toString();
+    return PhysicalUnaryOperator::toDebugString(os);
 }
 
 }

@@ -14,7 +14,7 @@
 
 #pragma once
 #include <memory>
-#include <string>
+#include <ostream>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
 #include <Nodes/Node.hpp>
@@ -35,7 +35,7 @@ public:
     bool equal(const std::shared_ptr<Node>& rhs) const override;
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    std::ostream& toDebugString(std::ostream& os) const override;
 };
 
 }

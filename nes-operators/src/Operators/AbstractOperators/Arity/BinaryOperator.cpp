@@ -99,21 +99,29 @@ std::vector<OriginId> BinaryOperator::getOutputOriginIds() const
     return outputOriginIds;
 }
 
-std::string BinaryOperator::toString() const
+std::ostream& BinaryOperator::toDebugString(std::ostream& os) const
 {
-    return fmt::format(
-        "leftInputSchema: {}\n"
-        "rightInputSchema: {}\n"
-        "outputSchema: {}\n"
-        "distinctSchemas: {}\n"
-        "leftInputOriginIds: {}\n"
-        "rightInputOriginIds: {}",
-        leftInputSchema->toString(),
-        rightInputSchema->toString(),
-        outputSchema->toString(),
-        ::Util::concatenateVectorAsString(distinctSchemas),
-        fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
-        fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
+    return os << fmt::format(
+               "leftInputSchema: {}\n"
+               "rightInputSchema: {}\n"
+               "outputSchema: {}\n"
+               "distinctSchemas: {}\n"
+               "leftInputOriginIds: {}\n"
+               "rightInputOriginIds: {}",
+               leftInputSchema->toString(),
+               rightInputSchema->toString(),
+               outputSchema->toString(),
+               ::Util::concatenateVectorAsString(distinctSchemas),
+               fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
+               fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
+}
+
+std::ostream& BinaryOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format(
+               "leftOrigins({}),rightOrigins({})",
+               fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
+               fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
 }
 
 }

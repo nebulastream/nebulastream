@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -51,11 +52,9 @@ bool NodeFunctionOr::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionOr::toString() const
+std::ostream& NodeFunctionOr::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << "||" << *children[1];
-    return ss.str();
+    return os << *children[0] << " || " << *children[1];
 }
 
 void NodeFunctionOr::inferStamp(const Schema& schema)

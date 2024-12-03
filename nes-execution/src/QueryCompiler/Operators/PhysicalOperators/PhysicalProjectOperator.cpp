@@ -55,13 +55,16 @@ std::vector<std::shared_ptr<NodeFunction>> PhysicalProjectOperator::getFunctions
     return functions;
 }
 
-std::string PhysicalProjectOperator::toString() const
+std::ostream& PhysicalProjectOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalProjectOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    return out.str();
+    os << "\nPhysicalProjectOperator:\n";
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalProjectOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalProjectOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalProjectOperator::copy()

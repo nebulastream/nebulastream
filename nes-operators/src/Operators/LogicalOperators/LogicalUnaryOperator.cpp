@@ -38,7 +38,7 @@ bool LogicalUnaryOperator::inferSchema()
 
     if (children.empty())
     {
-        throw CannotInferSchema("This operator ({}) should have at least one child operator", this->toString());
+        throw CannotInferSchema("This operator ({}) should have at least one child operator", *this);
     }
 
     const auto childSchema = NES::Util::as<Operator>(children[0])->getOutputSchema();

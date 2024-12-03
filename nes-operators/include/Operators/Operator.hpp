@@ -86,7 +86,7 @@ protected:
 
     std::shared_ptr<Operator> getDuplicateOfChild(const std::shared_ptr<Operator>& operatorNode);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
     OperatorId id;
 

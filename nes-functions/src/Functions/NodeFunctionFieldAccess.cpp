@@ -13,7 +13,7 @@
 */
 #include <format>
 #include <memory>
-#include <string>
+#include <ostream>
 #include <utility>
 
 #include <API/AttributeField.hpp>
@@ -63,9 +63,14 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
     this->fieldName = std::move(fieldName);
 }
 
-std::string NodeFunctionFieldAccess::toString() const
+std::ostream& NodeFunctionFieldAccess::toDebugString(std::ostream& os) const
 {
-    return std::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp->toString());
+    return os << std::format("NodeFunctionFieldAccess( {} + [ {} ])", fieldName, stamp->toString());
+}
+
+std::ostream& NodeFunctionFieldAccess::toQueryPlanString(std::ostream& os) const
+{
+    return os << std::format("{}", fieldName);
 }
 
 void NodeFunctionFieldAccess::inferStamp(const Schema& schema)

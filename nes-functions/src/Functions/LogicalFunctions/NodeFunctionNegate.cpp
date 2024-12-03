@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -41,11 +42,9 @@ bool NodeFunctionNegate::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionNegate::toString() const
+std::ostream& NodeFunctionNegate::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "!" << *children[0];
-    return ss.str();
+    return os << "!" << *children[0];
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionNegate::create(const std::shared_ptr<NodeFunction>& child)
