@@ -120,8 +120,7 @@ class Topology {
                             const uint16_t numberOfSlots,
                             std::map<std::string, std::any> workerProperties,
                             uint32_t bandwidthInMbps,
-                            uint32_t latencyInMs,
-                            WorkerId alternativeWorkerId = WorkerId(0));
+                            uint32_t latencyInMs);
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -454,11 +453,14 @@ class Topology {
      */
     WorkerId getNextWorkerId();
 
-    void findAllPathsDFS(const TopologyNodePtr& currentNode,
-                         const std::vector<TopologyNodePtr>& destinationNodes,
-                         std::set<WorkerId>& visited,
-                         std::vector<TopologyNodePtr>& currentPath,
-                         std::vector<std::vector<TopologyNodePtr>>& allPaths);
+ void findAllPathsDFS(const TopologyNodePtr& currentNode,
+                            const std::vector<TopologyNodePtr>& destinationNodes,
+                            std::set<WorkerId>& visited,
+                            std::vector<TopologyNodePtr>& currentPath,
+                            std::vector<std::vector<TopologyNodePtr>>& allPaths,
+                            std::unordered_map<WorkerId, std::set<int>>& nodeLevels);
+
+ void assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels);
 
     std::vector<WorkerId> rootWorkerIds;
     std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;

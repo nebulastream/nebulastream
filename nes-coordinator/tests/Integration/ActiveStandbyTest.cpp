@@ -155,10 +155,10 @@ class ActiveStandbyTest : public Testing::BaseIntegrationTest {
 
         auto middleNode1Id = WorkerId(3);
         auto middleNode2Id = WorkerId(2);
-        topology->registerWorker(middleNode1Id, "localhost", 123, 124, 10, properties, 0, 0, middleNode2Id);
+        topology->registerWorker(middleNode1Id, "localhost", 123, 124, 10, properties, 0, 0);
         topology->addTopologyNodeAsChild(rootNodeId, middleNode1Id);
 
-        topology->registerWorker(middleNode2Id, "localhost", 123, 124, 10, properties, 0, 0, middleNode1Id);
+        topology->registerWorker(middleNode2Id, "localhost", 123, 124, 10, properties, 0, 0);
         topology->addTopologyNodeAsChild(rootNodeId, middleNode2Id);
 
         auto sourceNodeId = WorkerId(1);

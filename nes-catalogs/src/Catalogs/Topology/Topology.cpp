@@ -94,8 +94,7 @@ WorkerId Topology::registerWorker(WorkerId workerId,
                                   const uint16_t numberOfSlots,
                                   std::map<std::string, std::any> workerProperties,
                                   uint32_t bandwidthInMbps,
-                                  uint32_t latencyInMs,
-                                  WorkerId alternativeWorkerid) {
+                                  uint32_t latencyInMs) {
 
     NES_TRACE("TopologyManagerService: Register Node address={} numberOfSlots={}", address, numberOfSlots);
     NES_DEBUG(" topology before insert");
@@ -114,16 +113,6 @@ WorkerId Topology::registerWorker(WorkerId workerId,
     if (!workerIdToTopologyNode.contains(workerId)) {
         TopologyNodePtr newTopologyNode =
             TopologyNode::create(workerId, address, grpcPort, dataPort, numberOfSlots, workerProperties);
-        if (alternativeWorkerid.getRawValue())
-            newTopologyNode->setAlternativeNodeCandidate(alternativeWorkerid);
-        else {
-            if (workerId == WorkerId(2)) {
-                newTopologyNode->setAlternativeNodeCandidate(WorkerId(3));
-            }
-            else if(workerId == WorkerId(3)) {
-                newTopologyNode->setAlternativeNodeCandidate(WorkerId(2));
-            }
-        }
 
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         workerIdToTopologyNode[workerId] = newTopologyNode;
@@ -458,10 +447,13 @@ std::vector<TopologyNodePtr> Topology::findPathBetween(const std::vector<WorkerI
     return mergeSubGraphs(startNodesOfGraph);
 }
 
-std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
-                                                                        const std::vector<WorkerId>& destinationTopologyNodeIds) {
+std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(
+    const std::vector<WorkerId>& sourceTopologyNodeIds,
+    const std::vector<WorkerId>& destinationTopologyNodeIds) {
 
     std::vector<std::vector<TopologyNodePtr>> allPaths;
+    // Map from node ID to a set of levels at which the node appears
+    std::unordered_map<WorkerId, std::set<int>> nodeLevels;
 
     // Fetch the source and destination topology nodes (same as existing code)
     std::vector<TopologyNodePtr> sourceTopologyNodes;
@@ -490,8 +482,11 @@ std::vector<std::vector<TopologyNodePtr>> Topology::findAllPathsBetween(const st
     for (const auto& sourceNode : sourceTopologyNodes) {
         std::vector<TopologyNodePtr> currentPath;
         std::set<WorkerId> visited;
-        findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths);
+        findAllPathsDFS(sourceNode, destinationTopologyNodes, visited, currentPath, allPaths, nodeLevels);
     }
+
+    // After finding all paths, assign alternative nodes
+    assignAlternativeNodes(nodeLevels);
 
     return allPaths;
 }
@@ -500,28 +495,70 @@ void Topology::findAllPathsDFS(const TopologyNodePtr& currentNode,
                                const std::vector<TopologyNodePtr>& destinationNodes,
                                std::set<WorkerId>& visited,
                                std::vector<TopologyNodePtr>& currentPath,
-                               std::vector<std::vector<TopologyNodePtr>>& allPaths) {
+                               std::vector<std::vector<TopologyNodePtr>>& allPaths,
+                               std::unordered_map<WorkerId, std::set<int>>& nodeLevels) {
 
     visited.insert(currentNode->getId());
     currentPath.push_back(currentNode);
 
+    int currentLevel = currentPath.size() - 1;
+    WorkerId currentNodeId = currentNode->getId();
+
+    // Record the level of the current node
+    nodeLevels[currentNodeId].insert(currentLevel);
+
     // Check if currentNode is a destination node
     if (std::any_of(destinationNodes.begin(), destinationNodes.end(), [&](const TopologyNodePtr& destNode) {
-            return destNode->getId() == currentNode->getId();
+            return destNode->getId() == currentNodeId;
         })) {
         // Found a path; add a copy of currentPath to allPaths
         allPaths.push_back(currentPath);
-    } else {
-        for (const auto& parentNode : currentNode->getParents()) {
-            if (visited.find(parentNode->as<TopologyNode>()->getId()) == visited.end()) {
-                findAllPathsDFS(parentNode->as<TopologyNode>(), destinationNodes, visited, currentPath, allPaths);
+        } else {
+            for (const auto& parentNode : currentNode->getParents()) {
+                WorkerId parentId = parentNode->as<TopologyNode>()->getId();
+                if (visited.find(parentId) == visited.end()) {
+                    findAllPathsDFS(parentNode->as<TopologyNode>(), destinationNodes, visited, currentPath, allPaths, nodeLevels);
+                }
             }
+        }
+
+    visited.erase(currentNodeId);
+    currentPath.pop_back();
+}
+
+void Topology::assignAlternativeNodes(const std::unordered_map<WorkerId, std::set<int>>& nodeLevels) {
+    // Map from level to set of node IDs at that level
+    std::unordered_map<int, std::set<WorkerId>> levelToNodeIds;
+
+    for (const auto& [nodeId, levels] : nodeLevels) {
+        for (int level : levels) {
+            levelToNodeIds[level].insert(nodeId);
         }
     }
 
-    visited.erase(currentNode->getId());
-    currentPath.pop_back();
+    // For each node, assign alternative nodes
+    for (const auto& [nodeId, levels] : nodeLevels) {
+        TopologyNodePtr node = workerIdToTopologyNode.at(nodeId).copy();
+        std::set<WorkerId> alternativeNodeIds;
+
+        for (int level : levels) {
+            const auto& nodesAtLevel = levelToNodeIds[level];
+            for (WorkerId altNodeId : nodesAtLevel) {
+                if (altNodeId != nodeId) {
+                    alternativeNodeIds.insert(altNodeId);
+                }
+            }
+        }
+
+        for (const auto& id : alternativeNodeIds) {
+            node->setAlternativeNodeCandidate(id);
+        }
+
+
+        workerIdToTopologyNode[nodeId] = node;
+    }
 }
+
 
 bool Topology::findAllDownstreamNodes(const WorkerId& startNode,
                                       std::set<WorkerId>& reachableDownstreamNodes,
