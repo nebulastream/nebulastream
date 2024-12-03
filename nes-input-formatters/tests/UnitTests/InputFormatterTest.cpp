@@ -77,9 +77,21 @@ TEST_F(InputFormatterTest, testFormattingEmptyRawBuffer)
     //      - create PipelineExecutionContext <-- required to access OperatorHandler & BufferManager
     //      - create WorkerContext <-- required to emit buffer
 
-}
+    // Query manager has:
+    /// folly::MPMCQueue<Task> taskQueue;
+    // New task is started like this:
+    /// taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
+    // Task is executed in runningRoutine which calls:
+    /// processNextTask(bool running, WorkerContext& workerContext)
+    /// Task task;
+    /// if (running)
+    /// {
+    ///     taskQueue.blockingRead(task);
+    /// }
+    /// ExecutionResult result = task(workerContext); //<--- actual task execution
 
-// for (size_t i = 0; i < 10; ++i)
+
+    // for (size_t i = 0; i < 10; ++i)
 // {
 //     (*testBuffer)[i].writeVarSized("t1", "" + std::to_string(i) + std::to_string(i), *bufferManager);
 //
