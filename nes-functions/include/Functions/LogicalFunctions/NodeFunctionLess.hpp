@@ -39,6 +39,6 @@ public:
 protected:
     explicit NodeFunctionLess(NodeFunctionLess* other);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 }

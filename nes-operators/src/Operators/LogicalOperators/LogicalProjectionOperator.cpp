@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <ostream>
 #include <ranges>
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -81,17 +82,29 @@ std::string getFieldName(const NodeFunction& function)
     return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
 }
 
-std::string LogicalProjectionOperator::toString() const
+std::ostream& LogicalProjectionOperator::toDebugString(std::ostream& os) const
 {
     PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
     if (not outputSchema->getFieldNames().empty())
     {
-        return fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
+        return os << fmt::format("PROJECTION(opId: {}, schema={})", id, outputSchema->toString());
     }
-    return fmt::format(
-        "PROJECTION(opId: {}, fields: [{}])",
-        id,
-        fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
+    return os << fmt::format(
+               "PROJECTION(opId: {}, fields: [{}])",
+               id,
+               fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
+}
+
+std::ostream& LogicalProjectionOperator::toQueryPlanString(std::ostream& os) const
+{
+    PRECONDITION(not functions.empty(), "The projection operator must contain at least one function.");
+    if (not outputSchema->getFieldNames().empty())
+    {
+        return os << fmt::format("PROJECTION(schema={})", outputSchema->toString());
+    }
+    return os << fmt::format(
+               "PROJECTION(fields: [{}])",
+               fmt::join(std::views::transform(functions, [](const auto& function) { return getFieldName(*function); }), ", "));
 }
 
 bool LogicalProjectionOperator::inferSchema()
@@ -100,7 +113,7 @@ bool LogicalProjectionOperator::inferSchema()
     {
         return false;
     }
-    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
+    NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), *this);
     outputSchema->clear();
     for (const auto& function : functions)
     {

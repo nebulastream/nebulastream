@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
@@ -74,9 +75,9 @@ NodeFunctionConcat::create(const std::shared_ptr<NodeFunction>& left, const std:
     return concatNode;
 }
 
-std::string NodeFunctionConcat::toString() const
+std::ostream& NodeFunctionConcat::toDebugString(std::ostream& os) const
 {
-    return fmt::format("Concat({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
+    return os << fmt::format("CONCAT({} ({}, {}))", this->stamp->toString(), *getLeft(), *getRight());
 }
 
 }

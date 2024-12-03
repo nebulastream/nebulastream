@@ -13,11 +13,37 @@
 */
 
 #pragma once
+#include <cstdint>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <ErrorHandling.hpp>
 
+namespace NES
+{
+/// Used by all `Node`s to control the verbosity of their `operator<<` method.
+enum class VerbosityLevel : uint8_t
+{
+    /// Print everything.
+    Debug = 0,
+    /// Print only the name of the Node/Function, to make the queryplan printing easier to read.
+    QueryPlan = 1,
+};
+/// Check the iword array of the passed stream for the set `VerbosityLevel` using the allocated index.
+VerbosityLevel getVerbosityLevel(std::ostream& os);
+/// Set the iword array of the passed stream to the passed `VerbosityLevel` using the allocated index.
+void setVerbosityLevel(std::ostream& os, const VerbosityLevel& level);
+/// The index for the `VerbosityLevel` into any stream's iword array.
+/// The index may only be allocated once, otherwise it will change and we won't be able to set and retrieve it correctly.
+int getIwordIndex();
+
+inline std::ostream& operator<<(std::ostream& os, const VerbosityLevel& level)
+{
+    setVerbosityLevel(os, level);
+    return os;
+}
+}
 
 namespace NES::Util
 {

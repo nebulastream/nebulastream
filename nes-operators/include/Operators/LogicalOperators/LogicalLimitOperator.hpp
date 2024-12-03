@@ -55,7 +55,8 @@ public:
     void inferStringSignature() override;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     uint64_t limit;

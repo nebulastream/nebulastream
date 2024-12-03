@@ -13,13 +13,12 @@
 */
 
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -50,11 +49,10 @@ bool NodeFunctionGreaterEquals::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionGreaterEquals::toString() const
+std::ostream& NodeFunctionGreaterEquals::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << *children[0] << ">=" << *children[1];
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << *children.at(0) << " >= " << *children.at(1);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionGreaterEquals::deepCopy()

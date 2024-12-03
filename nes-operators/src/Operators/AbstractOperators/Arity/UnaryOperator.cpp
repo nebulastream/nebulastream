@@ -68,15 +68,19 @@ std::vector<OriginId> UnaryOperator::getOutputOriginIds() const
     return inputOriginIds;
 }
 
-std::string UnaryOperator::toString() const
+std::ostream& UnaryOperator::toDebugString(std::ostream& os) const
 {
-    return fmt::format(
-        "inputSchema: {}\n"
-        "outputSchema: {}\n"
-        "inputOriginIds: {}",
-        inputSchema->toString(),
-        outputSchema->toString(),
-        fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+    return os << fmt::format(
+               "inputSchema: {}\n"
+               "outputSchema: {}\n"
+               "inputOriginIds: {}",
+               inputSchema->toString(),
+               outputSchema->toString(),
+               fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
+}
+std::ostream& UnaryOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("OriginIds({})", fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 
 }

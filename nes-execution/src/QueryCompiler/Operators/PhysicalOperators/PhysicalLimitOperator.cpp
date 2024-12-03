@@ -13,7 +13,7 @@
 */
 #include <cstdint>
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -46,15 +46,17 @@ PhysicalLimitOperator::create(const std::shared_ptr<Schema>& inputSchema, const 
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), limit);
 }
 
-std::string PhysicalLimitOperator::toString() const
+std::ostream& PhysicalLimitOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalLimitOperator:\n";
-    out << PhysicalUnaryOperator::toString();
-    out << "limit: " << limit;
-    out << std::endl;
-    return out.str();
+    os << "\nPhysicalLimitOperator:\n";
+    os << "limit: " << limit << '\n';
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalLimitOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalLimitOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalLimitOperator::copy()

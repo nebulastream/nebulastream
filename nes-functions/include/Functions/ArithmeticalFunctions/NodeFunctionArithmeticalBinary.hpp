@@ -44,7 +44,7 @@ protected:
     explicit NodeFunctionArithmeticalBinary(NodeFunctionArithmeticalBinary* other);
     ~NodeFunctionArithmeticalBinary() noexcept override = default;
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 
 }

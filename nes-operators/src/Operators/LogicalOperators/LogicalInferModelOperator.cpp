@@ -14,6 +14,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <string>
 #include <utility>
@@ -49,31 +50,14 @@ LogicalInferModelOperator::LogicalInferModelOperator(
     NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
 }
 
-std::string getFieldName(const NodeFunction& function)
+std::ostream& LogicalInferModelOperator::toDebugString(std::ostream& os) const
 {
-    if (const auto* nodeFunctionFieldAccess = dynamic_cast<const NodeFunctionFieldAccess*>(&function))
-    {
-        return nodeFunctionFieldAccess->getFieldName();
-    }
-    return dynamic_cast<const NodeFunctionFieldAssignment*>(&function)->getField()->getFieldName();
+    return os << "INFER_MODEL(" << id << ")";
 }
 
-std::string LogicalInferModelOperator::toString() const
+std::ostream& LogicalInferModelOperator::toQueryPlanString(std::ostream& os) const
 {
-    PRECONDITION(not model.empty(), "Inference operator must contain a path to the model.");
-    PRECONDITION(not inputFields.empty(), "Inference operator must contain at least 1 input field.");
-    PRECONDITION(not outputFields.empty(), "Inference operator must contain at least 1 output field.");
-
-    if (not outputSchema->getFieldNames().empty())
-    {
-        return fmt::format("INFER_MODEL(opId: {}, schema={})", id, outputSchema->toString());
-    }
-    return fmt::format(
-        "INFER_MODEL(opId: {}, model: \"{}\", inputFields: [{}], outputFields: [{}])",
-        id,
-        getDeployedModelPath(),
-        fmt::join(std::views::transform(inputFields, [](const auto& field){ return getFieldName(*field); }), ", "),
-        fmt::join(std::views::transform(outputFields, [](const auto& field){ return getFieldName(*field); }), ", "));
+    return os << "INFER_MODEL";
 }
 
 std::shared_ptr<Operator> LogicalInferModelOperator::copy()
@@ -221,6 +205,5 @@ const std::vector<std::shared_ptr<NodeFunction>>& LogicalInferModelOperator::get
 {
     return outputFields;
 }
-
 
 }

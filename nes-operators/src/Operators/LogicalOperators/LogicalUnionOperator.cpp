@@ -13,12 +13,14 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -34,18 +36,22 @@ bool LogicalUnionOperator::isIdentical(const std::shared_ptr<Node>& rhs) const
     return equal(rhs) && NES::Util::as<LogicalUnionOperator>(rhs)->getId() == id;
 }
 
-std::string LogicalUnionOperator::toString() const
+std::ostream& LogicalUnionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
     if (properties.contains("PINNED_WORKER_ID"))
     {
-        ss << "unionWith(" << id << " PINNED, STATE = " << magic_enum::enum_name(operatorState) << " )";
+        os << fmt::format("unionWith({} PINNED, STATE = {})", id, magic_enum::enum_name(operatorState));
     }
     else
     {
-        ss << "unionWith(" << id << ")";
+        os << fmt::format("unionWith({})", id);
     }
-    return ss.str();
+    return os;
+}
+
+std::ostream& LogicalUnionOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "unionWith";
 }
 
 bool LogicalUnionOperator::inferSchema()
