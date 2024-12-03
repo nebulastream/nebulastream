@@ -21,6 +21,8 @@
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -42,26 +44,28 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/QueryParsingService.hpp>
+#include <Services/RequestHandlerService.hpp>
 #include <StatisticCollection/StatisticCache/DefaultStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <Util/Core.hpp>
 #include <Util/QuerySignatureContext.hpp>
+#include <Util/TestUtils.hpp>
 #include <z3++.h>
 
 using namespace NES;
 
 using namespace Configurations;
-const int timestamp = 1644426604;
-const uint64_t numberOfTupleBuffers = 100;
 const uint64_t numberOfBuffersToProduceInTuples = 1000000;
 const uint64_t ingestionRate = 20;
 
 class ActiveStandbyTest : public Testing::BaseIntegrationTest {
-  protected:
-    z3::ContextPtr z3Context;
 
   public:
+    CoordinatorConfigurationPtr coordinatorConfig;
+    WorkerConfigurationPtr workerConfig1;
+    WorkerConfigurationPtr workerConfig2;
+    WorkerConfigurationPtr workerConfig3;
     std::shared_ptr<QueryParsingService> queryParsingService;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     TopologyPtr topology;
@@ -73,7 +77,10 @@ class ActiveStandbyTest : public Testing::BaseIntegrationTest {
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup ActiveStandbyTest test class." << std::endl; }
+    static void SetUpTestCase() {
+                NES::Logger::setupLogging("ActiveStandby.log", NES::LogLevel::LOG_DEBUG);
+        std::cout << "Setup ActiveStandbyTest test class." << std::endl;
+    }
 
     /* Will be called before a test is executed. */
     void SetUp() override {
@@ -84,6 +91,50 @@ class ActiveStandbyTest : public Testing::BaseIntegrationTest {
                                                                               Statistic::DefaultStatisticProbeGenerator::create(),
                                                                               Statistic::DefaultStatisticCache::create(),
                                                                               topology);
+
+        coordinatorConfig = CoordinatorConfiguration::createDefault();
+        coordinatorConfig->numberOfBuffersPerEpoch = 2;
+
+        workerConfig1 = WorkerConfiguration::create();
+        workerConfig1->numWorkerThreads = 1;
+        workerConfig1->numberOfBuffersPerEpoch = 2;
+
+        workerConfig2 = WorkerConfiguration::create();
+        workerConfig2->numWorkerThreads = 1;
+        workerConfig2->numberOfBuffersPerEpoch = 2;
+
+        workerConfig3 = WorkerConfiguration::create();
+        workerConfig3->numWorkerThreads = 1;
+        workerConfig3->numberOfBuffersPerEpoch = 2;
+
+        inputSchema = Schema::create()
+                  ->addField("id", DataTypeFactory::createUInt64())
+                  ->addField("value", DataTypeFactory::createUInt64())
+                  ->addField("timestamp", DataTypeFactory::createUInt64());
+
+        auto func1 = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t id;
+                uint64_t value;
+                uint64_t timestamp;
+            };
+
+            auto* records = buffer.getBuffer<Record>();
+            auto ts = time(nullptr);
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].id = u;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[u].value = u % 10;
+                records[u].timestamp = ts;
+            }
+        };
+
+        lambdaSource = LambdaSourceType::create("window",
+                                        "x1",
+                                        std::move(func1),
+                                        numberOfBuffersToProduceInTuples,
+                                        ingestionRate,
+                                        GatheringMode::INGESTION_RATE_MODE);
     }
 
     /* Will be called before a test is executed. */
@@ -124,8 +175,8 @@ class ActiveStandbyTest : public Testing::BaseIntegrationTest {
         auto logicalSource = sourceCatalog->getLogicalSource(carSourceName);
 
         CSVSourceTypePtr csvSourceTypeForCar1 = CSVSourceType::create(carSourceName, "carPhysicalSourceName1");
-        csvSourceTypeForCar1->setGatheringInterval(0);
-        csvSourceTypeForCar1->setNumberOfTuplesToProducePerBuffer(0);
+        csvSourceTypeForCar1->setGatheringInterval(10);
+        csvSourceTypeForCar1->setNumberOfTuplesToProducePerBuffer(10);
 
         auto physicalSourceForCar1 = PhysicalSource::create(csvSourceTypeForCar1);
 
@@ -139,7 +190,7 @@ class ActiveStandbyTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(ActiveStandbyTest, testActiveStandbyDiamond) {
+TEST_F(ActiveStandbyTest, testActiveStandbyDeployment) {
     setupTopologyAndSourceCatalogSimpleShortDiamond();
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("car"));
@@ -229,4 +280,67 @@ TEST_F(ActiveStandbyTest, testActiveStandbyDiamond) {
             EXPECT_TRUE(actualRootOperator->getChildren()[1]->instanceOf<SourceLogicalOperator>());
         }
     }
+}
+/*
+ * @brief test full lifecycle of active standby
+ */
+TEST_F(ActiveStandbyTest, testActiveStandbyRun) {
+    NES_INFO("UpstreamBackupTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    crd->getSourceCatalog()->addLogicalSource("window", inputSchema);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0UL);
+    NES_INFO("UpstreamBackupTest: Coordinator started successfully");
+
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(std::move(workerConfig1));
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("UpstreamBackupTest: Worker1 started successfully");
+
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(std::move(workerConfig2));
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+    NES_INFO("UpstreamBackupTest: Worker2 started successfully");
+
+    //Setup Source
+    NES_INFO("UpstreamBackupTest: Start worker 3");
+    workerConfig3->physicalSourceTypes.add(lambdaSource);
+
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(std::move(workerConfig3));
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    NES_INFO("UpstreamBackupTest: Worker3 started successfully");
+
+    wrk3->removeParent(crd->getNesWorker()->getWorkerId());
+    wrk3->addParent(wrk2->getWorkerId());
+    wrk3->addParent(wrk1->getWorkerId());
+
+    auto queryCatalog = crd->getQueryCatalog();
+    auto requestHandlerService = crd->getRequestHandlerService();
+
+
+    // The query contains a watermark assignment with 50 ms allowed lateness
+    NES_INFO("UpstreamBackupTest: Submit query");
+    auto query = Query::from("window").filter(Attribute("id") > 10).sink(NullOutputSinkDescriptor::create());
+
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(),
+                                                                             Optimizer::PlacementStrategy::BottomUp,
+                                                                             FaultToleranceType::AS);
+
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("UpstreamBackupTest: Remove query");
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    NES_INFO("UpstreamBackupTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("UpstreamBackupTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("UpstreamBackupTest: Test finished");
 }

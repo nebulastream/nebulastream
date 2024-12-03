@@ -110,11 +110,21 @@ WorkerId Topology::registerWorker(WorkerId workerId,
         workerId = getNextWorkerId();
     }
 
+
     if (!workerIdToTopologyNode.contains(workerId)) {
         TopologyNodePtr newTopologyNode =
             TopologyNode::create(workerId, address, grpcPort, dataPort, numberOfSlots, workerProperties);
         if (alternativeWorkerid.getRawValue())
             newTopologyNode->setAlternativeNodeCandidate(alternativeWorkerid);
+        else {
+            if (workerId == WorkerId(2)) {
+                newTopologyNode->setAlternativeNodeCandidate(WorkerId(3));
+            }
+            else if(workerId == WorkerId(3)) {
+                newTopologyNode->setAlternativeNodeCandidate(WorkerId(2));
+            }
+        }
+
         NES_INFO("Adding New Node {} to the catalog of nodes.", newTopologyNode->toString());
         workerIdToTopologyNode[workerId] = newTopologyNode;
         NES_DEBUG(" register node");

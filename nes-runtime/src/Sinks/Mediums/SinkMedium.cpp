@@ -53,7 +53,7 @@ SinkMedium::SinkMedium(SinkFormatPtr sinkFormat,
     buffersPerEpoch = this->nodeEngine->getQueryManager()->getNumberOfBuffersPerEpoch();
     currentTimestamp = 0;
     isWaiting = false;
-    if (faultToleranceType == FaultToleranceType::UB) {
+    if (faultToleranceType != FaultToleranceType::NONE) {
         notifyEpochCallback = [this](uint64_t timestamp) {
             notifyEpochTermination(timestamp);
         };
