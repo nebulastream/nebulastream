@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <string_view>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -141,6 +142,13 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                 ++currentQueryNumber;
             }
 
+            /// We expect at least one sink to be defined in the test file
+            if (sinkNamesToSchema.empty())
+            {
+                NES_ERROR("No sinks defined in test file: {}", testFileName);
+                std::exit(1);
+            }
+
             /// We have to get all sink names from the query and then create custom paths for each sink.
             /// The filepath can not be the sink name, as we might have multiple queries with the same sink name, i.e., sink20Booleans in FunctionEqual.test
             /// We assume:
@@ -155,7 +163,14 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
                     return "";
                 }
                 const auto intoLength = std::string("INTO").length();
-                return std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+                auto trimmedSinkName = std::string(Util::trimWhiteSpaces(query.substr(intoClause + intoLength)));
+
+                /// As the sink name might have a semicolon at the end, we remove it
+                if (trimmedSinkName.back() == ';')
+                {
+                    trimmedSinkName.pop_back();
+                }
+                return trimmedSinkName;
             }();
             if (sinkName.empty() or not sinkNamesToSchema.contains(sinkName))
             {
