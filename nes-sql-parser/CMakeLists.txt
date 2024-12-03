@@ -13,6 +13,7 @@
 add_subdirectory(src)
 get_source(nes-sql-parser SQL_PARSER_SOURCE_FILES)
 
+find_program(antlr4_executable antlr4 REQUIRED)
 add_custom_command(
         OUTPUT
         ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLBaseListener.cpp
@@ -20,7 +21,7 @@ add_custom_command(
         ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLListener.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLParser.cpp
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4
-        COMMAND antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND ${antlr4_executable} -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 # The VCPKG port is called 'antlr4', finding the package requires to look for 'antlr4-runtime' and
