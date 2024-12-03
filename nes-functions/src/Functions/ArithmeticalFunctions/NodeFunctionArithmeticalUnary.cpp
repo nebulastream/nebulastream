@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -57,7 +58,7 @@ void NodeFunctionArithmeticalUnary::inferStamp(const Schema& schema)
     }
 
     this->stamp = child_stamp;
-    NES_TRACE("We assigned the following stamp: {}", toString());
+    NES_TRACE("We assigned the following stamp: {}", *this);
 }
 
 bool NodeFunctionArithmeticalUnary::equal(const std::shared_ptr<Node>& rhs) const
@@ -70,9 +71,9 @@ bool NodeFunctionArithmeticalUnary::equal(const std::shared_ptr<Node>& rhs) cons
     return false;
 }
 
-std::string NodeFunctionArithmeticalUnary::toString() const
+std::ostream& NodeFunctionArithmeticalUnary::toDebugString(std::ostream& os) const
 {
-    return "ArithmeticalFunction()";
+    return os << "ArithmeticalUnaryFunction()";
 }
 
 bool NodeFunctionArithmeticalUnary::validateBeforeLowering() const

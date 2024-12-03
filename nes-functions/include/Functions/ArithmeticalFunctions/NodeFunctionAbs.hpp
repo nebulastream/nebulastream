@@ -34,7 +34,7 @@ public:
     std::shared_ptr<NodeFunction> deepCopy() override;
 
 protected:
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 private:
     explicit NodeFunctionAbs(NodeFunctionAbs* other);

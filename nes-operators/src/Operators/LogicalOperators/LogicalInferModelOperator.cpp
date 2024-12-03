@@ -14,7 +14,7 @@
 
 #include <filesystem>
 #include <memory>
-#include <string>
+#include <ostream>
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
@@ -47,11 +47,14 @@ LogicalInferModelOperator::LogicalInferModelOperator(
     NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
 }
 
-std::string LogicalInferModelOperator::toString() const
+std::ostream& LogicalInferModelOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "INFER_MODEL(" << id << ")";
-    return ss.str();
+    return os << "INFER_MODEL(" << id << ")";
+}
+
+std::ostream& LogicalInferModelOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "INFER_MODEL";
 }
 
 std::shared_ptr<Operator> LogicalInferModelOperator::copy()

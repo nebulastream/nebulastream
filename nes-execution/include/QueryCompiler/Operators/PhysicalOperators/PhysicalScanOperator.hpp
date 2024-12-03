@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
@@ -51,6 +52,7 @@ public:
     std::shared_ptr<Operator> copy() override;
 
 protected:
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 };
 }

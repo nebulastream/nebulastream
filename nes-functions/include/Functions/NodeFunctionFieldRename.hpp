@@ -41,7 +41,8 @@ public:
 protected:
     explicit NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldRename>& other);
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     NodeFunctionFieldRename(const std::shared_ptr<NodeFunctionFieldAccess>& originalField, std::string newFieldName);

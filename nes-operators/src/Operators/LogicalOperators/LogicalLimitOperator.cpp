@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
@@ -48,11 +49,14 @@ bool LogicalLimitOperator::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 };
 
-std::string LogicalLimitOperator::toString() const
+std::ostream& LogicalLimitOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "LIMIT" << id << ")";
-    return ss.str();
+    return os << "LIMIT(" << id << ")";
+}
+
+std::ostream& LogicalLimitOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "LIMIT";
 }
 
 bool LogicalLimitOperator::inferSchema()
