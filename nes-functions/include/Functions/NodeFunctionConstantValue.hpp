@@ -45,7 +45,8 @@ public:
 protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
 
 private:
     explicit NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value);

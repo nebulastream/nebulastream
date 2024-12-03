@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
@@ -43,9 +44,14 @@ bool NodeFunctionConstantValue::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionConstantValue::toString() const
+std::ostream& NodeFunctionConstantValue::toDebugString(std::ostream& os) const
 {
-    return fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
+    return os << fmt::format("ConstantValue({}, {})", constantValue, stamp->toString());
+}
+
+std::ostream& NodeFunctionConstantValue::toQueryPlanString(std::ostream& os) const
+{
+    return os << fmt::format("{}", constantValue);
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionConstantValue::create(const std::shared_ptr<DataType>& type, std::string value)

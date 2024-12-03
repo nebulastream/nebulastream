@@ -13,17 +13,18 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalBinary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionPow.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeProvider.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
+
 namespace NES
 {
 
@@ -50,11 +51,10 @@ bool NodeFunctionPow::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionPow::toString() const
+std::ostream& NodeFunctionPow::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "POWER(" << *children[0] << ", " << *children[1] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly two children.");
+    return os << fmt::format("POWER({}, {})", *children.at(0), *children.at(1));
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionPow::deepCopy()

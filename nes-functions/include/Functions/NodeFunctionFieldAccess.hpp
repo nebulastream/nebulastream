@@ -74,7 +74,8 @@ protected:
 
     NodeFunctionFieldAccess(std::shared_ptr<DataType> stamp, std::string fieldName);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
+    [[nodiscard]] std::ostream& toQueryPlanString(std::ostream& os) const override;
     /**
      * @brief Name of the field want to access.
      */

@@ -38,6 +38,6 @@ public:
 protected:
     explicit NodeFunctionGreaterEquals(NodeFunctionGreaterEquals* other);
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 }

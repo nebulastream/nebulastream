@@ -12,9 +12,8 @@
     limitations under the License.
 */
 #include <memory>
-#include <sstream>
+#include <ostream>
 #include <utility>
-#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionBinary.hpp>
@@ -23,6 +22,7 @@
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
@@ -54,11 +54,16 @@ bool NodeFunctionFieldAssignment::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionFieldAssignment::toString() const
+std::ostream& NodeFunctionFieldAssignment::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "NodeFunctionFieldAssignment(" << *children[0] << "=" << *children[1] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << "NodeFunctionFieldAssignment(" << *children.at(0) << " = " << *children.at(1) << ")";
+}
+
+std::ostream& NodeFunctionFieldAssignment::toQueryPlanString(std::ostream& os) const
+{
+    PRECONDITION(children.size() == 2, "Cannot print function without exactly 2 children.");
+    return os << VerbosityLevel::QueryPlan << *children.at(0) << " = " << *children.at(1);
 }
 
 std::shared_ptr<NodeFunctionFieldAccess> NodeFunctionFieldAssignment::getField() const

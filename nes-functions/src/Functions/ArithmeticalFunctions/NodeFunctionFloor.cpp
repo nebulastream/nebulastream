@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
-#include <cmath>
 #include <memory>
+#include <ostream>
 #include <utility>
 #include <Functions/ArithmeticalFunctions/NodeFunctionArithmeticalUnary.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionFloor.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -49,11 +50,10 @@ bool NodeFunctionFloor::equal(const std::shared_ptr<Node>& rhs) const
     return false;
 }
 
-std::string NodeFunctionFloor::toString() const
+std::ostream& NodeFunctionFloor::toDebugString(std::ostream& os) const
 {
-    std::stringstream ss;
-    ss << "FLOOR(" << *children[0] << ")";
-    return ss.str();
+    PRECONDITION(children.size() == 1, "Cannot print function without exactly one child.");
+    return os << fmt::format("FLOOR({})", *children.front());
 }
 
 std::shared_ptr<NodeFunction> NodeFunctionFloor::deepCopy()

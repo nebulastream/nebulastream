@@ -31,7 +31,7 @@ class PhysicalOperator : public virtual Operator
 protected:
     explicit PhysicalOperator(OperatorId id);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 public:
     ~PhysicalOperator() noexcept override = default;

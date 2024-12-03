@@ -40,6 +40,6 @@ public:
 protected:
     explicit NodeFunctionOr(NodeFunctionOr* other);
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 }

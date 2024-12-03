@@ -13,6 +13,7 @@
 */
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
@@ -76,7 +77,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(const Schema& schema)
     }
 
     stamp = commonStamp;
-    NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", toString());
+    NES_DEBUG("NodeFunctionArithmeticalBinary: we assigned the following stamp: {}", *this);
 }
 
 bool NodeFunctionArithmeticalBinary::equal(const std::shared_ptr<Node>& rhs) const
@@ -89,9 +90,9 @@ bool NodeFunctionArithmeticalBinary::equal(const std::shared_ptr<Node>& rhs) con
     return false;
 }
 
-std::string NodeFunctionArithmeticalBinary::toString() const
+std::ostream& NodeFunctionArithmeticalBinary::toDebugString(std::ostream& os) const
 {
-    return "ArithmeticalBinaryFunction()";
+    return os << "ArithmeticalBinaryFunction()";
 }
 
 bool NodeFunctionArithmeticalBinary::validateBeforeLowering() const

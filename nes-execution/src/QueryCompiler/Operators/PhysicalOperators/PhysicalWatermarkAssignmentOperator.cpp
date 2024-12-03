@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
@@ -56,18 +57,21 @@ std::shared_ptr<PhysicalOperator> PhysicalWatermarkAssignmentOperator::create(
     return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(watermarkStrategyDescriptor));
 }
 
-std::string PhysicalWatermarkAssignmentOperator::toString() const
+std::ostream& PhysicalWatermarkAssignmentOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalWatermarkAssignmentOperator:\n";
-    out << PhysicalUnaryOperator::toString();
+    os << "\nPhysicalWatermarkAssignmentOperator:\n";
     if (watermarkStrategyDescriptor != nullptr)
     {
-        out << "watermarkStrategyDescriptor: " << watermarkStrategyDescriptor->toString();
+        os << "watermarkStrategyDescriptor: " << watermarkStrategyDescriptor->toString();
     }
-    out << std::endl;
-    return out.str();
+    os << '\n';
+    return PhysicalUnaryOperator::toDebugString(os);
+}
+
+std::ostream& PhysicalWatermarkAssignmentOperator::toQueryPlanString(std::ostream& os) const
+{
+    os << "PhysicalWatermarkAssignmentOperator:";
+    return PhysicalUnaryOperator::toQueryPlanString(os);
 }
 
 std::shared_ptr<Operator> PhysicalWatermarkAssignmentOperator::copy()

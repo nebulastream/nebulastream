@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <ostream>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -22,6 +23,9 @@
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
@@ -72,14 +76,14 @@ std::shared_ptr<Operator> Operator::duplicate()
     for (const auto& parent : getParents())
     {
         const auto success = copyOperator->addParent(getDuplicateOfParent(NES::Util::as<Operator>(parent)));
-        INVARIANT(success, "Unable to add parent ({}) to copy ({})", NES::Util::as<Operator>(parent)->toString(), copyOperator->toString());
+        INVARIANT(success, "Unable to add parent ({}) to copy ({})", *NES::Util::as<Operator>(parent), *copyOperator);
     }
 
     NES_DEBUG("Operator: copy all children");
     for (const auto& child : getChildren())
     {
         const auto success = copyOperator->addChild(getDuplicateOfChild(NES::Util::as<Operator>(child)->duplicate()));
-        INVARIANT(success, "Unable to add child ({}) to copy ({})", NES::Util::as<Operator>(child)->toString(), copyOperator->toString());
+        INVARIANT(success, "Unable to add child ({}) to copy ({})", *NES::Util::as<Operator>(child), *copyOperator);
     }
     return copyOperator;
 }
@@ -272,22 +276,9 @@ OperatorId getNextOperatorId()
     return OperatorId(id++);
 }
 
-std::string Operator::toString() const
+std::ostream& Operator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "operatorId: " << id << "\n";
-    out << "properties: ";
-    for (const auto& itemKey : properties | std::views::keys)
-    {
-        if (itemKey != properties.begin()->first)
-        {
-            out << ", ";
-        }
-        out << itemKey;
-    }
-    out << std::endl;
-    return out.str();
+    return os << fmt::format("\nOperatorId: {}\nproperties: {}\n", id, fmt::join(std::ranges::views::keys(properties), ", "));
 }
 
 }

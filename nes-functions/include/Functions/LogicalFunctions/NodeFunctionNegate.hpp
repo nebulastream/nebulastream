@@ -46,6 +46,6 @@ public:
 protected:
     explicit NodeFunctionNegate(NodeFunctionNegate* other);
 
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 };
 }

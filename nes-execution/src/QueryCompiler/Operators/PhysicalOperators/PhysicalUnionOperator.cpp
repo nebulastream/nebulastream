@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <memory>
+#include <ostream>
 #include <sstream>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -48,12 +49,13 @@ PhysicalUnionOperator::PhysicalUnionOperator(
 {
 }
 
-std::string PhysicalUnionOperator::toString() const
+std::ostream& PhysicalUnionOperator::toDebugString(std::ostream& os) const
 {
-    std::stringstream out;
-    out << std::endl;
-    out << "PhysicalUnionOperator:\n";
-    return out.str();
+    return os << "\nPhysicalUnionOperator:\n";
+}
+std::ostream& PhysicalUnionOperator::toQueryPlanString(std::ostream& os) const
+{
+    return os << "PhysicalUnionOperator";
 }
 std::shared_ptr<Operator> PhysicalUnionOperator::copy()
 {

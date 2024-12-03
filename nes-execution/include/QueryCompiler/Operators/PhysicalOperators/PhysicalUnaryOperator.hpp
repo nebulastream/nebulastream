@@ -30,7 +30,7 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
 protected:
     PhysicalUnaryOperator(OperatorId id, std::shared_ptr<Schema> inputSchema, std::shared_ptr<Schema> outputSchema);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toDebugString(std::ostream& os) const override;
 
 public:
     ~PhysicalUnaryOperator() noexcept override = default;
