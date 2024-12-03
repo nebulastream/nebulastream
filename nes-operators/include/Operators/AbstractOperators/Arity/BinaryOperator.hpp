@@ -101,10 +101,6 @@ public:
     std::vector<OriginId> getOutputOriginIds() const override;
 
 protected:
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
     std::string toString() const override;
 
     SchemaPtr leftInputSchema = Schema::create();

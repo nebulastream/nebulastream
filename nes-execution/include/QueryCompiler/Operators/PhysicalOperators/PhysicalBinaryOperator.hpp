@@ -27,10 +27,6 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
 protected:
     PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
     std::string toString() const override;
 };
 
