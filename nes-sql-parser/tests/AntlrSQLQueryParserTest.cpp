@@ -134,16 +134,16 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestTumblingWindow)
 {
     {
         /// Testing join with two streams that have the same field names
-        const auto inputQueryEventTime
-            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window tumbling (ts_field, size 10 sec) INTO PRINT"s;
+        const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window "
+                                         "tumbling (ts_field, size 10 sec) INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))
                                         .window(TumblingWindow::of(EventTime(Attribute("ts_field")), Seconds(10)))
                                         .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
-        const auto inputQueryIngestionTime
-            = "select * from (select * from purchases) inner join (select * from tweets) on userId = userId window tumbling (size 10 sec) INTO PRINT"s;
+        const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on userId = userId "
+                                             "window tumbling (size 10 sec) INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
@@ -157,8 +157,8 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestTumblingWindow)
 TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestTumblingWindowWithQualifierNames)
 {
     /// Testing join with two streams that specify the join field names via the stream name
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId = tweets.id window tumbling (timestamp, size 10 ms) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId = "
+                                     "tweets.id window tumbling (timestamp, size 10 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id"))
@@ -166,8 +166,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestTumblingWindowWithQualifi
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.id window tumbling (size 10 ms) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets "
+                                         "on purchases.userId = tweets.id window tumbling (size 10 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("purchases.userId") == Attribute("tweets.id"))
@@ -180,8 +180,8 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindows)
 {
     {
         /// Testing join with two stream that have different field names and perform the join over a sliding window
-        const auto inputQueryEventTime
-            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window sliding (timestamp, size 10 min, advance by 5 ms) INTO PRINT"s;
+        const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window "
+                                         "sliding (timestamp, size 10 min, advance by 5 ms) INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))
@@ -189,8 +189,8 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindows)
                                         .sink("PRINT");
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-        const auto inputQueryIngestionTime
-            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window sliding (size 3 days, advance by 5 hours) INTO PRINT"s;
+        const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on userId = id "
+                                             "window sliding (size 3 days, advance by 5 hours) INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("id"))
@@ -206,7 +206,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithQualifi
     {
         /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
         const auto inputQueryEventTime
-            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.userId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = "
+              "tweets.userId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId"))
@@ -215,7 +216,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithQualifi
         EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
         const auto inputQueryIngestionTime
-            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.userId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = "
+              "tweets.userId window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
@@ -232,7 +234,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
         /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
         const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) "
                                          "on userId = userId1234 "
-                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT"s;
+                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId1234"))
@@ -243,7 +245,7 @@ TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
 
         const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) "
                                              "on userId = userId1234 "
-                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT"s;
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId1234"))
@@ -261,7 +263,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterW
         /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
         const auto inputQueryEventTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets "
                                          "on purchases.userId = tweets.userId "
-                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT"s;
+                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId"))
@@ -272,7 +274,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterW
 
         const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS "
                                              "tweets on purchases.userId = tweets.userId "
-                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT"s;
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
@@ -290,7 +292,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterA
         /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
         const auto inputQueryEventTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS "
                                          "tweets2 on purchases.userId = tweets.userId "
-                                         "window sliding (timestamp, size 10 ms, advance by 5 ms) WHERE tweets2.field > 0 INTO PRINT"s;
+                                         "window sliding (timestamp, size 10 ms, advance by 5 ms) WHERE tweets2.field > 0 INTO PRINT";
         const auto queryEventTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("userId"))
@@ -301,7 +303,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterA
 
         const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases2 inner join (select * from tweets) AS "
                                              "tweets on purchases.userId = tweets.userId "
-                                             "window sliding (size 10 ms, advance by 5 ms) WHERE purchases2.field > 1234 INTO PRINT"s;
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE purchases2.field > 1234 INTO PRINT";
         const auto queryIngestionTime = Query::from("purchases")
                                             .joinWith(Query::from("tweets"))
                                             .where(Attribute("userId") == Attribute("userId"))
@@ -319,7 +321,7 @@ TEST_F(AntlrSQLQueryParserTest, threeJoinTest)
     const auto inputQueryEventTime
         = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id "
           "window sliding (ts1, size 10 day, advance by 5 ms) inner join (select * from sellers) ON id = sellerId "
-          "window tumbling (ts2, size 30 min) INTO PRINT"s;
+          "window tumbling (ts2, size 30 min) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id"))
@@ -333,7 +335,7 @@ TEST_F(AntlrSQLQueryParserTest, threeJoinTest)
     const auto inputQueryIngestionTime
         = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id "
           "window sliding (size 10 day, advance by 5 ms) inner join (select * from sellers) ON id = sellerId "
-          "window sliding (size 30 min, advance by 8 sec) INTO PRINT"s;
+          "window sliding (size 30 min, advance by 8 sec) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))
@@ -353,7 +355,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithQualifierName)
                                      "ON tweets2.userId = purchases2.id "
                                      "window sliding (ts1, size 10 day, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
                                      "purchases2.id = sellers2.sellerId "
-                                     "window tumbling (ts2, size 30 min) INTO PRINT"s;
+                                     "window tumbling (ts2, size 30 min) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("tweets2.userId") == Attribute("purchases2.id"))
@@ -368,7 +370,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithQualifierName)
                                          "tweets2 ON tweets2.userId = purchases2.id "
                                          "window sliding (size 10 day, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
                                          "purchases2.id = sellers2.sellerId "
-                                         "window sliding (size 30 min, advance by 8 sec) INTO PRINT"s;
+                                         "window sliding (size 30 min, advance by 8 sec) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("tweets2.userId") == Attribute("purchases2.id"))
@@ -386,7 +388,7 @@ TEST_F(AntlrSQLQueryParserTest, threeJoinTestWithMultipleJoinkeyFunctions)
     const auto inputQueryEventTime
         = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id and userId2 >= id2 "
           "window sliding (ts1, size 10 days, advance by 5 ms) inner join (select * from sellers) ON id = sellerId or id2 < sellerId2 "
-          "window tumbling (ts2, size 30 min) INTO PRINT"s;
+          "window tumbling (ts2, size 30 min) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
@@ -400,7 +402,7 @@ TEST_F(AntlrSQLQueryParserTest, threeJoinTestWithMultipleJoinkeyFunctions)
     const auto inputQueryIngestionTime
         = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id and userId2 >= id2 "
           "window sliding (size 12 days, advance by 5 ms) inner join (select * from sellers) ON id = sellerId or id2 < sellerId2 "
-          "window tumbling (size 30 min) INTO PRINT"s;
+          "window tumbling (size 30 min) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
@@ -420,7 +422,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithMultipleJoinkeyFunctio
                                      "ON purchases2.userId = tweets2.id and tweets2.userId2 >= tweets2.id2 "
                                      "window sliding (ts1, size 10 days, advance by 5 ms) inner join (select * from sellers) as sellers2 "
                                      "ON tweets2.id = sellers2.sellerId or tweets2.id2 < sellers2.sellerId2 "
-                                     "window tumbling (ts2, size 30 min) INTO PRINT"s;
+                                     "window tumbling (ts2, size 30 min) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
@@ -435,7 +437,7 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithMultipleJoinkeyFunctio
                                          "tweets2 ON purchases2.userId = tweets2.id and userId2 >= tweets2.id2 "
                                          "window sliding (size 12 days, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
                                          "tweets2.id = sellers2.sellerId or tweets2.id2 < sellers2.sellerId2 "
-                                         "window tumbling (size 30 min) INTO PRINT"s;
+                                         "window tumbling (size 30 min) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
@@ -450,8 +452,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithMultipleJoinkeyFunctio
 TEST_F(AntlrSQLQueryParserTest, thetaJoinTest)
 {
     /// Testing join with two stream that have different field names and perform the join over a sliding window
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window "
+                                     "sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") >= Attribute("id"))
@@ -459,8 +461,8 @@ TEST_F(AntlrSQLQueryParserTest, thetaJoinTest)
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window "
+                                         "sliding (size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") >= Attribute("id"))
@@ -473,8 +475,8 @@ TEST_F(AntlrSQLQueryParserTest, thetaJoinTest)
 TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestWithQualifierName)
 {
     /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < tweets.userId window sliding (timestamp, size 23 days, advance by 5 sec) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < "
+                                     "tweets.userId window sliding (timestamp, size 23 days, advance by 5 sec) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") < Attribute("userId"))
@@ -482,8 +484,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestWithQualifierName)
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < tweets.userId window sliding (size 10 sec, advance by 5 sec) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < "
+                                         "tweets.userId window sliding (size 10 sec, advance by 5 sec) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") < Attribute("userId"))
@@ -496,8 +498,8 @@ TEST_F(AntlrSQLQueryParserTest, thetaJoinTestNegatedJoinExpression)
 
 {
     /// Testing join with two stream that have different field names and perform the join over a sliding window
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) window sliding (timestamp, size 42 ms, advance by 1 ms) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) window "
+                                     "sliding (timestamp, size 42 ms, advance by 1 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(!(Attribute("userId") < Attribute("id")))
@@ -505,8 +507,8 @@ TEST_F(AntlrSQLQueryParserTest, thetaJoinTestNegatedJoinExpression)
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) window sliding (size 42 ms, advance by 1 ms) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) "
+                                         "window sliding (size 42 ms, advance by 1 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(!(Attribute("userId") < Attribute("id")))
@@ -519,8 +521,8 @@ TEST_F(AntlrSQLQueryParserTest, thetaJoinTestNegatedJoinExpression)
 TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestNegatedJoinExpressionWithQualifierName)
 {
     /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= "
+                                     "tweets.userId) window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") < Attribute("userId"))
@@ -528,8 +530,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestNegatedJoinExpressionWithQ
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId "
+                                         ">= tweets.userId) window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") < Attribute("userId"))
@@ -541,8 +543,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestNegatedJoinExpressionWithQ
 TEST_F(AntlrSQLQueryParserTest, joinTestWithMultipleJoinkeyFunctions)
 {
     /// Testing join with two stream that have different field names and perform the join over a sliding window
-    const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and id >= sellerId window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and id "
+                                     ">= sellerId window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where((!(Attribute("userId") < Attribute("id"))) && (Attribute("id") >= Attribute("sellerId")))
@@ -550,8 +552,8 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithMultipleJoinkeyFunctions)
                                     .sink("PRINT");
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
-    const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and id >= sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and "
+                                         "id >= sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where((!(Attribute("userId") < Attribute("id"))) && (Attribute("id") >= Attribute("sellerId")))
@@ -565,7 +567,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithMultipleJoinkeyFunctionsWit
 {
     /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
     const auto inputQueryEventTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && purchases.id >= tweets.sellerId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && "
+          "purchases.id >= tweets.sellerId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") < Attribute("userId") && Attribute("id") >= Attribute("sellerId"))
@@ -574,7 +577,8 @@ TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithMultipleJoinkeyFunctionsWit
     EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
 
     const auto inputQueryIngestionTime
-        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && purchases.id >= tweets.sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && "
+          "purchases.id >= tweets.sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") < Attribute("userId") && Attribute("id") >= Attribute("sellerId"))
@@ -589,7 +593,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryEventTime
         = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
-          "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >=23 and field2 <=12 into PRINT"s;
+          "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >=23 and field2 <=12 into PRINT";
     const auto queryEventTime = Query::from("purchases")
                                     .joinWith(Query::from("tweets"))
                                     .where(Attribute("userId") == Attribute("id"))
@@ -603,7 +607,7 @@ TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
     /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
     const auto inputQueryIngestionTime
         = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
-          "window sliding (size 10 sec, advance by 5 ms)) where field >=23 or field2 <=12 into PRINT"s;
+          "window sliding (size 10 sec, advance by 5 ms)) where field >=23 or field2 <=12 into PRINT";
     const auto queryIngestionTime = Query::from("purchases")
                                         .joinWith(Query::from("tweets"))
                                         .where(Attribute("userId") == Attribute("id"))

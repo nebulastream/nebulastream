@@ -101,14 +101,8 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        if (!source->start())
-        {
-            NES_WARNING("QueryManager: source {} could not started as it is already running", *source);
-        }
-        else
-        {
-            NES_DEBUG("QueryManager: source  {}  started successfully", *source);
-        }
+        source->start();
+        NES_DEBUG("QueryManager: source  {}  started successfully", *source);
     }
 
     /// register start timestamp of query in statistics
@@ -172,7 +166,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     }
     for (const auto& source : qep->getSources())
     {
-        NES_ASSERT2_FMT(source->stop(), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
+        source->stop();
     }
 
     auto terminationFuture = qep->getTerminationFuture();
@@ -230,14 +224,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
 
     for (const auto& source : qep->getSources())
     {
-        if (type == QueryTerminationType::Graceful)
-        {
-            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
-        }
-        else if (type == QueryTerminationType::HardStop)
-        {
-            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
-        }
+        source->stop();
     }
 
     if (type == QueryTerminationType::HardStop || type == QueryTerminationType::Failure)

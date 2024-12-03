@@ -34,6 +34,7 @@ class Source
 public:
     struct EoS
     {
+        bool dataAvailable;
     };
 
     struct Continue

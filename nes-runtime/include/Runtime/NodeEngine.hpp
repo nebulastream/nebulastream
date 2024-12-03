@@ -14,12 +14,12 @@
 
 #pragma once
 #include <unordered_map>
-#include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include "Sources/AsyncSourceExecutor.hpp"
 
 namespace NES::Runtime
 {
@@ -59,10 +59,12 @@ public:
     [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
     [[nodiscard]] std::shared_ptr<QueryManager> getQueryManager() { return queryManager; }
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
+    [[nodiscard]] std::shared_ptr<Sources::AsyncSourceExecutor> getAsyncSourceExecutor() { return sourceExecutor; }
 
 private:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::shared_ptr<QueryManager> queryManager;
+    std::shared_ptr<Sources::AsyncSourceExecutor> sourceExecutor;
     std::shared_ptr<QueryLog> queryLog;
 
     std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;

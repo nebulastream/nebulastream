@@ -74,7 +74,7 @@ asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(ByteBuffer&
     {
         if (errorCode == asio::error::eof)
         {
-            co_return EoS{};
+            co_return EoS{.dataAvailable = bytesRead != 0};
         }
         co_return Error{boost::system::system_error{errorCode}};
     }

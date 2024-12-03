@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <string>
 #include <utility>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
+#include <Sources/AsyncSourceExecutor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -29,7 +29,10 @@ NodeEngine::NodeEngine(
     const std::shared_ptr<Memory::BufferManager>& bufferManager,
     const std::shared_ptr<QueryManager>& queryManager,
     const std::shared_ptr<QueryLog>& queryLog)
-    : bufferManager(bufferManager), queryManager(queryManager), queryLog(queryLog)
+    : bufferManager(bufferManager)
+    , queryManager(queryManager)
+    , sourceExecutor(std::make_shared<Sources::AsyncSourceExecutor>(1))
+    , queryLog(queryLog)
 {
     this->queryManager->startThreadPool(100);
 }
