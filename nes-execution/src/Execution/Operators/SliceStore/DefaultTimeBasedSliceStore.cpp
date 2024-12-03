@@ -17,14 +17,15 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
-#include <Util/Common.hpp>
 #include <Util/Execution.hpp>
+#include <Util/Locks.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
@@ -33,6 +34,34 @@ DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
     const uint64_t windowSize, const uint64_t windowSlide, const uint8_t numberOfInputOrigins)
     : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
 {
+}
+
+DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other)
+    : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfInputOrigins(other.numberOfInputOrigins)
+{
+}
+
+DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept
+    : sliceAssigner(std::move(other.sliceAssigner))
+    , sequenceNumber(std::move(other.sequenceNumber.load()))
+    , numberOfInputOrigins(std::move(other.numberOfInputOrigins))
+{
+}
+
+DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultTimeBasedSliceStore& other)
+{
+    sliceAssigner = other.sliceAssigner;
+    sequenceNumber = other.sequenceNumber.load();
+    numberOfInputOrigins = other.numberOfInputOrigins;
+    return *this;
+}
+
+DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBasedSliceStore&& other) noexcept
+{
+    sliceAssigner = std::move(other.sliceAssigner);
+    sequenceNumber = std::move(other.sequenceNumber.load());
+    numberOfInputOrigins = std::move(other.numberOfInputOrigins);
+    return *this;
 }
 
 std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(const Slice& slice) const

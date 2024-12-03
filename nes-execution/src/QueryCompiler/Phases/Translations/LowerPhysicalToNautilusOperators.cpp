@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -40,8 +41,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>

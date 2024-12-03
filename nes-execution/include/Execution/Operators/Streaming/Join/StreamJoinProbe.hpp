@@ -20,9 +20,10 @@
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/Execution.hpp>
 #include <val_concepts.hpp>
+#include "Time/Timestamp.hpp"
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -65,9 +66,9 @@ protected:
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
 
-    const uint64_t operatorHandlerIndex;
+    uint64_t operatorHandlerIndex;
     std::shared_ptr<Functions::Function> joinFunction;
-    const WindowMetaData windowMetaData;
-    const JoinSchema joinSchema;
+    WindowMetaData windowMetaData;
+    JoinSchema joinSchema;
 };
 }

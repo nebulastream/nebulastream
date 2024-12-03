@@ -14,6 +14,7 @@
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include "TupleBufferImpl.hpp"
 namespace NES::Memory

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -25,8 +26,7 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Util/Common.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -60,11 +60,11 @@ public:
     const Runtime::Execution::WindowMetaData& getWindowMetaData() const;
 
 protected:
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
-    const StreamJoinStrategy joinStrategy;
+    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
+    StreamJoinStrategy joinStrategy;
     std::unique_ptr<Runtime::Execution::Functions::Function> joinFunction;
-    const std::vector<std::string> joinFieldNamesLeft;
-    const std::vector<std::string> joinFieldNamesRight;
-    const Runtime::Execution::WindowMetaData windowMetaData;
+    std::vector<std::string> joinFieldNamesLeft;
+    std::vector<std::string> joinFieldNamesRight;
+    Runtime::Execution::WindowMetaData windowMetaData;
 };
 }

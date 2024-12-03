@@ -20,6 +20,10 @@ namespace NES::Runtime::Execution
 Slice::Slice(const SliceStart sliceStart, const SliceEnd sliceEnd) : sliceStart(sliceStart), sliceEnd(sliceEnd)
 {
 }
+Slice::Slice(const Slice& other) = default;
+Slice::Slice(Slice&& other) noexcept = default;
+Slice& Slice::operator=(const Slice& other) = default;
+Slice& Slice::operator=(Slice&& other) noexcept = default;
 
 SliceStart Slice::getSliceStart() const
 {

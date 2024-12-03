@@ -18,64 +18,37 @@
 #include <ostream>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
-#include <nautilus/tracing/TypedValueRef.hpp>
-#include <nautilus/tracing/Types.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_concepts.hpp>
-#include <nautilus/function.hpp>
 
 
-namespace NES::Runtime {
-class Timestamp;
-using SliceStart = Timestamp;
-using SliceEnd = Timestamp;
+namespace NES::Runtime
+{
 
-class Timestamp {
+class Timestamp
+{
 public:
     using Underlying = uint64_t;
-    static constexpr auto INITIAL_VALUE = 0;
-    static constexpr auto INVALID_VALUE = UINT64_MAX;
+    static constexpr Underlying INITIAL_VALUE = 0;
+    static constexpr Underlying INVALID_VALUE = UINT64_MAX;
 
+    explicit constexpr Timestamp(const Underlying value) : value(value) { }
 
-    explicit Timestamp(const uint64_t value) : value(value)
-    {
-    }
+    Timestamp operator+(const uint64_t offset) const { return Timestamp(value + offset); }
 
-    Timestamp operator+(const uint64_t offset) const
-    {
-        return Timestamp(value + offset);
-    }
+    Timestamp operator+=(const uint64_t offset) const { return Timestamp(value + offset); }
 
-    Timestamp operator+=(const uint64_t offset) const
-    {
-        return Timestamp(value + offset);
-    }
+    Timestamp operator-(const uint64_t offset) const { return Timestamp(value - offset); }
 
-    Timestamp operator-(const uint64_t offset) const
-    {
-        return Timestamp(value - offset);
-    }
+    Timestamp operator-=(const uint64_t offset) const { return Timestamp(value - offset); }
 
-    Timestamp operator-=(const uint64_t offset) const
-    {
-        return Timestamp(value - offset);
-    }
+    friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) { return os << timestamp.value; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Timestamp& timestamp) {
-        return os << timestamp.value;
-    }
+    [[nodiscard]] uint64_t getRawValue() const { return value; }
 
-    uint64_t getRawValue() const
-    {
-        return value;
-    }
-
-    friend constexpr std::strong_ordering operator<=>(const Timestamp& lh, const Timestamp& rh) = default;
+    friend constexpr std::strong_ordering operator<=>(const Timestamp& lhs, const Timestamp& rhs) = default;
 
 private:
     Underlying value;
 };
-
 
 
 }

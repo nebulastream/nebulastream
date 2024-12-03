@@ -75,15 +75,15 @@ bool LogicalJoinOperator::inferSchema()
     /// Finds the join schema that contains the joinKey and copies the fields to the input schema, if found
     auto findSchemaInDistinctSchemas = [&](NodeFunctionFieldAccess& joinKey, const SchemaPtr& inputSchema)
     {
-        for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end(); ++itr)
+        for (auto& distinctSchema : distinctSchemas)
         {
             const auto& joinKeyName = joinKey.getFieldName();
-            if (const auto attributeField = (*itr)->getFieldByName(joinKeyName); attributeField.has_value())
+            if (const auto attributeField = distinctSchema->getFieldByName(joinKeyName); attributeField.has_value())
             {
                 /// If we have not copied the fields from the schema, copy them for the first time
                 if (inputSchema->getSchemaSizeInBytes() == 0)
                 {
-                    inputSchema->copyFields(*itr);
+                    inputSchema->copyFields(distinctSchema);
                 }
                 joinKey.inferStamp(inputSchema);
                 return true;

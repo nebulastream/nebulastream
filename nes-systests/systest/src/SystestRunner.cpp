@@ -16,13 +16,13 @@
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <ostream>
 #include <regex>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <string_view>
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>

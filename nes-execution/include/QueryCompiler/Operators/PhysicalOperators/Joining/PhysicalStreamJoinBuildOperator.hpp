@@ -22,9 +22,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
-#include <Util/Common.hpp>
 
 #include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -51,9 +51,9 @@ public:
     JoinBuildSideType getBuildSide() const;
 
 private:
-    const std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
-    const QueryCompilation::StreamJoinStrategy joinStrategy;
-    const TimestampField timeStampField;
-    const JoinBuildSideType buildSide;
+    std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> streamJoinOperatorHandler;
+    QueryCompilation::StreamJoinStrategy joinStrategy;
+    TimestampField timeStampField;
+    JoinBuildSideType buildSide;
 };
 }

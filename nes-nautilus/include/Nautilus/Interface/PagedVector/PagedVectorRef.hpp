@@ -53,8 +53,8 @@ public:
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;
 
 private:
-    const nautilus::val<PagedVector*> pagedVectorRef;
-    const std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    nautilus::val<PagedVector*> pagedVectorRef;
+    std::shared_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 class PagedVectorRefIter
@@ -69,8 +69,8 @@ public:
     nautilus::val<bool> operator!=(const PagedVectorRefIter& other) const;
 
 private:
-    const PagedVectorRef pagedVector;
-    const std::vector<Record::RecordFieldIdentifier> projections;
+    PagedVectorRef pagedVector;
+    std::vector<Record::RecordFieldIdentifier> projections;
     nautilus::val<uint64_t> pos;
 };
 

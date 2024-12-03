@@ -42,9 +42,9 @@ NLJOperatorHandler::NLJOperatorHandler(
     const std::shared_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider>& rightMemoryProvider)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), leftMemoryProvider, rightMemoryProvider)
 {
-    averageNumberOfTuplesLeft.wlock()->first = leftMemoryProvider->getMemoryLayoutPtr()->getCapacity();
+    averageNumberOfTuplesLeft.wlock()->first = static_cast<int64_t>(leftMemoryProvider->getMemoryLayoutPtr()->getCapacity());
     averageNumberOfTuplesLeft.wlock()->second = 0;
-    averageNumberOfTuplesRight.wlock()->first = rightMemoryProvider->getMemoryLayoutPtr()->getCapacity();
+    averageNumberOfTuplesRight.wlock()->first = static_cast<int64_t>(rightMemoryProvider->getMemoryLayoutPtr()->getCapacity());
     averageNumberOfTuplesRight.wlock()->second = 0;
 }
 
@@ -54,7 +54,7 @@ std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)> NLJOper
         [&](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             const auto [averageNumberOfTuplesLeft, _] = *this->averageNumberOfTuplesLeft.rlock();
-            const auto [averageNumberOfTuplesRight, _] = *this->averageNumberOfTuplesLeft.rlock();
+            const auto [averageNumberOfTuplesRight, __] = *this->averageNumberOfTuplesLeft.rlock();
             auto memoryLayoutCopyLeft = leftMemoryProvider->getMemoryLayoutPtr()->deepCopy();
             auto memoryLayoutCopyRight = rightMemoryProvider->getMemoryLayoutPtr()->deepCopy();
 
@@ -116,12 +116,12 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 
     /// Calculating a rolling average of the number of tuples in the slices
     const auto averageNumberLockedLeft = this->averageNumberOfTuplesLeft.wlock();
-    averageNumberLockedLeft->second = std::min(averageNumberLockedLeft->second + 1, 10L);
+    averageNumberLockedLeft->second = std::min(averageNumberLockedLeft->second + 1, windowSizeRollingAverage);
     averageNumberLockedLeft->first
         += (static_cast<int64_t>(sliceLeft.getNumberOfTuplesLeft()) - averageNumberLockedLeft->first) / averageNumberLockedLeft->second;
 
     const auto averageNumberLockedRight = this->averageNumberOfTuplesRight.wlock();
-    averageNumberLockedRight->second = std::min(averageNumberLockedRight->second + 1, 10L);
+    averageNumberLockedRight->second = std::min(averageNumberLockedRight->second + 1, windowSizeRollingAverage);
     averageNumberLockedRight->first
         += (static_cast<int64_t>(sliceRight.getNumberOfTuplesRight()) - averageNumberLockedRight->first) / averageNumberLockedRight->second;
 }

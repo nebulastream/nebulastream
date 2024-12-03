@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>

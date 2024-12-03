@@ -14,6 +14,7 @@
 #include <sstream>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators

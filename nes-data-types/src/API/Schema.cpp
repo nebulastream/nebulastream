@@ -14,7 +14,6 @@
 
 #include <Configurations/Coordinator/SchemaType.hpp>
 
-#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 #include <API/AttributeField.hpp>

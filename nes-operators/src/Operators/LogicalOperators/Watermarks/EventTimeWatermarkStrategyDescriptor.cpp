@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
