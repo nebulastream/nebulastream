@@ -48,6 +48,10 @@ class Slice
 {
 public:
     Slice(SliceStart sliceStart, SliceEnd sliceEnd);
+    Slice(const Slice& other);
+    Slice(Slice&& other) noexcept;
+    Slice& operator=(const Slice& other);
+    Slice& operator=(Slice&& other) noexcept;
     virtual ~Slice() = default;
 
     [[nodiscard]] SliceStart getSliceStart() const;
@@ -60,7 +64,7 @@ public:
     bool operator!=(const Slice& rhs) const;
 
 protected:
-    const SliceStart sliceStart;
-    const SliceEnd sliceEnd;
+    SliceStart sliceStart;
+    SliceEnd sliceEnd;
 };
 }

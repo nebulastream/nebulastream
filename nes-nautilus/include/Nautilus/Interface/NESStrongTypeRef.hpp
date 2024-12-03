@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <type_traits>
 #include <Identifiers/NESStrongType.hpp>
 #include <nautilus/tracing/TypedValueRef.hpp>
 #include <nautilus/tracing/Types.hpp>
@@ -35,12 +36,12 @@ struct TypeResolver<T>
 
 namespace details
 {
-template <NES::NESIdentifier LHS>
-struct RawValueResolver<LHS>
+template <NES::NESIdentifier LhsS>
+struct RawValueResolver<LhsS>
 {
-    static LHS inline getRawValue(const val<LHS>& val)
+    static LhsS getRawValue(const val<LhsS>& val)
     {
-        return LHS(details::RawValueResolver<typename LHS::Underlying>::getRawValue(val.value));
+        return LhsS(details::RawValueResolver<typename LhsS::Underlying>::getRawValue(val.value));
     }
 };
 
@@ -72,7 +73,7 @@ public:
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const NES::NESStrongType<T, Tag, Invalid, Initial> type) : value(type.getRawValue())
     {
     }
-    val<NES::NESStrongType<T, Tag, Invalid, Initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
+    explicit val<NES::NESStrongType<T, Tag, Invalid, Initial>>(nautilus::tracing::TypedValueRef typedValueRef) : value(typedValueRef) { }
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& other) : value(other.value)
     {
     }
@@ -86,11 +87,11 @@ public:
     /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function
     val<Underlying> convertToValue() const { return value; }
 
-    [[nodiscard]] friend bool operator<(const val& lh, const val& rh) noexcept { return lh.value < rh.value; }
-    [[nodiscard]] friend bool operator<=(const val& lh, const val& rh) noexcept { return lh.value <= rh.value; }
-    [[nodiscard]] friend bool operator>(const val& lh, const val& rh) noexcept { return lh.value > rh.value; }
-    [[nodiscard]] friend bool operator>=(const val& lh, const val& rh) noexcept { return lh.value >= rh.value; }
-    [[nodiscard]] friend bool operator==(const val& lh, const val& rh) noexcept { return lh.value == rh.value; }
+    [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
+    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
+    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
+    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
+    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
     val<Underlying> value;
 };

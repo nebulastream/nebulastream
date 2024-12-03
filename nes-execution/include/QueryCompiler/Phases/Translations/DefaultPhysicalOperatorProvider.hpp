@@ -13,7 +13,9 @@
 */
 #pragma once
 
+#include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>

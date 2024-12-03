@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
+#include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
@@ -48,7 +51,6 @@ class WindowSlicesStoreInterface
 {
 public:
     virtual ~WindowSlicesStoreInterface() = default;
-
     /// Retrieves the slices that corresponds to the timestamp. If no slices exist for the timestamp, they are created by calling the method createNewSlice
     virtual std::vector<std::shared_ptr<Slice>>
     getSlicesOrCreate(Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
@@ -75,6 +77,6 @@ public:
     virtual void deleteState() = 0;
 
     /// Returns the window size
-    virtual uint64_t getWindowSize() const = 0;
+    [[nodiscard]] virtual uint64_t getWindowSize() const = 0;
 };
 }

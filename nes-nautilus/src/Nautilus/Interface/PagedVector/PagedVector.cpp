@@ -25,8 +25,8 @@
 namespace NES::Nautilus::Interface
 {
 PagedVector::PagedVector(
-    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout)
-    : bufferProvider(bufferProvider), memoryLayout(memoryLayout)
+    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout)
+    : bufferProvider(bufferProvider), memoryLayout(std::move(memoryLayout))
 {
     INVARIANT(this->memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
     INVARIANT(this->memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");

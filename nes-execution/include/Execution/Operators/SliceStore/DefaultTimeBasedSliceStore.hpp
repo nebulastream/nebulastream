@@ -44,6 +44,10 @@ class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
     DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, uint8_t numberOfInputOrigins);
+    DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other);
+    DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept;
+    DefaultTimeBasedSliceStore& operator=(const DefaultTimeBasedSliceStore& other);
+    DefaultTimeBasedSliceStore& operator=(DefaultTimeBasedSliceStore&& other) noexcept;
 
     ~DefaultTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
@@ -65,7 +69,7 @@ private:
     /// while we need to access windows during the triggering of windows.
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
     folly::Synchronized<std::map<SliceEnd, std::shared_ptr<Slice>>> slices;
-    const Operators::SliceAssigner sliceAssigner;
+    Operators::SliceAssigner sliceAssigner;
 
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.
@@ -73,7 +77,7 @@ private:
 
     /// Depending, if we have one or two input origins, we have to treat the slices differently
     /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
-    const uint8_t numberOfInputOrigins;
+    uint8_t numberOfInputOrigins;
 };
 
 }

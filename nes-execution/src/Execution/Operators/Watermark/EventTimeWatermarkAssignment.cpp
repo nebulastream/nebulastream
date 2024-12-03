@@ -18,6 +18,8 @@
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -26,7 +28,7 @@ namespace NES::Runtime::Execution::Operators
 struct WatermarkState final : OperatorState
 {
     explicit WatermarkState() = default;
-    nautilus::val<Timestamp> currentWatermark = Runtime::Timestamp::INITIAL_VALUE;
+    nautilus::val<Timestamp> currentWatermark = Timestamp(Runtime::Timestamp::INITIAL_VALUE);
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};

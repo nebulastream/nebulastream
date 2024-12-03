@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
@@ -24,7 +25,6 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <Util/Common.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -96,7 +96,7 @@ std::vector<std::string> PhysicalStreamJoinProbeOperator::getJoinFieldNameRight(
 
 Runtime::Execution::JoinSchema PhysicalStreamJoinProbeOperator::getJoinSchema() const
 {
-    return Runtime::Execution::JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
+    return {leftInputSchema, rightInputSchema, outputSchema};
 }
 
 const Runtime::Execution::WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const

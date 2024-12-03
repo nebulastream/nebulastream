@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <optional>
+#include <tuple>
+#include <folly/Synchronized.h>
+
 namespace folly
 {
 /// Tries to acquire two locks in a deadlock-free manner. If it fails, it returns an empty optional.

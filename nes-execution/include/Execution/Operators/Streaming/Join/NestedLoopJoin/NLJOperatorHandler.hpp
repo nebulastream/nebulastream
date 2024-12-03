@@ -44,6 +44,7 @@ struct EmittedNLJWindowTriggerTask
 class NLJOperatorHandler final : public StreamJoinOperatorHandler
 {
 public:
+    static constexpr int64_t windowSizeRollingAverage = 10;
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,

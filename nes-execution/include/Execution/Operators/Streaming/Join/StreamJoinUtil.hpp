@@ -36,9 +36,9 @@ struct JoinSchema
     {
     }
 
-    const std::shared_ptr<Schema> leftSchema;
-    const std::shared_ptr<Schema> rightSchema;
-    const std::shared_ptr<Schema> joinSchema;
+    std::shared_ptr<Schema> leftSchema;
+    std::shared_ptr<Schema> rightSchema;
+    std::shared_ptr<Schema> joinSchema;
 };
 
 namespace Util

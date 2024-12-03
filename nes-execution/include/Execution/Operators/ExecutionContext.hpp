@@ -13,8 +13,6 @@
 */
 
 #pragma once
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -24,7 +22,9 @@
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <nautilus/val_concepts.hpp>
 
 namespace NES::Runtime::Execution
@@ -52,9 +52,9 @@ struct ExecutionContext final
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
-    nautilus::val<WorkerThreadId> getWorkerThreadId() const;
-    nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
+    [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex) const;
+    [[nodiscard]] nautilus::val<WorkerThreadId> getWorkerThreadId() const;
+    [[nodiscard]] nautilus::val<Memory::TupleBuffer*> allocateBuffer() const;
 
 
     /// Emit a record buffer to the next pipeline or sink

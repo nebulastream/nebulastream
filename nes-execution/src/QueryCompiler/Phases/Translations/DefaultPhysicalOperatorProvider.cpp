@@ -12,10 +12,17 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <memory>
 #include <API/Schema.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -43,16 +50,17 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Common.hpp>
+#include <Util/Execution.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-
-#include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -242,7 +250,7 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr
     auto joinOperator = NES::Util::as<LogicalJoinOperator>(operatorNode);
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    auto getJoinFieldNames = [](const SchemaPtr& inputSchema, NodeFunctionPtr joinFunction)
+    auto getJoinFieldNames = [](const SchemaPtr& inputSchema, const NodeFunctionPtr& joinFunction)
     {
         std::vector<std::string> joinFieldNames;
         std::vector<std::string> fieldNamesInJoinFunction;

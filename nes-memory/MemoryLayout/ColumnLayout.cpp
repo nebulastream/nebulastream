@@ -30,7 +30,7 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
     }
 }
 
-ColumnLayout::ColumnLayout(const ColumnLayout& other) : MemoryLayout(other), columnOffsets(other.columnOffsets)
+ColumnLayout::ColumnLayout(const ColumnLayout& other) : ColumnLayout(other.schema, other.bufferSize)
 {
 }
 
