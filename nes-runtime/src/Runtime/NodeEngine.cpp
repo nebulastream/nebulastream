@@ -12,109 +12,66 @@
     limitations under the License.
 */
 
-#include <memory>
-#include <unordered_map>
 #include <utility>
-#include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Listeners/SystemEventListener.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryTerminationType.hpp>
-#include <Util/AtomicState.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Sources/AsyncSourceExecutor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
-#include <ExecutableQueryPlan.hpp>
-#include <InstantiatedQueryPlan.hpp>
-#include <QueryEngine.hpp>
 
 namespace NES::Runtime
 {
 
-class QueryTracker
-{
-    struct Idle
-    {
-        std::unique_ptr<Execution::ExecutableQueryPlan> qep;
-    };
-    struct Executing
-    {
-    };
-    using QueryState = AtomicState<Idle, Executing>;
-    folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
-
-public:
-    QueryId registerQuery(std::unique_ptr<Execution::ExecutableQueryPlan> qep)
-    {
-        QueryId queryId = qep->queryId;
-        queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
-        return queryId;
-    }
-
-    std::unique_ptr<Execution::ExecutableQueryPlan> moveToExecuting(QueryId qid)
-    {
-        auto rlocked = queries.rlock();
-        std::unique_ptr<Execution::ExecutableQueryPlan> qep;
-        if (auto it = rlocked->find(qid); it != rlocked->end())
-        {
-            it->second->transition(
-                [&](Idle&& idle)
-                {
-                    qep = std::move(std::move(idle).qep);
-                    return Executing{};
-                });
-        }
-        return qep;
-    }
-};
-
-NodeEngine::~NodeEngine() = default;
 NodeEngine::NodeEngine(
-    std::shared_ptr<Memory::BufferManager> bufferManager,
-    std::shared_ptr<SystemEventListener> systemEventListener,
-    std::shared_ptr<QueryLog> queryLog,
-    std::unique_ptr<QueryEngine> queryEngine)
-    : bufferManager(std::move(bufferManager))
-    , queryLog(std::move(queryLog))
-    , systemEventListener(std::move(systemEventListener))
-    , queryEngine(std::move(queryEngine))
-    , queryTracker(std::make_unique<QueryTracker>())
+    const std::shared_ptr<Memory::BufferManager>& bufferManager,
+    const std::shared_ptr<QueryManager>& queryManager,
+    const std::shared_ptr<QueryLog>& queryLog)
+    : bufferManager(bufferManager)
+    , queryManager(queryManager)
+    , sourceExecutor(std::make_shared<Sources::AsyncSourceExecutor>(1))
+    , queryLog(queryLog)
 {
+    this->queryManager->startThreadPool(100);
 }
 
-QueryId NodeEngine::registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan)
+QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan)
 {
-    auto queryId = queryTracker->registerQuery(std::move(queryExecutionPlan));
-    queryLog->logQueryStatusChange(queryId, Execution::QueryStatus::Registered);
+    auto queryId = queryExecutionPlan->getQueryId();
+    queryManager->registerQuery(queryExecutionPlan);
+
+    registeredQueries[queryId] = queryExecutionPlan;
     return queryId;
 }
 
 void NodeEngine::startQuery(QueryId queryId)
 {
-    if (auto qep = queryTracker->moveToExecuting(queryId))
+    if (const auto query = registeredQueries.find(queryId); query != registeredQueries.end() and query->second)
     {
-        systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-        queryEngine->start(InstantiatedQueryPlan::instantiate(std::move(qep), bufferManager));
+        if (!queryManager->startQuery(query->second))
+        {
+            throw CannotStartQuery("Cannot start query with id '{}'.", queryId);
+        }
     }
     else
     {
-        throw QueryNotRegistered("Query with queryId {} is not currently idle", queryId);
+        throw QueryNotRegistered("Cannot find query with id '{}' in registered queries.", queryId);
     }
 }
 
 void NodeEngine::unregisterQuery(QueryId queryId)
 {
-    NES_INFO("Unregister {}", queryId);
-    queryEngine->stop(queryId);
+    registeredQueries.erase(queryId);
 }
 
-void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
+void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType type)
 {
-    NES_INFO("Stop {}", queryId);
-    systemEventListener->onEvent(StopQuerySystemEvent(queryId));
-    queryEngine->stop(queryId);
+    if (!queryManager->stopQuery(registeredQueries[queryId], type))
+    {
+        NES_THROW_RUNTIME_ERROR("Could not stop the query");
+    }
 }
 
 }

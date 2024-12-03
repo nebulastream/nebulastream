@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include "AsyncSourceExecutor.hpp"
+#include "Sources/AsyncSourceExecutor.hpp"
 
-#include "boost/asio/awaitable.hpp"
 #include "boost/asio/co_spawn.hpp"
 #include "boost/asio/detached.hpp"
 #include "boost/asio/io_context.hpp"
@@ -22,6 +21,8 @@
 
 namespace NES::Sources
 {
+
+namespace asio = boost::asio;
 
 AsyncSourceExecutor::AsyncSourceExecutor(size_t numThreads) : workGuard(asio::make_work_guard(ioc))
 {

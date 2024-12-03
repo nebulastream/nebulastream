@@ -17,6 +17,8 @@ add_source_files(nes-sources
         SourceHandle.cpp
         SourceProvider.cpp
         SourceValidationProvider.cpp
+        AsyncSourceRunner.cpp
+        AsyncSourceExecutor.cpp
 )
 
 # Register plugins

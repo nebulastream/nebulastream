@@ -14,41 +14,98 @@
 
 #pragma once
 
+#include <Sources/AsyncSourceExecutor.hpp>
+
+#include <cstdint>
+#include <iostream>
+#include <memory>
+
+#include <Util/Logger/Logger.hpp>
+#include <boost/asio/awaitable.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <boost/asio/io_context.hpp>
-#include <AsyncSourceExecutor.hpp>
-#include <SourceRunner.hpp>
+
 
 namespace NES::Sources
 {
 
 namespace asio = boost::asio;
 
-class AsyncSourceRunner : public SourceRunner
+class AsyncSourceRunner : public std::enable_shared_from_this<AsyncSourceRunner>
 {
 public:
-    AsyncSourceRunner(
+    explicit AsyncSourceRunner(
         OriginId originId,
         std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
         SourceReturnType::EmitFunction&& emitFn,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImpl,
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter,
         std::shared_ptr<AsyncSourceExecutor> executor);
 
-    void start() override;
+    AsyncSourceRunner() = delete;
+    virtual ~AsyncSourceRunner() = default;
 
-    void stop() override;
+    AsyncSourceRunner(const AsyncSourceRunner&) = delete;
+    AsyncSourceRunner& operator=(const AsyncSourceRunner&) = delete;
+    AsyncSourceRunner(AsyncSourceRunner&&) = delete;
+    AsyncSourceRunner& operator=(AsyncSourceRunner&&) = delete;
 
-    void close() override;
+    void start();
+    void stop();
+    asio::awaitable<void> coroutine();
 
-    SourceType run() override;
+    [[nodiscard]] OriginId getOriginId() const { return originId; }
 
 
-private:
-    asio::io_context ioc;
+protected:
+    enum class RunnerState
+    {
+        Initial,
+        Running,
+        Stopped,
+    };
+
+    const OriginId originId;
+    uint64_t maxSequenceNumber;
+    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider;
+    const SourceReturnType::EmitFunction emitFn;
+    std::unique_ptr<Source> sourceImpl;
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter;
     std::shared_ptr<AsyncSourceExecutor> executor;
+    RunnerState state{RunnerState::Initial};
 
-    asio::awaitable<SourceReturnType::SourceReturnType> rootCoroutine();
+    void addBufferMetadata(ByteBuffer& buffer, SequenceNumber sequenceNumber)
+    {
+        buffer.setOriginId(originId);
+        buffer.setCreationTimestampInMS(Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+        buffer.setSequenceNumber(sequenceNumber);
+        buffer.setChunkNumber(ChunkNumber(1));
+        buffer.setLastChunk(true);
+
+        NES_TRACE(
+            "Setting buffer metadata with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
+            buffer.getOriginId(),
+            buffer.getSequenceNumber(),
+            buffer.getChunkNumber(),
+            buffer.isLastChunk());
+    }
+
+
+    friend std::ostream& operator<<(std::ostream& out, const AsyncSourceRunner& sourceRunner)
+    {
+        out << "\nAsyncSourceRunner(";
+        out << "\n  originId: " << sourceRunner.originId;
+        out << "\n  maxSequenceNumber: " << sourceRunner.maxSequenceNumber;
+        out << "\n  source implementation:" << *sourceRunner.sourceImpl;
+        out << ")\n";
+        return out;
+    }
 };
 
 }
