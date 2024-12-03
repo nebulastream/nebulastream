@@ -142,7 +142,7 @@ public:
      */
     void setKeyFieldNames(const std::vector<std::string>& keyFields);
 
-    virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
+    [[nodiscard]] virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
 
     /**
      * @brief Comparator methods

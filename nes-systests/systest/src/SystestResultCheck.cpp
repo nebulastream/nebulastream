@@ -20,9 +20,9 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
-#include <unordered_set>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>

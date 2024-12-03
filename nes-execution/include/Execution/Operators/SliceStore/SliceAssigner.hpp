@@ -15,8 +15,9 @@
 #pragma once
 
 #include <algorithm>
-#include <Identifiers/Identifiers.hpp>
-
+#include <cstdint>
+#include <Execution/Operators/SliceStore/Slice.hpp>
+#include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -35,6 +36,13 @@ public:
         INVARIANT(
             windowSize >= windowSlide, "Currently the window assigner does not support windows with a larger slide then the window size.");
     }
+
+    SliceAssigner(const SliceAssigner& other) = default;
+    SliceAssigner(SliceAssigner&& other) noexcept = default;
+    SliceAssigner& operator=(const SliceAssigner& other) = default;
+    SliceAssigner& operator=(SliceAssigner&& other) noexcept = default;
+
+    ~SliceAssigner() = default;
 
     /**
      * @brief Calculates the start of a slice for a specific timestamp ts.
@@ -57,27 +65,18 @@ public:
     [[nodiscard]] SliceEnd getSliceEndTs(const Timestamp ts) const
     {
         const auto timestampRaw = ts.getRawValue();
-        auto nextSlideEnd = timestampRaw + windowSlide - ((timestampRaw) % windowSlide);
-        auto nextWindowEnd
+        const auto nextSlideEnd = timestampRaw + windowSlide - ((timestampRaw) % windowSlide);
+        const auto nextWindowEnd
             = timestampRaw < windowSize ? windowSize : timestampRaw + windowSlide - ((timestampRaw - windowSize) % windowSlide);
         return SliceEnd(std::min(nextSlideEnd, nextWindowEnd));
     }
 
-    /**
-     * @brief Getter for the window size
-     * @return window size in uint64_t
-     */
-    uint64_t getWindowSize() const { return windowSize; }
-
-    /**
-     * @brief Getter for the window slide
-     * @return window slide in uint64_t
-     */
-    uint64_t getWindowSlide() const { return windowSlide; }
+    [[nodiscard]] uint64_t getWindowSize() const { return windowSize; }
+    [[nodiscard]] uint64_t getWindowSlide() const { return windowSlide; }
 
 private:
-    const uint64_t windowSize;
-    const uint64_t windowSlide;
+    uint64_t windowSize;
+    uint64_t windowSlide;
 };
 
 }

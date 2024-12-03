@@ -33,5 +33,5 @@ enum class CompilationStrategy : uint8_t
 enum class StreamJoinStrategy : uint8_t
 {
     NESTED_LOOP_JOIN
-  };
+};
 }

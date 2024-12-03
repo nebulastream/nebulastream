@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Util/Execution.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -41,7 +42,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
-    const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> leftMemoryProvider;
+    std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> rightMemoryProvider;
 };
 }

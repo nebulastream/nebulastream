@@ -41,7 +41,7 @@ public:
     constexpr static T INITIAL = initial;
     constexpr static T INVALID = invalid;
 
-    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongType& lh, const NESStrongType& rh) noexcept = default;
+    [[nodiscard]] friend constexpr std::strong_ordering operator<=>(const NESStrongType& lhs, const NESStrongType& rhs) noexcept = default;
 
     friend std::ostream& operator<<(std::ostream& os, const NESStrongType& t) { return os << t.getRawValue(); }
 

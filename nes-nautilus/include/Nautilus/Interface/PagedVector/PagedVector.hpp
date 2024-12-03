@@ -31,8 +31,7 @@ namespace NES::Nautilus::Interface
 class PagedVector
 {
 public:
-    PagedVector(
-        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, const Memory::MemoryLayouts::MemoryLayoutPtr& memoryLayout);
+    PagedVector(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout);
 
     /// Appends a new page to the pages vector if the last page is full.
     void appendPageIfFull();
@@ -52,8 +51,8 @@ public:
     [[nodiscard]] uint64_t getNumberOfPages() const;
 
 private:
-    const std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
-    const Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
+    Memory::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     std::vector<Memory::TupleBuffer> pages;
 };
 

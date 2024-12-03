@@ -14,9 +14,10 @@
 
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
-#include <nautilus/function.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
+#include <Nautilus/Interface/TupleBufferProxyFunctions.hpp>
+#include <Time/Timestamp.hpp>
+#include <nautilus/function.hpp>
 
 namespace NES::Nautilus
 {

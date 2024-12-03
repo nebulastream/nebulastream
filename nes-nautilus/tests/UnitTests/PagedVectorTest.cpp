@@ -18,6 +18,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>

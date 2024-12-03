@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Nautilus::ProxyFunctions
 {

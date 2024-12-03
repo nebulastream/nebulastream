@@ -24,6 +24,7 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Sinks/FileSink.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
