@@ -22,6 +22,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>
@@ -131,7 +132,6 @@ static void populateErrorStream(
         if (areDifferent)
         {
             std::stringstream expectedStr;
-            expectedStr << "(missing)";
             if (i < queryResultExpected.size())
             {
                 const auto& expectedMap = queryResultExpected[i];
@@ -148,7 +148,6 @@ static void populateErrorStream(
             }
 
             std::stringstream gotStr;
-            gotStr << "(missing)";
             if (i < queryResultActual.size())
             {
                 gotStr << std::to_string(i) << ": ";
@@ -260,15 +259,39 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                     errorMessages << ", got " << std::to_string(queryResultActual.size()) << "\n";
                 }
 
-                /// 5. Check if content match per line. We skip the first line, as it this contains the schema
-                bool same = true;
-                for (size_t i = 0; i < queryResultExpected.size(); ++i)
+                /// 5. Check if for all fields of the result expected, we can find one equal field in the actual result
+                /// Stores if we have found a result for the expected result idx
+                std::unordered_set<uint64_t> idxExpectedToFound;
+                uint64_t idxExpected = 0;
+                for (const auto& expected : queryResultExpected)
                 {
-                    same = same && (queryResultExpected[i] == queryResultActual[i]);
+                    if (idxExpected >= queryResultActual.size())
+                    {
+                        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+                        errorMessages << "Expected result has more lines than the actual result\n";
+                        break;
+                    }
+
+                    /// If we have found an idx for the expected result, we can skip it
+                    if (idxExpectedToFound.contains(idxExpected))
+                    {
+                        continue;
+                    }
+
+                    for (const auto& actual : queryResultActual)
+                    {
+                        if (expected == actual)
+                        {
+                            idxExpectedToFound.emplace(idxExpected);
+                            break;
+                        }
+                    }
+
+                    ++idxExpected;
                 }
 
-                /// 6. Build error message if not the same
-                if (not same)
+                /// 6. Build error message if we have not found a result for every expected result
+                if (idxExpectedToFound.size() != queryResultExpected.size())
                 {
                     populateErrorStream(
                         errorMessages,
