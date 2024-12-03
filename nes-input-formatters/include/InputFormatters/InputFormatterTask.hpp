@@ -19,11 +19,11 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
+#include <Executable.hpp>
 
 namespace NES::InputFormatters
 {
@@ -64,21 +64,33 @@ public:
     InputFormatterTask(InputFormatterTask&&) = delete;
     InputFormatterTask& operator=(InputFormatterTask&&) = delete;
 
+    uint32_t start(Runtime::Execution::PipelineExecutionContext&) override
+    {
+        /* noop */
+        return 0;
+    }
+    uint32_t stop(Runtime::Execution::PipelineExecutionContext&) override
+    {
+        /* noop */
+        return 0;
+    }
+
     // Todo: think about what to do with setup and stop
     // uint32_t setup(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
     // uint32_t stop(Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
-    ExecutionResult execute(
-        Memory::TupleBuffer& inputTupleBuffer,
+    void execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override;
+
+
+    virtual void parseTupleBufferRaw(
+        const NES::Memory::TupleBuffer& tbRaw,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-        Runtime::WorkerContext& workerContext) override;
-
-
-    virtual void
-    parseTupleBufferRaw(const NES::Memory::TupleBuffer& tbRaw, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext, Runtime::WorkerContext& workerContext,
         size_t numBytesInTBRaw)
         = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const InputFormatterTask& InputFormatterTask) { return InputFormatterTask.toString(out); }
+    friend std::ostream& operator<<(std::ostream& out, const InputFormatterTask& InputFormatterTask)
+    {
+        return InputFormatterTask.toString(out);
+    }
 
 protected:
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;

@@ -64,7 +64,7 @@ class ProgressTracker
 {
 public:
     ProgressTracker(std::string tupleDelimiter, const size_t tupleSizeInBytes, const size_t numberOfSchemaFields)
-        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields){};
+        : tupleDelimiter(std::move(tupleDelimiter)), tupleSizeInBytes(tupleSizeInBytes), numSchemaFields(numberOfSchemaFields) { };
 
     ~ProgressTracker() = default;
 
@@ -340,7 +340,6 @@ CSVInputFormatter::~CSVInputFormatter() = default;
 void CSVInputFormatter::parseTupleBufferRaw(
     const NES::Memory::TupleBuffer& tbRaw,
     Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-    Runtime::WorkerContext& workerContext,
     const size_t numBytesInTBRaw)
 {
     PRECONDITION(tbRaw.getBufferSize() != 0, "A tuple buffer raw must not be of empty.");
@@ -353,8 +352,16 @@ void CSVInputFormatter::parseTupleBufferRaw(
     {
         /// If there is not a single complete tuple in the buffer, write it to the staging area and wait for the next buffer(s).
         // progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
-        pipelineExecutionContext.getOperatorHandler<InputFormatterOperatorHandler>(0)->getTupleBufferStagingArea().pushTupleBuffer(
-        tbRaw, 0); // at tbRaw.getSequenceNumber().getRawValue()
+        if (auto inputFormatterOperatorHandler
+            = dynamic_pointer_cast<InputFormatterOperatorHandler>(pipelineExecutionContext.getOperatorHandlers().at(0)))
+        {
+            inputFormatterOperatorHandler->getTupleBufferStagingArea().pushTupleBuffer(
+                tbRaw, 0); // at tbRaw.getSequenceNumber().getRawValue()
+        }
+        else
+        {
+            throw NotImplemented("Received OperatorHandler that was not InputFormatterOperatorHandler");
+        }
         return;
     }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
@@ -390,8 +397,10 @@ void CSVInputFormatter::parseTupleBufferRaw(
             /// Emit TBF and get new TBF
             progressTracker->setNumberOfTuplesInTBFormatted();
             NES_TRACE("emitting TupleBuffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
+            /// true triggers adding sequence number, etc.
             pipelineExecutionContext.emitBuffer(
-                progressTracker->getTupleBufferFormatted(), workerContext); /// true triggers adding sequence number, etc.
+                progressTracker->getTupleBufferFormatted(),
+                NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
             progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
@@ -407,12 +416,18 @@ void CSVInputFormatter::parseTupleBufferRaw(
     NES_TRACE("emitting parsed tuple buffer with {} tuples.", progressTracker->numTuplesInTBFormatted);
 
     /// Emit the current TBF, even if there is only a single tuple (there is at least one) in it.
-    pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), workerContext);
+    pipelineExecutionContext.emitBuffer(progressTracker->getTupleBufferFormatted(), NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
     // Todo: remove staging area from progressTracker
     // - write to pipelineExecutionContext
-    pipelineExecutionContext.getOperatorHandler<InputFormatterOperatorHandler>(0)->getTupleBufferStagingArea().pushTupleBuffer(
-        tbRaw, progressTracker->currentTupleEndTBRaw);
-    // progressTracker->handleResidualBytes(tbRaw);
+    if (auto inputFormatterOperatorHandler
+        = dynamic_pointer_cast<InputFormatterOperatorHandler>(pipelineExecutionContext.getOperatorHandlers().at(0)))
+    {
+        inputFormatterOperatorHandler->getTupleBufferStagingArea().pushTupleBuffer(tbRaw, progressTracker->currentTupleEndTBRaw);
+    }
+    else
+    {
+        throw NotImplemented("Received OperatorHandler that was not InputFormatterOperatorHandler");
+    }
 }
 
 void CSVInputFormatter::parseStringIntoTupleBuffer(

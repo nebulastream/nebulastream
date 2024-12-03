@@ -73,12 +73,14 @@ public:
     InputFormatterOperatorHandler() = default;
 
     /// pipelineExecutionContext, localStateVariableId
-    void start(NES::Runtime::Execution::PipelineExecutionContextPtr, uint32_t) override
+    // pipelineExecutionContext
+    void start(NES::Runtime::Execution::PipelineExecutionContext&, uint32_t) override
     {
         /*noop*/
     }
     /// terminationType, pipelineExecutionContext
-    void stop(NES::Runtime::QueryTerminationType, NES::Runtime::Execution::PipelineExecutionContextPtr) override
+    void stop(
+        NES::Runtime::QueryTerminationType, NES::Runtime::Execution::PipelineExecutionContext&) override
     {
         /*noop*/
         /// Todo: destroy staging area

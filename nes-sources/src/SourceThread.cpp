@@ -130,13 +130,13 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `EndOfStream`
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
         ///    The thread exists with an exception
-        auto emptyBuffer = bufferProvider.getBufferBlocking();
-        auto numReadBytes = source.fillTupleBuffer(emptyBuffer, stopToken);
+        auto tupleBuffer = bufferProvider.getBufferBlocking();
+        auto numReadBytes = source.fillTupleBuffer(tupleBuffer, stopToken);
 
         if (numReadBytes != 0)
         {
             tupleBuffer.setNumberOfTuples(numReadBytes); // Todo: don't hack num bytes into setNumberOfTuples
-            emitWork(tupleBuffer);
+            emit(tupleBuffer, true);
         }
 
         if (stopToken.stop_requested())

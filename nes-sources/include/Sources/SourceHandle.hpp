@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>

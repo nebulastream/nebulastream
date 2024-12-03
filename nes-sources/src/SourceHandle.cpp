@@ -28,8 +28,7 @@ SourceHandle::SourceHandle(
     OriginId originId,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation,
-    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
+    std::unique_ptr<Source> sourceImplementation)
 {
     this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId), std::move(bufferPool), numSourceLocalBuffers, std::move(sourceImplementation));

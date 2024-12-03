@@ -21,6 +21,8 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
+#include "TestExecution.hpp"
+
 
 namespace NES
 {
@@ -58,6 +60,28 @@ public:
     }
 };
 
+TEST_F(InputFormatterTest, testMockedTaskQueue)
+{
+
+    TestTaskExecutor executor(1);  // Single thread for deterministic order
+
+    // Todo: TestableTask should mock the actual Tasks in `Task.hpp`, which are NOT exposed! Neither are the RunningQueryPlanNodes.
+    // -> alternatively, implement in the QueryEngine to expose
+    // The RunningQueryPlanNodes is essentially a wrapper around: 'std::unique_ptr<Execution::ExecutablePipelineStage>'
+    // -> thus, it suffices to create another wrapper around an ExecutablePipelineStage
+    auto task1 = std::make_unique<TestableTask>("Task1");
+    task1->addStep("step1", []{ std::cout << "hello from thread 1\n"; });
+
+    auto task2 = std::make_unique<TestableTask>("Task2");
+    task2->addStep("step1", []{ std::cout << "hello from thread 2\n"; });
+
+    // Add tasks in desired order
+    executor.enqueueTask(std::move(task1));
+    executor.enqueueTask(std::move(task2));
+
+    executor.waitForCompletion();
+}
+
 // Todo: make TBs smaller (two var sized,each 16 bytes (2 * (4 bytes size, 4 bytes index))
 // - start with simple test case where variable sized data fits perfectly into buffer
 TEST_F(InputFormatterTest, testFormattingEmptyRawBuffer)
@@ -92,29 +116,30 @@ TEST_F(InputFormatterTest, testFormattingEmptyRawBuffer)
 
 
     // for (size_t i = 0; i < 10; ++i)
-// {
-//     (*testBuffer)[i].writeVarSized("t1", "" + std::to_string(i) + std::to_string(i), *bufferManager);
-//
-//     const auto readVarSized = (*testBuffer)[i].readVarSized("t1");
-//     NES_DEBUG("Var sized in buffer is: {}", readVarSized);
-// }
-// for (int i = 0; i < 10; i++)
-// {
-//     auto testTuple = std::make_tuple(static_cast<uint64_t>(i));
-//     testBuffer->pushRecordToBuffer(testTuple);
-//     const auto readTupleFromBuffer = (testBuffer->readRecordFromBuffer<uint64_t>(i));
-//     ASSERT_EQ(readTupleFromBuffer, testTuple);
-//     NES_DEBUG("Buffer at {} is {}", i, std::get<uint64_t>(readTupleFromBuffer))
-// }
-// Todo: mock PipelineExecutionContext
-// auto pec = std::make_unique<Runtime::Execution::PipelineExecutionContext>(
-//         PipelineId(1),
-//         QueryId(1),
-//         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-//         size_t numberOfWorkerThreads,
-//         std::function<void(Memory::TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
-//         std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-//         std::vector<OperatorHandlerPtr> operatorHandlers)
-// auto inputFormatterTask = std::make_unique<InputFormatters::InputFormatterTask>();
+    // {
+    //     (*testBuffer)[i].writeVarSized("t1", "" + std::to_string(i) + std::to_string(i), *bufferManager);
+    //
+    //     const auto readVarSized = (*testBuffer)[i].readVarSized("t1");
+    //     NES_DEBUG("Var sized in buffer is: {}", readVarSized);
+    // }
+    // for (int i = 0; i < 10; i++)
+    // {
+    //     auto testTuple = std::make_tuple(static_cast<uint64_t>(i));
+    //     testBuffer->pushRecordToBuffer(testTuple);
+    //     const auto readTupleFromBuffer = (testBuffer->readRecordFromBuffer<uint64_t>(i));
+    //     ASSERT_EQ(readTupleFromBuffer, testTuple);
+    //     NES_DEBUG("Buffer at {} is {}", i, std::get<uint64_t>(readTupleFromBuffer))
+    // }
+    // Todo: mock PipelineExecutionContext
+    // auto pec = std::make_unique<Runtime::Execution::PipelineExecutionContext>(
+    //         PipelineId(1),
+    //         QueryId(1),
+    //         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
+    //         size_t numberOfWorkerThreads,
+    //         std::function<void(Memory::TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
+    //         std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+    //         std::vector<OperatorHandlerPtr> operatorHandlers)
+    // auto inputFormatterTask = std::make_unique<InputFormatters::InputFormatterTask>();
 
+}
 }

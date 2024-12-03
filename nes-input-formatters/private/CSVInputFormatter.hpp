@@ -50,7 +50,6 @@ public:
     void parseTupleBufferRaw(
         const Memory::TupleBuffer& tbRaw,
         Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-        Runtime::WorkerContext& workerContext,
         size_t numBytesInTBRaw) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

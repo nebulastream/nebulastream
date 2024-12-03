@@ -177,13 +177,11 @@ namespace NES::InputFormatters {
 
 
 // Todo: think about layouts
-ExecutionResult InputFormatterTask::execute(
-    Memory::TupleBuffer& inputTupleBuffer,
-    Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext,
-    Runtime::WorkerContext& workerContext)
+void InputFormatterTask::execute(
+    const Memory::TupleBuffer& inputTupleBuffer,
+    Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext)
 {
     // pipelineExecutionContext.getOperatorHandler<NES::InputFormatters::InputFormatterTask>()
-    parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, workerContext, inputTupleBuffer.getNumberOfTuples());
-    return ExecutionResult::Ok;
+    parseTupleBufferRaw(inputTupleBuffer, pipelineExecutionContext, inputTupleBuffer.getNumberOfTuples());
 }
 }
