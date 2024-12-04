@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import urllib.request
+from collections import defaultdict
 from typing import Tuple
 
 def run_cmd(cmd: list) -> str:
@@ -88,17 +89,14 @@ def main():
     added_lines = get_added_lines_from_diff(diff)
 
     illegal_todos = []
-    todo_issues = {}
+    todo_issues = defaultdict(list)
     fail = 0
 
     for diff_file, line_no, line in added_lines:
         if line_contains_todo(diff_file, line):
             if tm := todo_with_issue.match(line):
                 todo_no = int(tm[2])
-                if todo_no not in todo_issues:
-                    todo_issues[todo_no] = [f"{diff_file}:{line_no}"]
-                else:
-                    todo_issues[todo_no].append(f"{diff_file}:{line_no}")
+                todo_issues[todo_no].append(f"{diff_file}:{line_no}")
             else:
                 illegal_todos.append((diff_file, line_no, line[1:]))
 
