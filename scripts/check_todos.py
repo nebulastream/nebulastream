@@ -63,7 +63,7 @@ def main():
     file_header = re.compile("diff --git a/.* b/(.*)")
     line_context = re.compile(r"@@ -\d*,\d \+(\d+),\d+ @@")
 
-    todos_without_issue_no = []
+    illegal_todos = []
     todo_issues = {}
     line_no = 0
     fail = 0
@@ -82,16 +82,16 @@ def main():
                 else:
                     todo_issues[todo_no].append(f"{diff_file}:{line_no}")
             else:
-                todos_without_issue_no.append((diff_file, line_no, line[1:]))
+                illegal_todos.append((diff_file, line_no, line[1:]))
         if not line.startswith("-"):
             line_no += 1
 
-    if todos_without_issue_no:
+    if illegal_todos:
         fail = 1
-        print("\nError: The following TODOs do not have an issue number, like e.g. 'TODO #123'\n")
+        print("\nError: The following TODOs lack whitespace, miss issue number or TODO is not in ALL CAPS\n")
         # sort by file, line_no
-        todos_without_issue_no.sort(key=lambda x: (x[0], x[1]))
-        for file, line_no, line in todos_without_issue_no:
+        illegal_todos.sort(key=lambda x: (x[0], x[1]))
+        for file, line_no, line in illegal_todos:
             print(f"{file}:{line_no}:{line}")
         print()
 
