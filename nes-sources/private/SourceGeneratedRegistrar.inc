@@ -28,6 +28,7 @@
 namespace NES::Sources::SourceGeneratedRegistrar
 {
 
+/// declaration of register functions for 'Sources'
 std::unique_ptr<Source> RegisterFileSource(const SourceDescriptor&);
 std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor&);
 
@@ -39,8 +40,11 @@ template <>
 inline void
 Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
+
     using namespace NES::Sources::SourceGeneratedRegistrar;
+    /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     registry.registerPlugin("File", RegisterFileSource);
     registry.registerPlugin("TCP", RegisterTCPSource);
+	
 }
 }
