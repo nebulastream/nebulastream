@@ -10,12 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-sources
-        FileSource.cpp
-        SourceThread.cpp
-        SourceDescriptor.cpp
-        Source.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
-        SourceValidationProvider.cpp
-)
+add_plugin(TCP Source nes-sources tcp_source_plugin_library TCPSource.cpp)
+add_plugin(TCP SourceValidation nes-sources tcp_source_validation_plugin_library TCPSource.cpp)
+# target_link_libraries(LINK_ADDITIONAL_LIBRARIES_SPECIFIC_TO_YOUR_PLUGIN_HERE)
