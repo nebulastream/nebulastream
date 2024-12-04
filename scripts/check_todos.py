@@ -13,6 +13,7 @@ import urllib.request
 from typing import Tuple
 
 def run_cmd(cmd: list) -> str:
+    """runs cmd, returns stdout or crashes"""
     try:
         # Handle decode errors by replacing illegal chars with � (see #343)
         p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='replace')
