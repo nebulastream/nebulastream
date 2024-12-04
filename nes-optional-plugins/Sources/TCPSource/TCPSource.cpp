@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "TCPSource.hpp"
 #include <cerrno> /// For socket error
 #include <chrono>
 #include <cstring>
@@ -34,9 +35,6 @@
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
 #include <ErrorHandling.hpp>
-#include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
-#include <TCPSource.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 
@@ -209,15 +207,21 @@ void TCPSource::close()
     }
 }
 
+namespace SourceValidationGeneratedRegistrar
+{
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceValidationGeneratedRegistrar::RegisterSourceValidationTCP(std::unordered_map<std::string, std::string>&& sourceConfig)
+RegisterTCPSourceValidation(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
     return TCPSource::validateAndFormat(std::move(sourceConfig));
 }
+}
 
-std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterTCPSource(const SourceDescriptor& sourceDescriptor)
+namespace SourceGeneratedRegistrar
+{
+std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor& sourceDescriptor)
 {
     return std::make_unique<TCPSource>(sourceDescriptor);
+}
 }
 
 }

@@ -74,7 +74,7 @@ std::ostream& FileSource::toString(std::ostream& str) const
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SourceValidationGeneratedRegistrar::RegisterSourceValidationFile(std::unordered_map<std::string, std::string>&& sourceConfig)
+SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(std::unordered_map<std::string, std::string>&& sourceConfig)
 {
     return FileSource::validateAndFormat(std::move(sourceConfig));
 }
