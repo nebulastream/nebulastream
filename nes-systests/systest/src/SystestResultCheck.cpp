@@ -25,6 +25,7 @@
 #include <vector>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 #include <SystestParser.hpp>

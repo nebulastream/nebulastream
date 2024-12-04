@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -18,97 +19,27 @@
 #include <numeric>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Util
 {
 
-uint64_t numberOfUniqueValues(std::vector<uint64_t>& values)
-{
-    std::sort(values.begin(), values.end());
-    return std::unique(values.begin(), values.end()) - values.begin();
-}
-
 std::string escapeJson(const std::string& str)
 {
-    std::ostringstream o;
-    for (char c : str)
+    std::ostringstream os;
+    for (char character : str)
     {
-        if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f'))
+        if (character == '"' || character == '\\' || ('\x00' <= character && character <= '\x1f'))
         {
-            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
+            os << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(character);
         }
         else
         {
-            o << c;
+            os << character;
         }
     }
-    return o.str();
-}
-
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
-{
-    /// Get the first occurrence
-    uint64_t pos = data.find(toSearch);
-    /// Repeat till end is reached
-    while (pos != std::string::npos)
-    {
-        /// Replace this occurrence of Sub String
-        data.replace(pos, toSearch.size(), replaceStr);
-        /// Get the next occurrence from the current position
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
-}
-
-std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace)
-{
-    if (origin.find(search) != std::string::npos)
-    {
-        return origin.replace(origin.find(search), search.size(), replace);
-    }
-    return origin;
-}
-
-bool endsWith(const std::string& fullString, const std::string& ending)
-{
-    if (fullString.length() >= ending.length())
-    {
-        /// get the start of the ending index of the full string and compare with the ending string
-        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    }
-    /// if full string is smaller than the ending automatically return false
-    return false;
-}
-
-bool startsWith(const std::string& fullString, const std::string& ending)
-{
-    return (fullString.rfind(ending, 0) == 0);
-}
-
-void toLowerCaseInPlace(std::string& string)
-{
-    std::ranges::transform(string, string.begin(), ::tolower);
-}
-
-void toUpperCaseInPlace(std::string& string)
-{
-    std::ranges::transform(string, string.begin(), ::toupper);
-}
-
-std::string toLowerCase(const std::string_view string)
-{
-    auto stringCopy = std::string(string);
-    toLowerCaseInPlace(stringCopy);
-    return stringCopy;
-}
-
-std::string toUpperCase(const std::string_view string)
-{
-    auto stringCopy = std::string(string);
-    toUpperCaseInPlace(stringCopy);
-    return stringCopy;
+    return os.str();
 }
 
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header)
@@ -167,30 +98,6 @@ uint64_t countLines(std::istream& stream)
     }
 
     return cnt;
-}
-
-std::string_view trimWhiteSpaces(const std::string_view input)
-{
-    const auto start = input.find_first_not_of(" \t\n\r");
-    const auto end = input.find_last_not_of(" \t\n\r");
-    return (start == std::string_view::npos) ? "" : input.substr(start, end - start + 1);
-}
-
-std::string_view trimChar(std::string_view in, const char trimFor)
-{
-    /// Skip all `trimFor` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left)
-    {
-        if (left == in.end())
-            return {};
-        if (*left != trimFor)
-            break;
-    }
-    auto right = in.end() - 1;
-    for (; right > left && *right == trimFor; --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
 
 }
