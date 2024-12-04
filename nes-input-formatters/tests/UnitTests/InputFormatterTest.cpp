@@ -21,7 +21,8 @@
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
-#include "TestExecution.hpp"
+#include <TestUtils/TestTaskQueue.hpp>
+#include <TestTaskQueue.hpp>
 
 
 namespace NES
@@ -63,7 +64,7 @@ public:
 TEST_F(InputFormatterTest, testMockedTaskQueue)
 {
 
-    TestTaskExecutor executor(1);  // Single thread for deterministic order
+    TestTaskQueue taskQueue(1);  // Single thread for deterministic order
 
     // Todo: TestableTask should mock the actual Tasks in `Task.hpp`, which are NOT exposed! Neither are the RunningQueryPlanNodes.
     // -> alternatively, implement in the QueryEngine to expose
@@ -76,10 +77,10 @@ TEST_F(InputFormatterTest, testMockedTaskQueue)
     task2->addStep("step1", []{ std::cout << "hello from thread 2\n"; });
 
     // Add tasks in desired order
-    executor.enqueueTask(std::move(task1));
-    executor.enqueueTask(std::move(task2));
+    taskQueue.enqueueTask(std::move(task1));
+    taskQueue.enqueueTask(std::move(task2));
 
-    executor.waitForCompletion();
+    taskQueue.waitForCompletion();
 }
 
 // Todo: make TBs smaller (two var sized,each 16 bytes (2 * (4 bytes size, 4 bytes index))

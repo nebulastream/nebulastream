@@ -110,6 +110,7 @@ private:
 // A task that can be controlled for testing
 class TestableTask {
 public:
+    // Todo: how to make TaskFunction general enough? Use type erasure?
     using TaskFunction = std::function<void()>;
     using TaskPipeline = std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage>;
     using TestTask = std::variant<TaskFunction, TaskPipeline>;
@@ -120,6 +121,9 @@ public:
         this->pipelineExecutionContext = std::make_unique<TestPipelineExecutionContext>();
     }
 
+    // Todo: Either add a list of steps
+    // or add an ExecutablePipelineStage
+    // - TestTask should be either of the two
     void addStep(std::string step_name, TestTask testTask) {
         steps_.push_back({step_name, std::move(testTask)});
     }

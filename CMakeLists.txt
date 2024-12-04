@@ -329,7 +329,6 @@ add_subdirectory(nes-nebuli)
 add_subdirectory(nes-sql-parser)
 add_subdirectory(nes-query-engine)
 add_subdirectory(nes-input-formatters)
-add_subdirectory(nes-external-plugins)
 
 add_tests_if_enabled(nes-systests)
 
