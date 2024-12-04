@@ -61,7 +61,7 @@ def main():
                     ])
 
     file_header = re.compile("diff --git a/.* b/(.*)")
-    line_context = re.compile(r"@@ -\d*,\d \+(\d+),\d+ @@")
+    line_context = re.compile(r"@@ -\d+,\d+ \+(\d+),\d+ @@")
 
     illegal_todos = []
     todo_issues = {}
