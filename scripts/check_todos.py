@@ -32,7 +32,7 @@ def line_contains_todo(filename: str, line: str) -> bool:
 
 def main():
     # Note: corresponding regex also in closing issue gh action
-    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")  # NO_TODO_CHECK
+    todo_with_issue = re.compile(".*(///|#).*\\sTODO #(\\d+).*")  # NO_TODO_CHECK
 
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
