@@ -10,12 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-sources
-        FileSource.cpp
-        SourceThread.cpp
-        SourceDescriptor.cpp
-        Source.cpp
-        SourceHandle.cpp
-        SourceProvider.cpp
-        SourceValidationProvider.cpp
-)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
+# add(ON) external plugins and add the path "THE/PATH" to the build (adding all dependencies of the external plugin)
+add_external_plugin("Sources/TCPSource" ON)
