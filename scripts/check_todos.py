@@ -23,9 +23,13 @@ def run_cmd(cmd: list) -> str:
     return p.stdout
 
 
+def line_contains_todo(filename: str, line: str) -> bool:
+    return re.match(".*(///|#).* TODO.*", line)
+
+
 def main():
-    todo_regex      = re.compile(".*(///|#).* TODO.*")
-    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")  # Note: corresponding regex also in closing issue gh action
+    # Note: corresponding regex also in closing issue gh action
+    todo_with_issue = re.compile(".*(///|#).* TODO #(\\d+).*")
 
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
@@ -63,7 +67,7 @@ def main():
         if m := line_context.match(line):
             line_no = int(m[1]) - 1
 
-        if line.startswith("+") and todo_regex.match(line):
+        if line.startswith("+") and line_contains_todo(diff_file, line):
             if tm := todo_with_issue.match(line):
                 todo_no = int(tm[2])
                 if todo_no not in todo_issues:
