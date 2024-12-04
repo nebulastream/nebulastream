@@ -93,12 +93,14 @@ def main():
     fail = 0
 
     for diff_file, line_no, line in added_lines:
-        if line_contains_todo(diff_file, line):
-            if tm := todo_with_issue.match(line):
-                todo_no = int(tm[2])
-                todo_issues[todo_no].append(f"{diff_file}:{line_no}")
-            else:
-                illegal_todos.append((diff_file, line_no, line[1:]))
+        if not line_contains_todo(diff_file, line):
+            continue
+
+        if tm := todo_with_issue.match(line):
+            todo_no = int(tm[2])
+            todo_issues[todo_no].append(f"{diff_file}:{line_no}")
+        else:
+            illegal_todos.append((diff_file, line_no, line[1:]))
 
     if illegal_todos:
         fail = 1
