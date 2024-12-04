@@ -26,6 +26,7 @@
 #include <Sinks/FileSink.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/core.h>
 #include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
@@ -188,7 +189,7 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::FLOAT: {
-                    Util::findAndReplaceAll(inputString, ",", ".");
+                    inputString = Util::replaceAll(inputString, ",", ".");
                     auto value = static_cast<float>(std::stof(inputString));
                     tupleBuffer[tupleCount][schemaFieldIndex].write<float>(value);
                     break;

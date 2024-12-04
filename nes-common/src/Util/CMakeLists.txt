@@ -15,7 +15,7 @@ add_source_files(nes-common
         DumpHelper.cpp
         FileMutex.cpp
         DumpHelper.cpp
-        Common.cpp
+        Strings.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
 )

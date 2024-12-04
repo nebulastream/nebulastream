@@ -11,10 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Util/Common.hpp>
+
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {
@@ -44,18 +46,6 @@ TEST(UtilFunctionTest, trimWhiteSpaces)
     EXPECT_EQ(NES::Util::trimWhiteSpaces("   12  34  "), "12  34");
     EXPECT_EQ(NES::Util::trimWhiteSpaces("     "), "");
     EXPECT_EQ(NES::Util::trimWhiteSpaces(""), "");
-}
-
-TEST(UtilFunctionTest, trimChar)
-{
-    EXPECT_EQ(NES::Util::trimChar("   1234  ", ' '), "1234");
-    EXPECT_EQ(NES::Util::trimChar("   12  34  ", ' '), "12  34");
-    EXPECT_EQ(NES::Util::trimChar("     ", ' '), "");
-    EXPECT_EQ(NES::Util::trimChar("", ' '), "");
-
-    EXPECT_EQ(NES::Util::trimChar("1234,", ','), "1234");
-    EXPECT_EQ(NES::Util::trimChar(Util::trimWhiteSpaces(" 1234, "), ','), "1234");
-    EXPECT_EQ(NES::Util::trimWhiteSpaces(Util::trimChar(" 1234 ,", ',')), "1234");
 }
 
 TEST(UtilFunctionTest, replaceOnceWithOneFinding)
@@ -114,6 +104,12 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice)
     EXPECT_TRUE(tokens == test);
 }
 
+TEST(UtilFunctionTest, splitIntegersWithWhiteSpaces)
+{
+    std::string const line = "123,43,123,532, 12, 432,12,43   ,2341,321";
+    EXPECT_THAT(NES::Util::splitWithStringDelimiter<int>(line, ","), ::testing::ElementsAre(123, 43, 123, 532, 12, 432, 12, 43, 2341, 321));
+}
+
 TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
 {
     std::vector<std::string> tokens;
@@ -121,10 +117,10 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
     test.emplace_back("This is a random ");
     test.emplace_back(" line with ");
     test.emplace_back(" delimiter. ");
-    std::string line = "This is a random x line with x delimiter. x";
-    std::string delimiter = "x";
+    std::string const line = "This is a random x line with x delimiter. x";
+    std::string const delimiter = "x";
     tokens = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
-    EXPECT_TRUE(tokens == test);
+    EXPECT_EQ(tokens, test);
 }
 
 }
