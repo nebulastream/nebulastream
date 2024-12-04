@@ -13,14 +13,9 @@
 */
 
 #pragma once
-#include <charconv>
-#include <functional>
 #include <memory>
 #include <string>
-#include <string_view>
-#include <system_error>
 #include <vector>
-#include <Sequencing/SequenceData.hpp>
 #include <ErrorHandling.hpp>
 
 
@@ -33,99 +28,6 @@ namespace NES::Util
 */
 std::string escapeJson(const std::string& str);
 
-/**
-* @brief removes leading and trailing whitespaces
-*/
-std::string_view trimWhiteSpaces(std::string_view input);
-
-/**
-* @brief removes leading and trailing occurences of `trimFor`
-*/
-std::string_view trimChar(std::string_view in, char trimFor);
-
-namespace detail
-{
-
-/**
- * @brief set of helper functions for splitting for different types
- * @return splitting function for a given type
- */
-template <typename T>
-struct SplitFunctionHelper
-{
-    /// Most conversions can be delegated to `std::from_chars`
-    static constexpr auto FUNCTION = [](std::string_view str)
-    {
-        T result_value;
-        auto trimmed = trimWhiteSpaces(str);
-        auto result = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result_value);
-        if (result.ec == std::errc::invalid_argument)
-        {
-            /// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
-            throw FunctionNotImplemented("Could not parse: {}", std::string(trimmed));
-        }
-        return result_value;
-    };
-};
-
-/**
- * Specialization for `std::string`, which is just a copy from the string_view
- */
-template <>
-struct SplitFunctionHelper<std::string>
-{
-    static constexpr auto FUNCTION = [](std::string_view x) { return std::string(x); };
-};
-
-}
-
-/// Checks if a string ends with a given string.
-bool endsWith(const std::string& fullString, const std::string& ending);
-
-/// Checks if a string starts with a given string.
-uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
-
-/// Get number of unique elements
-bool startsWith(const std::string& fullString, const std::string& ending);
-
-/// creates a copy of the string, transforms the copy to a lower case version and returns the copy
-std::string toLowerCase(std::string_view string);
-
-/// creates a copy of the string, transforms the copy to an upper case version and returns the copy
-std::string toUpperCase(std::string_view string);
-
-/// takes a reference to a string and transforms the string data behind the reference to a lower case version in place
-void toLowerCaseInPlace(std::string& string);
-
-/// takes a reference to a string and transforms the string data behind the reference to an upper case version in place
-void toUpperCaseInPlace(std::string& string);
-
-/// splits a string given a delimiter into multiple substrings stored in a T vector
-/// the delimiter is allowed to be a string rather than a char only.
-template <typename T>
-std::vector<T> splitWithStringDelimiter(
-    std::string_view inputString,
-    std::string_view delim,
-    std::function<T(std::string_view)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION)
-{
-    size_t prev_pos = 0;
-    size_t next_pos = 0;
-    std::vector<T> elems;
-
-    while ((next_pos = inputString.find(delim, prev_pos)) != std::string::npos)
-    {
-        elems.push_back(fromStringToT(inputString.substr(prev_pos, next_pos - prev_pos)));
-        prev_pos = next_pos + delim.size();
-    }
-
-    if (auto rest = inputString.substr(prev_pos, inputString.size()); !rest.empty())
-    {
-        elems.push_back(fromStringToT(rest));
-    }
-
-    return elems;
-}
-
 /// this method checks if the object is null
 template <typename T>
 std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage)
@@ -133,12 +35,6 @@ std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& error
     NES_ASSERT(ptr, errorMessage);
     return ptr;
 }
-
-/// function to replace all string occurrences
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
-
-/// This function replaces the first occurrence of search term in a string with the replace term.
-std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
 /// Update the source names by sorting and then concatenating the source names from the sub- and query plan
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
