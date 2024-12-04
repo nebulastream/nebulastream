@@ -14,7 +14,7 @@ jobs:
       - name: Check that no TODO with closed Issue remains
         run: |
           TODO_LINES=$(mktemp)
-          if ! git grep -n -E -e "(///|#).* TODO #${{ github.event.issue.number }}([^0-9]|$)" > $TODO_LINES  # NO_TODO_CHECK
+          if ! git grep -n -E -e "(///|#).*\sTODO #${{ github.event.issue.number }}([^0-9]|$)" > $TODO_LINES  # NO_TODO_CHECK
           then
             echo "found no TODOs referencing #${{ github.event.issue.number }}" >> $GITHUB_STEP_SUMMARY
             exit 0
