@@ -53,7 +53,10 @@ def line_contains_todo(filename: str, line: str) -> bool:
     if line.endswith("NO_TODO_CHECK"):
         return False
 
-    return re.match(".*(///|#).*todo.*", line, re.IGNORECASE)  # NO_TODO_CHECK
+    if filename.endswith(".md"):
+        return re.match(".*todo[^a-zA-Z].*", line, re.IGNORECASE)
+    else:
+        return re.match(".*(///|#).*todo.*", line, re.IGNORECASE)  # NO_TODO_CHECK
 
 
 def main():
