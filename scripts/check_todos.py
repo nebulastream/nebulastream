@@ -40,7 +40,11 @@ def main():
     if "CI" in os.environ and "BASE_REF" not in os.environ:
         print("Error: running in CI, but BASE_REF not set")
         sys.exit(1)
-    elif "BASE_REF" in os.environ:
+    if "CI" in os.environ and "GH_TOKEN" not in os.environ:
+        print("Error: running in CI, but GH_TOKEN not set")
+        sys.exit(1)
+
+    if "BASE_REF" in os.environ:
         base = os.environ["BASE_REF"]
     else:
         base = "main"
@@ -91,9 +95,6 @@ def main():
             print(f"{file}:{line_no}:{line}")
         print()
 
-    if "CI" in os.environ and "GH_TOKEN" not in os.environ:
-        print("Error: running in CI, but GH_TOKEN not set")
-        sys.exit(1)
     if not todo_issues:
         # No added issue references, thus nothing to check
         sys.exit(fail)
