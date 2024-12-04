@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import urllib.request
+from typing import Tuple
 
 def run_cmd(cmd: list) -> str:
     try:
@@ -21,6 +22,29 @@ def run_cmd(cmd: list) -> str:
         print(e.stderr)
         sys.exit(1)
     return p.stdout
+
+
+def get_added_lines_from_diff(diff: str) -> Tuple[str, int, str]:
+    """returns all added lines from diff as (file_no, line_no, line)"""
+    file_header = re.compile("diff --git a/.* b/(.*)")
+    line_context = re.compile(r"@@ -\d+,\d+ \+(\d+),\d+ @@")
+    line_no = 0
+
+    diff_file = ""
+    added_lines = []
+
+    for line in diff.split("\n"):
+        if m := file_header.match(line):
+            diff_file = m[1]
+        if m := line_context.match(line):
+            line_no = int(m[1]) - 1
+
+        if line.startswith("+"):
+            added_lines.append((diff_file, line_no, line[1:]))
+        if not line.startswith("-"):
+            line_no += 1
+
+    return added_lines
 
 
 def line_contains_todo(filename: str, line: str) -> bool:
@@ -60,21 +84,14 @@ def main():
                     ":!vcpkg/vcpkg-registry/**/*.patch"
                     ])
 
-    file_header = re.compile("diff --git a/.* b/(.*)")
-    line_context = re.compile(r"@@ -\d+,\d+ \+(\d+),\d+ @@")
+    added_lines = get_added_lines_from_diff(diff)
 
     illegal_todos = []
     todo_issues = {}
-    line_no = 0
     fail = 0
 
-    for line in diff.split("\n"):
-        if m := file_header.match(line):
-            diff_file = m[1]
-        if m := line_context.match(line):
-            line_no = int(m[1]) - 1
-
-        if line.startswith("+") and line_contains_todo(diff_file, line):
+    for diff_file, line_no, line in added_lines:
+        if line_contains_todo(diff_file, line):
             if tm := todo_with_issue.match(line):
                 todo_no = int(tm[2])
                 if todo_no not in todo_issues:
@@ -83,8 +100,6 @@ def main():
                     todo_issues[todo_no].append(f"{diff_file}:{line_no}")
             else:
                 illegal_todos.append((diff_file, line_no, line[1:]))
-        if not line.startswith("-"):
-            line_no += 1
 
     if illegal_todos:
         fail = 1
