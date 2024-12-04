@@ -10,14 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
-# Add Library
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-
-# Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sources
 target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-input-formatters)
 
 target_include_directories(nes-sources PUBLIC
@@ -30,4 +26,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-# There are currently no tests in nes-sources. There are system level tests and integration tests (nes-single-node-worker)
+# Generate Registrar for Source Plugins
+generate_plugin_registrar(Source "${CMAKE_CURRENT_LIST_DIR}/private/RegistrarTemplates/SourceGeneratedRegistrar.inc.in" nes-sources)
+generate_plugin_registrar(SourceValidation "${CMAKE_CURRENT_LIST_DIR}/private/RegistrarTemplates/SourceValidationGeneratedRegistrar.inc.in" nes-sources)
