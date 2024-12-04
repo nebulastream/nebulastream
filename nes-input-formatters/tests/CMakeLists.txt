@@ -16,7 +16,7 @@ include(GoogleTest)
 function(add_nes_input_formatter_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-input-formatters) #nes-execution nes-common nes-data-types nes-operators nes-grpc nes-runtime nes-test-util nes-configurations nes-nautilus nes-window-types
+    target_link_libraries(${TARGET_NAME} nes-input-formatters nes-executable-test-utils)
 endfunction()
 
 add_subdirectory(UnitTests)

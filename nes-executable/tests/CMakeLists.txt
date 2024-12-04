@@ -10,10 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-executable ExecutableQueryPlan.cpp
-        tests/TestUtils/TestTaskQueue.cpp)
-target_include_directories(nes-executable PUBLIC include PRIVATE .)
-target_link_libraries(nes-executable PUBLIC nes-common nes-runtime)
+add_library(nes-executable-test-utils TestUtils/TestTaskQueue.cpp) #<--- todo add impls
+target_include_directories(nes-executable-test-utils PUBLIC TestUtils)
+target_link_libraries(nes-executable-test-utils PUBLIC nes-executable nes-memory nes-runtime nes-configurations) #<-- link required libraries
 
-# Todo: nes-executable-nes-utils
-add_tests_if_enabled(tests)
+#add_library(nes-memory-test-utils TestUtils/MemoryTestUtils.cpp)
+#target_include_directories(nes-memory-test-utils PUBLIC TestUtils)
+#target_link_libraries(nes-memory-test-utils PUBLIC nes-memory)
