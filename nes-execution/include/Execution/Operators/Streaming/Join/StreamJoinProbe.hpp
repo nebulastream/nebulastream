@@ -52,6 +52,8 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
                     const WindowMetaData& windowMetaData,
                     QueryCompilation::StreamJoinStrategy joinStrategy,
                     QueryCompilation::WindowingStrategy windowingStrategy,
+                    TimeFunctionPtr leftTimeFunctionPtr,
+                    TimeFunctionPtr rightTimeFunctionPtr,
                     bool withDeletion = true);
 
     /**
@@ -86,6 +88,9 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
     const JoinSchema joinSchema;
     bool withDeletion;
     Expressions::ExpressionPtr joinExpression;
+
+    TimeFunctionPtr leftTimeFunctionPtr;
+    TimeFunctionPtr rightTimeFunctionPtr;
 
     // TODO these will be replaced by an interface function with #3691
     const std::string joinFieldNameLeft;

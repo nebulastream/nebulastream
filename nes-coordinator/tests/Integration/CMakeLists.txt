@@ -138,6 +138,9 @@ add_nes_integration_test(query-failure-test "QueryFailureTest.cpp")
 ### Query Redeployment Integration Test ###
 add_nes_integration_test(query-redeployment-integration-tests "QueryRedeploymentIntegrationTest.cpp")
 
+### Query Reconfiguration Test ###
+add_nes_integration_test(query-reconfiguration-test "QueryReconfigurationTest.cpp")
+
 ### Explain Integration Test ###
 add_nes_integration_test(explain-request-integration-test "ExplainRequestIntegrationTest.cpp")
 

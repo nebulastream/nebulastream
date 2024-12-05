@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(IntervalJoin)
+
 add_source_files(nes-execution
         PhysicalStreamJoinOperator.cpp
         PhysicalStreamJoinBuildOperator.cpp

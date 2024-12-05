@@ -46,7 +46,7 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
 
     ~NLJOperatorHandler() override = default;
 
-    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
+    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId) override;
 
     void emitSliceIdsToProbe(StreamSlice& sliceLeft,
                              StreamSlice& sliceRight,

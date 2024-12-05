@@ -183,6 +183,15 @@ class LogicalOperatorFactory {
                             OperatorId id = getNextOperatorId());
 
     /**
+    * @brief Create a specialized interval join operator.
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return BinaryOperator
+    */
+    static LogicalBinaryOperatorPtr
+    createIntervalJoinOperator(const Join::LogicalIntervalJoinDescriptorPtr& intervalJoinDefinition,
+                               OperatorId id = getNextOperatorId());
+
+    /**
      * @brief Create a new MapJavaUDFLogicalOperator.
      * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
      * @param id The operator ID.

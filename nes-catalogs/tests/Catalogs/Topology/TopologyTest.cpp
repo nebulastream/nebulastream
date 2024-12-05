@@ -23,6 +23,7 @@
 #include <cstddef>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <queue>
 
 using namespace NES;
 
@@ -31,8 +32,48 @@ class TopologyTest : public Testing::BaseUnitTest {
   public:
     /* Will be called before a test is executed. */
     static void SetUpTestCase() { NES::Logger::setupLogging("NesTopologyManager.log", NES::LogLevel::LOG_DEBUG); }
+
+    /**
+     * @brief compares expected and calculated paths
+     * @param startNode path starting node
+     * @param expectedPath expected nodes path
+     * @param expectedParentsSize expected parent nodes number
+     */
+    void checkPath(TopologyNodePtr startNode, std::vector<WorkerId> expectedPath, std::vector<int> expectedParentsSize) {
+        auto nodesQueue = std::queue<TopologyNodePtr>();
+        nodesQueue.push(startNode);
+
+        // go over parents and check expected and calculated path
+        for (size_t i = 0; i < expectedPath.size(); i++) {
+            if (nodesQueue.empty()) {
+                FAIL();
+            }
+            auto curr = nodesQueue.front();
+            nodesQueue.pop();
+            EXPECT_EQ(curr->getId(), expectedPath[i]);
+
+            std::vector<NodePtr> parents = curr->getParents();
+            // check number of parents
+            EXPECT_EQ(expectedParentsSize[i], parents.size());
+
+            // go over parents and put to the queue
+            for (auto parent : parents) {
+                nodesQueue.push(parent->as<TopologyNode>());
+            }
+        }
+    }
 };
-/* - Nodes ----------------------------------------------------------------- */
+/*
+ * There are 7 groups of topology tests
+ * 1) common tests of creating, removing nodes and modifying node's properties
+ * 2) path finding between not connected nodes
+ * 3) path finding between one source node and one destination node
+ * 4) path finding between one source node and several destination nodes
+ * 5) path finding between several source nodes and one destination node
+ * 6) path finding between several source nodes and several destination nodes
+ * 7) path finding when some nodes are marked for maintenance
+ */
+/* 1) common tests of creating, removing nodes, modifying node's properties and printing topology ----------------------------- */
 /**
  * Create a new node. 
  */
@@ -57,7 +98,9 @@ TEST_F(TopologyTest, createNode) {
     EXPECT_EQ(physicalNode->getDataPort(), dataPort);
 }
 
-///* Remove a root node. */
+/**
+ * Remove a root node.
+ */
 TEST_F(TopologyTest, removeRootNode) {
     TopologyPtr topology = Topology::create();
 
@@ -181,7 +224,9 @@ TEST_F(TopologyTest, removeNodeFromEmptyTopology) {
     EXPECT_FALSE(topology->nodeWithWorkerIdExists(node1Id));
 }
 
-/* Create a new link. */
+/**
+ * Create a new link.
+ */
 TEST_F(TopologyTest, createLink) {
     TopologyPtr topology = Topology::create();
 
@@ -211,7 +256,9 @@ TEST_F(TopologyTest, createLink) {
     EXPECT_TRUE(success);
 }
 
-/* Create link, where a link already exists. */
+/**
+ * Create link, where a link already exists.
+ */
 TEST_F(TopologyTest, createExistingLink) {
     TopologyPtr topology = Topology::create();
 
@@ -234,9 +281,10 @@ TEST_F(TopologyTest, createExistingLink) {
     EXPECT_FALSE(success);
 }
 
-/* Remove an existing link. */
+/**
+ * Remove an existing link.
+ */
 TEST_F(TopologyTest, removeLink) {
-
     TopologyPtr topology = Topology::create();
 
     auto node1Id = WorkerId(1);
@@ -258,7 +306,9 @@ TEST_F(TopologyTest, removeLink) {
     EXPECT_TRUE(success);
 }
 
-/* Remove a non-existing link. */
+/**
+ * Remove a non-existing link.
+ */
 TEST_F(TopologyTest, removeNonExistingLink) {
     TopologyPtr topology = Topology::create();
 
@@ -282,9 +332,10 @@ TEST_F(TopologyTest, removeNonExistingLink) {
     EXPECT_FALSE(success);
 }
 
-///* - Print ----------------------------------------------------------------- */
+/**
+ * Printing topology graph
+ */
 TEST_F(TopologyTest, printGraph) {
-
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -292,7 +343,7 @@ TEST_F(TopologyTest, printGraph) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
 
-    // creater workers
+    // create workers
     std::vector<WorkerId> workers;
     int resource = 4;
     for (uint32_t i = 0; i < 7; ++i) {
@@ -343,6 +394,9 @@ TEST_F(TopologyTest, printGraph) {
     SUCCEED();
 }
 
+/**
+ * Printing empty topology
+ */
 TEST_F(TopologyTest, printGraphWithoutAnything) {
     TopologyPtr topology = Topology::create();
 
@@ -350,91 +404,15 @@ TEST_F(TopologyTest, printGraphWithoutAnything) {
     EXPECT_TRUE(topology->toString() == expectedResult);
 }
 
-/**
- * @brief Find Path between two nodes
- */
-TEST_F(TopologyTest, findPathBetweenTwoNodes) {
-    TopologyPtr topology = Topology::create();
-
-    WorkerId node1Id = WorkerId(1);
-    std::string node1Address = "localhost";
-    uint32_t grpcPort = 4000;
-    uint32_t dataPort = 5000;
-    uint64_t resources = 4;
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-    topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
-    topology->addAsRootWorkerId(node1Id);
-
-    WorkerId node2Id = WorkerId(2);
-    std::string node2Address = "localhost";
-    grpcPort++;
-    dataPort++;
-    topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
-
-    WorkerId node3Id = WorkerId(3);
-    std::string node3Address = "localhost";
-    grpcPort++;
-    dataPort++;
-    topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
-    bool success = topology->removeTopologyNodeAsChild(node1Id, node3Id);
-    EXPECT_TRUE(success);
-    success = topology->addTopologyNodeAsChild(node2Id, node3Id);
-    EXPECT_TRUE(success);
-
-    auto startNode = topology->findAllPathBetween(node2Id, node1Id).value();
-
-    EXPECT_TRUE(startNode->getId() == node2Id);
-}
-
-/**
- * @brief Find Path between nodes with multiple parents and children
- */
-TEST_F(TopologyTest, findPathBetweenNodesWithMultipleParentsAndChildren) {
-
-    TopologyPtr topology = Topology::create();
-    uint32_t grpcPort = 4000;
-    uint32_t dataPort = 5000;
-
-    std::map<std::string, std::any> properties;
-    properties[NES::Worker::Properties::MAINTENANCE] = false;
-
-    // creater workers
-    std::vector<WorkerId> workerIds;
-    int resource = 4;
-    for (uint32_t i = 0; i < 10; ++i) {
-        topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        workerIds.emplace_back(i);
-        grpcPort = grpcPort + 2;
-        dataPort = dataPort + 2;
-    }
-
-    topology->addAsRootWorkerId(workerIds.at(0));
-
-    // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(workerIds.at(0), workerIds.at(1));
-    topology->addTopologyNodeAsChild(workerIds.at(0), workerIds.at(2));
-
-    topology->addTopologyNodeAsChild(workerIds.at(1), workerIds.at(3));
-    topology->addTopologyNodeAsChild(workerIds.at(1), workerIds.at(4));
-
-    topology->addTopologyNodeAsChild(workerIds.at(2), workerIds.at(5));
-    topology->addTopologyNodeAsChild(workerIds.at(2), workerIds.at(6));
-
-    topology->addTopologyNodeAsChild(workerIds.at(4), workerIds.at(7));
-    topology->addTopologyNodeAsChild(workerIds.at(5), workerIds.at(7));
-
-    topology->addTopologyNodeAsChild(workerIds.at(7), workerIds.at(8));
-    topology->addTopologyNodeAsChild(workerIds.at(7), workerIds.at(9));
-
-    const std::optional<TopologyNodePtr> startNode = topology->findAllPathBetween(workerIds.at(9), workerIds.at(2));
-
-    EXPECT_TRUE(startNode.has_value());
-    EXPECT_TRUE(startNode.value()->getId() == workerIds.at(9));
-}
+/* 2) path finding between not connected nodes -------------------------------------------------------------------------------- */
 
 /**
  * @brief Find Path between two not connected nodes
+ * . . . . 1 . .
+ * . . . / . . .
+ * . .  2 . 3 . .
+ * PhysicalNode[id=1, ip=localhost, resourceCapacity=4, usedResource=0]
+ * |--PhysicalNode[id=2, ip=localhost, resourceCapacity=4, usedResource=0]
  */
 TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     TopologyPtr topology = Topology::create();
@@ -447,7 +425,6 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
-    topology->addAsRootWorkerId(node1Id);
 
     auto node2Id = WorkerId(2);
     std::string node2Address = "localhost";
@@ -468,14 +445,239 @@ TEST_F(TopologyTest, findPathBetweenTwoNotConnectedNodes) {
     success = topology->removeTopologyNodeAsChild(node2Id, node3Id);
     EXPECT_TRUE(success);
 
-    const std::optional<TopologyNodePtr> startNode = topology->findAllPathBetween(node3Id, node1Id);
-    EXPECT_FALSE(startNode.has_value());
+    std::vector<WorkerId> sourceNodes{node3Id};
+    std::vector<WorkerId> destinationNodes{node1Id};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+    EXPECT_TRUE(startNodes.empty());
 }
 
 /**
- * @brief Find Path between multiple source and destination nodes
+ * @brief Find path between no nodes
+ * . . . . 1 . .
+ * . . . / . . .
+ * . .  2 . 3 . .
+ * PhysicalNode[id=1, ip=localhost, resourceCapacity=4, usedResource=0]
+ * |--PhysicalNode[id=2, ip=localhost, resourceCapacity=4, usedResource=0]
  */
-TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
+TEST_F(TopologyTest, findPathBetweenNoNodes) {
+    TopologyPtr topology = Topology::create();
+
+    auto node1Id = WorkerId(1);
+    std::string node1Address = "localhost";
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+    uint64_t resources = 4;
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    auto node2Id = WorkerId(2);
+    std::string node2Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    auto node3Id = WorkerId(3);
+    std::string node3Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
+    bool success = topology->addTopologyNodeAsChild(node2Id, node3Id);
+    EXPECT_TRUE(success);
+
+    success = topology->removeTopologyNodeAsChild(node1Id, node3Id);
+    EXPECT_TRUE(success);
+    success = topology->removeTopologyNodeAsChild(node2Id, node3Id);
+    EXPECT_TRUE(success);
+
+    std::vector<WorkerId> sourceNodes{};
+    std::vector<WorkerId> destinationNodes{};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+    EXPECT_TRUE(startNodes.empty());
+}
+
+/* 3) path finding between one source node and one destination node ----------------------------------------------------------- */
+
+/**
+ * @brief Find Path between two nodes in simple topology, when destination node is parent of source node
+ *  __
+ * |1| . . . .
+ * . .\ . . .
+ * . . 2 . . .
+ * . . . \ . .
+ *        __
+ * . .  ||3|| .
+ * PhysicalNode[id=1, ip=localhost, resourceCapacity=4, usedResource=0]
+ * |--PhysicalNode[id=2, ip=localhost, resourceCapacity=4, usedResource=0]
+ * |  |--PhysicalNode[id=3, ip=localhost, resourceCapacity=4, usedResource=0]
+ */
+TEST_F(TopologyTest, FindPathBetweenTwoAncestorNodesInSimpleTopology) {
+    TopologyPtr topology = Topology::create();
+
+    WorkerId node1Id = WorkerId(1);
+    std::string node1Address = "localhost";
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+    uint64_t resources = 4;
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    WorkerId node2Id = WorkerId(2);
+    std::string node2Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    WorkerId node3Id = WorkerId(3);
+    std::string node3Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
+    bool success = topology->removeTopologyNodeAsChild(node1Id, node3Id);
+    EXPECT_TRUE(success);
+    success = topology->addTopologyNodeAsChild(node2Id, node3Id);
+    EXPECT_TRUE(success);
+
+    std::vector<WorkerId> sourceNodes{node2Id};
+    std::vector<WorkerId> destinationNodes{node1Id};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_EQ(startNodes.size(), 1);
+    auto startNode = startNodes[0];
+    EXPECT_EQ(startNode->getId(), node2Id);
+    EXPECT_EQ(startNode->getParents().size(), 1);
+    auto firstParent = startNode->getParents()[0];
+    EXPECT_EQ(firstParent->as<TopologyNode>()->getId(), node1Id);
+    EXPECT_EQ(firstParent->getParents().size(), 0);
+}
+
+/**
+ * @brief Find Path between two nodes in simple topology, when source node and destination node are on the same graph level
+ * . . . . 1 . .
+ * . . . /  \ . .
+ *     __   __
+ * .  |2| ||3|| .
+ */
+TEST_F(TopologyTest, findPathBetweenTwoNotParentsNodesInSimpleTopology) {
+    TopologyPtr topology = Topology::create();
+
+    WorkerId node1Id = WorkerId(1);
+    std::string node1Address = "localhost";
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+    uint64_t resources = 4;
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    topology->registerWorker(node1Id, node1Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    WorkerId node2Id = WorkerId(2);
+    std::string node2Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node2Id, node2Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    WorkerId node3Id = WorkerId(3);
+    std::string node3Address = "localhost";
+    grpcPort++;
+    dataPort++;
+    topology->registerWorker(node3Id, node3Address, grpcPort, dataPort, resources, properties, 0, 0);
+
+    std::vector<WorkerId> sourceNodes{node2Id};
+    std::vector<WorkerId> destinationNodes{node3Id};
+
+    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_EQ(startNodes.size(), 1);
+
+    auto startNode = startNodes[0];
+    EXPECT_EQ(startNode->getId(), node2Id);
+
+    EXPECT_EQ(startNode->getParents().size(), 1);
+    auto firstParent = startNode->getParents()[0];
+    EXPECT_EQ(firstParent->as<TopologyNode>()->getId(), node1Id);
+
+    EXPECT_EQ(firstParent->getParents().size(), 1);
+    EXPECT_EQ(firstParent->getParents()[0]->as<TopologyNode>()->getId(), node3Id);
+}
+
+/**
+ * @brief Find Path between two nodes in topology with cycles, when destination node is parent of source node
+ * . . .   . 1 . . . . . . .
+ * . . . / . . . \ . . . . .
+ *                 __
+ * . .  2 . . .  ||3|| . . . .
+ * . . / \ . . .  / \ . . . .
+ * .  4 . 5 . . 6 . 7 . . . .
+ * . . . . \   /. . . . . . .
+ * . . . . . 8 . . . . . . .
+ * . . . . /  \ . . . . . . .
+ *             __
+ * . . . 9 .  |10| . . . . .
+*/
+TEST_F(TopologyTest, findPathBetweenTwoAncestorNodesInTopologyWithCycles) {
+
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> workerIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 11; ++i) {
+        topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        workerIds.emplace_back(i);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(workerIds.at(0), workerIds.at(1));
+    topology->addTopologyNodeAsChild(workerIds.at(0), workerIds.at(2));
+
+    topology->addTopologyNodeAsChild(workerIds.at(1), workerIds.at(3));
+    topology->addTopologyNodeAsChild(workerIds.at(1), workerIds.at(4));
+
+    topology->addTopologyNodeAsChild(workerIds.at(2), workerIds.at(5));
+    topology->addTopologyNodeAsChild(workerIds.at(2), workerIds.at(6));
+
+    topology->addTopologyNodeAsChild(workerIds.at(4), workerIds.at(7));
+    topology->addTopologyNodeAsChild(workerIds.at(5), workerIds.at(7));
+
+    topology->addTopologyNodeAsChild(workerIds.at(7), workerIds.at(8));
+    topology->addTopologyNodeAsChild(workerIds.at(7), workerIds.at(9));
+
+    std::vector<WorkerId> sourceNodes{workerIds.at(9)};
+    std::vector<WorkerId> destinationNodes{workerIds.at(2)};
+
+    topology->print();
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_EQ(startNodes.size(), 1);
+    EXPECT_EQ(startNodes[0]->getId(), workerIds.at(9));
+}
+
+/**
+ * @brief Find Path between two nodes in topology with cycles, when destination node is not parent of source node
+ * . . . . 0 . .
+ * . . . / \ . .
+ * . .  1 . 2 .
+ * . . / \ /  .
+ *        ___
+ * .  3  ||4|| . .
+ * . / \ . . . .
+ *  _
+ * |5| . 6  . .
+ * . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenTwoNotParents) {
     TopologyPtr topology = Topology::create();
 
     uint32_t grpcPort = 4000;
@@ -484,10 +686,64 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
 
-    // creater workers
+    // create workers
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
-    for (uint32_t i = 0; i < 10; ++i) {
+    for (uint32_t i = 1; i < 8; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // Remove the registration of nodes connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
+
+    // Link nodes according to schema
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(5));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(6));
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(5)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(4)};
+
+    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    std::vector<WorkerId> path{topologyNodeIds.at(5), topologyNodeIds.at(3), topologyNodeIds.at(1), topologyNodeIds.at(4)};
+    std::vector<int> parentsSizes{1, 1, 1, 0};
+    checkPath(startNodes[0], path, parentsSizes);
+}
+
+/**
+ * @brief Find Path between two nodes in topology with cycles, when destination node is not parent of source node
+ * . . .   . 1 . . . . . . .
+ * . . . / \ . . \ . . . . .
+ * . .  2 . 3 . . 6 . . . .
+ * . . / \ /  .  / \ . . . .
+ * .  4 . 5 . . 7 . 8 . . .
+ * . / \ . . . . . / \ . . .
+ *  _                  _
+ * |9| . 10  . . 11  ||12|| .
+ * . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenTwoNotParentsNodesInComplexTopology) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 13; ++i) {
         auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
@@ -496,53 +752,41 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
 
     topology->addAsRootWorkerId(topologyNodeIds.at(0));
 
-    // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(5));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(6));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(7));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(8));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(9));
-
-    //Remove the registration of connection with the root node
+    // Remove the registration of nodes connection with the root node
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
-    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(7));
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(8));
     topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(9));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(10));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(11));
 
-    NES_INFO("Updated Topology {}", topology->toString());
+    // Link nodes according to schema
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(6));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(8));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(10));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(11));
 
-    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8), topologyNodeIds.at(9)};
-    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(11)};
 
-    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
-    EXPECT_FALSE(startNodes.empty());
-    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
-
-    TopologyNodePtr startNode1 = startNodes[0];
-    EXPECT_TRUE(startNode1->getId() == topologyNodeIds.at(8));
-    TopologyNodePtr startNode2 = startNodes[1];
-    EXPECT_TRUE(startNode2->getId() == topologyNodeIds.at(9));
-    EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
-    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId()
-                == startNode1->getParents()[0]->as<TopologyNode>()->getId());
-    TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(s1Parent1->getId() == topologyNodeIds.at(7));
-    TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(s1Parent2->getId() == topologyNodeIds.at(4));
-    TopologyNodePtr s1Parent3 = s1Parent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(s1Parent3->getId() == topologyNodeIds.at(1));
-    TopologyNodePtr s1Parent4 = s1Parent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(s1Parent4->getId() == topologyNodeIds.at(0));
+    std::vector<WorkerId> path{topologyNodeIds.at(8),
+                               topologyNodeIds.at(3),
+                               topologyNodeIds.at(1),
+                               topologyNodeIds.at(0),
+                               topologyNodeIds.at(5),
+                               topologyNodeIds.at(7),
+                               topologyNodeIds.at(11)};
+    std::vector<int> parentsSizes{1, 1, 1, 1, 1, 1, 0};
+    checkPath(startNodes[0], path, parentsSizes);
 }
 
 /**
@@ -557,7 +801,7 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
 
-    // creater workers
+    // create workers
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
     for (uint32_t i = 0; i < 10; ++i) {
@@ -589,7 +833,7 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8)};
     std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
 
-    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
     EXPECT_FALSE(startNodes.empty());
     EXPECT_TRUE(startNodes.size() == sourceNodes.size());
@@ -604,44 +848,21 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     EXPECT_TRUE(parent3->getId() == topologyNodeIds.at(0));
 }
 
+/* 4) path finding between one source node and several destination nodes ------------------------------------------------------ */
+
 /**
- * @brief Tests if the path finding function find() properly ignores nodes marked for maintenance in a complex topology
- * Topology:
-    PhysicalNode[id=0, ip=localhost, resourceCapacity=4, usedResource=0]
-    |--PhysicalNode[id=4, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=7, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=11, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
-    |--PhysicalNode[id=3, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=7, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=11, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=6, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
-    |--PhysicalNode[id=2, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=6, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=10, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=14, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=5, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=9, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=13, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=8, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
-    |--PhysicalNode[id=1, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |--PhysicalNode[id=8, ip=localhost, resourceCapacity=4, usedResource=0]
-    |  |  |--PhysicalNode[id=12, ip=localhost, resourceCapacity=4, usedResource=0]
-*/
-/*TEST_F(TopologyTest, testPathFindingWithMaintenance) {
+ * @brief Find Path between one siurce and several destination nodes in simple topology without cycles
+ *            __
+ * . . . .  ||1|| . . . . . . .
+ * . . . / . . . \ . . . . .
+ *                 __
+ * . .  2 . . .  ||3|| . . . .
+ * . . / \ .  . . . . . . .
+ *    __
+ * . |4| . 5 . . . . . . . .
+ * . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenOneSourceAndSeveralDestinationNodesInSimpleTopologyWithoutCycles) {
     TopologyPtr topology = Topology::create();
 
     uint32_t grpcPort = 4000;
@@ -653,123 +874,483 @@ TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodesAndSelectTheSh
     // create workers
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
-    for (uint32_t i = 0; i < 15; ++i) {
-        topology->registerTopologyNode(i, "localhost", grpcPort, dataPort, resource, properties, 0, 0);
-        topologyNodeIds.emplace_back(i);
+    for (uint32_t i = 1; i < 6; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
 
-    topology->addAsRootWorkerId(topologyNodeIds.at(0));
-    //sets up Topology
     // link each worker with its neighbor
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(1));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(2));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
 
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(8));
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
 
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(5));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(6));
+    NES_INFO("Updated Topology {}", topology->toString());
 
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(6));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(7));
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(3)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0), topologyNodeIds.at(2)};
 
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(7));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(8));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(9));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(10));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(10));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(11));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(8), topologyNodeIds.at(12));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(12));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(13));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(10), topologyNodeIds.at(13));
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(10), topologyNodeIds.at(14));
-
-    topology->addTopologyNodeAsChild(topologyNodeIds.at(11), topologyNodeIds.at(14));
-
-    topology->print();
-
-    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(12), topologyNodeIds.at(13), topologyNodeIds.at(14)};
-
-    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
-
-    const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
     EXPECT_FALSE(startNodes.empty());
     EXPECT_TRUE(startNodes.size() == sourceNodes.size());
 
-    //checks if Ids of source nodes are as expected
-    EXPECT_TRUE(sourceNodes[0] == topologyNodeIds[12]);
-    EXPECT_TRUE(sourceNodes[1] == topologyNodeIds[13]);
-    EXPECT_TRUE(sourceNodes[2] == topologyNodeIds[14]);
-    //checks path from source node 12 to sink
-    TopologyNodePtr firstStartNodeParent1 = startNodes[0]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(firstStartNodeParent1->getId() == topologyNodeIds[8]);
-    TopologyNodePtr firstStartNodeParent2 = firstStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(firstStartNodeParent2->getId() == topologyNodeIds[1]);
-    TopologyNodePtr firstStartNodeParent3 = firstStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(firstStartNodeParent3->getId() == topologyNodeIds[0]);
-    //checks path from source node 13 to sink
-    TopologyNodePtr secondStartNodeParent1 = startNodes[1]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(secondStartNodeParent1->getId() == topologyNodeIds[10]);
-    TopologyNodePtr secondStartNodeParent2 = secondStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(secondStartNodeParent2->getId() == topologyNodeIds[6]);
-    TopologyNodePtr secondStartNodeParent3 = secondStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(secondStartNodeParent3->getId() == topologyNodeIds[2]);
-    TopologyNodePtr secondStartNodeParent4 = secondStartNodeParent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(secondStartNodeParent4->getId() == topologyNodeIds[0]);
-    //checks path from source node 14 to sink
-    TopologyNodePtr thirdStartNodeParent1 = startNodes[2]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(thirdStartNodeParent1->getId() == topologyNodeIds[10]);
-    TopologyNodePtr thirdStartNodeParent2 = thirdStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(thirdStartNodeParent2->getId() == topologyNodeIds[6]);
-    TopologyNodePtr thirdStartNodeParent3 = thirdStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(thirdStartNodeParent3->getId() == topologyNodeIds[2]);
-    TopologyNodePtr thirdStartNodeParent4 = thirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(thirdStartNodeParent4->getId() == topologyNodeIds[0]);
-    //flags nodes currently on path for maintenance
-    topologyNodeIds[1]->setForMaintenance(true);
-    topologyNodeIds[3]->setForMaintenance(true);
-    topologyNodeIds[10]->setForMaintenance(true);
-    //calculate Path again
-    const std::vector<TopologyNodePtr> mStartNodes = topology->findPathBetween(sourceNodes, destinationNodes);
-    //checks path from source node 12 to sink
-    TopologyNodePtr mFirstStartNodeParent1 = mStartNodes[0]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mFirstStartNodeParent1->getId() == topologyNodeIds[9]);
-    TopologyNodePtr mFirstStartNodeParent2 = mFirstStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mFirstStartNodeParent2->getId() == topologyNodeIds[5]);
-    TopologyNodePtr mFirstStartNodeParent3 = mFirstStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mFirstStartNodeParent3->getId() == topologyNodeIds[2]);
-    TopologyNodePtr mFirstStartNodeParent4 = mFirstStartNodeParent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mFirstStartNodeParent4->getId() == topologyNodeIds[0]);
-    //checks path from source node 13 to sink
-    TopologyNodePtr mSecondStartNodeParent1 = mStartNodes[1]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mSecondStartNodeParent1->getId() == topologyNodeIds[9]);
-    TopologyNodePtr mSecondStartNodeParent2 = mSecondStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mSecondStartNodeParent2->getId() == topologyNodeIds[5]);
-    TopologyNodePtr mSecondStartNodeParent3 = mSecondStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mSecondStartNodeParent3->getId() == topologyNodeIds[2]);
-    TopologyNodePtr mSecondStartNodeParent4 = mSecondStartNodeParent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mSecondStartNodeParent4->getId() == topologyNodeIds[0]);
-    //checks path from source node 14 to sink
-    TopologyNodePtr mThirdStartNodeParent1 = mStartNodes[2]->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mThirdStartNodeParent1->getId() == topologyNodeIds[11]);
-    TopologyNodePtr mThirdStartNodeParent2 = mThirdStartNodeParent1->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mThirdStartNodeParent2->getId() == topologyNodeIds[7]);
-    TopologyNodePtr mThirdStartNodeParent3 = mThirdStartNodeParent2->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mThirdStartNodeParent3->getId() == topologyNodeIds[4]);
-    TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
-    EXPECT_TRUE(mThirdStartNodeParent4->getId() == topologyNodeIds[0]);
-}*/
+    std::vector<WorkerId> path{topologyNodeIds.at(3), topologyNodeIds.at(1), topologyNodeIds.at(0), topologyNodeIds.at(2)};
+    std::vector<int> parentsSizes{1, 1, 1, 0};
+    checkPath(startNodes[0], path, parentsSizes);
+}
+
+/**
+ * @brief Find Path between one source node and several destination nodes in simple topology with cycles
+ *            __
+ * . . . .  ||1|| . . . . . . .
+ * . . . / . . . \ . . . . .
+ *                __
+ * . .  2  -----||3|| . . . .
+ * . . / \ . . . . . . . . .
+ *    __
+ * . |4| . 5 . . . . . . . .
+ * . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenOneSourceAndSeveralDestinationNodesInSimpleTopologyWithCycles) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 6; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(1));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(3)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0), topologyNodeIds.at(2)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    std::vector<WorkerId> path{topologyNodeIds.at(3), topologyNodeIds.at(1), topologyNodeIds.at(0), topologyNodeIds.at(2)};
+    std::vector<int> parentsSizes{1, 2, 0, 0};
+    checkPath(startNodes[0], path, parentsSizes);
+}
+
+/**
+ * @brief Find Path between one source and several destination nodes in complex topology with cycles
+ *
+ * . . . . . . . . . . . . . . . . . . 1 --- 2 . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . /  \ . . \ . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . 3 . . 4 . ||5|| . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . / . \ . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . 6 .  ||7|| . . . . . . . . . . . . . . . . . . . . . .
+ *  . . . . . . . . . . . . . . /  . | \ / . | . \ . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . |8| . . 9 10. . 11  ||12|| . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . / \ . . . . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . .  13 14 . . . . . . . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenOneSourceAndSeveralDestinationNodesInComplexTopologyWithCycles) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 15; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(5));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(6));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(8));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(10));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(11));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(12));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(13));
+
+    //Remove the registration of connection with the root node
+    for (uint32_t i = 4; i < 14; ++i) {
+        topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(i));
+    }
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(7)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(4), topologyNodeIds.at(6), topologyNodeIds.at(11)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    std::vector<WorkerId> path{topologyNodeIds.at(7),
+                               topologyNodeIds.at(5),
+                               topologyNodeIds.at(3),
+                               topologyNodeIds.at(0),
+                               topologyNodeIds.at(6),
+                               topologyNodeIds.at(1),
+                               topologyNodeIds.at(11),
+                               topologyNodeIds.at(4)};
+    std::vector<int> parentsSizes{1, 1, 2, 1, 1, 1, 0, 0};
+    checkPath(startNodes[0], path, parentsSizes);
+}
+
+/* 5) path finding between several source nodes and one destination node ------------------------------------------------------ */
+
+/**
+ * @brief Find Path between one source node and several destination nodes in simple topology without cycles
+ * . . . . . 1 . . . . . . . . .
+ * . . . / . . . \ . . . . .
+ *                 __
+ * . .  2 . . .  ||3|| . . . .
+ * . . / \ .  . . . . . . .
+ *    __    __
+ * . |4| . |5| . . . . . . . .
+ * . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenSeveralSourceAndOneDestinationNodeInSimpleTopologyWithoutCycles) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 6; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(3), topologyNodeIds.at(4)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(2)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    std::vector<WorkerId> pathFirstStartNode{topologyNodeIds.at(3),
+                                             topologyNodeIds.at(1),
+                                             topologyNodeIds.at(0),
+                                             topologyNodeIds.at(2)};
+    std::vector<int> parentsSizesFirstStartNode{1, 1, 1, 0};
+
+    std::vector<WorkerId> pathSecondStartNode{topologyNodeIds.at(4),
+                                              topologyNodeIds.at(1),
+                                              topologyNodeIds.at(0),
+                                              topologyNodeIds.at(2)};
+    std::vector<int> parentsSizesSecondStarNode{1, 1, 1, 0};
+    checkPath(startNodes[0], pathFirstStartNode, parentsSizesFirstStartNode);
+    checkPath(startNodes[1], pathSecondStartNode, parentsSizesSecondStarNode);
+}
+
+/**
+ * @brief Find Path between several source nodes and one destination node in complex topology with cycles
+ *
+ * . . . . . . . . . . . . . . . . . . 1 --- |2| . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . /  \ . . \ . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . 3 . . 4 . ||5|| . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . / . \ . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . 6 . . 7 . . . . . . . . . . . . . . . . . . . . . . .
+ *  . . . . . . . . . . . . . . /  . | \ / . | . \ . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . |8| . . 9 10. . 11 . 12 . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . / \ . . . . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . |13| 14 . . . . . . . . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenSeveralSourceAndOneDestinationNodeInComplexTopologyWithCycles) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 15; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(5));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(6));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(8));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(10));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(11));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(12));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(13));
+
+    //Remove the registration of connection with the root node
+    for (uint32_t i = 4; i < 14; ++i) {
+        topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(i));
+    }
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(1), topologyNodeIds.at(7), topologyNodeIds.at(12)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(4)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    std::vector<WorkerId> pathFirstStartNode{topologyNodeIds.at(1), topologyNodeIds.at(4)};
+    std::vector<int> parentsSizesFirstStartNode{1, 0};
+
+    std::vector<WorkerId> pathSecondStartNode{topologyNodeIds.at(7),
+                                              topologyNodeIds.at(5),
+                                              topologyNodeIds.at(3),
+                                              topologyNodeIds.at(0),
+                                              topologyNodeIds.at(1),
+                                              topologyNodeIds.at(4)};
+    std::vector<int> parentsSizesSecondStartNode{1, 1, 1, 1, 1, 0};
+
+    std::vector<WorkerId> pathThirdStartNode{topologyNodeIds.at(12),
+                                             topologyNodeIds.at(9),
+                                             topologyNodeIds.at(5),
+                                             topologyNodeIds.at(3),
+                                             topologyNodeIds.at(0),
+                                             topologyNodeIds.at(1),
+                                             topologyNodeIds.at(4)};
+    std::vector<int> parentsSizesThirdStartNode{1, 1, 1, 1, 1, 1, 0};
+
+    checkPath(startNodes[0], pathFirstStartNode, parentsSizesFirstStartNode);
+    checkPath(startNodes[1], pathSecondStartNode, parentsSizesSecondStartNode);
+    checkPath(startNodes[2], pathThirdStartNode, parentsSizesThirdStartNode);
+}
+
+/**
+ * @brief Find Path between multiple source and one destination in complex topology
+ */
+TEST_F(TopologyTest, findPathBetweenSetOfSourceAndDestinationNodes) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 11; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(5));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(6));
+
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(7));
+
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(8));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(9));
+
+    //Remove the registration of connection with the root node
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(3));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(4));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(5));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(6));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(7));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(8));
+    topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(9));
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(8), topologyNodeIds.at(9)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(0)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    TopologyNodePtr startNode1 = startNodes[0];
+    EXPECT_TRUE(startNode1->getId() == topologyNodeIds.at(8));
+    TopologyNodePtr startNode2 = startNodes[1];
+    EXPECT_TRUE(startNode2->getId() == topologyNodeIds.at(9));
+    EXPECT_TRUE(startNode2->getParents().size() == startNode1->getParents().size());
+    EXPECT_TRUE(startNode2->getParents()[0]->as<TopologyNode>()->getId()
+                == startNode1->getParents()[0]->as<TopologyNode>()->getId());
+    TopologyNodePtr s1Parent1 = startNode1->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent1->getId() == topologyNodeIds.at(7));
+    TopologyNodePtr s1Parent2 = s1Parent1->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent2->getId() == topologyNodeIds.at(4));
+    TopologyNodePtr s1Parent3 = s1Parent2->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent3->getId() == topologyNodeIds.at(1));
+    TopologyNodePtr s1Parent4 = s1Parent3->getParents()[0]->as<TopologyNode>();
+    EXPECT_TRUE(s1Parent4->getId() == topologyNodeIds.at(0));
+}
+
+/* 6) path finding between several source nodes and several destination nodes ------------------------------------------------- */
+
+/**
+ * @brief Find Path between several source nodes and several destination nodes in complex topology with cycles
+ *
+ * . . . . . . . . . . . . . . . . . |1| ------ 2 . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . /  \ . . . | . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . 3 . . 4 .  ||5|| . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . / .\ . / . . / \ . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . |6|. .  7 --- 8 . 9 . . . . . . . . . . . . . . . . . . . . . . .
+ *  . . . . . . . . . . . . . . . \  /  \  /  . / \ . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . .  |10| . 11 . ||12||  13. . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . . . . .  \  /. . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . . . . . . 14 . . . . . . . . . . . . . . . . . .
+ * . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+ */
+TEST_F(TopologyTest, findPathBetweenSeveralSourceAndSeveralDestinationNodesInComplexTopologyWithCycles) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+
+    // create workers
+    std::vector<WorkerId> topologyNodeIds;
+    int resource = 4;
+    for (uint32_t i = 1; i < 15; ++i) {
+        auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
+        topologyNodeIds.emplace_back(workerId);
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    // link each worker with its neighbor
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(5));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(6));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(3), topologyNodeIds.at(6));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(5), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(9));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(6), topologyNodeIds.at(7));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(9), topologyNodeIds.at(10));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(7), topologyNodeIds.at(10));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(4), topologyNodeIds.at(8));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(8), topologyNodeIds.at(11));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(8), topologyNodeIds.at(12));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(11), topologyNodeIds.at(13));
+    topology->addTopologyNodeAsChild(topologyNodeIds.at(12), topologyNodeIds.at(13));
+
+    //Remove the registration of connection with the root node
+    for (uint32_t i = 4; i < 14; ++i) {
+        topology->removeTopologyNodeAsChild(topologyNodeIds.at(0), topologyNodeIds.at(i));
+    }
+
+    NES_INFO("Updated Topology {}", topology->toString());
+
+    std::vector<WorkerId> sourceNodes{topologyNodeIds.at(0), topologyNodeIds.at(5), topologyNodeIds.at(9)};
+    std::vector<WorkerId> destinationNodes{topologyNodeIds.at(4), topologyNodeIds.at(11)};
+
+    const auto startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
+
+    EXPECT_FALSE(startNodes.empty());
+    EXPECT_TRUE(startNodes.size() == sourceNodes.size());
+
+    std::vector<WorkerId> pathFirstStartNode{topologyNodeIds.at(0),
+                                             topologyNodeIds.at(1),
+                                             topologyNodeIds.at(4),
+                                             topologyNodeIds.at(8),
+                                             topologyNodeIds.at(11)};
+    std::vector<int> parentsSizesFirstStartNode{1, 1, 1, 1, 0};
+
+    std::vector<WorkerId> pathSecondStartNode{topologyNodeIds.at(5),
+                                              topologyNodeIds.at(2),
+                                              topologyNodeIds.at(0),
+                                              topologyNodeIds.at(1),
+                                              topologyNodeIds.at(4),
+                                              topologyNodeIds.at(8),
+                                              topologyNodeIds.at(11)};
+    std::vector<int> parentsSizesSecondStartNode{1, 1, 1, 1, 1, 1, 0};
+
+    std::vector<WorkerId> pathThirdStartNode{topologyNodeIds.at(9),
+                                             topologyNodeIds.at(6),
+                                             topologyNodeIds.at(7),
+                                             topologyNodeIds.at(4),
+                                             topologyNodeIds.at(8),
+                                             topologyNodeIds.at(11)};
+    std::vector<int> parentsSizesThirdStartNode{1, 1, 1, 1, 1, 0};
+
+    checkPath(startNodes[0], pathFirstStartNode, parentsSizesFirstStartNode);
+    checkPath(startNodes[1], pathSecondStartNode, parentsSizesSecondStartNode);
+    checkPath(startNodes[2], pathThirdStartNode, parentsSizesThirdStartNode);
+}
+
+/* 7) path finding when some nodes are marked for maintenance ----------------------------------------------------------------- */
 
 /**
  * @brief Tests if findCommonAncestor properly ignores nodes marked for maintenance
@@ -786,14 +1367,13 @@ TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
     // create workers
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
-    for (uint32_t i = 0; i <= 6; ++i) {
+    for (uint32_t i = 1; i < 8; ++i) {
         auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
 
-    topology->addAsRootWorkerId(topologyNodeIds.at(0));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(4));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(5));
     topology->addTopologyNodeAsChild(topologyNodeIds.at(2), topologyNodeIds.at(4));
@@ -853,14 +1433,12 @@ TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedFo
     // create workers
     std::vector<WorkerId> topologyNodeIds;
     int resource = 4;
-    for (uint32_t i = 0; i < 9; ++i) {
+    for (uint32_t i = 1; i < 10; ++i) {
         auto workerId = topology->registerWorker(WorkerId(i), "localhost", grpcPort, dataPort, resource, properties, 0, 0);
         topologyNodeIds.emplace_back(workerId);
         grpcPort = grpcPort + 2;
         dataPort = dataPort + 2;
     }
-
-    topology->addAsRootWorkerId(topologyNodeIds.at(0));
 
     // link each worker with its neighbor
     topology->addTopologyNodeAsChild(topologyNodeIds.at(1), topologyNodeIds.at(3));

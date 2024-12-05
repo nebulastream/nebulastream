@@ -28,6 +28,8 @@ add_source_files(nes-operators
         LogicalMeosOperator.cpp
         LogicalTernaryOperator.cpp
         LogicalQuaternaryOperator.cpp
+        LogicalIntervalJoinDescriptor.cpp
+        LogicalIntervalJoinOperator.cpp
 )
 
 add_subdirectory(Sinks)

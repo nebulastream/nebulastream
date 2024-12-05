@@ -24,6 +24,8 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
@@ -134,7 +136,9 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     } else if (operatorNode->instanceOf<Experimental::LogicalBatchJoinOperator>()) {
         // serialize batch join operator
         serializeBatchJoinOperator(*operatorNode->as<Experimental::LogicalBatchJoinOperator>(), serializedOperator);
-
+    } else if (operatorNode->instanceOf<LogicalIntervalJoinOperator>()) {
+        //serialize interval join operator
+        serializeIntervalJoinOperator(*operatorNode->as<LogicalIntervalJoinOperator>(), serializedOperator);
     } else if (operatorNode->instanceOf<LogicalLimitOperator>()) {
         // serialize limit operator
         serializeLimitOperator(*operatorNode->as<LogicalLimitOperator>(), serializedOperator);
@@ -278,6 +282,13 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         auto serializedJoinOperator = SerializableOperator_JoinDetails();
         details.UnpackTo(&serializedJoinOperator);
         operatorNode = deserializeJoinOperator(serializedJoinOperator, getNextOperatorId());
+
+    } else if (details.Is<SerializableOperator_IntervalJoinDetails>()) {
+        // de-serialize streaming interval join operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to IntervalJoinLogicalOperator");
+        auto serializedIntervalJoinOperator = SerializableOperator_IntervalJoinDetails();
+        details.UnpackTo(&serializedIntervalJoinOperator);
+        operatorNode = deserializeIntervalJoinOperator(serializedIntervalJoinOperator, getNextOperatorId());
 
     } else if (details.Is<SerializableOperator_BatchJoinDetails>()) {
         // de-serialize batch join operator
@@ -799,6 +810,62 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
     auto retValue =
         LogicalOperatorFactory::createBatchJoinOperator(joinDefinition, operatorId)->as<Experimental::LogicalBatchJoinOperator>();
     return retValue;
+}
+
+void OperatorSerializationUtil::serializeIntervalJoinOperator(const LogicalIntervalJoinOperator& intervalJoinOperator,
+                                                              SerializableOperator& serializedOperator) {
+    NES_TRACE("OperatorSerializationUtil:: serialize to LogicalIntervalJoinOperator");
+    auto joinDetails = SerializableOperator_IntervalJoinDetails();
+    auto joinDefinition = intervalJoinOperator.getIntervalJoinDefinition();
+
+    ExpressionSerializationUtil::serializeExpression(joinDefinition->getJoinExpression(), joinDetails.mutable_joinexpression());
+
+    auto timeCharacteristic = joinDefinition->getTimeCharacteristic();
+    auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
+    timeCharacteristicDetails.set_multiplier(timeCharacteristic->getTimeUnit().getMillisecondsConversionMultiplier());
+    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+        timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
+        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
+    } else {
+        NES_ERROR("OperatorSerializationUtil: Can't serialize TimeCharacteristic");
+    }
+    joinDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
+
+    joinDetails.set_lowerbound(joinDefinition->getLowerBound());
+    joinDetails.set_upperbound(joinDefinition->getUpperBound());
+
+    serializedOperator.mutable_details()->PackFrom(joinDetails);
+}
+
+LogicalIntervalJoinOperatorPtr
+OperatorSerializationUtil::deserializeIntervalJoinOperator(const SerializableOperator_IntervalJoinDetails& joinDetails,
+                                                           OperatorId operatorId) {
+
+    const auto& serializedTimeCharacteristic = joinDetails.timecharacteristic();
+    auto multiplier = serializedTimeCharacteristic.multiplier();
+
+    LogicalIntervalJoinOperatorPtr joinOperator;
+
+    if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime) {
+        auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
+        auto timeCharacteristic = Windowing::TimeCharacteristic::createEventTime(field, Windowing::TimeUnit(multiplier));
+
+        LogicalOperatorPtr ptr;
+        auto serializedJoinExpression = joinDetails.joinexpression();
+        auto joinExpression =
+            ExpressionSerializationUtil::deserializeExpression(serializedJoinExpression)->as<BinaryExpressionNode>();
+
+        auto joinDefinition = Join::LogicalIntervalJoinDescriptor::create(joinExpression,
+                                                                          timeCharacteristic,
+                                                                          joinDetails.lowerbound(),
+                                                                          joinDetails.upperbound());
+        joinOperator =
+            LogicalOperatorFactory::createIntervalJoinOperator(joinDefinition, operatorId)->as<LogicalIntervalJoinOperator>();
+
+    } else {
+        NES_THROW_RUNTIME_ERROR("The IntervalJoin implementation only supports event time queries, please check your query. ");
+    }
+    return joinOperator;
 }
 
 void OperatorSerializationUtil::serializeSourceDescriptor(const SourceDescriptor& sourceDescriptor,

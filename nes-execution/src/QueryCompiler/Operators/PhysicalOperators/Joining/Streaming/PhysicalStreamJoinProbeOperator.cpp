@@ -28,7 +28,9 @@ PhysicalStreamJoinProbeOperator::create(OperatorId id,
                                         const std::string& windowEndFieldName,
                                         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
+                                        QueryCompilation::WindowingStrategy windowingStrategy,
+                                        const TimestampField timestampFieldLeft,
+                                        const TimestampField timestampFieldRight) {
     return std::make_shared<PhysicalStreamJoinProbeOperator>(id,
                                                              statisticId,
                                                              leftSchema,
@@ -39,7 +41,9 @@ PhysicalStreamJoinProbeOperator::create(OperatorId id,
                                                              windowEndFieldName,
                                                              operatorHandler,
                                                              joinStrategy,
-                                                             windowingStrategy);
+                                                             windowingStrategy,
+                                                             timestampFieldLeft,
+                                                             timestampFieldRight);
 }
 
 PhysicalOperatorPtr
@@ -52,7 +56,9 @@ PhysicalStreamJoinProbeOperator::create(StatisticId statisticId,
                                         const std::string& windowEndFieldName,
                                         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
                                         QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
+                                        QueryCompilation::WindowingStrategy windowingStrategy,
+                                        const TimestampField timestampFieldLeft,
+                                        const TimestampField timestampFieldRight) {
     return create(getNextOperatorId(),
                   statisticId,
                   leftSchema,
@@ -63,7 +69,9 @@ PhysicalStreamJoinProbeOperator::create(StatisticId statisticId,
                   windowEndFieldName,
                   operatorHandler,
                   joinStrategy,
-                  windowingStrategy);
+                  windowingStrategy,
+                  timestampFieldLeft,
+                  timestampFieldRight);
 }
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
@@ -77,10 +85,13 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     const std::string& windowEndFieldName,
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy)
+    QueryCompilation::WindowingStrategy windowingStrategy,
+    const TimestampField timestampFieldLeft,
+    const TimestampField timestampFieldRight)
     : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
       PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema), joinExpression(joinExpression),
-      windowMetaData(windowStartFieldName, windowEndFieldName) {}
+      windowMetaData(windowStartFieldName, windowEndFieldName), timestampFieldLeft(timestampFieldLeft),
+      timestampFieldRight(timestampFieldRight) {}
 
 std::string PhysicalStreamJoinProbeOperator::toString() const {
     std::stringstream out;
@@ -104,7 +115,9 @@ OperatorPtr PhysicalStreamJoinProbeOperator::copy() {
                   windowMetaData.windowEndFieldName,
                   joinOperatorHandler,
                   getJoinStrategy(),
-                  getWindowingStrategy());
+                  getWindowingStrategy(),
+                  timestampFieldLeft,
+                  timestampFieldRight);
 }
 
 const Runtime::Execution::Operators::WindowMetaData& PhysicalStreamJoinProbeOperator::getWindowMetaData() const {
@@ -116,5 +129,9 @@ Runtime::Execution::Operators::JoinSchema PhysicalStreamJoinProbeOperator::getJo
 }
 
 ExpressionNodePtr PhysicalStreamJoinProbeOperator::getJoinExpression() const { return joinExpression; }
+
+TimestampField PhysicalStreamJoinProbeOperator::getTimestampFieldLeft() const { return timestampFieldLeft; }
+
+TimestampField PhysicalStreamJoinProbeOperator::getTimestampFieldRight() const { return timestampFieldRight; }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

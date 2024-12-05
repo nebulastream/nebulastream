@@ -62,7 +62,8 @@ class BaseNetworkChannel {
     void close(bool isEventOnly,
                Runtime::QueryTerminationType terminationType,
                uint16_t numSendingThreads = 0,
-               uint64_t currentMessageSequenceNumber = 0);
+               uint64_t currentMessageSequenceNumber = 0,
+               const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker = std::nullopt);
 
   protected:
     const std::string socketAddr;

@@ -23,7 +23,7 @@ package NES;
 The serializable wrapper definition for query plan
  */
 message SerializableReconfigurationMarker {
-    map<string, SerializableReconfigurationMarkerEvent> reconfigurationMarkerEvents = 1;
+    map<uint64, SerializableReconfigurationMarkerEvent> reconfigurationMarkerEvents = 1;
 }
 
 message SerializableReconfigurationMarkerEvent {

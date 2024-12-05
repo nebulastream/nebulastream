@@ -46,12 +46,19 @@
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES {
 class NesWorker;
 class BasePersistentSourceProperties;
+
+namespace Network {
+class NetworkSource;
+using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
+}// namespace Network
+
 namespace Runtime {
 
 class ThreadPool;
@@ -280,6 +287,13 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
+     * @brief propagetes a reconfiguration marker to all downstream operators of a source operator
+     * @param source the source operator
+     * @return true if it went through
+     */
+    bool propagateReconfigurationMarker(const ReconfigurationMarkerPtr& marker, DataSourcePtr source);
+
+    /**
      * @return true if thread pool is running
      */
     bool isThreadPoolRunning() const;
@@ -326,6 +340,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param terminationType the type of termination (e.g., failure, soft)
      */
     void notifySinkCompletion(DecomposedQueryId decomposedQueryId, DataSinkPtr sink, QueryTerminationType terminationType);
+
+    std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEvent(Network::NetworkSourcePtr networkSource,
+                                                                         SharedQueryId sharedQueryId,
+                                                                         const ReconfigurationMarker& marker) const;
+    std::vector<DecomposedQueryId> getExecutablePlanIdsForSource(DataSourcePtr source) const;
 
     // Map containing persistent source properties
     folly::Synchronized<std::unordered_map<std::string, std::shared_ptr<BasePersistentSourceProperties>>>

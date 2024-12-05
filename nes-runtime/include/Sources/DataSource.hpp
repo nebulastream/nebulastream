@@ -18,6 +18,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -285,6 +286,14 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     void incrementNumberOfConsumerQueries() { numberOfConsumerQueries++; };
 
+    /**
+     * @brief check if a reconfiguration marker contains an event for this source. If so, trigger the reconfiguration and
+     * propagate the marker downstream.
+     * @param marker a marker containing a set of reconfiguration events
+     * @return true if a reconfiguration was triggered, false if the marker did not contain any event to be handled by this source
+     */
+    virtual bool handleReconfigurationMarker(ReconfigurationMarkerPtr marker);
+
     // bool indicating if the data source has to persist runtime properties
     // that can be loaded during the restart of the query.
     const bool persistentSource;
@@ -343,6 +352,7 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
     virtual void runningRoutineWithIngestionRate();
 
     bool endOfStreamSent{false};// protected by startStopMutex
+    std::optional<ReconfigurationMarkerPtr> reconfigurationMarker = std::nullopt;
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

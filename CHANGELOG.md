@@ -1,5 +1,61 @@
 # Changelog
 
+## [v0.6.200](https://github.com/nebulastream/nebulastream/tree/v0.6.200) (2024-11-29)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.199...v0.6.200)
+
+**Implemented enhancements:**
+
+- \[TASK\] Interval Join Support in NebulaStream  [\#4824](https://github.com/nebulastream/nebulastream/issues/4824)
+
+## [v0.6.199](https://github.com/nebulastream/nebulastream/tree/v0.6.199) (2024-11-28)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.198...v0.6.199)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add MQTT Sink to NES PSL Parsers  [\#5122](https://github.com/nebulastream/nebulastream/issues/5122)
+
+## [v0.6.198](https://github.com/nebulastream/nebulastream/tree/v0.6.198) (2024-11-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.197...v0.6.198)
+
+**Implemented enhancements:**
+
+- Coordinator: add migration decompose plan  [\#5103](https://github.com/nebulastream/nebulastream/issues/5103)
+
+## [v0.6.197](https://github.com/nebulastream/nebulastream/tree/v0.6.197) (2024-11-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.196...v0.6.197)
+
+**Implemented enhancements:**
+
+- \[FEATURE\] Implement skeleton for Meos plugin. [\#5135](https://github.com/nebulastream/nebulastream/issues/5135)
+
+## [v0.6.196](https://github.com/nebulastream/nebulastream/tree/v0.6.196) (2024-11-26)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.195...v0.6.196)
+
+**Implemented enhancements:**
+
+- \[TASK\]  Propagate reconfiguration markers through decomposed query plans [\#5047](https://github.com/nebulastream/nebulastream/issues/5047)
+
+## [v0.6.195](https://github.com/nebulastream/nebulastream/tree/v0.6.195) (2024-11-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.194...v0.6.195)
+
+**Implemented enhancements:**
+
+- \[TASK\] Approach one to adjust work with invalid slices \(after deployment of second shared query\) [\#5114](https://github.com/nebulastream/nebulastream/issues/5114)
+
+## [v0.6.194](https://github.com/nebulastream/nebulastream/tree/v0.6.194) (2024-11-21)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.193...v0.6.194)
+
+**Implemented enhancements:**
+
+- Topology: provide ability to find path between children nodes  [\#5077](https://github.com/nebulastream/nebulastream/issues/5077)
+
 ## [v0.6.193](https://github.com/nebulastream/nebulastream/tree/v0.6.193) (2024-11-14)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.192...v0.6.193)

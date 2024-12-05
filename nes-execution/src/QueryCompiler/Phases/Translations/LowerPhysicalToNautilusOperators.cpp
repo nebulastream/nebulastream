@@ -56,6 +56,9 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/IntervalJoin/IJBuildLeft.hpp>
+#include <Execution/Operators/Streaming/Join/IntervalJoin/IJBuildRight.hpp>
+#include <Execution/Operators/Streaming/Join/IntervalJoin/IJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
@@ -79,6 +82,8 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/IntervalJoin/PhysicalIntervalJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/IntervalJoin/PhysicalIntervalJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -344,40 +349,47 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
         switch (probeOperator->getJoinStrategy()) {
             case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(handlerIndex,
-                                                                                     probeOperator->getJoinSchema(),
-                                                                                     joinExpression,
-                                                                                     probeOperator->getWindowMetaData(),
-                                                                                     probeOperator->getLeftInputSchema(),
-                                                                                     probeOperator->getRightInputSchema(),
-                                                                                     probeOperator->getJoinStrategy(),
-                                                                                     probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    probeOperator->getLeftInputSchema(),
+                    probeOperator->getRightInputSchema(),
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
             case StreamJoinStrategy::HASH_JOIN_LOCAL:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
-                                                                             probeOperator->getJoinSchema(),
-                                                                             joinExpression,
-                                                                             probeOperator->getWindowMetaData(),
-                                                                             probeOperator->getJoinStrategy(),
-                                                                             probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbe>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
-            case StreamJoinStrategy::NESTED_LOOP_JOIN:
+            case StreamJoinStrategy::NESTED_LOOP_JOIN: {
                 const auto leftSchema = probeOperator->getLeftInputSchema();
                 const auto rightSchema = probeOperator->getRightInputSchema();
-                joinProbeNautilus =
-                    std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
-                                                                              probeOperator->getJoinSchema(),
-                                                                              joinExpression,
-                                                                              probeOperator->getWindowMetaData(),
-                                                                              leftSchema,
-                                                                              rightSchema,
-                                                                              probeOperator->getJoinStrategy(),
-                                                                              probeOperator->getWindowingStrategy());
+                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(
+                    handlerIndex,
+                    probeOperator->getJoinSchema(),
+                    joinExpression,
+                    probeOperator->getWindowMetaData(),
+                    leftSchema,
+                    rightSchema,
+                    probeOperator->getJoinStrategy(),
+                    probeOperator->getWindowingStrategy(),
+                    probeOperator->getTimestampFieldLeft().toTimeFunction(),
+                    probeOperator->getTimestampFieldRight().toTimeFunction());
                 break;
+            }
         }
         pipeline.setRootOperator(joinProbeNautilus);
         return joinProbeNautilus;
@@ -434,6 +446,59 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
                 }
                 break;
             };
+        }
+
+        parentOperator->setChild(joinBuildNautilus);
+        return joinBuildNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalIntervalJoinProbeOperator>()) {
+
+        auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalIntervalJoinProbeOperator>();
+
+        NES_DEBUG("Added intervalJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(probeOperator->getIJOperatorHandler());
+        auto operatorHandlerIndex = operatorHandlers.size() - 1;
+        auto keys = probeOperator->getJoinExpression();
+        auto joinExpression = expressionProvider->lowerExpression(keys);
+
+        Runtime::Execution::Operators::OperatorPtr joinProbeNautilus =
+            std::make_shared<Runtime::Execution::Operators::IJProbe>(operatorHandlerIndex,
+                                                                     joinExpression,
+                                                                     probeOperator->getIntervalStartField(),
+                                                                     probeOperator->getIntervalEndField(),
+                                                                     probeOperator->getTimeStampField().toTimeFunction(),
+                                                                     probeOperator->getLeftInputSchema(),
+                                                                     probeOperator->getRightInputSchema());
+
+        pipeline.setRootOperator(joinProbeNautilus);
+        return joinProbeNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalIntervalJoinBuildOperator>()) {
+        using namespace Runtime::Execution;
+
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalIntervalJoinBuildOperator>();
+
+        NES_DEBUG("Added intervalJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getIJOperatorHandler());
+        auto operatorHandlerIndex = operatorHandlers.size() - 1;
+
+        auto timeFunctionThisSide = buildOperator->getTimeStampFieldThisSide().toTimeFunction();
+        auto timeFunctionOtherSide = buildOperator->getTimeStampFieldOtherSide().toTimeFunction();
+
+        Operators::ExecutableOperatorPtr joinBuildNautilus;
+        if (buildOperator->getBuildSide() == JoinBuildSideType::Left) {
+            //the left build side needs to access the content of both left and right tuples, thus we provide timeFunctions for both
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::IJBuildLeft>(operatorHandlerIndex,
+                                                                             buildOperator->getInputSchema(),
+                                                                             buildOperator->getOtherSideInputSchema(),
+                                                                             std::move(timeFunctionThisSide),
+                                                                             std::move(timeFunctionOtherSide));
+        } else if (buildOperator->getBuildSide() == JoinBuildSideType::Right) {
+
+            joinBuildNautilus =
+                std::make_shared<Runtime::Execution::Operators::IJBuildRight>(operatorHandlerIndex,
+                                                                              buildOperator->getInputSchema(),
+                                                                              buildOperator->getOtherSideInputSchema(),
+                                                                              std::move(timeFunctionThisSide));
         }
 
         parentOperator->setChild(joinBuildNautilus);

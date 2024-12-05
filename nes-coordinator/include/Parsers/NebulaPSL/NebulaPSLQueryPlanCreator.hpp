@@ -100,15 +100,11 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
     //INTO clause
     /**
-      * @brief add a sink operator to the sink list
+      * @brief adds a sink operator to the sink list, calls different methods for sinkd with (File and MQTT) and without parameters
       * @param context
       */
-    void enterSink(NesCEPParser::SinkContext* context) override;
-
-    /** @brief append the list of sinks to the query plan
-      * @param context
-      */
-    void exitSinkList(NesCEPParser::SinkListContext* context) override;
+    void enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* context) override;
+    void enterSinkWithoutParameters(NesCEPParser::SinkWithoutParametersContext* context) override;
 
     // WITHIN clause
     /** @brief

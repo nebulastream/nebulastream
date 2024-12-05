@@ -18,6 +18,7 @@
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <string>
@@ -156,11 +157,13 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newNodeLocation the location of the node to which the connection is to be established
      * @param newNesPartition the partition of the source to which the connection is to be established
      * @param newVersion The new version number used by the receiver to determine if it can already accept this channel
+     * @param reconfigurationMarker in case of reconfiguration a reconfiguration marker to be processed and propagated
      */
     void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                              const NodeLocation& newNodeLocation,
                                              NesPartition newNesPartition,
-                                             DecomposedQueryPlanVersion newVersion);
+                                             DecomposedQueryPlanVersion newVersion,
+                                             const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker = std::nullopt);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel

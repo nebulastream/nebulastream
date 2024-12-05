@@ -16,6 +16,7 @@
 #define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/TimeUnit.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
@@ -188,6 +189,110 @@ class CrossJoin {
 
 }//namespace CrossJoinOperatorBuilder
 
+/**
+ * @brief IntervalJoinOperator
+ * @note Initialize as Join between originalQuery and subQueryRhs.
+ * @note In contrast to the JoinOperatorBuilder the windowing is replaced by an interval
+ * @note There is no windowing possible
+ * @note An interval (given by an upper und lower bound) is required
+ */
+namespace IntervalJoinOperatorBuilder {
+
+class JoinWhere;
+class JoinLowerBound;
+
+class IntervalJoin {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    IntervalJoin(const Query& subQueryRhs, Query& originalQuery);
+
+    /**
+     * @brief is called to append all joinExpressions (key predicates) to the previous defined join, i.e.,
+     * it sets all condition for the join matches
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     * @return object of type JoinWhere on which the lowerBound function is defined and can be called.
+     */
+    [[nodiscard]] JoinWhere where(ExpressionNodePtr joinExpression) const;
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+};
+
+class JoinWhere {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs, original Query and onLeftKey
+     * @param subQueryRhs
+     * @param originalQuery
+     * @param joinExpression : a set of binary expressions to compare left and right tuples
+     */
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpression);
+
+    /**
+     * @brief sets the parameters of the lower interval bound.
+     * @param timeCharacteristic : to identify what should be used for the tuple timestamp
+     * @param lowerBound : the value of the lower bound
+     * @param lowerTimeUnit : the time unit (seconds, minutes, etc) of the lower bound
+     * @param lowerBoundInclusive : true if the lower bound is inclusive; false if it is exclusive. default: true
+     * @return object of type JoinLowerBound on which the upperBound function can be called
+     */
+    [[nodiscard]] JoinLowerBound lowerBound(Windowing::TimeCharacteristicPtr timeCharacteristic,
+                                            int64_t lowerBound,
+                                            Windowing::TimeUnit lowerTimeUnit,
+                                            bool lowerBoundInclusive = true) const;
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+    ExpressionNodePtr joinExpression;
+};
+
+class JoinLowerBound {
+  public:
+    /**
+     * Constructor which always initializes the following parameters
+     * @param subQueryRhs
+     * @param originalQuery
+     * @param joinExpression
+     * @param timeCharacteristic
+     * @param lowerBound
+     * @param lowerTimeUnit
+     * @param lowerBoundInclusive
+     */
+    JoinLowerBound(const Query& subQueryRhs,
+                   Query& originalQuery,
+                   ExpressionNodePtr joinExpression,
+                   Windowing::TimeCharacteristicPtr timeCharacteristic,
+                   int64_t lowerBound,
+                   Windowing::TimeUnit lowerTimeUnit,
+                   bool lowerBoundInclusive);
+
+    /**
+     * @brief: calls internal the original joinWith function with all the gathered parameters.
+     * @param upperBound : the value of the upper bound
+     * @param upperTimeUnit : the time unit (seconds, minutes, etc) of the upper bound
+     * @param upperBoundInclusive : true if the upper bound is inclusive; false if it is exclusive, default = true
+     * @return the query with the result of the original joinWith function is returned.
+     */
+    [[nodiscard]] Query& upperBound(int64_t upperBound, Windowing::TimeUnit upperTimeUnit, bool upperBoundInclusive = true) const;
+
+  private:
+    const Query& subQueryRhs;
+    Query& originalQuery;
+    ExpressionNodePtr joinExpression;
+    Windowing::TimeCharacteristicPtr timeCharacteristic;
+    int64_t lowerBound;
+    Windowing::TimeUnit lowerTimeUnit;
+    bool lowerBoundInclusive;
+};
+
+}//namespace IntervalJoinOperatorBuilder
+
 namespace CEPOperatorBuilder {
 
 class And {
@@ -302,10 +407,12 @@ class Query {
 
     virtual ~Query() = default;
 
-    //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
+    // Join, IntervalJoin and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
     friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
+    friend class IntervalJoinOperatorBuilder::JoinWhere;
     friend class CrossJoinOperatorBuilder::CrossJoin;
+    friend class IntervalJoinOperatorBuilder::JoinLowerBound;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -334,6 +441,13 @@ class Query {
      * @return object of type CrossJoin on which the window can be can be called.
      */
     CrossJoinOperatorBuilder::CrossJoin crossJoinWith(const Query& subQueryRhs);
+
+    /**
+     * @brief can be called on the original query with the query to be joined with and sets this query in the class IntervalJoinOperatorBuilder::Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    IntervalJoinOperatorBuilder::IntervalJoin intervalJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.
@@ -529,6 +643,31 @@ class Query {
      * @return the query
      */
     Query& batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression);
+
+    /**
+      * @new change: Now it's private, because we don't want the user to have access to it.
+      * We call it only internal as a last step during the Join operation
+      * @note In contrast to joinWith() and batchJoinWith(), intervalJoinWith() requires interval bounds instead of a window to be specified .
+      * @param subQueryRhs : subQuery to be joined
+      * @param joinExpression : a set of binary expressions to compare left and right tuples
+      * @param timeCharacteristic : to identify what should be used for the tuple timestamp
+      * @param lowerBound : the value of the lower bound
+      * @param lowerTimeUnit : TimeUnit describing the unit of the lower bound
+      * @param lowerBoundInclusive : true if the lower bound is inclusive; false if it is exclusive
+      * @param upperBound : the value of the upper bound
+      * @param upperTimeUnit : TimeUnit describing the unit of the upper bound
+      * @param upperBoundInclusive : true if the upper bound is inclusive; false if it is exclusive
+      * @return the query
+      */
+    Query& intervalJoinWith(const Query& subQueryRhs,
+                            ExpressionNodePtr joinExpression,
+                            Windowing::TimeCharacteristicPtr TimeCharacteristic,
+                            int64_t lowerBound,
+                            Windowing::TimeUnit lowerTimeUnit,
+                            bool lowerBoundInclusive,
+                            int64_t upperBound,
+                            Windowing::TimeUnit upperTimeUnit,
+                            bool upperBoundInclusive);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.

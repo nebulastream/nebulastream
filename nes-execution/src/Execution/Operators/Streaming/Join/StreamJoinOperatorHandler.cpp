@@ -248,7 +248,7 @@ void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuff
                      });
 
         auto windowToSlicesLocked = this->windowToSlices.wlock();
-        windowToSlicesLocked->emplace(WindowInfo(windowStart, windowEnd), SlicesAndState(slicesInWindow, windowInfoState));
+        windowToSlicesLocked->emplace(WindowInfo(windowStart, windowEnd), SlicesAndState{slicesInWindow, windowInfoState});
     }
 }
 
@@ -339,13 +339,8 @@ void StreamJoinOperatorHandler::restoreStateFromFile(std::ifstream& stream) {
 }
 
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {
-    auto slicesLocked = slices.rlock();
-    return getSliceBySliceIdentifier(slicesLocked, sliceIdentifier);
-}
-
-std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const RLockedSlices& slicesLocked,
-                                                                                   uint64_t sliceIdentifier) {
     {
+        auto slicesLocked = slices.rlock();
         for (auto& curSlice : *slicesLocked) {
             if (curSlice->getSliceIdentifier() == sliceIdentifier) {
                 return curSlice;
@@ -355,11 +350,11 @@ std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifi
     return std::nullopt;
 }
 
-std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(const WLockedSlices& slicesLocked,
-                                                                                   uint64_t sliceIdentifier) {
+std::optional<StreamSlicePtr>
+StreamJoinOperatorHandler::getSliceByStartEnd(const WLockedSlices& slicesLocked, uint64_t sliceStart, uint64_t sliceEnd) {
     {
         for (auto& curSlice : *slicesLocked) {
-            if (curSlice->getSliceIdentifier() == sliceIdentifier) {
+            if (curSlice->getSliceStart() == sliceStart && curSlice->getSliceEnd() == sliceEnd && curSlice->isMutable()) {
                 return curSlice;
             }
         }
@@ -443,7 +438,11 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
     auto slicesLocked = slices.wlock();
     for (auto it = slicesLocked->begin(); it != slicesLocked->end(); ++it) {
         auto& curSlice = *it;
-        if (curSlice->getSliceStart() + windowSize < newGlobalWaterMarkProbe) {
+
+        if ((approach != SharedJoinApproach::APPROACH_ONE_PROBING
+             && curSlice->getSliceStart() + windowSize
+                 < newGlobalWaterMarkProbe)//In approach one #5114 a window can contain a slice that is not completely contained so we are only allowed to remove slices once there is no overlap
+            || (curSlice->getSliceEnd() + windowSize < newGlobalWaterMarkProbe)) {
             // We can delete this slice/window
             NES_DEBUG("Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
                       curSlice->toString(),
@@ -505,30 +504,28 @@ void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManag
     this->bufferManager = bufManager;
 }
 
-void StreamJoinOperatorHandler::addQueryToSharedJoin(QueryId queryId, uint64_t deploymentTime) {
-    deploymentTimes.emplace(queryId, deploymentTime);
-    sliceAssigner.addWindowDeploymentTime(deploymentTime);
-
-    NES_INFO("Add new query that uses same joinOperatorHandler. QueryId {}, deployment time {}, number of queries handler was "
-             "handling before {}",
-             queryId,
-             deploymentTime,
-             deploymentTimes.size())
-
-    for (auto slice : *slices.wlock()) {
-        if (slice->getSliceEnd() >= deploymentTime) {
-            slice->setSliceEnd(sliceAssigner.getSliceEndTs(slice->getSliceStart()));
-        }
-    }
-}
-
-void StreamJoinOperatorHandler::removeQueryFromSharedJoin(QueryId queryId) {
-    auto deploymentTime = deploymentTimes.at(queryId);
-    sliceAssigner.removeWindowDeploymentTime(deploymentTime);
-    deploymentTimes.erase(queryId);
-}
-
 std::map<QueryId, uint64_t> StreamJoinOperatorHandler::getQueriesAndDeploymentTimes() { return deploymentTimes; }
+
+uint64_t StreamJoinOperatorHandler::getNextSliceId() {
+    currentSliceId++;
+    return currentSliceId;
+}
+
+void StreamJoinOperatorHandler::setApproach(SharedJoinApproach approach) { this->approach = approach; }
+
+SharedJoinApproach StreamJoinOperatorHandler::getApproach() { return approach; }
+
+uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
+    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
+    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
+    return nljSlice->getSliceStart();
+}
+
+uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
+    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
+    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
+    return nljSlice->getSliceEnd();
+}
 
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(const std::vector<OriginId>& inputOrigins,
                                                      const OriginId outputOriginId,

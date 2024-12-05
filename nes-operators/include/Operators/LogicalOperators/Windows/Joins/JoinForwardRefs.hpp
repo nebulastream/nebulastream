@@ -28,6 +28,9 @@ namespace Join {
 class LogicalJoinDescriptor;
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
+class LogicalIntervalJoinDescriptor;
+using LogicalIntervalJoinDescriptorPtr = std::shared_ptr<LogicalIntervalJoinDescriptor>;
+
 namespace Experimental {
 class LogicalBatchJoinDescriptor;
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;

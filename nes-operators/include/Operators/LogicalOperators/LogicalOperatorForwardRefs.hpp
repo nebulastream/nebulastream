@@ -34,6 +34,9 @@ namespace NES::Join {
 class LogicalJoinDescriptor;
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
+class LogicalIntervalJoinDescriptor;
+using LogicalIntervalJoinDescriptorPtr = std::shared_ptr<LogicalIntervalJoinDescriptor>;
+
 namespace Experimental {
 class LogicalBatchJoinDescriptor;
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
@@ -82,6 +85,9 @@ using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
 class LogicalJoinOperator;
 using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
+
+class LogicalIntervalJoinOperator;
+using LogicalIntervalJoinOperatorPtr = std::shared_ptr<LogicalIntervalJoinOperator>;
 
 namespace Experimental {
 class LogicalBatchJoinOperator;

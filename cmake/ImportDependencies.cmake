@@ -126,9 +126,9 @@ if (NES_SELF_HOSTING)
     endif ()
 
     cached_fetch_and_extract(
-            https://github.com/nebulastream/clang-binaries/releases/download/${LLVM_BINARY_VERSION}/${CLANG_COMPRESSED_BINARY_NAME}.7z
-            ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}
-    )
+        https://github.com/nebulastream/clang-binaries/releases/download/${LLVM_BINARY_VERSION}/${CLANG_COMPRESSED_BINARY_NAME}.7z
+        ${CMAKE_CURRENT_BINARY_DIR}/${LLVM_FOLDER_NAME}
+   )
 
     message(STATUS "Self-host compilation of NES from ${LLVM_FOLDER_NAME}")
     # CMAKE_<LANG>_COMPILER are only set the first time a build tree is configured.

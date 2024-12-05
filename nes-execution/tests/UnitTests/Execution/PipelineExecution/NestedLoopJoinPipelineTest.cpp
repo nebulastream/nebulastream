@@ -162,14 +162,19 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         Operators::JoinSchema joinSchemaStruct(leftSchema, rightSchema, Util::createJoinSchema(leftSchema, rightSchema));
         Operators::WindowMetaData windowMetaData(windowStartFieldName, windowEndFieldName);
 
-        auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
-                                                              joinSchemaStruct,
-                                                              joinExpression,
-                                                              windowMetaData,
-                                                              leftSchema,
-                                                              rightSchema,
-                                                              QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                                                              QueryCompilation::WindowingStrategy::SLICING);
+        auto nljProbe = std::make_shared<Operators::NLJProbe>(
+            handlerIndex,
+            joinSchemaStruct,
+            joinExpression,
+            windowMetaData,
+            leftSchema,
+            rightSchema,
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+            QueryCompilation::WindowingStrategy::SLICING,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()));
 
         // Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};

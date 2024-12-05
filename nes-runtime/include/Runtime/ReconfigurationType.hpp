@@ -16,8 +16,11 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_
 
 #include <cstdint>
+#include <gmock/internal/gmock-internal-utils.h>
 
 namespace NES::Runtime {
+enum class QueryTerminationType : uint8_t;
+
 enum class ReconfigurationType : uint8_t {
     /// use Initialize for reconfiguration tasks that initialize a reconfigurable instance
     Initialize,
@@ -35,7 +38,11 @@ enum class ReconfigurationType : uint8_t {
     ConnectionEstablished,
     /// Indicates that the version of the operator is updated due to reconfiguration as part of query redeployment
     UpdateVersion,
+    /// reconfiguration marker
+    ReconfigurationMarker,
 };
-}
+
+QueryTerminationType reconfigurationTypeToTerminationType(ReconfigurationType reconfigurationType);
+}// namespace NES::Runtime
 
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_

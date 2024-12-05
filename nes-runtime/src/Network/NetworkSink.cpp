@@ -15,6 +15,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -125,6 +126,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
     NES_DEBUG("NetworkSink: reconfigure() called {} qep {}", nesPartition.toString(), decomposedQueryId);
     inherited0::reconfigure(task, workerContext);
     Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::Invalid;
+    std::optional<ReconfigurationMarkerPtr> reconfigurationMarker = std::nullopt;
     switch (task.getType()) {
         case Runtime::ReconfigurationType::Initialize: {
             //check if the worker is configured to use async connecting
@@ -205,6 +207,19 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             retrieveNewChannelAndUnbuffer(workerContext);
             break;
         }
+        case Runtime::ReconfigurationType::ReconfigurationMarker: {
+            reconfigurationMarker = task.getUserData<ReconfigurationMarkerPtr>();
+            auto event = reconfigurationMarker.value()->getReconfigurationEvent(decomposedQueryId);
+            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+
+            if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
+
+            terminationType = Runtime::reconfigurationTypeToTerminationType(task.getType());
+            break;
+        }
         default: {
             break;
         }
@@ -237,7 +252,8 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
             NES_ASSERT2_FMT(workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                                                 terminationType,
                                                                 queryManager->getNumberOfWorkerThreads(),
-                                                                messageSequenceNumber),
+                                                                messageSequenceNumber,
+                                                                reconfigurationMarker),
                             "Cannot remove network channel " << nesPartition.toString());
             /* store a nullptr in place of the released channel, in case another write happens afterwards, that will prevent crashing and
             allow throwing an error instead */
@@ -264,6 +280,17 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             version = versionUpdate.version;
             messageSequenceNumber = 0;
 
+            break;
+        }
+        case Runtime::ReconfigurationType::ReconfigurationMarker: {
+            auto reconfigurationMarker = task.getUserData<ReconfigurationMarkerPtr>();
+            auto event = reconfigurationMarker->getReconfigurationEvent(decomposedQueryId);
+            NES_ASSERT2_FMT(event, "Markers should only be propageted to a network sink if the plan is to be reconfigured");
+
+            if (!event.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
             break;
         }
         default: {
@@ -312,7 +339,8 @@ void NetworkSink::configureNewSinkDescriptor(const NetworkSinkDescriptor& newNet
 void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
                                                       const NodeLocation& newNodeLocation,
                                                       NesPartition newNesPartition,
-                                                      DecomposedQueryPlanVersion newVersion) {
+                                                      DecomposedQueryPlanVersion newVersion,
+                                                      const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
     NES_DEBUG("NetworkSink: method clearOldAndConnectToNewChannelAsync() called {} qep {}, by thread {}",
               nesPartition.toString(),
               decomposedQueryId,
@@ -340,7 +368,8 @@ void NetworkSink::clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& wo
     workerContext.releaseNetworkChannel(getUniqueNetworkSinkDescriptorId(),
                                         Runtime::QueryTerminationType::Graceful,
                                         queryManager->getNumberOfWorkerThreads(),
-                                        messageSequenceNumber);
+                                        messageSequenceNumber,
+                                        reconfigurationMarker);
     workerContext.storeNetworkChannel(getUniqueNetworkSinkDescriptorId(), nullptr);
 }
 

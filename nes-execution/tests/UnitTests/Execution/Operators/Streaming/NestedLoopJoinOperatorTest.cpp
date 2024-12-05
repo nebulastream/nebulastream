@@ -178,11 +178,11 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      */
     uint64_t calculateExpNoTuplesInWindow(uint64_t totalTuples, uint64_t windowIdentifier) {
         std::map<uint64_t, uint64_t> windowIdToTuples;
-        auto curWindowId = windowSize;
+        uint64_t curWindowId = 1;
         while (totalTuples > windowSize) {
             windowIdToTuples[curWindowId] = windowSize;
             totalTuples -= windowSize;
-            curWindowId += windowSize;
+            curWindowId += 1;
         }
         windowIdToTuples[curWindowId] = totalTuples;
         return windowIdToTuples[windowIdentifier];
@@ -206,7 +206,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         Nautilus::Value<UInt64> zeroVal(0_u64);
         Nautilus::Interface::PagedVectorVarSizedRef pagedVector(pagedVectorRef, schema);
-        auto windowStartPos = windowIdentifier - windowSize;
+        auto windowStartPos = (windowIdentifier * windowSize) - windowSize;
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
         uint64_t posInWindow = 0;
 
@@ -236,8 +236,9 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto memoryProviderRight =
             MemoryProvider::MemoryProvider::createMemoryProvider(rightSchema->getSchemaSizeInBytes(), rightSchema);
 
-        auto maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize) * windowSize;
-        for (auto windowIdentifier = windowSize; windowIdentifier < maxWindowIdentifier; windowIdentifier += windowSize) {
+        auto maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize);
+
+        for (uint64_t windowIdentifier = 1; windowIdentifier < maxWindowIdentifier; windowIdentifier += 1) {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
@@ -358,8 +359,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         for (auto& leftRecord : allLeftRecords) {
             for (auto& rightRecord : allRightRecords) {
 
-                auto windowStart = windowIdentifier - windowSize;
-                auto windowEnd = windowIdentifier;
+                auto windowStart = (windowIdentifier - 2) * windowSize;
+                auto windowEnd = (windowIdentifier - 1) * windowSize;
                 auto leftKey = leftRecord.read(joinFieldNameLeft);
                 auto rightKey = rightRecord.read(joinFieldNameRight);
                 auto timestampLeftVal = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
@@ -411,14 +412,23 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         Operators::WindowMetaData windowMetaData(joinSchema.joinSchema->get(0)->getName(),
                                                  joinSchema.joinSchema->get(1)->getName());
 
-        auto nljProbe = std::make_shared<Operators::NLJProbe>(handlerIndex,
-                                                              joinSchema,
-                                                              joinExpression,
-                                                              windowMetaData,
-                                                              leftSchema,
-                                                              rightSchema,
-                                                              QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-                                                              QueryCompilation::WindowingStrategy::SLICING);
+        auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameLeft);
+        auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timestampFieldNameRight);
+        NES_INFO("ts left {}; right {}", timestampFieldNameLeft, timestampFieldNameRight)
+
+        auto nljProbe = std::make_shared<Operators::NLJProbe>(
+            handlerIndex,
+            joinSchema,
+            joinExpression,
+            windowMetaData,
+            leftSchema,
+            rightSchema,
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
+            QueryCompilation::WindowingStrategy::SLICING,
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
+                                                                               Windowing::TimeUnit::Milliseconds()),
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight,
+                                                                               Windowing::TimeUnit::Milliseconds()));
 
         NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
@@ -431,8 +441,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto numberOfRecordsLeft = allLeftRecords.size();
         auto numberOfRecordsRight = allRightRecords.size();
 
-        uint64_t maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize) * windowSize;
-        for (auto windowIdentifier = windowSize; windowIdentifier <= maxWindowIdentifier; windowIdentifier += windowSize) {
+        uint64_t maxWindowIdentifier = std::ceil((double) maxTimestamp / windowSize);
+        for (uint64_t windowIdentifier = 1; windowIdentifier <= maxWindowIdentifier; windowIdentifier += 1) {
             auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(numberOfRecordsLeft, windowIdentifier);
             auto expectedNumberOfTuplesInWindowRight = calculateExpNoTuplesInWindow(numberOfRecordsRight, windowIdentifier);
 
@@ -448,7 +458,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                 auto bufferMemory = tupleBuffer.getBuffer<Operators::EmittedNLJWindowTriggerTask>();
                 bufferMemory->leftSliceIdentifier = windowIdentifier;
                 bufferMemory->rightSliceIdentifier = windowIdentifier;
-                bufferMemory->windowInfo = WindowInfo(windowIdentifier - windowSize, windowIdentifier);
+                bufferMemory->windowInfo = WindowInfo(windowIdentifier * windowSize - windowSize, windowIdentifier * windowSize);
                 tupleBuffer.setNumberOfTuples(1);
 
                 RecordBuffer recordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
@@ -533,6 +543,13 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto sliceEndId = std::ceil((double) end / windowSize);
         auto expectedNumberOfSlice = sliceEndId - sliceStartId;
 
+        NES_INFO("start {} end {}; sliceStartId {}, sliceEndId {}, expectedNumberOfTuples {}",
+                 start,
+                 end,
+                 sliceStartId,
+                 sliceEndId,
+                 expectedNumberOfSlice)
+
         auto buffers = nljOperatorHandler->getStateToMigrate(start, end);
 
         // check sequence numbers order. They should start from 1
@@ -542,22 +559,27 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         auto numberOfBuffersInLeft = std::ceil((double) windowSize / (leftPageSize / getSizeOfRecord(leftSchema)));
         auto numberOfBuffersInRight = std::ceil((double) windowSize / (rightPageSize / getSizeOfRecord(rightSchema)));
-        // 1 for number of metadata buffers, 2 for slice start and end, 1 for number of workers + 2 * number of workers (default one) (see documentation of NLJSlice serialize function)
-        auto numberOfOSliceMetadataBuffers = std::ceil((double) (4 + 2) * sizeof(uint64_t) / bm->getBufferSize());
+        // 1 for number of metadata buffers, 3 for slice id, start and end, 1 for number of workers + 2 * number of workers (default one) (see documentation of NLJSlice serialize function)
+        auto uint64TPerBuffer = bm->getBufferSize() / sizeof(uint64_t);
+        auto numberOfOSliceMetadataBuffers = std::ceil((double) (1 + 3 + 1 + 2) / uint64TPerBuffer);
         // 1 for number of metadata buffers, 1 for number of slices + number of slices (see documentation of StreamJoinOperatorHandler getStateToMigrate function)
-        auto numberOfOperatorMetadataBuffers =
-            std::ceil((double) (2 + expectedNumberOfSlice) * sizeof(uint64_t) / bm->getBufferSize());
+        auto numberOfOperatorMetadataBuffers = std::ceil((double) (2 + expectedNumberOfSlice) / uint64TPerBuffer);
 
         auto expectedNumberOfBuffers = numberOfOperatorMetadataBuffers
             + expectedNumberOfSlice * (numberOfOSliceMetadataBuffers + numberOfBuffersInLeft + numberOfBuffersInRight);
         ASSERT_EQ(buffers.size(), expectedNumberOfBuffers);
 
         auto startMetadataPtr = buffers[numberOfOperatorMetadataBuffers].getBuffer<uint64_t>();
-        // Second uint64_t in metadata is sliceStart
-        uint64_t sliceStart = startMetadataPtr[1];
+        // third uint64_t in metadata is sliceStart
+        uint64_t sliceStart = startMetadataPtr[2];
+        //if this is the case the third uint64_t is actually the first field of the second buffer
+        if (uint64TPerBuffer == 2) {
+            auto secondBufferMetadataPtr = buffers[numberOfOperatorMetadataBuffers + 1].getBuffer<uint64_t>();
+            sliceStart = secondBufferMetadataPtr[0];
+        }
         ASSERT_EQ(sliceStart, sliceStartId * windowSize);
 
-        auto sliceEndIdx = 3;
+        auto sliceEndIdx = 4;
         // count index of sliceEnd metadata buffer (from of sliceEnd and pageSize)
         auto sliceEndMetadataIdx = sliceEndIdx * sizeof(uint64_t) / bm->getBufferSize();
         auto startOfLastSliceBufferIdx = numberOfOperatorMetadataBuffers
@@ -565,7 +587,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             + sliceEndMetadataIdx;
         auto endMetadataPtr = buffers[startOfLastSliceBufferIdx].getBuffer<uint64_t>();
         // sliceEnd index is real index normed by number of data in slice
-        auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % (bm->getBufferSize() / sizeof(uint64_t));
+        auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % uint64TPerBuffer;
         // Third uint64_t in metadata is sliceEnd
         uint64_t sliceEnd = endMetadataPtr[sliceEndIdxInBuffer];
         ASSERT_EQ(sliceEnd, sliceEndId * windowSize);

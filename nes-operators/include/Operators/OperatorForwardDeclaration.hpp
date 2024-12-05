@@ -36,6 +36,9 @@ using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 class LogicalJoinOperator;
 using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 
+class LogicalIntervalJoinOperator;
+using LogicalIntervalJoinOperatorPtr = std::shared_ptr<LogicalIntervalJoinOperator>;
+
 namespace Experimental {
 class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;

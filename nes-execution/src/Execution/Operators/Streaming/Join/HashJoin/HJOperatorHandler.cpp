@@ -24,12 +24,13 @@ StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::Tupl
     NES_NOT_IMPLEMENTED();
 }
 
-StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
+StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId) {
     switch (joinStrategy) {
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
             return std::make_shared<HJSliceVarSized>(numberOfWorkerThreads,
                                                      sliceStart,
                                                      sliceEnd,
+                                                     sliceId,
                                                      leftSchema,
                                                      rightSchema,
                                                      bufferManager,
@@ -41,6 +42,7 @@ StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t s
             return std::make_shared<HJSlice>(numberOfWorkerThreads,
                                              sliceStart,
                                              sliceEnd,
+                                             sliceId,
                                              sizeOfRecordLeft,
                                              sizeOfRecordRight,
                                              totalSizeForDataStructures,

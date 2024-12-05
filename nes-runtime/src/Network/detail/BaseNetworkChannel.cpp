@@ -15,6 +15,9 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <Network/detail/BaseNetworkChannel.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -31,7 +34,18 @@ void BaseNetworkChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR("
 void BaseNetworkChannel::close(bool isEventOnly,
                                Runtime::QueryTerminationType terminationType,
                                uint16_t numSendingThreads,
-                               uint64_t currentMessageSequenceNumber) {
+                               uint64_t currentMessageSequenceNumber,
+                               const std::optional<ReconfigurationMarkerPtr>& reconfigurationMarker) {
+
+    auto events = 0;
+    if (terminationType == Runtime::QueryTerminationType::Reconfiguration && !isEventOnly) {
+        NES_ASSERT((reconfigurationMarker.has_value()),
+                   "Reconfiguration marker must be provided for reconfiguration of data channels");
+        events = reconfigurationMarker.value()->getAllReconfigurationMarkerEvents().size();
+    } else {
+        NES_ASSERT(!reconfigurationMarker.has_value(), "Reconfiguration marker must not be provided for non-reconfiguration");
+    }
+
     if (isClosed) {
         return;
     }
@@ -43,14 +57,92 @@ void BaseNetworkChannel::close(bool isEventOnly,
                                                   numSendingThreads,
                                                   currentMessageSequenceNumber);
     } else {
-        //todo #4313: pass number of threads on client announcement instead of on closing
-        sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
-                                                  channelId,
-                                                  Messages::ChannelType::DataChannel,
-                                                  terminationType,
-                                                  numSendingThreads,
-                                                  currentMessageSequenceNumber);
+        //check if this is a reconfiguration, if yes, also propagate the reconfiguraiont events
+        if (!reconfigurationMarker) {
+            //not a reconfiguration, no events to propagate
+
+            //todo #4313: pass number of threads on client announcement instead of on closing
+            sendMessage<Messages::EndOfStreamMessage>(zmqSocket,
+                                                      channelId,
+                                                      Messages::ChannelType::DataChannel,
+                                                      terminationType,
+                                                      numSendingThreads,
+                                                      currentMessageSequenceNumber,
+                                                      events);
+        } else {
+            //reconfiguration, create message for each reconfiguration event
+            sendMessage<Messages::EndOfStreamMessage, kZmqSendMore>(zmqSocket,
+                                                                    channelId,
+                                                                    Messages::ChannelType::DataChannel,
+                                                                    terminationType,
+                                                                    numSendingThreads,
+                                                                    currentMessageSequenceNumber,
+                                                                    events);
+
+            auto count = 0;
+            for (auto& [key, msg] : reconfigurationMarker.value()->getAllReconfigurationMarkerEvents()) {
+
+                QueryState queryState = msg->queryState;
+                ReconfigurationMetadataType metadataType;
+                uint16_t numberOfSources;
+                WorkerId workerId = INVALID_WORKER_NODE_ID;
+                SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
+                DecomposedQueryId decomposedQueryId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+                DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+
+                auto metadata = msg->reconfigurationMetadata;
+                if (metadata->instanceOf<DrainQueryMetadata>()) {
+                    auto drain = metadata->as<DrainQueryMetadata>();
+                    metadataType = ReconfigurationMetadataType::DrainQuery;
+                    numberOfSources = drain->numberOfSources;
+                }
+                if (metadata->instanceOf<UpdateQueryMetadata>()) {
+                    auto update = metadata->as<UpdateQueryMetadata>();
+                    metadataType = ReconfigurationMetadataType::UpdateQuery;
+                    workerId = update->workerId;
+                    sharedQueryId = update->sharedQueryId;
+                    decomposedQueryId = update->decomposedQueryId;
+                    decomposedQueryPlanVersion = update->decomposedQueryPlanVersion;
+                }
+                if (metadata->instanceOf<UpdateAndDrainQueryMetadata>()) {
+                    auto updateAndDrain = metadata->as<UpdateAndDrainQueryMetadata>();
+                    metadataType = ReconfigurationMetadataType::UpdateAndDrainQuery;
+                    workerId = updateAndDrain->workerId;
+                    sharedQueryId = updateAndDrain->sharedQueryId;
+                    decomposedQueryId = updateAndDrain->decomposedQueryId;
+                    decomposedQueryPlanVersion = updateAndDrain->decomposedQueryPlanVersion;
+                    numberOfSources = updateAndDrain->numberOfSources;
+                }
+
+                //check if we reached the last element
+                if (count < events - 1) {
+                    //if this is not the last message, send with send more flag
+                    sendMessageNoHeader<Messages::ReconfigurationEventMessage, kZmqSendMore>(zmqSocket,
+                                                                                             key,
+                                                                                             queryState,
+                                                                                             metadataType,
+                                                                                             numberOfSources,
+                                                                                             workerId,
+                                                                                             sharedQueryId,
+                                                                                             decomposedQueryId,
+                                                                                             decomposedQueryPlanVersion);
+                } else {
+                    //send the last element without send more flag
+                    sendMessageNoHeader<Messages::ReconfigurationEventMessage>(zmqSocket,
+                                                                               key,
+                                                                               queryState,
+                                                                               metadataType,
+                                                                               numberOfSources,
+                                                                               workerId,
+                                                                               sharedQueryId,
+                                                                               decomposedQueryId,
+                                                                               decomposedQueryPlanVersion);
+                }
+                ++count;
+            }
+        }
     }
+
     zmqSocket.close();
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;

@@ -18,6 +18,7 @@
 #include <Execution/Operators/Streaming/Join/OperatorHandlerInterfaces/JoinOperatorHandlerInterfaceSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Runtime/Execution/OperatorHandlerSlices.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
@@ -25,12 +26,17 @@ namespace NES::Runtime::Execution::Operators {
  * @brief This class implements the slicing interface while also providing the methods from StreamJoinOperatorHandler
  */
 class StreamJoinOperatorHandlerSlicing : public virtual JoinOperatorHandlerInterfaceSlicing,
-                                         public virtual StreamJoinOperatorHandler {
+                                         public virtual StreamJoinOperatorHandler,
+                                         public virtual OperatorHandlerSlices {
   public:
     ~StreamJoinOperatorHandlerSlicing() override = default;
     StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) override;
     StreamSlice* getCurrentSliceOrCreate() override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
+
+    void addQueryToSharedJoinApproachOneProbing(QueryId queryId, uint64_t deploymentTime) override;
+
+    void removeQueryFromSharedJoin(QueryId queryId) override;
 };
 }// namespace NES::Runtime::Execution::Operators
 

@@ -20,75 +20,87 @@ class NesCEPParser : public antlr4::Parser {
         T__5 = 6,
         T__6 = 7,
         T__7 = 8,
-        WS = 9,
-        FROM = 10,
-        PATTERN = 11,
-        WHERE = 12,
-        WITHIN = 13,
-        CONSUMING = 14,
-        SELECT = 15,
-        INTO = 16,
-        ALL = 17,
-        ANY = 18,
-        SEP = 19,
-        COMMA = 20,
-        LPARENTHESIS = 21,
-        RPARENTHESIS = 22,
-        NOT = 23,
-        NOT_OP = 24,
-        SEQ = 25,
-        NEXT = 26,
-        AND = 27,
-        OR = 28,
-        STAR = 29,
-        PLUS = 30,
-        D_POINTS = 31,
-        LBRACKET = 32,
-        RBRACKET = 33,
-        XOR = 34,
-        IN = 35,
-        IS = 36,
-        NULLTOKEN = 37,
-        BETWEEN = 38,
-        BINARY = 39,
-        TRUE = 40,
-        FALSE = 41,
-        UNKNOWN = 42,
-        QUARTER = 43,
-        MONTH = 44,
-        DAY = 45,
-        HOUR = 46,
-        MINUTE = 47,
-        WEEK = 48,
-        SECOND = 49,
-        MICROSECOND = 50,
-        AS = 51,
-        EQUAL = 52,
-        SINKSEP = 53,
-        KAFKA = 54,
-        FILE = 55,
-        MQTT = 56,
-        NETWORK = 57,
-        NULLOUTPUT = 58,
-        OPC = 59,
-        PRINT = 60,
-        ZMQ = 61,
-        POINT = 62,
-        QUOTE = 63,
-        AVG = 64,
-        SUM = 65,
-        MIN = 66,
-        MAX = 67,
-        COUNT = 68,
-        IF = 69,
-        LOGOR = 70,
-        LOGAND = 71,
-        LOGXOR = 72,
-        NONE = 73,
-        INT = 74,
-        FLOAT = 75,
-        NAME = 76,
-        ID = 77
+        T__8 = 9,
+        T__9 = 10,
+        T__10 = 11,
+        T__11 = 12,
+        T__12 = 13,
+        T__13 = 14,
+        T__14 = 15,
+        T__15 = 16,
+        INT = 17,
+        FLOAT = 18,
+        PROTOCOL = 19,
+        FILETYPE = 20,
+        PORT = 21,
+        WS = 22,
+        FROM = 23,
+        PATTERN = 24,
+        WHERE = 25,
+        WITHIN = 26,
+        CONSUMING = 27,
+        SELECT = 28,
+        INTO = 29,
+        ALL = 30,
+        ANY = 31,
+        SEP = 32,
+        COMMA = 33,
+        LPARENTHESIS = 34,
+        RPARENTHESIS = 35,
+        NOT = 36,
+        NOT_OP = 37,
+        SEQ = 38,
+        NEXT = 39,
+        AND = 40,
+        OR = 41,
+        STAR = 42,
+        PLUS = 43,
+        D_POINTS = 44,
+        LBRACKET = 45,
+        RBRACKET = 46,
+        XOR = 47,
+        IN = 48,
+        IS = 49,
+        NULLTOKEN = 50,
+        BETWEEN = 51,
+        BINARY = 52,
+        TRUE = 53,
+        FALSE = 54,
+        UNKNOWN = 55,
+        QUARTER = 56,
+        MONTH = 57,
+        DAY = 58,
+        HOUR = 59,
+        MINUTE = 60,
+        WEEK = 61,
+        SECOND = 62,
+        MICROSECOND = 63,
+        AS = 64,
+        EQUAL = 65,
+        KAFKA = 66,
+        FILE = 67,
+        MQTT = 68,
+        NETWORK = 69,
+        NULLOUTPUT = 70,
+        OPC = 71,
+        PRINT = 72,
+        ZMQ = 73,
+        POINT = 74,
+        QUOTE = 75,
+        AVG = 76,
+        SUM = 77,
+        MIN = 78,
+        MAX = 79,
+        COUNT = 80,
+        IF = 81,
+        LOGOR = 82,
+        LOGAND = 83,
+        LOGXOR = 84,
+        NONE = 85,
+        URL = 86,
+        NAME = 87,
+        ID = 88,
+        PATH = 89
     };
 
     enum {
@@ -105,28 +117,28 @@ class NesCEPParser : public antlr4::Parser {
         RuleOutputExpression = 10,
         RuleOutAttribute = 11,
         RuleSinkList = 12,
-        RuleSink = 13,
-        RuleListEvents = 14,
-        RuleEventElem = 15,
-        RuleEvent = 16,
-        RuleQuantifiers = 17,
-        RuleIterMax = 18,
-        RuleIterMin = 19,
-        RuleConsecutiveOption = 20,
-        RuleOperatorRule = 21,
-        RuleSequence = 22,
-        RuleContiguity = 23,
-        RuleSinkType = 24,
-        RuleNullNotnull = 25,
-        RuleConstant = 26,
-        RuleExpressions = 27,
-        RuleExpression = 28,
-        RulePredicate = 29,
-        RuleExpressionAtom = 30,
-        RuleEventAttribute = 31,
-        RuleEventIteration = 32,
-        RuleMathExpression = 33,
-        RuleAggregation = 34,
+        RuleListEvents = 13,
+        RuleEventElem = 14,
+        RuleEvent = 15,
+        RuleQuantifiers = 16,
+        RuleIterMax = 17,
+        RuleIterMin = 18,
+        RuleConsecutiveOption = 19,
+        RuleOperatorRule = 20,
+        RuleSequence = 21,
+        RuleContiguity = 22,
+        RuleSinkType = 23,
+        RuleNullNotnull = 24,
+        RuleConstant = 25,
+        RuleExpressions = 26,
+        RuleExpression = 27,
+        RulePredicate = 28,
+        RuleExpressionAtom = 29,
+        RuleEventAttribute = 30,
+        RuleEventIteration = 31,
+        RuleMathExpression = 32,
+        RuleAggregation = 33,
+        RuleValue = 34,
         RuleAttribute = 35,
         RuleAttVal = 36,
         RuleBoolRule = 37,
@@ -135,7 +147,13 @@ class NesCEPParser : public antlr4::Parser {
         RuleComparisonOperator = 40,
         RuleLogicalOperator = 41,
         RuleBitOperator = 42,
-        RuleMathOperator = 43
+        RuleMathOperator = 43,
+        RuleSink = 44,
+        RuleParameters = 45,
+        RuleParameter = 46,
+        RuleFileName = 47,
+        RuleTopic = 48,
+        RuleAddress = 49
     };
 
     explicit NesCEPParser(antlr4::TokenStream* input);
@@ -162,7 +180,6 @@ class NesCEPParser : public antlr4::Parser {
     class OutputExpressionContext;
     class OutAttributeContext;
     class SinkListContext;
-    class SinkContext;
     class ListEventsContext;
     class EventElemContext;
     class EventContext;
@@ -184,6 +201,7 @@ class NesCEPParser : public antlr4::Parser {
     class EventIterationContext;
     class MathExpressionContext;
     class AggregationContext;
+    class ValueContext;
     class AttributeContext;
     class AttValContext;
     class BoolRuleContext;
@@ -193,6 +211,12 @@ class NesCEPParser : public antlr4::Parser {
     class LogicalOperatorContext;
     class BitOperatorContext;
     class MathOperatorContext;
+    class SinkContext;
+    class ParametersContext;
+    class ParameterContext;
+    class FileNameContext;
+    class TopicContext;
+    class AddressContext;
 
     class QueryContext : public antlr4::ParserRuleContext {
       public:
@@ -310,6 +334,7 @@ class NesCEPParser : public antlr4::Parser {
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* INT();
         IntervalTypeContext* intervalType();
+        antlr4::tree::TerminalNode* WS();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
@@ -396,20 +421,6 @@ class NesCEPParser : public antlr4::Parser {
     };
 
     SinkListContext* sinkList();
-
-    class SinkContext : public antlr4::ParserRuleContext {
-      public:
-        SinkContext(antlr4::ParserRuleContext* parent, size_t invokingState);
-        virtual size_t getRuleIndex() const override;
-        SinkTypeContext* sinkType();
-        antlr4::tree::TerminalNode* SINKSEP();
-        antlr4::tree::TerminalNode* NAME();
-
-        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
-        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
-    };
-
-    SinkContext* sink();
 
     class ListEventsContext : public antlr4::ParserRuleContext {
       public:
@@ -556,13 +567,8 @@ class NesCEPParser : public antlr4::Parser {
       public:
         SinkTypeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
-        antlr4::tree::TerminalNode* KAFKA();
-        antlr4::tree::TerminalNode* FILE();
         antlr4::tree::TerminalNode* MQTT();
-        antlr4::tree::TerminalNode* NETWORK();
-        antlr4::tree::TerminalNode* NULLOUTPUT();
         antlr4::tree::TerminalNode* OPC();
-        antlr4::tree::TerminalNode* PRINT();
         antlr4::tree::TerminalNode* ZMQ();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
@@ -750,6 +756,7 @@ class NesCEPParser : public antlr4::Parser {
 
         UnaryOperatorContext* unaryOperator();
         ExpressionAtomContext* expressionAtom();
+        antlr4::tree::TerminalNode* WS();
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
@@ -893,6 +900,21 @@ class NesCEPParser : public antlr4::Parser {
 
     AggregationContext* aggregation();
 
+    class ValueContext : public antlr4::ParserRuleContext {
+      public:
+        ValueContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+        AttributeContext* attribute();
+        antlr4::tree::TerminalNode* POINT();
+        antlr4::tree::TerminalNode* FILETYPE();
+        antlr4::tree::TerminalNode* URL();
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    ValueContext* value();
+
     class AttributeContext : public antlr4::ParserRuleContext {
       public:
         AttributeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
@@ -972,6 +994,8 @@ class NesCEPParser : public antlr4::Parser {
         virtual size_t getRuleIndex() const override;
         std::vector<antlr4::tree::TerminalNode*> EQUAL();
         antlr4::tree::TerminalNode* EQUAL(size_t i);
+        std::vector<antlr4::tree::TerminalNode*> WS();
+        antlr4::tree::TerminalNode* WS(size_t i);
         antlr4::tree::TerminalNode* NOT_OP();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
@@ -1018,6 +1042,101 @@ class NesCEPParser : public antlr4::Parser {
     };
 
     MathOperatorContext* mathOperator();
+
+    class SinkContext : public antlr4::ParserRuleContext {
+      public:
+        SinkContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+
+        SinkContext() = default;
+        void copyFrom(SinkContext* context);
+        using antlr4::ParserRuleContext::copyFrom;
+
+        virtual size_t getRuleIndex() const override;
+    };
+
+    class SinkWithParametersContext : public SinkContext {
+      public:
+        SinkWithParametersContext(SinkContext* ctx);
+
+        SinkTypeContext* sinkType();
+        antlr4::tree::TerminalNode* LPARENTHESIS();
+        ParametersContext* parameters();
+        antlr4::tree::TerminalNode* RPARENTHESIS();
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    class SinkWithoutParametersContext : public SinkContext {
+      public:
+        SinkWithoutParametersContext(SinkContext* ctx);
+
+        SinkTypeContext* sinkType();
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    SinkContext* sink();
+
+    class ParametersContext : public antlr4::ParserRuleContext {
+      public:
+        ParametersContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+        std::vector<ParameterContext*> parameter();
+        ParameterContext* parameter(size_t i);
+        std::vector<ValueContext*> value();
+        ValueContext* value(size_t i);
+        std::vector<antlr4::tree::TerminalNode*> COMMA();
+        antlr4::tree::TerminalNode* COMMA(size_t i);
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    ParametersContext* parameters();
+
+    class ParameterContext : public antlr4::ParserRuleContext {
+      public:
+        ParameterContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    ParameterContext* parameter();
+
+    class FileNameContext : public antlr4::ParserRuleContext {
+      public:
+        FileNameContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    FileNameContext* fileName();
+
+    class TopicContext : public antlr4::ParserRuleContext {
+      public:
+        TopicContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    TopicContext* topic();
+
+    class AddressContext : public antlr4::ParserRuleContext {
+      public:
+        AddressContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    AddressContext* address();
 
     virtual bool sempred(antlr4::RuleContext* _localctx, size_t ruleIndex, size_t predicateIndex) override;
     bool expressionSempred(ExpressionContext* _localctx, size_t predicateIndex);

@@ -17,6 +17,8 @@
 #include <Network/NetworkSource.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/ReconfigurationMarker.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
@@ -238,6 +240,19 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             isTermination = true;
             break;
         }
+        case Runtime::ReconfigurationType::ReconfigurationMarker: {
+            auto marker = task.getUserData<ReconfigurationMarkerPtr>();
+            auto eventOptional = getReconfigurationEventOptional(marker);
+
+            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
+
+            terminationType = Runtime::QueryTerminationType::Reconfiguration;
+            isTermination = true;
+            break;
+        }
         default: {
             break;
         }
@@ -278,6 +293,18 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         }
         case Runtime::ReconfigurationType::SoftEndOfStream: {
             terminationType = Runtime::QueryTerminationType::Graceful;
+            break;
+        }
+        case Runtime::ReconfigurationType::ReconfigurationMarker: {
+            auto marker = task.getUserData<ReconfigurationMarkerPtr>();
+            auto eventOptional = getReconfigurationEventOptional(marker);
+
+            if (!eventOptional.value()->reconfigurationMetadata->instanceOf<DrainQueryMetadata>()) {
+                NES_WARNING("Non drain reconfigurations not yes supported");
+                NES_NOT_IMPLEMENTED();
+            }
+
+            terminationType = Runtime::QueryTerminationType::Reconfiguration;
             break;
         }
         default: {
@@ -325,7 +352,7 @@ bool NetworkSource::startNewVersion() {
     auto reconfMessage = Runtime::ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
                                                          INVALID_DECOMPOSED_QUERY_PLAN_ID,
                                                          Runtime::ReconfigurationType::UpdateVersion,
-                                                         Runtime::Reconfigurable::shared_from_this());
+                                                         Reconfigurable::shared_from_this());
     queryManager->addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
     return true;
 }
@@ -363,5 +390,38 @@ bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& network
         return true;
     }
     return false;
+}
+
+std::optional<ReconfigurationMarkerEventPtr> NetworkSource::getReconfigurationEventOptional(ReconfigurationMarkerPtr marker) {
+    auto sourcePtr = shared_from_base<DataSource>();
+
+    auto executablePlans = queryManager->getExecutablePlanIdsForSource(sourcePtr);
+    if (executablePlans.size() > 1) {
+        NES_ERROR("Source sharing is currently not compatible with query reconfiguration");
+        NES_NOT_IMPLEMENTED();
+    }
+
+    NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
+
+    auto qepId = executablePlans.front();
+    return marker->getReconfigurationEvent(qepId);
+}
+
+bool NetworkSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
+    auto sourcePtr = shared_from_base<DataSource>();
+    if (auto eventOptional = getReconfigurationEventOptional(marker)) {
+        auto event = eventOptional.value();
+        auto metadata = event->reconfigurationMetadata;
+        if (metadata->instanceOf<DrainQueryMetadata>()) {
+            return queryManager->propagateReconfigurationMarker(std::move(marker), sourcePtr);
+        }
+        NES_ERROR("Currently only drain reconfigurations are supported");
+        NES_NOT_IMPLEMENTED();
+    }
+    return false;
+}
+
+bool NetworkSource::insertReconfigurationMarker(ReconfigurationMarkerPtr marker) {
+    return handleReconfigurationMarker(std::move(marker));
 }
 }// namespace NES::Network

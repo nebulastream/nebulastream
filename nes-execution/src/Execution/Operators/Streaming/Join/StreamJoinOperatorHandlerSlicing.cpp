@@ -24,24 +24,31 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     // Checking, if we maybe already have this slice
     auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
-    auto sliceId = StreamSlice::getSliceIdentifier(sliceStart, sliceEnd);
-    auto slice = getSliceBySliceIdentifier(slicesWriteLocked, sliceId);
+    auto slice = getSliceByStartEnd(slicesWriteLocked, sliceStart, sliceEnd);
     if (slice.has_value()) {
+        NES_DEBUG("Slice had value for: slice start {}, slice end {}, slice {}", sliceStart, sliceEnd, slice.value()->toString())
         return slice.value();
     }
 
     // No slice was found for the timestamp
     NES_DEBUG("Creating slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
-    auto newSlice = createNewSlice(sliceStart, sliceEnd);
+    auto newSlice = createNewSlice(sliceStart, sliceEnd, getNextSliceId());
     slicesWriteLocked->emplace_back(newSlice);
 
     // For all possible slices in their respective windows, reset the state
     for (auto windowInfo : getAllWindowsForSlice(*newSlice)) {
         NES_DEBUG("reset the state for window {}", windowInfo.toString());
+
         auto& window = (*windowToSlicesLocked)[windowInfo];
-        window.windowState = WindowInfoState::BOTH_SIDES_FILLING;
+        // If the window existed its state is probably already BOTH_SIDES_FILLING. There is only one scenario (I am aware of)
+        // where a window with a different state could exist as there should be no tuples ingested for windows that are already
+        // emitted. However, if the standard slice for ts=0 gets created (like in the build setup) this did reset the state and a
+        // test failed
+        if (windowToSlicesLocked->find(windowInfo) == windowToSlicesLocked->end()) {
+            window.windowState = WindowInfoState::BOTH_SIDES_FILLING;
+        }
         window.slices.emplace_back(newSlice);
-        NES_DEBUG("Added slice {} to window {}", newSlice->toString(), windowInfo.toString());
+        NES_DEBUG("Added slice {} to window {} #slices {}", newSlice->toString(), windowInfo.toString(), window.slices.size());
     }
     return newSlice;
 }
@@ -100,4 +107,105 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
     }
     return allWindows;
 }
+
+void StreamJoinOperatorHandlerSlicing::addQueryToSharedJoinApproachOneProbing(QueryId queryId, uint64_t deploymentTime) {
+    if (getApproach() == SharedJoinApproach::UNSHARED) {
+        setApproach(SharedJoinApproach::APPROACH_ONE_PROBING);
+    }//set approach here to help in some functions
+
+    deploymentTimes.emplace(queryId, deploymentTime);
+    sliceAssigner.addWindowDeploymentTime(deploymentTime);
+
+    NES_INFO("Add new query that uses same joinOperatorHandler. QueryId {}, deployment time {}, number of queries handler is "
+             "handling now {}",
+             queryId,
+             deploymentTime,
+             deploymentTimes.size())
+
+    auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
+
+    for (auto slice : *slicesWriteLocked) {
+        if (slice->getSliceEnd() >= deploymentTime) {
+
+            NES_INFO("update windows for slice with start {}, end {}", slice->getSliceStart(), slice->getSliceEnd())
+
+            // A slice would be cut in half if a second query arrives that this handler needs to take care of. If this already
+            // happened and another query arrives this slice would be split up into even more parts. Now we want to add it to all
+            // new windows, and it's enough if we pretend it's just the smallest or just the biggest part as one of these parts is
+            // definitely in the window.
+            uint64_t sliceStart = slice->getSliceStart();
+            uint64_t firstPartSliceEnd = sliceAssigner.getSliceEndTs(slice->getSliceStart());
+            uint64_t lastPartSliceStart = sliceAssigner.getSliceStartTs(slice->getSliceEnd() - 1);
+            uint64_t sliceEnd = slice->getSliceEnd();
+
+            for (auto sliceStartEnd :
+                 {std::make_pair(sliceStart, firstPartSliceEnd), std::make_pair(lastPartSliceStart, sliceEnd)}) {
+                slice->setSliceStart(sliceStartEnd.first);
+                slice->setSliceEnd(sliceStartEnd.second);
+                NES_INFO("adding windows for old slice by pretending: start {}, end {}",
+                         slice->getSliceStart(),
+                         slice->getSliceEnd())
+
+                //add slice to all newly added windows. Skip windows of which it is already a part of
+                for (auto windowInfo : getAllWindowsForSlice(*slice)) {
+                    auto& window = (*windowToSlicesLocked)[windowInfo];
+
+                    if (std::find(window.slices.begin(), window.slices.end(), slice) != window.slices.end()) {
+                        std::ostringstream oss;
+                        for (const auto& s : window.slices) {
+                            oss << s->toString() << "\n";
+                        }
+                        std::string result = oss.str();
+                        NES_INFO("dont add slice to current window {} \t as it already contains these slices {}",
+                                 windowInfo.toString(),
+                                 result);
+                        continue;
+                    }
+
+                    window.slices.emplace_back(slice);
+                    NES_DEBUG("Added slice (sliceStart: {} sliceEnd: {} sliceId: {}) to window {}, #slices {}",
+                              sliceStart,
+                              sliceEnd,
+                              slice->getSliceId(),
+                              windowInfo.toString(),
+                              window.slices.size())
+                }
+            }
+
+            //original start and end
+            slice->setSliceStart(sliceStart);
+            slice->setSliceEnd(sliceEnd);
+        }
+    }
+}
+
+void StreamJoinOperatorHandlerSlicing::removeQueryFromSharedJoin(QueryId queryId) {
+    NES_INFO("Removing Query {} from a shared join operator handler", queryId)
+
+    if (deploymentTimes.find(queryId) == deploymentTimes.end()) {
+        NES_THROW_RUNTIME_ERROR("tried to remove a query that did not exist");
+    }
+
+    auto deploymentTime = deploymentTimes.at(queryId);
+    sliceAssigner.removeWindowDeploymentTime(deploymentTime);
+    deploymentTimes.erase(queryId);
+
+    auto [slicesLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
+    for (auto& [windowInfo, slicesAndStateForWindow] : *windowToSlicesLocked) {
+        // windows that do not start at a time that is x * windowSize + deploymentTime do not belong to this query and we do not need to do anything for them
+        if ((windowInfo.windowStart - deploymentTime) % windowSize != 0) {
+            continue;
+        }
+
+        // setting all slices that are needed for windows of the removed query to not writable, so the correct tuples can be sent to the probe later
+        // we cant simply sent the tuples to probe in this method as the emitting is connected to the watermark and will invalidate assumptions
+        for (auto& slice : slicesAndStateForWindow.slices) {
+            slice->setImmutable();
+            NES_INFO("set slice {} to not writable, as an associated query got removed and we want to emit all tuples for this "
+                     "query that currently belong",
+                     slice->toString())
+        }
+    }
+}
+
 }// namespace NES::Runtime::Execution::Operators

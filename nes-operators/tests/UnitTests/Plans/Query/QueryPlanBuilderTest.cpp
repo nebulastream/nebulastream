@@ -16,12 +16,14 @@
 #include <BaseIntegrationTest.hpp>
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalIntervalJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
@@ -72,6 +74,19 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalUnionOperator>().size() == 1);
+    //test addIntervalJoin
+    queryPlan = QueryPlanBuilder::addIntervalJoin(queryPlan,
+                                                  rightQueryPlan,
+                                                  Attribute(""),
+                                                  Windowing::TimeCharacteristic::createEventTime(Attribute("")),
+                                                  1,
+                                                  Windowing::TimeUnit::Seconds(),
+                                                  true,
+                                                  1,
+                                                  Windowing::TimeUnit::Seconds(),
+                                                  true);
+    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalIntervalJoinOperator>().size() == 1);
+    EXPECT_EQ(queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>().size(), 2);
     // test addSink
     auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
     queryPlan = QueryPlanBuilder::addSink(queryPlan, sinkDescriptorPtr);

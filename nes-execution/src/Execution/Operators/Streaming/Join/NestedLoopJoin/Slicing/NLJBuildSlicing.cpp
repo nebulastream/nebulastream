@@ -15,10 +15,8 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -26,18 +24,6 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-uint64_t getNLJSliceStartProxy(void* ptrNljSlice) {
-    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
-    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    return nljSlice->getSliceStart();
-}
-
-uint64_t getNLJSliceEndProxy(void* ptrNljSlice) {
-    NES_ASSERT2_FMT(ptrNljSlice != nullptr, "nlj slice pointer should not be null!");
-    auto* nljSlice = static_cast<NLJSlice*>(ptrNljSlice);
-    return nljSlice->getSliceEnd();
-}
 
 void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
@@ -53,6 +39,7 @@ void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinS
 
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     // Get the local state
+    NES_DEBUG("Printing record: {}", record.toString());
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
@@ -63,13 +50,15 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal);
     }
 
-    // Write record to the pagedVector
+    //Gets the pagedVector reference for either the left slice or the right slice
     auto nljPagedVectorMemRef = Nautilus::FunctionCall("getNLJPagedVectorProxy",
                                                        getNLJPagedVectorProxy,
                                                        localJoinState->sliceReference,
                                                        ctx.getWorkerThreadId(),
                                                        Value<UInt64>(to_underlying(joinBuildSide)));
+
     Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    // Write record to the pagedVector
     pagedVectorVarSizedRef.writeRecord(record);
 }
 

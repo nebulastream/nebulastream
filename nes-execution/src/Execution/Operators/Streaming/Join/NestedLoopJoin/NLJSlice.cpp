@@ -21,13 +21,14 @@ namespace NES::Runtime::Execution {
 
 NLJSlice::NLJSlice(uint64_t windowStart,
                    uint64_t windowEnd,
+                   uint64_t nljSliceId,
                    uint64_t numberOfWorker,
                    BufferManagerPtr& bufferManager,
                    SchemaPtr& leftSchema,
                    uint64_t leftPageSize,
                    SchemaPtr& rightSchema,
                    uint64_t rightPageSize)
-    : StreamSlice(windowStart, windowEnd) {
+    : StreamSlice(windowStart, windowEnd, nljSliceId) {
     for (uint64_t i = 0; i < numberOfWorker; ++i) {
         leftPagedVectors.emplace_back(
             std::make_unique<Nautilus::Interface::PagedVectorVarSized>(bufferManager, leftSchema, leftPageSize));
@@ -139,6 +140,8 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
         metadataPtr[metadataIdx++] = dataToWrite;
     };
     // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    // 0. Store slice id
+    writeToMetadata(sliceId);
     // 1. Store slice start
     writeToMetadata(sliceStart);
     // 2. Store slice end
@@ -178,7 +181,7 @@ StreamSlicePtr NLJSlice::deserialize(BufferManagerPtr& bufferManager,
                                      std::span<const Runtime::TupleBuffer> buffers) {
 
     // create new slice with 0 number of worker thread (this will create empty vector of var sized pages) and 0 in slice start and end
-    auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, bufferManager, leftSchema, leftPageSize, rightSchema, rightPageSize);
+    auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, 0, bufferManager, leftSchema, leftPageSize, rightSchema, rightPageSize);
 
     // get main metadata buffer
     auto metadataBuffersIdx = 0;
@@ -206,6 +209,8 @@ StreamSlicePtr NLJSlice::deserialize(BufferManagerPtr& bufferManager,
         return metadataPtr[metadataIdx++];
     };
     // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
+    // 0. Retrieve slice id
+    newSlice->sliceId = readFromMetadata();
     // 1. Retrieve slice start
     newSlice->sliceStart = readFromMetadata();
     // 2. Retrieve slice end

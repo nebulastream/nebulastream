@@ -16,6 +16,7 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -114,16 +115,65 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
     Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
 
+    auto const leftSliceStart = Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, sliceRefLeft);
+    auto const leftSliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, sliceRefLeft);
+    auto const rightSliceStart = Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, sliceRefRight);
+    auto const rightSliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, sliceRefRight);
+
+    auto leftSliceNotCompletelyContained = leftSliceStart < windowStart || leftSliceEnd > windowEnd;
+    auto rightSliceNotCompletelyContained = rightSliceStart < windowStart || rightSliceEnd > windowEnd;
+
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
+
+    NES_INFO("current probe: left Slice({}) {}, {}, #{}; right Slice({}) {}, {}, #{}; window {}, {}",
+             sliceIdLeft->getValue(),
+             leftSliceStart->getValue(),
+             leftSliceEnd->getValue(),
+             leftNumberOfEntries->getValue(),
+             sliceIdRight->getValue(),
+             rightSliceStart->getValue(),
+             rightSliceEnd->getValue(),
+             rightNumberOfEntries->getValue(),
+             windowStart->getValue(),
+             windowEnd->getValue())
+
+    bool skippedRightRecordsLogged = false;
+    bool helperSkippedBool = false;
     for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
+        auto leftRecord = leftPagedVector.readRecord(leftCnt);
+        if (leftSliceNotCompletelyContained
+            && (leftTimeFunctionPtr->getTsWithoutContext(leftRecord) < windowStart
+                || leftTimeFunctionPtr->getTsWithoutContext(leftRecord) >= windowEnd)) {
+            NES_INFO("skipped left record of slice that was adjusted. Record ts is {}, but window starts at {} and ends at {}",
+                     leftTimeFunctionPtr->getTsWithoutContext(leftRecord)->getValue(),
+                     windowStart->getValue(),
+                     windowEnd->getValue())
+            continue;
+        }
+        if (helperSkippedBool) {
+            skippedRightRecordsLogged = true;
+        }
+
         for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
-            auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
+            if (rightSliceNotCompletelyContained
+                && (rightTimeFunctionPtr->getTsWithoutContext(rightRecord) < windowStart
+                    || rightTimeFunctionPtr->getTsWithoutContext(rightRecord) >= windowEnd)) {
+                if (!skippedRightRecordsLogged) {
+                    NES_INFO("skipped right record of slice that was adjusted. Record ts is {}, but window starts at {} and ends "
+                             "at {}",
+                             rightTimeFunctionPtr->getTsWithoutContext(rightRecord)->getValue(),
+                             windowStart->getValue(),
+                             windowEnd->getValue())
+                    helperSkippedBool = true;
+                }
+                continue;
+            }
+
             Record joinedRecord;
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
             if (joinExpression->execute(joinedRecord).as<Boolean>()) {
-                // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }
         }
@@ -138,6 +188,8 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                    const SchemaPtr& rightSchema,
                    QueryCompilation::StreamJoinStrategy joinStrategy,
                    QueryCompilation::WindowingStrategy windowingStrategy,
+                   TimeFunctionPtr leftTimeFunctionPtr,
+                   TimeFunctionPtr rightTimeFunctionPtr,
                    bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
@@ -145,6 +197,8 @@ NLJProbe::NLJProbe(const uint64_t operatorHandlerIndex,
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,
+                      std::move(leftTimeFunctionPtr),
+                      std::move(rightTimeFunctionPtr),
                       withDeletion),
       leftSchema(leftSchema), rightSchema(rightSchema) {}
 

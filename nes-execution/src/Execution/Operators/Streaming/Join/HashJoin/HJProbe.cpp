@@ -201,6 +201,8 @@ HJProbe::HJProbe(const uint64_t operatorHandlerIndex,
                  const WindowMetaData& windowMetaData,
                  QueryCompilation::StreamJoinStrategy joinStrategy,
                  QueryCompilation::WindowingStrategy windowingStrategy,
+                 TimeFunctionPtr leftTimeFunctionPtr,
+                 TimeFunctionPtr rightTimeFunctionPtr,
                  bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex,
                       joinSchema,
@@ -208,6 +210,8 @@ HJProbe::HJProbe(const uint64_t operatorHandlerIndex,
                       windowMetaData,
                       joinStrategy,
                       windowingStrategy,
+                      std::move(leftTimeFunctionPtr),
+                      std::move(rightTimeFunctionPtr),
                       withDeletion),
       // As we are only ever reading a single record, we do not care about the buffer size
       leftMemProvider(

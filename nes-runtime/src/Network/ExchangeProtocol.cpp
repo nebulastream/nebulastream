@@ -128,7 +128,8 @@ void ExchangeProtocol::onEvent(NesPartition nesPartition, Runtime::BaseEvent& ev
     }
 }
 
-void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage) {
+void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage,
+                                     std::optional<ReconfigurationMarkerPtr> marker) {
     const auto& eosChannelId = endOfStreamMessage.getChannelId();
     const auto& eosNesPartition = eosChannelId.getNesPartition();
 
@@ -164,8 +165,13 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             auto dataEmitter = partitionManager->getDataEmitter(endOfStreamMessage.getChannelId().getNesPartition());
             auto networkSource = std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
             if (!(networkSource && networkSource->startNewVersion())) {
-                dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
-                protocolListener->onEndOfStream(endOfStreamMessage);
+                if (endOfStreamMessage.getQueryTerminationType() == Runtime::QueryTerminationType::Reconfiguration) {
+                    NES_ASSERT(marker, "Reconfiguration must supply a marker");
+                    dataEmitter->insertReconfigurationMarker(std::move(marker.value()));
+                } else {
+                    dataEmitter->onEndOfStream(endOfStreamMessage.getQueryTerminationType());
+                    protocolListener->onEndOfStream(endOfStreamMessage);
+                }
             }
         }
     } else if (partitionManager->getProducerRegistrationStatus(eosNesPartition) == PartitionRegistrationStatus::Registered) {

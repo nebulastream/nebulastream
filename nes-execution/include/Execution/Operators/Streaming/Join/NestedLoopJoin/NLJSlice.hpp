@@ -46,6 +46,7 @@ class NLJSlice : public StreamSlice {
      */
     explicit NLJSlice(uint64_t sliceStart,
                       uint64_t sliceEnd,
+                      uint64_t sliceId,
                       uint64_t numWorkerThreads,
                       BufferManagerPtr& bufferManager,
                       SchemaPtr& leftSchema,
@@ -98,7 +99,7 @@ class NLJSlice : public StreamSlice {
      * Format of buffers looks like:
      * start metadata buffers contains metadata in format:
      * -----------------------------------------
-     * number of metadata buffers | sliceStart | sliceEnd | number of var sized pages (also number of workers) (n) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
+     * number of metadata buffers | sliceId | sliceStart | sliceEnd | number of var sized pages (also number of workers) (n) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
      * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
      * -----------------------------------------
      * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page
@@ -112,7 +113,7 @@ class NLJSlice : public StreamSlice {
      * Expected format:
      * start buffers contain metadata in format:
      * -----------------------------------------
-     * number of metadata buffers | sliceStart | sliceEnd | number of var sized pages (also number of workers) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
+     * number of metadata buffers | sliceId | sliceStart | sliceEnd | number of var sized pages (also number of workers) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
      * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
      * -----------------------------------------
      * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page

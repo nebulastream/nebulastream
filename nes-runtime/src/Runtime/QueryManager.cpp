@@ -18,6 +18,7 @@
  */
 
 #include <Network/NetworkSink.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -324,5 +325,14 @@ bool AbstractQueryManager::isThreadPoolRunning() const { return threadPool != nu
 uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
+
+std::vector<DecomposedQueryId> AbstractQueryManager::getExecutablePlanIdsForSource(DataSourcePtr source) const {
+    auto executablePlans = sourceToQEPMapping.at(source->getOperatorId());
+    std::vector<DecomposedQueryId> ids;
+    for (auto& plan : executablePlans) {
+        ids.push_back(plan->getDecomposedQueryId());
+    }
+    return ids;
+}
 
 }// namespace NES::Runtime

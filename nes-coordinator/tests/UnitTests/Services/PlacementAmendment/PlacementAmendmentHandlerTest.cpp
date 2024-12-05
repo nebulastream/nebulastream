@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/Phases/QueryPlacementAmendmentPhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
@@ -1646,6 +1647,226 @@ TEST_F(PlacementAmendmentHandlerTest,
     auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
     auto numOfSinks = sharedQueryPlan->getQueryPlan()->getSinkOperators().size();
     EXPECT_EQ(numOfSinks, 1);
+    placementAmendmentHandler->shutDown();
+}
+
+TEST_F(PlacementAmendmentHandlerTest, testJoinMigrationAmendmentPhase) {
+
+    //  Create mocked amendment handler and ISQP request to setup topology and queries to be processed
+    auto mockedPlacementAmendmentHandler = std::make_shared<NES::Optimizer::MockedPlacementAmendmentHandler>(1);
+
+    // Two ISQP requests are issues in this test. One contains only topology change events and other contains an add query event.
+    // Therefore, assert that only one call ot the mocked placement amendment handler are made.
+    EXPECT_CALL(*mockedPlacementAmendmentHandler, enqueueRequest(_))
+        .Times(2)
+        .WillRepeatedly(Invoke(handleMockedPlacementAmendmentCall));
+
+    // Enable incremental placement
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
+    // Number of amendment threads
+    coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
+
+    // Prepare the system
+    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
+                                                                 topology,
+                                                                 globalExecutionPlan,
+                                                                 globalQueryPlan,
+                                                                 queryCatalog,
+                                                                 sourceCatalog,
+                                                                 udfCatalog,
+                                                                 statisticProbeHandler});
+    // init topology nodes
+    std::map<std::string, std::any> properties;
+    properties[NES::Worker::Properties::MAINTENANCE] = false;
+    properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
+
+    std::vector<WorkerId> nodeIds;
+    for (auto nodeIndex = 1; nodeIndex <= 8; nodeIndex++) {
+        nodeIds.push_back(WorkerId(nodeIndex));
+    }
+
+    std::vector<ISQPEventPtr> isqpMainEvents;
+    // create cloud nodes
+    auto addNode1Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::CLOUD,
+                                                                    nodeIds.at(0),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    // create fog nodes
+    auto addNode2Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::FOG,
+                                                                    nodeIds.at(1),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    auto addNode3Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::FOG,
+                                                                    nodeIds.at(2),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    auto addNode4Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::FOG,
+                                                                    nodeIds.at(3),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    auto addNode5Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
+                                                                    nodeIds.at(4),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+
+    auto addNode6Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
+                                                                    nodeIds.at(5),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    auto addNode7Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
+                                                                    nodeIds.at(6),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+    auto addNode8Event = RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::FOG,
+                                                                    nodeIds.at(7),
+                                                                    "localhost",
+                                                                    0,
+                                                                    0,
+                                                                    UINT16_MAX,
+                                                                    properties);
+
+    executeMockISQPRequest(
+        {addNode1Event, addNode2Event, addNode3Event, addNode4Event, addNode5Event, addNode6Event, addNode7Event, addNode8Event},
+        storageHandler,
+        mockedPlacementAmendmentHandler);
+
+    auto isqpAddLink25 = RequestProcessor::ISQPAddLinkEvent::create(nodeIds.at(1), nodeIds.at(4));
+    auto isqpAddLink36 = RequestProcessor::ISQPAddLinkEvent::create(nodeIds.at(2), nodeIds.at(5));
+    auto isqpAddLink37 = RequestProcessor::ISQPAddLinkEvent::create(nodeIds.at(2), nodeIds.at(6));
+    auto isqpRemoveLink15 = RequestProcessor::ISQPRemoveLinkEvent::create(nodeIds.at(0), nodeIds.at(4));
+    auto isqpRemoveLink16 = RequestProcessor::ISQPRemoveLinkEvent::create(nodeIds.at(0), nodeIds.at(5));
+    auto isqpRemoveLink17 = RequestProcessor::ISQPRemoveLinkEvent::create(nodeIds.at(0), nodeIds.at(6));
+
+    for (auto id : nodeIds) {
+        EXPECT_TRUE(topology->nodeWithWorkerIdExists(id));
+    }
+
+    executeMockISQPRequest({isqpAddLink25, isqpAddLink36, isqpRemoveLink15, isqpRemoveLink16, isqpAddLink37, isqpRemoveLink17},
+                           storageHandler,
+                           mockedPlacementAmendmentHandler);
+
+    // Register physical and logical sources
+    auto schema = Schema::create()
+                      ->addField("id", BasicType::UINT32)
+                      ->addField("value", BasicType::UINT64)
+                      ->addField("timestamp", BasicType::UINT64);
+    const std::string logicalSource1Name = "car_stream_1";
+    const std::string logicalSource2Name = "car_stream_2";
+    const std::string logicalSource3Name = "car_stream_3";
+    const std::string logicalSource4Name = "state_gathering";
+    sourceCatalog->addLogicalSource(logicalSource1Name, schema);
+    sourceCatalog->addLogicalSource(logicalSource2Name, schema);
+    sourceCatalog->addLogicalSource(logicalSource3Name, schema);
+    sourceCatalog->addLogicalSource(logicalSource4Name, schema);
+    NES_DEBUG("ISQPMigrationTest: Logical sources registered");
+
+    auto defaultSourceType1 = DefaultSourceType::create(logicalSource1Name, "pTest1");
+    auto physicalSource1 = PhysicalSource::create(defaultSourceType1);
+    auto sce1 = Catalogs::Source::SourceCatalogEntry::create(physicalSource1,
+                                                             sourceCatalog->getLogicalSource(logicalSource1Name),
+                                                             nodeIds.at(4));
+
+    auto defaultSourceType2 = DefaultSourceType::create(logicalSource2Name, "pTest2");
+    auto physicalSource2 = PhysicalSource::create(defaultSourceType2);
+    auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2,
+                                                             sourceCatalog->getLogicalSource(logicalSource2Name),
+                                                             nodeIds.at(5));
+
+    auto defaultSourceType3 = DefaultSourceType::create(logicalSource3Name, "pTest3");
+    auto physicalSource3 = PhysicalSource::create(defaultSourceType3);
+    auto sce3 = Catalogs::Source::SourceCatalogEntry::create(physicalSource3,
+                                                             sourceCatalog->getLogicalSource(logicalSource3Name),
+                                                             nodeIds.at(6));
+
+    sourceCatalog->addPhysicalSource(logicalSource1Name, sce1);
+    sourceCatalog->addPhysicalSource(logicalSource2Name, sce2);
+    sourceCatalog->addPhysicalSource(logicalSource3Name, sce3);
+
+    Query query = Query::from(logicalSource2Name)
+                      .as("c3")
+                      .joinWith(Query::from(logicalSource3Name).as("c2"))
+                      .where(Attribute("id") == Attribute("id"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .joinWith(Query::from(logicalSource1Name).as("c1"))
+                      .where(Attribute("value") == Attribute("value"))
+                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
+                      .sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+    auto queryAddEvent = ISQPAddQueryEvent::create(queryPlan, TEST_PLACEMENT_STRATEGY);
+
+    executeMockISQPRequest({queryAddEvent}, storageHandler, mockedPlacementAmendmentHandler);
+
+    auto placementAmendmentHandler =
+        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    placementAmendmentHandler->start();
+    performPlacementAmendment(placementAmendmentHandler);
+    auto response1 = queryAddEvent->getResponse().get();
+    auto queryId = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response1)->queryId;
+    EXPECT_EQ(queryCatalog->getQueryState(queryId), QueryState::RUNNING);
+
+    topology->print();
+
+    auto isqpRemoveLink37 = RequestProcessor::ISQPRemoveLinkEvent::create(nodeIds.at(2), nodeIds.at(6));
+    auto addLink87 = RequestProcessor::ISQPAddLinkEvent::create(nodeIds.at(7), nodeIds.at(6));
+    auto isqpRemoveLink36 = RequestProcessor::ISQPRemoveLinkEvent::create(nodeIds.at(2), nodeIds.at(5));
+    auto addLink68 = RequestProcessor::ISQPAddLinkEvent::create(nodeIds.at(7), nodeIds.at(5));
+    executeMockISQPRequest({isqpRemoveLink37, addLink87, isqpRemoveLink36, addLink68},
+                           storageHandler,
+                           mockedPlacementAmendmentHandler);
+    topology->print();
+    performPlacementAmendment(placementAmendmentHandler);
+
+    auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
+    auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+    auto queryPlanToCompare = sharedQueryPlan->getQueryPlan();
+    auto statefulJoinOperator = queryPlanToCompare->getOperatorByType<LogicalJoinOperator>()[1];
+
+    // check decomposed plan of stateful operator to contain migration operators
+    auto migratingDecomposedPlan = globalExecutionPlan->getCopyOfAllDecomposedQueryPlans(nodeIds.at(2), sharedQueryId)[0];
+    auto migratingStatefulOperator = migratingDecomposedPlan->getOperatorWithOperatorId(statefulJoinOperator->getId());
+    EXPECT_TRUE(migratingStatefulOperator != nullptr);
+
+    // check connection to migration plan
+    auto parents = migratingStatefulOperator->getParents();
+    EXPECT_EQ(parents.size(), 2);
+
+    // check type to be source migrating operator
+    auto sourceMigrationOperator = parents[1].get();
+    EXPECT_EQ(typeid(*sourceMigrationOperator), typeid(SourceLogicalOperator));
+
+    // check that plan contains network sink
+    EXPECT_EQ(sourceMigrationOperator->getParents().size(), 1);
+
+    // check migration sink on the other node
+    auto newNodeDecomposedPlans = globalExecutionPlan->getCopyOfAllDecomposedQueryPlans(nodeIds.at(7), sharedQueryId);
+    auto sinkOperators = newNodeDecomposedPlans[1]->getOperatorByType<SinkLogicalOperator>();
+    EXPECT_EQ(sinkOperators.size(), 1);
+
+    // check that new node contains stateful operator
+    auto newJoinOperator = newNodeDecomposedPlans[0]->getOperatorWithOperatorId(statefulJoinOperator->getId());
+    EXPECT_TRUE(newJoinOperator != nullptr);
+
     placementAmendmentHandler->shutDown();
 }
 

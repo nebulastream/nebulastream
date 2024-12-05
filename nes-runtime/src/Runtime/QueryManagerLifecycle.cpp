@@ -582,4 +582,59 @@ bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTe
     return success;
 }
 
+bool AbstractQueryManager::propagateReconfigurationMarker(const ReconfigurationMarkerPtr& marker, DataSourcePtr source) {
+    auto sourceId = source->getOperatorId();
+    auto pipelineSuccessors = source->getExecutableSuccessors();
+
+    if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
+        //add soft eaos for network source
+        auto reconfMessage = ReconfigurationMessage(INVALID_SHARED_QUERY_ID,
+                                                    INVALID_DECOMPOSED_QUERY_PLAN_ID,
+                                                    ReconfigurationType::ReconfigurationMarker,
+                                                    netSource,
+                                                    marker);
+        addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
+    }
+
+    for (auto successor : pipelineSuccessors) {
+        // create reconfiguration message. If the successor is an executable pipeline we send the marker to the pipeline.
+        if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryId(),
+                                                        ReconfigurationType::ReconfigurationMarker,
+                                                        (*executablePipeline),
+                                                        marker);
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryId(),
+                                      reconfMessage,
+                                      false);
+            NES_DEBUG("Inserted reconfiguration to propagate reconfiguration marker to Pipeline opId={} reconfType={} "
+                      "queryExecutionPlanId={} "
+                      "threadPool->getNumberOfThreads()={} qep {}",
+                      sourceId,
+                      magic_enum::enum_name(ReconfigurationType::ReconfigurationMarker),
+                      executablePipeline->get()->getDecomposedQueryId(),
+                      threadPool->getNumberOfThreads(),
+                      executablePipeline->get()->getSharedQueryId());
+        } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
+            // In case of a network sink we apply the reconfiguration to the sink.
+            // Depending on the kind of reconfiguration event the sink will propagate the to the next worker if necessary.
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
+                                                            sink->get()->getParentPlanId(),
+                                                            ReconfigurationType::ReconfigurationMarker,
+                                                            (*sink),
+                                                            marker);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            NES_DEBUG("Inserted reconfiguration to propagate reconfiguration marker to Sink opId={} reconfType={} "
+                      "queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
+                      sourceId,
+                      magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
+                      sink->get()->getParentPlanId(),
+                      threadPool->getNumberOfThreads(),
+                      sink->get()->getSharedQueryId());
+        }
+    }
+    return true;
+}
+
 }// namespace NES::Runtime

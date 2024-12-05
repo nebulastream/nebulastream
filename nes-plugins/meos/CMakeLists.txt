@@ -17,11 +17,10 @@ if (APPLE)
     message(STATUS "Building on macOS")
     # Set the include and library directories for Homebrew (macOS)
     set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
-    set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
-    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
-    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
-    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
-    link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
+    set(MEOS_PLUGIN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include" CACHE PATH "Path to MEOS plugin include directory")
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR})
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR})
+    link_directories(${MEOS_LIBRARY_DIR} )
 
 else()
     message(STATUS "Building on Linux")
@@ -31,7 +30,7 @@ else()
     include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
 endif()
 
-# Specify the source files for nes-meos
+# Manually specify the source files for nes-meos
 set(NES_COMPILER_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Execution/Operators/Meos/Meos.cpp  # Add necessary files here
 )
@@ -40,9 +39,9 @@ add_library(nes-meos SHARED ${NES_COMPILER_SOURCE_FILES})
 
 # Link libraries
 if (APPLE)
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib)
+    target_link_libraries(nes-meos nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib)
 else()
-    target_link_libraries(nes-meos nes-common nes-runtime pq nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos)
+    target_link_libraries(nes-meos nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos)
 endif()
 
 link_directories(${MEOS_INCLUDE_DIR})

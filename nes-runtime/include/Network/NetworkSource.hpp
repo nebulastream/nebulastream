@@ -19,8 +19,16 @@
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES {
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
+class ReconfigurationMarkerEvent;
+using ReconfigurationMarkerEventPtr = std::shared_ptr<const ReconfigurationMarkerEvent>;
+}// namespace NES
 
 namespace NES::Runtime {
 class BaseEvent;
@@ -165,11 +173,33 @@ class NetworkSource : public DataSource {
      */
     bool scheduleNewDescriptor(const NetworkSourceDescriptor& networkSourceDescriptor);
 
+    /**
+     * @brief check if a reconfiguration marker contains an event for this source. If so, trigger the reconfiguration and
+     * propagate the marker downstream.
+     * @param marker a marker containing a set of reconfiguration events
+     * @return true if a reconfiguration was triggered, false if the marker did not contain any event to be handled by this source
+     */
+    bool handleReconfigurationMarker(ReconfigurationMarkerPtr marker) override;
+
+    /**
+     * @brief insert a reconfiguratin marker into the stream starting at this source.
+     * @param marker a marker containing a set of reconfiguration events
+     * @return true if a reconfiguration was triggered, false if the marker did not contain any event to be handled by this source
+     */
+    bool insertReconfigurationMarker(ReconfigurationMarkerPtr marker) override;
+
     bool bind();
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:
+    /**
+     * @brief get the reconfiguration event from the marker that is associated with the current source
+     * @param marker the reconfiguration marker
+     * @return the reconfiguration event if it exists, std::nullopt otherwise
+     */
+    std::optional<ReconfigurationMarkerEventPtr> getReconfigurationEventOptional(ReconfigurationMarkerPtr marker);
+
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
     NodeLocation sinkLocation;

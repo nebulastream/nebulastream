@@ -19,19 +19,21 @@ namespace NES {
 
 ReconfigurationMarkerPtr ReconfigurationMarker::create() { return std::make_shared<ReconfigurationMarker>(); }
 
-std::optional<ReconfigurationMarkerEventPtr> ReconfigurationMarker::getReconfigurationEvent(const std::string& key) {
-    if (reconfigurationEvents.contains(key)) {
-        return reconfigurationEvents.at(key);
+std::optional<ReconfigurationMarkerEventPtr>
+ReconfigurationMarker::getReconfigurationEvent(DecomposedQueryId decomposedQueryId) const {
+    if (reconfigurationEvents.contains(decomposedQueryId)) {
+        return reconfigurationEvents.at(decomposedQueryId);
     }
-    NES_DEBUG("{} not found in the reconfiguration marker event", key);
+    NES_DEBUG("{} not found in the reconfiguration marker event", decomposedQueryId);
     return std::nullopt;
 }
 
-void ReconfigurationMarker::addReconfigurationEvent(const std::string& key, ReconfigurationMarkerEventPtr reconfigurationEvent) {
-    reconfigurationEvents.insert({key, reconfigurationEvent});
+void ReconfigurationMarker::addReconfigurationEvent(DecomposedQueryId decomposedQueryId,
+                                                    const ReconfigurationMarkerEventPtr reconfigurationEvent) {
+    reconfigurationEvents.insert({decomposedQueryId, reconfigurationEvent});
 }
 
-const std::unordered_map<std::string, ReconfigurationMarkerEventPtr>&
+const std::unordered_map<DecomposedQueryId, ReconfigurationMarkerEventPtr>&
 ReconfigurationMarker::getAllReconfigurationMarkerEvents() const {
     return reconfigurationEvents;
 }

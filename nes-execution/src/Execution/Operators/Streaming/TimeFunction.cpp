@@ -18,6 +18,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/StdInt.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -37,12 +38,24 @@ Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ct
     return tsInMs;
 }
 
+Value<UInt64> EventTimeFunction::getTsWithoutContext(Record& record) {
+    Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
+    auto timeMultiplier = Value<UInt64>(unit.getMillisecondsConversionMultiplier());
+    auto tsInMs = (ts * timeMultiplier).as<UInt64>();
+    return tsInMs;
+}
+
 void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) {
     ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
 Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
     return ctx.getCurrentTs();
+}
+
+Value<UInt64> IngestionTimeFunction::getTsWithoutContext(Record& record) {
+    NES_ERROR("Can't get time as this only works with EventTime. (Issue #5138) record {}", record.toString())
+    NES_NOT_IMPLEMENTED();
 }
 
 }// namespace NES::Runtime::Execution::Operators

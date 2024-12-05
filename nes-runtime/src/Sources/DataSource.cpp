@@ -35,6 +35,7 @@
 #include <numaif.h>
 #endif
 #endif
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
 #include <utility>
 using namespace std::string_literals;
 namespace NES {
@@ -211,6 +212,79 @@ bool waitForFuture(std::future<bool>&& future, std::chrono::duration<R, P>&& dea
 }
 }// namespace detail
 
+bool DataSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker) {
+    using namespace std::chrono_literals;
+
+    NES_DEBUG("DataSource {}: Propagate reconfiguration marker called and source is {}",
+              operatorId,
+              (running ? "running" : "not running"));
+
+    auto sourcePtr = shared_from_base<DataSource>();
+
+    auto executablePlans = queryManager->getExecutablePlanIdsForSource(sourcePtr);
+    if (executablePlans.size() > 1) {
+        NES_ERROR("Source sharing is currently not compatible with query reconfiguration");
+        NES_NOT_IMPLEMENTED();
+    }
+
+    NES_ASSERT(!executablePlans.empty(), "No executable plans found for source");
+    auto qepId = executablePlans.front();
+    if (auto eventOptional = marker->getReconfigurationEvent(qepId)) {
+        auto event = eventOptional.value();
+        auto metadata = event->reconfigurationMetadata;
+        if (metadata->instanceOf<DrainQueryMetadata>()) {
+            //if this is a drain event, set the marker as a member var and proceed to set running to false
+            //the source will then propagate the reconfiguration when close is called
+            try {
+                {
+                    std::unique_lock lock(startStopMutex);// this mutex guards the thread variable
+                    wasGracefullyStopped = Runtime::QueryTerminationType::Reconfiguration;
+                    reconfigurationMarker = std::move(marker);
+                }
+                bool expected = true;
+                if (!running.compare_exchange_strong(expected, false)) {
+                    NES_DEBUG("DataSource {} was not running, retrieving future now...", operatorId);
+                    auto expected = false;
+                    if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true)) {
+                        NES_ASSERT2_FMT(detail::waitForFuture(completedPromise.get_future(), 60s),
+                                        "Cannot complete future to stop source " << operatorId);
+                    }
+                    NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
+                    return true;// it's ok to return true because the source is stopped
+                } else {
+                    NES_DEBUG("DataSource {} is running, retrieving future now...", operatorId);
+                    auto expected = false;
+                    NES_ASSERT2_FMT(wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
+                                        && detail::waitForFuture(completedPromise.get_future(), 10min),
+                                    "Cannot complete future to stop source " << operatorId);
+                    NES_WARNING("Stopped Source {} = {}", operatorId, wasGracefullyStopped);
+                    return true;
+                }
+            } catch (...) {
+                auto expPtr = std::current_exception();
+                wasGracefullyStopped = Runtime::QueryTerminationType::Failure;
+                try {
+                    if (expPtr) {
+                        std::rethrow_exception(expPtr);
+                    }
+                } catch (std::exception const& e) {// it would not work if you pass by value
+                    // I leave the following lines just as a reminder:
+                    // here we do not need to call notifySourceFailure because it is done from the main thread
+                    // the only reason to call notifySourceFailure is when the main thread was not stated
+                    if (!wasStarted) {
+                        queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+                    }
+                    return true;
+                }
+            }
+        } else {
+            NES_ERROR("Currently only drain reconfigurations are supported");
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+    return false;
+}
+
 bool DataSource::stop(Runtime::QueryTerminationType graceful) {
     using namespace std::chrono_literals;
     // Do not call stop from the runningRoutine!
@@ -283,9 +357,11 @@ void DataSource::open() {
 void DataSource::close() {
     NES_WARNING("Close Called")
     Runtime::QueryTerminationType queryTerminationType;
+    std::optional<ReconfigurationMarkerPtr> marker;
     {
         std::unique_lock lock(startStopMutex);
         queryTerminationType = this->wasGracefullyStopped;
+        marker = reconfigurationMarker;
     }
 
     if (persistentSource) {
@@ -300,7 +376,12 @@ void DataSource::close() {
         NES_WARNING("DataSource {} : Data Source add end of stream of type ={}",
                     operatorId,
                     magic_enum::enum_name(queryTerminationType));
-        endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
+        if (queryTerminationType == Runtime::QueryTerminationType::Reconfiguration) {
+            NES_ASSERT2_FMT(marker, "Shutting down source with type Reconfiguration but no marker is available");
+            endOfStreamSent = queryManager->propagateReconfigurationMarker(marker.value(), shared_from_base<DataSource>());
+        } else {
+            endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
+        }
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
         bufferManager->destroy();
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), queryTerminationType);

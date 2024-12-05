@@ -272,15 +272,18 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.joinFieldNameRight);
     auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
-    auto hashJoinProbe = std::make_shared<Operators::HJProbeVarSized>(handlerIndex,
-                                                                      joinSchema,
-                                                                      keyExpressions,
-                                                                      windowMetaData,
-                                                                      hashJoinProbeHelper.leftSchema,
-                                                                      hashJoinProbeHelper.rightSchema,
-                                                                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
-                                                                      QueryCompilation::WindowingStrategy::SLICING,
-                                                                      /*withDeletion*/ false);
+    auto hashJoinProbe = std::make_shared<Operators::HJProbeVarSized>(
+        handlerIndex,
+        joinSchema,
+        keyExpressions,
+        windowMetaData,
+        hashJoinProbeHelper.leftSchema,
+        hashJoinProbeHelper.rightSchema,
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
+        QueryCompilation::WindowingStrategy::SLICING,
+        std::make_unique<Operators::EventTimeFunction>(readTsFieldLeft, Windowing::TimeUnit::Milliseconds()),
+        std::make_unique<Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
+        /*withDeletion*/ false);
     auto collector = std::make_shared<Operators::CollectOperator>();
     hashJoinProbe->setChild(collector);
     hashJoinBuildLeft->setup(executionContext);
@@ -394,10 +397,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     }
 
     Value<UInt64> zeroValue((uint64_t) 0UL);
-    auto maxWindowIdentifier = std::ceil((double) hashJoinProbeHelper.numberOfTuplesToProduce / hashJoinProbeHelper.windowSize)
-        * hashJoinProbeHelper.windowSize;
-    for (auto windowIdentifier = hashJoinProbeHelper.windowSize; windowIdentifier < maxWindowIdentifier;
-         windowIdentifier += hashJoinProbeHelper.windowSize) {
+    auto maxWindowIdentifier = std::ceil((double) hashJoinProbeHelper.numberOfTuplesToProduce / hashJoinProbeHelper.windowSize);
+    for (uint64_t windowIdentifier = 1; windowIdentifier < maxWindowIdentifier; windowIdentifier += 1) {
         auto expectedNumberOfTuplesInWindowLeft = calculateExpNoTuplesInWindow(hashJoinProbeHelper.numberOfTuplesToProduce,
                                                                                windowIdentifier,
                                                                                hashJoinProbeHelper.windowSize);

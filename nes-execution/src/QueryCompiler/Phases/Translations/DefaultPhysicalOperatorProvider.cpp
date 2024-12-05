@@ -45,6 +45,8 @@
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/IntervalJoin/PhysicalIntervalJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/IntervalJoin/PhysicalIntervalJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -237,6 +239,8 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
         lowerUnionOperator(operatorNode);
     } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
         lowerJoinOperator(operatorNode);
+    } else if (operatorNode->instanceOf<LogicalIntervalJoinOperator>()) {
+        lowerIntervalJoinOperator(operatorNode);
     } else {
         throw QueryCompilationException("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -308,9 +312,13 @@ void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOpera
     operatorNode->replace(physicalMapOperator);
 }
 
-OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator,
+OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const LogicalOperatorPtr& joinOperator,
                                                                        SchemaPtr outputSchema,
                                                                        std::vector<OperatorPtr> children) {
+    if (!joinOperator->instanceOf<LogicalJoinOperator>() && !joinOperator->instanceOf<LogicalIntervalJoinOperator>()) {
+        NES_ERROR("the operator can only be of type LogicalJoinOperator or logicalIntervalJoinOperator")
+    }
+
     if (children.empty()) {
         throw QueryCompilationException("There should be at least one child for the join operator " + joinOperator->toString());
     }
@@ -327,6 +335,81 @@ OperatorPtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(const Log
         return demultiplexOperator;
     }
     return children[0];
+}
+
+void DefaultPhysicalOperatorProvider::lowerIntervalJoinOperator(const LogicalOperatorPtr& operatorNode) {
+    using namespace Runtime::Execution::Operators;
+
+    auto joinOperator = operatorNode->as<LogicalIntervalJoinOperator>();
+    auto joinDefinition = joinOperator->getIntervalJoinDefinition();
+
+    auto joinExpression = joinDefinition->getJoinExpression();
+
+    auto lowerBound = joinDefinition->getLowerBound();
+    auto upperBound = joinDefinition->getUpperBound();
+
+    const auto [timeStampFieldLeft, timeStampFieldRight] = getTimestampLeftAndRight(joinOperator);
+
+    //storing input operators
+    const auto leftInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    const auto rightInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
+
+    const StreamJoinOperators streamJoinOperators(operatorNode, leftInputOperator, rightInputOperator);
+
+    auto IJOperatorHandler =
+        Runtime::Execution::Operators::IJOperatorHandler::create(joinOperator->getAllInputOriginIds(),
+                                                                 joinOperator->getOutputOriginIds()[0],
+                                                                 lowerBound,
+                                                                 upperBound,
+                                                                 joinOperator->getLeftInputSchema(),
+                                                                 joinOperator->getRightInputSchema(),
+                                                                 Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE,
+                                                                 Nautilus::Interface::PagedVectorVarSized::PAGE_SIZE);
+
+    //creating the build operator two times
+    auto createBuildOperator = [&](const SchemaPtr& buildSideInputSchema,
+                                   const SchemaPtr& otherInputSchema,
+                                   JoinBuildSideType buildSideType,
+                                   const TimestampField& timeStampFieldThisSide,
+                                   const TimestampField& timeStampFieldOtherSide) {
+        return PhysicalOperators::PhysicalIntervalJoinBuildOperator::create(operatorNode->getStatisticId(),
+                                                                            buildSideInputSchema,
+                                                                            otherInputSchema,
+                                                                            joinOperator->getOutputSchema(),
+                                                                            IJOperatorHandler,
+                                                                            buildSideType,
+                                                                            timeStampFieldThisSide,
+                                                                            timeStampFieldOtherSide);
+    };
+
+    const auto leftJoinBuildOperator = createBuildOperator(joinOperator->getLeftInputSchema(),
+                                                           joinOperator->getRightInputSchema(),
+                                                           JoinBuildSideType::Left,
+                                                           timeStampFieldLeft,
+                                                           timeStampFieldRight);
+    const auto rightJoinBuildOperator = createBuildOperator(joinOperator->getRightInputSchema(),
+                                                            joinOperator->getLeftInputSchema(),
+                                                            JoinBuildSideType::Right,
+                                                            timeStampFieldRight,
+                                                            timeStampFieldLeft);
+
+    const auto joinProbeOperator =
+        PhysicalOperators::PhysicalIntervalJoinProbeOperator::create(operatorNode->getStatisticId(),
+                                                                     joinOperator->getLeftInputSchema(),
+                                                                     joinOperator->getRightInputSchema(),
+                                                                     joinOperator->getOutputSchema(),
+                                                                     joinExpression,
+                                                                     joinDefinition->getIntervalStartFieldName(),
+                                                                     joinDefinition->getIntervalEndFieldName(),
+                                                                     timeStampFieldRight,
+                                                                     IJOperatorHandler);
+
+    // adding the two build operators and replacing the join operator with the probe operator
+    streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+    streamJoinOperators.operatorNode->replace(joinProbeOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(const LogicalOperatorPtr& operatorNode) {
@@ -382,8 +465,8 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                 auto queriesAndDeploymentTimes = joinOperatorHandler->getQueriesAndDeploymentTimes();
                 for (auto queryAndTime : streamJoinOperators.operatorNode->as<LogicalJoinOperator>()->getDeploymentTimes()) {
                     if (!queriesAndDeploymentTimes.contains(queryAndTime.first)) {
-                        joinOperatorHandler->addQueryToSharedJoin(queryAndTime.first, queryAndTime.second);
-                        //dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())->updateSlicesNewDefinition(queryAndTime.second);
+                        dynamic_cast<NLJOperatorHandlerSlicing*>(joinOperatorHandler.get())
+                            ->addQueryToSharedJoinApproachOneProbing(queryAndTime.first, queryAndTime.second);
                     }
                 }
                 joinOperatorHandler->setThisForReuse(
@@ -432,7 +515,9 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
                                                                    joinOperator->getWindowEndFieldName(),
                                                                    joinOperatorHandler,
                                                                    options->getStreamJoinStrategy(),
-                                                                   options->getWindowingStrategy());
+                                                                   options->getWindowingStrategy(),
+                                                                   timeStampFieldLeft,
+                                                                   timeStampFieldRight);
 
     streamJoinOperators.leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
     streamJoinOperators.rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
@@ -506,40 +591,61 @@ DefaultPhysicalOperatorProvider::lowerStreamingHashJoin(const StreamJoinOperator
     }
 }
 
+std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(
+    const std::shared_ptr<LogicalIntervalJoinOperator>& joinOperator) const {
+    if (joinOperator.get()->getIntervalJoinDefinition()->getTimeCharacteristic()->getType()
+        == Windowing::TimeCharacteristic::Type::IngestionTime) {
+        NES_DEBUG("Skip eventTime identification as we use ingestion time");
+        return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
+    } else {
+        return getEventTimeTimestampLeftAndRight(joinOperator->getLeftInputSchema(),
+                                                 joinOperator->getRightInputSchema(),
+                                                 joinOperator.get()->getIntervalJoinDefinition()->getTimeCharacteristic());
+    }
+}
+
 std::tuple<TimestampField, TimestampField>
 DefaultPhysicalOperatorProvider::getTimestampLeftAndRight(const std::shared_ptr<LogicalJoinOperator>& joinOperator,
                                                           const Windowing::TimeBasedWindowTypePtr& windowType) const {
     if (windowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime) {
-        NES_DEBUG("Skip eventime identification as we use ingestion time");
+        NES_DEBUG("Skip eventTime identification as we use ingestion time");
         return {TimestampField::IngestionTime(), TimestampField::IngestionTime()};
     } else {
-
-        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
-        auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
-        auto timeStampFieldNameWithoutSourceName =
-            timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-
-        // Lambda function for extracting the timestamp from a schema
-        auto findTimeStampFieldName = [&](const SchemaPtr& schema) {
-            for (const auto& field : schema->fields) {
-                if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
-                    return field->getName();
-                }
-            }
-            return std::string();
-        };
-
-        // Extracting the left and right timestamp
-        auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
-        auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
-
-        NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
-                   "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
-        NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
-
-        return {TimestampField::EventTime(timeStampFieldNameLeft, windowType->getTimeCharacteristic()->getTimeUnit()),
-                TimestampField::EventTime(timeStampFieldNameRight, windowType->getTimeCharacteristic()->getTimeUnit())};
+        return getEventTimeTimestampLeftAndRight(joinOperator->getLeftInputSchema(),
+                                                 joinOperator->getRightInputSchema(),
+                                                 windowType->getTimeCharacteristic());
     }
+}
+
+std::tuple<TimestampField, TimestampField>
+DefaultPhysicalOperatorProvider::getEventTimeTimestampLeftAndRight(SchemaPtr leftInputSchema,
+                                                                   SchemaPtr rightInputSchema,
+                                                                   Windowing::TimeCharacteristicPtr timeCharacteristic) const {
+
+    // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+    auto timeStampFieldName = timeCharacteristic->getField()->getName();
+    auto timeStampFieldNameWithoutSourceName =
+        timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
+    // Lambda function for extracting the timestamp from a schema
+    auto findTimeStampFieldName = [&](const SchemaPtr& schema) {
+        for (const auto& field : schema->fields) {
+            if (field->getName().find(timeStampFieldNameWithoutSourceName) != std::string::npos) {
+                return field->getName();
+            }
+        }
+        return std::string();
+    };
+
+    // Extracting the left and right timestamp
+    auto timeStampFieldNameLeft = findTimeStampFieldName(leftInputSchema);
+    auto timeStampFieldNameRight = findTimeStampFieldName(rightInputSchema);
+
+    NES_ASSERT(!(timeStampFieldNameLeft.empty() || timeStampFieldNameRight.empty()),
+               "Could not find timestampfieldname " << timeStampFieldNameWithoutSourceName << " in both streams!");
+    NES_DEBUG("timeStampFieldNameLeft:{}  timeStampFieldNameRight:{} ", timeStampFieldNameLeft, timeStampFieldNameRight);
+
+    return {TimestampField::EventTime(timeStampFieldNameLeft, timeCharacteristic->getTimeUnit()),
+            TimestampField::EventTime(timeStampFieldNameRight, timeCharacteristic->getTimeUnit())};
 }
 
 void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode) {

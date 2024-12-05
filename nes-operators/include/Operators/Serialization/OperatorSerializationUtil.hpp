@@ -31,6 +31,7 @@ class SerializableOperator_SinkDetails;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
 class SerializableOperator_BatchJoinDetails;
+class SerializableOperator_IntervalJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
 class SerializableOperator_LimitDetails;
 class SerializableOperator_MapDetails;
@@ -194,6 +195,23 @@ class OperatorSerializationUtil {
      */
     static Experimental::LogicalBatchJoinOperatorPtr
     deserializeBatchJoinOperator(const SerializableOperator_BatchJoinDetails& joinDetails, OperatorId operatorId);
+
+    /**
+     * @brief Serializes an interval join operator and all its properties to a SerializableOperator_IntervalJoinDetails object.
+     * @param LogicalIntervalJoinOperatorPtr The interval join operator node.
+     * @param serializedOperator serialized instance of the operator
+     */
+    static void serializeIntervalJoinOperator(const LogicalIntervalJoinOperator& intervalJoinOperator,
+                                              SerializableOperator& serializedOperator);
+
+    /**
+     * @brief Deserializes the SerializableOperator_IntervalJoinDetails and all its properties back to a interval join operatorNodePtr
+     * @param intervalJoinDetails The serialized interval join operator details.
+     * @param operatorId: id of the operator to be deserialized
+     * @return LogicalIntervalJoinOperator of type LogicalUnaryOperator
+     */
+    static LogicalIntervalJoinOperatorPtr
+    deserializeIntervalJoinOperator(const SerializableOperator_IntervalJoinDetails& intervalJoinDetails, OperatorId operatorId);
 
     /**
      * @brief Serializes an source descriptor and all its properties to a SerializableOperator_SourceDetails object.

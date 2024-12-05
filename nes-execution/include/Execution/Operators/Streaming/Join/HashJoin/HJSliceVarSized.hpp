@@ -43,6 +43,7 @@ class HJSliceVarSized : public StreamSlice {
     explicit HJSliceVarSized(size_t numberOfWorker,
                              uint64_t sliceStart,
                              uint64_t sliceEnd,
+                             uint64_t sliceId,
                              SchemaPtr& leftSchema,
                              SchemaPtr& rightSchema,
                              BufferManagerPtr& bufferManager,

@@ -17,6 +17,9 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
+#include <Reconfiguration/Metadata/DrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateAndDrainQueryMetadata.hpp>
+#include <Reconfiguration/Metadata/UpdateQueryMetadata.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -443,11 +446,53 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRetSize = dispatcherSocket.recv(eosEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto eosMsg = *eosEnvelope.data<Messages::EndOfStreamMessage>();
+                    auto reconfigurationEvents = eosMsg.getReconfigurationEventCount();
+                    std::optional<ReconfigurationMarkerPtr> marker = std::nullopt;
+                    if (reconfigurationEvents > 0) {
+                        marker = ReconfigurationMarker::create();
+                        for (auto i = 0; i < reconfigurationEvents; ++i) {
+                            zmq::message_t reconfigEnvelope;
+                            optRetSize = dispatcherSocket.recv(reconfigEnvelope, kZmqRecvDefault);
+                            NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                            auto reconfigMsg = *reconfigEnvelope.data<Messages::ReconfigurationEventMessage>();
+
+                            switch (reconfigMsg.metadataType) {
+                                case ReconfigurationMetadataType::DrainQuery:
+                                    marker.value()->addReconfigurationEvent(
+                                        reconfigMsg.key,
+                                        ReconfigurationMarkerEvent::create(
+                                            reconfigMsg.queryState,
+                                            std::make_shared<DrainQueryMetadata>(reconfigMsg.numberOfSources)));
+                                    break;
+                                case ReconfigurationMetadataType::UpdateAndDrainQuery:
+                                    marker.value()->addReconfigurationEvent(
+                                        reconfigMsg.key,
+                                        ReconfigurationMarkerEvent::create(
+                                            reconfigMsg.queryState,
+                                            std::make_shared<UpdateAndDrainQueryMetadata>(reconfigMsg.workerId,
+                                                                                          reconfigMsg.sharedQueryId,
+                                                                                          reconfigMsg.decomposedQueryId,
+                                                                                          reconfigMsg.decomposedQueryPlanVersion,
+                                                                                          reconfigMsg.numberOfSources)));
+                                    break;
+                                case ReconfigurationMetadataType::UpdateQuery:
+                                    marker.value()->addReconfigurationEvent(
+                                        reconfigMsg.key,
+                                        ReconfigurationMarkerEvent::create(
+                                            reconfigMsg.queryState,
+                                            std::make_shared<UpdateQueryMetadata>(reconfigMsg.workerId,
+                                                                                  reconfigMsg.sharedQueryId,
+                                                                                  reconfigMsg.decomposedQueryId,
+                                                                                  reconfigMsg.decomposedQueryPlanVersion)));
+                                    break;
+                            }
+                        }
+                    }
                     NES_WARNING("ZmqServer({}:{}): EndOfStream received for channel ",
                                 this->hostname,
                                 this->currentPort,
                                 eosMsg.getChannelId());
-                    exchangeProtocol.onEndOfStream(eosMsg);
+                    exchangeProtocol.onEndOfStream(eosMsg, marker);
                     break;
                 }
                 default: {

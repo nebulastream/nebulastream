@@ -62,12 +62,13 @@ void HJSliceVarSized::mergeLocalToGlobalHashTable() {
 HJSliceVarSized::HJSliceVarSized(size_t numberOfWorker,
                                  uint64_t sliceStart,
                                  uint64_t sliceEnd,
+                                 uint64_t sliceId,
                                  SchemaPtr& leftSchema,
                                  SchemaPtr& rightSchema,
                                  BufferManagerPtr& bufferManager,
                                  size_t pageSize,
                                  size_t numPartitions)
-    : StreamSlice(sliceStart, sliceEnd), mergingHashTableLeftSide(Operators::MergingHashTableVarSized(numPartitions)),
+    : StreamSlice(sliceStart, sliceEnd, sliceId), mergingHashTableLeftSide(Operators::MergingHashTableVarSized(numPartitions)),
       mergingHashTableRightSide(Operators::MergingHashTableVarSized(numPartitions)), alreadyMergedLocalToGlobalHashTable(false) {
 
     for (auto i = 0UL; i < numberOfWorker; ++i) {

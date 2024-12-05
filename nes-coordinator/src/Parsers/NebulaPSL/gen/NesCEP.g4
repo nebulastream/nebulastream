@@ -38,14 +38,17 @@ timeConstraints
 
 interval
 	:
-	INT intervalType
+	INT (WS)? intervalType
 	;
 
-intervalType
-    : QUARTER | MONTH | DAY | HOUR
-    | MINUTE | WEEK | SECOND | MICROSECOND
-    ;
+INT:
+  DEC_DIGIT+
+  ;
 
+intervalType
+    : 'QUARTER' | 'MONTH' | 'DAY' | 'HOUR'
+    | 'MINUTE' | 'WEEK' | 'SECOND' | 'MICROSECOND'
+    ;
 
 option
 	: ALL
@@ -58,16 +61,12 @@ outputExpression
 
 outAttribute
     :
-        NAME EQUAL attVal
+    NAME EQUAL attVal
     ;
 
 sinkList
 	: sink (COMMA sink)*
 	;
-
-sink
-  : sinkType SINKSEP NAME
-  ;
 
 listEvents
    : eventElem (operatorRule eventElem)*
@@ -99,30 +98,31 @@ iterMin:
 
 consecutiveOption: (ANY)? NEXT;
 
-
 operatorRule
    : AND
    | OR
    | sequence
    ;
+
 sequence
 	: SEQ
 	| contiguity
 	;
+
 contiguity
 	: NEXT
 	| ANY NEXT
 	;
 
   sinkType
-  : KAFKA
-  | FILE
-  | MQTT
-  | NETWORK
-  | NULLOUTPUT
-  | OPC
-  | PRINT
-  | ZMQ
+  : 'KAFKA'
+  | 'FILE'
+  | 'MQTT'
+  | 'NETWORK'
+  | 'NULLOUTPUT'
+  | 'OPC'
+  | 'PRINT'
+  | 'ZMQ'
   ;
 
 nullNotnull
@@ -133,39 +133,38 @@ constant
     : QUOTE NAME QUOTE | FLOAT | INT | NAME
     ;
 
+FLOAT:
+  DEC_DIGIT+ '.' DEC_DIGIT+
+  ;
 
 expressions
     : expression (COMMA expression)*
     ;
 
-
 // Simplified approach for expression
 expression
-    : NOT_OP expression                            #notExpression
+    : NOT_OP expression                                             #notExpression
     | expression logicalOperator expression                         #logicalExpression
     | predicate IS NOT? testValue=(TRUE | FALSE | UNKNOWN)          #isExpression
     | predicate                                                     #predicateExpression
     ;
 
 predicate
-    : predicate NOT? IN LPARENTHESIS expressions RPARENTHESIS    					#inPredicate
+    : predicate NOT? IN LPARENTHESIS expressions RPARENTHESIS    	#inPredicate
     | predicate IS nullNotnull                                      #isNullPredicate
     | left=predicate comparisonOperator right=predicate             #binaryComparisonPredicate
     | expressionAtom                         			            #expressionAtomPredicate
     ;
 
-
 expressionAtom
     : eventAttribute                                                #attributeAtom
-    | unaryOperator expressionAtom                                  #unaryExpressionAtom
+    | unaryOperator WS? expressionAtom                              #unaryExpressionAtom
     | BINARY expressionAtom                                         #binaryExpressionAtom
     | LPARENTHESIS expression (COMMA expression)* RPARENTHESIS      #nestedExpressionAtom
     | left=expressionAtom bitOperator right=expressionAtom          #bitExpressionAtom
     | left=expressionAtom mathOperator right=expressionAtom         #mathExpressionAtom
     | constant                                                      #constantExpressionAtom
-
     ;
-
 
 eventAttribute
     : aggregation LPARENTHESIS expressions RPARENTHESIS
@@ -175,13 +174,11 @@ eventAttribute
 
 eventIteration:
    NAME LBRACKET (mathExpression)? RBRACKET
-
 ;
 
 mathExpression:
   left=expressionAtom mathOperator right=expressionAtom
-| constant (D_POINTS constant)?
-
+  | constant (D_POINTS constant)?
 ;
 
 aggregation:
@@ -191,8 +188,30 @@ aggregation:
  | MAX
  | COUNT
  ;
+
+PROTOCOL
+    : 'http'
+    | 'https'
+    | 'ws'
+    | 'wss'
+    ;
+
+FILETYPE
+    : 'csv'
+    | 'txt'
+    ;
+
+value:
+    attribute POINT FILETYPE
+    | attribute
+    | URL;
+
 attribute
     : NAME
+    ;
+
+PORT
+    : INT                        // Numeric port
     ;
 
 attVal
@@ -207,15 +226,13 @@ boolRule: TRUE | FALSE;
 
 condition: LPARENTHESIS expression COMMA attVal COMMA attVal RPARENTHESIS;
 
-
 unaryOperator
     : '+' | '-' | NOT
     ;
 
-
 comparisonOperator
-    : '=' '=' | '>' | '<' | '<' '=' | '>' '='
-    | '<' '>' | '!' '=' | '<' '=' '>' |'='
+    : '=' WS? '=' | '>' | '<' | '<' WS? '=' | '>' WS? '='
+    | '<' WS? '>' | '!' WS? '=' | '<' WS? '=' WS? '>' |'='
     ;
 
 logicalOperator
@@ -230,13 +247,25 @@ mathOperator
     : '*' | '/' | '%'  | '+' | '-' | '--'
     ;
 
-
 //White space skipping
 WS
    : [ \r\n\t]+ -> skip
    ;
 
+sink
+  : sinkType LPARENTHESIS parameters RPARENTHESIS #sinkWithParameters
+  | sinkType                                      #sinkWithoutParameters
+  ;
 
+parameters
+   : parameter value (COMMA parameter value)*
+   ;
+
+parameter
+  : 'fileName'
+  | 'topic'
+  | 'address'
+   ;
 
 //KEYWORDs
 FROM:                              'FROM';
@@ -282,7 +311,6 @@ SECOND:                            'SECOND';
 MICROSECOND:                       'MICROSECOND';
 AS:                                'AS';
 EQUAL:                             '=';
-SINKSEP:                           '::';
 KAFKA:                             'Kafka';
 FILE:                              'File';
 MQTT:                              'MQTT';
@@ -291,6 +319,9 @@ NULLOUTPUT:                        'NullOutput';
 OPC:                               'OPC';
 PRINT:                             'Print';
 ZMQ:                               'ZMQ';
+fileName:                           'fileName';
+topic:                              'topic';
+address:                            'address';
 POINT:                              '.';
 QUOTE:                               '"';
 AVG:                               'AVG';
@@ -304,29 +335,25 @@ LOGAND:                            '&&';
 LOGXOR:                            '^';
 NONE:                              'NONE';
 
-
-
-
-
-INT:
-  DEC_DIGIT+
-  ;
-
-FLOAT:
-  DEC_DIGIT+ '.' DEC_DIGIT+
-  ;
+URL
+    : PROTOCOL '://' NAME (':' PORT)? (PATH)? // PATH is optional here
+    ;
 
 NAME
-	:
-	('a'..'z' | 'A'..'Z' | '_' )+ ID*
+    : (ALPHA | DEC_DIGIT)+ ( ('_' |'-')+ (ID | INT | NAME)*)?
 	;
 
 ID
 	:
-	('a'..'z' | 'A'..'Z' | '_' |INT)+
+	(ALPHA | INT)+
 	;
 
-
-
+PATH
+    : ('/')+               // Optional path, disallowing spaces
+    ;
 
 fragment DEC_DIGIT:                  [0-9];
+
+fragment ALPHA
+    : [a-zA-Z]+                      // Alphabetic characters
+    ;

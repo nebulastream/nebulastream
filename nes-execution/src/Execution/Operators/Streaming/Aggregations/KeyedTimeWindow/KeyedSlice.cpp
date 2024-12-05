@@ -20,5 +20,6 @@ KeyedSlice::KeyedSlice(std::unique_ptr<Nautilus::Interface::ChainedHashMap> hash
     : start(start), end(end), state(std::move(hashMap)) {}
 
 KeyedSlice::~KeyedSlice() { NES_DEBUG("~KeyedSlice {}-{}", start, end); }
+KeyedSlice::KeyedSlice() { NES_DEBUG("~KeyedSlice {}-{}", start, end); }
 
 }// namespace NES::Runtime::Execution::Operators

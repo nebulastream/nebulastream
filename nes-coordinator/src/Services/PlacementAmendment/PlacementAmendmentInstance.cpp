@@ -187,19 +187,17 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 const auto& workerId = deploymentAdditionContext->getWorkerId();
                 const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
                 const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
-                auto key = workerId.toString() + "-" + sharedQueryId.toString() + "-" + decomposedQueryId.toString();
                 const auto& decomposedQueryPlanVersion = deploymentAdditionContext->getDecomposedQueryPlanVersion();
                 auto reConfMetaData =
                     std::make_shared<UpdateQueryMetadata>(workerId, sharedQueryId, decomposedQueryId, decomposedQueryPlanVersion);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
                 const auto& workerId = deploymentAdditionContext->getWorkerId();
                 const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
                 const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
-                auto key = workerId.toString() + "-" + sharedQueryId.toString() + "-" + decomposedQueryId.toString();
                 // Fetch already deployed decomposed query plan from the execution plan to count number of sources the plan to be
                 // terminated has. This will allow us to compute the number of reconfiguration markers to be received before
                 // terminating the decomposed query.
@@ -208,7 +206,7 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 auto numOfSourceOperators = deployedDecomposedQueryPlan->getSourceOperators().size();
                 auto reConfMetaData = std::make_shared<DrainQueryMetadata>(numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, markerEvent);
                 break;
             }
             case QueryState::MARKED_FOR_UPDATE_AND_DRAIN: {
@@ -216,7 +214,6 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                 const auto& sharedQueryId = deploymentAdditionContext->getSharedQueryId();
                 const auto& decomposedQueryId = deploymentAdditionContext->getDecomposedQueryId();
                 const auto& decomposedQueryVersion = deploymentAdditionContext->getDecomposedQueryPlanVersion();
-                auto key = workerId.toString() + "-" + sharedQueryId.toString() + "-" + decomposedQueryId.toString();
                 // Fetch already deployed decomposed query plan from the execution plan to count number of sources the plan to be
                 // terminated has. This will allow us to compute the number of reconfiguration markers to be received before
                 // terminating the decomposed query.
@@ -229,7 +226,7 @@ void PlacementAmendmentInstance::updateReconfigurationMarker(Optimizer::Deployme
                                                                                     decomposedQueryVersion,
                                                                                     numOfSourceOperators);
                 auto markerEvent = ReconfigurationMarkerEvent::create(queryState, reConfMetaData);
-                reconfigurationMarker->addReconfigurationEvent(key, markerEvent);
+                reconfigurationMarker->addReconfigurationEvent(decomposedQueryId, markerEvent);
                 break;
             }
 

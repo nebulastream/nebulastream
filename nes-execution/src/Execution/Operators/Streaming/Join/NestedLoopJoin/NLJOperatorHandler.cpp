@@ -31,8 +31,11 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
         dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
 
+        // Gets new empty pooled tupleBuffer from BufferPoolManager
         auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+        // Returns the buffer memory of the tuple buffer as an EmittedNLJWindowTriggerTask (containing information for a join window trigger)
         auto bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTriggerTask>();
+        // set information in buffer
         bufferMemory->leftSliceIdentifier = sliceLeft.getSliceIdentifier();
         bufferMemory->rightSliceIdentifier = sliceRight.getSliceIdentifier();
         bufferMemory->windowInfo = windowInfo;
@@ -45,11 +48,15 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
         tupleBuffer.setSequenceData({getNextSequenceNumber(), /*chunkNumber*/ 1, true});
         tupleBuffer.setWatermark(std::min(sliceLeft.getSliceStart(), sliceRight.getSliceStart()));
 
+        // The tupleBuffer is emitted to the Query manager, where a new task is created for it
         pipelineCtx->dispatchBuffer(tupleBuffer);
-        NES_INFO("Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
+        NES_INFO("Emitted leftSliceId {} (end {}) rightSliceId {} (end {}) with watermarkTs {} sequenceNumber {} originId {} for "
+                 "no. left tuples "
                  "{} and no. right tuples {}",
                  bufferMemory->leftSliceIdentifier,
+                 sliceLeft.getSliceEnd(),
                  bufferMemory->rightSliceIdentifier,
+                 sliceRight.getSliceEnd(),
                  tupleBuffer.getWatermark(),
                  tupleBuffer.getSequenceNumber(),
                  tupleBuffer.getOriginId(),
@@ -58,9 +65,10 @@ void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
     }
 }
 
-StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
+StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, uint64_t sliceId) {
     return std::make_shared<NLJSlice>(sliceStart,
                                       sliceEnd,
+                                      sliceId,
                                       numberOfWorkerThreads,
                                       bufferManager,
                                       leftSchema,
