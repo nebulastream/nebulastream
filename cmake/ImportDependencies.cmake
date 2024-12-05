@@ -22,6 +22,10 @@ if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     SET(DOCKER_DEV_IMAGE ON CACHE BOOL "Using Docker Development Image")
 endif ()
 
+if (NOT DEFINED ENV{LLVM_VERSION})
+    set(ENV{LLVM_VERSION} "${LLVM_MAJOR_VERSION}")
+endif ()
+
 # Default Settings:
 # CMAKE_TOOLCHAIN_FILE    -> Local VCPKG Repository. Will build dependencies locally
 # NES_PREBUILT_VCPKG_ROOT -> Docker Environment with pre-built sdk.
