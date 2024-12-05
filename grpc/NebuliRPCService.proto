@@ -1,0 +1,89 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+import "SerializableSchema.proto";
+
+package NES;
+
+service NebuliRPCService {
+  rpc RegisterQuery (RegisterQueryRequest) returns (RegisterQueryReply) {}
+  rpc UnregisterQuery (UnregisterQueryRequest) returns (google.protobuf.Empty) {}
+
+  rpc StartQuery (StartQueryRequest) returns (google.protobuf.Empty) {}
+  rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
+}
+
+message RegisterQueryRequest {
+
+  message Field {
+    enum  BasicType
+    {
+      INT8 = 0;
+      UINT8 = 1;
+      INT16 = 2;
+      UINT16 = 3;
+      INT32 = 4;
+      UINT32 = 5;
+      INT64 = 6;
+      FLOAT32 = 7;
+      UINT64 = 8;
+      FLOAT64 = 9;
+      BOOLEAN = 10;
+      CHAR = 11;
+    };
+    string name = 1;
+    BasicType type = 2;
+  }
+
+  message Sink {
+    string name = 1;
+    string type = 2;
+    map<string, string> config = 3;
+  }
+
+  message LogicalSource {
+    string name = 1;
+    repeated Field schema = 2;
+  }
+
+  message PhysicalSource {
+    string logical = 1;
+    map<string, string> parserConfig = 2;
+    map<string, string> sourceConfig = 3;
+  }
+
+  string query = 1;
+  Sink sink = 2;
+  repeated LogicalSource logical = 3;
+  repeated PhysicalSource physical = 4;
+}
+
+message RegisterQueryReply {
+  uint64 queryId = 1;
+}
+
+message UnregisterQueryRequest {
+  uint64 queryId = 1;
+}
+
+message StartQueryRequest {
+  uint64 queryId = 1;
+}
+
+message StopQueryRequest {
+  uint64 queryId = 1;
+}
+
