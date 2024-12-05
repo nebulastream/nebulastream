@@ -60,6 +60,12 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
     SystestParser::Schema schema;
     if (arguments.size() % 2 != 0)
     {
+        if(const auto& lastArg = arguments.back(); lastArg.ends_with(".csv"))
+        {
+            throw SLTUnexpectedToken(
+                "Incomplete fieldtype/fieldname pair for arguments {}; {} potentially is a CSV file? Are you mixing semantics",
+                fmt::join(arguments, ","), lastArg);
+        }
         throw SLTUnexpectedToken("Incomplete fieldtype/fieldname pair for arguments {}", fmt::join(arguments, ", "));
     }
 
@@ -74,7 +80,6 @@ SystestParser::Schema parseSchemaFields(const std::vector<std::string>& argument
             throw SLTUnexpectedToken("Unknown basic type: " + arguments[i]);
         }
     }
-
 
     return schema;
 }
