@@ -2,7 +2,7 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-# Todo 502
+# Todo 484 Validate that exception is thrown
 # The 'TESTDATA/200x8-rows-fields.csv' is wrong. However, our test parser does not catch this.
 # Instead the systest-utils runs indefinitely.
 Source fiveTuples UINT64 field_1 TESTDATA/200x8-rows-fields.csv
@@ -17,8 +17,4 @@ SINK fiveTuplesSink UINT64 fiveTuples$field_1
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO fiveTuplesSink
 ----
-1
-2
-3
-4
-5
+ErrorCode 1003 # or fitting Code
