@@ -1,18 +1,20 @@
 # name: buffersize/TwoSourcesOneEmtpy.test
-# description: Simple source/buffer tests
+# description: #503: Two sources do not work. Is this a special case that is different from 'TwoSources.test'?
 # groups: [Sources]
 
-# Todo #503: Two sources do not work. Is this a special case that is different from 'TwoSources.test'?
 Source noTuple UINT64 field_1
 
 Source oneTuple UINT64 field_1 # Probably triggers a parser bug (parser still looks for tuples)
 1
 
+SINK noTupleSink UINT64_t noTuple$field_1
+SINK oneTupleSink UINT64_t oneTuple$field_1
+
 # Description: check if we run into an error if we process a single tuple.
-SELECT field_1 FROM noTuple INTO SINK
+SELECT field_1 FROM noTuple INTO noTupleSink
 ----
 
 # Description: check if we run into an error if we process a single tuple.
-SELECT field_1 FROM oneTuple INTO SINK
+SELECT field_1 FROM oneTuple INTO oneTupleSink
 ----
 1

@@ -1,8 +1,7 @@
 # name: sources/TESTDATACanNotAppearInTestName.test
-# description: Simple source/buffer tests
+# description: #503
 # groups: [Tuples]
 
-# Todo #503
 # Both queries below should pass, but the first fails.
 Source fiveTuples UINT64 field_1
 1
@@ -19,8 +18,11 @@ Source sixTuples UINT64 field_1
 5
 6
 
+SINK fiveTuplesSink UINT64 fiveTuples$field_1
+SINK sixTuplesSink UINT64 sixTuples$field_1
+
 # Description: simply reads in five tuples with a single value and produces the same tuples
-SELECT field_1 FROM fiveTuples INTO SINK
+SELECT field_1 FROM fiveTuples INTO fiveTuplesSink
 ----
 1
 2
@@ -29,7 +31,7 @@ SELECT field_1 FROM fiveTuples INTO SINK
 5
 
 # Description: simply reads in six tuples with a single value and produces the same tuples
-SELECT field_1 FROM sixTuples INTO SINK
+SELECT field_1 FROM sixTuples INTO sixTuplesSink
 ----
 1
 2
