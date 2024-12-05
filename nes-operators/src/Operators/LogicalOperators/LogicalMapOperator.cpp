@@ -12,11 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -59,10 +60,8 @@ bool LogicalMapOperator::inferSchema()
     /// use the default input schema to calculate the out schema of this operator.
     mapFunction->inferStamp(getInputSchema());
 
-    auto assignedField = mapFunction->getField();
-    std::string fieldName = assignedField->getFieldName();
-
-    if (outputSchema->getField(fieldName))
+    const auto assignedField = mapFunction->getField();
+    if (std::string fieldName = assignedField->getFieldName(); outputSchema->getFieldByName(fieldName))
     {
         /// The assigned field is part of the current schema.
         /// Thus we check if it has the correct type.
@@ -88,7 +87,7 @@ std::string LogicalMapOperator::toString() const
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
+    auto copy = std::make_shared<LogicalMapOperator>(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -118,4 +117,5 @@ void LogicalMapOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
+
 }

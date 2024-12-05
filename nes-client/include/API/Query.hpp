@@ -147,7 +147,7 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] Query& where(const NodeFunctionPtr joinFunction) const;
+    [[nodiscard]] Query& where(const NodeFunctionPtr& joinFunction) const;
 
 private:
     const Query& subQueryRhs;
@@ -369,7 +369,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(std::vector<NodeFunctionPtr> functions);
+    Query& project(const std::vector<NodeFunctionPtr>& functions);
 
     /**
      * @brief: Filter records according to the predicate. An
@@ -377,7 +377,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& filter(NodeFunctionPtr const& filterFunction);
+    Query& selection(NodeFunctionPtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -425,7 +425,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -436,7 +436,7 @@ private:
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction);
+    Query& batchJoinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -448,7 +448,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -460,7 +460,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -489,7 +489,7 @@ private:
       * @param joinFunctions key functions
       * @return joinType
       */
-    Join::LogicalJoinDescriptor::JoinType identifyJoinType(NodeFunctionPtr joinFunctions);
+    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(const NodeFunctionPtr& joinFunctions);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

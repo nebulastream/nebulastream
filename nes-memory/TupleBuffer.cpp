@@ -14,6 +14,7 @@
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include "TupleBufferImpl.hpp"
 namespace NES::Memory
@@ -131,15 +132,15 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
-Timestamp TupleBuffer::getWatermark() const noexcept
+Runtime::Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(Timestamp value) noexcept
+void TupleBuffer::setWatermark(Runtime::Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
+Runtime::Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
@@ -169,7 +170,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(Timestamp value) noexcept
+void TupleBuffer::setCreationTimestampInMS(Runtime::Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }

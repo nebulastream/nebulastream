@@ -1,0 +1,9 @@
+Checks: [
+  -clang-diagnostic-*
+]
+
+WarningsAsErrors: '
+  -*,
+'
+
+HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories

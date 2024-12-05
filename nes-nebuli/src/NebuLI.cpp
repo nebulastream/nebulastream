@@ -16,6 +16,7 @@
 #include <fstream>
 #include <ranges>
 #include <regex>
+#include <utility>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -30,8 +31,9 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ranges.h>
 #include <nlohmann/detail/input/binary_reader.hpp>
@@ -79,7 +81,8 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -101,8 +104,43 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-Sources::SourceDescriptor
-createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+{
+    auto validParserConfig = Sources::ParserConfig{};
+    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    {
+        validParserConfig.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    {
+        validParserConfig.tupleDelimiter = tupleDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        validParserConfig.tupleDelimiter = "\n";
+    }
+    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    {
+        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        validParserConfig.fieldDelimiter = ",";
+    }
+    return validParserConfig;
+}
+
+Sources::SourceDescriptor createSourceDescriptor(
+    std::string logicalSourceName,
+    SchemaPtr schema,
+    const std::unordered_map<std::string, std::string>& parserConfig,
+    std::unordered_map<std::string, std::string> sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -111,15 +149,10 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
-    /// We currently only support CSV
-    auto inputFormat = Configurations::InputFormat::CSV;
-
-    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
-    {
-        return Sources::SourceDescriptor(
-            std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
-    }
-    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
+    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    return Sources::SourceDescriptor(
+        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
 }
 
 void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
@@ -163,10 +196,10 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, config] : config.physical)
+    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
-        auto sourceDescriptor
-            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
+        auto sourceDescriptor = createSourceDescriptor(
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
@@ -195,7 +228,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return DecomposedQueryPlan::create(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)

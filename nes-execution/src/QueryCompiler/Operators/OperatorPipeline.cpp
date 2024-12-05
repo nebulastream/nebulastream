@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <utility>
@@ -34,7 +35,9 @@ PipelineId getNextPipelineId()
 }
 
 OperatorPipeline::OperatorPipeline(PipelineId pipelineId, Type pipelineType)
-    : id(pipelineId), decomposedQueryPlan(DecomposedQueryPlan::create(INVALID_QUERY_ID, INVALID_WORKER_NODE_ID)), pipelineType(pipelineType)
+    : id(pipelineId)
+    , decomposedQueryPlan(std::make_shared<DecomposedQueryPlan>(INVALID_QUERY_ID, INVALID_WORKER_NODE_ID))
+    , pipelineType(pipelineType)
 {
 }
 

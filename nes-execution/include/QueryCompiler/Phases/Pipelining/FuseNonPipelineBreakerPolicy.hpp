@@ -20,7 +20,7 @@ namespace NES::QueryCompilation
 /**
  * @brief This operator fusion policy fuses all non pipeline breakers (operators, which do not materialize data).
  * Currently fusion is enabled for:
- * PhysicalMapOperator, PhysicalFilterOperator, PhysicalProjectOperator,
+ * PhysicalMapOperator, PhysicalSelectionOperator, PhysicalProjectOperator,
  * PhysicalWatermarkAssignmentOperator, PhysicalJoinBuildOperator,
  * PhysicalSlicePreAggregationOperator, PhysicalSliceMergingOperator.
  */

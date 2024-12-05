@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -67,7 +67,7 @@ bool LogicalUnionOperator::inferSchema()
         rightInputSchema->copyFields(distinctSchemas[1]);
     }
 
-    if (!leftInputSchema->hasEqualTypes(rightInputSchema))
+    if (!(*leftInputSchema == *rightInputSchema))
     {
         throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
@@ -89,7 +89,7 @@ bool LogicalUnionOperator::inferSchema()
 
 OperatorPtr LogicalUnionOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createUnionOperator(id);
+    auto copy = std::make_shared<LogicalUnionOperator>(id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -110,7 +110,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
         auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
-        return leftInputSchema->equals(rhsUnion->getLeftInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
+        return (*leftInputSchema == *rhsUnion->getLeftInputSchema()) && (*outputSchema == *rhsUnion->getOutputSchema());
     }
     return false;
 }

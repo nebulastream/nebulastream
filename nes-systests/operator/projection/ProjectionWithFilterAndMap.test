@@ -2,7 +2,7 @@
 # description: Simple map tests with an add function
 # groups: [Projection, Filter, Map]
 
-Source window UINT64 id UINT64 value UINT64 timestamp
+Source stream UINT64 id UINT64 value UINT64 timestamp
 1,1,1000
 2,1,1001
 3,1,1002
@@ -11,47 +11,41 @@ Source window UINT64 id UINT64 value UINT64 timestamp
 6,20,20000
 7,21,21000
 
+SINK sinkId UINT64 stream$id
+SINK sinkNewId UINT64 stream$new_id
+
+
 # 0: first filter on 'timestamp', then project on 'id'
-SELECT id FROM window WHERE timestamp == 1002 INTO SINK
+SELECT id FROM stream WHERE timestamp == 1002 INTO sinkId
 ----
 3
 
 # 1: first filter on 'timestamp' and 'value', then project on 'id'
-SELECT id FROM window WHERE timestamp == 1002 AND value == 1 INTO SINK
+SELECT id FROM stream WHERE timestamp == 1002 AND value == 1 INTO sinkId
 ----
 3
 
 # 2: filter -> project [id]
-SELECT id FROM window WHERE id == 1 INTO SINK
+SELECT id FROM stream WHERE id == 1 INTO sinkId
 ----
 1
 
 # 3: project -> filter -> map [id]
-SELECT id * 2 AS id FROM window WHERE id == 1 INTO SINK
+SELECT id * 2 AS id FROM stream WHERE id == 1 INTO sinkId
 ----
 2
 
 # It is not possible to write (without using a subquery):
-#   SELECT id * 2 AS new_id FROM window WHERE new_id == 2
+#   SELECT id * 2 AS new_id FROM stream WHERE new_id == 2
 # this is in line with the SQL standard: https://dev.mysql.com/doc/refman/8.4/en/problems-with-alias.html
 # 4: map -> filter -> project [id]
 SELECT new_id FROM
-    (SELECT id * 2 AS new_id FROM window)
-WHERE new_id == 2 INTO SINK
+    (SELECT id * 2 AS new_id FROM stream)
+WHERE new_id == 2 INTO sinkNewId
 ----
 2
 
 # 5: filter -> map -> project [id -> new_id]
-SELECT id * 2 AS new_id FROM window WHERE id == 1 INTO SINK
+SELECT id * 2 AS new_id FROM stream WHERE id == 1 INTO sinkNewId
 ----
 2
-
-# 6: filter -> map ->  project [id, id * 2 -> new_id, value, timestamp]
-SELECT id, id * 2 AS new_id, value, timestamp FROM window WHERE id == 1 INTO SINK
-----
-1 2 1 1000
-
-# 7: filter -> map -> project -> map -> map [new_id -> id, value, timestamp]
-SELECT id * 2 AS new_id, id, id AS value, id * 1000 AS timestamp FROM window WHERE id == 1 INTO SINK
-----
-2 1 1 1000

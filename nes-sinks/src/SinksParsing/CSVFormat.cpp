@@ -36,20 +36,11 @@ CSVFormat::CSVFormat(std::shared_ptr<Schema> schema, bool addTimestamp) : schema
 
 std::string CSVFormat::getFormattedSchema() const
 {
-    std::stringstream formattedSchema;
-    for (auto& attributeField : schema->fields)
-    {
-        formattedSchema << attributeField->toString() << ", ";
-    }
-    formattedSchema.seekp(-1, std::ios_base::end);
-    formattedSchema << std::endl;
-
     if (addTimestamp)
     {
-        formattedSchema << Util::trimWhiteSpaces(formattedSchema.str());
-        formattedSchema << ", timestamp\n";
+        return schema->toString("", ", ", ", timestamp\n");
     }
-    return formattedSchema.str();
+    return schema->toString("", ", ", "\n");
 }
 
 constexpr auto replaceNewlines(const std::string_view input, const std::string_view replacement)
@@ -99,9 +90,9 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
     for (uint64_t i = 0; i < numberOfTuples; i++)
     {
         uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++)
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
         {
-            auto field = schema->get(j);
+            auto field = schema->getFieldByIndex(j);
             auto dataType = field->getDataType();
             auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
             auto fieldSize = physicalType->size();
@@ -123,7 +114,7 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(Memory::TupleBuffer tbuff
             }
 
             ss << str;
-            if (j < schema->getSize() - 1)
+            if (j < schema->getFieldCount() - 1)
             {
                 ss << ",";
             }

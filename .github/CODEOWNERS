@@ -28,3 +28,4 @@
 /vcpkg/ @keyseven123 @ls-1801 @adrianmichalke
 
 # We  set here the ownership specific files or folders. This will be populated in the future
+/docs/watermarking_progress_window_triggering.md @keyseven123 @alepping

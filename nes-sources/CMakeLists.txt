@@ -18,15 +18,16 @@ get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sources
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-data-types nes-memory)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-input-formatters)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+        $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-add_tests_if_enabled(tests)
+# There are currently no tests in nes-sources. There are system level tests and integration tests (nes-single-node-worker)

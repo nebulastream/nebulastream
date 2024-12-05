@@ -16,4 +16,5 @@ add_source_files(nes-execution
         )
 
 add_subdirectory(ArithmeticalFunctions)
+add_subdirectory(Comparison)
 add_subdirectory(LogicalFunctions)

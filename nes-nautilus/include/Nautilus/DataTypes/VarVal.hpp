@@ -141,21 +141,35 @@ public:
     VarVal(const VarVal& other);
     VarVal(VarVal&& other) noexcept;
     VarVal& operator=(const VarVal& other);
-    VarVal& operator=(VarVal&& other);
+    VarVal& operator=(VarVal&& other) noexcept;
     explicit operator bool() const;
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal);
 
-    /// Casts the underlying value to the given type T1. If the cast is not possible, a std::bad_variant_access exception is thrown.
-    /// This should be the only way how the underlying value can be accessed.
+    /// Casts the underlying value to the given type T1. This should be the only way how the underlying value can be accessed.
     template <typename T1>
     T1 cast() const
     {
+        /// If the underlying value is the same type as T1, we can return it directly.
         if (std::holds_alternative<T1>(value))
         {
             return std::get<T1>(value);
         }
-        auto strType = std::visit([](auto&& x) -> decltype(auto) { return typeid(x).name(); }, value);
-        throw UnsupportedOperation("Tried to cast to " + std::string(typeid(T1).name()) + " but was type " + strType);
+
+        return std::visit(
+            []<typename T0>(T0&& underlyingValue) -> T1
+            {
+                using removedCVRefT0 = std::remove_cvref_t<T0>;
+                using removedCVRefT1 = std::remove_cvref_t<T1>;
+                if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
+                {
+                    throw UnsupportedOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else
+                {
+                    return static_cast<T1>(underlyingValue);
+                }
+            },
+            value);
     }
 
     template <typename T>

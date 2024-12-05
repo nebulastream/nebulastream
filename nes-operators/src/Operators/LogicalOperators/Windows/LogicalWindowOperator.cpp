@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
@@ -66,7 +66,7 @@ bool LogicalWindowOperator::equal(NodePtr const& rhs) const
 
 OperatorPtr LogicalWindowOperator::copy()
 {
-    auto copy = NES::Util::as<LogicalWindowOperator>(LogicalOperatorFactory::createWindowOperator(windowDefinition, id));
+    auto copy = std::make_shared<LogicalWindowOperator>(windowDefinition, id);
     copy->setOriginId(originId);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -109,9 +109,8 @@ bool LogicalWindowOperator::inferSchema()
             return false;
         }
         outputSchema
-            = outputSchema
-                  ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64))
-                  ->addField(createField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64));
+            = outputSchema->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "start", BasicType::UINT64)
+                  ->addField(inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "end", BasicType::UINT64);
     }
     else if (Util::instanceOf<Windowing::ContentBasedWindowType>(windowType))
     {

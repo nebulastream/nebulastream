@@ -21,7 +21,6 @@
 #include <string>
 #include <type_traits>
 #include <variant>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -65,7 +64,7 @@ public:
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
             throw BufferAccessException(
-                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
+                "Wrong field type passed. Field is of type {}  but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
     };
@@ -81,7 +80,7 @@ public:
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
             throw BufferAccessException(
-                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
+                "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
     };
@@ -98,7 +97,7 @@ public:
         if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
         {
             throw BufferAccessException(
-                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
+                "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
     };
@@ -114,7 +113,7 @@ public:
         if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
         {
             throw BufferAccessException(
-                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
+                "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
     };
@@ -130,7 +129,7 @@ public:
         if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
         {
             throw BufferAccessException(
-                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
+                "Wrong field type passed. Field is of type {} but accessed as {}", physicalType->toString(), typeid(Type).name());
         }
         *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
     };
@@ -336,8 +335,9 @@ public:
         if (recordIndex >= buffer.getBufferSize())
         {
             throw BufferAccessException(
-                "Current buffer is not big enough for index. Current buffer size: " + std::to_string(buffer.getBufferSize())
-                + ", Index: " + std::to_string(recordIndex));
+                "Current buffer is not big enough for index. Current buffer size: {}, Index: {}",
+                std::to_string(buffer.getBufferSize()),
+                std::to_string(recordIndex));
         }
         /// std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         /// On each iteration, the lambda function is called with the current field value, and the field index is increased.

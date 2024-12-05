@@ -1,0 +1,50 @@
+# This workflow builds and tests a ref, on a combination of different architectures and standard libraries.
+name: Build and Test
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        type: string
+        required: true
+        description: "ref of the branch"
+
+jobs:
+  build-and-test-linux:
+    name: "Build and test ${{matrix.arch}} with ${{matrix.stdlib}}"
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+        MOLD_JOBS: 1
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64, arm64 ]
+        stdlib: [ 'libstdcxx', 'libcxx' ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        # timeout of 600 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && !github.event.act }}
+        with:
+          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}.xml
+          path: /junit.xml

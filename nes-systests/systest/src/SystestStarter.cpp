@@ -142,7 +142,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
         auto testMap = loadTestFileMap(config);
 
         auto expectedGroup = program.get<std::string>("-g");
-        expectedGroup.erase(std::remove_if(expectedGroup.begin(), expectedGroup.end(), isspace), expectedGroup.end());
+        std::erase_if(expectedGroup, isspace);
 
         auto found = std::any_of(
             testMap.begin(),
@@ -153,6 +153,7 @@ Configuration::SystestConfiguration readConfiguration(int argc, const char** arg
                 const auto& groups = testfile.groups;
                 return std::any_of(groups.begin(), groups.end(), [&expectedGroup](const auto& group) { return group == expectedGroup; });
             });
+        config.testGroup = expectedGroup;
     }
 
     if (program.is_used("--shuffle"))
@@ -276,16 +277,24 @@ int main(int argc, const char** argv)
     using namespace NES;
     int returnCode = 0;
 
+    setupLogging();
+
     try
     {
         /// Read the configuration
         auto config = Systest::readConfiguration(argc, argv);
 
-        setupLogging();
-
         auto testMap = Systest::loadTestFileMap(config);
         const auto queries = loadQueries(std::move(testMap), config.resultDir.getValue());
         std::cout << std::format("Running a total of {} queries.", queries.size()) << std::endl;
+        if (queries.empty())
+        {
+            std::stringstream outputMessage;
+            outputMessage << "No queries were run.";
+            NES_ERROR("{}", outputMessage.str());
+            std::cout << outputMessage.str() << '\n';
+            std::exit(1);
+        }
 
         std::filesystem::remove_all(config.resultDir.getValue());
         std::filesystem::create_directory(config.resultDir.getValue());
@@ -303,10 +312,14 @@ int main(int argc, const char** argv)
         }
         else
         {
-            auto singleNodeWorkerConfiguration = Configuration::SingleNodeWorkerConfiguration();
+            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(Configuration::SingleNodeWorkerConfiguration{});
             if (not config.workerConfig.getValue().empty())
             {
                 singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+            }
+            else if (config.singleNodeWorkerConfig.has_value())
+            {
+                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
 
             failedQueries = runQueriesAtLocalWorker(queries, numberConcurrentQueries, singleNodeWorkerConfiguration);

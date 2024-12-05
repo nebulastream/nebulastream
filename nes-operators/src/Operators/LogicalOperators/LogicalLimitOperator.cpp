@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -64,7 +64,7 @@ bool LogicalLimitOperator::inferSchema()
 
 OperatorPtr LogicalLimitOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createLimitOperator(limit, id);
+    auto copy = std::make_shared<LogicalLimitOperator>(limit, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);

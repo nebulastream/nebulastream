@@ -36,7 +36,7 @@ void QueryPlanSerializationUtil::serializeQueryPlan(
     auto bfsIterator = PlanIterator(queryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
     {
-        auto visitingOp = NES::Util::as<Operator>(*itr);
+        auto visitingOp = NES::Util::as<LogicalOperator>(*itr);
         if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
         {
             /// skip rest of the steps as the operator is already serialized

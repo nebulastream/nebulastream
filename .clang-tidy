@@ -58,6 +58,7 @@ Checks: [
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-llvm-namespace-comment", # we do not require namespace comments
+  "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
@@ -236,7 +237,6 @@ WarningsAsErrors: '
   -google-upgrade-googletest-case,
   -fuchsia-multiple-inheritance,
   -cppcoreguidelines-pro-type-member-init,
-  -fuchsia-statically-constructed-objects,
   -cppcoreguidelines-pro-type-static-cast-downcast,
   -misc-unused-parameters,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
@@ -268,7 +268,6 @@ WarningsAsErrors: '
   -readability-identifier-naming,
   -misc-include-cleaner,
   -modernize-use-trailing-return-type,
-  -clang-diagnostic-*,
 '
 
 HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
@@ -302,5 +301,5 @@ CheckOptions:
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
   # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
-  readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs"
-  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs'
+  readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs|ts"
+  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs|ts'

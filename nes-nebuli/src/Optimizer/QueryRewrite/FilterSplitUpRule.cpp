@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <set>
+#include <vector>
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterSplitUpRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -33,18 +35,18 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan)
 {
     NES_INFO("Applying FilterSplitUpRule to query {}", queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
-    std::set<LogicalFilterOperatorPtr> filterOperatorsSet;
+    std::set<LogicalSelectionOperatorPtr> filterOperatorsSet;
     for (const OperatorPtr& rootOperator : rootOperators)
     {
-        auto filters = rootOperator->getNodesByType<LogicalFilterOperator>();
+        auto filters = rootOperator->getNodesByType<LogicalSelectionOperator>();
         filterOperatorsSet.insert(filters.begin(), filters.end());
     }
-    std::vector<LogicalFilterOperatorPtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
+    std::vector<LogicalSelectionOperatorPtr> filterOperators(filterOperatorsSet.begin(), filterOperatorsSet.end());
     NES_DEBUG("FilterSplitUpRule: Sort all filter nodes in increasing order of the operator id")
     std::sort(
         filterOperators.begin(),
         filterOperators.end(),
-        [](const LogicalFilterOperatorPtr& lhs, const LogicalFilterOperatorPtr& rhs) { return lhs->getId() < rhs->getId(); });
+        [](const LogicalSelectionOperatorPtr& lhs, const LogicalSelectionOperatorPtr& rhs) { return lhs->getId() < rhs->getId(); });
     auto originalQueryPlan = queryPlan->copy();
     try
     {
@@ -63,19 +65,19 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan)
     }
 }
 
-void FilterSplitUpRule::splitUpFilters(LogicalFilterOperatorPtr filterOperator)
+void FilterSplitUpRule::splitUpFilters(LogicalSelectionOperatorPtr filterOperator)
 {
     /// if our query plan contains a parentOperaters->filter(function1 && function2)->childOperator.
     /// We can rewrite this plan to parentOperaters->filter(function1)->filter(function2)->childOperator.
     if (Util::instanceOf<NodeFunctionAnd>(filterOperator->getPredicate()))
     {
         /// create filter that contains function1 of the andFunction
-        auto child1 = Util::as<LogicalFilterOperator>(filterOperator->copy());
+        auto child1 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
         child1->setId(getNextOperatorId());
         child1->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[0]));
 
         /// create filter that contains function2 of the andFunction
-        auto child2 = Util::as<LogicalFilterOperator>(filterOperator->copy());
+        auto child2 = Util::as<LogicalSelectionOperator>(filterOperator->copy());
         child2->setId(getNextOperatorId());
         child2->setPredicate(Util::as<NodeFunction>(filterOperator->getPredicate()->getChildren()[1]));
 

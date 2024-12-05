@@ -65,14 +65,14 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     auto originalFieldName = getOriginalField();
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
-    auto fieldAttribute = schema->getField(fieldName);
+    auto fieldAttribute = schema->getFieldByName(fieldName);
     ///Detect if user has added attribute name separator
+    if (!fieldAttribute)
+    {
+        throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
+    }
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        if (!fieldAttribute)
-        {
-            throw FieldNotFound("Original field with name: {} does not exists in the schema: {}", fieldName, schema->toString());
-        }
         newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
     }
 
@@ -82,14 +82,14 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     }
     else
     {
-        auto newFieldAttribute = schema->getField(newFieldName);
+        auto newFieldAttribute = schema->getFieldByName(newFieldName);
         if (newFieldAttribute)
         {
             throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
         }
     }
     /// assign the stamp of this field access with the type of this field.
-    stamp = fieldAttribute->getDataType();
+    stamp = fieldAttribute.value()->getDataType();
 }
 
 NodeFunctionPtr NodeFunctionFieldRename::deepCopy()

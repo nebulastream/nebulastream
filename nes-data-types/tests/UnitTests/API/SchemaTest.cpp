@@ -96,9 +96,9 @@ TEST_F(SchemaTest, addFieldTest)
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->fields.size(), 1);
-            ASSERT_EQ(testSchema->fields[0]->getName(), "field");
-            ASSERT_TRUE(testSchema->fields[0]->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(testSchema->getFieldCount(), 1);
+            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
+            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
         }
     }
 
@@ -112,13 +112,16 @@ TEST_F(SchemaTest, addFieldTest)
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->fields.size(), rndFields.size());
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
         for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
+            if (testSchema->getFieldByName(curField->getName()).has_value())
+            {
+                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            }
         }
     }
 }
@@ -133,22 +136,32 @@ TEST_F(SchemaTest, removeFieldsTest)
         ASSERT_TRUE(testSchema->addField(field));
     }
 
-    ASSERT_EQ(testSchema->fields.size(), rndFields.size());
+    ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
     for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
     {
         const auto& curField = rndFields[fieldCnt];
-        EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
+        if (testSchema->getFieldByName(curField->getName()).has_value())
+        {
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+        }
     }
 
     /// Removing fields while we still have one field
-    while (testSchema->getSize() > 0)
+    while (testSchema->getFieldCount() > 0)
     {
-        const auto rndPos = rand() % testSchema->getSize();
+        const auto rndPos = rand() % testSchema->getFieldCount();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
-        EXPECT_ANY_THROW(testSchema->get(fieldToRemove->getName()));
+        if (testSchema->getFieldCount() < 1)
+        {
+            EXPECT_ANY_THROW(testSchema->getFieldByName(fieldToRemove->getName()));
+        }
+        else
+        {
+            EXPECT_FALSE(testSchema->getFieldByName(fieldToRemove->getName()));
+        }
 
         rndFields.erase(rndFields.begin() + rndPos);
     }
@@ -164,14 +177,14 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->fields.size(), 1);
-            ASSERT_EQ(testSchema->fields[0]->getName(), "field");
-            ASSERT_TRUE(testSchema->fields[0]->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(testSchema->getFieldCount(), 1);
+            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
+            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
 
             /// Replacing field
             const auto newDataType = getRandomFields(1_u64)[0]->getDataType();
             ASSERT_NO_THROW(testSchema->replaceField("field", newDataType));
-            ASSERT_TRUE(testSchema->fields[0]->getDataType()->equals(newDataType));
+            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(newDataType));
         }
     }
 
@@ -185,13 +198,16 @@ TEST_F(SchemaTest, replaceFieldTest)
             ASSERT_TRUE(testSchema->addField(field));
         }
 
-        ASSERT_EQ(testSchema->fields.size(), rndFields.size());
+        ASSERT_EQ(testSchema->getFieldCount(), rndFields.size());
         for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
         {
             const auto& curField = rndFields[fieldCnt];
-            EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
+            if (testSchema->getFieldByName(curField->getName()).has_value())
+            {
+                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            }
         }
 
         /// Replacing multiple fields with new data types
@@ -204,9 +220,12 @@ TEST_F(SchemaTest, replaceFieldTest)
         for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)
         {
             const auto& curField = replacingFields[fieldCnt];
-            EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-            EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
+            if (testSchema->getFieldByName(curField->getName()).has_value())
+            {
+                EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+            }
         }
     }
 }
@@ -222,9 +241,9 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
             ASSERT_TRUE(testSchema->addField("field", basicTypeVal));
-            ASSERT_EQ(testSchema->fields.size(), 1);
-            ASSERT_EQ(testSchema->fields[0]->getName(), "field");
-            ASSERT_TRUE(testSchema->fields[0]->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
+            ASSERT_EQ(testSchema->getFieldCount(), 1);
+            ASSERT_EQ(testSchema->getFieldByIndex(0)->getName(), "field");
+            ASSERT_TRUE(testSchema->getFieldByIndex(0)->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
             ASSERT_EQ(
                 testSchema->getSchemaSizeInBytes(),
                 defaultPhysicalTypeFactory.getPhysicalType(DataTypeFactory::createType(basicTypeVal))->size());
@@ -271,6 +290,24 @@ TEST_F(SchemaTest, containsTest)
     }
 }
 
+TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
+{
+    using enum BasicType;
+
+    /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
+    const auto testSchema = Schema::create()
+                                ->addField("streamstream2$start", UINT64)
+                                ->addField("streamstream2$end", UINT64)
+                                ->addField("stream$id", UINT64)
+                                ->addField("stream$value", UINT64)
+                                ->addField("stream$timestamp", UINT64)
+                                ->addField("stream2$id2", UINT64)
+                                ->addField("stream2$value2", UINT64)
+                                ->addField("stream2$timestamp", UINT64);
+    EXPECT_TRUE(testSchema->getFieldByName("id"));
+    EXPECT_FALSE(testSchema->getFieldByName("notExistingField1"));
+}
+
 TEST_F(SchemaTest, getSourceNameQualifierTest)
 {
     using enum NES::BasicType;
@@ -293,15 +330,18 @@ TEST_F(SchemaTest, copyTest)
 
     ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
     ASSERT_EQ(testSchema->getLayoutType(), testSchemaCopy->getLayoutType());
-    ASSERT_EQ(testSchema->fields.size(), testSchemaCopy->fields.size());
+    ASSERT_EQ(testSchema->getFieldCount(), testSchemaCopy->getFieldCount());
 
     /// Comparing fields
-    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt)
+    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->getFieldCount(); ++fieldCnt)
     {
-        const auto& curField = testSchemaCopy->get(fieldCnt);
-        EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+        const auto& curField = testSchemaCopy->getFieldByIndex(fieldCnt);
+        EXPECT_TRUE(testSchema->getFieldByIndex(fieldCnt)->isEqual(curField));
+        EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).has_value());
+        if (testSchema->getFieldByName(curField->getName()).has_value())
+        {
+            EXPECT_TRUE(testSchema->getFieldByName(curField->getName()).value()->isEqual(curField));
+        }
     }
 }
 

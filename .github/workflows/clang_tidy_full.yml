@@ -1,0 +1,64 @@
+# This workflow computes a complete clang-tidy analysis based on the input ref.
+# This workflow output a list of clang-tidy warnings and their frequency and fails if we encounter any clang-tidy
+# warnings which have been flagged as errors.
+
+name: Clang-Tidy
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        required: true
+        description: "target commit"
+        type: string
+
+jobs:
+  clang-tidy-full:
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}
+      # TODO #401 Investigate rootless docker containers
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: Configure CMake
+        run: cmake -B build
+      - name: Generate grpc headers
+        run: cmake --build build --target nes-grpc
+      - name: Run clang-tidy
+        id: run-clang-tidy
+        run: run-clang-tidy-18 -p build 2> /dev/null > clang-tidy.log
+      - name: show errors
+        if: ${{ failure() && steps.run-clang-tidy.conclusion == 'failure' }}
+        run: |
+          echo "# clang-tidy errors" >> $GITHUB_STEP_SUMMARY
+          echo       >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          cat clang-tidy.log | grep ": error:" >> $GITHUB_STEP_SUMMARY
+
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: summarize
+        if: ${{ !failure() && ! cancelled() }}
+        run: |
+          cat clang-tidy.log \
+            | grep "^\/.*\[[^ ]*\]$"   \
+            | sed "s|\([^ ]*\):.*\[\([^ ]*\)\]$|\1 \2|" \
+            | awk '{ split($2, arr, ","); for (a in arr) { print $1, arr[a] } }' > clang-tidy-violations.txt
+
+          echo "# clang-tidy warning occurences" >> $GITHUB_STEP_SUMMARY
+          echo       >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat clang-tidy-violations.txt | cut -d " " -f 2 | sort | uniq -c | sort -n >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: clang-tidy-logs
+          path: clang-tidy*

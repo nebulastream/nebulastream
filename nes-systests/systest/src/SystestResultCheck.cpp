@@ -12,13 +12,168 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <fmt/base.h>
+#include <ErrorHandling.hpp>
+#include <SystestParser.hpp>
 #include <SystestResultCheck.hpp>
+#include <SystestState.hpp>
+#include <magic_enum.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Systest
 {
-std::optional<std::vector<std::string>> loadQueryResult(const Query& query)
+
+SystestParser::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
 {
-    std::vector<std::string> resultData;
+    /// Assumes the field and type to be similar to
+    /// window$val_i8_i8:INT32, window$val_i8_i8_plus_1:INT16
+    SystestParser::Schema fields;
+    for (auto field : std::ranges::split_view(fieldNamesRawLine, ',')
+             | std::views::transform([](auto splittedNameAndType)
+                                     { return std::string_view(splittedNameAndType.begin(), splittedNameAndType.end()); })
+             | std::views::filter([](const auto& stringViewSplitted) { return !stringViewSplitted.empty(); }))
+    {
+        /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
+        /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
+        /// After that, we can trim the field name and type and store it in the fields vector.
+        /// "window$val_i8_i8:INT32 " -> ["window$val_i8_i8", "INT32 "] -> {INT32, "window$val_i8_i8"}
+        std::vector<std::string_view> fieldAndType;
+        for (auto&& subrange : std::ranges::split_view(field, ':'))
+        {
+            fieldAndType.emplace_back(subrange.begin(), subrange.end());
+        }
+        const auto nameTrimmed = Util::trimWhiteSpaces(fieldAndType[0]);
+        const auto typeTrimmed = Util::trimWhiteSpaces(fieldAndType[1]);
+        const auto basicType = magic_enum::enum_cast<BasicType>(typeTrimmed);
+        INVARIANT(basicType.has_value(), "Basic type not found for: {}", typeTrimmed);
+        fields.emplace_back(basicType.value(), std::string(nameTrimmed));
+    }
+    return fields;
+}
+
+std::pair<std::vector<MapFieldNameToValue>, std::vector<MapFieldNameToValue>> parseResultTuples(
+    const SystestParser::Schema& schemaExpected,
+    const SystestParser::Schema& queryResultFields,
+    const SystestParser::ResultTuples& expectedResultLines,
+    const SystestParser::ResultTuples& queryResultLines)
+{
+    /// Store lines and the corresponding field values. We need a hashmap, as the order of the fields can be different
+    std::vector<MapFieldNameToValue> queryResultExpected;
+    std::vector<MapFieldNameToValue> queryResultActual;
+
+    /// Lambda for creating the field values from a line with the schema. For example, "1 2 3" with schema "field1:INT32, field2:FLOAT32, field3:INT64"
+    /// would be converted to {"field1": {INT32, "1"}, "field2": {FLOAT32, "2"}, "field3": {INT64, "3"}}
+    auto createFieldValues = [](const SystestParser::Schema& schema, const std::string& line) -> MapFieldNameToValue
+    {
+        MapFieldNameToValue fieldValues;
+        std::stringstream lineAsStream(line);
+        std::string value;
+        for (const auto& [type, name] : schema)
+        {
+            std::getline(lineAsStream, value, ' ');
+            fieldValues[name] = {.type = type, .valueAsString = value};
+        }
+        return fieldValues;
+    };
+
+    /// Parse the expected result into a hashmap as the order of the fields can be different
+    for (const auto& line : expectedResultLines)
+    {
+        const auto fieldValues = createFieldValues(schemaExpected, line);
+        queryResultExpected.emplace_back(fieldValues); /// store with 1-based index
+    }
+
+    /// Parse the query result into a hashmap as the order of the fields can be different
+    for (const auto& line : queryResultLines)
+    {
+        const auto fieldValues = createFieldValues(queryResultFields, line);
+        queryResultActual.emplace_back(fieldValues); /// store with 1-based index
+    }
+    return std::pair{queryResultExpected, queryResultActual};
+}
+
+static void populateErrorStream(
+    std::stringstream& errorMessages,
+    const SystestParser::Schema& schemaExpected,
+    const std::vector<MapFieldNameToValue>& queryResultExpected,
+    const std::vector<MapFieldNameToValue>& queryResultActual,
+    const uint64_t seenResultTupleSections)
+{
+    errorMessages << "Result does not match for query " + std::to_string(seenResultTupleSections) + ":\n";
+    errorMessages << "[#Line: Expected Result | #Line: Query Result]\n";
+
+    /// Writing the schema fields
+    for (const auto& [_, name] : schemaExpected)
+    {
+        errorMessages << name + " ";
+    }
+    errorMessages << "\n";
+
+    const auto maxSize = std::max(queryResultExpected.size(), queryResultActual.size());
+    for (size_t i = 0; i < maxSize; ++i)
+    {
+        /// Check if they are different or if we are not filtering by differences
+        const bool areDifferent
+            = (i >= queryResultExpected.size() || i >= queryResultActual.size() || queryResultExpected[i] != queryResultActual[i]);
+
+        if (areDifferent)
+        {
+            std::stringstream expectedStr;
+            if (i < queryResultExpected.size())
+            {
+                const auto& expectedMap = queryResultExpected[i];
+                expectedStr << std::to_string(i) << ": ";
+                for (const auto& [_, name] : schemaExpected)
+                {
+                    if (not expectedMap.contains(name))
+                    {
+                        expectedStr << "(missing) ";
+                        continue;
+                    }
+                    expectedStr << expectedMap.at(name).valueAsString + " ";
+                }
+            }
+
+            std::stringstream gotStr;
+            if (i < queryResultActual.size())
+            {
+                gotStr << std::to_string(i) << ": ";
+                const auto& queryResultMap = queryResultActual[i];
+                for (const auto& [_, name] : schemaExpected)
+                {
+                    if (not queryResultMap.contains(name))
+                    {
+                        gotStr << "(missing) ";
+                        continue;
+                    }
+                    gotStr << queryResultMap.at(name).valueAsString + " ";
+                }
+            }
+
+            errorMessages << expectedStr.rdbuf();
+            errorMessages << " | ";
+            errorMessages << gotStr.rdbuf();
+            errorMessages << "\n";
+        }
+    }
+}
+
+std::optional<QueryResult> loadQueryResult(const Query& query)
+{
+    NES_DEBUG("Loading query result for query: {} from queryResultFile: {}", query.queryDefinition, query.resultFile());
     std::ifstream resultFile(query.resultFile());
     if (!resultFile)
     {
@@ -26,146 +181,136 @@ std::optional<std::vector<std::string>> loadQueryResult(const Query& query)
         return std::nullopt;
     }
 
+    QueryResult result;
     std::string firstLine;
     if (!std::getline(resultFile, firstLine))
     {
-        return resultData;
+        return result;
     }
-    if (firstLine.find("$") == std::string::npos || firstLine.find(":") == std::string::npos)
+
+    if (firstLine.find('$') != std::string::npos)
     {
-        resultData.push_back(firstLine);
+        result.fields = parseFieldNames(firstLine);
     }
 
     while (std::getline(resultFile, firstLine))
     {
-        resultData.push_back(firstLine);
+        result.result.push_back(firstLine);
     }
-    return resultData;
+    return result;
 }
 
-/// TODO #373: refactor result checking to be type save
-std::optional<std::string> checkResult(const Query& query)
+std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 {
     SystestParser parser{};
-    if (!parser.loadFile(query.sqlLogicTestFile))
+    if (!parser.loadFile(runningQuery.query.sqlLogicTestFile))
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", query.sqlLogicTestFile);
-        return "Failed to parse test file: " + query.sqlLogicTestFile.string() + "\n";
+        NES_FATAL_ERROR("Failed to parse test file: {}", runningQuery.query.sqlLogicTestFile);
+        return "Failed to parse test file: " + runningQuery.query.sqlLogicTestFile.string() + "\n";
     }
 
     std::stringstream errorMessages;
     uint64_t seenResultTupleSections = 0;
-
-    constexpr bool printOnlyDifferences = true;
     parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, &query](SystestParser::SystestParser::ResultTuples&& resultLines)
+        [&seenResultTupleSections, &errorMessages, &runningQuery](SystestParser::ResultTuples&& expectedResultLines)
         {
+            NES_INFO(
+                "seenResultTupleSections: {}, runningQuery.query.queryIdInFile: {}",
+                seenResultTupleSections,
+                runningQuery.query.queryIdInFile);
             /// Result section matches with query --> we found the expected result to check for
-            if (seenResultTupleSections == query.queryIdInFile)
+            if (seenResultTupleSections++ == runningQuery.query.queryIdInFile)
             {
                 /// 1. Get query result
-                const auto opt = loadQueryResult(query);
+                const auto opt = loadQueryResult(runningQuery.query);
                 if (!opt)
                 {
-                    errorMessages << "Failed to load query result for query: " << query.queryDefinition << "\n";
+                    errorMessages << "Failed to load query result for query: " << runningQuery.query.queryDefinition << "\n";
                     return;
                 }
-                auto queryResult = opt.value();
+                auto [schemaResult, queryResultLines] = opt.value();
+
+                /// Check if the expected result is empty and if this is the case, the query result should be empty as well
+                if (expectedResultLines.empty())
+                {
+                    if (not queryResultLines.empty())
+                    {
+                        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+                        errorMessages << "Expected result is empty, but query result is not\n";
+                        return;
+                    }
+                    return;
+                }
 
                 /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both
-                std::ranges::for_each(queryResult, [](std::string& s) { std::ranges::replace(s, ',', ' '); });
-                std::ranges::for_each(resultLines, [](std::string& s) { std::ranges::replace(s, ',', ' '); });
+                std::ranges::for_each(queryResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
+                std::ranges::for_each(expectedResultLines, [](std::string& line) { std::ranges::replace(line, ',', ' '); });
 
-                /// 3. Store lines with line ids
-                std::vector<std::pair<int, std::string>> originalResultLines;
-                std::vector<std::pair<int, std::string>> originalQueryResult;
+                /// 3. Parse the expected result into a hashmap as the order of the fields can be different
+                auto [queryResultExpected, queryResultActual]
+                    = parseResultTuples(runningQuery.query.expectedSinkSchema, schemaResult, expectedResultLines, queryResultLines);
 
-                originalResultLines.reserve(resultLines.size());
-                for (size_t i = 0; i < resultLines.size(); ++i)
-                {
-                    originalResultLines.emplace_back(i + 1, resultLines[i]); /// store with 1-based index
-                }
 
-                originalQueryResult.reserve(queryResult.size());
-                for (size_t i = 0; i < queryResult.size(); ++i)
-                {
-                    originalQueryResult.emplace_back(i + 1, queryResult[i]); /// store with 1-based index
-                }
-
-                /// 4. Check if line sizes match
-                if (queryResult.size() != resultLines.size())
+                /// 4. Check if there exist the same amount of lines
+                if (queryResultExpected.size() != queryResultActual.size())
                 {
                     errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
-                    errorMessages << "Result size does not match: expected " << std::to_string(resultLines.size());
-                    errorMessages << ", got " << std::to_string(queryResult.size()) << "\n";
+                    errorMessages << "Result size does not match: expected " << std::to_string(queryResultExpected.size());
+                    errorMessages << ", got " << std::to_string(queryResultActual.size()) << "\n";
                 }
 
-                /// 5. Check if content match
-                std::ranges::sort(queryResult);
-                std::ranges::sort(resultLines);
-
-                if (!std::equal(queryResult.begin(), queryResult.end(), resultLines.begin()))
+                /// 5. Check if for all fields of the result expected, we can find one equal field in the actual result
+                /// Stores if we have found a result for the expected result idx
+                std::unordered_set<uint64_t> idxExpectedToFound;
+                uint64_t idxExpected = 0;
+                for (const auto& expected : queryResultExpected)
                 {
-                    /// 6. Build error message
-                    errorMessages << "Result does not match for query " << std::to_string(seenResultTupleSections) << ":\n";
-                    errorMessages << "[#Line: Expected Result | #Line: Query Result]\n";
-
-                    /// Maximum width of "Expected (Line #)"
-                    size_t maxExpectedWidth = 0;
-                    for (const auto& [lineNumber, line] : originalResultLines)
+                    if (idxExpected >= queryResultActual.size())
                     {
-                        size_t currentWidth = std::to_string(lineNumber).length() + 2 + line.length();
-                        maxExpectedWidth = std::max(currentWidth, maxExpectedWidth);
+                        errorMessages << "Result does not match for query: " << std::to_string(seenResultTupleSections) << "\n";
+                        errorMessages << "Expected result has more lines than the actual result\n";
+                        break;
                     }
 
-                    const auto maxSize = std::max(originalResultLines.size(), originalQueryResult.size());
-                    for (size_t i = 0; i < maxSize; ++i)
+                    /// If we have found an idx for the expected result, we can skip it
+                    if (idxExpectedToFound.contains(idxExpected))
                     {
-                        std::string expectedStr;
-                        if (i < originalResultLines.size())
-                        {
-                            expectedStr = std::to_string(originalResultLines[i].first) + ": " + originalResultLines[i].second;
-                        }
-                        else
-                        {
-                            expectedStr = "(missing)";
-                        }
+                        continue;
+                    }
 
-                        std::string gotStr;
-                        if (i < originalQueryResult.size())
+                    for (const auto& actual : queryResultActual)
+                    {
+                        if (expected == actual)
                         {
-                            gotStr = std::to_string(originalQueryResult[i].first) + ": " + originalQueryResult[i].second;
-                        }
-                        else
-                        {
-                            gotStr = "(missing)";
-                        }
-
-                        /// Check if they are different or if we are not filtering by differences
-                        bool const areDifferent
-                            = (i >= originalResultLines.size() || i >= originalQueryResult.size()
-                               || originalResultLines[i].second != originalQueryResult[i].second);
-
-                        if (areDifferent || !printOnlyDifferences)
-                        {
-                            /// Align the expected string by padding it to the maximum width
-                            errorMessages << fmt::format(
-                                "{}{} | {}\n", expectedStr, std::string(maxExpectedWidth - expectedStr.length(), ' '), gotStr);
+                            idxExpectedToFound.emplace(idxExpected);
+                            break;
                         }
                     }
+
+                    ++idxExpected;
+                }
+
+                /// 6. Build error message if we have not found a result for every expected result
+                if (idxExpectedToFound.size() != queryResultExpected.size())
+                {
+                    populateErrorStream(
+                        errorMessages,
+                        runningQuery.query.expectedSinkSchema,
+                        queryResultExpected,
+                        queryResultActual,
+                        seenResultTupleSections);
                 }
             }
-            seenResultTupleSections++;
         });
 
     try
     {
         parser.parse();
     }
-    catch (const Exception&)
+    catch (const Exception& e)
     {
         tryLogCurrentException();
-        return "Exception occurred";
+        return "Exception occurred: " + std::string(e.what());
     }
 
     if (errorMessages.str().empty())
@@ -175,4 +320,72 @@ std::optional<std::string> checkResult(const Query& query)
     return errorMessages.str();
 }
 
+
+bool operator!=(const FieldResult& left, const FieldResult& right)
+{
+    /// Check if the type is equal
+    if (left.type != right.type)
+    {
+        return true;
+    }
+
+
+    /// Check if the value is equal by casting it to the correct type and comparing it (we allow a small delta)
+    switch (left.type)
+    {
+        case BasicType::BOOLEAN:
+            return not compareStringAsTypeWithError<bool>(left.valueAsString, right.valueAsString);
+        case BasicType::CHAR:
+        case BasicType::INT8:
+        case BasicType::UINT8:
+        case BasicType::INT16:
+        case BasicType::UINT16:
+        case BasicType::INT32:
+        case BasicType::UINT32:
+        case BasicType::INT64:
+        case BasicType::UINT64:
+            return not compareStringAsTypeWithError<int64_t>(left.valueAsString, right.valueAsString);
+        case BasicType::FLOAT32:
+        case BasicType::FLOAT64:
+            return not compareStringAsTypeWithError<double>(left.valueAsString, right.valueAsString);
+    }
+}
+bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
+{
+    /// Check if the size is the same
+    if (left.size() != right.size())
+    {
+        return false;
+    }
+
+    /// Check that all fields are the same
+    return std::ranges::all_of(
+        left,
+        [&right](const auto& pair) -> bool
+        {
+            const auto& [name, field] = pair;
+            if (not right.contains(name))
+            {
+                return false;
+            }
+
+            if (field != right.at(name))
+            {
+                NES_WARNING(
+                    "Field {} does not match {} ({}) != {} ({})",
+                    name,
+                    field.valueAsString,
+                    magic_enum::enum_name(field.type),
+                    right.at(name).valueAsString,
+                    magic_enum::enum_name(right.at(name).type));
+                return false;
+            }
+            return true;
+        });
+}
+
+bool operator!=(const MapFieldNameToValue& left, const MapFieldNameToValue& right)
+{
+    return not(left == right);
+}
 }

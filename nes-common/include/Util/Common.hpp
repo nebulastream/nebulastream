@@ -16,70 +16,13 @@
 #include <charconv>
 #include <functional>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <ErrorHandling.hpp>
 
-namespace NES
-{
-static constexpr auto H3_SEED = 42;
-static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
-}
-
-namespace NES::QueryCompilation
-{
-enum class StreamJoinStrategy : uint8_t
-{
-    HASH_JOIN_LOCAL,
-    HASH_JOIN_VAR_SIZED,
-    HASH_JOIN_GLOBAL_LOCKING,
-    HASH_JOIN_GLOBAL_LOCK_FREE,
-    NESTED_LOOP_JOIN
-};
-
-enum class JoinBuildSideType : uint8_t
-{
-    Right,
-    Left
-};
-template <typename E = JoinBuildSideType, typename Out = uint64_t>
-constexpr Out to_underlying(E e) noexcept
-{
-    return static_cast<Out>(e);
-}
-
-}
-
-namespace NES::Runtime::Execution
-{
-/**
- * @brief Stores the meta date for a RecordBuffer
- */
-struct BufferMetaData
-{
-public:
-    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
-    {
-    }
-
-    std::string toString() const
-    {
-        std::ostringstream oss;
-        oss << "waterMarkTs: " << watermarkTs << ","
-            << "seqNumber: " << seqNumber << ","
-            << "originId: " << originId;
-        return oss.str();
-    }
-
-    const uint64_t watermarkTs;
-    const SequenceData seqNumber;
-    const OriginId originId;
-};
-}
 
 namespace NES::Util
 {
@@ -93,17 +36,12 @@ std::string escapeJson(const std::string& str);
 /**
 * @brief removes leading and trailing whitespaces
 */
-std::string_view trimWhiteSpaces(std::string_view in);
+std::string_view trimWhiteSpaces(std::string_view input);
 
 /**
 * @brief removes leading and trailing occurences of `trimFor`
 */
 std::string_view trimChar(std::string_view in, char trimFor);
-
-/// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
-/// Can should be removed once we have our own query parser
-void throwDynamicCastException(std::string message);
-void throwFunctionNotImplemented(std::string message);
 
 namespace detail
 {
@@ -124,7 +62,7 @@ struct SplitFunctionHelper
         if (result.ec == std::errc::invalid_argument)
         {
             /// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
-            throwFunctionNotImplemented("Could not parse: " + std::string(trimmed));
+            throw FunctionNotImplemented("Could not parse: {}", std::string(trimmed));
         }
         return result_value;
     };
@@ -272,9 +210,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    /// TODO #360: This is a fix to such that we do not have to include cpptrace and fmt during parsing.
-    throwDynamicCastException("Invalid dynamic cast: from " + std::string(typeid(In).name()) + " to " + std::string(typeid(Out).name()));
-    return nullptr;
+    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", std::string(typeid(In).name()), std::string(typeid(Out).name()));
 }
 
 /// cast the given object to the specified type.

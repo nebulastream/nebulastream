@@ -25,6 +25,7 @@
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include "gtest/gtest.h"
 
 #include <boost/asio.hpp>
 
@@ -123,10 +124,10 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -136,7 +137,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
     {
         auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
@@ -178,5 +179,5 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesMixed)
 INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
-    testing::Values(QueryTestParam{"qOneSourceCSVAndOneSourceTCPWithFilter", 1, 62, 960 /* 2*SUM(0, 1, ..., 15) */, 32}));
+    testing::Values(QueryTestParam{"qOneCSVSourceAndOneTCPSourceWithFilter", 1, 62, 960 /* 2*SUM(0, 1, ..., 15) */, 32}));
 }

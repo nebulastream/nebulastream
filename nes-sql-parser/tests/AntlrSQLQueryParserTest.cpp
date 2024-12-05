@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <climits>
 #include <iostream>
 #include <regex>
+#include <string>
 #include <API/Query.hpp>
 #include <API/QueryAPI.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <API/Windowing.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Types/SlidingWindow.hpp>
+#include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 
 using namespace NES;
+using namespace std::string_literals;
 
 /// This test checks for the correctness of the SQL queries created by the Antlr SQL Parsing Service.
 class AntlrSQLQueryParserTest : public Testing::BaseUnitTest
@@ -37,16 +41,7 @@ public:
     }
 };
 
-std::string queryPlanToString(const QueryPlanPtr queryPlan)
-{
-    std::regex r2("[0-9]");
-    std::regex r1("  ");
-    std::string queryPlanStr = std::regex_replace(queryPlan->toString(), r1, "");
-    queryPlanStr = std::regex_replace(queryPlanStr, r2, "");
-    return queryPlanStr;
-}
-
-bool parseAndCompareQueryPlans(const std::string antlrQueryString, const Query& internalLogicalQuery)
+bool parseAndCompareQueryPlans(const std::string& antlrQueryString, const Query& internalLogicalQuery)
 {
     const QueryPlanPtr antlrQueryParsed = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(antlrQueryString);
     NES_DEBUG("\n{} vs. \n{}", antlrQueryParsed->toString(), internalLogicalQuery.getQueryPlan()->toString());
@@ -77,275 +72,561 @@ TEST_F(AntlrSQLQueryParserTest, projectionAndMapTests)
     /// }
 }
 
+TEST_F(AntlrSQLQueryParserTest, multipleFieldsProjectionTest)
+{
+    {
+        const auto inputQuery = "SELECT "
+                                "(i8 == 1) and ((i16 == 1) and (i32 == 1)) AS a, "
+                                "(i32 == 1) and ((i64 == 1) and (u8 == 2)) AS b, "
+                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS c, "
+                                "(u8 == 2) and ((u16 == 1) and (u32 == 2)) AS d, "
+                                "(i8 == 1) and not ((i16 == 1) and (i32 == 1)) AS e, "
+                                "(i32 == 1) and not ((i64 == 1) and (u8 == 2)) AS f, "
+                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS g, "
+                                "(u8 == 2) and not ((u16 == 1) and (u32 == 2)) AS h "
+                                "FROM stream INTO Print"s;
+        const auto internalLogicalQuery
+            = Query::from("stream")
+                  .map(Attribute("a") = Attribute("i8") == 1 && ((Attribute("i16") == 1) && (Attribute("i32") == 1)))
+                  .map(Attribute("b") = Attribute("i32") == 1 && ((Attribute("i64") == 1) && (Attribute("u8") == 2)))
+                  .map(Attribute("c") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                  .map(Attribute("d") = Attribute("u8") == 2 && ((Attribute("u16") == 1) && (Attribute("u32") == 2)))
+                  .map(Attribute("e") = Attribute("i8") == 1 && !(Attribute("i16") == 1 && Attribute("i32") == 1))
+                  .map(Attribute("f") = Attribute("i32") == 1 && !(Attribute("i64") == 1 && Attribute("u8") == 2))
+                  .map(Attribute("g") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                  .map(Attribute("h") = Attribute("u8") == 2 && !(Attribute("u16") == 1 && Attribute("u32") == 2))
+                  .project(
+                      Attribute("a"),
+                      Attribute("b"),
+                      Attribute("c"),
+                      Attribute("d"),
+                      Attribute("e"),
+                      Attribute("f"),
+                      Attribute("g"),
+                      Attribute("h"))
+                  .sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
+}
+
 TEST_F(AntlrSQLQueryParserTest, selectionTest)
 {
-    std::string inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print";
-    std::shared_ptr<QueryPlan> actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery);
-    Query query = Query::from("StreamName").filter(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    {
+        const auto inputQuery = "SELECT f1 FROM StreamName WHERE f1 == 30 INTO Print"s;
+        const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 30).project(Attribute("f1")).sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
 
-    inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print";
-    actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(inputQuery);
-    query = Query::from("StreamName").filter(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    {
+        const auto inputQuery = "select * from StreamName where (f1 == 10 AND f2 != 10) INTO Print"s;
+        const auto internalLogicalQuery = Query::from("StreamName").selection(Attribute("f1") == 10 && Attribute("f2") != 10).sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
 
-    std::string SQLString = "SELECT * FROM default_logical INTO Print;";
-    actualPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(SQLString);
-    query = Query::from("default_logical").sink("Print");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
+    {
+        const auto inputQuery = "SELECT * FROM default_logical INTO Print;"s;
+        const auto internalLogicalQuery = Query::from("default_logical").sink("Print");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQuery, internalLogicalQuery));
+    }
 }
+
+TEST_F(AntlrSQLQueryParserTest, simpleJoinTestTumblingWindow)
+{
+    {
+        /// Testing join with two streams that have the same field names
+        const auto inputQueryEventTime
+            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window tumbling (ts_field, size 10 sec) INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id"))
+                                        .window(TumblingWindow::of(EventTime(Attribute("ts_field")), Seconds(10)))
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+        const auto inputQueryIngestionTime
+            = "select * from (select * from purchases) inner join (select * from tweets) on userId = userId window tumbling (size 10 sec) INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("userId"))
+                                            .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestTumblingWindowWithQualifierNames)
+{
+    /// Testing join with two streams that specify the join field names via the stream name
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId = tweets.id window tumbling (timestamp, size 10 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") == Attribute("id"))
+                                    .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.id window tumbling (size 10 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("purchases.userId") == Attribute("tweets.id"))
+                                        .window(TumblingWindow::of(IngestionTime(), Milliseconds(10)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindows)
+{
+    {
+        /// Testing join with two stream that have different field names and perform the join over a sliding window
+        const auto inputQueryEventTime
+            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window sliding (timestamp, size 10 min, advance by 5 ms) INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id"))
+                                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(10), Milliseconds(5)))
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+        const auto inputQueryIngestionTime
+            = "select * from (select * from purchases) inner join (select * from tweets) on userId = id window sliding (size 3 days, advance by 5 hours) INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("id"))
+                                            .window(SlidingWindow::of(IngestionTime(), Days(3), Hours(5)))
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithQualifierNames)
+{
+    {
+        /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+        const auto inputQueryEventTime
+            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.userId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("userId"))
+                                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+        const auto inputQueryIngestionTime
+            = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets on purchases.userId = tweets.userId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("userId"))
+                                            .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+
+TEST_F(AntlrSQLQueryParserTest, simpleJoinTestSlidingWindowsWithFilter)
+{
+    {
+        /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+        const auto inputQueryEventTime = "select * from (select * from purchases) inner join (select * from tweets) "
+                                         "on userId = userId1234 "
+                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("userId1234"))
+                                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Days(9876), Milliseconds(3)))
+                                        .selection(Attribute("field") > 0)
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+        const auto inputQueryIngestionTime = "select * from (select * from purchases) inner join (select * from tweets) "
+                                             "on userId = userId1234 "
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("userId1234"))
+                                            .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
+                                            .selection(Attribute("field") > 1234)
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterWithQualifierNames)
+{
+    {
+        /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+        const auto inputQueryEventTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS tweets "
+                                         "on purchases.userId = tweets.userId "
+                                         "window sliding (timestamp, size 9876 days, advance by 3 ms) WHERE field > 0 INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("userId"))
+                                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Days(9876), Milliseconds(3)))
+                                        .selection(Attribute("field") > 0)
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+        const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS "
+                                             "tweets on purchases.userId = tweets.userId "
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE field > 1234 INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("userId"))
+                                            .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
+                                            .selection(Attribute("field") > 1234)
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_simpleJoinTestSlidingWindowsWithFilterAndQualifierName)
+{
+    {
+        /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+        const auto inputQueryEventTime = "select * from (select * from purchases) AS purchases inner join (select * from tweets) AS "
+                                         "tweets2 on purchases.userId = tweets.userId "
+                                         "window sliding (timestamp, size 10 ms, advance by 5 ms) WHERE tweets2.field > 0 INTO PRINT"s;
+        const auto queryEventTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("userId"))
+                                        .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
+                                        .selection(Attribute("tweets2.field") > 0)
+                                        .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+        const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases2 inner join (select * from tweets) AS "
+                                             "tweets on purchases.userId = tweets.userId "
+                                             "window sliding (size 10 ms, advance by 5 ms) WHERE purchases2.field > 1234 INTO PRINT"s;
+        const auto queryIngestionTime = Query::from("purchases")
+                                            .joinWith(Query::from("tweets"))
+                                            .where(Attribute("userId") == Attribute("userId"))
+                                            .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                            .selection(Attribute("purchases2.field") > 1234)
+                                            .sink("PRINT");
+        EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+    }
+}
+
+
+TEST_F(AntlrSQLQueryParserTest, threeJoinTest)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id "
+          "window sliding (ts1, size 10 day, advance by 5 ms) inner join (select * from sellers) ON id = sellerId "
+          "window tumbling (ts2, size 30 min) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") == Attribute("id"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("ts1")), Days(10), Milliseconds(5)))
+                                    .joinWith(Query::from("sellers"))
+                                    .where(Attribute("id") == Attribute("sellerId"))
+                                    .window(TumblingWindow::of(EventTime(Attribute("ts2")), Minutes(30)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id "
+          "window sliding (size 10 day, advance by 5 ms) inner join (select * from sellers) ON id = sellerId "
+          "window sliding (size 30 min, advance by 8 sec) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id"))
+                                        .window(SlidingWindow::of(IngestionTime(), Days(10), Milliseconds(5)))
+                                        .joinWith(Query::from("sellers"))
+                                        .where(Attribute("id") == Attribute("sellerId"))
+                                        .window(SlidingWindow::of(IngestionTime(), Minutes(30), Seconds(8)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithQualifierName)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime = "select * from (select * from purchases) as purchases2 inner join (select * from tweets) as tweets2 "
+                                     "ON tweets2.userId = purchases2.id "
+                                     "window sliding (ts1, size 10 day, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
+                                     "purchases2.id = sellers2.sellerId "
+                                     "window tumbling (ts2, size 30 min) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("tweets2.userId") == Attribute("purchases2.id"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("ts1")), Days(10), Milliseconds(5)))
+                                    .joinWith(Query::from("sellers"))
+                                    .where(Attribute("purchases2.id") == Attribute("sellers2.sellerId"))
+                                    .window(TumblingWindow::of(EventTime(Attribute("ts2")), Minutes(30)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) AS purchases2 inner join (select * from tweets) AS "
+                                         "tweets2 ON tweets2.userId = purchases2.id "
+                                         "window sliding (size 10 day, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
+                                         "purchases2.id = sellers2.sellerId "
+                                         "window sliding (size 30 min, advance by 8 sec) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("tweets2.userId") == Attribute("purchases2.id"))
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                        .joinWith(Query::from("sellers"))
+                                        .where(Attribute("purchases2.id") == Attribute("sellers2.sellerId"))
+                                        .window(SlidingWindow::of(IngestionTime(), Minutes(30), Seconds(8)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, threeJoinTestWithMultipleJoinkeyFunctions)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id and userId2 >= id2 "
+          "window sliding (ts1, size 10 days, advance by 5 ms) inner join (select * from sellers) ON id = sellerId or id2 < sellerId2 "
+          "window tumbling (ts2, size 30 min) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("ts1")), Days(10), Milliseconds(5)))
+                                    .joinWith(Query::from("sellers"))
+                                    .where(Attribute("id") == Attribute("sellerId") || Attribute("id2") < Attribute("sellerId2"))
+                                    .window(TumblingWindow::of(EventTime(Attribute("ts2")), Minutes(30)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) ON userId = id and userId2 >= id2 "
+          "window sliding (size 12 days, advance by 5 ms) inner join (select * from sellers) ON id = sellerId or id2 < sellerId2 "
+          "window tumbling (size 30 min) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
+                                        .window(SlidingWindow::of(IngestionTime(), Days(12), Milliseconds(5)))
+                                        .joinWith(Query::from("sellers"))
+                                        .where(Attribute("id") == Attribute("sellerId") || Attribute("id2") < Attribute("sellerId2"))
+                                        .window(TumblingWindow::of(IngestionTime(), Minutes(30)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_threeJoinTestWithMultipleJoinkeyFunctionsWithQualifierName)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime = "select * from (select * from purchases) as purchases2 inner join (select * from tweets) as tweets2 "
+                                     "ON purchases2.userId = tweets2.id and tweets2.userId2 >= tweets2.id2 "
+                                     "window sliding (ts1, size 10 days, advance by 5 ms) inner join (select * from sellers) as sellers2 "
+                                     "ON tweets2.id = sellers2.sellerId or tweets2.id2 < sellers2.sellerId2 "
+                                     "window tumbling (ts2, size 30 min) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("ts1")), Days(10), Milliseconds(5)))
+                                    .joinWith(Query::from("sellers"))
+                                    .where(Attribute("id") == Attribute("sellerId") || Attribute("id2") < Attribute("sellerId2"))
+                                    .window(TumblingWindow::of(EventTime(Attribute("ts2")), Minutes(30)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime = "select * from (select * from purchases) as purchases2 inner join (select * from tweets) as "
+                                         "tweets2 ON purchases2.userId = tweets2.id and userId2 >= tweets2.id2 "
+                                         "window sliding (size 12 days, advance by 5 ms) inner join (select * from sellers) as sellers2 ON "
+                                         "tweets2.id = sellers2.sellerId or tweets2.id2 < sellers2.sellerId2 "
+                                         "window tumbling (size 30 min) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id") && Attribute("userId2") >= Attribute("id2"))
+                                        .window(SlidingWindow::of(IngestionTime(), Days(12), Milliseconds(5)))
+                                        .joinWith(Query::from("sellers"))
+                                        .where(Attribute("id") == Attribute("sellerId") || Attribute("id2") < Attribute("sellerId2"))
+                                        .window(TumblingWindow::of(IngestionTime(), Minutes(30)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, thetaJoinTest)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") >= Attribute("id"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on userId >= id window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") >= Attribute("id"))
+                                        .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestWithQualifierName)
+{
+    /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < tweets.userId window sliding (timestamp, size 23 days, advance by 5 sec) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") < Attribute("userId"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Days(23), Seconds(5)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on purchases.userId < tweets.userId window sliding (size 10 sec, advance by 5 sec) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") < Attribute("userId"))
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, thetaJoinTestNegatedJoinExpression)
+
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) window sliding (timestamp, size 42 ms, advance by 1 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(!(Attribute("userId") < Attribute("id")))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(42), Milliseconds(1)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) window sliding (size 42 ms, advance by 1 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(!(Attribute("userId") < Attribute("id")))
+                                        .window(SlidingWindow::of(IngestionTime(), Milliseconds(42), Milliseconds(1)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_thetaJoinTestNegatedJoinExpressionWithQualifierName)
+{
+    /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") < Attribute("userId"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") < Attribute("userId"))
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+TEST_F(AntlrSQLQueryParserTest, joinTestWithMultipleJoinkeyFunctions)
+{
+    /// Testing join with two stream that have different field names and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and id >= sellerId window sliding (timestamp, size 10 sec, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where((!(Attribute("userId") < Attribute("id"))) && (Attribute("id") >= Attribute("sellerId")))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(userId < id) and id >= sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where((!(Attribute("userId") < Attribute("id"))) && (Attribute("id") >= Attribute("sellerId")))
+                                        .window(SlidingWindow::of(IngestionTime(), Milliseconds(10), Milliseconds(5)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithMultipleJoinkeyFunctionsWithQualifierNames)
+{
+    /// Testing join with two streams that specify the join field names via the stream name and perform the join over a sliding window
+    const auto inputQueryEventTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && purchases.id >= tweets.sellerId window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") < Attribute("userId") && Attribute("id") >= Attribute("sellerId"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(5)))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    const auto inputQueryIngestionTime
+        = "select * from (select * from purchases) inner join (select * from tweets) on !(purchases.userId >= tweets.userId) && purchases.id >= tweets.sellerId window sliding (size 10 ms, advance by 5 ms) INTO PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") < Attribute("userId") && Attribute("id") >= Attribute("sellerId"))
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Seconds(5)))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+
+TEST_F(AntlrSQLQueryParserTest, joinTestWithFilterAndMapAfterJoin)
+{
+    /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
+    const auto inputQueryEventTime
+        = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
+          "window sliding (timestamp, size 10 sec, advance by 5 ms)) where field >=23 and field2 <=12 into PRINT"s;
+    const auto queryEventTime = Query::from("purchases")
+                                    .joinWith(Query::from("tweets"))
+                                    .where(Attribute("userId") == Attribute("id"))
+                                    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Milliseconds(5)))
+                                    .selection(Attribute("field") >= 23 && Attribute("field2") <= 12)
+                                    .map(Attribute("userId2") = Attribute("id2") + 1)
+                                    .project(Attribute("userId2"))
+                                    .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryEventTime, queryEventTime));
+
+    /// Todo #440: the grammar currently does not support a mixture of '*' and projections, therefore, we opted for using a projection in the test
+    const auto inputQueryIngestionTime
+        = "select (id2 + 1) AS userId2 from (select * from (select * from purchases) inner join (select * from tweets) on userId == id "
+          "window sliding (size 10 sec, advance by 5 ms)) where field >=23 or field2 <=12 into PRINT"s;
+    const auto queryIngestionTime = Query::from("purchases")
+                                        .joinWith(Query::from("tweets"))
+                                        .where(Attribute("userId") == Attribute("id"))
+                                        .window(SlidingWindow::of(IngestionTime(), Seconds(10), Milliseconds(5)))
+                                        .selection(Attribute("field") >= 23 || Attribute("field2") <= 12)
+                                        .map(Attribute("userId2") = Attribute("id2") + 1)
+                                        .project(Attribute("userId2"))
+                                        .sink("PRINT");
+    EXPECT_TRUE(parseAndCompareQueryPlans(inputQueryIngestionTime, queryIngestionTime));
+}
+
+/// TODO #474: Add support for qualifier names in join functions
+TEST_F(AntlrSQLQueryParserTest, DISABLED_joinTestWithFilterAndMapAfterJoinWithQualifierName)
+{
+    throw NotImplemented("We should do the same as in joinTestWithFilterAndMapAfterJoin but use qualifiernames");
+    ASSERT_TRUE(false);
+}
+
 
 /// Todo #447: use the code below as guidance for how to support WINDOWs and JOINs using the antlr sql parser
 /// The below tests are the 'validation' of the bachelor's thesis that introduced the antlr SQL parser.
 /// The tests mostly fail currently, but they provide valuable documentation for adding operators/functionality in the future.
 /*
-TEST(SQLParsingServiceTest, projectionTest)
-{
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-    double totalTime = 0.0;
-
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-
-
-    std::cout << "-------------------------Projection-------------------------\n";
-
-    /// Test case for simple projection
-    inputQuery = "select * from StreamName INTO PRINT;";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName").sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection with alias
-    inputQuery = "select * from StreamName as sn INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName").sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection of specific fields
-    inputQuery = "select f1,f2 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName").project(Attribute("f1"), Attribute("f2")).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection of specific fields
-    inputQuery = "select f1,f2,f3 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName").project(Attribute("f1"), Attribute("f2"), Attribute("f3")).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection of specific fields
-    inputQuery = "select f1,f2,f3, f4 as project4 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .project(Attribute("f1"), Attribute("f2"), Attribute("f3"), Attribute("f4").as("project4"))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection with rename
-    inputQuery = "select column1 as c1, column2 as c2 from StreamName INTO PRINT;";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    std::cout << "Time taken for all Projection Queries: " << totalTime / 6 << " ms" << std::endl;
-    query = Query::from("StreamName").project(Attribute("column1").as("c1"), Attribute("column2").as("c2")).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(actualPlan), queryPlanToString(query.getQueryPlan()));
-}
-
-TEST(SQLParsingServiceTest, mergeTest)
-{
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-    double totalTime = 0.0;
-
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-
-    std::cout << "-------------------------Merge-------------------------\n";
-
-    /// Test case for simple merge
-    inputQuery = "select f1 from cars union select f1 from bikes INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("cars").project(Attribute("f1")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select f1 as project from cars union select f1 from bikes INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query
-        = Query::from("cars").project(Attribute("f1").as("project")).unionWith(Query::from("bikes").project(Attribute("f1"))).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select f1 as project from cars where project > 5 union select f1 from bikes INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("cars")
-                .project(Attribute("f1").as("project"))
-                .filter(Attribute("f1") > 1)
-                .unionWith(Query::from("bikes").project(Attribute("f1")))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for merge with multiple unions
-    inputQuery = "select f1 from cars union select f1 from bikes union select f1 from autos INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("cars")
-                .project(Attribute("f1"))
-                .unionWith(Query::from("bikes").project(Attribute("f1")))
-                .unionWith(Query::from("autos").project(Attribute("f1")))
-                .sink("PRINT");
-    std::cout << "Time taken for all Union Queries: " << totalTime / 4 << " ms" << std::endl;
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-}
-
-
-TEST(SQLParsingServiceTest, mapTest)
-{
-    std::string inputQuery;
-    QueryPlanPtr actualPlan;
-    double totalTime = 0.0;
-
-    std::shared_ptr<QueryParsingService> SQLParsingService;
-
-
-    std::cout << "-------------------------Map-------------------------\n";
-
-    /// Test case for simple map
-    inputQuery = "select f1*f2 as newfield from StreamName INTO PRINT";
-    auto start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    Query query = Query::from("StreamName").map(Attribute("newfield") = Attribute("f1") * Attribute("f2")).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for parenthesis expression for map
-    inputQuery = "select (f1*f2)/(f3+f4) as f5 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .map(Attribute("f5") = (Attribute("f1") * Attribute("f2")) / (Attribute("f3") + Attribute("f4")))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for complex map expression
-    inputQuery = "select f1*f2/f3+f4 as f5 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .map(Attribute("f5") = Attribute("f1") * Attribute("f2") / Attribute("f3") + Attribute("f4"))
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for two maps
-    inputQuery = "select f1*f2 as newfield, f1+5 as newfield2 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .map(Attribute("newfield") = Attribute("f1") * Attribute("f2"))
-                .map(Attribute("newfield2") = Attribute("f1") + 5.0)
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for projection and map together
-    inputQuery = "select f1*f2 as newfield, f1+5 as newfield2, f1 as f from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .project(Attribute("f1").as("f"))
-                .map(Attribute("newfield") = Attribute("f1") * Attribute("f2"))
-                .map(Attribute("newfield2") = Attribute("f1") + 5.0)
-                .sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    /// Test case for when alias is not provided
-    inputQuery = "select f1*f2 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName").map(Attribute("mapField0") = Attribute("f1") * Attribute("f2")).sink("PRINT");
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-
-    inputQuery = "select f1*f2, f1+5 from StreamName INTO PRINT";
-    start = std::chrono::high_resolution_clock::now();
-    actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start;
-    totalTime += duration.count();
-    std::cout << "Time taken for \"" << inputQuery << "\": " << duration.count() << " ms" << std::endl;
-    query = Query::from("StreamName")
-                .map(Attribute("mapField0") = Attribute("f1") * Attribute("f2"))
-                .map(Attribute("mapField1") = Attribute("f1") + 5.0)
-                .sink("PRINT");
-    std::cout << "Time taken for all Union Queries: " << totalTime / 7 << " ms" << std::endl;
-    EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
-}
 TEST(SQLParsingServiceTest, globalWindowTest)
 {
     std::shared_ptr<QueryParsingService> SQLParsingService;
@@ -597,7 +878,7 @@ TEST(SQLParsingServiceTest, havingClauseTest)
     Query query = Query::from("StreamName")
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(10)))
                       .apply(Sum(Attribute("f2"))->as(Attribute("sum_f2")))
-                      .filter(Attribute("sum_f2") > 5)
+                      .selection(Attribute("sum_f2") > 5)
                       .sink("PRINT");
     ;
 
@@ -610,7 +891,7 @@ TEST(SQLParsingServiceTest, subQueryTest)
 
     std::string inputQuery = "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT";
     QueryPlanPtr actualPlan = SQLParsingService->createQueryFromSQL(inputQuery);
-    auto query = Query::from("subStream").project(Attribute("f1")).filter(Attribute("f1") > 1).filter(Attribute("f1") < 5).sink("PRINT");
+    auto query = Query::from("subStream").project(Attribute("f1")).selection(Attribute("f1") > 1).selection(Attribute("f1") < 5).sink("PRINT");
     EXPECT_EQ(queryPlanToString(query.getQueryPlan()), queryPlanToString(actualPlan));
 }
 
@@ -620,7 +901,7 @@ TEST(SQLParsingServiceTest, perfomanceTest1)
 
     std::vector<std::string> selectClauses
         = {"select max(f2) as max_f2, sum(f2) as sum_f2 from StreamName group by f2 window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
            "SELECT name FROM employees;",
            "SELECT department, COUNT(*) AS total FROM employees GROUP BY department window tumbling (timestamp, size 10 sec) INTO PRINT;",
            "select f1 from StreamName where f1 > 10*3 INTO PRINT",
@@ -638,13 +919,13 @@ TEST(SQLParsingServiceTest, perfomanceTest1)
            "select sum(f2) from StreamName WINDOW THRESHOLD (f1>2, 10) INTO PRINT",
            "select sum(f2) from StreamName group by f2 window sliding (timestamp, size 10 ms, advance by 5 ms) INTO PRINT",
            "SELECT name FROM employees;",
-           "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
-           "select * from purchases inner join tweets on purchases.user_id = tweets.user_id window tumbling (timestamp, size 10 sec) INTO "
+           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
+           "select * from purchases inner join tweets on purchases.userId = tweets.userId window tumbling (timestamp, size 10 sec) INTO "
            "PRINT",
            "select count(f2) from StreamName window tumbling (size 10 sec) INTO PRINT",
            "SELECT name, department FROM employees WHERE age > 30 INTO ZMQ (stream_name, localhost, 5555)",
            "select sum(f2) as sum_f2 from StreamName window tumbling (size 10 ms) having sum_f2 > 5 INTO PRINT",
-           "select * from purchases inner join tweets on user_id = user_id window tumbling (timestamp, size 10 sec) INTO PRINT",
+           "select * from purchases inner join tweets on userId = userId window tumbling (timestamp, size 10 sec) INTO PRINT",
            "SELECT * FROM (SELECT f1 FROM subStream WHERE f1 > 1) WHERE f1 < 5 INTO PRINT"};
     double totalTime = 0.0;
     std::cout << "-------------------------Mixed Queries-------------------------\n";

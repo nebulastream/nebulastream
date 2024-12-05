@@ -74,8 +74,8 @@ relation
     ;
 
 joinRelation
-    : (joinType) JOIN right=relationPrimary joinCriteria?
-    | NATURAL joinType JOIN right=relationPrimary
+    : (joinType) JOIN right=relationPrimary joinCriteria? windowClause
+    | NATURAL joinType JOIN right=relationPrimary windowClause
     ;
 
 joinType
@@ -180,6 +180,7 @@ booleanExpression
     | left=booleanExpression op=AND right=booleanExpression  #logicalBinary
     | left=booleanExpression op=OR right=booleanExpression   #logicalBinary
     ;
+
 /// Problem fixed that the querySpecification rule could match an empty string
 windowedAggregationClause:
     aggregationClause? windowClause watermarkClause?;
@@ -485,7 +486,7 @@ LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
 MERGE: 'MERGE' | 'merge';
 NATURAL: 'NATURAL';
-NOT: 'NOT' | '!';
+NOT: 'NOT' | 'not' | '!';
 NULLTOKEN:'NULL';
 NULLS: 'NULLS';
 OF: 'OF';
@@ -522,8 +523,8 @@ ADVANCE: 'ADVANCE' | 'advance';
 MS: 'MS' | 'ms';
 SEC: 'SEC' | 'sec';
 MIN: 'MIN' | 'min';
-HOUR: 'HOUR' | 'hour';
-DAY: 'DAY' | 'day';
+HOUR: 'HOUR' | 'hour' | 'HOURS' | 'hours';
+DAY: 'DAY' | 'day' | 'DAYS' | 'days';
 MAX: 'MAX' | 'max';
 AVG: 'AVG' | 'avg';
 SUM: 'SUM' | 'sum';

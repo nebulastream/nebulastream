@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
@@ -26,7 +28,8 @@ namespace NES::Runtime::Execution::Operators
 {
 
 Scan::Scan(
-    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }

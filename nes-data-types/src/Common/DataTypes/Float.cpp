@@ -14,11 +14,17 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <string>
 #include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
+
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -33,30 +39,27 @@ bool Float::equals(DataTypePtr otherDataType)
     return false;
 }
 
-DataTypePtr Float::join(DataTypePtr otherDataType)
+DataTypePtr Float::join(const DataTypePtr otherDataType)
 {
-    if (NES::Util::instanceOf<Float>(otherDataType))
+    if (NES::Util::instanceOf<Undefined>(otherDataType))
     {
-        auto otherFloat = as<Float>(otherDataType);
-        auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = fmax(upperBound, otherFloat->upperBound);
-        auto newLowerBound = fmin(lowerBound, otherFloat->lowerBound);
-        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+        return std::make_shared<Float>(bits, lowerBound, upperBound);
     }
-    if (NES::Util::instanceOf<Integer>(otherDataType))
+    if (not NES::Util::instanceOf<Numeric>(otherDataType))
     {
-        auto otherInteger = as<Integer>(otherDataType);
-        auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = fmax(upperBound, static_cast<double>(otherInteger->upperBound));
-        auto newLowerBound = fmin(lowerBound, static_cast<double>(otherInteger->lowerBound));
-        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+        throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
     }
-    return DataTypeFactory::createUndefined();
+
+    if (const auto newDataType = inferDataType(*this, *NES::Util::as<Numeric>(otherDataType)); newDataType.has_value())
+    {
+        return newDataType.value();
+    }
+    throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
 }
 
 std::string Float::toString()
 {
-    return fmt::format("Float({} bits)", bits);
+    return fmt::format("FLOAT{}", bits);
 }
 
 }

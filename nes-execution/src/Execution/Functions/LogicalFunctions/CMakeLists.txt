@@ -13,4 +13,6 @@
 add_source_files(nes-execution
         ExecutableFunctionEquals.cpp
         ExecutableFunctionNegate.cpp
+        ExecutableFunctionAnd.cpp
+        ExecutableFunctionOr.cpp
         )

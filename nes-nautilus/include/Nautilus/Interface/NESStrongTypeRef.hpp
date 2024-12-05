@@ -14,22 +14,48 @@
 
 #pragma once
 
-#include <Identifiers/Identifiers.hpp>
+#include <type_traits>
 #include <Identifiers/NESStrongType.hpp>
 #include <nautilus/tracing/TypedValueRef.hpp>
+#include <nautilus/tracing/Types.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_concepts.hpp>
 
 namespace nautilus
 {
 
 namespace tracing
 {
-template <typename NES_STRONG>
-constexpr Type to_type()
+template <NES::NESIdentifier T>
+struct TypeResolver<T>
 {
-    using Underlying = typename NES_STRONG::Underlying;
-    return to_type<Underlying>();
+    [[nodiscard]] static constexpr Type to_type() { return TypeResolver<typename T::Underlying>::to_type(); }
+};
+
 }
+
+namespace details
+{
+template <NES::NESIdentifier LhsS>
+struct RawValueResolver<LhsS>
+{
+    static LhsS getRawValue(const val<LhsS>& val)
+    {
+        return LhsS(details::RawValueResolver<typename LhsS::Underlying>::getRawValue(val.value));
+    }
+};
+
+template <typename T>
+requires(NES::NESIdentifier<typename std::remove_cvref_t<T>::raw_type>)
+struct StateResolver<T>
+{
+    template <typename U = T>
+    static tracing::TypedValueRef getState(U&& value)
+    {
+        return StateResolver<typename std::remove_cvref_t<T>::raw_type::Underlying>::getState(value.value);
+    }
+};
+
 }
 
 /// This class is a nautilus wrapper for our NESStrongType
@@ -38,6 +64,7 @@ class val<NES::NESStrongType<T, Tag, Invalid, Initial>>
 {
 public:
     using Underlying = typename NES::NESStrongType<T, Tag, Invalid, Initial>::Underlying;
+    using raw_type = NES::NESStrongType<T, Tag, Invalid, Initial>;
     /// ReSharper disable once CppNonExplicitConvertingConstructor
     val<NES::NESStrongType<T, Tag, Invalid, Initial>>(const Underlying type) : value(type) { }
     /// ReSharper disable once CppNonExplicitConvertingConstructor
@@ -56,29 +83,16 @@ public:
         return *this;
     }
 
-    [[nodiscard]] friend bool operator<(const val& lh, const val& rh) noexcept { return lh.value < rh.value; }
-    [[nodiscard]] friend bool operator<=(const val& lh, const val& rh) noexcept { return lh.value <= rh.value; }
-    [[nodiscard]] friend bool operator>(const val& lh, const val& rh) noexcept { return lh.value > rh.value; }
-    [[nodiscard]] friend bool operator>=(const val& lh, const val& rh) noexcept { return lh.value >= rh.value; }
-    [[nodiscard]] friend bool operator==(const val& lh, const val& rh) noexcept { return lh.value == rh.value; }
+    /// IMPORTANT: This should be used with utmost care. Only, if there is no other way to work with the strong types.
+    /// In general, this method should only be used to write to a Nautilus::Record of if one calls a proxy function
+    val<Underlying> convertToValue() const { return value; }
 
+    [[nodiscard]] friend bool operator<(const val& lhs, const val& rhs) noexcept { return lhs.value < rhs.value; }
+    [[nodiscard]] friend bool operator<=(const val& lhs, const val& rhs) noexcept { return lhs.value <= rhs.value; }
+    [[nodiscard]] friend bool operator>(const val& lhs, const val& rhs) noexcept { return lhs.value > rhs.value; }
+    [[nodiscard]] friend bool operator>=(const val& lhs, const val& rhs) noexcept { return lhs.value >= rhs.value; }
+    [[nodiscard]] friend bool operator==(const val& lhs, const val& rhs) noexcept { return lhs.value == rhs.value; }
 
     val<Underlying> value;
 };
-
-namespace details
-{
-template <typename T, typename Tag, T Invalid, T Initial>
-T inline getRawValue(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
-{
-    return details::getRawValue(val.value);
-}
-
-template <typename T, typename Tag, T Invalid, T Initial>
-tracing::TypedValueRef inline getState(const val<NES::NESStrongType<T, Tag, Invalid, Initial>>& val)
-{
-    return details::getState(val.value);
-}
-}
-
 }

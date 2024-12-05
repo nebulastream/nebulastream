@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <set>
+#include <vector>
 #include <Functions/NodeFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -27,8 +28,8 @@ using NodePtr = std::shared_ptr<Node>;
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
-class LogicalFilterOperator;
-using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
+class LogicalSelectionOperator;
+using LogicalSelectionOperatorPtr = std::shared_ptr<LogicalSelectionOperator>;
 }
 
 namespace NES::Optimizer
@@ -81,6 +82,6 @@ private:
      * @param OperatorPtr: the node to be check
      * @return boolean, true when a consecutive filter is found
      */
-    static std::vector<LogicalFilterOperatorPtr> getConsecutiveFilters(const NES::LogicalFilterOperatorPtr& firstFilter);
+    static std::vector<LogicalSelectionOperatorPtr> getConsecutiveFilters(const NES::LogicalSelectionOperatorPtr& firstFilter);
 };
 }

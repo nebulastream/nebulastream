@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <Execution/Operators/Operator.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -31,7 +32,7 @@ public:
      * @param record the record that should be processed.
      */
     virtual void execute(ExecutionContext& ctx, Record& record) const = 0;
-    virtual ~ExecutableOperator() = default;
+    ~ExecutableOperator() override = default;
 };
 
 }

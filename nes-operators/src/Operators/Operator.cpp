@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,9 +26,8 @@ namespace NES
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-Operator::Operator(OperatorId id) : id(id)
+Operator::Operator(const OperatorId id) : id(id)
 {
-    NES_INFO("Creating Operator {}", id);
 }
 
 OperatorId Operator::getId() const
@@ -35,7 +35,7 @@ OperatorId Operator::getId() const
     return id;
 }
 
-void Operator::setId(OperatorId id)
+void Operator::setId(const OperatorId id)
 {
     Operator::id = id;
 }
@@ -123,7 +123,7 @@ OperatorPtr Operator::getDuplicateOfChild(const OperatorPtr& operatorNode)
     return copyOfOperator;
 }
 
-bool Operator::addChild(NodePtr newNode)
+bool Operator::addChild(const NodePtr newNode)
 {
     if (!newNode)
     {
@@ -145,7 +145,7 @@ bool Operator::addChild(NodePtr newNode)
 
     if (found == currentChildren.end())
     {
-        NES_TRACE("Operator: Adding node {} to the children.", newNode->toString());
+        NES_TRACE("Operator: Adding node {} to the children.", *newNode);
         children.push_back(newNode);
         newNode->addParent(shared_from_this());
         return true;
@@ -154,7 +154,7 @@ bool Operator::addChild(NodePtr newNode)
     return false;
 }
 
-bool Operator::addParent(NodePtr newNode)
+bool Operator::addParent(const NodePtr newNode)
 {
     if (!newNode)
     {
@@ -176,7 +176,7 @@ bool Operator::addParent(NodePtr newNode)
 
     if (found == currentParents.end())
     {
-        NES_TRACE("Operator: Adding node {} to the Parents.", newNode->toString());
+        NES_TRACE("Operator: Adding node {} to the Parents.", *newNode);
         parents.push_back(newNode);
         newNode->addChild(shared_from_this());
         return true;
@@ -185,7 +185,7 @@ bool Operator::addParent(NodePtr newNode)
     return false;
 }
 
-NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const
+NodePtr Operator::getChildWithOperatorId(const OperatorId operatorId) const
 {
     for (const auto& child : children)
     {
@@ -225,7 +225,7 @@ void Operator::removeProperty(const std::string& key)
     properties.erase(key);
 }
 
-bool Operator::containAsGrandChild(NodePtr operatorNode)
+bool Operator::containAsGrandChild(const NodePtr operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors
@@ -242,7 +242,7 @@ bool Operator::containAsGrandChild(NodePtr operatorNode)
         [operatorIdToCheck](const NodePtr& ancestor) { return NES::Util::as<Operator>(ancestor)->getId() == operatorIdToCheck; });
 }
 
-bool Operator::containAsGrandParent(NES::NodePtr operatorNode)
+bool Operator::containAsGrandParent(const NodePtr operatorNode)
 {
     auto operatorIdToCheck = NES::Util::as<Operator>(operatorNode)->getId();
     /// populate all ancestors

@@ -11,12 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
 #include <functional>
 #include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
 #include <nautilus/val.hpp>
@@ -41,7 +42,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(
 }
 
 nautilus::engine::CallableFunction<void, WorkerContext*, PipelineExecutionContext*, Memory::TupleBuffer*>
-CompiledExecutablePipelineStage::compilePipeline()
+CompiledExecutablePipelineStage::compilePipeline() const
 {
     Timer timer("compiler");
     timer.start();
@@ -68,8 +69,8 @@ CompiledExecutablePipelineStage::compilePipeline()
 
 uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
-    auto workerContextRef = nautilus::val<int8_t*>((int8_t*)nullptr);
+    const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
+    const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
     return 0;
@@ -77,8 +78,8 @@ uint32_t CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelin
 
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext)
 {
-    const auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
-    const auto workerContextRef = nautilus::val<int8_t*>(nullptr);
+    const auto pipelineExecutionContextRef = nautilus::val<PipelineExecutionContext*>(&pipelineExecutionContext);
+    const auto workerContextRef = nautilus::val<WorkerContext*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     pipelineFunctionCompiled = this->compilePipeline();

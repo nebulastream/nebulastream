@@ -35,7 +35,6 @@ class AttributeField
 {
 public:
     AttributeField() = default;
-    AttributeField(std::string name, DataTypePtr dataType);
 
     /**
      * @brief Factory method to create a new field
@@ -59,9 +58,11 @@ public:
      * @brief Make copy of this attribute
      * @return shared pointer
      */
-    AttributeFieldPtr copy() const;
+    AttributeFieldPtr deepCopy() const;
 
 private:
+    AttributeField(std::string name, DataTypePtr dataType);
+
     std::string name;
     DataTypePtr dataType;
 };

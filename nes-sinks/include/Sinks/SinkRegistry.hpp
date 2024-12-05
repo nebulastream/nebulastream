@@ -30,5 +30,5 @@ class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
 }
 
 #define INCLUDED_FROM_SINK_REGISTRY
-#include <Sinks/SinkGeneratedRegistrar.hpp>
+#include <Sinks/SinkGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SINK_REGISTRY

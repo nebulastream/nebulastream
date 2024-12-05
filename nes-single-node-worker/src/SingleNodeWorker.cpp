@@ -11,11 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -30,8 +31,8 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
-    : qc(std::make_unique<QueryCompilation::NautilusQueryCompiler>(
-          QueryCompilation::queryCompilationOptionsFromConfig(configuration.queryCompilerConfiguration),
+    : qc(std::make_unique<QueryCompilation::QueryCompiler>(
+          QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration).build())
 {

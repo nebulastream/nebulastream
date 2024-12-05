@@ -18,11 +18,12 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 
@@ -39,7 +40,7 @@ LogicalProjectionOperator::LogicalProjectionOperator(std::vector<std::shared_ptr
     bool allFunctionsAreSupported = true;
     for (const auto& function : this->functions | std::views::filter(functionTypeNotSupported))
     {
-        NES_ERROR("The projection operator does not support the function: {}", function->toString());
+        NES_ERROR("The projection operator does not support the function: {}", *function);
         allFunctionsAreSupported = false;
     }
     INVARIANT(
@@ -62,7 +63,7 @@ bool LogicalProjectionOperator::equal(std::shared_ptr<Node> const& rhs) const
     if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
         auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
-        return outputSchema->equals(projection->outputSchema);
+        return (*outputSchema == *projection->outputSchema);
     }
     return false;
 };
@@ -112,14 +113,14 @@ bool LogicalProjectionOperator::inferSchema()
         else if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(function))
         {
             auto fieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(function);
-            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getStamp());
+            outputSchema->addField(fieldAssignment->getField()->getFieldName(), fieldAssignment->getField()->getStamp());
         }
         else
         {
-            throw CannotInferSchema(
+            throw CannotInferSchema(fmt::format(
                 "LogicalProjectionOperator: Function has to be an NodeFunctionFieldAccess, a "
-                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a "
-                + function->toString());
+                "NodeFunctionFieldRename, or a NodeFunctionFieldAssignment, but it was a {}",
+                *function));
         }
     }
     return true;
@@ -132,7 +133,7 @@ OperatorPtr LogicalProjectionOperator::copy()
     {
         copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
     }
-    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionFunctions, id);
+    auto copy = std::make_shared<LogicalProjectionOperator>(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -159,7 +160,7 @@ void LogicalProjectionOperator::inferStringSignature()
     }
     std::stringstream signatureStream;
     std::vector<std::string> fields;
-    for (const auto& field : outputSchema->fields)
+    for (const auto& field : *outputSchema)
     {
         fields.push_back(field->getName());
     }

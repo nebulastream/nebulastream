@@ -53,19 +53,21 @@ void loadQueriesFromTestFile(TestFile& testfile, const std::filesystem::path& re
 {
     auto loadedPlans = loadFromSLTFile(testfile.file, resultDir, testfile.name());
     uint64_t queryIdInFile = 0;
-    for (const auto& plan : loadedPlans)
+    for (const auto& [decomposedPlan, queryDefinition, sinkSchema] : loadedPlans)
     {
         if (not testfile.onlyEnableQueriesWithTestQueryNumber.empty())
         {
             for (const auto& testNumber : testfile.onlyEnableQueriesWithTestQueryNumber
                      | std::views::filter([&queryIdInFile](auto testNumber) { return testNumber == queryIdInFile + 1; }))
             {
-                testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile, resultDir);
+                testfile.queries.emplace_back(
+                    testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, resultDir, sinkSchema);
             }
         }
         else
         {
-            testfile.queries.emplace_back(testfile.name(), plan.second, testfile.file, plan.first, queryIdInFile, resultDir);
+            testfile.queries.emplace_back(
+                testfile.name(), queryDefinition, testfile.file, decomposedPlan, queryIdInFile, resultDir, sinkSchema);
         }
         ++queryIdInFile;
     }
@@ -109,7 +111,6 @@ TestFile::TestFile(std::filesystem::path file, std::vector<uint64_t> onlyEnableQ
 std::vector<Query> loadQueries(TestFileMap&& testmap, const std::filesystem::path& resultDir)
 {
     std::vector<Query> queries;
-
     for (auto& [testname, testfile] : testmap)
     {
         std::cout << "Loading queries from test file: file://" << testfile.file.string() << '\n' << std::flush;

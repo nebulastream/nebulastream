@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {
@@ -48,13 +53,13 @@ public:
     static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
 
     /**
-     * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
-     * exemplary usage would be: filter(Attribute("f1" < 10))
-     * @param filterFunction as function node containing the predicate
-     * @param queryPlanPtr the queryPlan the filter node is added to
+     * @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
+     * exemplary usage would be: selection(Attribute("f1" < 10))
+     * @param selectionFunction as function node containing the predicate
+     * @param queryPlanPtr the queryPlan the selection node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -93,7 +98,7 @@ public:
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
         NodeFunctionPtr joinFunction,
-        const Windowing::WindowTypePtr& windowType,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
     /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
@@ -105,11 +110,11 @@ public:
 
     /// Create watermark assigner operator and adds it to the queryPlan
     static QueryPlanPtr
-    assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    assignWatermark(QueryPlanPtr queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
-    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, Windowing::WindowTypePtr windowType);
 
 private:
     /**
@@ -118,7 +123,7 @@ private:
      * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
      * @return nodeFunction as NodeFunctionFieldAccess
      */
-    static std::shared_ptr<NodeFunctionFieldAccess> checkFunction(NodeFunctionPtr function, std::string side);
+    static std::shared_ptr<NodeFunctionFieldAccess> asNodeFunctionFieldAccess(const NodeFunctionPtr& function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources

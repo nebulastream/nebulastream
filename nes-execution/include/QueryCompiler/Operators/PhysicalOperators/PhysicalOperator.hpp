@@ -21,7 +21,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 /**
  * @brief General abstraction for all physical operators.
  * A physical operator represents the concrete realization of a logical operator.
- * It can be a direct mapping, e.g., a LogicalFilterOperator maps to a PhysicalFilterOperator.
+ * It can be a direct mapping, e.g., a LogicalSelectionOperator maps to a PhysicalSelectionOperator.
  * Other logical operators can also result in multiple physical operators,
  * e.g., CentralWindowOperator results in a SlicePreAggregation and a WindowSinkOperator.
  * This mapping is called lowering and is defined in a PhysicalOperatorProvider.

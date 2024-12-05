@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Functions/Functions.hpp>
@@ -20,12 +21,13 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
@@ -65,16 +67,17 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
             NES_DEBUG("add default watermark strategy as non is provided");
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
             {
-                queryPlan->appendOperatorAsNewRoot(
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
             }
             else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime)
             {
-                queryPlan->appendOperatorAsNewRoot(
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
                         NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
-                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                    getNextOperatorId()));
             }
         }
         else
@@ -107,7 +110,7 @@ Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API
         windowAggregationDescriptors.emplace_back(agg->aggregation);
     }
     auto windowDefinition = Windowing::LogicalWindowDescriptor::create(windowAggregationDescriptors, windowType, allowedLateness);
-    auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDefinition, getNextOperatorId());
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
@@ -122,7 +125,7 @@ Query& Query::windowByKey(
     {
         if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(onKey))
         {
-            NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a {}", onKey->toString());
+            NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a {}", *onKey);
         }
         nodeFunctions.emplace_back(NES::Util::as<NodeFunctionFieldAccess>(onKey));
     }
@@ -137,16 +140,17 @@ Query& Query::windowByKey(
             NES_DEBUG("add default watermark strategy as non is provided");
             if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
             {
-                queryPlan->appendOperatorAsNewRoot(
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create()));
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::IngestionTimeWatermarkStrategyDescriptor::create(), getNextOperatorId()));
             }
             else if (timeBasedWindowType->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime)
             {
-                queryPlan->appendOperatorAsNewRoot(
-                    LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+                queryPlan->appendOperatorAsNewRoot(std::make_shared<WatermarkAssignerLogicalOperator>(
+                    Windowing::EventTimeWatermarkStrategyDescriptor::create(
                         NodeFunctionFieldAccess::create(timeBasedWindowType->getTimeCharacteristic()->getField()->getName()),
                         API::Milliseconds(0),
-                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit())));
+                        timeBasedWindowType->getTimeCharacteristic()->getTimeUnit()),
+                    getNextOperatorId()));
             }
         }
         else
@@ -182,7 +186,7 @@ Query& Query::windowByKey(
 
     auto windowDefinition
         = Windowing::LogicalWindowDescriptor::create(nodeFunctions, windowAggregationDescriptors, windowType, allowedLateness);
-    auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
+    auto windowOperator = std::make_shared<LogicalWindowOperator>(windowDefinition, getNextOperatorId());
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;

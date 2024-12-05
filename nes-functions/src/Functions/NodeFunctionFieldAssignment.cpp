@@ -52,7 +52,7 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 std::string NodeFunctionFieldAssignment::toString() const
 {
     std::stringstream ss;
-    ss << "NodeFunctionFieldAssignment(" << children[0]->toString() << "=" << children[1]->toString() << ")";
+    ss << "NodeFunctionFieldAssignment(" << *children[0] << "=" << *children[1] << ")";
     return ss.str();
 }
 
@@ -76,11 +76,11 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
 
     ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
-        field->updateFieldName(existingField->getName());
+        field->updateFieldName(existingField.value()->getName());
         field->setStamp(stamp);
     }
     else
@@ -101,11 +101,6 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
     {
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
-    }
-    else
-    {
-        /// the field already has a type, check if it is compatible with the assignment
-        field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
 NodeFunctionPtr NodeFunctionFieldAssignment::deepCopy()

@@ -27,5 +27,5 @@ class ExecutablePipelineProviderRegistry
 }
 
 #define INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.hpp>
+#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.inc>
 #undef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY

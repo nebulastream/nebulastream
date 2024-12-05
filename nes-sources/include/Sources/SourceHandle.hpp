@@ -15,13 +15,17 @@
 #pragma once
 
 #include <memory>
+#include <InputFormatters/InputFormatter.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceThread.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
 namespace NES::Sources
 {
+
+/// Hides SourceThread implementation.
+class SourceThread;
 
 /// Interface class to handle sources.
 /// Created from a source descriptor via the SourceProvider.
@@ -33,13 +37,13 @@ class SourceHandle
 public:
     explicit SourceHandle(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SchemaPtr schema,
         std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<Source> sourceImplementation,
+        std::unique_ptr<InputFormatters::InputFormatter> inputFormatter);
 
-    ~SourceHandle() = default;
+    ~SourceHandle();
 
     bool start() const;
     bool stop() const;

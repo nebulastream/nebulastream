@@ -16,17 +16,17 @@
 #include <API/TimeUnit.hpp>
 #include <Execution/Functions/Function.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES::Nautilus
 {
 class Record;
+class RecordBuffer;
 }
 
 namespace NES::Runtime::Execution
 {
-class RecordBuffer;
 struct ExecutionContext;
-
 }
 
 namespace NES::Runtime::Execution::Operators
@@ -38,11 +38,11 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /// @brief A time function, infers the timestamp of an record.
 /// For ingestion time, this is determined by the creation ts in the buffer.
-/// For event time, this is infered by a field in the record.
+/// For event time, this is inferred by a field in the record.
 class TimeFunction
 {
 public:
-    virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
+    virtual void open(Execution::ExecutionContext& ctx, RecordBuffer& buffer) = 0;
     virtual nautilus::val<Timestamp> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
@@ -54,7 +54,7 @@ class EventTimeFunction final : public TimeFunction
 {
 public:
     explicit EventTimeFunction(std::unique_ptr<Functions::Function> timestampFunction, Windowing::TimeUnit unit);
-    void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
+    void open(Execution::ExecutionContext& ctx, RecordBuffer& buffer) override;
     nautilus::val<Timestamp> getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
 private:

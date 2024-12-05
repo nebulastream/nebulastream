@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/QueryAPI.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -51,15 +54,15 @@ public:
         pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator("test_source_1");
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator("test_source_2");
-        filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        sinkOp1 = LogicalOperatorFactory::createSinkOperator("print_sink");
-        sinkOp2 = LogicalOperatorFactory::createSinkOperator("print_sink");
-        sinkOp3 = LogicalOperatorFactory::createSinkOperator("print_sink");
+        sourceOp1 = std::make_shared<SourceNameLogicalOperator>("test_source_1", getNextOperatorId());
+        sourceOp2 = std::make_shared<SourceNameLogicalOperator>("test_source_2", getNextOperatorId());
+        filterOp1 = std::make_shared<LogicalSelectionOperator>(pred1, getNextOperatorId());
+        filterOp2 = std::make_shared<LogicalSelectionOperator>(pred2, getNextOperatorId());
+        filterOp3 = std::make_shared<LogicalSelectionOperator>(pred3, getNextOperatorId());
+        filterOp4 = std::make_shared<LogicalSelectionOperator>(pred4, getNextOperatorId());
+        sinkOp1 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
+        sinkOp2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
+        sinkOp3 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
 
         children.clear();
         parents.clear();

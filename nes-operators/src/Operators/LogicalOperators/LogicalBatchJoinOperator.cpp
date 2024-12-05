@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -70,7 +70,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
     {
-        if ((*itr)->getField(buildJoinKeyName))
+        if ((*itr)->getFieldByName(buildJoinKeyName))
         {
             leftInputSchema->copyFields(*itr);
             buildJoinKey->inferStamp(leftInputSchema);
@@ -86,7 +86,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
     {
-        if (schema->getField(probeJoinKeyName))
+        if (schema->getFieldByName(probeJoinKeyName))
         {
             rightInputSchema->copyFields(schema);
             probeJoinKey->inferStamp(rightInputSchema);
@@ -112,7 +112,7 @@ bool LogicalBatchJoinOperator::inferSchema()
     }
 
     ///Check that both left and right schema should be different
-    if (rightInputSchema->equals(leftInputSchema, false))
+    if (*rightInputSchema == *leftInputSchema)
     {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
         throw CannotInferSchema("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
@@ -126,12 +126,12 @@ bool LogicalBatchJoinOperator::inferSchema()
     outputSchema->clear();
 
     /// create dynamic fields to store all fields from left and right streams
-    for (const auto& field : leftInputSchema->fields)
+    for (const auto& field : *leftInputSchema)
     {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
-    for (const auto& field : rightInputSchema->fields)
+    for (const auto& field : *rightInputSchema)
     {
         outputSchema->addField(field->getName(), field->getDataType());
     }
@@ -144,7 +144,7 @@ bool LogicalBatchJoinOperator::inferSchema()
 
 OperatorPtr LogicalBatchJoinOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createBatchJoinOperator(batchJoinDefinition, id);
+    auto copy = std::make_shared<LogicalBatchJoinOperator>(batchJoinDefinition, id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);

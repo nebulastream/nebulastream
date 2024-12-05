@@ -1,22 +1,12 @@
 name: NES PR CI
 
-# The following pipeline is meant to run for every PR. It will not call any other workflow / pipeline.
+# The following pipeline is meant to run for every PR.
 # It will also apply the format check. If these steps are successful, it will try to build the PR and run the tests.
-# In the future, we will add more automated checks to this pipeline, e.g., clang-tidy for our codebase or code coverage checks.
-#
 # If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
 # Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
-
 on:
-  workflow_call:
-    inputs:
-      branch:
-        required: true
-        type: string
   pull_request:
-    # The ready_for_review event is used when a draft pr is changed into a non-draft version. If we did
-    # not use the ready_for_review the ci would not be triggered and appear to have passed.
-    types: [ ready_for_review, synchronize, opened, reopened ]
+    types: [ synchronize, opened, reopened ]
 
 # cancel previous runs of same PR / branch.
 concurrency:
@@ -24,121 +14,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-format:
-    if: ${{ !github.event.workflow_call }}
-    runs-on: [ self-hosted, linux, Build ]
-    container:
-      image: nebulastream/nes-development:latest
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
-      env:
-        GH_TOKEN: ${{ github.token }}
-        # has to be sha since github.base_ref would have to be checked out
-        BASE_REF: ${{ github.event.pull_request.base.sha }}
-    permissions:
-      issues: read
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # check-todos.py needs to reach the merge-base,
-          # so it fails if the PR is longer than 100 commits
-          fetch-depth: 100
-      - name: Check Format
-        run: ./scripts/format.sh
+  get-dev-images-for-base-branch:
+    uses: ./.github/workflows/get_dev_images.yml
+    secrets: inherit
+    with:
+      ref: ${{ github.event.pull_request.base.sha }}
 
   get-dev-images:
     uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
     with:
+      ref: ${{ github.event.pull_request.head.sha }}
+
+  check-format:
+    needs: [ get-dev-images ]
+    name: "Run build and test"
+    uses: ./.github/workflows/format.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
+
+  build-and-test:
+    needs: [ get-dev-images ]
+    name: "Run build and test"
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       ref: ${{ github.event.pull_request.head.ref }}
 
-  check-clang-tidy:
+  clang-tidy-report:
     needs: [ get-dev-images ]
-    runs-on: [ self-hosted, linux, Build ]
-    container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}
-      options: --user root
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-        GH_TOKEN: ${{ github.token }}
-    steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v4
-        with:
-          # Otherwise, we are not able to run clang-tidy on the diff, as we are not fetching the base branch.
-          fetch-depth: 0
-      - name: Configure NebulaStream for Clang-Tidy
-        run: cmake -GNinja -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-      # We need to build the project, as some headers are only created during the build.
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
-      - name: Create results directory
-        run: mkdir clang-tidy-result
-      - name: Analyze by running Clang-Tidy
-        run: git diff -U0 "$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}")" | python3 /clang-tidy-diff.py -clang-tidy-binary clang-tidy-18 -p1 -path build -export-fixes clang-tidy-result/fixes.yml -config-file .clang-tidy -j $(nproc)
-      - name: Upload Clang-Tidy Results
-        if: ${{ !cancelled() && !github.event.act }}
-        uses: actions/upload-artifact@v4
-        with:
-          if-no-files-found: warn
-          name: clang-tidy-result
-          path: clang-tidy-result
-      - name: Run clang-tidy-pr-comments action
-        uses: platisd/clang-tidy-pr-comments@v1
-        with:
-          github_token: ${{ github.token }}
-          clang_tidy_fixes: clang-tidy-result/fixes.yml
-          request_changes: false
-          # Optionally set the number of comments per review to avoid GitHub API timeouts for heavily loaded pull requests
-          suggestions_per_comment: 100
-          # As we are running it in a docker, we need to set the repo path prefix to /__w
-          # This is mentioned in https://github.com/platisd/clang-tidy-pr-comments/blob/master/action.yml
-          repo_path_prefix: /__w
-
-  build-linux:
-    name: "Build and test ${{matrix.arch}} with ${{matrix.stdlib}}"
-    needs: [ get-dev-images ]
-    container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}
-      volumes:
-        - ccache:/ccache
-      env:
-        CCACHE_DIR: /ccache
-        MOLD_JOBS: 1
-      # TODO #401 Investigate rootless docker containers
-      options: --user root
-    timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [ x64, arm64 ]
-        stdlib: [ 'libstdcxx', 'libcxx' ]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Configure NebulaStream
-        run: cmake -GNinja -B build
-      - name: Build NebulaStream
-        run: cmake --build build -j -- -k 0
-      - name: Run CTests
-        # Setting the timeout to 600 seconds (10 min.), since we run many system level tests that may take longer to finish.
-        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 600
-      - name: Upload Test Summary
-        uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && !github.event.act }}
-        with:
-          name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}.xml
-          path: /junit.xml
+    name: "Run clang tidy report"
+    uses: ./.github/workflows/clang_tidy_diff.yml
+    with:
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
 
   run_code_coverage:
-    needs: [ get-dev-images ]
+    needs: [ get-dev-images, get-dev-images-for-base-branch ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
-    # Using the tag from the get-dev-images job
     with:
-      tag_pr: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+      base_sha: ${{ github.event.pull_request.base.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      base_dev_image_tag: ${{ needs.get-dev-images-for-base-branch.outputs.image-tag }}
+      number_of_commits: ${{ github.event.pull_request.commits }}
     secrets: inherit

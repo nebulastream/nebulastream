@@ -154,19 +154,19 @@ remove the vcpkg feature responsible for building `MLIR`. Unless the `MLIR` back
 CMake expects to be able to locate `MLIR` somewhere on the system.
 
 The current recommendation is to use the
-legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/v18_11)
+legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/vmlir-sanitized)
 and pass the `-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang`
 
 ```bash
 cmake -B build \
-  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DUSE_LOCAL_MLIR=ON \
-  -DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang
+-DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+-DUSE_LOCAL_MLIR=ON \
+-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-libc++-x64-None/clang 
 ```
 
-It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
-sanitizers
-also require llvm to be built with sanitization enabled which is not the case for the pre-built version.
+Ensure your locally installed version of MLIR uses the correct standard library and sanitizers. The default build uses
+libc++ and no sanitizers. Mismatches between the standard library will appear as linker errors during the build, while
+mismatched sanitizers might cause them not to work or produce false positives.
 
 ## Standard Libraries
 

@@ -15,9 +15,88 @@
 #pragma once
 
 #include <cstdint>
+#include <sstream>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Time/Timestamp.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include "Sequencing/SequenceData.hpp"
+
+
+namespace NES::QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t
+{
+    Right,
+    Left
+};
+}
+
+
+namespace NES::Runtime::Execution
+{
+
+/// Stores the window start and window end field names
+struct WindowMetaData
+{
+    WindowMetaData(std::string windowStartFieldName, std::string windowEndFieldName)
+        : windowStartFieldName(std::move(windowStartFieldName)), windowEndFieldName(std::move(windowEndFieldName))
+    {
+    }
+
+    std::string windowStartFieldName;
+    std::string windowEndFieldName;
+};
+
+/// Stores the information of a window. The start, end, and the identifier
+struct WindowInfo
+{
+    WindowInfo(const Timestamp windowStart, const Timestamp windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        if (windowEnd < windowStart)
+        {
+            this->windowStart = Timestamp(0);
+        }
+    }
+
+    WindowInfo(const uint64_t windowStart, const uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd)
+    {
+        if (windowEnd < windowStart)
+        {
+            this->windowStart = Timestamp(0);
+        }
+    }
+
+    bool operator<(const WindowInfo& other) const { return windowEnd < other.windowEnd; }
+    Timestamp windowStart;
+    Timestamp windowEnd;
+};
+
+/// Stores the metadata for a RecordBuffer
+struct BufferMetaData
+{
+    BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId)
+        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
+    {
+    }
+
+    [[nodiscard]] std::string toString() const
+    {
+        std::ostringstream oss;
+        oss << "waterMarkTs: " << watermarkTs << ","
+            << "seqNumber: " << seqNumber << ","
+            << "originId: " << originId;
+        return oss.str();
+    }
+
+    Timestamp watermarkTs;
+    SequenceData seqNumber;
+    OriginId originId;
+};
+}
 
 namespace NES::QueryCompilation::Util
 {

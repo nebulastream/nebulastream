@@ -29,13 +29,8 @@ LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), Logi
 
 bool LogicalBinaryOperator::inferSchema()
 {
-    PRECONDITION(children.size() >= 2, "BinaryOperator: this node should have at least two child operators");
+    PRECONDITION(children.size() == 2, "BinaryOperator: this node should have exactly two child operators");
     distinctSchemas.clear();
-    ///Check the number of child operators
-    if (children.size() < 2)
-    {
-        throw CannotInferSchema("BinaryOperator: this node should have at least two child operators");
-    }
 
     /// Infer schema of all child operators
     for (const auto& child : children)
@@ -53,7 +48,7 @@ bool LogicalBinaryOperator::inferSchema()
         auto found = std::find_if(
             distinctSchemas.begin(),
             distinctSchemas.end(),
-            [&](const SchemaPtr& distinctSchema) { return childOutputSchema->equals(distinctSchema, false); });
+            [&](const SchemaPtr& distinctSchema) { return (*childOutputSchema == *distinctSchema); });
         if (found == distinctSchemas.end())
         {
             distinctSchemas.push_back(childOutputSchema);
@@ -61,7 +56,7 @@ bool LogicalBinaryOperator::inferSchema()
     }
 
     ///validate that only two different type of schema were present
-    INVARIANT(distinctSchemas.size() > 2, "BinaryOperator: this node should have at least two child operators");
+    INVARIANT(distinctSchemas.size() == 2, "BinaryOperator: this node should have exactly two distinct schemas");
 
     return true;
 }
@@ -72,7 +67,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getOperatorsBySchema(const Schem
     for (const auto& child : getChildren())
     {
         auto childOperator = NES::Util::as<Operator>(child);
-        if (childOperator->getOutputSchema()->equals(schema, false))
+        if (*childOperator->getOutputSchema() == *schema)
         {
             operators.emplace_back(childOperator);
         }

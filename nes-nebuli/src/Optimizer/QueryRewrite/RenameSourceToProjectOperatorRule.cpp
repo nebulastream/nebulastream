@@ -11,12 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -51,7 +53,7 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
 
     std::vector<NodeFunctionPtr> projectionAttributes;
     /// Iterate over the input schema and add a new field rename function
-    for (const auto& field : inputSchema->fields)
+    for (const auto& field : *inputSchema)
     {
         /// compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
@@ -63,7 +65,7 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
         projectionAttributes.push_back(fieldRenameFunction);
     }
     /// Construct a new project operator
-    auto projectOperator = LogicalOperatorFactory::createProjectionOperator(projectionAttributes);
+    auto projectOperator = std::make_shared<LogicalProjectionOperator>(projectionAttributes, getNextOperatorId());
     return projectOperator;
 }
 

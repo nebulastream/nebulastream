@@ -13,6 +13,7 @@
 */
 
 #include <iostream>
+#include <vector>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -32,7 +33,7 @@ std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::os
 
 void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    out << std::string(indent * depth, ' ') << op->toString() << std::endl;
+    out << std::string(indent * depth, ' ') << op << '\n';
     ++depth;
     auto children = op->getChildren();
     for (auto&& child : children)
@@ -43,7 +44,7 @@ void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint
 
 void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const
 {
-    std::vector<std::string> multiLineNodeString = op->toMultilineString();
+    std::vector<std::string> multiLineNodeString = {fmt::format("{}", *op)};
     for (const std::string& line : multiLineNodeString)
     {
         for (auto i{0ULL}; i < indent * depth; ++i)

@@ -16,11 +16,11 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {
 struct ExecutionContext;
-class RecordBuffer;
 }
 namespace NES::Runtime::Execution::Operators
 {

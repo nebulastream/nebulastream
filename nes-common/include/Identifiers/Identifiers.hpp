@@ -18,8 +18,6 @@
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
 
-#define UNSURE_CONVERSION_TODO_4761(from, to) (to(from.getRawValue()))
-
 namespace NES
 {
 
@@ -31,9 +29,9 @@ using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
-using Timestamp = NESStrongType<uint64_t, struct Timestamp_, UINT64_MAX, 0>;
 using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
 using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
+
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
@@ -57,16 +55,10 @@ static constexpr ChunkNumber INITIAL_CHUNK_NUMBER = INITIAL<ChunkNumber>;
 static constexpr SequenceNumber INVALID_SEQ_NUMBER = INVALID<SequenceNumber>;
 static constexpr SequenceNumber INITIAL_SEQ_NUMBER = INITIAL<SequenceNumber>;
 
-static constexpr Timestamp INVALID_WATERMARK_TS_NUMBER = INVALID<Timestamp>;
-static constexpr Timestamp INITIAL_WATERMARK_TS_NUMBER = INITIAL<Timestamp>;
-
-static constexpr Timestamp INITIAL_CREATION_TS_NUMBER = INITIAL<Timestamp>;
-
-/// Special overloads for commonly occuring patterns
+/// Special overloads for commonly occurring patterns
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets
 inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
     return id.getRawValue() % containerSize;
 }
-
 }

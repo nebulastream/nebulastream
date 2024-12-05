@@ -1,0 +1,13 @@
+# name: tuples/OneTuple.test
+# description: Simple tuple/buffer tests
+# groups: [Tuples]
+
+Source oneTuple UINT64 field_1
+1
+
+SINK sinkOneTuple UINT64 oneTuple$field_1
+
+# Description: check if we run into an error if we process a single tuple.
+SELECT field_1 FROM oneTuple INTO sinkOneTuple
+----
+1

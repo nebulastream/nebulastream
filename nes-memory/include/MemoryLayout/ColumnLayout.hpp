@@ -34,6 +34,8 @@ class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<Co
 {
 public:
     ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
+    ColumnLayout(const ColumnLayout& other);
+
     static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
@@ -46,6 +48,8 @@ public:
      * @return offset in the tuple buffer.
      */
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
+
+    std::shared_ptr<MemoryLayout> deepCopy() const override;
 
     const std::vector<uint64_t>& getColumnOffsets() const;
 
