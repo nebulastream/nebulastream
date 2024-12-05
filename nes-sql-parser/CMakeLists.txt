@@ -13,31 +13,41 @@
 add_subdirectory(src)
 get_source(nes-sql-parser SQL_PARSER_SOURCE_FILES)
 
-add_custom_command(
-        OUTPUT
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLBaseListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLLexer.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLParser.cpp
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4
-        COMMAND antlr4 -Dlanguage=Cpp ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 -o ${CMAKE_CURRENT_BINARY_DIR}
-)
+find_package(antlr4-generator CONFIG REQUIRED)
+
+set(ANTLR_JAR_FILE "antlr-${ANTLR_VERSION}-complete.jar")
+
+if (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
+  # if in prebuilt docker, expect jar _with correct version_ in /opt
+  if (NOT EXISTS "/opt/${ANTLR_JAR_FILE}")
+    message(FATAL_ERROR "could not find expected ANTLR jar file /opt/${ANTLR_JAR_FILE}. "
+                        "Maybe there is a version mismatch?")
+  endif ()
+  set(ANTLR4_JAR_LOCATION "/opt/${ANTLR_JAR_FILE}")
+else ()
+  include(FetchContent)
+  FetchContent_Declare(
+    antlr4_jar
+    URL      https://www.antlr.org/download/${ANTLR_JAR_FILE}
+    URL_HASH SHA256=bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487
+    DOWNLOAD_NO_EXTRACT TRUE
+  )
+  FetchContent_MakeAvailable(antlr4_jar)
+  set(ANTLR4_JAR_LOCATION "${antlr4_jar_SOURCE_DIR}/${ANTLR_JAR_FILE}")
+endif ()
+
+# generate BOTH parser and lexer, and additionaly listener
+antlr4_generate(NES_SQL_PARSER ${CMAKE_CURRENT_SOURCE_DIR}/AntlrSQL.g4 BOTH -listener)
 
 # The VCPKG port is called 'antlr4', finding the package requires to look for 'antlr4-runtime' and
 # adding antlr library as a dependency to another library, requires to link against 'antlr-static'.
 find_package(antlr4-runtime CONFIG REQUIRED)
-add_library(nes-sql-parser
-        ${SQL_PARSER_SOURCE_FILES}
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLBaseListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLLexer.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLListener.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/AntlrSQLParser.cpp
-)
+add_library(nes-sql-parser ${SQL_PARSER_SOURCE_FILES} ${ANTLR4_SRC_FILES_NES_SQL_PARSER})
 
 target_include_directories(nes-sql-parser PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
-        ${CMAKE_CURRENT_BINARY_DIR} ${ANTLR4_INCLUDE_DIR}
+        ${ANTLR4_INCLUDE_DIR_NES_SQL_PARSER} ${ANTLR4_INCLUDE_DIR}
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 target_link_libraries(nes-sql-parser PUBLIC antlr4_static nes-common nes-functions nes-sinks nes-sources nes-client nes-operators PRIVATE nes-client)
 

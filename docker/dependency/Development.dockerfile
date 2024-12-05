@@ -2,6 +2,8 @@
 ARG TAG=latest
 FROM nebulastream/nes-development-dependency:${TAG}
 
+ARG ANTLR4_VERSION=4.13.1
+
 RUN apt update -y \
     && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} lldb-${LLVM_VERSION} gdb jq -y
 
@@ -13,14 +15,11 @@ RUN apt-get update && \
         apt-get install -y software-properties-common && \
         add-apt-repository ppa:deadsnakes/ppa && \
         apt-get update && \
-        apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils pipx -y
+        apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils -y
 
-# Had to install antlr4-tools via pipx as the antlr4-tools package is not available in the apt repository
-# Additionally, we had to change the homedir in the antlr4_tool_runner.py file to /opt as the Path.home() function
-# Otherwise, we would need to downoad the antlr4.jar during the building of the project
-RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin PIPX_MAN_DIR=/usr/local/share/man pipx install antlr4-tools  && \
-    sed -i "s|homedir = Path.home()|homedir = '/opt'|" /opt/pipx/venvs/antlr4-tools/lib/python3.12/site-packages/antlr4_tool_runner.py && \
-    antlr4
+# The vcpkg port of antlr requires the jar to be available somewhere
+ADD --checksum=sha256:bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487 \
+  https://www.antlr.org/download/antlr-${ANTLR4_VERSION}-complete.jar /opt/antlr-${ANTLR4_VERSION}-complete.jar
 
 
 RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
