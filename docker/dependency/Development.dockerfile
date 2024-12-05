@@ -13,7 +13,7 @@ RUN apt-get update && \
         apt-get install -y software-properties-common && \
         add-apt-repository ppa:deadsnakes/ppa && \
         apt-get update && \
-        apt-get install -y default-jre python3.11 python3.11-dev python3.11-distutils pipx -y
+        apt-get install -y default-jre-headless python3.11 python3.11-dev python3.11-distutils pipx -y
 
 # Had to install antlr4-tools via pipx as the antlr4-tools package is not available in the apt repository
 # Additionally, we had to change the homedir in the antlr4_tool_runner.py file to /opt as the Path.home() function
