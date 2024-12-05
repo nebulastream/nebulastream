@@ -17,6 +17,9 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
+#include <nautilus/std/cstdlib.h>
+#include <Runtime/WorkerContext.hpp>
+
 
 namespace NES::Nautilus
 {
@@ -88,13 +91,43 @@ nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) 
         return {false};
     }
 
-    const auto compareResult = (nautilus::memcmp(ptrToVarSized, rhs.ptrToVarSized, size) == 0);
+    const auto compareResult = (nautilus::memcmp(this->getContent(), rhs.getContent(), size) == 0);
     return {compareResult};
+}
+
+// TODO: Implement new operations: concat(), substr(), find() -> index
+// Note: Hardcode stuff for now based on a operator => think about how to allocate space for new operators
+/*VariableSizedData VariableSizedData::operator>(const VariableSizedData& other) const
+{
+    // Think about how to allocate new memory here for storing a new value
+    // as a result of the string operation.
+    auto newPtr = createNewVariableSizedData(size + other.size);
+    nautilus::memcpy(newPtr, ptrToVarSized, size);
+    return VariableSizedData(newPtr);
+}*/
+
+nautilus::val<bool> greaterThan(const VariableSizedData& left, const VariableSizedData& right)
+{
+    // Get sizes of each data value:
+    nautilus::val<uint32_t> sizeLeft = left.getSize();
+    nautilus::val<uint32_t> sizeRight = right.getSize();
+    nautilus::val<uint32_t> minLength = sizeLeft < sizeRight ? sizeLeft : sizeRight;
+
+    const auto compareResult = nautilus::memcmp(left.getContent(), right.getContent(), minLength);
+    return compareResult > 0 || (compareResult == 0 && sizeLeft > sizeRight);
+}
+
+
+// Compare up to shared length, if still the same, compare lengths
+nautilus::val<bool> VariableSizedData::operator>(const VariableSizedData& other) const
+{
+    return greaterThan(*this, other);
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
 {
-    return !(*this == rhs);
+    //return !(*this == rhs);
+    return greaterThan(*this, rhs);;
 }
 
 nautilus::val<bool> VariableSizedData::operator!() const

@@ -27,7 +27,7 @@ class NodeFunction;
 using NodeFunctionPtr = std::shared_ptr<NodeFunction>;
 
 /**
- * @brief this indicates an function, which is a parameter for a FilterOperator or a MapOperator.
+ * @brief this indicates a function, which is a parameter for a FilterOperator or a MapOperator.
  * Each function declares a stamp, which expresses the data type of this function.
  * A stamp can be of a concrete type or invalid if the data type was not yet inferred.
  */

@@ -24,6 +24,8 @@ CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pi
 {
     /// As we are creating here a pipeline that is compiled, we need to set the compilation option to true
     options.setOption("engine.Compilation", true);
+    // The following is set to get the dump for learning purposes.
+    options.setOption("dump.all", true);
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
 }
 

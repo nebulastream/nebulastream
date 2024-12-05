@@ -11,3 +11,6 @@
 # limitations under the License.
 
 add_subdirectory(QueryCompilers)
+
+add_nes_execution_test(var-sized-data-selection-unit-tests "VarSizedDataSelectionTest.cpp")
+target_link_libraries(var-sized-data-selection-unit-tests nes-nautilus)
