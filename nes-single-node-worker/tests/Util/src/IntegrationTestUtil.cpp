@@ -84,7 +84,7 @@ namespace NES::IntegrationTestUtil
     for (std::string line; std::getline(file, line);)
     {
         auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
-        auto values = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
+        auto values = Util::splitWithStringDelimiter<std::string>(line, ",");
 
         /// iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++)
@@ -148,55 +148,46 @@ void writeFieldValueToTupleBuffer(
             switch (basicPhysicalType->nativeType)
             {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
-                    auto value = static_cast<int8_t>(std::stoi(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_16: {
-                    auto value = static_cast<int16_t>(std::stol(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(value);
-
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_32: {
-                    auto value = static_cast<int32_t>(std::stol(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_64: {
-                    auto value = static_cast<int64_t>(std::stoll(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_8: {
-                    auto value = static_cast<uint8_t>(std::stoi(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
                     auto value = static_cast<uint16_t>(std::stoul(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_32: {
-                    auto value = static_cast<uint32_t>(std::stoul(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_64: {
-                    auto value = static_cast<uint64_t>(std::stoull(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::FLOAT: {
-                    inputString = Util::replaceAll(inputString, ",", ".");
-                    auto value = static_cast<float>(std::stof(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<float>(value);
+                    auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::DOUBLE: {
-                    auto value = static_cast<double>(std::stod(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<double>(value);
+                    auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
@@ -212,19 +203,7 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    ///verify that a valid bool was transmitted (valid{true,false,0,1})
-                    bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
-                    if (!value)
-                    {
-                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0"))
-                        {
-                            NES_FATAL_ERROR(
-                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                inputString.c_str());
-                            throw std::invalid_argument("Value " + inputString + " is not a boolean");
-                        }
-                    }
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
@@ -240,12 +219,8 @@ void writeFieldValueToTupleBuffer(
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
         }
         else
-        { /// char array(string) case
-            /// obtain pointer from buffer to fill with content via strcpy
-            char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
-            /// remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
-            /// improve behavior with json library
-            strcpy(value, inputString.c_str());
+        {
+            throw NotImplemented();
         }
     }
     catch (const std::exception& e)

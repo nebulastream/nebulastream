@@ -15,10 +15,8 @@
 #include <Configurations/Coordinator/SchemaType.hpp>
 
 #include <iostream>
-#include <stdexcept>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>

@@ -26,14 +26,11 @@
 #include <vector>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <folly/MPMCQueue.h>
-#include <grpc++/create_channel.h>
 
 #include <NebuLI.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
 #include <SingleNodeWorker.hpp>
 #include <SystestGrpc.hpp>
 #include <SystestParser.hpp>
