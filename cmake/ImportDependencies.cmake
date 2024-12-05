@@ -42,13 +42,13 @@ if ($CACHE{DOCKER_DEV_IMAGE})
     )
     if ((NOT DEFINED ENV{VCPKG_DEPENDENCY_HASH}) OR (NOT $ENV{VCPKG_DEPENDENCY_HASH} STREQUAL "${VCPKG_HASH}"))
         message(WARNING
-                "VCPKG Hash does not match, this is most likely due to an outdated development image."
-                "Make sure to update the current development image."
-                "The build will continue, but you may encounter errors during the build"
-                "Expected Hash:"
-                " ${VCPKG_HASH}"
-                "vs. Development Image Hash:"
-                " $ENV{VCPKG_DEPENDENCY_HASH}"
+                "VCPKG Hash does not match, this is most likely due to an outdated development image. "
+                "Make sure to update the current development image. "
+                "The build will continue, but you may encounter errors during the build."
+                "\nExpected Hash: ${VCPKG_HASH}\n"
+                "Development Image Hash: $ENV{VCPKG_DEPENDENCY_HASH}\n"
+                "To update the development image, you can call the install local script via "
+                "./scripts/install-local-docker-environment.sh\n"
         )
     endif ()
 
