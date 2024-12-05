@@ -23,7 +23,6 @@ target_compile_definitions(nes-systest-lib PRIVATE
         TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../testdata"
 )
 
-
 find_package(argparse CONFIG REQUIRED)
 
 add_executable(systest src/SystestStarter.cpp)
@@ -35,30 +34,37 @@ target_compile_definitions(systest PRIVATE
 set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
+if (CODE_COVERAGE)
+    target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter PUBLIC AUTO ALL ARGS --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryCompiler.nautilusBackend=INTERPRETER)
+endif (CODE_COVERAGE)
+
+
+include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
 
 # If we are running code coverage, we need to ONLY run the interpreter tests, as otherwise, the code coverage will be 100% for all operators as the compiler traces all branches and operations.
-add_test(systest_interpreter systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryCompiler.nautilusBackend=INTERPRETER)
-if (NOT CODE_COVERAGE)
-    add_test(systest_compiler systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER)
-endif (NOT CODE_COVERAGE)
+add_test(NAME systest_interpreter COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_interpreter -- --worker.queryCompiler.nautilusBackend=INTERPRETER)
+add_test(NAME systest_compiler COMMAND systest --sequential --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_compiler -- --worker.queryCompiler.nautilusBackend=COMPILER)
 
-# We wish to run all join tests with a small, medium and large page size while also setting the threads to 1, 2, 4 for the worker
+
+## We wish to run all join tests with 1, 2, 4 worker threads
 set(workerThreads 1 2 4 8)
 foreach(workerThreads IN LISTS workerThreads)
+    if (CODE_COVERAGE)
+        target_code_coverage(systest COVERAGE_TARGET_NAME systest_join_${workerThreads}_interpreter PUBLIC AUTO ALL ARGS --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter -- --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
+    endif (CODE_COVERAGE)
+
     add_test(
             NAME systest_join_${workerThreads}_interpreter
             COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_interpreter
                             --
                             --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=INTERPRETER)
-
-    if (NOT CODE_COVERAGE)
-        add_test(
-                NAME systest_join_${workerThreads}_compiler
-                COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
-                                --
-                                --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
-    endif (NOT CODE_COVERAGE)
+    add_test(
+            NAME systest_join_${workerThreads}_compiler
+            COMMAND systest --sequential --group Join --resultDir=${CMAKE_CURRENT_BINARY_DIR}/results_${workerThreads}_compiler
+                            --
+                            --workerConfiguration.numberOfWorkerThreads=${workerThreads} --worker.queryCompiler.nautilusBackend=COMPILER)
 endforeach()
+
 
 function(add_nes_test_systest)
     add_nes_test(${ARGN})
