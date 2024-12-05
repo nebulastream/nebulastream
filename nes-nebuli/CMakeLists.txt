@@ -12,23 +12,12 @@
 
 add_subdirectory(src)
 
-find_program(CLANG_EXECUTABLE NAMES clang clang-18 REQUIRED)
-message(STATUS "Found Clang Binary: ${CLANG_EXECUTABLE}")
-
-set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
-
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nes-nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
-
-target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
-target_compile_definitions(nes-nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
-target_compile_definitions(nes-nebuli-lib PRIVATE PATH_TO_NES_SOURCE_CODE="${PATH_TO_NES_SOURCE_CODE}")
+add_library(nes-nebuli-lib STATIC src/NebuLI.cpp src/GRPCClient.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(argparse CONFIG REQUIRED)
@@ -43,8 +32,6 @@ target_link_libraries(nes-nebuli-lib
 )
 
 add_executable(nes-nebuli src/NebuLIStarter.cpp)
-# Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
-set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse)
 target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>

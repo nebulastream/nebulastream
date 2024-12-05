@@ -18,128 +18,16 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <argparse/argparse.hpp>
 #include <google/protobuf/text_format.h>
-#include <grpc++/create_channel.h>
+#include <grpcpp/create_channel.h>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <GRPCClient.hpp>
 #include <NebuLI.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
 using namespace std::literals;
 
 
-class GRPCClient
-{
-public:
-    explicit GRPCClient(std::shared_ptr<grpc::Channel> channel) : stub(WorkerRPCService::NewStub(channel)) { }
-    std::unique_ptr<WorkerRPCService::Stub> stub;
-
-    size_t registerQuery(const NES::DecomposedQueryPlan& plan) const
-    {
-        grpc::ClientContext context;
-        RegisterQueryReply reply;
-        RegisterQueryRequest request;
-        NES::DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, request.mutable_decomposedqueryplan());
-        auto status = stub->RegisterQuery(&context, request, &reply);
-        if (status.ok())
-        {
-            NES_DEBUG("Registration was successful.");
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details()));
-        }
-        return reply.queryid();
-    }
-
-    void stop(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        StopQueryRequest request;
-        request.set_queryid(queryId);
-        request.set_terminationtype(StopQueryRequest::HardStop);
-        google::protobuf::Empty response;
-        auto status = stub->StopQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Stopping was successful.");
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details()));
-        }
-    }
-
-    void status(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        QuerySummaryRequest request;
-        request.set_queryid(queryId);
-        QuerySummaryReply response;
-        auto status = stub->RequestQuerySummary(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Stopping was successful.");
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details()));
-        }
-    }
-
-    void start(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        StartQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId);
-        auto status = stub->StartQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Starting was successful.");
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details()));
-        }
-    }
-
-    void unregister(size_t queryId) const
-    {
-        grpc::ClientContext context;
-        UnregisterQueryRequest request;
-        google::protobuf::Empty response;
-        request.set_queryid(queryId);
-        auto status = stub->UnregisterQuery(&context, request, &response);
-        if (status.ok())
-        {
-            NES_DEBUG("Unregister was successful.");
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(fmt::format(
-                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
-                magic_enum::enum_name(status.error_code()),
-                status.error_message(),
-                status.error_details()));
-        }
-    }
-};
 
 int main(int argc, char** argv)
 {
