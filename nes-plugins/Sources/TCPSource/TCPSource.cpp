@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <Configurations/Descriptor.hpp>
@@ -79,6 +81,57 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
+bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
+{
+    sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    while (result != nullptr && sockfd == -1)
+    {
+        result = result->ai_next;
+    }
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+    constexpr static timeval Timeout{TCP_SOCKET_DEFAULT_TIMEOUT.count(), 0};
+    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &Timeout, sizeof(Timeout));
+    connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
+
+    /// if the TCPSource did not establish a connection, try with timeout
+    if (connection < 0)
+    {
+        if (errno != EINPROGRESS) {
+            NES_ERROR("Cannot try to establish connection, because of error number: {}.", errno);
+            close();
+            return false;
+        }
+
+        /// Set the timeout for the connect attempt
+        fd_set fdset;
+        timeval tv{TCP_SOCKET_DEFAULT_TIMEOUT.count(), 0};
+
+        FD_ZERO(&fdset);
+        FD_SET(sockfd, &fdset);
+
+        connection = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
+        if (connection <= 0) {
+            /// Timeout or error
+            errno = ETIMEDOUT;
+            NES_ERROR("Failed to establish a connection within timeout of {} seconds.", TCP_SOCKET_DEFAULT_TIMEOUT.count());
+            close();
+            return false;
+        }
+
+        /// Check if connect succeeded
+        int error = 0;
+        socklen_t len = sizeof(error);
+        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || error) {
+            errno = error;
+            NES_ERROR("Established a connection, but connection return error number: {}.", errno);
+            close();
+            return false;
+        }
+    }
+    return true;
+}
+
 void TCPSource::open()
 {
     NES_TRACE("TCPSource::open: Trying to create socket and connect.");
@@ -98,34 +151,17 @@ void TCPSource::open()
         throw CannotOpenSource("Failed getaddrinfo with error: {}", gai_strerror(errorCode));
     }
 
-    /// Try each address until we successfully connect
-    while (result != nullptr)
-    {
-        sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-        if (sockfd == -1)
-        {
-            result = result->ai_next;
-            continue;
-        }
+    const int flags = fcntl(sockfd, F_GETFL, 0);
 
-        constexpr static timeval Timeout{0, TCP_SOCKET_DEFAULT_TIMEOUT.count()};
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &Timeout, sizeof(Timeout));
-        connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
-
-        if (connection != -1)
-        {
-            break; /// success
-        }
-
-        /// The connection was closed, therefore we close the source.
-        close();
-    }
+    const bool isConnected = tryToConnect(result, flags);
     freeaddrinfo(result);
 
-    if (result == nullptr)
+    if (not isConnected)
     {
         throw CannotOpenSource("Could not connect to: {}:", socketHost, socketPort);
     }
+    /// Set connection to non-blocking again to enable a timeout in the 'read()' call
+    fcntl(sockfd, F_SETFL, flags);
 
     NES_TRACE("TCPSource::open: Connected to server.");
 }
@@ -164,6 +200,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
             /// if read method returned -1 an error occurred during read.
             NES_ERROR("An error occurred while reading from socket. Error: {}", strerror(errno));
             readWasValid = false;
+            numReceivedBytes = 0;
             break;
         }
         if (bufferSizeReceived == EOF_RECEIVED_BUFFER_SIZE)
@@ -200,7 +237,7 @@ TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config
 
 void TCPSource::close()
 {
-    NES_TRACE("TCPSource::close: trying to close connection.");
+    NES_DEBUG("TCPSource::close: trying to close connection.");
     if (connection >= 0)
     {
         ::close(sockfd);
