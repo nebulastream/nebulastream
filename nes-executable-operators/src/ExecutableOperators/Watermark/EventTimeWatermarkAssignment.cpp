@@ -14,7 +14,7 @@
 
 #include <ExecutableOperators/ExecutionContext.hpp>
 #include <ExecutableOperators/OperatorState.hpp>
- #include <ExecutableOperators/Watermark/EventTimeWatermarkAssignment.hpp>
+#include <ExecutableOperators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <ExecutableOperators/Watermark/TimeFunction.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>

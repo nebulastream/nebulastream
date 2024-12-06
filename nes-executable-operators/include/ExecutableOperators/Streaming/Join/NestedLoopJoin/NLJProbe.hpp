@@ -16,7 +16,7 @@
 
 #include <cstdint>
 #include <memory>
-#include <Functions/Function.hpp>
+#include <ExecutableFunctions/Function.hpp>
 #include <ExecutableOperators/Operator.hpp>
 #include <ExecutableOperators/Streaming/Join/StreamJoinProbe.hpp>
 #include <ExecutableOperators/Streaming/Join/StreamJoinUtil.hpp>

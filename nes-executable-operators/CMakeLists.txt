@@ -16,7 +16,7 @@ get_source(nes-executable-operators NES_EXECUTABLE_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-executable-operators ${NES_EXECUTABLE_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-executable-operators PUBLIC nes-sources nes-sinks nes-window-types nes-nautilus nes-execution)
+target_link_libraries(nes-executable-operators PUBLIC nes-sources nes-executable-functions nes-sinks nes-window-types nes-nautilus nes-execution)
 target_include_directories(nes-executable-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

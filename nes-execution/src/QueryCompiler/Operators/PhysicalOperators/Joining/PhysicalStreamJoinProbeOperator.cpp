@@ -18,7 +18,7 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Functions/Function.hpp>
+#include <ExecutableFunctions/Function.hpp>
 #include <ExecutableOperators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <ExecutableOperators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>

@@ -14,10 +14,10 @@
 
 #include <memory>
 #include <vector>
-#include <Functions/ExecutableFunctionConstantValue.hpp>
-#include <Functions/ExecutableFunctionReadField.hpp>
-#include <Functions/ExecutableFunctionWriteField.hpp>
-#include <Functions/Registry/RegistryFunctionExecutable.hpp>
+#include <ExecutableFunctions/ExecutableFunctionConstantValue.hpp>
+#include <ExecutableFunctions/ExecutableFunctionReadField.hpp>
+#include <ExecutableFunctions/ExecutableFunctionWriteField.hpp>
+#include <ExecutableFunctions/Registry/RegistryFunctionExecutable.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>

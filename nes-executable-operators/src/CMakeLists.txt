@@ -11,4 +11,3 @@
 # limitations under the License.
 
 add_subdirectory(ExecutableOperators)
-add_subdirectory(Functions)

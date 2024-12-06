@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Record.hpp>
 #include <ExecutableOperators/Selection.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

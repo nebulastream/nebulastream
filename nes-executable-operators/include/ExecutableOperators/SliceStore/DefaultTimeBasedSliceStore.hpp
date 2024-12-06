@@ -20,13 +20,13 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <ExecutableOperators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <folly/Synchronized.h>
 #include <ExecutableOperators/SliceStore/Slice.hpp>
 #include <ExecutableOperators/SliceStore/SliceAssigner.hpp>
+#include <ExecutableOperators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
 {

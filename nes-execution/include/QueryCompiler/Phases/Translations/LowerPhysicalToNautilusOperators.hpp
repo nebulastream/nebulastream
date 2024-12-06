@@ -16,7 +16,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include <Functions/Function.hpp>
+#include <ExecutableFunctions/Function.hpp>
 #include <ExecutableOperators/ExecutableOperator.hpp>
 #include <ExecutableOperators/Operator.hpp>
 #include <ExecutableOperators/Watermark/TimeFunction.hpp>

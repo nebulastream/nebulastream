@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <Functions/Function.hpp>
+#include <ExecutableFunctions/Function.hpp>
 #include <ExecutableOperators/Operator.hpp>
 #include <ExecutableOperators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>

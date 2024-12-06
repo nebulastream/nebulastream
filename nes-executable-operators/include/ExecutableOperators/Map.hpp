@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #pragma once
-#include <Functions/Function.hpp>
+#include <ExecutableFunctions/Function.hpp>
 #include <ExecutableOperators/ExecutableOperator.hpp>
 
 namespace NES::Runtime::Execution::Operators

@@ -13,12 +13,12 @@
 */
 
 #include <API/Schema.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
-#include <Functions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
-#include <Functions/LogicalFunctions/ExecutableFunctionEquals.hpp>
-#include <Functions/LogicalFunctions/ExecutableFunctionNegate.hpp>
+#include <ExecutableFunctions/ArithmeticalFunctions/ExecutableFunctionAdd.hpp>
+#include <ExecutableFunctions/ArithmeticalFunctions/ExecutableFunctionDiv.hpp>
+#include <ExecutableFunctions/ArithmeticalFunctions/ExecutableFunctionMul.hpp>
+#include <ExecutableFunctions/ArithmeticalFunctions/ExecutableFunctionSub.hpp>
+#include <ExecutableFunctions/LogicalFunctions/ExecutableFunctionEquals.hpp>
+#include <ExecutableFunctions/LogicalFunctions/ExecutableFunctionNegate.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionCeil.hpp>
 #include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
