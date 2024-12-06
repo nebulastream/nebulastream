@@ -199,22 +199,21 @@ std::
     std::vector<std::pair<std::unique_ptr<Sources::SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
     std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
     std::unordered_map<Execution::ExecutablePipeline*, std::shared_ptr<RunningQueryPlanNode>> cache;
-    std::function<std::shared_ptr<RunningQueryPlanNode>(Execution::ExecutablePipeline*, PipelineId::Underlying&)> getOrCreate
-        = [&](Execution::ExecutablePipeline* pipeline, PipelineId::Underlying& pipelineIdCounter)
+    std::function<std::shared_ptr<RunningQueryPlanNode>(Execution::ExecutablePipeline*)> getOrCreate
+        = [&](Execution::ExecutablePipeline* pipeline)
     {
         if (auto it = cache.find(pipeline); it != cache.end())
         {
             return it->second;
         }
-        PipelineId const pipelineId(pipelineIdCounter++);
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
         std::ranges::transform(
             pipeline->successors,
             std::back_inserter(successors),
-            [&](const auto& successor) { return getOrCreate(successor.lock().get(), pipelineIdCounter); });
+            [&](const auto& successor) { return getOrCreate(successor.lock().get()); });
         auto node = RunningQueryPlanNode::create(
             queryId,
-            pipelineId,
+            pipeline->id,
             emitter,
             std::move(successors),
             std::move(pipeline->stage),
@@ -232,7 +231,7 @@ std::
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successorNodes;
         for (const auto& successor : successors)
         {
-            successorNodes.push_back(getOrCreate(successor.lock().get(), pipelineIdCounter));
+            successorNodes.push_back(getOrCreate(successor.lock().get()));
         }
         sources.emplace_back(std::move(source), std::move(successorNodes));
     }

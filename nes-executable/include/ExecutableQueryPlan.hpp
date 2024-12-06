@@ -27,11 +27,13 @@ namespace NES::Runtime::Execution
 
 struct ExecutablePipeline
 {
-    static std::shared_ptr<ExecutablePipeline>
-    create(std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
+    static std::shared_ptr<ExecutablePipeline> create(
+        PipelineId id, std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
 
-    ExecutablePipeline(std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
+    ExecutablePipeline(
+        PipelineId id, std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);
 
+    PipelineId id;
     std::unique_ptr<ExecutablePipelineStage> stage;
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
 };

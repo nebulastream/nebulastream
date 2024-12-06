@@ -49,6 +49,7 @@ struct LoweringContext
         sinks;
     std::vector<Runtime::Execution::Source> sources;
     std::map<PipelineId, std::shared_ptr<Runtime::Execution::ExecutablePipeline>> pipelineToExecutableMap;
+    PipelineId::Underlying pipelineIdGenerator = PipelineId::INITIAL;
 };
 
 using Predecessor = std::variant<OriginId, std::weak_ptr<Runtime::Execution::ExecutablePipeline>>;
@@ -121,7 +122,8 @@ processOperatorPipeline(const OperatorPipelinePtr& pipeline, const PipelineQuery
 
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
-    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(executableOperator->takeExecutablePipelineStage(), {});
+    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(
+        PipelineId(context.pipelineIdGenerator++), executableOperator->takeExecutablePipelineStage(), {});
 
     for (const auto& successor : pipeline->getSuccessors())
     {

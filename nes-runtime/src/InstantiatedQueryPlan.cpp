@@ -67,10 +67,11 @@ std::unique_ptr<InstantiatedQueryPlan> InstantiatedQueryPlan::instantiate(
         instantiatedSources;
 
     std::unordered_map<OriginId, std::vector<Execution::ExecutablePipelinePtr>> instantiatedSinksWithSourcePredecessor;
+    PipelineId::Underlying pipelineIdGenerator = executableQueryPlan->pipelines.size() + PipelineId::INITIAL;
 
     for (auto& [descriptor, predecessors] : executableQueryPlan->sinks)
     {
-        auto sink = Execution::ExecutablePipeline::create(Sinks::SinkProvider::lower(*descriptor), {});
+        auto sink = Execution::ExecutablePipeline::create(PipelineId(pipelineIdGenerator++), Sinks::SinkProvider::lower(*descriptor), {});
         executableQueryPlan->pipelines.push_back(sink);
         for (const auto& predecessor : predecessors)
         {

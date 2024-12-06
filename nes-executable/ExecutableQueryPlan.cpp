@@ -24,13 +24,13 @@
 namespace NES::Runtime::Execution
 {
 std::shared_ptr<ExecutablePipeline> ExecutablePipeline::create(
-    std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
+    PipelineId id, std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
 {
-    return std::make_shared<ExecutablePipeline>(std::move(stage), successors);
+    return std::make_shared<ExecutablePipeline>(id, std::move(stage), successors);
 }
 ExecutablePipeline::ExecutablePipeline(
-    std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
-    : stage(std::move(stage))
+    PipelineId id, std::unique_ptr<ExecutablePipelineStage> stage, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors)
+    : id(id), stage(std::move(stage))
 {
     std::ranges::transform(
         successors, std::back_inserter(this->successors), [](const auto& successor) { return std::weak_ptr(successor); });
