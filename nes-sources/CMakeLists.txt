@@ -21,11 +21,12 @@ target_include_directories(nes-sources PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
-
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sources REUSE_FROM nes-common)
 endif ()
 
-# Generate Registrar for Source Plugins
-generate_plugin_registrar(Source "${CMAKE_CURRENT_LIST_DIR}/private/RegistrarTemplates/SourceGeneratedRegistrar.inc.in" nes-sources)
-generate_plugin_registrar(SourceValidation "${CMAKE_CURRENT_LIST_DIR}/private/RegistrarTemplates/SourceValidationGeneratedRegistrar.inc.in" nes-sources)
+# Create library for the registries, and privately link it against nes-sources so that nes-sources can access its registries.
+create_plugin_registry_library(nes-sources-registry nes-sources)
+target_link_libraries(nes-sources PRIVATE nes-sources-registry)
+# Generate a registrar for every registry in nes-sources
+generate_plugin_registrars(nes-sources Source SourceValidation)
