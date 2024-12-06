@@ -43,11 +43,6 @@ JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs)
     return JoinOperatorBuilder::Join(subQueryRhs, *this);
 }
 
-NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs)
-{
-    return NES::Experimental::BatchJoinOperatorBuilder::Join(subQueryRhs, *this);
-}
-
 CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs)
 {
     return CEPOperatorBuilder::And(subQueryRhs, *this);
@@ -93,20 +88,6 @@ JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared
 Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
 {
     return originalQuery.joinWith(subQueryRhs, joinFunctions, windowType); ///call original joinWith() function
-}
-
-}
-
-namespace Experimental::BatchJoinOperatorBuilder
-{
-
-Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery)
-{
-}
-
-Query& Join::where(const std::shared_ptr<NodeFunction>& joinFunction) const
-{
-    return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
 
 }
@@ -281,23 +262,6 @@ Query::joinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& j
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction)
-{
-    NES_DEBUG("Query: add Batch Join Operator to Query");
-    if (NES::Util::as<NodeFunctionEquals>(joinFunction))
-    {
-        auto onProbeKey = NES::Util::as<NodeFunctionBinary>(joinFunction)->getLeft();
-        auto onBuildKey = NES::Util::as<NodeFunctionBinary>(joinFunction)->getRight();
-
-        this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
-    }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("Query:joinFunction has to be a NodeFunctionEquals");
-    }
-    return *this;
-}
-
 Query&
 Query::andWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
@@ -328,12 +292,6 @@ Query& Query::selection(const std::shared_ptr<NodeFunction>& selectionFunction)
     return *this;
 }
 
-Query& Query::limit(const uint64_t limit)
-{
-    NES_DEBUG("Query: add limit operator to query");
-    this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
-    return *this;
-}
 Query& Query::map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction)
 {
     NES_DEBUG("Query: add map operator to query");

@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 #include <API/Functions/Functions.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 
 namespace NES
@@ -117,41 +116,6 @@ private:
     const Query& subQueryRhs;
     Query& originalQuery;
     NodeFunctionPtr joinFunctions;
-};
-
-}
-
-/**
-* @brief BatchJoinOperatorBuilder.
-* @note Initialize as Join between originalQuery and subQueryRhs.
-* @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
-* @note No windowing is required.
-*/
-namespace Experimental::BatchJoinOperatorBuilder
-{
-
-class JoinWhere;
-
-class Join
-{
-public:
-    /**
-     * @brief Constructor. Initialises always subQueryRhs and original Query
-     * @param subQueryRhs
-     * @param originalQuery
-     */
-    Join(const Query& subQueryRhs, Query& originalQuery);
-
-    /** @brief is called to append all joinFunctions (key predicates) to the previous defined join, i.e.,
-     * it sets all condition for the join matches
-     * @param joinFunction : a set of binary functions to compare left and right tuples
-     * @return object of type JoinWhere on which equalsTo function is defined and can be called.
-     */
-    [[nodiscard]] Query& where(const NodeFunctionPtr& joinFunction) const;
-
-private:
-    const Query& subQueryRhs;
-    Query& originalQuery;
 };
 
 }
@@ -277,7 +241,6 @@ public:
 
     ///both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
-    friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
     friend class CEPOperatorBuilder::And;
     friend class CEPOperatorBuilder::Seq;
     friend class WindowOperatorBuilder::WindowedQuery;
@@ -291,14 +254,6 @@ public:
      * @return object where where() function is defined and can be called by user
      */
     JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
-
-    /**
-     * @brief can be called on the original query with the query to be joined with and sets this query in the class BatchJoinOperatorBuilder::Join.
-     * @warning The batch join is an experimental feature.
-     * @param subQueryRhs
-     * @return object where where() function is defined and can be called by user
-     */
-    NES::Experimental::BatchJoinOperatorBuilder::Join batchJoinWith(const Query& subQueryRhs);
 
     /**
      * @brief can be called on the original query with the query to be composed with and sets this query in the class And.

@@ -23,11 +23,6 @@
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Measures/TimeMeasure.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -87,14 +82,6 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
         NES_THROW_RUNTIME_ERROR("QueryPlanBuilder: Selection predicate cannot have a FieldRenameFunction");
     }
     OperatorPtr const op = std::make_shared<LogicalSelectionOperator>(selectionFunction, getNextOperatorId());
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
-QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr queryPlan)
-{
-    NES_TRACE("QueryPlanBuilder: add limit operator to query plan");
-    OperatorPtr const op = std::make_shared<LogicalLimitOperator>(limit, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -217,25 +204,6 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     NES_TRACE("QueryPlanBuilder: add join operator to query plan");
     auto op = std::make_shared<LogicalJoinOperator>(joinDefinition, getNextOperatorId());
     NES_INFO("Created join {}", op->toString(), Util::as<LogicalJoinOperator>(op)->getJoinDefinition()->getWindowType()->toString());
-    leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
-    return leftQueryPlan;
-}
-
-QueryPlanPtr QueryPlanBuilder::addBatchJoin(
-    QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey)
-{
-    NES_TRACE("Query: joinWith the subQuery to current query");
-    auto probeKeyFieldAccess = asNodeFunctionFieldAccess(onProbeKey, "onProbeKey");
-    auto buildKeyFieldAccess = asNodeFunctionFieldAccess(onBuildKey, "onBuildKey");
-
-    NES_ASSERT(rightQueryPlan && !rightQueryPlan->getRootOperators().empty(), "invalid rightQueryPlan query plan");
-    auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
-    auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
-    auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();
-
-    auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
-
-    auto op = std::make_shared<Experimental::LogicalBatchJoinOperator>(joinDefinition, getNextOperatorId());
     leftQueryPlan = addBinaryOperatorAndUpdateSource(op, leftQueryPlan, rightQueryPlan);
     return leftQueryPlan;
 }

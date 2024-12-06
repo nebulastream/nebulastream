@@ -16,9 +16,7 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -35,12 +33,9 @@ namespace NES
 class SerializableOperator;
 class SerializableOperator_WindowDetails;
 class SerializableOperator_JoinDetails;
-class SerializableOperator_BatchJoinDetails;
 class SerializableOperator_WatermarkStrategyDetails;
-class SerializableOperator_LimitDetails;
 class SerializableOperator_MapDetails;
 class SerializableOperator_InferModelDetails;
-class SerializableOperator_CEPIterationDetails;
 class SerializableOperator_ProjectionDetails;
 class SerializableOperator_SelectionDetails;
 class SerializableOperator_UnionDetails;
@@ -75,9 +70,6 @@ public:
 
     static void serializeJoinOperator(const LogicalJoinOperator& joinOperator, SerializableOperator& serializedOperator);
 
-    static void
-    serializeBatchJoinOperator(const Experimental::LogicalBatchJoinOperator& joinOperator, SerializableOperator& serializedOperator);
-
     static void serializeSourceDescriptor(
         const Sources::SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDescriptorLogicalOperator& sourceDetails);
 
@@ -89,8 +81,6 @@ public:
 
     static std::unique_ptr<Sinks::SinkDescriptor>
     deserializeSinkDescriptor(const SerializableOperator_SinkLogicalOperator_SerializableSinkDescriptor& serializableSinkDescriptor);
-
-    static void serializeLimitOperator(const LogicalLimitOperator& limitLogicalOperator, SerializableOperator& serializedOperator);
 
     static void serializeWatermarkAssignerOperator(
         const WatermarkAssignerLogicalOperator& watermarkAssignerOperator, SerializableOperator& serializedOperator);

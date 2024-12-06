@@ -26,10 +26,8 @@
 
 namespace NES
 {
-/**
- * This class adds the logical operators to the queryPlan and handles further conditions and updates on the updated queryPlan and its nodes, e.g.,
- * update the consumed sources after a binary operator or adds window characteristics to the join operator.
- */
+/// This class adds the logical operators to the queryPlan and handles further conditions and updates on the updated queryPlan and its nodes, e.g.,
+/// update the consumed sources after a binary operator or adds window characteristics to the join operator.
 class QueryPlanBuilder
 {
 public:
@@ -61,14 +59,6 @@ public:
      * @return the updated queryPlan
      */
     static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
-
-    /**
-     * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
-     * @param filterFunction as function node containing the predicate
-     * @param queryPlanPtr the queryPlan the filter node is added to
-     * @return the updated queryPlan
-     */
-    static QueryPlanPtr addLimit(const uint64_t limit, QueryPlanPtr queryPlan);
 
     /**
      * @brief: Map records according to a map function. An
@@ -108,11 +98,6 @@ public:
         const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
-    /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-    static QueryPlanPtr
-    addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey);
-
-    /// Adds a
     static QueryPlanPtr addSink(std::string sinkName, QueryPlanPtr queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
     /// Create watermark assigner operator and adds it to the queryPlan

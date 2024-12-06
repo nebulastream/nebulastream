@@ -23,8 +23,6 @@
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
@@ -144,20 +142,9 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
     {
         lowerMapOperator(operatorNode);
     }
-    else if (NES::Util::instanceOf<InferModel::LogicalInferModelOperator>(operatorNode))
-    {
-        lowerInferModelOperator(operatorNode);
-    }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
         lowerProjectOperator(operatorNode);
-    }
-    else if (NES::Util::instanceOf<LogicalLimitOperator>(operatorNode))
-    {
-        auto limitOperator = NES::Util::as<LogicalLimitOperator>(operatorNode);
-        auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
-            limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
-        operatorNode->replace(physicalLimitOperator);
     }
     else
     {
@@ -200,18 +187,6 @@ void DefaultPhysicalOperatorProvider::lowerProjectOperator(const LogicalOperator
 
     physicalProjectOperator->addProperty("LogicalOperatorId", projectOperator->getId());
     operatorNode->replace(physicalProjectOperator);
-}
-
-void DefaultPhysicalOperatorProvider::lowerInferModelOperator(LogicalOperatorPtr operatorNode)
-{
-    auto inferModelOperator = NES::Util::as<InferModel::LogicalInferModelOperator>(operatorNode);
-    auto physicalInferModelOperator = PhysicalOperators::PhysicalInferModelOperator::create(
-        inferModelOperator->getInputSchema(),
-        inferModelOperator->getOutputSchema(),
-        inferModelOperator->getModel(),
-        inferModelOperator->getInputFields(),
-        inferModelOperator->getOutputFields());
-    operatorNode->replace(physicalInferModelOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr& operatorNode)

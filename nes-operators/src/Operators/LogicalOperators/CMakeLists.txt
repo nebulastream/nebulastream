@@ -17,12 +17,9 @@ add_source_files(nes-operators
         LogicalMapOperator.cpp
         LogicalInferModelOperator.cpp
         LogicalUnionOperator.cpp
-        LogicalBatchJoinOperator.cpp
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp
         LogicalUnaryOperator.cpp
-        LogicalLimitOperator.cpp
-        LogicalBatchJoinDescriptor.cpp
 )
 
 add_subdirectory(Sinks)
