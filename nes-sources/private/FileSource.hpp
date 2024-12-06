@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <fstream>
 #include <optional>
@@ -56,7 +57,7 @@ public:
 private:
     std::ifstream inputFile;
     std::string filePath;
-    size_t totalNumBytesRead{};
+    std::atomic<size_t> totalNumBytesRead;
 };
 
 struct ConfigParametersCSV
