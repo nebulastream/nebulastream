@@ -22,8 +22,14 @@
 namespace NES::Sources
 {
 
+using SourceValidationRegistryReturnType = NES::Configurations::DescriptorConfig::Config;
+struct SourceValidationRegistryArguments
+{
+    std::unordered_map<std::string, std::string> config;
+};
+
 using SourceValidationRegistrySignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
+    = RegistrySignature<std::string, SourceValidationRegistryReturnType, SourceValidationRegistryArguments>;
 class SourceValidationRegistry final : public BaseRegistry<SourceValidationRegistry, SourceValidationRegistrySignature>
 {
 };

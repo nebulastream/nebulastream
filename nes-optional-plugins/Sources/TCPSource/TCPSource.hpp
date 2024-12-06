@@ -14,20 +14,75 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
-#include "Util/Logger/Logger.hpp"
+#include "Configurations/Descriptor.hpp"
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES::Sources
 {
+
+class TCPSource : public Source
+{
+    constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
+    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
+    /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
+    constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
+
+public:
+    static constexpr std::string_view NAME = "TCP";
+
+    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
+    ~TCPSource() override = default;
+
+    TCPSource(const TCPSource&) = delete;
+    TCPSource& operator=(const TCPSource&) = delete;
+    TCPSource(TCPSource&&) = delete;
+    TCPSource& operator=(TCPSource&&) = delete;
+
+    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
+
+    /// Open TCP connection.
+    void open() override;
+    /// Close TCP connection.
+    void close() override;
+
+    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
+
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+private:
+    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+
+    int connection = -1;
+    int sockfd = -1;
+
+    std::string socketHost;
+    std::string socketPort;
+    int socketType;
+    int socketDomain;
+    char tupleDelimiter;
+    size_t socketBufferSize;
+    size_t bytesUsedForSocketBufferSizeTransfer;
+    float flushIntervalInMs;
+    uint64_t generatedTuples{0};
+    uint64_t generatedBuffers{0};
+};
+
 
 /// Defines the names, (optional) default values, (optional) validation & config functions, for all TCP config parameters.
 struct ConfigParametersTCP
@@ -128,54 +183,6 @@ struct ConfigParametersTCP
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
             HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
-};
-
-class TCPSource : public Source
-{
-    constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
-    /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
-    constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
-
-public:
-    static inline const std::string NAME = "TCP";
-
-    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
-    ~TCPSource() override = default;
-
-    TCPSource(const TCPSource&) = delete;
-    TCPSource& operator=(const TCPSource&) = delete;
-    TCPSource(TCPSource&&) = delete;
-    TCPSource& operator=(TCPSource&&) = delete;
-
-    size_t fillTupleBuffer(NES::Memory::TupleBuffer& tupleBuffer) override;
-
-    /// Open TCP connection.
-    void open() override;
-    /// Close TCP connection.
-    void close() override;
-
-    static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
-
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
-private:
-    bool fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
-
-    int connection = -1;
-    int sockfd = -1;
-
-    std::string socketHost;
-    std::string socketPort;
-    int socketType;
-    int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
-    float flushIntervalInMs;
-    uint64_t generatedTuples{0};
-    uint64_t generatedBuffers{0};
 };
 
 }

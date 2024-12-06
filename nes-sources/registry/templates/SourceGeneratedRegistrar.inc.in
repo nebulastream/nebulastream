@@ -15,34 +15,32 @@
 #pragma once
 
 /// NOLINT(clang-diagnostic-error)
-#ifndef INCLUDED_FROM_SOURCE_VALIDATION_REGISTRY
+#ifndef INCLUDED_FROM_SOURCE_REGISTRY
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
 
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Sources::SourceValidationGeneratedRegistrar
+namespace NES::Sources::SourceGeneratedRegistrar
 {
+
 /// declaration of register functions for 'Sources'
-// CONFIGURATION
-@RETURN_TYPE=std::unique_ptr<NES::Configurations::DescriptorConfig::Config>@
-@ARGUMENTS=std::unordered_map<std::string, std::string>&&@
-// END CONFIGURATION
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
 {
-
 template <>
 inline void
-Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
+Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
 {
-    using namespace NES::Sources::SourceValidationGeneratedRegistrar;
+
+    using namespace NES::Sources::SourceGeneratedRegistrar;
+    /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }
