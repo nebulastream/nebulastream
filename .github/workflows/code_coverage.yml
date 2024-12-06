@@ -133,25 +133,42 @@ jobs:
         run: |
           mkdir -p /tmp/cov-cache/code-coverage-${{ matrix.platform }}
           rm -rf /tmp/cov-cache/code-coverage-${{ matrix.platform }}/*
-          
+
           filepath_style_css=$(find build -name "style.css" -print)
-          cp "${filepath_style_css}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
-          echo "Copying ${filepath_style_css} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}."
-          
+          cp --parents "${filepath_style_css}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
+          echo "Copying ${filepath_style_css} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
+
+          # Creating the file that will contain the absolute paths of the changed files
+          changed_file_name="changed_files.txt"
+          touch "${changed_file_name}"
+
           # We only want to copy the html files of the changed files to the cache
           # Otherwise, we would copy all html files, which would be a lot of data and we run into the data limit of github.
           for file in $(git diff --name-status ${{ inputs.head_sha }} ${{ inputs.base_sha }}); do
             base_name=$(basename ${file})
-            filepath=$(find build -name "${base_name}.html" -print)
-            echo "Outside of the loop: <${filepath}<"
-            if [ -n "filepath" ]; then
-              for found_file in ${filepath}; do
-                sed -i "s#href='\(\.\.\/\)*style\.css'#href='style.css'#g" "${found_file}"
-                cp "${found_file}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
-                echo "Copying ${found_file} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}."
-              done 
+            file_path=$(find build -name "${base_name}.html" -print)
+            echo "Outside of the loop: <${file_path}>"
+            if [ -n "${file_path}" ]; then
+              for found_file in ${file_path}; do
+                echo "Inside the loop: <${found_file}>"
+                cp --parents "${found_file}" "/tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
+                echo "Copying ${found_file} to /tmp/cov-cache/code-coverage-${{ matrix.platform }}/."
+                echo ${found_file} >> "${changed_file_name}"
+              done
             fi
           done
+
+          # Installing the bs4 library to remove the rows from the index.html file
+          # This should be done in the Development.dockerfile, if everything works
+          # Dear reviewer, if you can read this, please let me know!
+          apt update && apt install -y python3-pip && python3.12 -m venv my-venv &&  my-venv/bin/pip install beautifulsoup4 bs4
+
+          # Calling the script that will change the paths in the index.html file
+          index_html_file=$(find build -name "index.html" -print)
+          output_file="/tmp/cache/code-coverage-${{ matrix.platform }}/index.html"
+          echo "Index html file: ${index_html_file} Output file: ${output_file}"
+          my-venv/bin/python ./scripts/code-coverage-remove-rows-index-html.py "${index_html_file}" "${output_file}" "${changed_file_name}"
+
       - name: Upload Code Coverage Summary
         uses: actions/upload-artifact@v4
         with:
