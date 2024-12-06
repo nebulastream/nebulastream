@@ -10,14 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Set Sources and Headers
-add_subdirectory(src)
-get_source(nes-client NES_CLIENT_SOURCE_FILES)
+add_source_files(nes-logical-operators
+        LogicalWindowDescriptor.cpp
+        LogicalWindowOperator.cpp
+        WindowOperator.cpp
+)
 
-# Add Library
-add_library(nes-client ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PRIVATE nes-logical-operators)
-target_link_libraries(nes-client PRIVATE nes-grpc nes-common)
-target_include_directories(nes-client PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+add_subdirectory(Aggregations)
+add_subdirectory(Joins)

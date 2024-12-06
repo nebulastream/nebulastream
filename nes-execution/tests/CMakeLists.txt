@@ -16,7 +16,7 @@ include(GoogleTest)
 function(add_nes_execution_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-execution nes-common nes-data-types nes-operators nes-grpc nes-runtime nes-test-util nes-configurations nes-nautilus nes-window-types)
+    target_link_libraries(${TARGET_NAME} nes-execution nes-common nes-data-types nes-logical-operators nes-grpc nes-runtime nes-test-util nes-configurations nes-nautilus nes-window-types)
 endfunction()
 
 add_subdirectory(UnitTests)

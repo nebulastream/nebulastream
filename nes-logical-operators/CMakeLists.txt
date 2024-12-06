@@ -12,12 +12,13 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-client NES_CLIENT_SOURCE_FILES)
+get_source(nes-logical-operators NES_LOGICAL_OPERATORS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-client ${NES_CLIENT_SOURCE_FILES})
-target_link_libraries(nes-client PRIVATE nes-logical-operators)
-target_link_libraries(nes-client PRIVATE nes-grpc nes-common)
-target_include_directories(nes-client PUBLIC
+add_library(nes-logical-operators  ${NES_LOGICAL_OPERATORS_SOURCE_FILES})
+target_link_libraries(nes-logical-operators  PUBLIC nes-sources nes-sinks nes-window-types)
+target_include_directories(nes-logical-operators  PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
+
+add_tests_if_enabled(tests)
