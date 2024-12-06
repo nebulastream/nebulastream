@@ -68,7 +68,7 @@ FileSource::validateAndFormat(std::unordered_map<std::string, std::string> confi
 
 std::ostream& FileSource::toString(std::ostream& str) const
 {
-    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead);
+    str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
 }
 
