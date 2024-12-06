@@ -55,8 +55,8 @@ AsyncSourceRunner::AsyncSourceRunner(
 
 void AsyncSourceRunner::start()
 {
-    PRECONDITION(executor != nullptr, "Executor is null");
-    PRECONDITION(state == RunnerState::Running, "start() called twice");
+    INVARIANT(executor != nullptr, "Executor is null");
+    INVARIANT(state == RunnerState::Running, "start() called twice");
 
     auto self = shared_from_this();
     /// Let go of the coroutine and let the executor run it.
@@ -66,8 +66,8 @@ void AsyncSourceRunner::start()
 
 void AsyncSourceRunner::stop()
 {
-    PRECONDITION(executor != nullptr, "Executor is null");
-    PRECONDITION(state == RunnerState::Running, "start() not called");
+    INVARIANT(executor != nullptr, "Executor is null");
+    INVARIANT(state == RunnerState::Running, "start() not called");
 
     state = RunnerState::Stopped;
 }
