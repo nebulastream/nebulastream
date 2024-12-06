@@ -18,6 +18,7 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -29,7 +30,7 @@ namespace NES::Sources
 class FileSource final : public Source
 {
 public:
-    static inline const std::string NAME = "File";
+    static constexpr std::string_view NAME = "File";
 
     explicit FileSource(const SourceDescriptor& sourceDescriptor);
     ~FileSource() override = default;
@@ -48,7 +49,7 @@ public:
 
     /// validates and formats a string to string configuration
     static std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-    validateAndFormat(std::unordered_map<std::string, std::string>&& config);
+    validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

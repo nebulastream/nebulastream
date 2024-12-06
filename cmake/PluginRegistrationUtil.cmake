@@ -1,11 +1,26 @@
+# Includes all CMake utility functions to generate plugin registrars, which register plugins at plugin registries.
+
+# creates a library that exposes only the registries and not the registrars
+# assumes that registries are located in '${CMAKE_CURRENT_SOURCE_DIR}/registry/include' (see nes-sources for an example)
+function(create_plugin_registry_library plugin_registry_library plugin_registry_component)
+    add_library(${plugin_registry_library} registry)
+    target_link_libraries(${plugin_registry_library} PUBLIC ${plugin_registry_component})
+    target_include_directories(${plugin_registry_library}
+            PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/registry/include>
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/registry/templates> # link against generated registrar headers
+            $<INSTALL_INTERFACE:include/nebulastream/>
+    )
+endfunction()
+
 # enables/disables an optional plugin; if enabled, the path to the plugin becomes part of the build
 function(activate_optional_plugin plugin_path plugin_option)
-    if(${plugin_option})
+    if (${plugin_option})
         message(STATUS "Activating optional plugin: ${plugin_path} (and all of its dependencies).")
         add_subdirectory(${plugin_path})
-    else()
+    else ()
         message(STATUS "Skipping optional plugin: ${plugin_path}.")
-    endif()
+    endif ()
 endfunction()
 
 # create a new library for the plugin and link the component that the plugin registry belongs to against it
@@ -30,25 +45,17 @@ function(add_plugin plugin_name plugin_registry plugin_registry_component)
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 endfunction()
 
-# reads a specific variable, such as 'RETURN_TYPE' from the contents of an '*.inc.in' file
-function(read_variable_from_in_file variable_name file_content variable)
-    string(REGEX MATCHALL "@(${variable_name}[^@]*)@" matches "${file_content}")
-    foreach (match ${matches})
-        string(REGEX REPLACE "@([^=]*)=(.*)@" "\\2" value ${match})
-        set(${variable} ${value} PARENT_SCOPE)
-    endforeach ()
-endfunction()
-
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
-function(generate_plugin_registrar plugin_registry registrar_header_template_path plugin_registry_component)
+function(generate_plugin_registrar plugin_registry plugin_registry_component)
+    set(registrar_header_template_path ${CMAKE_CURRENT_LIST_DIR}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
+    set(registrar_header_generated_path ${CMAKE_CURRENT_BINARY_DIR}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
+
     # get the names of plugins and all plugin libraries for the plugin registry
     get_property(plugin_registry_plugin_names_final GLOBAL PROPERTY ${plugin_registry}_plugin_names)
     get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
 
     # first, read the Configuration(RETURN_TYPE, ARGUMENTS) from the '.in' file
     file(READ ${registrar_header_template_path} registrar_header_file_data)
-    read_variable_from_in_file("RETURN_TYPE" "${registrar_header_file_data}" return_type)
-    read_variable_from_in_file("ARGUMENTS" "${registrar_header_file_data}" arguments)
 
     # second, remove the configuration and write the modified version of the registrar header template to a temporary file
     # we generate the final '.inc' file from that temporary file
@@ -61,7 +68,7 @@ function(generate_plugin_registrar plugin_registry registrar_header_template_pat
     set(REGISTER_FUNCTION_DECLARATIONS "")
     set(REGISTER_ALL_FUNCTION_CALLS "")
     foreach (reg_func IN LISTS plugin_registry_plugin_names_final)
-        list(APPEND REGISTER_FUNCTION_DECLARATIONS "${return_type} Register${reg_func}${plugin_registry}(${arguments})")
+        list(APPEND REGISTER_FUNCTION_DECLARATIONS "std::unique_ptr<${plugin_registry}RegistryReturnType> Register${reg_func}${plugin_registry}(const ${plugin_registry}RegistryArguments&)")
         list(APPEND REGISTER_ALL_FUNCTION_CALLS "registry.registerPlugin(\"${reg_func}\", Register${reg_func}${plugin_registry})")
     endforeach ()
 
@@ -76,12 +83,17 @@ function(generate_plugin_registrar plugin_registry registrar_header_template_pat
     string(REPLACE ";" ";\n\t" REGISTER_ALL_FUNCTION_CALLS "${REGISTER_ALL_FUNCTION_CALLS};")
 
     # remove the '.in' from the end of the file and write the result to the parent directory of the the template
-    # we assume that the Registrar templates are in a subdirectory, e.g., 'PATH/TO/REGISTRAR/RegistrarTemplates'
-    string(REGEX REPLACE "/[^/]+/([^/]+)\.in$" "/\\1" registrar_header_generated_path ${registrar_header_template_path})
+
     configure_file(
             ${temp_registrar_header_template_file}
             ${registrar_header_generated_path}
             @ONLY
     )
     file(REMOVE ${temp_registrar_header_template_file})
+endfunction()
+
+function(generate_plugin_registrars plugin_registry_component)
+    foreach(plugin_registry ${ARGN})
+        generate_plugin_registrar(${plugin_registry} ${plugin_registry_component})
+    endforeach ()
 endfunction()

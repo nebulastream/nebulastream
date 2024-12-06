@@ -35,8 +35,9 @@
 #include <sys/socket.h> /// For socket functions
 #include <sys/types.h>
 #include <ErrorHandling.hpp>
+#include <SourceRegistry.hpp>
+#include <SourceValidationRegistry.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-
 
 namespace NES::Sources
 {
@@ -191,7 +192,7 @@ bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, size_t& numRec
 }
 
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-TCPSource::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
+TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), NAME);
 }
@@ -207,21 +208,16 @@ void TCPSource::close()
     }
 }
 
-namespace SourceValidationGeneratedRegistrar
+std::unique_ptr<SourceValidationRegistryReturnType>
+SourceValidationGeneratedRegistrar::RegisterTCPSourceValidation(const SourceValidationRegistryArguments& sourceConfig)
 {
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-RegisterTCPSourceValidation(std::unordered_map<std::string, std::string>&& sourceConfig)
-{
-    return TCPSource::validateAndFormat(std::move(sourceConfig));
-}
+    return TCPSource::validateAndFormat(sourceConfig.config);
 }
 
-namespace SourceGeneratedRegistrar
+std::unique_ptr<SourceRegistryReturnType>
+SourceGeneratedRegistrar::RegisterTCPSource(const SourceRegistryArguments& sourceRegistryArguments)
 {
-std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor& sourceDescriptor)
-{
-    return std::make_unique<TCPSource>(sourceDescriptor);
-}
+    return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
 }

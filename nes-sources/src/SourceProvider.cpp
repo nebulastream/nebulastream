@@ -42,7 +42,8 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
         sourceDescriptor.parserConfig.tupleDelimiter,
         sourceDescriptor.parserConfig.fieldDelimiter);
 
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor))
+    auto sourceArguments = NES::Sources::SourceRegistryArguments(sourceDescriptor);
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceArguments))
     {
         return std::make_unique<SourceHandle>(
             std::move(originId),

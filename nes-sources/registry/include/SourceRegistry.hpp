@@ -22,7 +22,13 @@
 namespace NES::Sources
 {
 
-using SourceRegistrySignature = RegistrySignature<std::string, Source, const SourceDescriptor&>;
+using SourceRegistryReturnType = Source;
+struct SourceRegistryArguments
+{
+    SourceDescriptor sourceDescriptor;
+};
+
+using SourceRegistrySignature = RegistrySignature<std::string, SourceRegistryReturnType, const SourceRegistryArguments&>;
 class SourceRegistry : public BaseRegistry<SourceRegistry, SourceRegistrySignature>
 {
 };
