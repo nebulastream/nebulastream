@@ -54,8 +54,12 @@ asio::awaitable<void> FileSource::open(asio::io_context& ioc)
 {
     fileDescriptor.emplace(::open(filePath.c_str(), O_RDONLY));
 
+    NES_DEBUG("FileSource: Opened file: {}", filePath);
+    NES_DEBUG("FileSource: File descriptor: {}", fileDescriptor.value());
+
     if (fileDescriptor == -1)
     {
+        NES_DEBUG("Throw CannotOpenSource");
         throw CannotOpenSource("FileSource: Failed to open file: {}", filePath);
     }
 
@@ -65,7 +69,7 @@ asio::awaitable<void> FileSource::open(asio::io_context& ioc)
 
 asio::awaitable<Source::InternalSourceResult> FileSource::fillBuffer(ByteBuffer& buffer)
 {
-    PRECONDITION(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
+    INVARIANT(fileStream.has_value() && fileStream->is_open(), "FileSource::fillBuffer: File is not open.");
 
     auto [errorCode, bytesRead] = co_await asio::async_read(
         fileStream.value(), asio::mutable_buffer(buffer.getBuffer(), buffer.getBufferSize()), asio::as_tuple(asio::use_awaitable));
