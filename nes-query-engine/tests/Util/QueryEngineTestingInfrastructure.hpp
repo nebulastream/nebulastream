@@ -319,10 +319,10 @@ private:
 };
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(std::shared_ptr<Memory::AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm);
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
-createPipeline(const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors);
+createPipeline(PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors);
 
 struct QueryPlanBuilder
 {
@@ -337,6 +337,7 @@ struct QueryPlanBuilder
     };
     struct SinkDescriptor
     {
+        PipelineId pipelineId = INVALID<PipelineId>;
     };
     using QueryComponentDescriptor = std::variant<SourceDescriptor, SinkDescriptor, PipelineDescriptor>;
 

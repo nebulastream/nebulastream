@@ -123,7 +123,7 @@ std::ostream& TestSink::toString(std::ostream& os) const
 }
 
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(std::shared_ptr<Memory::AbstractBufferProvider> bm)
+createSinkPipeline(PipelineId id, std::shared_ptr<Memory::AbstractBufferProvider> bm)
 {
     auto sinkController = std::make_shared<TestSinkController>();
     auto stage = std::make_unique<TestSink>(std::move(bm), sinkController);
@@ -131,11 +131,11 @@ createSinkPipeline(std::shared_ptr<Memory::AbstractBufferProvider> bm)
     return {pipeline, sinkController};
 }
 std::tuple<std::shared_ptr<Runtime::Execution::ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
-createPipeline(const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors)
+createPipeline(PipelineId id, const std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>>& successors)
 {
     auto pipelineCtrl = std::make_shared<TestPipelineController>();
     auto stage = std::make_unique<TestPipeline>(pipelineCtrl);
-    auto pipeline = Runtime::Execution::ExecutablePipeline::create(std::move(stage), successors);
+    auto pipeline = Runtime::Execution::ExecutablePipeline::create(id, std::move(stage), successors);
     return {pipeline, pipelineCtrl};
 }
 QueryPlanBuilder::identifier_t QueryPlanBuilder::addPipeline(const std::vector<identifier_t>& predecssors)
@@ -168,7 +168,7 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
         backwardRelations[identifier].push_back(pred);
     }
 
-    objects[identifier] = SinkDescriptor{};
+    objects[identifier] = SinkDescriptor{PipelineId(pipelineIdCounter++)};
     return identifier;
 }
 QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<Memory::BufferManager> bm) &&
@@ -198,19 +198,20 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
             Overloaded{
                 [](SourceDescriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 { INVARIANT(false, "Source cannot be a successor"); },
-                [&](SinkDescriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
+                [&](SinkDescriptor descriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 {
-                    auto [sink, ctrl] = createSinkPipeline(bm);
+                    auto [sink, ctrl] = createSinkPipeline(descriptor.pipelineId, bm);
                     pipelines.push_back(sink);
                     stages[identifier] = sink->stage.get();
                     sinkCtrls[identifier] = ctrl;
+                    pipelineIds.emplace(identifier, descriptor.pipelineId);
                     return pipelines.back();
                 },
                 [&](PipelineDescriptor descriptor) -> std::shared_ptr<Runtime::Execution::ExecutablePipeline>
                 {
                     std::vector<std::shared_ptr<Runtime::Execution::ExecutablePipeline>> successors;
                     std::ranges::transform(forwardRelations.at(identifier), std::back_inserter(successors), getOrCreatePipeline);
-                    auto [pipeline, pipelineCtrl] = createPipeline(successors);
+                    auto [pipeline, pipelineCtrl] = createPipeline(descriptor.pipelineId, successors);
                     stages[identifier] = pipeline->stage.get();
                     pipelines.push_back(std::move(pipeline));
                     pipelineIds.emplace(identifier, descriptor.pipelineId);
