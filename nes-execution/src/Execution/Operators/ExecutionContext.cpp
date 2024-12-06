@@ -14,6 +14,7 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -23,6 +24,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
+#include <val_ptr.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -30,11 +32,11 @@ ExecutionContext::ExecutionContext(
     const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext)
     : workerContext(workerContext)
     , pipelineContext(pipelineContext)
-    , originId(0_u64)
+    , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
-    , sequenceNumber(0_u64)
-    , chunkNumber(0_u64)
+    , sequenceNumber(INVALID<SequenceNumber>)
+    , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
 {
 }
