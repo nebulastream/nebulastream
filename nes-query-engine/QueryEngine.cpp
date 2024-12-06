@@ -298,6 +298,7 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
     }
 
     ENGINE_LOG_WARNING("Task for Query {} is Expired. Tuples: {}", task.queryId, task.buf.getNumberOfTuples());
+    pool.statistic->onEvent(TaskExpired{threadId, taskId, task.queryId});
     return false;
 }
 

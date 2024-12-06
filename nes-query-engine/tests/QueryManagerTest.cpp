@@ -828,6 +828,47 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
 
+
+    /// This abomination is used to determine how many Non-Sink tasks have been completed or expired.
+    /// There is a race between the source failure and the query termination (Which is intended).
+    /// Both results are fine, as long as the pipeline was executed or has expired as the number of buffers multiplied by source successors.
+    std::atomic<size_t> pipelinesCompletedOrExpired = 0;
+    folly::Synchronized<std::set<Runtime::TaskId>> ignoreTaskIds;
+    /// Figure out which tasks are sink tasks.
+    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
+        .WillRepeatedly(::testing::Invoke(
+            [&](Runtime::Event event)
+            {
+                const auto& emit = std::get<Runtime::TaskEmit>(event);
+                if (emit.toPipeline == test.pipelineIds.at(sink))
+                {
+                    ignoreTaskIds->insert(emit.taskId);
+                }
+            }));
+
+    /// Count number of completed non-sink tasks
+    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
+        .WillRepeatedly(::testing::Invoke(
+            [&](Runtime::Event event)
+            {
+                const auto& completion = std::get<Runtime::TaskExecutionComplete>(event);
+                if (!ignoreTaskIds.rlock()->contains(completion.id))
+                {
+                    ++pipelinesCompletedOrExpired;
+                }
+            }));
+    /// Count number of expired Non-Sink tasks
+    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
+        .WillRepeatedly(::testing::Invoke(
+            [&](Runtime::Event event)
+            {
+                const auto& expired = std::get<Runtime::TaskExpired>(event);
+                if (!ignoreTaskIds.rlock()->contains(expired.id))
+                {
+                    ++pipelinesCompletedOrExpired;
+                }
+            }));
+
     test.start();
     {
         test.startQuery(std::move(query));
@@ -840,7 +881,6 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
         test.sourceControls[source]->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
         test.sourceControls[source]->injectError("I should fail here!");
 
-        EXPECT_TRUE(test.sinkControls[sink]->waitForNumberOfReceivedBuffers(4 * 3));
         EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         EXPECT_TRUE(test.sourceControls[source]->waitUntilDestroyed());
         EXPECT_FALSE(test.pipelineControls[pipeline1]->wasStopped());
@@ -848,6 +888,8 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
         EXPECT_FALSE(test.pipelineControls[pipeline3]->wasStopped());
     }
     test.stop();
+
+    EXPECT_EQ(pipelinesCompletedOrExpired.load(), 3 * 4) << "Expected 4 Buffers for each of 3 pipeline to be either processed or expire";
 }
 
 TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesAndPipelineFailures)

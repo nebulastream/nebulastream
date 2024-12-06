@@ -81,13 +81,11 @@ public:
     MOCK_METHOD(void, onEvent, (Runtime::Event), (override));
 };
 
-class ExpectStats
+struct ExpectStats
 {
-private:
     std::shared_ptr<TestQueryStatisticListener> listener;
 
 #define STAT_TYPE(Name) \
-public: \
     struct Name \
     { \
         size_t lower; \
@@ -100,7 +98,6 @@ public: \
         } \
     }; \
 \
-private: \
     void apply(Name v) \
     { \
         EXPECT_CALL(*listener, onEvent(::testing::VariantWith<Runtime::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
@@ -111,9 +108,9 @@ private: \
     STAT_TYPE(PipelineStop);
     STAT_TYPE(TaskExecutionStart);
     STAT_TYPE(TaskExecutionComplete);
+    STAT_TYPE(TaskExpired);
     STAT_TYPE(TaskEmit);
 
-public:
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_)))
@@ -127,6 +124,8 @@ public:
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) {}));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) {}));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) {}));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) {}));
