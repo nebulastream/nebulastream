@@ -50,6 +50,7 @@ struct LoweringContext
         sinks;
     std::vector<Runtime::Execution::Source> sources;
     std::unordered_map<PipelineId, std::shared_ptr<Runtime::Execution::ExecutablePipeline>> pipelineToExecutableMap;
+    PipelineId::Underlying pipelineIdGenerator = PipelineId::INITIAL;
 };
 
 /// forward declaring processOperatorPipeline() and processSink() to avoid a cyclic dependency between processSuccessor() and processOperatorPipeline()
@@ -115,16 +116,18 @@ void processSink(const Predecessor& predecessor, const OperatorPipelinePtr& pipe
 std::shared_ptr<Runtime::Execution::ExecutablePipeline> processOperatorPipeline(
     const OperatorPipelinePtr& pipeline, const PipelineQueryPlanPtr& pipelineQueryPlan, LoweringContext& loweringContext)
 {
+    PRECONDITION(!pipeline->getDecomposedQueryPlan()->getRootOperators().empty(), "A pipeline should have at least one root operator");
+
     /// check if the particular pipeline already exist in the pipeline map.
     if (const auto executable = loweringContext.pipelineToExecutableMap.find(pipeline->getPipelineId());
         executable != loweringContext.pipelineToExecutableMap.end())
     {
         return executable->second;
     }
-
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
-    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(executableOperator->takeStage(), {});
+    auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(
+        PipelineId(loweringContext.pipelineIdGenerator++), executableOperator->takeStage(), {});
 
     for (const auto& successor : pipeline->getSuccessors())
     {
