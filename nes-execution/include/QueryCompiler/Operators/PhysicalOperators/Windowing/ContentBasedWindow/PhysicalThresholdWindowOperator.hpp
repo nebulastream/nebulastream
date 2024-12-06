@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators

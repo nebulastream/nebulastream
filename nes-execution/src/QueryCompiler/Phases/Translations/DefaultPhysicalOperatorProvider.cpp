@@ -16,10 +16,10 @@
 #include <memory>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
-#include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
-#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <ExecutableOperators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <ExecutableOperators/SliceStore/WindowSlicesStoreInterface.hpp>
+#include <ExecutableOperators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <ExecutableOperators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>

@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <ExecutableOperators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>

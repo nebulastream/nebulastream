@@ -17,7 +17,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <ExecutableOperators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>

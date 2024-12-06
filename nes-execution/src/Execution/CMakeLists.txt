@@ -10,6 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Functions)
-add_subdirectory(Operators)
 add_subdirectory(Pipelines)

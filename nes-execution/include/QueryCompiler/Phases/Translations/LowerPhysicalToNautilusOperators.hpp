@@ -16,10 +16,10 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/ExecutableOperator.hpp>
-#include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Functions/Function.hpp>
+#include <ExecutableOperators/ExecutableOperator.hpp>
+#include <ExecutableOperators/Operator.hpp>
+#include <ExecutableOperators/Watermark/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Functions/NodeFunction.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>

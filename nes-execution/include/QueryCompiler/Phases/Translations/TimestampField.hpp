@@ -18,8 +18,8 @@
 #include <string>
 #include <utility>
 #include <API/TimeUnit.hpp>
-#include <Execution/Functions/ExecutableFunctionReadField.hpp>
-#include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Functions/ExecutableFunctionReadField.hpp>
+#include <ExecutableOperators/Watermark/TimeFunction.hpp>
 
 namespace NES::QueryCompilation
 {

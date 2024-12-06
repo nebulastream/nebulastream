@@ -18,9 +18,9 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
-#include <Execution/Functions/Function.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Functions/Function.hpp>
+#include <ExecutableOperators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <ExecutableOperators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>

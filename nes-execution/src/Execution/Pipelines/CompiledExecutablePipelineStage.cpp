@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <functional>
 #include <utility>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <ExecutableOperators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
