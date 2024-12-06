@@ -41,6 +41,7 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <algorithm>
 
 namespace NES::Sources
 {
@@ -54,6 +55,7 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
     , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
+    , tcpConnectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::TCP_CONNECT_TIMEOUT))
 {
     /// init physical types
     const std::vector<std::string> schemaKeys;
@@ -83,6 +85,8 @@ std::ostream& TCPSource::toString(std::ostream& str) const
 
 bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
 {
+    /// we need at least 1 second of timeout
+    std::chrono::seconds TCP_SOCKET_CONNECT_DEFAULT_TIMEOUT{std::max(tcpConnectionTimeout, (uint32_t) 1)};
     sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     while (result != nullptr && sockfd == -1)
     {
