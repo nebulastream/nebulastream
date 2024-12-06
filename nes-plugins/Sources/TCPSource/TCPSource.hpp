@@ -133,10 +133,14 @@ struct ConfigParametersTCP
         "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
+    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> TCP_CONNECT_TIMEOUT{
+        "tcpConnectTimeoutSeconds", 10, [](const std::unordered_map<std::string, std::string>& config) {
+            return Configurations::DescriptorConfig::tryGet(TCP_CONNECT_TIMEOUT, config);
+        }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE);
+            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, TCP_CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
@@ -186,6 +190,7 @@ private:
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
+    u_int32_t tcpConnectionTimeout;
 };
 
 }
