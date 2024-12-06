@@ -18,13 +18,15 @@
 #include <array>
 #include <atomic>
 #include <cassert>
-#include <list>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Sequencing/ChunkCollector.hpp>
 #include <Sequencing/SequenceData.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <Time/Timestamp.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sequencing
 {
@@ -53,49 +55,15 @@ namespace NES::Sequencing
  * @tparam T
  * @tparam blockSize
  */
-template <class T, uint64_t blockSize = 10000>
+template <class T, uint64_t BlockSize = 8192>
 class NonBlockingMonotonicSeqQueue
 {
 private:
-    /**
-     * @brief This class contains the state for one sequence number. It checks if the SeqQueue has seen all chunks for
-     * the sequence number.
-     */
-    class Container
+    /// @brief Container, which contains the sequence number and the value.
+    struct Container
     {
-    public:
-        Container()
-            : seqNumber(INVALID_SEQ_NUMBER.getRawValue())
-            , lastChunkNumber(INVALID_CHUNK_NUMBER.getRawValue())
-            , seenChunks(INITIAL_CHUNK_NUMBER.getRawValue())
-            , mergeValues(Util::updateAtomicMax<T>)
-        {
-        }
-
-        /// This methods emplaces <chunkNumber, lastChunk, value> into the container.
-        void emplaceChunk(ChunkNumber::Underlying chunkNumber, const bool lastChunk, T value)
-        {
-            if (lastChunk)
-            {
-                this->lastChunkNumber = chunkNumber;
-            }
-            ++seenChunks;
-            mergeValues(this->value, value);
-        }
-
-        void setSeqNumber(const SequenceNumber::Underlying& seqNumber) { this->seqNumber = seqNumber; }
-
-        T getValue() const { return value; }
-        [[nodiscard]] SequenceNumber::Underlying getSeqNumber() const { return seqNumber; }
-
-        bool seenAllChunks() const { return (lastChunkNumber != INVALID_CHUNK_NUMBER.getRawValue()) && (seenChunks == lastChunkNumber); }
-
-    private:
-        SequenceNumber::Underlying seqNumber;
-        ChunkNumber::Underlying lastChunkNumber;
-        std::atomic<ChunkNumber::Underlying> seenChunks;
+        std::atomic<SequenceNumber::Underlying> seq;
         std::atomic<T> value;
-        std::function<void(std::atomic<T>&, const T&)> mergeValues;
     };
 
     /**
@@ -105,16 +73,15 @@ private:
     class Block
     {
     public:
-        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex) {};
+        explicit Block(size_t blockIndex) : blockIndex(blockIndex) {};
         ~Block() = default;
-        const uint64_t blockIndex;
-        std::array<Container, blockSize> log;
+        const size_t blockIndex;
+        std::array<Container, BlockSize> log = {};
         std::shared_ptr<Block> next = std::shared_ptr<Block>();
     };
 
 public:
     NonBlockingMonotonicSeqQueue() : head(std::make_shared<Block>(0)), currentSeq(0) { }
-
     ~NonBlockingMonotonicSeqQueue() = default;
 
     NonBlockingMonotonicSeqQueue& operator=(const NonBlockingMonotonicSeqQueue& other)
@@ -127,24 +94,27 @@ public:
     /**
      * @brief Emplace a new element to the queue.
      * This method can be called concurrently.
-     * However, only one element with a given sequence number can be inserted.
+     * However, only one element with a given sequence number and chunk number can be inserted.
      * @param sequenceData of the new element.
-     * @param value of the new value.
+     * @param newValue
      * @throws RuntimeException if an element with the same sequence number was already inserted.
      */
-    void emplace(SequenceData sequenceData, T value)
+    void emplace(SequenceData sequenceData, T newValue)
     {
-        if (sequenceData.sequenceNumber < currentSeq)
+        if (auto opt = chunks.collect(sequenceData, Runtime::Timestamp(newValue)))
         {
-            NES_FATAL_ERROR("Invalid sequence number {} as it is < {}", sequenceData.sequenceNumber, currentSeq);
-            /// TODO add exception, currently tests fail
-            /// throw Exceptions::RuntimeException("Invalid sequence number {}  as it is <= {} ", std::to_string(sequenceNumber), std::to_string(currentSeq));
+            auto [sequenceNumber, value] = *opt;
+            INVARIANT(
+                sequenceNumber.getRawValue() > currentSeq,
+                "Invalid sequenceNumber: {} has already been seen. Current Sequence: {}",
+                sequenceNumber,
+                currentSeq);
+            /// First emplace the value to the specific block of the sequenceNumber.
+            /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
+            emplaceValueInBlock(sequenceNumber.getRawValue(), value.getRawValue());
+            /// Try to shift the current sequence number
+            shiftCurrentValue();
         }
-        /// First emplace the value to the specific block of the sequenceNumber.
-        /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
-        emplaceValueInBlock(sequenceData, value);
-        /// Try to shift the current sequence number
-        shiftCurrentValue();
     }
 
     /**
@@ -157,12 +127,12 @@ public:
         auto currentBlock = std::atomic_load(&head);
         /// get the current sequence number and access the associated block
         auto currentSequenceNumber = currentSeq.load();
-        auto targetBlockIndex = currentSequenceNumber / blockSize;
+        auto targetBlockIndex = currentSequenceNumber / BlockSize;
         currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
         /// read the value from the correct slot.
-        auto seqIndexInBlock = currentSequenceNumber % blockSize;
+        auto seqIndexInBlock = currentSequenceNumber % BlockSize;
         auto& value = currentBlock->log[seqIndexInBlock];
-        return value.getValue();
+        return value.value.load(std::memory_order_relaxed);
     }
 
 private:
@@ -176,12 +146,12 @@ private:
      * @param seq the sequence number of the value
      * @param value the value that should be stored.
      */
-    void emplaceValueInBlock(SequenceData seq, T value)
+    void emplaceValueInBlock(SequenceNumber::Underlying seq, T value)
     {
         /// Each block contains blockSize elements and covers sequence numbers from
         /// [blockIndex * blockSize] till [blockIndex * blockSize + blockSize]
         /// Calculate the target block index, which contains the sequence number
-        auto targetBlockIndex = seq.sequenceNumber / blockSize;
+        auto targetBlockIndex = seq / BlockSize;
         /// Lookup the current block
         auto currentBlock = std::atomic_load(&head);
         /// if the blockIndex is smaller the target block index we travers the next block
@@ -204,16 +174,18 @@ private:
         }
 
         /// check if we really found the correct block
-        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
-              && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize))
+        if (!(seq >= currentBlock->blockIndex * BlockSize && seq < currentBlock->blockIndex * BlockSize + BlockSize))
         {
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 
         /// Emplace value in block
-        auto seqIndexInBlock = seq.sequenceNumber % blockSize;
-        currentBlock->log[seqIndexInBlock].setSeqNumber(seq.sequenceNumber);
-        currentBlock->log[seqIndexInBlock].emplaceChunk(seq.chunkNumber, seq.lastChunk, value);
+        /// It is safe to perform this operation without atomics as no other thread can't have the same sequence number,
+        /// and thus can't modify this value.
+        /// Concurrent can also not happen yet as the currentSeq is only modified in shiftCurrent.
+        auto seqIndexInBlock = seq % BlockSize;
+        currentBlock->log[seqIndexInBlock].seq.store(seq, std::memory_order::relaxed);
+        currentBlock->log[seqIndexInBlock].value.store(value, std::memory_order::relaxed);
     }
 
     /**
@@ -231,20 +203,21 @@ private:
             /// we are looking for the next sequence number
             auto currentSequenceNumber = currentSeq.load();
             /// find the correct block, that contains the current sequence number.
-            auto targetBlockIndex = currentSequenceNumber / blockSize;
+            auto targetBlockIndex = currentSequenceNumber / BlockSize;
             currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
 
             /// check if next value is set
             /// next seqNumber
             auto nextSeqNumber = currentSequenceNumber + 1;
-            if (nextSeqNumber % blockSize == 0)
+            if (nextSeqNumber % BlockSize == 0)
             {
                 /// the next sequence number is the first element in the next block.
                 auto nextBlock = std::atomic_load(&currentBlock->next);
                 if (nextBlock != nullptr)
                 {
                     /// this will always be the first element
-                    if (auto& value = nextBlock->log[0]; value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
+                    auto& value = nextBlock->log[0];
+                    if (value.seq.load(std::memory_order::relaxed) == nextSeqNumber)
                     {
                         /// Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
@@ -257,9 +230,9 @@ private:
             }
             else
             {
-                auto seqIndexInBlock = nextSeqNumber % blockSize;
+                auto seqIndexInBlock = nextSeqNumber % BlockSize;
                 auto& value = currentBlock->log[seqIndexInBlock];
-                if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
+                if (value.seq == nextSeqNumber)
                 {
                     /// the next sequence number is still in the current block thus we only have to exchange the currentSeq.
                     std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
@@ -297,6 +270,7 @@ private:
     std::shared_ptr<Block> head;
     /// Stores the current sequence number
     std::atomic<SequenceNumber::Underlying> currentSeq;
+    ChunkCollector<BlockSize> chunks;
 };
 
 }
