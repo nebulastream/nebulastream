@@ -48,6 +48,14 @@ struct TaskExecutionComplete
     QueryId queryId;
 };
 
+struct TaskExpired
+{
+    WorkerThreadId threadId;
+    TaskId id;
+    PipelineId pipelineId;
+    QueryId queryId;
+};
+
 struct QueryStart
 {
     WorkerThreadId threadId;
@@ -74,7 +82,8 @@ struct PipelineStop
     QueryId queryId;
 };
 
-using Event = std::variant<TaskExecutionStart, TaskEmit, TaskExecutionComplete, PipelineStart, PipelineStop, QueryStart, QueryStop>;
+using Event
+    = std::variant<TaskExecutionStart, TaskEmit, TaskExecutionComplete, TaskExpired, PipelineStart, PipelineStop, QueryStart, QueryStop>;
 
 struct QueryEngineStatisticListener
 {
