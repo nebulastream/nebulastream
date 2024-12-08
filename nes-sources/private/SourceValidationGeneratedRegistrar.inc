@@ -29,6 +29,7 @@ namespace NES::Sources::SourceValidationGeneratedRegistrar
 {
 /// declaration of register functions for 'Sources'
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterTCPSourceValidation(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterMQTTSourceValidation(std::unordered_map<std::string, std::string>&&);
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterFileSourceValidation(std::unordered_map<std::string, std::string>&&);
 
 }
@@ -42,6 +43,7 @@ Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySi
 {
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
     registry.registerPlugin("TCP", RegisterTCPSourceValidation);
+	registry.registerPlugin("MQTT", RegisterMQTTSourceValidation);
 	registry.registerPlugin("File", RegisterFileSourceValidation);
 	
 }

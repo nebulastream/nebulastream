@@ -14,3 +14,4 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 # add(ON) external plugins and add the path "THE/PATH" to the build (adding all dependencies of the external plugin)
 add_external_plugin("Sources/TCPSource" ON)
+add_external_plugin("Sources/MQTTSource" ON)

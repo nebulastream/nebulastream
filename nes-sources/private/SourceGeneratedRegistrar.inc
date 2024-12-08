@@ -30,6 +30,7 @@ namespace NES::Sources::SourceGeneratedRegistrar
 
 /// declaration of register functions for 'Sources'
 std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor&);
+std::unique_ptr<Source> RegisterMQTTSource(const SourceDescriptor&);
 std::unique_ptr<Source> RegisterFileSource(const SourceDescriptor&);
 
 }
@@ -44,6 +45,7 @@ Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAl
     using namespace NES::Sources::SourceGeneratedRegistrar;
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     registry.registerPlugin("TCP", RegisterTCPSource);
+	registry.registerPlugin("MQTT", RegisterMQTTSource);
 	registry.registerPlugin("File", RegisterFileSource);
 	
 }

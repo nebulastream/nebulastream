@@ -19,6 +19,7 @@ endfunction()
 function(add_plugin_as_library plugin_name plugin_registry plugin_registry_component plugin_library)
     set(sources ${ARGN})
     add_library(${plugin_library} STATIC ${sources})
+    message(STATUS "Adding plugin library: ${plugin_library}.")
     target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_component})
 
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
