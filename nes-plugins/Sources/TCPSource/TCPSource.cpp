@@ -41,7 +41,6 @@
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <algorithm>
 
 namespace NES::Sources
 {
@@ -55,7 +54,7 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
     , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
     , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
-    , tcpConnectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::TCP_CONNECT_TIMEOUT))
+    , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
 {
     /// init physical types
     const std::vector<std::string> schemaKeys;
@@ -70,7 +69,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     str << "\n  generated tuples: " << this->generatedTuples;
     str << "\n  generated buffers: " << this->generatedBuffers;
     str << "\n  connection: " << this->connection;
-    str << "\n  timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
+    str << "\n  timeout: " << connectionTimeout << " seconds";
     str << "\n  socketHost: " << socketHost;
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
@@ -85,8 +84,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
 
 bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
 {
-    /// we need at least 1 second of timeout
-    std::chrono::seconds TCP_SOCKET_CONNECT_DEFAULT_TIMEOUT{std::max(tcpConnectionTimeout, (uint32_t) 1)};
+    std::chrono::seconds SocketConnectDefaultTimeout{connectionTimeout};
     sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     while (result != nullptr && sockfd == -1)
     {
@@ -94,43 +92,49 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     }
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
-    constexpr static timeval Timeout{TCP_SOCKET_DEFAULT_TIMEOUT.count(), 0};
+    /// set timeout for both blocking receive and send calls
+    /// if timeout is set to zero, then the operation will never timeout
+    /// (https://linux.die.net/man/7/socket)
+    /// as a workaround, we implicitly add one microsecond to the timeout
+    timeval Timeout{SocketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &Timeout, sizeof(Timeout));
+    setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &Timeout, sizeof(Timeout));
     connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
     /// if the TCPSource did not establish a connection, try with timeout
     if (connection < 0)
     {
-        if (errno != EINPROGRESS) {
-            NES_ERROR("Cannot try to establish connection, because of error number: {}.", errno);
+        if (errno != EINPROGRESS)
+        {
             close();
-            return false;
+            /// if connection was unsuccessful, throw an exception with context using errno
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
         }
 
         /// Set the timeout for the connect attempt
         fd_set fdset;
-        timeval tv{TCP_SOCKET_DEFAULT_TIMEOUT.count(), 0};
+        timeval tv{SocketConnectDefaultTimeout.count(), IMPLICIT_TIMEOUT_USEC};
 
         FD_ZERO(&fdset);
         FD_SET(sockfd, &fdset);
 
         connection = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
-        if (connection <= 0) {
+        if (connection <= 0)
+        {
             /// Timeout or error
             errno = ETIMEDOUT;
-            NES_ERROR("Failed to establish a connection within timeout of {} seconds.", TCP_SOCKET_DEFAULT_TIMEOUT.count());
             close();
-            return false;
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
         }
 
         /// Check if connect succeeded
         int error = 0;
         socklen_t len = sizeof(error);
-        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || error) {
+        if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0 || error)
+        {
             errno = error;
-            NES_ERROR("Established a connection, but connection return error number: {}.", errno);
             close();
-            return false;
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerror(errno));
         }
     }
     return true;
@@ -155,15 +159,21 @@ void TCPSource::open()
         throw CannotOpenSource("Failed getaddrinfo with error: {}", gai_strerror(errorCode));
     }
 
+    /// make sure that result is cleaned up automatically (RAII)
+    std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> resultGuard(result, freeaddrinfo);
+
     const int flags = fcntl(sockfd, F_GETFL, 0);
 
-    const bool isConnected = tryToConnect(result, flags);
-    freeaddrinfo(result);
-
-    if (not isConnected)
+    try
     {
-        throw CannotOpenSource("Could not connect to: {}:", socketHost, socketPort);
+        tryToConnect(result, flags);
     }
+    catch (const std::exception& e)
+    {
+        ::close(sockfd); /// close socket to clean up state
+        throw CannotOpenSource("Could not establish connection! Error: {}", e.what());
+    }
+
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
     fcntl(sockfd, F_SETFL, flags);
 

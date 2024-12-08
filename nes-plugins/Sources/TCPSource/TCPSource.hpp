@@ -133,22 +133,24 @@ struct ConfigParametersTCP
         "bytesUsedForSocketBufferSizeTransfer", 0, [](const std::unordered_map<std::string, std::string>& config) {
             return Configurations::DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config);
         }};
-    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> TCP_CONNECT_TIMEOUT{
+    static inline const Configurations::DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
         "tcpConnectTimeoutSeconds", 10, [](const std::unordered_map<std::string, std::string>& config) {
-            return Configurations::DescriptorConfig::tryGet(TCP_CONNECT_TIMEOUT, config);
+            return Configurations::DescriptorConfig::tryGet(CONNECT_TIMEOUT, config);
         }};
 
     static inline std::unordered_map<std::string, Configurations::DescriptorConfig::ConfigParameterContainer> parameterMap
         = Configurations::DescriptorConfig::createConfigParameterContainerMap(
-            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, TCP_CONNECT_TIMEOUT);
+            HOST, PORT, DOMAIN, TYPE, SEPARATOR, FLUSH_INTERVAL_MS, SOCKET_BUFFER_SIZE, SOCKET_BUFFER_TRANSFER_SIZE, CONNECT_TIMEOUT);
 };
 
 class TCPSource : public Source
 {
-    constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
     constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
     constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
+    /// We implicitly add one microsecond to avoid operation from never timing out
+    /// (https://linux.die.net/man/7/socket)
+    constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
 
 public:
     static inline const std::string NAME = "TCP";
@@ -190,7 +192,7 @@ private:
     float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
-    u_int32_t tcpConnectionTimeout;
+    u_int32_t connectionTimeout;
 };
 
 }
