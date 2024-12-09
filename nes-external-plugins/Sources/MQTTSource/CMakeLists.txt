@@ -41,7 +41,7 @@ if (NOT paho_mqtt_cpp_POPULATED)
         FetchContent_MakeAvailable(paho_mqtt_c)
 
         add_library(paho_mqtt_c::paho-mqtt3a ALIAS paho-mqtt3a)
-        message(STATUS "Using asynchronous dynamically linked library")
+        message(STATUS "Using paho-mqtt3a (asynchronous, dynamically linked) library")
 
         set(PAHO_MQTT_C_INCLUDE_DIRS $<TARGET_PROPERTY:paho_mqtt_c::paho-mqtt3a,INCLUDE_DIRECTORIES>)
         set(PAHO_MQTT_C_LIBRARIES ${paho_mqtt_c_BINARY_DIR}/src/libpaho-mqtt3a.so)
