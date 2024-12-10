@@ -63,15 +63,19 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
         ScalarOption<std::string> a{"A", "False", "This is Option A"};
         ScalarOption<size_t> b{"B", "42", "This is Option B"};
         EnumOption<TestEnum> c{"C", TestEnum::YES, "This is Option C"};
-        SequenceOption<InnerConfiguration> d{"D", "This is Option D"};
-        InnerConfiguration e{"E", "This is Option E"};
+        ScalarOption<ssize_t> d{"D", "-42", "This is Option D"};
+        SequenceOption<InnerConfiguration> e{"E", "This is Option E"};
+        InnerConfiguration f{"F", "This is Option F"};
+        ScalarOption<float> g{"G", "1.25", "This is Option G"};
 
     protected:
-        std::vector<BaseOption*> getOptions() override { return {&a, &b, &c, &d, &e}; }
+        std::vector<BaseOption*> getOptions() override { return {&a, &b, &c, &d, &e, &f, &g}; }
     };
 
     std::stringstream ss;
     Configurations::generateHelp<TestConfig>(ss);
+    std::cout << ss.str() << "\n\n";
+
 
     /// We have to remove the "(Multiple)" from D until SequenceOption is fixed
     EXPECT_EQ(
@@ -80,9 +84,11 @@ TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
 A: This is Option A (False, String)
 B: This is Option B (42, Unsigned Integer)
 C: This is Option C (YES)
-D: This is Option D
-    B: This is Inner Option B (54, Unsigned Integer)
+D: This is Option D (-42, Signed Integer)
 E: This is Option E
-    B: This is Inner Option B (54, Unsigned Integer))");
+    B: This is Inner Option B (54, Unsigned Integer)
+F: This is Option F
+    B: This is Inner Option B (54, Unsigned Integer)
+G: This is Option G (1.25, Float))");
 }
 }

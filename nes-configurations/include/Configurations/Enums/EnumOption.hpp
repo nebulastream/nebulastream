@@ -15,7 +15,8 @@
 #include <string>
 #include <type_traits>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/ReadingVisitor.hpp>
+#include <Configurations/WritingVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
@@ -52,7 +53,17 @@ public:
         return os.str();
     };
 
-    void accept(OptionVisitor& visitor) override
+    void accept(ReadingVisitor& visitor) override
+    {
+        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
+        visitor.visit(*this);
+        if (config)
+        {
+            config->accept(visitor);
+        }
+    }
+
+    void accept(WritingVisitor& visitor) override
     {
         auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
         visitor.visit(*this);

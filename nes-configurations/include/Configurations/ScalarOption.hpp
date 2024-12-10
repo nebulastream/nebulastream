@@ -75,6 +75,10 @@ private:
         {
             return std::stoull(strValue);
         }
+        else if constexpr (std::is_same<Type, int64_t>::value)
+        {
+            return std::stoull(strValue);
+        }
         else if constexpr (std::is_same<Type, bool>::value)
         {
             /// Simple boolean conversion (true for "true", false otherwise)

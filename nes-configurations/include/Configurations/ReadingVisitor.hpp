@@ -12,6 +12,9 @@
     limitations under the License.
 */
 #pragma once
+#include <iostream>
+
+
 #include <Configurations/BaseOption.hpp>
 #include <magic_enum.hpp>
 
@@ -21,51 +24,50 @@ namespace NES::Configurations
 class BaseConfiguration;
 template <typename T>
 class TypedBaseOption;
-class OptionVisitor
+
+
+/// This class is the basis of all visitors. The idea of a visitor is, to visit config options and perform something using/on them.
+/// e.g. PrintingVisitor, which goes through config options and prints each of them.
+class ReadingVisitor
 {
 public:
-    virtual ~OptionVisitor() = default;
+    virtual ~ReadingVisitor() = default;
+    /// visits the value of a TypedBaseOption
     template <typename T>
     void visit(TypedBaseOption<T>& option)
     {
         visitLeaf(option);
-        /// bool first because it also counts as a unsigned integral
+        /// bool before 'unsigned integral', because bool would be treated as an unsigned integral otherwise
         if constexpr (std::same_as<bool, T>)
         {
             bool v = option.getValue();
             visitBool(v);
-            option.setValue(static_cast<T>(v));
         }
         else if constexpr (std::signed_integral<T>)
         {
             ssize_t v = option.getValue();
             visitSignedInteger(v);
-            option.setValue(static_cast<T>(v));
         }
         else if constexpr (std::unsigned_integral<T>)
         {
             size_t v = option.getValue();
             visitUnsignedInteger(v);
-            option.setValue(static_cast<T>(v));
         }
         else if constexpr (std::floating_point<T>)
         {
             double v = option.getValue();
             visitFloat(v);
-            option.setValue(static_cast<T>(v));
         }
         else if constexpr (std::convertible_to<std::string, T> && std::convertible_to<T, std::string>)
         {
             std::string v = option.getValue();
             visitString(v);
-            option.setValue(static_cast<T>(v));
         }
         else if constexpr (std::is_enum_v<T>)
         {
             static_assert(std::unsigned_integral<magic_enum::underlying_type_t<T>>, "This is only implemented for unsigned enums");
             size_t v = static_cast<magic_enum::underlying_type_t<T>>(option.getValue());
             visitEnum(magic_enum::enum_name(option.getValue()), v);
-            option.setValue(magic_enum::enum_cast<T>(v).value());
         }
         else
         {
@@ -73,19 +75,22 @@ public:
         }
     }
 
-    /// For handling SequenceOption
-    template <typename T>
-    void visit(std::vector<T>& options)
-    {
-        for (auto& option : options)
-        {
-            visit(option);
-        }
-    }
-
-    /// When starting a compound type. All subsequent visits are part of the CompoundType.
+    /// The general idea of push and pop is to support nested configs.
+    /// For example, we have a nested config A. With push(), the visitor starts working on config A.
+    /// pop() is called later when the visitor finishes working on config A. This is done recursively,
+    /// because A can contain a nested subconfig B, and B can contain a nested subconfig C, and so on.
+    ///
+    /// For the given example, it would look like this:
+    /// "push(A)
+    ///     push(B)
+    ///         push(C)
+    ///         pop(C)
+    ///     pop(B)
+    /// pop(A)"
+    ///
+    /// Start working on a BaseOption. All subsequent visits are part of the BaseOption.
     virtual void push(BaseOption& o) = 0;
-    /// When finishing a compound type
+    /// When finishing a BaseOption.
     virtual void pop(BaseOption& o) = 0;
 
 protected:
@@ -94,8 +99,8 @@ protected:
 
     /// Typed visit functions:
 
-    ///we lose the concrete enum type, but sometimes we want to present the human-readable enum value so the visitEnum
-    ///provides both: string value and underlying value.
+    /// we lose the concrete enum type, but sometimes we want to present the human-readable enum value,
+    /// so the visitEnum provides both: string value and underlying value.
     virtual void visitEnum(std::string_view enumName, size_t& underlying) = 0;
     virtual void visitUnsignedInteger(size_t&) = 0;
     virtual void visitSignedInteger(ssize_t&) = 0;
