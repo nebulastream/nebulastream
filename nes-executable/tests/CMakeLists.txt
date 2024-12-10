@@ -12,6 +12,9 @@
 
 add_library(nes-executable-test-utils TestUtils/TestTaskQueue.cpp) #<--- todo add impls
 target_include_directories(nes-executable-test-utils PUBLIC TestUtils)
+#target_include_directories(nes-executable-test-utils PUBLIC
+#        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/TestUtils>
+#        $<INSTALL_INTERFACE:include/nebulastream/>)
 target_link_libraries(nes-executable-test-utils PUBLIC nes-executable nes-memory nes-runtime nes-configurations) #<-- link required libraries
 
 #add_library(nes-memory-test-utils TestUtils/MemoryTestUtils.cpp)

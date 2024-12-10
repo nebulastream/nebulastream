@@ -19,12 +19,6 @@
 #    error "This file should not be included directly! Include instead include SourceRegistry.hpp"
 #endif
 
-#include <memory>
-#include <string>
-#include <Sources/Source.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <Util/PluginRegistry.hpp>
-
 namespace NES::Sources::SourceGeneratedRegistrar
 {
 
@@ -35,9 +29,10 @@ std::unique_ptr<Source> RegisterTCPSource(const SourceDescriptor&);
 
 namespace NES
 {
+
 template <>
 inline void
-Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceGeneratedRegistrar;
     registry.registerPlugin("File", RegisterFileSource);

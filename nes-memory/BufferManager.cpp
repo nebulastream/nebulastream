@@ -49,7 +49,7 @@ void BufferManager::destroy()
     {
         std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex, localBufferPoolsMutex);
         auto success = true;
-        NES_DEBUG("Shutting down Buffer Manager");
+        NES_TRACE("Shutting down Buffer Manager");
         for (auto& localPool : localBufferPools)
         {
             localPool->destroy();
@@ -99,7 +99,7 @@ void BufferManager::destroy()
             }
         }
         unpooledBuffers.clear();
-        NES_DEBUG("Shutting down Buffer Manager completed");
+        NES_TRACE("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
 }
@@ -125,7 +125,7 @@ void BufferManager::initialize(uint32_t withAlignment)
 
     uint64_t requiredMemorySpace = this->bufferSize * this->numOfBuffers;
     double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
-    NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
+    NES_TRACE("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
 
     ///    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     NES_ASSERT2_FMT(
@@ -182,7 +182,7 @@ void BufferManager::initialize(uint32_t withAlignment)
         availableBuffers.write(&allBuffers.back());
         ptr += offsetBetweenBuffers;
     }
-    NES_DEBUG("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
+    NES_TRACE("BufferManager configuration bufferSize={} numOfBuffers={}", this->bufferSize, this->numOfBuffers);
 }
 
 TupleBuffer BufferManager::getBufferBlocking()
