@@ -110,12 +110,12 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
         field);
 }
 
-std::string DynamicTuple::toString(const SchemaPtr& schema)
+std::string DynamicTuple::toString(const Schema& schema) const
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
+    for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
     {
-        const auto dataType = schema->getFieldByIndex(i)->getDataType();
+        const auto dataType = schema.getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
         if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {

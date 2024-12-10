@@ -24,6 +24,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Executable.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -48,17 +49,18 @@ public:
 
     void emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, ContinuationPolicy) override
     {
-        if (resultBuffers->size() <= pipelineId.getRawValue())
-        {
-            std::vector<NES::Memory::TupleBuffer> tupleBuffersForPipeline;
-            // Todo: wrong, because there might be intermediates
-            resultBuffers->push_back(tupleBuffersForPipeline);
-        }
         resultBuffers->at(pipelineId.getRawValue()).emplace_back(resultBuffer);
     }
     uint64_t getNumberOfWorkerThreads() override { return numberOfWorkerThreads; }
     [[nodiscard]] NES::WorkerThreadId getId() const override { return workerThreadId; }
-    NES::Memory::TupleBuffer allocateTupleBuffer() override { return bufferManager->getBufferBlocking(); }
+    NES::Memory::TupleBuffer allocateTupleBuffer() override
+    {
+        if (auto buffer = bufferManager->getBufferNoBlocking())
+        {
+            return buffer.value();
+        }
+        throw NES::BufferAllocationFailure("Required more buffers in TestTaskQueue than provided.");
+    }
     std::shared_ptr<NES::Memory::AbstractBufferProvider> getBufferManager() override { return bufferManager; }
     NES::PipelineId getPipelineID() override { return pipelineId; }
     std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; }
@@ -82,10 +84,7 @@ class TestablePipelineStage : public NES::Runtime::Execution::ExecutablePipeline
 public:
     using ExecuteFunction = std::function<void(const NES::Memory::TupleBuffer&, NES::Runtime::Execution::PipelineExecutionContext&)>;
     TestablePipelineStage() = default;
-    TestablePipelineStage(std::string step_name, ExecuteFunction testTask)
-    {
-        addStep(std::move(step_name), std::move(testTask));
-    }
+    TestablePipelineStage(std::string step_name, ExecuteFunction testTask) { addStep(std::move(step_name), std::move(testTask)); }
 
     void addStep(std::string step_name, ExecuteFunction testTask) { taskSteps.push_back({step_name, std::move(testTask)}); }
 
@@ -110,11 +109,12 @@ class TestablePipelineTask
 {
 public:
     TestablePipelineTask(
+        NES::SequenceNumber sequenceNumber,
         NES::Memory::TupleBuffer tupleBuffer,
         std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps,
         std::shared_ptr<NES::Memory::BufferManager> bufferManager,
         std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-        : tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
+        : sequenceNumber(sequenceNumber), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
         this->pipelineExecutionContext = std::make_unique<TestPipelineExecutionContext>(std::move(bufferManager), resultBuffers);
     }
@@ -128,13 +128,13 @@ public:
     void setPipelineId(const uint64_t pipelineId) { this->pipelineExecutionContext->pipelineId = NES::PipelineId(pipelineId); }
 
     // Todo: allow setting operator handlers in constructor?
-    void setOperatorHandlers(std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>>& operatorHandlers) const
+    void setOperatorHandlers(std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers) const
     {
         this->pipelineExecutionContext->setOperatorHandlers(operatorHandlers);
     }
 
+    NES::SequenceNumber sequenceNumber;
     std::unique_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
-
 private:
     NES::Memory::TupleBuffer tupleBuffer;
     std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
@@ -144,83 +144,50 @@ private:
 class TestTaskQueue
 {
 public:
-    TestTaskQueue(const size_t numThreads = 1) : numberOfWorkerThreads(numThreads), numPipelines(0), isRunning(true)
+    TestTaskQueue(const size_t numThreads) : numberOfWorkerThreads(numThreads), numPipelines(0)
     {
-        // Todo: make size configurable
-        for (size_t i = 0; i < numberOfWorkerThreads; ++i)
-        {
-            workerThreads.emplace_back([this] { workerLoop(); });
-        }
+        /// Initialize with size of worker threads, each thread gets one task
+        testTasks.resize(numberOfWorkerThreads);
     }
 
-    ~TestTaskQueue()
-    {
-        {
-            std::lock_guard<std::mutex> lock(queueMutex);
-            isRunning = false;
-        }
-        queueCV.notify_all();
-    }
+    ~TestTaskQueue() = default;
 
     void enqueueTask(std::unique_ptr<TestablePipelineTask> pipelineTask)
     {
         pipelineTask->setWorkerThreadId(numPipelines);
         pipelineTask->setPipelineId(numPipelines);
         ++numPipelines;
-        std::lock_guard<std::mutex> lock(queueMutex);
+        testTasks.at(pipelineTask->sequenceNumber.getRawValue()) = std::move(pipelineTask);
+        // testTasks.emplace_back(std::move(pipelineTask));
+    }
+
+    void startProcessing()
+    {
+        for (size_t i = 0; i < numberOfWorkerThreads; ++i)
         {
-            testTasks.push(std::move(pipelineTask));
-            queueCV.notify_one();
+            workerThreads.emplace_back([this, i] { workerLoop(i); });
         }
     }
 
     /// Wait for all tasks to complete
     void waitForCompletion()
     {
-        while (true)
+        while (numThreadsCompleted != numberOfWorkerThreads)
         {
-            std::lock_guard<std::mutex> lock(queueMutex);
-            if (testTasks.empty())
-            {
-                break;
-            }
-            std::this_thread::yield();
+            /// busy wait
         }
     }
 
 private:
-    void workerLoop()
+    void workerLoop(const size_t taskIndex)
     {
-        while (true)
-        {
-            // std::unique_ptr<TestablePipelineTask> task;
-            {
-                std::unique_lock<std::mutex> lock(queueMutex);
-                queueCV.wait(lock, [this] { return !isRunning || !testTasks.empty(); });
-
-                if (!isRunning && testTasks.empty())
-                {
-                    return;
-                }
-
-                if (!testTasks.empty())
-                {
-                    // task = std::move(testTasks.front());
-                    if (testTasks.front())
-                    {
-                        testTasks.front()->execute();
-                    }
-                    testTasks.pop();
-                }
-            }
-        }
+        INVARIANT(taskIndex < testTasks.size(), "Cannot execute task {} when there are only {} tasks.", taskIndex, testTasks.size());
+        testTasks.at(taskIndex)->execute();
+        ++numThreadsCompleted;
     }
-
+    std::atomic<size_t> numThreadsCompleted;
     uint64_t numberOfWorkerThreads;
     uint64_t numPipelines;
-    std::queue<std::unique_ptr<TestablePipelineTask>> testTasks;
-    std::mutex queueMutex;
-    std::condition_variable queueCV;
+    std::vector<std::unique_ptr<TestablePipelineTask>> testTasks;
     std::vector<std::jthread> workerThreads;
-    bool isRunning;
 };

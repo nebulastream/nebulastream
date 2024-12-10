@@ -365,7 +365,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         return;
     }
     /// At least one tuple ends in the current TBR, allocate a new output tuple buffer for the parsed data.
-    progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
+    progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
 
     /// A single partial tuple may have spanned over the prior N TBRs, ending in the current TBR. If so, construct the tuple using the prior TBRs.
     /// The size of the partial tuple may reach from just the last byte of the prior TBR to all bytes of multiple prior TBRs.
@@ -401,7 +401,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
             pipelineExecutionContext.emitBuffer(
                 progressTracker->getTupleBufferFormatted(),
                 NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-            progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.getBufferManager()->getBufferBlocking());
+            progressTracker->setNewTupleBufferFormatted(pipelineExecutionContext.allocateTupleBuffer());
             progressTracker->currentFieldOffsetTBFormatted = 0;
             progressTracker->numTuplesInTBFormatted = 0;
         }

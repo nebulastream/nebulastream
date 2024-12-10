@@ -13,13 +13,96 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <set>
 #include <tuple>
+
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include "Common.hpp"
 
 namespace NES::TestUtil
 {
+
+bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::TupleBuffer& buffer2, const uint64_t schemaSizeInByte) {
+    NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
+    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
+        NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
+        return false;
+    }
+
+    std::set<uint64_t> sameTupleIndices;
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
+        bool idxFoundInBuffer2 = false;
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
+            if (sameTupleIndices.contains(idxBuffer2)) {
+                continue;
+            }
+
+            const auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
+            const auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
+            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0) {
+                sameTupleIndices.insert(idxBuffer2);
+                idxFoundInBuffer2 = true;
+                break;
+            }
+        }
+
+        if (!idxFoundInBuffer2) {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
+                      idxBuffer1);
+            return false;
+        }
+    }
+
+    return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
+}
+
+std::string dynamicTupleToString(Memory::MemoryLayouts::TestTupleBuffer& buffer, const Memory::MemoryLayouts::DynamicTuple& dynamicTuple, const Schema& schema)
+{
+    std::stringstream ss;
+    for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
+    {
+        const auto dataType = schema.getFieldByIndex(i)->getDataType();
+        Memory::MemoryLayouts::DynamicField currentField = dynamicTuple.operator[](i);
+        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
+        {
+            const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
+            const auto string = Memory::MemoryLayouts::readVarSizedData(buffer.getBuffer(), index);
+            ss << string << ",";
+        }
+        else
+        {
+            ss << currentField.toString() << (i == schema.getFieldCount() - 1 ? "" : ",");
+        }
+    }
+    return ss.str();
+}
+
+std::string testTupleBufferToString(Memory::MemoryLayouts::TestTupleBuffer& buffer, const Schema& schema)
+{
+    if (buffer.getBuffer().getNumberOfTuples() == 0)
+    {
+        return "";
+    }
+
+    std::stringstream str;
+    // add the first tuple to the string stream
+    // str << dynamicTupleToString(buffer, *buffer.begin(), schema);
+    // /// process the other tuples
+    // auto tupleIterator = ++buffer.begin();
+    // while (tupleIterator != buffer.end())
+    for (const auto tupleIterator : buffer)
+    {
+        str << dynamicTupleToString(buffer, tupleIterator, schema) << '\n';
+    }
+    return str.str();
+}
 
 /// Called by 'createTestTupleBufferFromTuples' to create a tuple from values.
 template <bool containsVarSized = false, typename... Values>

@@ -13,17 +13,17 @@
 */
 
 #include <cstdint>
-
+#include <memory>
 #include <API/Schema.hpp>
+#include <InputFormatters/InputFormatterOperatorHandler.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Util/TestUtil.hpp>
 #include <BaseUnitTest.hpp>
 #include <TestTaskQueue.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include "Util/TestUtil.hpp"
 
 
 namespace NES
@@ -36,131 +36,146 @@ class RowLayout;
 class InputFormatterTest : public Testing::BaseUnitTest
 {
 public:
+    using ResultBufferVector = std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>>;
+    ResultBufferVector resultBuffers;
+    std::shared_ptr<NES::Memory::BufferManager> testBufferManager;
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
+
+    struct TestValues
+    {
+        const size_t numTasks;
+        const size_t numThreads;
+        const size_t numResultBuffers;
+        const uint64_t bufferSize;
+        const std::string inputFormatterType;
+        const std::string tupleDelimiter;
+        const std::string fieldDelimiter;
+    };
+
     static void SetUpTestCase()
     {
         Logger::setupLogging("InputFormatterTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup InputFormatterTest test class.");
     }
     void SetUp() override { BaseUnitTest::SetUp(); }
+
+    void TearDown() override
+    {
+        /// Let go of all TupleBuffer references owned by the vector holding the results, then destroy the BufferManager.
+        resultBuffers->clear();
+        operatorHandlers.clear();
+        testBufferManager->destroy();
+        BaseUnitTest::TearDown();
+    }
+
     static std::shared_ptr<NES::Memory::BufferManager>
     getBufferManager(const size_t numTasks, const size_t numExpectedResultBuffers, const size_t bufferSize)
     {
         return Memory::BufferManager::create(bufferSize, numTasks + numExpectedResultBuffers);
     }
+
+
+    void setupTest(const TestValues& testValues)
+    {
+        /// Multiplying result buffers x2, because we want to create one expected buffer, for each result buffer.
+        this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testValues.numResultBuffers);
+        this->operatorHandlers = {std::make_shared<InputFormatterOperatorHandler>()};
+        this->testBufferManager = getBufferManager(testValues.numTasks, testValues.numResultBuffers * 2, testValues.bufferSize);
+    }
+
+    // Todo: take sequence number!!!!
+    std::unique_ptr<TestablePipelineTask>
+    createInputFormatterTask(SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const Schema& schema, const TestValues& testConfig)
+    {
+        auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
+            testConfig.inputFormatterType, schema, testConfig.tupleDelimiter, testConfig.fieldDelimiter);
+        return std::make_unique<TestablePipelineTask>(sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
+    }
 };
 
-TEST_F(InputFormatterTest, testTaskPipeline)
+// Todo: test with multiple buffers/tasks
+TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
 {
     constexpr size_t NUM_THREADS = 1;
-    /// Setup buffers
     constexpr size_t NUM_RESULT_BUFFERS = 1;
     auto testBufferManager = getBufferManager(1, 1, 16);
+    auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_RESULT_BUFFERS);
 
+    /// Create and fill buffers for tasks.
     using TestTuple = std::tuple<int>;
     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32);
+    auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(42));
 
-    // Fill test tuple buffer with values, which also sets up the expected KV pairs that must be contained in the JSON.
-    auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, testBufferManager, TestTuple(42));
-    NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
-
+    /// create task queue and add tasks to it.
     TestTaskQueue taskQueue(NUM_THREADS);
-    std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers
-        = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>();
-    resultBuffers->reserve(NUM_RESULT_BUFFERS);
-
-    // Todo: introduce helper function to fill buffers for tasks (use TestTupleBuffer convenience functions)
-    // auto theTestBuffer = testBufferManager->getBufferBlocking();
-    // *theTestBuffer.getBuffer<int>() = 42;
-
     auto stage1 = std::make_unique<TestablePipelineStage>(
         "step_1",
         [](const Memory::TupleBuffer& tupleBuffer, Runtime::Execution::PipelineExecutionContext& pec)
         {
             auto theNewBuffer = pec.getBufferManager()->getBufferBlocking();
             const auto theOnlyIntInBuffer = *tupleBuffer.getBuffer<int>();
-            NES_DEBUG("The only int in buffer: {}", theOnlyIntInBuffer);
             *theNewBuffer.getBuffer<int>() = theOnlyIntInBuffer;
             pec.emitBuffer(theNewBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         });
-    auto task1 = std::make_unique<TestablePipelineTask>(testTupleBuffer->getBuffer(), std::move(stage1), testBufferManager, resultBuffers);
+    auto task1 = std::make_unique<TestablePipelineTask>(SequenceNumber(0), testTupleBuffer->getBuffer(), std::move(stage1), testBufferManager, resultBuffers);
 
     taskQueue.enqueueTask(std::move(task1));
 
     taskQueue.waitForCompletion();
-    ASSERT_FALSE(resultBuffers->empty());
     ASSERT_FALSE(resultBuffers->at(0).empty());
     auto resultBuffer = resultBuffers->at(0).at(0);
     ASSERT_EQ(*resultBuffer.getBuffer<int>(), 42);
 }
 
-// TEST_F(InputFormatterTest, testTaskFunctions)
-// {
-//     TestTaskQueue taskQueue(1);
-//
-//     // auto eps = std::make_unique<TestExecutablePipelineStage>();
-//     auto task1 = std::make_unique<TestablePipelineTask>("Task1");
-//     taskQueue.enqueueTask(std::move(task1));
-//
-//     taskQueue.waitForCompletion();
-// }
-
-// Todo: make TBs smaller (two var sized,each 16 bytes (2 * (4 bytes size, 4 bytes index))
-// - start with simple test case where variable sized data fits perfectly into buffer
-TEST_F(InputFormatterTest, testFormattingEmptyRawBuffer)
+Memory::MemoryLayouts::TestTupleBuffer
+createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer, std::shared_ptr<Schema> schema)
 {
-    // (*testBuffer)[0].writeVarSized("t1", "1234", *bufferManager);
-    // (*testBuffer)[1].writeVarSized("t2", "5678", *bufferManager);
-    // const auto readVarSizedOne = (*testBuffer)[0].readVarSized("t1");
-    // const auto readVarSizedTwo = (*testBuffer)[1].readVarSized("t2");
-    // NES_DEBUG("Var sized in buffer is: {}", readVarSizedOne);
-    // NES_DEBUG("Var sized in buffer is: {}", readVarSizedTwo);
-
-    // Todo: think about whether to emit tuple or not
-    //  - might require mocked TaskQueue or similar
-
-    // Todo:
-    // - create InputParserTask that consumes buffer and produces formatted buffer with two UINT64s
-    //      - create PipelineExecutionContext <-- required to access OperatorHandler & BufferManager
-    //      - create WorkerContext <-- required to emit buffer
-
-    // Query manager has:
-    /// folly::MPMCQueue<Task> taskQueue;
-    // New task is started like this:
-    /// taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
-    // Task is executed in runningRoutine which calls:
-    /// processNextTask(bool running, WorkerContext& workerContext)
-    /// Task task;
-    /// if (running)
-    /// {
-    ///     taskQueue.blockingRead(task);
-    /// }
-    /// ExecutionResult result = task(workerContext); //<--- actual task execution
-
-
-    // for (size_t i = 0; i < 10; ++i)
-    // {
-    //     (*testBuffer)[i].writeVarSized("t1", "" + std::to_string(i) + std::to_string(i), *bufferManager);
-    //
-    //     const auto readVarSized = (*testBuffer)[i].readVarSized("t1");
-    //     NES_DEBUG("Var sized in buffer is: {}", readVarSized);
-    // }
-    // for (int i = 0; i < 10; i++)
-    // {
-    //     auto testTuple = std::make_tuple(static_cast<uint64_t>(i));
-    //     testBuffer->pushRecordToBuffer(testTuple);
-    //     const auto readTupleFromBuffer = (testBuffer->readRecordFromBuffer<uint64_t>(i));
-    //     ASSERT_EQ(readTupleFromBuffer, testTuple);
-    //     NES_DEBUG("Buffer at {} is {}", i, std::get<uint64_t>(readTupleFromBuffer))
-    // }
-    // Todo: mock PipelineExecutionContext
-    // auto pec = std::make_unique<Runtime::Execution::PipelineExecutionContext>(
-    //         PipelineId(1),
-    //         QueryId(1),
-    //         std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-    //         size_t numberOfWorkerThreads,
-    //         std::function<void(Memory::TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
-    //         std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-    //         std::vector<OperatorHandlerPtr> operatorHandlers)
-    // auto inputFormatterTask = std::make_unique<InputFormatters::InputFormatterTask>();
+    NES_ASSERT(
+        tupleBuffer.getBufferSize() >= rawData.size(),
+        fmt::format("{} < {}, size of TupleBuffer is not sufficient to contain string", tupleBuffer.getBufferSize(), rawData.size()));
+    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
+    tupleBuffer.setNumberOfTuples(rawData.size());
+    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(std::move(tupleBuffer), std::move(schema));
+    return testTupleBuffer;
 }
+
+// Todo: use sequence numbers!
+TEST_F(InputFormatterTest, testTaskPipeline)
+{
+    auto testConfig = TestValues{
+        .numTasks = 1,
+        .numThreads = 1,
+        .numResultBuffers = 1,
+        .bufferSize = 16,
+        .inputFormatterType = "CSV",
+        .tupleDelimiter = "\n",
+        .fieldDelimiter = ","};
+    setupTest(testConfig);
+    const SchemaPtr schema = Schema::create()->addField("INT8", BasicType::INT8)->addField("INT8", BasicType::INT8);
+
+    /// Create tuple buffers with raw input data.
+    constexpr std::string_view rawData = "1,2\n"
+                                         "3,4\n";
+    auto testTupleBuffer = createTestTupleBufferFromString(rawData, testBufferManager->getBufferBlocking(), schema);
+
+    /// Create expected results
+    using TestTuple = std::tuple<int8_t, int8_t>;
+    auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(1, 2), TestTuple(3, 4));
+
+    auto inputFormatterTask = createInputFormatterTask(SequenceNumber(0), testTupleBuffer.getBuffer(), schema, testConfig);
+    inputFormatterTask->setOperatorHandlers(operatorHandlers);
+
+    /// create task queue and add tasks to it.
+    TestTaskQueue taskQueue(testConfig.numThreads);
+    taskQueue.enqueueTask(std::move(inputFormatterTask));
+    taskQueue.startProcessing();
+    taskQueue.waitForCompletion();
+
+    // Todo: compare correctly (all vectors of the result vector^2 with all expected vectors in the expected vector^2
+    ASSERT_FALSE(resultBuffers->at(0).empty());
+    auto resultBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBuffers->at(0).at(0), schema);
+    ASSERT_TRUE(TestUtil::checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedBuffer->getBuffer(), schema->getSchemaSizeInBytes()));
+}
+// Todo: could use
+// auto rawData = TestUtil::testTupleBufferToString(*expectedBuffer, schema);
 }

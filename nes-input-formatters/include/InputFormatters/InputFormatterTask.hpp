@@ -91,9 +91,6 @@ public:
     {
         return InputFormatterTask.toString(out);
     }
-
-// protected:
-//     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const override = 0;
 };
 
 
