@@ -28,8 +28,8 @@
 namespace NES::Sources::SourceValidationGeneratedRegistrar
 {
 /// declaration of register functions for 'Sources'
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterFileSourceValidation(std::unordered_map<std::string, std::string>&&);
 std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterTCPSourceValidation(std::unordered_map<std::string, std::string>&&);
+std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterFileSourceValidation(std::unordered_map<std::string, std::string>&&);
 
 }
 
@@ -41,8 +41,8 @@ inline void
 Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
-    registry.registerPlugin("File", RegisterFileSourceValidation);
     registry.registerPlugin("TCP", RegisterTCPSourceValidation);
+	registry.registerPlugin("File", RegisterFileSourceValidation);
 	
 }
 }
