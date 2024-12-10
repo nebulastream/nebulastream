@@ -107,6 +107,7 @@ testing::AssertionResult TestSinkController::waitForNumberOfReceivedBuffers(size
 
 void TestSinkController::insertBuffer(Memory::TupleBuffer&& buffer)
 {
+    ++invocations;
     receivedBuffers.lock()->push_back(std::move(buffer));
     receivedBufferTrigger.notify_one();
 }

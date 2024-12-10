@@ -114,21 +114,21 @@ struct ExpectStats
     explicit ExpectStats(std::shared_ptr<TestQueryStatisticListener> listener) : listener(std::move(listener))
     {
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::QueryStop>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::PipelineStop>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionStart>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
-            .WillRepeatedly(::testing::Invoke([](auto) {}));
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
     }
 
     template <typename... Args>
@@ -149,8 +149,14 @@ public:
 struct TestWorkEmitter : Runtime::WorkEmitter
 {
     MOCK_METHOD(
-        void, emitWork, (QueryId, std::weak_ptr<Runtime::RunningQueryPlanNode>, Memory::TupleBuffer, onComplete, onFailure), (override));
-    MOCK_METHOD(void, emitPipelineStart, (QueryId, std::weak_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
+        void,
+        emitWork,
+        (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure),
+        (override));
+    MOCK_METHOD(
+        void, emitPipelineStart, (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure), (override));
+    MOCK_METHOD(
+        void, emitPendingPipelineStop, (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure), (override));
     MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
 };
 
@@ -187,7 +193,7 @@ class TestPipelineController
 {
 public:
     std::atomic_size_t invocations;
-    std::atomic<ssize_t> throwAfterNExecutions = -1;
+    std::atomic<size_t> throwOnNthInvocation = -1;
 
     std::promise<void> setup;
     std::promise<void> stop;
@@ -197,7 +203,7 @@ public:
     [[nodiscard]] testing::AssertionResult waitForStop() const { return waitForFuture(stopFuture, DEFAULT_AWAIT_TIMEOUT); }
     [[nodiscard]] testing::AssertionResult wasStarted() const { return waitForFuture(setupFuture, std::chrono::milliseconds(0)); }
     [[nodiscard]] testing::AssertionResult wasStopped() const { return waitForFuture(stopFuture, std::chrono::milliseconds(0)); }
-    void failAfterNInvocations(ssize_t i) { throwAfterNExecutions = i; }
+    void failOnNthInvocations(size_t i) { throwOnNthInvocation = i; }
 };
 
 class TestPipeline final : public Runtime::Execution::ExecutablePipelineStage
@@ -218,8 +224,7 @@ public:
     void
     execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext& pipelineExecutionContext) override
     {
-        ++controller->invocations;
-        if (controller->throwAfterNExecutions.fetch_sub(1) == 1)
+        if (controller->invocations.fetch_add(1) + 1 == controller->throwOnNthInvocation)
         {
             throw Exception("I should throw here.", 9999);
         }
@@ -249,6 +254,7 @@ struct TestSinkController
     }
     testing::AssertionResult waitForShutdown(std::chrono::milliseconds timeout) const { return waitForFuture(shutdown_future, timeout); }
 
+    std::atomic<size_t> invocations = 0;
 private:
     folly::Synchronized<std::vector<Memory::TupleBuffer>, std::mutex> receivedBuffers;
     std::condition_variable receivedBufferTrigger;

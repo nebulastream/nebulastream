@@ -57,35 +57,49 @@ public:
 
 private:
     std::chrono::high_resolution_clock::time_point creation = std::chrono::high_resolution_clock::now();
-    std::function<void()> onCompletion = [] {};
-    std::function<void(Exception)> onError = [](const Exception&) {};
+    std::function<void()> onCompletion = [] { };
+    std::function<void(Exception)> onError = [](const Exception&) { };
 };
 
 struct WorkTask : BaseTask
 {
     WorkTask(
         QueryId queryId,
+        PipelineId pipelineId,
         std::weak_ptr<RunningQueryPlanNode> pipeline,
         Memory::TupleBuffer buf,
         WorkEmitter::onComplete complete,
         WorkEmitter::onFailure failure)
-        : BaseTask(queryId, std::move(complete), std::move(failure)), pipeline(std::move(pipeline)), buf(std::move(buf))
+        : BaseTask(queryId, std::move(complete), std::move(failure))
+        , pipeline(std::move(pipeline))
+        , pipelineId(pipelineId)
+        , buf(std::move(buf))
     {
     }
+
     WorkTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
+    PipelineId pipelineId = INVALID<PipelineId>;
     Memory::TupleBuffer buf;
 };
 
 struct StartPipelineTask : BaseTask
 {
-    explicit StartPipelineTask(
-        QueryId queryId, std::weak_ptr<RunningQueryPlanNode> pipeline, WorkEmitter::onComplete complete, WorkEmitter::onFailure failure)
-        : BaseTask(queryId, std::move(complete), std::move(failure)), pipeline(std::move(pipeline))
+    StartPipelineTask(
+        QueryId queryId,
+        PipelineId pipelineId,
+        std::function<void()> onCompletion,
+        std::function<void(Exception)> onError,
+        std::weak_ptr<RunningQueryPlanNode> pipeline)
+        : BaseTask(std::move(queryId), std::move(onCompletion), std::move(onError))
+        , pipeline(std::move(pipeline))
+        , pipelineId(std::move(pipelineId))
     {
     }
+
     StartPipelineTask() = default;
     std::weak_ptr<RunningQueryPlanNode> pipeline;
+    PipelineId pipelineId = INVALID<PipelineId>;
 };
 
 struct StopPipelineTask : BaseTask
@@ -159,7 +173,31 @@ struct StartQueryTask : BaseTask
     std::weak_ptr<QueryCatalog> catalog;
 };
 
-using Task = std::variant<WorkTask, StopQueryTask, StartQueryTask, FailSourceTask, StopSourceTask, StopPipelineTask, StartPipelineTask>;
+struct PendingPipelineStop : BaseTask
+{
+    PendingPipelineStop(
+        QueryId queryId,
+        std::shared_ptr<RunningQueryPlanNode> pipeline,
+        size_t attempts,
+        std::function<void()> onCompletion,
+        std::function<void(Exception)> onError)
+        : BaseTask(std::move(queryId), std::move(onCompletion), std::move(onError)), attempts(attempts), pipeline(std::move(pipeline))
+    {
+    }
+
+    size_t attempts;
+    std::shared_ptr<RunningQueryPlanNode> pipeline;
+};
+
+using Task = std::variant<
+    WorkTask,
+    StopQueryTask,
+    StartQueryTask,
+    FailSourceTask,
+    StopSourceTask,
+    PendingPipelineStop,
+    StopPipelineTask,
+    StartPipelineTask>;
 
 inline auto completeTask(const Task& task)
 {

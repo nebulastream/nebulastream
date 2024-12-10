@@ -50,6 +50,17 @@
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 
+// #define DEBUG_THREAD_SWITCH(PROB) \
+//     do \
+//     { \
+//         if (rand() < RAND_MAX / PROB) \
+//         { \
+//             ENGINE_LOG_INFO("Sleep"); \
+//             std::this_thread::sleep_for(std::chrono::milliseconds(100)); \
+//         } \
+//     } while (0)
+#define DEBUG_THREAD_SWITCH(PROB)
+
 namespace NES::Runtime
 {
 
@@ -169,20 +180,51 @@ public:
     void addThread();
 
     void emitWork(
-        QueryId qid, std::weak_ptr<RunningQueryPlanNode> node, Memory::TupleBuffer buffer, onComplete complete, onFailure failure) override
+        QueryId qid,
+        const std::shared_ptr<RunningQueryPlanNode>& node,
+        Memory::TupleBuffer buffer,
+        onComplete complete,
+        onFailure failure) override
     {
+        auto updatedCount = node->pendingTasks.fetch_add(1) + 1;
+        ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, node->id, updatedCount);
         taskQueue.blockingWrite(WorkTask(
             qid,
+            node->id,
             node,
             buffer,
-            complete,
-            [failure = std::move(failure), node](auto exception)
+            [qid, complete = std::move(complete), node = std::weak_ptr(node)]()
             {
                 if (auto existingNode = node.lock())
                 {
+                    auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
+                    ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
+                    INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
+                }
+                else
+                {
+                    ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
+                }
+                if (complete)
+                {
+                    complete();
+                }
+            },
+            [qid, failure = std::move(failure), node = std::weak_ptr(node)](auto exception)
+            {
+                if (auto existingNode = node.lock())
+                {
+                    auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
+                    ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
+                    INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
                     exception.what() += fmt::format(" In Pipeline: {}.", existingNode->id);
                     existingNode->fail(exception);
                 }
+                else
+                {
+                    ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
+                }
+
                 if (failure)
                 {
                     failure(exception);
@@ -190,9 +232,9 @@ public:
             }));
     }
 
-    void emitPipelineStart(QueryId qid, std::weak_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
+    void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, onComplete complete, onFailure failure) override
     {
-        taskQueue.blockingWrite(StartPipelineTask(qid, node, complete, failure));
+        taskQueue.blockingWrite(StartPipelineTask(qid, node->id, complete, failure, node));
     }
 
     void emitPipelineStop(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
@@ -202,21 +244,31 @@ public:
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
-        taskQueue.blockingWrite(FailSourceTask{
-            id,
-            std::move(source),
-            std::move(exception),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
-            {}});
+        taskQueue.blockingWrite(
+            FailSourceTask{
+                id,
+                std::move(source),
+                std::move(exception),
+                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
+                {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
-        taskQueue.blockingWrite(StopSourceTask{
-            id,
-            std::move(source),
-            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
-            {}});
+        taskQueue.blockingWrite(
+            StopSourceTask{
+                id,
+                std::move(source),
+                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
+                {}});
+    }
+
+    void
+    emitPendingPipelineStop(
+        QueryId queryId, const std::shared_ptr<RunningQueryPlanNode>& node, onComplete complete, onFailure failure) override
+    {
+        ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
+        taskQueue.blockingWrite(PendingPipelineStop{queryId, std::move(node), 0, std::move(complete), std::move(failure)});
     }
 
     ThreadPool(
@@ -231,6 +283,7 @@ public:
     {
     }
 
+
 private:
     struct Worker
     {
@@ -240,6 +293,7 @@ private:
         bool operator()(const StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
         bool operator()(const StartPipelineTask& startPipeline) const;
+        bool operator()(PendingPipelineStop pendingPipelineStop) const;
         bool operator()(const StopPipelineTask& stopPipeline) const;
         bool operator()(const StopSourceTask& stopSource) const;
         bool operator()(const FailSourceTask& failSource) const;
@@ -274,9 +328,12 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
     }
 
     auto const taskId = TaskId(pool.taskIdCounter++);
+
+    DEBUG_THREAD_SWITCH(50);
+
     if (auto pipeline = task.pipeline.lock())
     {
-        ENGINE_LOG_DEBUG("Handle Task for pipeline {} of query {}. Tuples: {}", pipeline->id, task.queryId, task.buf.getNumberOfTuples());
+        ENGINE_LOG_DEBUG("Handle Task for {}-{}. Tuples: {}", task.queryId, pipeline->id, task.buf.getNumberOfTuples());
         DefaultPEC pec(
             pool.pool.size(),
             this->threadId,
@@ -284,11 +341,11 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto)
             {
-                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}. Tuples: {}", task.queryId, tupleBuffer.getNumberOfTuples());
+                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
                     pool.statistic->onEvent(TaskEmit{threadId, taskId, pipeline->id, successor->id, task.queryId});
-                    pool.taskQueue.blockingWrite(WorkTask{task.queryId, successor, tupleBuffer, {}, {}});
+                    pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
         pool.statistic->onEvent(TaskExecutionStart{threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId});
@@ -297,8 +354,8 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
         return true;
     }
 
-    ENGINE_LOG_WARNING("Task for Query {} is Expired. Tuples: {}", task.queryId, task.buf.getNumberOfTuples());
-    pool.statistic->onEvent(TaskExpired{threadId, taskId, task.queryId});
+    ENGINE_LOG_WARNING("Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
+    pool.statistic->onEvent(TaskExpired{threadId, taskId, task.pipelineId, task.queryId});
     return false;
 }
 
@@ -310,9 +367,9 @@ bool ThreadPool::Worker::operator()(const StartPipelineTask& startPipeline) cons
         return false;
     }
 
-    ENGINE_LOG_DEBUG("Setup Pipeline Task for Query {}", startPipeline.queryId);
     if (auto pipeline = startPipeline.pipeline.lock())
     {
+        ENGINE_LOG_DEBUG("Setup Pipeline Task for Query {}-{}", startPipeline.queryId, pipeline->id);
         DefaultPEC pec(
             pool.pool.size(),
             this->threadId,
@@ -331,8 +388,26 @@ bool ThreadPool::Worker::operator()(const StartPipelineTask& startPipeline) cons
         return true;
     }
 
-    ENGINE_LOG_DEBUG("Setup pipeline is expired");
+    ENGINE_LOG_DEBUG("Setup pipeline is expired for {}-{}", startPipeline.queryId, startPipeline.pipelineId);
     return false;
+}
+
+bool ThreadPool::Worker::operator()(PendingPipelineStop pendingPipelineStop) const
+{
+    INVARIANT(pendingPipelineStop.pipeline->requireTermination, "Pending Pipeline Stop should always require a non-terminated pipeline");
+    INVARIANT(pendingPipelineStop.pipeline->pendingTasks >= 0);
+
+    if (pendingPipelineStop.pipeline->pendingTasks != 0)
+    {
+        ENGINE_LOG_WARNING(
+            "Pipeline {}-{} is still active: {}",
+            pendingPipelineStop.queryId,
+            pendingPipelineStop.pipeline->id,
+            pendingPipelineStop.pipeline->pendingTasks);
+        pool.taskQueue.blockingWrite(std::move(pendingPipelineStop));
+    }
+
+    return true;
 }
 
 bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
@@ -356,10 +431,11 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.taskQueue.blockingWrite(WorkTask{stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {}});
+                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] { }, {});
             }
         });
-    ENGINE_LOG_DEBUG("Stopping Pipeline");
+
+    ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     stopPipeline.pipeline->stage->stop(pec);
     pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.pipeline->id, stopPipeline.queryId});
     return true;

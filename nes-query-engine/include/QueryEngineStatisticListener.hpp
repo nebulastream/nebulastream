@@ -52,6 +52,7 @@ struct TaskExpired
 {
     WorkerThreadId threadId;
     TaskId id;
+    PipelineId pipelineId;
     QueryId queryId;
 };
 

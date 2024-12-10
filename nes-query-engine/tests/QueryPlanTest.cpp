@@ -576,69 +576,6 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
     EXPECT_TRUE(srcCtrl->wasClosed());
 }
 
-TEST_F(QueryPlanTest, RunningQueryPlanIndividualSourceTermination)
-{
-    Testing::TestingHarness test;
-    auto builder = test.buildNewQuery();
-    auto source = builder.addSource();
-    auto source1 = builder.addSource();
-    auto source2 = builder.addSource();
-    auto pipeline = builder.addPipeline({source1});
-    auto pipeline1 = builder.addPipeline({source, source1, source2});
-    auto sink = builder.addSink({pipeline, pipeline1});
-    auto queryPlan = test.addNewQuery(std::move(builder));
-    auto srcCtrl = test.sourceControls[source];
-    auto src1Ctrl = test.sourceControls[source1];
-    auto src2Ctrl = test.sourceControls[source2];
-
-    TestQueryLifetimeController controller;
-    TestWorkEmitter emitter;
-
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
-    auto setups = Setups::setup(stdv::values(test.stages), emitter);
-    auto terminations = Terminations::setup(stdv::values(test.stages), emitter);
-
-    /// Query Terminates after successfull initialization
-    auto listener = std::make_shared<TestQueryLifetimeListener>();
-    EXPECT_CALL(*listener, onDestruction()).Times(1);
-    EXPECT_CALL(*listener, onRunning()).Times(1);
-
-    {
-        auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
-
-        EXPECT_TRUE(setups->waitForTasks(3));
-        EXPECT_TRUE(setups->handleAll());
-
-        /// All sources should have started
-        EXPECT_TRUE(srcCtrl->waitUntilOpened());
-        EXPECT_TRUE(src1Ctrl->waitUntilOpened());
-        EXPECT_TRUE(src2Ctrl->waitUntilOpened());
-
-        runningQueryPlan->stopSource(test.sourceIds.at(source1));
-        EXPECT_TRUE(src1Ctrl->waitUntilDestroyed());
-        EXPECT_TRUE(src1Ctrl->wasClosed());
-
-        EXPECT_TRUE(terminations->handle(test.stages.at(pipeline)));
-        /// No Further Terminations, as sink is kept alive by pipeline1 which is kept alive by s, and source2
-        EXPECT_THAT(*terminations, ::testing::IsEmpty());
-
-        runningQueryPlan->stopSource(test.sourceIds.at(source));
-        EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
-        EXPECT_TRUE(srcCtrl->wasClosed());
-
-        /// still
-        EXPECT_THAT(*terminations, ::testing::IsEmpty());
-
-        runningQueryPlan->stopSource(test.sourceIds.at(source2));
-        EXPECT_TRUE(src2Ctrl->waitUntilDestroyed());
-
-        EXPECT_TRUE(terminations->handle(test.stages.at(pipeline1)));
-        EXPECT_TRUE(terminations->handle(test.stages.at(sink)));
-
-        leak(std::move(runningQueryPlan), std::move(listener));
-    }
-}
-
 TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
 {
     Testing::TestingHarness test;

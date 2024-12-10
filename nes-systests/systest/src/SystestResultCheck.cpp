@@ -371,7 +371,7 @@ bool operator==(const MapFieldNameToValue& left, const MapFieldNameToValue& righ
 
             if (field != right.at(name))
             {
-                NES_WARNING(
+                NES_TRACE(
                     "Field {} does not match {} ({}) != {} ({})",
                     name,
                     field.valueAsString,

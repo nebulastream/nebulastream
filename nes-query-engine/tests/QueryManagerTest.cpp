@@ -742,7 +742,7 @@ TEST_F(QueryManagerTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermin
 }
 
 template <typename T>
-auto IsInRange(T lo, T hi)
+auto IsInInclusiveRange(T lo, T hi)
 {
     return ::testing::AllOf(::testing::Ge((lo)), ::testing::Le((hi)));
 }
@@ -757,7 +757,7 @@ TEST_F(QueryManagerTest, singleQueryWithPipelineFailure)
     auto query = test.addNewQuery(std::move(builder));
 
     test.expectQueryStatusEvents(QueryId(1), {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
-    test.pipelineControls[pipeline]->failAfterNInvocations(2);
+    test.pipelineControls[pipeline]->failOnNthInvocations(2);
 
     test.start();
     {
@@ -772,7 +772,8 @@ TEST_F(QueryManagerTest, singleQueryWithPipelineFailure)
 
         EXPECT_TRUE(test.waitForQepTermination(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
         EXPECT_TRUE(test.sourceControls[source]->wasDestroyed());
-        EXPECT_THAT(test.pipelineControls[pipeline]->invocations.load(), IsInRange(3, 4));
+        EXPECT_THAT(test.pipelineControls[pipeline]->invocations.load(), IsInInclusiveRange(2, 4));
+        EXPECT_THAT(test.sinkControls[sink]->invocations.load(), IsInInclusiveRange(1, 3));
     }
     test.stop();
 }
@@ -829,45 +830,35 @@ TEST_F(QueryManagerTest, singleSourceWithMultipleSuccessorsSourceFailure)
     test.expectSourceTermination(QueryId(1), source, Runtime::QueryTerminationType::Failure);
 
 
-    /// This abomination is used to determine how many Non-Sink tasks have been completed or expired.
     /// There is a race between the source failure and the query termination (Which is intended).
     /// Both results are fine, as long as the pipeline was executed or has expired as the number of buffers multiplied by source successors.
     std::atomic<size_t> pipelinesCompletedOrExpired = 0;
-    folly::Synchronized<std::set<Runtime::TaskId>> ignoreTaskIds;
-    /// Figure out which tasks are sink tasks.
-    EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskEmit>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Runtime::Event event)
-            {
-                const auto& emit = std::get<Runtime::TaskEmit>(event);
-                if (emit.toPipeline == test.pipelineIds.at(sink))
-                {
-                    ignoreTaskIds->insert(emit.taskId);
-                }
-            }));
 
     /// Count number of completed non-sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExecutionComplete>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Runtime::Event event)
-            {
-                const auto& completion = std::get<Runtime::TaskExecutionComplete>(event);
-                if (!ignoreTaskIds.rlock()->contains(completion.id))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Runtime::Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& completion = std::get<Runtime::TaskExecutionComplete>(event);
+                    if (completion.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
+
     /// Count number of expired Non-Sink tasks
     EXPECT_CALL(*test.stats.listener, onEvent(::testing::VariantWith<Runtime::TaskExpired>(::testing::_)))
-        .WillRepeatedly(::testing::Invoke(
-            [&](Runtime::Event event)
-            {
-                const auto& expired = std::get<Runtime::TaskExpired>(event);
-                if (!ignoreTaskIds.rlock()->contains(expired.id))
+        .WillRepeatedly(
+            ::testing::Invoke(
+                [&](Runtime::Event event)
                 {
-                    ++pipelinesCompletedOrExpired;
-                }
-            }));
+                    const auto& expired = std::get<Runtime::TaskExpired>(event);
+                    if (expired.pipelineId != test.pipelineIds.at(sink))
+                    {
+                        ++pipelinesCompletedOrExpired;
+                    }
+                }));
 
     test.start();
     {
@@ -932,7 +923,7 @@ TEST_F(QueryManagerTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     /// Rest of the queries are failing due to pipeline errors on pipeline 1
     for (size_t index = 1; const auto& query : queryPlans | std::ranges::views::drop(1))
     {
-        test.pipelineControls[pipelines[index]]->failAfterNInvocations(failAfterNInvocations);
+        test.pipelineControls[pipelines[index]]->failOnNthInvocations(failAfterNInvocations);
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2 + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);

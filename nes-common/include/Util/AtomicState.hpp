@@ -61,6 +61,6 @@ private:
         state = transitionFunction(std::move(std::get<FromState>(state)));
         return true;
     }
-    std::recursive_mutex mutex;
+    std::mutex mutex;
     std::variant<States...> state;
 };

@@ -65,7 +65,7 @@ OriginId RunningSource::getOriginId() const
 RunningSource::RunningSource(
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     std::unique_ptr<Sources::SourceHandle> source,
-    std::function<void()> unregister,
+    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
     std::function<void(Exception)> unregisterWithError)
     : successors(std::move(successors))
     , source(std::move(source))
@@ -78,7 +78,7 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryId queryId,
     std::unique_ptr<Sources::SourceHandle> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-    std::function<void()> unregister,
+    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
     std::function<void(Exception)> unregisterWithError,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
@@ -102,9 +102,9 @@ RunningSource::~RunningSource()
         }
     }
 }
-void RunningSource::stop() const
+void RunningSource::stop()
 {
-    unregister();
+    unregister(std::move(this->successors));
 }
 void RunningSource::fail(Exception exception) const
 {
