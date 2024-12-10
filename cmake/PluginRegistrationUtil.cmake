@@ -11,7 +11,7 @@ endfunction()
 # create a new library for the plugin and link the component that the plugin registry belongs to against it
 # adds the name of plugin to the list of plugin names for the plugin registry
 # adds the name of the library of the plugin to the list of libraries for the plugin registry
-function(add_plugin plugin_name plugin_registry plugin_registry_component plugin_library)
+function(add_plugin_as_library plugin_name plugin_registry plugin_registry_component plugin_library)
     set(sources ${ARGN})
     add_library(${plugin_library} STATIC ${sources})
     target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_component})
@@ -20,7 +20,17 @@ function(add_plugin plugin_name plugin_registry plugin_registry_component plugin
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
 endfunction()
 
-# read a specific variable, such as 'RETURN_TYPE' from the contents of an '*.inc.in' file
+# adds the source files of the plugin to the source files of the component that the plugin registry belongs to
+# adds the name of plugin to the list of plugin names for the plugin registry
+function(add_plugin plugin_name plugin_registry plugin_registry_component)
+    set(sources ${ARGN})
+    add_source_files(nes-sources
+            ${sources}
+    )
+    set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
+endfunction()
+
+# reads a specific variable, such as 'RETURN_TYPE' from the contents of an '*.inc.in' file
 function(read_variable_from_in_file variable_name file_content variable)
     string(REGEX MATCHALL "@(${variable_name}[^@]*)@" matches "${file_content}")
     foreach (match ${matches})

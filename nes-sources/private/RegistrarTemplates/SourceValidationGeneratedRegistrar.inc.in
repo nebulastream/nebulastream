@@ -32,7 +32,6 @@ namespace NES::Sources::SourceValidationGeneratedRegistrar
 @RETURN_TYPE=std::unique_ptr<NES::Configurations::DescriptorConfig::Config>@
 @ARGUMENTS=std::unordered_map<std::string, std::string>&&@
 // END CONFIGURATION
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config> RegisterFileSourceValidation(std::unordered_map<std::string, std::string>&&);
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
@@ -44,7 +43,6 @@ inline void
 Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
-    registry.registerPlugin("File", RegisterFileSourceValidation);
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }
