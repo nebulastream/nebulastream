@@ -244,27 +244,24 @@ public:
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
-        taskQueue.blockingWrite(
-            FailSourceTask{
-                id,
-                std::move(source),
-                std::move(exception),
-                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
-                {}});
+        taskQueue.blockingWrite(FailSourceTask{
+            id,
+            std::move(source),
+            std::move(exception),
+            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure); },
+            {}});
     }
 
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
-        taskQueue.blockingWrite(
-            StopSourceTask{
-                id,
-                std::move(source),
-                [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
-                {}});
+        taskQueue.blockingWrite(StopSourceTask{
+            id,
+            std::move(source),
+            [id, sourceId, listener = listener] { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful); },
+            {}});
     }
 
-    void
-    emitPendingPipelineStop(
+    void emitPendingPipelineStop(
         QueryId queryId, const std::shared_ptr<RunningQueryPlanNode>& node, onComplete complete, onFailure failure) override
     {
         ENGINE_LOG_DEBUG("Inserting Pending Pipeline Stop for {}-{}", queryId, node->id);
@@ -341,20 +338,23 @@ bool ThreadPool::Worker::operator()(const WorkTask& task) const
             pool.bufferProvider,
             [&](const Memory::TupleBuffer& tupleBuffer, auto)
             {
-                ENGINE_LOG_DEBUG("Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
+                ENGINE_LOG_DEBUG(
+                    "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
                     pool.statistic->onEvent(TaskEmit{threadId, taskId, pipeline->id, successor->id, task.queryId});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
-        pool.statistic->onEvent(TaskExecutionStart{threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId});
+        pool.statistic->onEvent(TaskExecutionStart{
+            threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId, std::chrono::system_clock::now()});
         pipeline->stage->execute(task.buf, pec);
-        pool.statistic->onEvent(TaskExecutionComplete{threadId, taskId, pipeline->id, task.queryId});
+        pool.statistic->onEvent(TaskExecutionComplete{threadId, taskId, pipeline->id, task.queryId, std::chrono::system_clock::now()});
         return true;
     }
 
-    ENGINE_LOG_WARNING("Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
+    ENGINE_LOG_WARNING(
+        "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
     pool.statistic->onEvent(TaskExpired{threadId, taskId, task.pipelineId, task.queryId});
     return false;
 }
@@ -431,7 +431,7 @@ bool ThreadPool::Worker::operator()(const StopPipelineTask& stopPipeline) const
                 /// The Termination Exceution Context appends a strong reference to the successer into the Task.
                 /// This prevents the successor nodes to be destructed before they were able process tuplebuffer generated during
                 /// pipeline termination.
-                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] { }, {});
+                pool.emitWork(stopPipeline.queryId, successor, tupleBuffer, [ref = successor] {}, {});
             }
         });
 

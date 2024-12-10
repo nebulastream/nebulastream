@@ -14,6 +14,7 @@
 
 #pragma once
 #include <cstddef>
+#include <chrono>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
@@ -29,6 +30,7 @@ struct TaskExecutionStart
     size_t numberOfTuples;
     PipelineId pipelineId;
     QueryId queryId;
+    std::chrono::system_clock::time_point timestamp;
 };
 
 struct TaskEmit
@@ -46,6 +48,7 @@ struct TaskExecutionComplete
     TaskId id;
     PipelineId pipelineId;
     QueryId queryId;
+    std::chrono::system_clock::time_point timestamp;
 };
 
 struct TaskExpired

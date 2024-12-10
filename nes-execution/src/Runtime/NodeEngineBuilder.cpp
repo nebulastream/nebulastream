@@ -49,7 +49,7 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener
     void onEvent(Event event) override { events.writeIfNotFull(event); }
 
     explicit PrintingStatisticListener(const std::filesystem::path& path)
-        : file(path, std::ios::out | std::ios::app)
+        : file(folly::Synchronized<std::shared_ptr<std::ofstream>>(std::make_shared<std::ofstream>(path, std::ios::out | std::ios::app)))
         , printThread([this](const std::stop_token& stopToken) { this->threadRoutine(stopToken); })
     {
         NES_INFO("Writing Statistics to: {}", path);
@@ -70,18 +70,19 @@ private:
                 Overloaded{
                     [&](TaskExecutionStart taskStartEvent)
                     {
-                        file << fmt::format(
-                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started\n",
-                            std::chrono::system_clock::now(),
+                        *(file.wlock()->get()) << fmt::format(
+                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started with no. of tuples: {}\n",
+                            taskStartEvent.timestamp,
                             taskStartEvent.taskId,
                             taskStartEvent.pipelineId,
-                            taskStartEvent.queryId);
+                            taskStartEvent.queryId,
+                            taskStartEvent.numberOfTuples);
                     },
                     [&](TaskExecutionComplete taskStopEvent)
                     {
-                        file << fmt::format(
-                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed\n",
-                            std::chrono::system_clock::now(),
+                        *(file.wlock()->get()) << fmt::format(
+                            "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed.\n",
+                            taskStopEvent.timestamp,
                             taskStopEvent.id,
                             taskStopEvent.pipelineId,
                             taskStopEvent.queryId);
@@ -91,7 +92,7 @@ private:
         }
     }
 
-    std::ofstream file;
+    folly::Synchronized<std::shared_ptr<std::ofstream>> file;
     folly::MPMCQueue<Event> events{100};
     std::jthread printThread;
 };
@@ -113,7 +114,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     std::vector bufferManagers = {bufferManager};
     auto queryManager = std::make_unique<QueryEngine>(
         workerConfiguration.queryEngineConfiguration,
-        std::make_shared<PrintingStatisticListener>(fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", timestamp, pid)),
+        std::make_shared<PrintingStatisticListener>(std::filesystem::path("statistics.txt")),
         queryLog,
         bufferManagers[0]);
 
