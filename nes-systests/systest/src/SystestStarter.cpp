@@ -21,6 +21,7 @@
 #include <Configurations/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <argparse/argparse.hpp>
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <folly/MPMCQueue.h>
@@ -253,11 +254,9 @@ void shuffleQueries(std::vector<NES::Systest::Query> queries)
 
 void setupLogging()
 {
-    const std::time_t nowTimeT = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
-    std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&nowTimeT));
-
-    const auto logFileName = fmt::format("/nes-systests/SystemTest_{}.log", timestamp);
+    const auto now = std::chrono::system_clock::now();
+    const auto pid = ::getpid();
+    const auto logFileName = fmt::format("/nes-systests/SystemTest_{:%H:%M:%S}_{}.log", now, pid);
     NES::Logger::setupLogging(fmt::format("{}{}", PATH_TO_BINARY_DIR, logFileName), NES::LogLevel::LOG_DEBUG, false);
 
     if (const char* hostLoggingPath = std::getenv("HOST_LOGGING_PATH"))

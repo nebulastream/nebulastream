@@ -119,6 +119,7 @@ loadFromSLTFile(const std::filesystem::path& testFilePath, const std::filesystem
             {
                 fileSource << tuple << '\n';
             }
+            fileSource.flush();
         });
 
     /// We create a new query plan from our config when finding a query
