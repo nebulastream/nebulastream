@@ -33,7 +33,6 @@ namespace NES::Sources::SourceGeneratedRegistrar
 @RETURN_TYPE=std::unique_ptr<Source>@
 @ARGUMENTS=const SourceDescriptor&@
 // END CONFIGURATION
-std::unique_ptr<Source> RegisterFileSource(const SourceDescriptor&);
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 
@@ -46,7 +45,6 @@ Registrar<Sources::SourceRegistry, Sources::SourceRegistrySignature>::registerAl
 
     using namespace NES::Sources::SourceGeneratedRegistrar;
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
-    registry.registerPlugin("File", RegisterFileSource);
     @REGISTER_ALL_FUNCTION_CALLS@
 }
 }
