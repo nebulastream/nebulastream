@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+
 #include <API/Schema.hpp>
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
@@ -22,6 +23,7 @@
 #include <BaseUnitTest.hpp>
 #include <TestTaskQueue.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include "Util/TestUtil.hpp"
 
 
 namespace NES
@@ -29,23 +31,6 @@ namespace NES
 namespace Memory::MemoryLayouts
 {
 class RowLayout;
-}
-
-template <typename... Values>
-auto createTuple(NES::Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, const Values&... values)
-{
-    // Iterate over all values in the current tuple and add them to the expected KV pairs.
-    auto testTuple = std::make_tuple(values...);
-    testTupleBuffer->pushRecordToBuffer(testTuple);
-}
-template <typename... Tuples>
-auto createTestTupleBufferFromTuples(
-    std::shared_ptr<Schema> schema, std::shared_ptr<Memory::BufferManager> bufferManager, const Tuples&... tuples)
-{
-    auto rowLayout = Memory::MemoryLayouts::RowLayout::create(std::move(schema), bufferManager->getBufferSize());
-    auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager->getBufferBlocking());
-    (std::apply([&](const auto&... values) { createTuple(testTupleBuffer.get(), values...); }, tuples), ...);
-    return testTupleBuffer;
 }
 
 class InputFormatterTest : public Testing::BaseUnitTest
@@ -75,7 +60,7 @@ TEST_F(InputFormatterTest, testTaskPipeline)
     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32);
 
     // Fill test tuple buffer with values, which also sets up the expected KV pairs that must be contained in the JSON.
-    auto testTupleBuffer = createTestTupleBufferFromTuples(schema, testBufferManager, TestTuple(42));
+    auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, testBufferManager, TestTuple(42));
     NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
 
     TestTaskQueue taskQueue(NUM_THREADS);
