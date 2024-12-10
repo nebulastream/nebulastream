@@ -12,6 +12,15 @@
 # limitations under the License.
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+
+# Takes a target and a list of source files and calls 'add_source' on the target (e.g., nes-memory) and the source files
+macro(add_source_files)
+    set(SOURCE_FILES "${ARGN}")
+    list(POP_FRONT SOURCE_FILES TARGET_NAME)
+    add_source(${TARGET_NAME} "${SOURCE_FILES}")
+endmacro()
+
+# Adds a list of source files to a global property that is tied to a global PROP_NAME (target, e.g., nes-memory_SOURCE_PROP)
 macro(add_source PROP_NAME SOURCE_FILES)
     set(SOURCE_FILES_ABSOLUTE)
     foreach (it ${SOURCE_FILES})
@@ -23,15 +32,11 @@ macro(add_source PROP_NAME SOURCE_FILES)
     set_property(GLOBAL PROPERTY "${PROP_NAME}_SOURCE_PROP" ${SOURCE_FILES_ABSOLUTE} ${OLD_PROP_VAL})
 endmacro()
 
+# (builds on top of add_source_files)
+# looks up the source files using a global source property (e.g., nes-memory_SOURCE_PROP) and adds the source files to SOURCE_FILES
 macro(get_source PROP_NAME SOURCE_FILES)
     get_property(SOURCE_FILES_LOCAL GLOBAL PROPERTY "${PROP_NAME}_SOURCE_PROP")
     set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
-endmacro()
-
-macro(add_source_files)
-    set(SOURCE_FILES "${ARGN}")
-    list(POP_FRONT SOURCE_FILES TARGET_NAME)
-    add_source(${TARGET_NAME} "${SOURCE_FILES}")
 endmacro()
 
 # Looks for the configured clang format version and enabled the format target if available.
@@ -55,8 +60,8 @@ function(project_enable_format)
     endif ()
 
     message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
-    add_custom_target(format       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
-    add_custom_target(check-format COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(format COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(check-format COMMAND scripts/format.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
 endfunction(project_enable_format)
 
 macro(get_nes_log_level_value NES_LOGGING_VALUE)
