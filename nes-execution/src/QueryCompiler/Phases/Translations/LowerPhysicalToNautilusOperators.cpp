@@ -53,7 +53,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "Execution/MemoryProvider/TupleBufferMemoryProvider.hpp"
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -274,8 +274,8 @@ LowerPhysicalToNautilusOperators::lowerSortBufferOperator(const PhysicalOperator
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
+    std::unique_ptr<Nautilus::Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Nautilus::Interface::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
 
     auto sortBufferOperator = NES::Util::as<PhysicalOperators::PhysicalSortBufferOperator>(operatorNode);
     return std::make_shared<Runtime::Execution::Operators::SortBuffer>(

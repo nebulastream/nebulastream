@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
 #include <API/AttributeField.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
@@ -50,6 +51,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
+#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 
 namespace NES
 {
@@ -93,7 +95,7 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
 
 QueryPlanPtr QueryPlanBuilder::addSortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder, QueryPlanPtr queryPlan) {
     NES_DEBUG("QueryPlanBuilder: add sort buffer operator to query plan");
-    OperatorPtr op = LogicalOperatorFactory::createSortBufferOperator(sortFieldIdentifier, sortOrder);
+    const auto op = std::make_shared<NES::LogicalSortBufferOperator>(sortFieldIdentifier, sortOrder, getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

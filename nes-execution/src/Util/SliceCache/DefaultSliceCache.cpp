@@ -18,8 +18,8 @@ namespace NES::Runtime::Execution::Operators {
 DefaultSliceCache::DefaultSliceCache() {}
 DefaultSliceCache::~DefaultSliceCache() {}
 
-std::optional<SlicePtr> DefaultSliceCache::getSliceFromCache(uint64_t) { return {}; }
+std::optional<SliceCache::SlicePtr> DefaultSliceCache::getSliceFromCache(uint64_t) { return {}; }
 
-bool DefaultSliceCache::passSliceToCache(uint64_t, SlicePtr) { return false; }
+bool DefaultSliceCache::passSliceToCache(uint64_t, SliceCache::SlicePtr) { return false; }
 
 }// namespace NES::Runtime::Execution::Operators

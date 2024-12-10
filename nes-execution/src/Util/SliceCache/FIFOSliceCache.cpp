@@ -21,7 +21,7 @@ FIFOSliceCache::FIFOSliceCache(uint64_t cacheSize) : cacheSize(cacheSize) {
 
 FIFOSliceCache::~FIFOSliceCache() {}
 
-std::optional<SlicePtr> FIFOSliceCache::getSliceFromCache(uint64_t sliceId) {
+std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(uint64_t sliceId) {
     // Get read lock for cache
     auto cacheLocked = cache.rlock();
 
@@ -37,7 +37,7 @@ std::optional<SlicePtr> FIFOSliceCache::getSliceFromCache(uint64_t sliceId) {
     return cacheLocked->find(sliceId)->second;
 }
 
-bool FIFOSliceCache::passSliceToCache(uint64_t sliceId, SlicePtr newSlice) {
+bool FIFOSliceCache::passSliceToCache(uint64_t sliceId, SliceCache::SlicePtr newSlice) {
     {
         // Get read lock for cache
         auto cacheLocked = cache.rlock();

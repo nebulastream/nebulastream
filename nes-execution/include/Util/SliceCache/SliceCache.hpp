@@ -25,13 +25,6 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-enum class SliceCacheType : uint8_t
-{
-    DEFAULT,
-    FIFO,
-    LRU
-};
-
 class SliceCache;
 using SliceCachePtr = std::shared_ptr<SliceCache>;
 
@@ -40,9 +33,10 @@ using SliceCachePtr = std::shared_ptr<SliceCache>;
  */
 class SliceCache
 {
-    using SlicePtr = std::variant<std::shared_ptr<Slice>>; //std::variant<StreamSlicePtr, NonKeyedSlicePtr, KeyedSlicePtr>;
 
 public:
+  using SlicePtr = std::variant<std::shared_ptr<Slice>>; //std::variant<StreamSlicePtr, NonKeyedSlicePtr, KeyedSlicePtr>;
+
     /**
      * @brief destructor
      */

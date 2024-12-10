@@ -21,7 +21,7 @@ LeastRecentlyUsedSliceCache::LeastRecentlyUsedSliceCache(uint64_t cacheSize) : c
 
 LeastRecentlyUsedSliceCache::~LeastRecentlyUsedSliceCache() {}
 
-std::optional<SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(uint64_t sliceId) {
+std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(uint64_t sliceId) {
     // Search for corresponding slice
     auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
     auto it = cacheLocked->find(sliceId);
@@ -35,13 +35,13 @@ std::optional<SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(uint64_t 
         lruSlicesLocked->push_front(sliceId);
         std::get<listPosition>(currentTuple) = lruSlicesLocked->begin();
 
-        return std::get<SlicePtr>(currentTuple);
+        return std::get<SliceCache::SlicePtr>(currentTuple);
     }
     // If not found, return nullopt
     return {};
 }
 
-bool LeastRecentlyUsedSliceCache::passSliceToCache(uint64_t sliceId, SlicePtr newSlice) {
+bool LeastRecentlyUsedSliceCache::passSliceToCache(uint64_t sliceId, SliceCache::SlicePtr newSlice) {
     // Check if slice already in cache
     auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
     if (cacheLocked->contains(sliceId)) {
