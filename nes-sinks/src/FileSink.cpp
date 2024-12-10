@@ -116,7 +116,9 @@ void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Exe
 void FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
     NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    outputFileStream.wlock()->close();
+    auto stream = outputFileStream.wlock();
+    stream->flush();
+    stream->close();
 }
 
 std::unique_ptr<Configurations::DescriptorConfig::Config> FileSink::validateAndFormat(std::unordered_map<std::string, std::string>&& config)
