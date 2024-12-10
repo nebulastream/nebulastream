@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        FileSource.cpp
         SourceThread.cpp
         SourceDescriptor.cpp
         Source.cpp
@@ -19,3 +18,7 @@ add_source_files(nes-sources
         SourceProvider.cpp
         SourceValidationProvider.cpp
 )
+
+# Register plugins
+add_plugin(File Source nes-sources FileSource.cpp)
+add_plugin(File SourceValidation nes-sources FileSource.cpp)

@@ -19,7 +19,6 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>

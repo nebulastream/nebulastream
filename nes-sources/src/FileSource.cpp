@@ -79,7 +79,6 @@ SourceValidationGeneratedRegistrar::RegisterFileSourceValidation(std::unordered_
     return FileSource::validateAndFormat(std::move(sourceConfig));
 }
 
-
 std::unique_ptr<Source> SourceGeneratedRegistrar::RegisterFileSource(const SourceDescriptor& sourceDescriptor)
 {
     return std::make_unique<FileSource>(sourceDescriptor);
