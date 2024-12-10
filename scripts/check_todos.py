@@ -50,6 +50,18 @@ def get_added_lines_from_diff(diff: str) -> Tuple[str, int, str]:
 
 
 def line_contains_todo(filename: str, line: str) -> bool:
+    """
+    Heuristic to find TODOs.
+
+    To be sensitive (i.e. catch many TODOs), we ignore case while searching,
+    since TODO might not always be written in all caps, causing false negatives.
+
+    To be specific (i.e. have little false positives), we shall not match e.g.
+    `toDouble`. For this, we search for TODOs in single line comments,
+    when checking code files.
+
+    Additionally, `NO_TODO_CHECK` at the end of the line can be used to suppress the check.
+    """
     if line.endswith("NO_TODO_CHECK"):
         return False
 
@@ -60,6 +72,12 @@ def line_contains_todo(filename: str, line: str) -> bool:
 
 
 def main():
+    """
+    Searches for new TODOs (added since forking of $BASE_REF or main).
+    Checks that new TODOs are well-formed (format, have issue number).
+    Checks that listed issues exist and are open.
+    """
+    # This regex describes conforming how a well-formed TODO should look like.  NO_TODO_CHECK
     # Note: corresponding regex also in closing issue gh action
     todo_with_issue = re.compile(".*(///|#).*\\sTODO #(\\d+).*")  # NO_TODO_CHECK
 
@@ -95,6 +113,7 @@ def main():
     todo_issues = defaultdict(list)
     fail = 0
 
+    # Checks if line contains TODO. If so, checks if TODO adheres to format.  NO_TODO_CHECK
     for diff_file, line_no, line in added_lines:
         if not line_contains_todo(diff_file, line):
             continue
@@ -107,7 +126,7 @@ def main():
 
     if illegal_todos:
         fail = 1
-        print("\nError: The following TODOs lack whitespace, miss issue number or TODO is not in ALL CAPS\n")
+        print("\nError: The following TODOs lack whitespace, miss issue number or TODO is not in ALL CAPS:\n")
         # sort by file, line_no
         illegal_todos.sort(key=lambda x: (x[0], x[1]))
         for file, line_no, line in illegal_todos:
