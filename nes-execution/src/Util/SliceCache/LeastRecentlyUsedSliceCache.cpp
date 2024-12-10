@@ -50,6 +50,7 @@ bool LeastRecentlyUsedSliceCache::passSliceToCache(uint64_t sliceId, SlicePtr ne
     // Check if cache full
     if(cacheLocked->size()==cacheSize) {
         // If full, remove least recently used slice
+        cacheLocked->erase(lruSlicesLocked->back());
         lruSlicesLocked->pop_back();
     }
     // Add new slice to cache

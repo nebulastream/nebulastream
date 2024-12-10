@@ -49,8 +49,8 @@ struct QueryCompilerOptions
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     StreamJoinOptions joinOptions;
-    SliceCacheType sliceCacheType = SliceCacheType::DEFAULT; 
-    uint64_t sliceCacheSize;
+    SliceCacheType sliceCacheType = SliceCacheType::DEFAULT;
+    uint64_t sliceCacheSize = 1;
 } __attribute__((aligned(64)));
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 

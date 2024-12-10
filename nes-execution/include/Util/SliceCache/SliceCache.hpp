@@ -18,21 +18,31 @@
 // #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <cstdint>
 #include <memory>
-#include <variant>
 #include <optional>
+#include <variant>
+#include <Execution/Operators/SliceStore/Slice.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
+
+enum class SliceCacheType : uint8_t
+{
+    DEFAULT,
+    FIFO,
+    LRU
+};
 
 class SliceCache;
 using SliceCachePtr = std::shared_ptr<SliceCache>;
 
-using SlicePtr = std::variant<uint64_t, uint32_t>;//std::variant<StreamSlicePtr, NonKeyedSlicePtr, KeyedSlicePtr>;
-
 /**
  * @brief Interface for a slice cache.
  */
-class SliceCache {
-  public:
+class SliceCache
+{
+    using SlicePtr = std::variant<std::shared_ptr<Slice>>; //std::variant<StreamSlicePtr, NonKeyedSlicePtr, KeyedSlicePtr>;
+
+public:
     /**
      * @brief destructor
      */
@@ -55,4 +65,4 @@ class SliceCache {
     virtual bool passSliceToCache(uint64_t sliceId, SlicePtr slice) = 0;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

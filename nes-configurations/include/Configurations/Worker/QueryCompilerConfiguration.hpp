@@ -97,7 +97,7 @@ public:
         SLICE_CACHE_TYPE,
         QueryCompilation::SliceCacheType::DEFAULT,
         "Type of slice cache"
-        "[DEFAULT|MOST_RECENT]. "};
+        "[DEFAULT|FIFO|LRU]. "};
 
     UIntOption sliceCacheSize = {SLICE_CACHE_SIZE,
                                 "1",
