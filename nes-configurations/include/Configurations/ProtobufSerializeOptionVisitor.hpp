@@ -12,23 +12,24 @@
     limitations under the License.
 */
 #pragma once
-#include <memory>
+#include "ScalarOption.hpp"
+
+
 #include <stack>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/OptionVisitor.hpp>
-#include <Configurations/Validation/BooleanValidation.hpp>
-#include <Configurations/Validation/FloatValidation.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/ReadingVisitor.hpp>
 #include <google/protobuf/descriptor.h>
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/dynamic_message.h>
+#include <google/protobuf/extension_set.h>
 #include <google/protobuf/text_format.h>
-#include <google/protobuf/util/json_util.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Configurations
 {
 
-class ProtobufSerializeOptionVisitor : public NES::Configurations::OptionVisitor
+/// Serializes all options of a configuration. The basic structure is always given by
+/// ProtobufMessageTypeBuilderOptionVisitor, the focus in this class is only on the config values.
+/// Uses protobuf reflection util to dynamically fill a protobuf message with the contents of a configuration option.
+class ProtobufSerializeOptionVisitor : public NES::Configurations::ReadingVisitor
 {
 public:
     explicit ProtobufSerializeOptionVisitor(google::protobuf::Message* message)
@@ -39,21 +40,57 @@ public:
         descriptors.push(descriptor);
     }
 
-    void push(BaseOption& o) override
+    void push(BaseOption& option) override
     {
-        const auto* descriptor = descriptors.top()->FindFieldByName(o.getName());
+        const auto* descriptor = descriptors.top()->FindFieldByName(option.getName());
         if (!descriptor)
         {
-            std::cerr << "Field not found: " << o.getName() << std::endl;
-            assert(descriptor && "Field not found");
+            throw InvalidConfigParameter("Field not found: {}", option.getName());
         }
-        auto* message = reflections.top()->MutableMessage(messages.top(), descriptor);
-        const auto* reflection = message->GetReflection();
 
-        reflections.push(reflection);
+        auto* message = reflections.top()->MutableMessage(messages.top(), descriptor);
+        reflections.push(message->GetReflection());
         messages.push(message);
         descriptors.push(message->GetDescriptor());
+
+        if (auto* sequenceOption = dynamic_cast<SequenceOption<StringOption>*>(&option))
+        {
+            for (size_t i = 0; i < sequenceOption->size(); ++i)
+            {
+                push(sequenceOption->operator[](i));
+                sequenceOption->operator[](i).accept(*this);
+                pop(sequenceOption->operator[](i));
+            }
+        }
+        else if (auto* sequenceOption = dynamic_cast<SequenceOption<FloatOption>*>(&option))
+        {
+            for (size_t i = 0; i < sequenceOption->size(); ++i)
+            {
+                push(sequenceOption->operator[](i));
+                sequenceOption->operator[](i).accept(*this);
+                pop(sequenceOption->operator[](i));
+            }
+        }
+        else if (auto* sequenceOption = dynamic_cast<SequenceOption<BoolOption>*>(&option))
+        {
+            for (size_t i = 0; i < sequenceOption->size(); ++i)
+            {
+                push(sequenceOption->operator[](i));
+                sequenceOption->operator[](i).accept(*this);
+                pop(sequenceOption->operator[](i));
+            }
+        }
+        else if (auto* sequenceOption = dynamic_cast<SequenceOption<UIntOption>*>(&option))
+        {
+            for (size_t i = 0; i < sequenceOption->size(); ++i)
+            {
+                push(sequenceOption->operator[](i));
+                sequenceOption->operator[](i).accept(*this);
+                pop(sequenceOption->operator[](i));
+            }
+        }
     }
+
     void pop(BaseOption&) override
     {
         reflections.pop();
@@ -62,16 +99,16 @@ public:
     }
 
 protected:
-    void visitLeaf(BaseOption& o) override { fieldDescriptor = descriptors.top()->FindFieldByName(o.getName()); }
+    void visitLeaf(BaseOption& option) override { fieldDescriptor = descriptors.top()->FindFieldByName(option.getName()); }
     void visitEnum(std::string_view, size_t& underlying) override
     {
         reflections.top()->SetUInt64(messages.top(), fieldDescriptor, underlying);
     }
-    void visitUnsignedInteger(size_t& v) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, v); }
-    void visitSignedInteger(ssize_t& v) override { reflections.top()->SetInt64(messages.top(), fieldDescriptor, v); }
-    void visitFloat(double& v) override { reflections.top()->SetDouble(messages.top(), fieldDescriptor, v); }
-    void visitBool(bool& v) override { reflections.top()->SetBool(messages.top(), fieldDescriptor, v); }
-    void visitString(std::string& s) override { reflections.top()->SetString(messages.top(), fieldDescriptor, s); }
+    void visitUnsignedInteger(size_t& value) override { reflections.top()->SetUInt64(messages.top(), fieldDescriptor, value); }
+    void visitSignedInteger(ssize_t& value) override { reflections.top()->SetInt64(messages.top(), fieldDescriptor, value); }
+    void visitFloat(double& value) override { reflections.top()->SetDouble(messages.top(), fieldDescriptor, value); }
+    void visitBool(bool& value) override { reflections.top()->SetBool(messages.top(), fieldDescriptor, value); }
+    void visitString(std::string& value) override { reflections.top()->SetString(messages.top(), fieldDescriptor, value); }
 
 private:
     const google::protobuf::FieldDescriptor* fieldDescriptor{};

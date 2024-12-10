@@ -14,16 +14,21 @@
 # Include dirs
 add_subdirectory(src)
 get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
+include_directories(${PROJECT_SOURCE_DIR}/nes-runtime/include)
+include_directories(${PROJECT_SOURCE_DIR}/nes-query-engine/include)
 
 # Add Library
 add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES}
-        include/Configurations/OptionVisitor.hpp
+        include/Configurations/ReadingVisitor.hpp
         include/Configurations/PrintingVisitor.hpp
         include/Configurations/ProtobufDeserializeVisitor.hpp
         include/Configurations/ProtobufConfigCache.hpp
         include/Configurations/ProtobufMessageTypeBuilderOptionVisitor.hpp
+        include/Configurations/WritingVisitor.hpp
 )
 target_link_libraries(nes-configurations PUBLIC nes-common)
+target_link_libraries(nes-configurations PRIVATE nes-query-engine)
+
 
 target_include_directories(nes-configurations PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

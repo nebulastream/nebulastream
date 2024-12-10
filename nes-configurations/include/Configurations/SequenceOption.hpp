@@ -21,26 +21,22 @@
 
 namespace NES::Configurations
 {
-
 /// This class implements sequential options of a type that has to be a subtype of the BaseOption.
 template <DerivedBaseOption T>
 class SequenceOption : public BaseOption
 {
 public:
-    /// Constructor to create a new option that sets a name, and description.
     SequenceOption(const std::string& name, const std::string& description);
 
-    /// Clears the option and removes all values in the sequence.
     void clear() override;
 
-    /// Accesses an option at a specific index.
-    T operator[](size_t index) const;
+    T& operator[](size_t index);
+    const T& operator[](size_t index) const;
 
-    /// returns the number of options
     [[nodiscard]] size_t size() const;
-
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
+
     template <class X>
     void add(X value)
     {
@@ -49,9 +45,15 @@ public:
         options.push_back(option);
     };
 
+    void add(T option)
+    {
+        options.push_back(option);
+    };
+
     std::string toString() override;
 
-    void accept(OptionVisitor&) override;
+    void accept(ReadingVisitor&) override;
+    void accept(WritingVisitor&) override;
 
 protected:
     void parseFromYAMLNode(YAML::Node node) override;
@@ -62,7 +64,7 @@ private:
 };
 
 template <DerivedBaseOption T>
-SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description){};
+SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description) {}
 
 template <DerivedBaseOption T>
 void SequenceOption<T>::clear()
@@ -71,46 +73,43 @@ void SequenceOption<T>::clear()
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
+void SequenceOption<T>::parseFromYAMLNode(YAML::Node)
 {
-    if (node.IsSequence())
-    {
-        for (auto child : node)
-        {
-            auto option = T();
-            option.parseFromYAMLNode(child);
-            options.push_back(option);
-        }
-    }
-    else
-    {
-        throw InvalidConfigParameter("YAML node should be a sequence but it was a " + node.as<std::string>());
-    }
-}
-template <DerivedBaseOption T>
-void SequenceOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
-{
-    auto option = T();
-    option.parseFromString(identifier, inputParams);
-    options.push_back(option);
 }
 
 template <DerivedBaseOption T>
-void SequenceOption<T>::accept(OptionVisitor& visitor)
+void SequenceOption<T>::parseFromString(std::string, std::unordered_map<std::string, std::string>&)
+{
+}
+
+template <DerivedBaseOption T>
+void SequenceOption<T>::accept(ReadingVisitor& visitor)
 {
     if constexpr (std::is_base_of_v<BaseConfiguration, T>)
     {
         T inner{name, description + " (Multiple)"};
         inner.accept(visitor);
     }
-    else
+}
+
+template <DerivedBaseOption T>
+void SequenceOption<T>::accept(WritingVisitor& visitor)
+{
+    if constexpr (std::is_base_of_v<BaseConfiguration, T>)
     {
-        visitor.visit(options);
+        T inner{name, description + " (Multiple)"};
+        inner.accept(visitor);
     }
 }
 
 template <DerivedBaseOption T>
-T SequenceOption<T>::operator[](size_t index) const
+T& SequenceOption<T>::operator[](size_t index)
+{
+    return options[index];
+}
+
+template <DerivedBaseOption T>
+const T& SequenceOption<T>::operator[](size_t index) const
 {
     return options[index];
 }
@@ -141,5 +140,4 @@ std::string SequenceOption<T>::toString()
     os << "Description: " << description << "\n";
     return os.str();
 }
-
 }

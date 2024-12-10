@@ -16,7 +16,8 @@
 #include <typeinfo>
 #include <vector>
 #include <Configurations/BaseOption.hpp>
-#include <Configurations/OptionVisitor.hpp>
+#include <Configurations/ReadingVisitor.hpp>
+#include <Configurations/WritingVisitor.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
@@ -65,7 +66,9 @@ protected:
     void isValid(std::string);
 
 public:
-    void accept(OptionVisitor& visitor) override { visitor.visit(*this); }
+    void accept(ReadingVisitor& visitor) override { visitor.visit(*this); }
+
+    void accept(WritingVisitor& visitor) override { visitor.visit(*this); }
 };
 
 template <class T>

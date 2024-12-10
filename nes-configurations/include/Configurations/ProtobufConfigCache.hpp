@@ -16,8 +16,12 @@
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
 #include <google/protobuf/dynamic_message.h>
+#include <google/protobuf/util/json_util.h>
+
 #include "ProtobufMessageTypeBuilderOptionVisitor.hpp"
 
+/// We do not want rebuild every protobuf message type whenever we want to serialize a configuration.
+/// This class caches protobuf message types and provides a convenient way to create a new protobuf message based on a configuration class.
 class ProtobufConfigCache
 {
 public:
@@ -32,12 +36,22 @@ public:
             const google::protobuf::Descriptor* messageDesc = fileDesc->FindMessageTypeByName(it->second);
             return factory.GetPrototype(messageDesc)->New();
         }
-
-        NES::Configurations::ProtobufMessageTypeBuilderOptionVisitor option(protoFile, typeid(ConfigurationClass).name());
+        /// Inserts names and types of options into protoFile
+        NES::Configurations::ProtobufMessageTypeBuilderOptionVisitor visitor(protoFile, typeid(ConfigurationClass).name());
         ConfigurationClass configuration("root", "");
-        configuration.accept(option);
+        configuration.accept(visitor);
         configNames[std::type_index(typeid(ConfigurationClass))] = typeid(ConfigurationClass).name();
         return getEmptyMessage<ConfigurationClass>();
+    }
+
+    void printFile()
+    {
+        std::string json_format;
+        google::protobuf::util::JsonPrintOptions options;
+        options.add_whitespace = true;
+        options.always_print_primitive_fields = true;
+        auto _ = google::protobuf::util::MessageToJsonString(protoFile, &json_format, options);
+        std::cout << "=== Schema in JSON Format ===\n" << json_format << "\n\n";
     }
 
 private:
