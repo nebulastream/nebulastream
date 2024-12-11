@@ -138,7 +138,8 @@ struct RunningQueryPlanNode
 
     PipelineId id;
 
-    std::atomic_bool requiresTermination;
+    std::atomic_bool requiresTermination = false;
+    std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<Execution::ExecutablePipelineStage> stage;
 
@@ -177,8 +178,6 @@ struct RunningQueryPlan
         WorkEmitter&,
         std::shared_ptr<QueryLifetimeListener>);
 
-    void stopSource(OriginId oid);
-
     /// Stopping a RunningQueryPlan will:
     /// 1. Keep all callbacks alive. Eventually onDestruction will be called.
     /// 2. Initialize pipeline termination asynchronously.
@@ -197,26 +196,53 @@ struct RunningQueryPlan
     ~RunningQueryPlan();
 
 private:
+    struct Internal
+    {
+        Internal(
+            std::vector<std::shared_ptr<QueryLifetimeListener>> listeners,
+            std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources,
+            std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines,
+            std::unique_ptr<InstantiatedQueryPlan> qep,
+            CallbackOwner all_pipelines_expired,
+            CallbackOwner pipeline_setup_done)
+            : listeners(std::move(listeners))
+            , sources(std::move(sources))
+            , pipelines(std::move(pipelines))
+            , qep(std::move(qep))
+            , allPipelinesExpired(std::move(all_pipelines_expired))
+            , allPipelinesStarted(std::move(pipeline_setup_done))
+        {
+        }
+
+        /// ORDER OF MEMBER IS IMPORTANT!
+        /// The destructor of the Callbacks could potentially cause
+        /// the `onDestruct` callback of the listeners to be called
+        /// Thus it is important that when the callbacks are destroyed
+        /// all potentially used members are still alive.
+        /// The order of destruction is bottom up.
+        std::vector<std::shared_ptr<QueryLifetimeListener>> listeners;
+        std::unordered_map<OriginId, std::shared_ptr<RunningSource>> sources;
+        std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
+        std::unique_ptr<InstantiatedQueryPlan> qep;
+
+        /// The entire graph of the query has been destroyed.
+        CallbackOwner allPipelinesExpired;
+        /// All pipelines have been initialized
+        CallbackOwner allPipelinesStarted;
+    };
+
+    folly::Synchronized<Internal, std::recursive_mutex> internal;
+
     explicit RunningQueryPlan(CallbackOwner allPipelinesExpired, CallbackOwner pipelineSetupDone)
-        : allPipelinesExpired(std::move(allPipelinesExpired)), allPipelinesStarted(std::move(pipelineSetupDone))
+        : internal(Internal(
+              std::vector<std::shared_ptr<QueryLifetimeListener>>{},
+              std::unordered_map<OriginId, std::shared_ptr<RunningSource>>{},
+              std::vector<std::weak_ptr<RunningQueryPlanNode>>{},
+              nullptr,
+              std::move(allPipelinesExpired),
+              std::move(pipelineSetupDone)))
     {
     }
-
-    /// ORDER OF MEMBER IS IMPORTANT!
-    /// The destructor of the Callbacks could potentially cause
-    /// the `onDestruct` callback of the listeners to be called
-    /// Thus it is important that when the callbacks are destroyed
-    /// all potentially used members are still alive.
-    /// The order of destruction is bottom up.
-    std::vector<std::shared_ptr<QueryLifetimeListener>> listeners;
-    folly::Synchronized<std::unordered_map<OriginId, std::shared_ptr<RunningSource>>, std::recursive_mutex> sources;
-    std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines;
-    std::unique_ptr<InstantiatedQueryPlan> qep;
-
-    /// The entire graph of the query has been destroyed.
-    CallbackOwner allPipelinesExpired;
-    /// All pipelines have been initialized
-    CallbackOwner allPipelinesStarted;
 };
 
 }

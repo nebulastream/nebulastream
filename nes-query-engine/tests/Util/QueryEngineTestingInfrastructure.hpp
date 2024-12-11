@@ -165,6 +165,8 @@ struct TestWorkEmitter : Runtime::WorkEmitter
         (override));
     MOCK_METHOD(
         void, emitPipelineStart, (QueryId, const std::shared_ptr<Runtime::RunningQueryPlanNode>&, onComplete, onFailure), (override));
+    MOCK_METHOD(
+        void, emitPendingPipelineStop, (QueryId, std::shared_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
     MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<Runtime::RunningQueryPlanNode>, onComplete, onFailure), (override));
 };
 struct TestQueryLifetimeController : Runtime::QueryLifetimeController
