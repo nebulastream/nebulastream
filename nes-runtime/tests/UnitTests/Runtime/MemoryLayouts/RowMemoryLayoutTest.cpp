@@ -14,6 +14,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <vector>
 #include <API/Schema.hpp>
 #include <MemoryLayout/RowLayout.hpp>
@@ -290,6 +291,35 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
     }
 
     ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
+}
+
+TEST_F(RowMemoryLayoutTest, getFieldOffset)
+{
+    SchemaPtr const schema
+        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    std::shared_ptr<RowLayout> columnLayout;
+    columnLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
+}
+
+TEST_F(RowMemoryLayoutTest, deepCopy)
+{
+    const auto schema
+        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    auto rowLayout = RowLayout::create(schema, bufferManager->getBufferSize());
+
+    const auto deepCopy = std::dynamic_pointer_cast<RowLayout>(rowLayout->deepCopy());
+
+    ASSERT_NE(deepCopy.get(), rowLayout.get());
+    ASSERT_EQ(*deepCopy, *rowLayout);
+
+    /// checking if changing the schema does not affect the deep copy
+    const auto schema2 = Schema::create()->addField("r1", BasicType::UINT8);
+    rowLayout = RowLayout::create(schema2, bufferManager->getBufferSize());
+
+    ASSERT_NE(deepCopy->getSchema(), rowLayout->getSchema());
 }
 
 }

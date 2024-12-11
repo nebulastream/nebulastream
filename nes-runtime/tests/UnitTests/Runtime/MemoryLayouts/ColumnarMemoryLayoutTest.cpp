@@ -328,4 +328,32 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
 }
 
+TEST_F(ColumnarMemoryLayoutTest, getFieldOffset)
+{
+    const auto schema
+        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    const auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(2, 4), ErrorCode::CannotAccessBuffer);
+    ASSERT_EXCEPTION_ERRORCODE(auto result = columnLayout->getFieldOffset(1000000000, 2), ErrorCode::CannotAccessBuffer);
+}
+
+TEST_F(ColumnarMemoryLayoutTest, deepCopy)
+{
+    const auto schema
+        = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
+    auto columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize());
+
+    const auto deepCopy = columnLayout->deepCopy();
+
+    ASSERT_NE(deepCopy, columnLayout);
+    ASSERT_EQ(*deepCopy, *columnLayout);
+
+    /// checking if changing the schema does not affect the deep copy
+    const auto schema2 = Schema::create()->addField("r1", BasicType::UINT8);
+    columnLayout = ColumnLayout::create(schema2, bufferManager->getBufferSize());
+
+    ASSERT_TRUE(deepCopy->getSchema() != columnLayout->getSchema());
+}
+
 }
