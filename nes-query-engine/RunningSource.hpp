@@ -42,7 +42,7 @@ public:
         QueryId queryId,
         std::unique_ptr<Sources::SourceHandle> source,
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
-        std::function<void()> unregister,
+        std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
         std::function<void(Exception)> unregisterWithError,
         QueryLifetimeController& controller,
         WorkEmitter& emitter);
@@ -55,19 +55,19 @@ public:
     ~RunningSource();
     [[nodiscard]] OriginId getOriginId() const;
 
-    void stop() const;
+    void stop();
     void fail(Exception exception) const;
 
 private:
     RunningSource(
         std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
         std::unique_ptr<Sources::SourceHandle> source,
-        std::function<void()> unregister,
+        std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister,
         std::function<void(Exception)> unregisterWithError);
 
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<Sources::SourceHandle> source;
-    std::function<void()> unregister;
+    std::function<void(std::vector<std::shared_ptr<RunningQueryPlanNode>>&&)> unregister;
     std::function<void(Exception)> unregisterWithError;
 };
 

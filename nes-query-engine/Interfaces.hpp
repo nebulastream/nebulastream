@@ -42,6 +42,7 @@ public:
 
     virtual void emitWork(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, Memory::TupleBuffer, onComplete, onFailure) = 0;
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, onComplete, onFailure) = 0;
+    virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, onComplete, onFailure) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, onComplete, onFailure) = 0;
 };
 }
