@@ -53,7 +53,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "Identifiers/Identifiers.hpp"
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::QueryCompilation
 {

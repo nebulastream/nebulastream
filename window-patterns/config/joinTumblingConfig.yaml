@@ -39,7 +39,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: 5000
+      socketPort: 5010
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
@@ -50,7 +50,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: 3000
+      socketPort: 5011
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
