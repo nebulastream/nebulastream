@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Ranges.hpp>
 #include <absl/functional/any_invocable.h>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
@@ -131,15 +132,20 @@ std::optional<CallbackRef> CallbackOwner::getRef() const
 void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryPlanNode* ptr)
 {
     std::unique_ptr<RunningQueryPlanNode> node(ptr);
+    ENGINE_LOG_DEBUG("Node {} will be deleted", node->id);
     if (ptr->requiresTermination)
     {
         emitter.emitPipelineStop(
             queryId,
             std::move(node),
-            [ptr ENGINE_IF_LOG_TRACE(, queryId = this->queryId)]()
+            [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
             {
                 ENGINE_LOG_TRACE("Pipeline {}-{} was terminated", queryId, ptr->id);
                 ptr->requiresTermination = false;
+                for (auto& successor : ptr->successors)
+                {
+                    emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
+                }
             },
             {});
     }
@@ -254,26 +260,30 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
 
     auto runningPlan = std::unique_ptr<RunningQueryPlan>(
         new RunningQueryPlan(std::move(terminationCallbackOwner), std::move(pipelineSetupCallbackOwner)));
-    runningPlan->qep = std::move(plan);
 
-    terminationCallbackRef = runningPlan->allPipelinesExpired.addCallbackAssumeNonShared(
+    auto lock = runningPlan->internal.lock();
+    auto& internal = *lock;
+
+    internal.qep = std::move(plan);
+
+    terminationCallbackRef = internal.allPipelinesExpired.addCallbackAssumeNonShared(
         std::move(terminationCallbackRef), [listener] { listener->onDestruction(); });
 
 
     auto [sources, pipelines] = createRunningNodes(
         queryId,
-        *runningPlan->qep,
+        *internal.qep,
         [listener](Exception exception) { listener->onFailure(exception); },
         terminationCallbackRef,
         pipelineSetupCallbackRef,
         emitter);
-    runningPlan->pipelines = std::move(pipelines);
+    internal.pipelines = std::move(pipelines);
 
 
     /// We can call the unsafe version of addCallback (which does not take a lock), because we hold a reference to one pipelineSetupCallbackRef,
     /// thus it is impossible for a different thread to trigger the registered callbacks. We are the only owner of the CallbackOwner, so
     /// it is impossible for any other thread to add addtional callbacks concurrently.
-    runningPlan->allPipelinesStarted.addCallbackUnsafe(
+    internal.pipelineSetupDone.addCallbackUnsafe(
         pipelineSetupCallbackRef,
         [runningPlan = runningPlan.get(),
          queryId,
@@ -320,25 +330,40 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
 
     return {std::move(runningPlan), pipelineSetupCallbackRef};
 }
-void RunningQueryPlan::stopSource(OriginId oid)
-{
-    sources.lock()->erase(oid);
-}
 
 std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
     ENGINE_LOG_DEBUG("Soft Stopping Query Plan");
-    /// By default the RunningQueryPlan dtor will disable pipeline termination. The Softstop should invoke all pipeline terminations.
+
+    auto lock = runningQueryPlan->internal.lock();
+    auto& internal = *lock;
+
+    /// By default the RunningQueryPlan dtor will disable pipeline termination. The SoftStop should invoke all pipeline terminations.
     /// So we prevent the disabling the terminations by clearing all weak references to the pipelines before destroying the rqp.
-    auto callback = runningQueryPlan->allPipelinesExpired.getRef();
-    runningQueryPlan->allPipelinesStarted = {};
+    auto callback = internal.allPipelinesExpired.getRef();
+
+    /// Disarm the pipeline setup callback. Once this scope is over, there will no longer be any concurrent access into the
+    /// sources map.
+    /// This allows us to clear all sources and not have to worry about a in flight pipeline setup to trigger the initialization of
+    /// sources.
+    internal.pipelineSetupDone = {};
+
     INVARIANT(
         callback.has_value(),
         "Invalid State, the pipeline expiration callback should not have been triggered while attempting to stop the query");
-    runningQueryPlan->pipelines.clear();
+    internal.pipelines.clear();
+
+
+    /// Source stop will emit a the PendingPipelineStop which stops a pipeline once no more tasks are depending on it.
+    auto sources = internal.sources | std::views::values | ranges::to<std::vector>();
+    for (auto& source : sources)
+    {
+        source->stop();
+    }
+
     return {
         std::make_unique<StoppingQueryPlan>(
-            std::move(runningQueryPlan->qep), std::move(runningQueryPlan->listeners), std::move(runningQueryPlan->allPipelinesExpired)),
+            std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired)),
         *callback};
 }
 
@@ -352,20 +377,27 @@ std::unique_ptr<InstantiatedQueryPlan> StoppingQueryPlan::dispose(std::unique_pt
 std::unique_ptr<InstantiatedQueryPlan> RunningQueryPlan::dispose(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
 {
     ENGINE_LOG_DEBUG("Disposing Running Query Plan");
-    runningQueryPlan->listeners.clear();
-    runningQueryPlan->allPipelinesExpired = {};
-    return std::move(runningQueryPlan->qep);
+
+    auto lock = runningQueryPlan->internal.lock();
+    auto& internal = *lock;
+
+    internal.listeners.clear();
+    internal.allPipelinesExpired = {};
+    return std::move(internal.qep);
 }
 
 RunningQueryPlan::~RunningQueryPlan()
 {
-    for (const auto& weakRef : pipelines)
+    auto lock = this->internal.lock();
+    auto& internal = *lock;
+
+    for (const auto& weakRef : internal.pipelines)
     {
         if (auto strongRef = weakRef.lock())
         {
             strongRef->requiresTermination = false;
         }
     }
-    sources.lock()->clear();
+    internal.sources.clear();
 }
 }
