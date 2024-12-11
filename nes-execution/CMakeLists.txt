@@ -40,9 +40,10 @@ endif()
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
 if (APPLE)
-    target_link_libraries(nes-execution PUBLIC nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus /opt/homebrew/lib/libmeos.dylib)
+    target_link_libraries(nes-execution PUBLIC /opt/homebrew/lib/libmeos.dylib)
 else()
-    target_link_libraries(nes-execution PUBLIC nes-common nes-runtime nes-data-types nes-catalogs nes-operators nes-configurations nes-execution nes-nautilus meos) 
+    target_link_libraries(nes-execution nes-nautilus meos) 
+endif()
 
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
