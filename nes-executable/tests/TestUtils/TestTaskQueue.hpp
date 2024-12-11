@@ -47,7 +47,9 @@ public:
 
     void emitBuffer(const NES::Memory::TupleBuffer& resultBuffer, ContinuationPolicy) override
     {
-        resultBuffers->at(pipelineId.getRawValue()).emplace_back(resultBuffer);
+        // Todo: add assert
+        // Fix workerThreadId handling
+        resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
     }
     uint64_t getNumberOfWorkerThreads() override { return numberOfWorkerThreads; }
     [[nodiscard]] NES::WorkerThreadId getId() const override { return workerThreadId; }
@@ -134,57 +136,165 @@ public:
 
     NES::SequenceNumber sequenceNumber;
     std::unique_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
+
 private:
     NES::Memory::TupleBuffer tupleBuffer;
     std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps;
+};
+
+class TestWorkerThreadPool
+{
+public:
+    TestWorkerThreadPool(size_t num_threads) : thread_data(num_threads)
+    {
+        for (size_t i = 0; i < num_threads; ++i)
+        {
+            threads.emplace_back([this, i] { thread_function(i); });
+        }
+    }
+
+    // Assign work to a specific thread
+    void assign_work(size_t thread_idx, TestablePipelineTask task)
+    {
+        if (thread_idx >= thread_data.size())
+        {
+            throw std::out_of_range("Thread index out of range");
+        }
+
+        auto& data = thread_data[thread_idx];
+        {
+            std::lock_guard<std::mutex> lock(data.mtx);
+            data.tasks.push(std::move(task));
+            data.is_working = true;
+        }
+        data.cv.notify_one();
+    }
+
+    // Wait for all threads to complete their current work
+    void wait() {
+        bool all_done;
+        do {
+            std::unique_lock<std::mutex> wait_lock(wait_mtx);
+            all_done = true;
+
+            // Check if any thread is still working
+            for (auto& data : thread_data) {
+                std::lock_guard<std::mutex> lock(data.mtx);
+                if (data.is_working || !data.tasks.empty()) {
+                    all_done = false;
+                    break;
+                }
+            }
+
+            if (!all_done) {
+                // Wait for notification from any thread completing work
+                wait_cv.wait(wait_lock);
+            }
+        } while (!all_done);
+    }
+
+    ~TestWorkerThreadPool()
+    {
+        // Stop all threads
+        for (auto& data : thread_data)
+        {
+            {
+                std::lock_guard<std::mutex> lock(data.mtx);
+                data.stop = true;
+            }
+            data.cv.notify_one();
+        }
+    }
+
+private:
+    struct ThreadData
+    {
+        std::mutex mtx;
+        std::condition_variable cv;
+        std::queue<TestablePipelineTask> tasks;
+        bool stop = false;
+        bool is_working = false;
+    };
+
+    std::vector<ThreadData> thread_data;
+    std::vector<std::jthread> threads;
+
+    std::mutex wait_mtx;
+    std::condition_variable wait_cv;
+
+private:
+    void thread_function(size_t thread_idx)
+    {
+        auto& data = thread_data[thread_idx];
+
+        while (true)
+        {
+            std::unique_lock<std::mutex> lock(data.mtx);
+            data.cv.wait(lock, [&data] { return !data.tasks.empty() || data.stop; });
+
+            if (data.stop && data.tasks.empty())
+            {
+                break;
+            }
+
+            while (!data.tasks.empty())
+            {
+                TestablePipelineTask task = std::move(data.tasks.front());
+                data.tasks.pop();
+
+                // Release lock while processing
+                lock.unlock();
+                task.execute();
+                lock.lock();
+            }
+            data.is_working = false;
+            lock.unlock();
+            wait_cv.notify_all();
+        }
+    }
 };
 
 // The test executor that controls task execution
 class TestTaskQueue
 {
 public:
-    TestTaskQueue(const size_t numThreads) : numberOfWorkerThreads(numThreads), numPipelines(0)
+    struct TestTask
     {
-        /// Initialize with size of worker threads, each thread gets one task
-        testTasks.resize(numberOfWorkerThreads);
+        NES::WorkerThreadId workerThreadId;
+        TestablePipelineTask task;
+    };
+    TestTaskQueue(const size_t numThreads)
+        : numberOfWorkerThreads(numThreads), numPipelines(0), workerThreads(TestWorkerThreadPool(numberOfWorkerThreads))
+    {
     }
 
     ~TestTaskQueue() = default;
 
-    void enqueueTask(std::unique_ptr<TestablePipelineTask> pipelineTask)
+    void enqueueTask(const NES::WorkerThreadId workerThreadId, TestablePipelineTask pipelineTask)
     {
-        pipelineTask->setWorkerThreadId(numPipelines);
-        pipelineTask->setPipelineId(numPipelines);
+        pipelineTask.setWorkerThreadId(numPipelines);
+        pipelineTask.setPipelineId(numPipelines);
         ++numPipelines;
-        testTasks.at(pipelineTask->sequenceNumber.getRawValue()) = std::move(pipelineTask);
+        testTasks.push({.workerThreadId = workerThreadId, .task = std::move(pipelineTask)});
     }
-
+    // Todo: lots of stuff:
+    // - fixes in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
+    // - fix (further up) emitting buffers using workerThreadId
     void startProcessing()
     {
-        for (size_t i = 0; i < numberOfWorkerThreads; ++i)
+        while (!testTasks.empty())
         {
-            workerThreads.emplace_back([this, i] { workerLoop(i); });
-        }
-    }
-
-    void waitForCompletion()
-    {
-        while (numThreadsCompleted != numberOfWorkerThreads)
-        {
-            /// busy wait
+            auto [workerThreadId, task] = std::move(testTasks.front());
+            testTasks.pop();
+            workerThreads.assign_work(workerThreadId.getRawValue(), std::move(task));
+            workerThreads.wait();
         }
     }
 
 private:
-    void workerLoop(const size_t taskIndex)
-    {
-        INVARIANT(taskIndex < testTasks.size(), "Cannot execute task {} when there are only {} tasks.", taskIndex, testTasks.size());
-        testTasks.at(taskIndex)->execute();
-        ++numThreadsCompleted;
-    }
     std::atomic<size_t> numThreadsCompleted;
     uint64_t numberOfWorkerThreads;
     uint64_t numPipelines;
-    std::vector<std::unique_ptr<TestablePipelineTask>> testTasks;
-    std::vector<std::jthread> workerThreads;
+    std::queue<TestTask> testTasks;
+    TestWorkerThreadPool workerThreads;
 };

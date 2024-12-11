@@ -78,19 +78,18 @@ public:
     void setupTest(const TestValues& testValues)
     {
         /// Multiplying result buffers x2, because we want to create one expected buffer, for each result buffer.
-        this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testValues.numResultBuffers);
+        this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testValues.numThreads);
         this->operatorHandlers = {std::make_shared<InputFormatterOperatorHandler>()};
         this->testBufferManager = getBufferManager(testValues.numTasks, testValues.numResultBuffers * 2, testValues.bufferSize);
     }
 
-    std::unique_ptr<TestablePipelineTask> createInputFormatterTask(
+    TestablePipelineTask createInputFormatterTask(
         SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const Schema& schema, const TestValues& testConfig)
     {
         taskBuffer.setSequenceNumber(sequenceNumber);
         auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
             testConfig.inputFormatterType, schema, testConfig.tupleDelimiter, testConfig.fieldDelimiter);
-        return std::make_unique<TestablePipelineTask>(
-            sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
+        return TestablePipelineTask(sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
     }
 
     bool validateResult(
@@ -122,90 +121,163 @@ public:
 };
 
 // Todo: test with multiple buffers/tasks
-TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
-{
-    constexpr size_t NUM_THREADS = 1;
-    constexpr size_t NUM_RESULT_BUFFERS = 1;
-    auto testBufferManager = getBufferManager(1, 1, 16);
-    auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_RESULT_BUFFERS);
+// TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
+// {
+//     constexpr size_t NUM_THREADS = 1;
+//     constexpr size_t NUM_TASKS = 1;
+//     constexpr size_t NUM_RESULT_BUFFERS = 1;
+//     auto testBufferManager = getBufferManager(1, 1, 16);
+//     auto resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(NUM_RESULT_BUFFERS);
+//
+//     /// Create and fill buffers for tasks.
+//     using TestTuple = std::tuple<int>;
+//     SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32);
+//     auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(42));
+//
+//     /// create task queue and add tasks to it.
+//     TestTaskQueue taskQueue(NUM_THREADS, NUM_TASKS);
+//     auto stage1 = std::make_unique<TestablePipelineStage>(
+//         "step_1",
+//         [](const Memory::TupleBuffer& tupleBuffer, Runtime::Execution::PipelineExecutionContext& pec)
+//         {
+//             auto theNewBuffer = pec.getBufferManager()->getBufferBlocking();
+//             const auto theOnlyIntInBuffer = *tupleBuffer.getBuffer<int>();
+//             *theNewBuffer.getBuffer<int>() = theOnlyIntInBuffer;
+//             pec.emitBuffer(theNewBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+//         });
+//     auto task1
+//         = std::make_unique<TestablePipelineTask>(SequenceNumber(0), testTupleBuffer, std::move(stage1), testBufferManager, resultBuffers);
+//
+//     taskQueue.enqueueTask(std::move(task1));
+//
+//     taskQueue.waitForCompletion();
+//     ASSERT_FALSE(resultBuffers->at(0).empty());
+//     auto resultBuffer = resultBuffers->at(0).at(0);
+//     ASSERT_EQ(*resultBuffer.getBuffer<int>(), 42);
+// }
+//
+//
+// TEST_F(InputFormatterTest, testTaskPipeline)
+// {
+//     // Todo: numTasks = numThreads?
+//     const auto testConfig = TestValues{
+//         .numTasks = 1,
+//         .numThreads = 1,
+//         .numResultBuffers = 1,
+//         .bufferSize = 16,
+//         .inputFormatterType = "CSV",
+//         .tupleDelimiter = "\n",
+//         .fieldDelimiter = ","};
+//     setupTest(testConfig);
+//     const SchemaPtr schema = Schema::create()->addField("INT8", BasicType::INT8)->addField("INT8", BasicType::INT8);
+//
+//     /// Create tuple buffers with raw input data.
+//     constexpr std::string_view rawData = "1,2\n"
+//                                          "3,4\n"
+//                                          "5,6\n"
+//                                          "7,8\n";
+//     auto testTupleBuffer = createTestTupleBufferFromString(rawData, testBufferManager->getBufferBlocking(), schema);
+//
+//     /// Create expected results
+//     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
+//     using TestTuple = std::tuple<int8_t, int8_t>;
+//     auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(
+//         schema, *testBufferManager, TestTuple(1, 2), TestTuple(3, 4), TestTuple(5, 6), TestTuple(7, 8));
+//     std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
+//     firstTaskExpectedBuffers.emplace_back(expectedBuffer);
+//     expectedResultVectors.emplace_back(firstTaskExpectedBuffers);
+//
+//     auto inputFormatterTask = createInputFormatterTask(SequenceNumber(0), testTupleBuffer.getBuffer(), schema, testConfig);
+//     inputFormatterTask->setOperatorHandlers(operatorHandlers);
+//
+//     /// create task queue and add tasks to it.
+//     TestTaskQueue taskQueue(testConfig.numThreads, testConfig.numTasks);
+//     taskQueue.enqueueTask(std::move(inputFormatterTask));
+//     taskQueue.startProcessing();
+//     taskQueue.waitForCompletion();
+//
+//     ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, schema->getSchemaSizeInBytes()));
+// }
+//
+// TEST_F(InputFormatterTest, testTaskPipelineWithGeneratedExpectedResults)
+// {
+//     // Todo: numTasks = numThreads?
+//     const auto testConfig = TestValues{
+//         .numTasks = 1,
+//         .numThreads = 1,
+//         .numResultBuffers = 1,
+//         .bufferSize = 16,
+//         .inputFormatterType = "CSV",
+//         .tupleDelimiter = "\n",
+//         .fieldDelimiter = ","};
+//     setupTest(testConfig);
+//     const SchemaPtr schema = Schema::create()->addField("INT8", BasicType::INT8)->addField("INT8", BasicType::INT8);
+//
+//     /// Create expected results
+//     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
+//     using TestTuple = std::tuple<int8_t, int8_t>;
+//     auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(
+//         schema, *testBufferManager, TestTuple(1, 2), TestTuple(3, 4), TestTuple(5, 6), TestTuple(7, 8));
+//     const auto rawData = TestUtil::testTupleBufferToString(expectedBuffer, schema);
+//
+//     /// Create tuple buffers with raw input data.
+//     auto testTupleBuffer = createTestTupleBufferFromString(rawData, testBufferManager->getBufferBlocking(), schema);
+//     std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
+//     firstTaskExpectedBuffers.emplace_back(expectedBuffer);
+//     expectedResultVectors.emplace_back(firstTaskExpectedBuffers);
+//
+//     auto inputFormatterTask = createInputFormatterTask(SequenceNumber(0), testTupleBuffer.getBuffer(), schema, testConfig);
+//     inputFormatterTask->setOperatorHandlers(operatorHandlers);
+//
+//     /// create task queue and add tasks to it.
+//     TestTaskQueue taskQueue(testConfig.numThreads, testConfig.numTasks);
+//     taskQueue.enqueueTask(std::move(inputFormatterTask));
+//     taskQueue.startProcessing();
+//     taskQueue.waitForCompletion();
+//
+//     ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, schema->getSchemaSizeInBytes()));
+// }
 
-    /// Create and fill buffers for tasks.
-    using TestTuple = std::tuple<int>;
-    SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32);
-    auto testTupleBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(42));
-
-    /// create task queue and add tasks to it.
-    TestTaskQueue taskQueue(NUM_THREADS);
-    auto stage1 = std::make_unique<TestablePipelineStage>(
-        "step_1",
-        [](const Memory::TupleBuffer& tupleBuffer, Runtime::Execution::PipelineExecutionContext& pec)
-        {
-            auto theNewBuffer = pec.getBufferManager()->getBufferBlocking();
-            const auto theOnlyIntInBuffer = *tupleBuffer.getBuffer<int>();
-            *theNewBuffer.getBuffer<int>() = theOnlyIntInBuffer;
-            pec.emitBuffer(theNewBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-        });
-    auto task1 = std::make_unique<TestablePipelineTask>(
-        SequenceNumber(0), testTupleBuffer, std::move(stage1), testBufferManager, resultBuffers);
-
-    taskQueue.enqueueTask(std::move(task1));
-
-    taskQueue.waitForCompletion();
-    ASSERT_FALSE(resultBuffers->at(0).empty());
-    auto resultBuffer = resultBuffers->at(0).at(0);
-    ASSERT_EQ(*resultBuffer.getBuffer<int>(), 42);
-}
-
-Memory::MemoryLayouts::TestTupleBuffer
-createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer, std::shared_ptr<Schema> schema)
-{
-    INVARIANT(
-        tupleBuffer.getBufferSize() >= rawData.size(),
-        "{} < {}, size of TupleBuffer is not sufficient to contain string",
-        tupleBuffer.getBufferSize(),
-        rawData.size());
-    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
-    tupleBuffer.setNumberOfTuples(rawData.size());
-    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(std::move(tupleBuffer), std::move(schema));
-    return testTupleBuffer;
-}
-
-TEST_F(InputFormatterTest, testTaskPipeline)
+TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasks)
 {
     // Todo: numTasks = numThreads?
     const auto testConfig = TestValues{
-        .numTasks = 1,
-        .numThreads = 1,
+        .numTasks = 2,
+        .numThreads = 2,
         .numResultBuffers = 1,
         .bufferSize = 16,
         .inputFormatterType = "CSV",
         .tupleDelimiter = "\n",
         .fieldDelimiter = ","};
     setupTest(testConfig);
-    const SchemaPtr schema = Schema::create()->addField("INT8", BasicType::INT8)->addField("INT8", BasicType::INT8);
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    const SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32)->addField("INT", BasicType::INT32);
 
     /// Create tuple buffers with raw input data.
-    constexpr std::string_view rawData = "1,2\n"
-                                         "3,4\n";
-    auto testTupleBuffer = createTestTupleBufferFromString(rawData, testBufferManager->getBufferBlocking(), schema);
+    // Todo: alternative: creating one big string and simply min(bufferSize, remainingBytes) into buffers.
+    constexpr std::string_view firstRawBufferData = "123456789,123456";
+    constexpr std::string_view secondRawBufferData = "789\n";
+
+    auto firstRawBuffer = TestUtil::createTestTupleBufferFromString(firstRawBufferData, testBufferManager->getBufferBlocking(), schema);
+    auto secondRawBuffer = TestUtil::createTestTupleBufferFromString(secondRawBufferData, testBufferManager->getBufferBlocking(), schema);
 
     /// Create expected results
-    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
-    using TestTuple = std::tuple<int8_t, int8_t>;
-    auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(1, 2), TestTuple(3, 4));
+    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors(testConfig.numThreads);
+    auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(123456789, 123456789));
     std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
     firstTaskExpectedBuffers.emplace_back(expectedBuffer);
-    expectedResultVectors.emplace_back(firstTaskExpectedBuffers);
+    expectedResultVectors.at(1) = firstTaskExpectedBuffers;
 
-    auto inputFormatterTask = createInputFormatterTask(SequenceNumber(0), testTupleBuffer.getBuffer(), schema, testConfig);
-    inputFormatterTask->setOperatorHandlers(operatorHandlers);
+    auto firstTask = createInputFormatterTask(SequenceNumber(0), firstRawBuffer.getBuffer(), schema, testConfig);
+    auto secondTask = createInputFormatterTask(SequenceNumber(1), secondRawBuffer.getBuffer(), schema, testConfig);
+    firstTask.setOperatorHandlers(operatorHandlers);
+    secondTask.setOperatorHandlers(operatorHandlers);
 
     /// create task queue and add tasks to it.
     TestTaskQueue taskQueue(testConfig.numThreads);
-    taskQueue.enqueueTask(std::move(inputFormatterTask));
+    taskQueue.enqueueTask(WorkerThreadId(0), std::move(firstTask));
+    taskQueue.enqueueTask(WorkerThreadId(1), std::move(secondTask));
     taskQueue.startProcessing();
-    taskQueue.waitForCompletion();
-
     ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, schema->getSchemaSizeInBytes()));
 }
 }

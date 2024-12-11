@@ -84,22 +84,33 @@ std::string dynamicTupleToString(Memory::MemoryLayouts::TestTupleBuffer& buffer,
     return ss.str();
 }
 
-std::string testTupleBufferToString(Memory::MemoryLayouts::TestTupleBuffer& buffer, const Schema& schema)
+
+Memory::MemoryLayouts::TestTupleBuffer
+createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer, std::shared_ptr<Schema> schema)
 {
-    if (buffer.getBuffer().getNumberOfTuples() == 0)
+    INVARIANT(
+        tupleBuffer.getBufferSize() >= rawData.size(),
+        "{} < {}, size of TupleBuffer is not sufficient to contain string",
+        tupleBuffer.getBufferSize(),
+        rawData.size());
+    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
+    tupleBuffer.setNumberOfTuples(rawData.size());
+    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(std::move(tupleBuffer), std::move(schema));
+    return testTupleBuffer;
+}
+
+std::string testTupleBufferToString(Memory::TupleBuffer& buffer, std::shared_ptr<Schema> schema)
+{
+    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+    if (testTupleBuffer.getBuffer().getNumberOfTuples() == 0)
     {
         return "";
     }
 
     std::stringstream str;
-    // add the first tuple to the string stream
-    // str << dynamicTupleToString(buffer, *buffer.begin(), schema);
-    // /// process the other tuples
-    // auto tupleIterator = ++buffer.begin();
-    // while (tupleIterator != buffer.end())
-    for (const auto tupleIterator : buffer)
+    for (const auto tupleIterator : testTupleBuffer)
     {
-        str << dynamicTupleToString(buffer, tupleIterator, schema) << '\n';
+        str << dynamicTupleToString(testTupleBuffer, tupleIterator, schema) << '\n';
     }
     return str.str();
 }

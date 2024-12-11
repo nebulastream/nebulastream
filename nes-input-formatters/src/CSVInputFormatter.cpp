@@ -353,7 +353,7 @@ void CSVInputFormatter::parseTupleBufferRaw(
         /// If there is not a single complete tuple in the buffer, write it to the staging area and wait for the next buffer(s).
         // progressTracker->stagingAreaTBRaw.emplace_back(PartialTuple{.offsetInBuffer = 0, .tbRaw = tbRaw});
         if (auto inputFormatterOperatorHandler
-            = dynamic_pointer_cast<InputFormatterOperatorHandler>(pipelineExecutionContext.getOperatorHandlers().at(0)))
+            = dynamic_pointer_cast<InputFormatterOperatorHandler>(pipelineExecutionContext.getOperatorHandlers().at(0))) //Todo: do not hardcode at 0
         {
             inputFormatterOperatorHandler->getTupleBufferStagingArea().pushTupleBuffer(
                 tbRaw, 0); // at tbRaw.getSequenceNumber().getRawValue()
@@ -369,13 +369,19 @@ void CSVInputFormatter::parseTupleBufferRaw(
 
     /// A single partial tuple may have spanned over the prior N TBRs, ending in the current TBR. If so, construct the tuple using the prior TBRs.
     /// The size of the partial tuple may reach from just the last byte of the prior TBR to all bytes of multiple prior TBRs.
-    if (progressTracker->hasPartialTuple())
+    // Todo: need
+    auto operatorHandler = dynamic_pointer_cast<InputFormatterOperatorHandler>(pipelineExecutionContext.getOperatorHandlers().at(0));
+    if (operatorHandler->getTupleBufferStagingArea().hasPartialTuple())
     {
         /// Construct the full tuple from all prior tuple buffers that contain a part of the partial tuple.
         std::stringstream completeTuple;
-        for (const auto& partialTuple : progressTracker->stagingAreaTBRaw)
+        // for (const auto& partialTuple : progressTracker->stagingAreaTBRaw)
+        auto partialTuple = operatorHandler->getTupleBufferStagingArea().getPriorStagedTupleBuffer(tbRaw.getSequenceNumber().getRawValue());
         {
-            completeTuple << partialTuple.getStringView();
+            if (partialTuple)
+            {
+                completeTuple << partialTuple.value().getStringView();
+            }
         }
         /// Add the final part of the partial tuple from the current TBR to the partial tuple to complete it.
         completeTuple << progressTracker->getNextTuple();

@@ -24,12 +24,17 @@ struct StagedTupleBuffer
 {
     NES::Memory::TupleBuffer tupleBuffer;
     uint64_t offset = 0;
+
+    [[nodiscard]] std::string_view getStringView() const
+    {
+        return {tupleBuffer.getBuffer<const char>() + offset, tupleBuffer.getBufferSize() - offset};
+    }
 };
 
 class TupleBufferStagingArea
 {
 public:
-    TupleBufferStagingArea(const size_t sizeOfStagingArea)
+    TupleBufferStagingArea(const size_t sizeOfStagingArea) : activeBuffers(0)
     {
         buffers.reserve(sizeOfStagingArea);
     }
@@ -61,10 +66,18 @@ public:
     void pushTupleBuffer(NES::Memory::TupleBuffer tupleBuffer, const uint64_t offset)
     {
         buffers.emplace_back(StagedTupleBuffer{.tupleBuffer = std::move(tupleBuffer), .offset = offset});
+        ++activeBuffers;
+    }
+
+    // Todo: implement properly
+    bool hasPartialTuple() const
+    {
+        return activeBuffers > 0;
     }
 
 private:
     std::vector<StagedTupleBuffer> buffers;
+    size_t activeBuffers;
 };
 
 class InputFormatterOperatorHandler : public NES::Runtime::Execution::OperatorHandler
@@ -89,6 +102,11 @@ public:
     TupleBufferStagingArea& getTupleBufferStagingArea()
     {
         return tbStagingArea;
+    }
+
+    bool hasPartialTuple() const
+    {
+        return tbStagingArea.hasPartialTuple();
     }
 
 private:
