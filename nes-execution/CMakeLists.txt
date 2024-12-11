@@ -23,10 +23,8 @@ if (APPLE)
     # Set the include and library directories for Homebrew (macOS)
     set(MEOS_INCLUDE_DIR "/opt/homebrew/include" CACHE PATH "Path to MEOS include directory")
     set(MEOS_PLUGIN_INCLUDE_DIR "/Users/marianaduarte/Desktop/nebulastream/nes-plugins/meos/include" CACHE PATH "Path to MEOS plugin include directory")
-    set(POSTGRESQL_LIB_DIR "/opt/homebrew/lib/postgresql@14" CACHE PATH "Path to PostgreSQL library directory")
-    set(POSTGRESQL_INCLUDE_DIR "/opt/homebrew/include/postgresql@14" CACHE PATH "Path to PostgreSQL include directory")
-    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR} ${POSTGRESQL_INCLUDE_DIR})
-    link_directories(${MEOS_LIBRARY_DIR} ${POSTGRESQL_LIB_DIR})
+    include_directories(SYSTEM ${MEOS_INCLUDE_DIR} ${MEOS_PLUGIN_INCLUDE_DIR})
+    link_directories(${MEOS_LIBRARY_DIR})
 
 else()
     message(STATUS "Building on Linux")
@@ -34,6 +32,7 @@ else()
     # Default behavior for Linux
     find_package(meos REQUIRED)
     include_directories(SYSTEM ${MEOS_INCLUDE_DIR})
+    link_directories(${MEOS_LIBRARY_DIR})
 endif()
 
 # Add Library
@@ -50,7 +49,7 @@ target_include_directories(nes-execution PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
+    # target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
     # Define map java udf utils class file
     SET(NES_JAVA_UTILS_SRC_PATH "src/Execution/Operators/Relational/JavaUDF")
     if (NES_JAVA_UDF_UTILS_PATH)
