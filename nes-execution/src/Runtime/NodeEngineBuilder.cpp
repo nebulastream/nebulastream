@@ -49,7 +49,7 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener
     void onEvent(Event event) override { events.writeIfNotFull(event); }
 
     explicit PrintingStatisticListener(const std::filesystem::path& path)
-        : file(folly::Synchronized<std::shared_ptr<std::ofstream>>(std::make_shared<std::ofstream>(path, std::ios::out | std::ios::app)))
+        : file(path, std::ios::out | std::ios::app)
         , printThread([this](const std::stop_token& stopToken) { this->threadRoutine(stopToken); })
     {
         NES_INFO("Writing Statistics to: {}", path);
@@ -70,7 +70,7 @@ private:
                 Overloaded{
                     [&](TaskExecutionStart taskStartEvent)
                     {
-                        *(file.wlock()->get()) << fmt::format(
+                        file << fmt::format(
                             "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Started with no. of tuples: {}\n",
                             taskStartEvent.timestamp,
                             taskStartEvent.taskId,
@@ -80,7 +80,7 @@ private:
                     },
                     [&](TaskExecutionComplete taskStopEvent)
                     {
-                        *(file.wlock()->get()) << fmt::format(
+                        file << fmt::format(
                             "{:%Y-%m-%d %H:%M:%S} Task {} for Pipeline {} of Query {} Completed.\n",
                             taskStopEvent.timestamp,
                             taskStopEvent.id,
@@ -92,7 +92,7 @@ private:
         }
     }
 
-    folly::Synchronized<std::shared_ptr<std::ofstream>> file;
+    std::ofstream file;
     folly::MPMCQueue<Event> events{100};
     std::jthread printThread;
 };
