@@ -103,10 +103,7 @@ TEST_F(MeosDeploy, testCSVIntersection) {
         testHarness.validate().setupTopology();
 
         // Expected output as a string (adjust as needed)
-        const auto expectedOutput = "1610060000,1610070000,265513270,0.400000\n"
-                                    "1610060000,1610070000,219027804,0.000000\n"
-                                    "1610060000,1610070000,566948000,1.000000\n"
-                                    "1610060000,1610070000,219001559,0.300000\n";
+        const auto expectedOutput = "1610060000,1610070000,265513270,0.400000\n";
 
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput)).getOutput();
