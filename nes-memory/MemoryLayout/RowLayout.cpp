@@ -30,7 +30,7 @@ RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(buffe
     }
 }
 
-RowLayout::RowLayout(const RowLayout& other) : RowLayout(other.schema, other.bufferSize)
+RowLayout::RowLayout(const RowLayout& other) : MemoryLayout(other), fieldOffSets(other.fieldOffSets) /// NOLINT(*-copy-constructor-init)
 {
 }
 
