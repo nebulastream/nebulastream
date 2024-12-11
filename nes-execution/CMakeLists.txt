@@ -41,7 +41,7 @@ add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 if (APPLE)
     target_link_libraries(nes-execution PUBLIC /opt/homebrew/lib/libmeos.dylib)
 else()
-    target_link_libraries(nes-execution nes-nautilus meos) 
+    target_link_libraries(nes-execution PUBLIC nes-nautilus meos) 
 endif()
 
 target_include_directories(nes-execution PUBLIC
