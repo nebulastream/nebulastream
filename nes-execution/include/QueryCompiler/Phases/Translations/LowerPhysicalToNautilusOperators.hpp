@@ -51,7 +51,6 @@ public:
 private:
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        PipelineId pipelineId,
         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
         const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
         size_t bufferSize,
@@ -70,7 +69,6 @@ private:
 
     static std::shared_ptr<Runtime::Execution::Operators::Operator>
     lowerSortBufferOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                            PipelineId pipelineId,
                             // uint64_t operatorHandlerIndex,
                             size_t bufferSize);
 

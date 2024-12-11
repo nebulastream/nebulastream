@@ -171,10 +171,12 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     emitter.emitPipelineStart(
         queryId,
         node,
-        [setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
+        [queryId, pipelineId, setupCallback = std::move(setupCallback), weakRef = std::weak_ptr(node)]
         {
             if (auto node = weakRef.lock())
             {
+                ((void)queryId);
+                ((void)pipelineId);
                 ENGINE_LOG_TRACE("Pipeline {}-{} was initialized", queryId, pipelineId);
                 node->requireTermination = true;
             }

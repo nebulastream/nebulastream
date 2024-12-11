@@ -79,7 +79,8 @@ class ClientHandler:
                 if (execution_time > self.interval):
                     logging.info(f"TCP server could not match given interval.")
                 else:
-                    time.sleep(self.interval - execution_time)
+                    pass
+                    # time.sleep(self.interval - execution_time)
         except (BrokenPipeError, ConnectionResetError):
             print(f"Client {self.address} disconnected")
         finally:

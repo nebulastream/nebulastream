@@ -63,66 +63,69 @@ std::ostream& FileSink::toString(std::ostream& str) const
 
 uint32_t FileSink::start(Runtime::Execution::PipelineExecutionContext&)
 {
-    NES_DEBUG("Setting up file sink: {}", *this);
-    auto stream = outputFileStream.wlock();
-    /// Remove an existing file unless the isAppend mode is isAppend.
-    if (!isAppend)
-    {
-        if (std::filesystem::exists(outputFilePath.c_str()))
-        {
-            std::error_code ec;
-            if (!std::filesystem::remove(outputFilePath.c_str(), ec))
-            {
-                NES_ERROR("Could not remove existing output file: filePath={} ", outputFilePath);
-                isOpen = false;
-                return 1;
-            }
-        }
-    }
-
-    /// Open the file stream
-    if (!stream->is_open())
-    {
-        stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
-    }
-    isOpen = stream->is_open() && stream->good();
-    if (!isOpen)
-    {
-        NES_ERROR(
-            "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
-        return 1;
-    }
-
-    /// Write the schema to the file, if it is empty.
-    if (stream->tellp() == 0)
-    {
-        const auto schemaStr = formatter->getFormattedSchema();
-        stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
-    }
+    // NES_DEBUG("Setting up file sink: {}", *this);
+    // auto stream = outputFileStream.wlock();
+    // /// Remove an existing file unless the isAppend mode is isAppend.
+    // if (!isAppend)
+    // {
+    //     if (std::filesystem::exists(outputFilePath.c_str()))
+    //     {
+    //         std::error_code ec;
+    //         if (!std::filesystem::remove(outputFilePath.c_str(), ec))
+    //         {
+    //             NES_ERROR("Could not remove existing output file: filePath={} ", outputFilePath);
+    //             isOpen = false;
+    //             return 1;
+    //         }
+    //     }
+    // }
+    //
+    // /// Open the file stream
+    // if (!stream->is_open())
+    // {
+    //     stream->open(outputFilePath, std::ofstream::binary | std::ofstream::app);
+    // }
+    // isOpen = stream->is_open() && stream->good();
+    // if (!isOpen)
+    // {
+    //     NES_ERROR(
+    //         "Could not open output file; filePathOutput={}, is_open()={}, good={}", outputFilePath, stream->is_open(), stream->good());
+    //     return 1;
+    // }
+    //
+    // /// Write the schema to the file, if it is empty.
+    // if (stream->tellp() == 0)
+    // {
+    //     const auto schemaStr = formatter->getFormattedSchema();
+    //     stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
+    // }
 
     return 0;
 }
 void FileSink::execute(const Memory::TupleBuffer& inputTupleBuffer, Runtime::Execution::PipelineExecutionContext&)
 {
-    PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
-    PRECONDITION(isOpen, "Sink was not opened");
+    // PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
+    // PRECONDITION(isOpen, "Sink was not opened");
 
-    {
-        auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
-        NES_DEBUG("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
-        {
-            auto wlocked = outputFileStream.wlock();
-            wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
-            wlocked->flush();
-        }
-    }
+    ((void) inputTupleBuffer);
+    ((void) isAppend);
+    ((void) isOpen);
+    // {
+    //     auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+    //     NES_DEBUG("Writing tuples to file sink; filePathOutput={}, fBuffer={}", outputFilePath, fBuffer);
+    //     {
+    //         auto wlocked = outputFileStream.wlock();
+    //         wlocked->write(fBuffer.c_str(), static_cast<long>(fBuffer.size()));
+    //         wlocked->flush();
+    //     }
+    // }
 }
 uint32_t FileSink::stop(Runtime::Execution::PipelineExecutionContext&)
 {
-    NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
-    auto stream = outputFileStream.wlock();
-    stream->flush();
-    stream->close();
+    // NES_DEBUG("Closing file sink, filePathOutput={}", outputFilePath);
+    // auto stream = outputFileStream.wlock();
+    // stream->flush();
+    // stream->close();
     return 0;
 }
 

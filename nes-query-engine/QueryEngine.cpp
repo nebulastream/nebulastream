@@ -198,6 +198,7 @@ public:
                 if (auto existingNode = node.lock())
                 {
                     auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
+                    ((void)qid);
                     ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
                     INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
                 }
