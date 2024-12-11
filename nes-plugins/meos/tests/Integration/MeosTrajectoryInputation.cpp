@@ -31,7 +31,8 @@
 #include <iostream>
 #include <thread>
 
-#include <Execution/Operators/meos/Meos.hpp>
+
+#include <Execution/Operators/MEOS/Meos.hpp>
 
 using namespace std;
 
