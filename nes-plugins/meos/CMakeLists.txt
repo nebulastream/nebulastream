@@ -50,8 +50,10 @@ link_directories(${MEOS_INCLUDE_DIR})
  add_dependencies(build_all_plugins nes-meos)
 
  target_include_directories(nes-meos PUBLIC
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-         $<INSTALL_INTERFACE:include/nebulastream/>)
+ $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+ $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/nes-execution/include>
+ $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/Execution/Operators/MEOS>  # Add explicit MEOS path
+ $<INSTALL_INTERFACE:include/nebulastream/>)
 
  set_target_properties(nes-meos PROPERTIES
          LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/nes-plugins/)
