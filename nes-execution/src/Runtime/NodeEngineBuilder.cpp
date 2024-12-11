@@ -52,6 +52,7 @@ struct PrintingStatisticListener final : QueryEngineStatisticListener
         : file(path, std::ios::out | std::ios::app)
         , printThread([this](const std::stop_token& stopToken) { this->threadRoutine(stopToken); })
     {
+        NES_INFO("Writing Statistics to: {}", path);
     }
 
 private:
@@ -106,10 +107,12 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     auto bufferManager = Memory::BufferManager::create(
         workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
+    const auto pid = ::getpid();
+    const auto timestamp = std::chrono::system_clock::now();
 
     auto queryManager = std::make_unique<QueryEngine>(
         workerConfiguration.queryEngineConfiguration,
-        std::make_shared<PrintingStatisticListener>("/tmp/statistics.txt"),
+        std::make_shared<PrintingStatisticListener>(fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", timestamp, pid)),
         queryLog,
         bufferManager);
 
