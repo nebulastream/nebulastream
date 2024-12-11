@@ -141,6 +141,6 @@ auto createTestTupleBufferFromTuples(
     {
         NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
     }
-    return testTupleBuffer;
+    return testTupleBuffer->getBuffer();
 }
 }

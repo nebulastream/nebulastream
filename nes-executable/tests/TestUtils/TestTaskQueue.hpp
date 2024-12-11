@@ -22,6 +22,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <queue>
 #include <thread>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -29,9 +30,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Executable.hpp>
 #include <PipelineExecutionContext.hpp>
 
-// Todo: give shared resources of TestTaskQueue?
-// - could share tuple buffer <-- is thread safe if using getBufferBlocking
-// - could share resultBuffers <-- is thread safe, if dedicated slot (PipelineId/WorkerThreadId)
 class TestPipelineExecutionContext : public NES::Runtime::Execution::PipelineExecutionContext
 {
 public:
@@ -108,6 +106,7 @@ private:
 class TestablePipelineTask
 {
 public:
+    // Todo: handle (optional) chunk number
     TestablePipelineTask(
         NES::SequenceNumber sequenceNumber,
         NES::Memory::TupleBuffer tupleBuffer,
@@ -158,7 +157,6 @@ public:
         pipelineTask->setPipelineId(numPipelines);
         ++numPipelines;
         testTasks.at(pipelineTask->sequenceNumber.getRawValue()) = std::move(pipelineTask);
-        // testTasks.emplace_back(std::move(pipelineTask));
     }
 
     void startProcessing()
@@ -169,7 +167,6 @@ public:
         }
     }
 
-    /// Wait for all tasks to complete
     void waitForCompletion()
     {
         while (numThreadsCompleted != numberOfWorkerThreads)

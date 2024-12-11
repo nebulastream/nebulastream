@@ -36,8 +36,8 @@ class RowLayout;
 class InputFormatterTest : public Testing::BaseUnitTest
 {
 public:
-    using ResultBufferVector = std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>>;
-    ResultBufferVector resultBuffers;
+    using ResultBufferVectors = std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>>;
+    ResultBufferVectors resultBuffers;
     std::shared_ptr<NES::Memory::BufferManager> testBufferManager;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 
@@ -83,13 +83,41 @@ public:
         this->testBufferManager = getBufferManager(testValues.numTasks, testValues.numResultBuffers * 2, testValues.bufferSize);
     }
 
-    // Todo: take sequence number!!!!
-    std::unique_ptr<TestablePipelineTask>
-    createInputFormatterTask(SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const Schema& schema, const TestValues& testConfig)
+    std::unique_ptr<TestablePipelineTask> createInputFormatterTask(
+        SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const Schema& schema, const TestValues& testConfig)
     {
+        taskBuffer.setSequenceNumber(sequenceNumber);
         auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
             testConfig.inputFormatterType, schema, testConfig.tupleDelimiter, testConfig.fieldDelimiter);
-        return std::make_unique<TestablePipelineTask>(sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
+        return std::make_unique<TestablePipelineTask>(
+            sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
+    }
+
+    bool validateResult(
+        const std::vector<std::vector<NES::Memory::TupleBuffer>>& actualResultVectorVector,
+        const std::vector<std::vector<NES::Memory::TupleBuffer>>& expectedResultVectorVector,
+        const size_t sizeOfSchemaInBytes)
+    {
+        /// check that vectors of vectors contain the same number of vectors.
+        bool isValid = true;
+        isValid &= (actualResultVectorVector.size() == expectedResultVectorVector.size());
+
+        /// iterate over all vectors in the actual results
+        for (size_t taskIndex = 0; const auto& actualResultVector : actualResultVectorVector)
+        {
+            /// check that the corresponding vector in the vector of vector containing the expected results is of the same size
+            isValid &= (actualResultVector.size() == expectedResultVectorVector[taskIndex].size());
+            /// iterate over all buffers in the vector containing the actual results and compare the buffer with the corresponding buffers
+            /// in the expected results.
+            for (size_t bufferIndex = 0; const auto& actualResultBuffer : actualResultVector)
+            {
+                isValid &= TestUtil::checkIfBuffersAreEqual(
+                    actualResultBuffer, expectedResultVectorVector[taskIndex][bufferIndex], sizeOfSchemaInBytes);
+                ++bufferIndex;
+            }
+            ++taskIndex;
+        }
+        return isValid;
     }
 };
 
@@ -117,7 +145,8 @@ TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
             *theNewBuffer.getBuffer<int>() = theOnlyIntInBuffer;
             pec.emitBuffer(theNewBuffer, NES::Runtime::Execution::PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
         });
-    auto task1 = std::make_unique<TestablePipelineTask>(SequenceNumber(0), testTupleBuffer->getBuffer(), std::move(stage1), testBufferManager, resultBuffers);
+    auto task1 = std::make_unique<TestablePipelineTask>(
+        SequenceNumber(0), testTupleBuffer, std::move(stage1), testBufferManager, resultBuffers);
 
     taskQueue.enqueueTask(std::move(task1));
 
@@ -130,19 +159,21 @@ TEST_F(InputFormatterTest, testTaskPipelineWithFunction)
 Memory::MemoryLayouts::TestTupleBuffer
 createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer, std::shared_ptr<Schema> schema)
 {
-    NES_ASSERT(
+    INVARIANT(
         tupleBuffer.getBufferSize() >= rawData.size(),
-        fmt::format("{} < {}, size of TupleBuffer is not sufficient to contain string", tupleBuffer.getBufferSize(), rawData.size()));
+        "{} < {}, size of TupleBuffer is not sufficient to contain string",
+        tupleBuffer.getBufferSize(),
+        rawData.size());
     std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
     tupleBuffer.setNumberOfTuples(rawData.size());
     auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(std::move(tupleBuffer), std::move(schema));
     return testTupleBuffer;
 }
 
-// Todo: use sequence numbers!
 TEST_F(InputFormatterTest, testTaskPipeline)
 {
-    auto testConfig = TestValues{
+    // Todo: numTasks = numThreads?
+    const auto testConfig = TestValues{
         .numTasks = 1,
         .numThreads = 1,
         .numResultBuffers = 1,
@@ -159,8 +190,12 @@ TEST_F(InputFormatterTest, testTaskPipeline)
     auto testTupleBuffer = createTestTupleBufferFromString(rawData, testBufferManager->getBufferBlocking(), schema);
 
     /// Create expected results
+    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
     using TestTuple = std::tuple<int8_t, int8_t>;
     auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(1, 2), TestTuple(3, 4));
+    std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
+    firstTaskExpectedBuffers.emplace_back(expectedBuffer);
+    expectedResultVectors.emplace_back(firstTaskExpectedBuffers);
 
     auto inputFormatterTask = createInputFormatterTask(SequenceNumber(0), testTupleBuffer.getBuffer(), schema, testConfig);
     inputFormatterTask->setOperatorHandlers(operatorHandlers);
@@ -171,11 +206,6 @@ TEST_F(InputFormatterTest, testTaskPipeline)
     taskQueue.startProcessing();
     taskQueue.waitForCompletion();
 
-    // Todo: compare correctly (all vectors of the result vector^2 with all expected vectors in the expected vector^2
-    ASSERT_FALSE(resultBuffers->at(0).empty());
-    auto resultBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(resultBuffers->at(0).at(0), schema);
-    ASSERT_TRUE(TestUtil::checkIfBuffersAreEqual(resultBuffer.getBuffer(), expectedBuffer->getBuffer(), schema->getSchemaSizeInBytes()));
+    ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, schema->getSchemaSizeInBytes()));
 }
-// Todo: could use
-// auto rawData = TestUtil::testTupleBufferToString(*expectedBuffer, schema);
 }
