@@ -34,16 +34,6 @@ NodeFunctionPtr NodeFunctionCeil::create(NodeFunctionPtr const& child)
     return ceilNode;
 }
 
-void NodeFunctionCeil::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of the child, check if its numerical, assume the same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("NodeFunctionCeil: converted stamp to float: {}", toString());
-}
-
 bool NodeFunctionCeil::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionCeil>(rhs))

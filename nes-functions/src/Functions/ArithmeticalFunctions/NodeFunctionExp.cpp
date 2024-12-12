@@ -36,16 +36,6 @@ NodeFunctionPtr NodeFunctionExp::create(NodeFunctionPtr const& child)
     return expNode;
 }
 
-void NodeFunctionExp::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    /// change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
-    stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
-    NES_TRACE("NodeFunctionExp: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
-}
-
 bool NodeFunctionExp::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionExp>(rhs))

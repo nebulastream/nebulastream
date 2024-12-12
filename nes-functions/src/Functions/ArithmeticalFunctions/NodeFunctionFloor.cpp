@@ -35,16 +35,6 @@ NodeFunctionPtr NodeFunctionFloor::create(NodeFunctionPtr const& child)
     return floorNode;
 }
 
-void NodeFunctionFloor::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("NodeFunctionFloor: converted stamp to float: {}", toString());
-}
-
 bool NodeFunctionFloor::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFloor>(rhs))
