@@ -14,22 +14,28 @@
 
 #pragma once
 
+#ifndef INCLUDED_FROM_SINK_VALIDATION_REGISTRY
+#    error "This file should not be included directly! Include instead include SinkRegistry.hpp"
+#endif
+
 #include <string>
-#include <unordered_map>
-#include <Configurations/Descriptor.hpp>
 #include <Util/PluginRegistry.hpp>
+#include <Configurations/Descriptor.hpp>
 
-namespace NES::Sinks
+namespace NES::Sinks::SinkValidationGeneratedRegistrar
 {
 
-using SinkValidationRegistrySignature
-    = RegistrySignature<std::string, NES::Configurations::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
-class SinkValidationRegistry final : public BaseRegistry<SinkValidationRegistry, SinkValidationRegistrySignature>
-{
-};
-
+/// declaration of register functions for 'Sinks'
+@REGISTER_FUNCTION_DECLARATIONS@
 }
 
-#define INCLUDED_FROM_SINK_VALIDATION_REGISTRY
-#include <SinksValidation/SinkValidationGeneratedRegistrar.inc>
-#undef INCLUDED_FROM_SINK_VALIDATION_REGISTRY
+namespace NES
+{
+template <>
+inline void Registrar<Sinks::SinkValidationRegistry, Sinks::SinkValidationRegistrySignature>::registerAll(
+    [[maybe_unused]] Registry<Registrar>& registry)
+{
+    using namespace NES::Sinks::SinkValidationGeneratedRegistrar;
+    @REGISTER_ALL_FUNCTION_CALLS@
+}
+}

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -22,7 +23,13 @@
 namespace NES::Sinks
 {
 
-using SinkRegistrySignature = RegistrySignature<std::string, Sink, const SinkDescriptor&>;
+using SinkRegistryReturnType = Sink;
+struct SinkRegistryArguments
+{
+    SinkDescriptor sinkDescriptor;
+};
+
+using SinkRegistrySignature = RegistrySignature<std::string, SinkRegistryReturnType, const SinkRegistryArguments>;
 class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
 {
 };
@@ -30,5 +37,5 @@ class SinkRegistry : public BaseRegistry<SinkRegistry, SinkRegistrySignature>
 }
 
 #define INCLUDED_FROM_SINK_REGISTRY
-#include <Sinks/SinkGeneratedRegistrar.inc>
+#include <SinkGeneratedRegistrar.inc>
 #undef INCLUDED_FROM_SINK_REGISTRY

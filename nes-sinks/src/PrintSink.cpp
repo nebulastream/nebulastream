@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -25,12 +26,12 @@
 #include <Sinks/PrintSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sinks/SinkRegistry.hpp>
-#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SinkRegistry.hpp>
+#include <SinkValidationRegistry.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sinks
@@ -75,15 +76,15 @@ PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>&& conf
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SinkValidationGeneratedRegistrar::RegisterSinkValidationPrint(std::unordered_map<std::string, std::string>&& sinkConfig)
+std::unique_ptr<SinkValidationRegistryReturnType>
+SinkValidationGeneratedRegistrar::RegisterPrintSinkValidation(const SinkValidationRegistryArguments& sinkConfig)
 {
-    return PrintSink::validateAndFormat(std::move(sinkConfig));
+    return PrintSink::validateAndFormat(std::unordered_map<std::string, std::string>(sinkConfig.config));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterPrintSink(const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterPrintSink(const SinkRegistryArguments& sinkRegistryArguments)
 {
-    return std::make_unique<PrintSink>(sinkDescriptor);
+    return std::make_unique<PrintSink>(sinkRegistryArguments.sinkDescriptor);
 }
 
 }
