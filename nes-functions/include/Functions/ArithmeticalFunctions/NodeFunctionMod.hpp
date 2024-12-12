@@ -25,14 +25,6 @@ public:
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    /**
-     * @brief Determine returned datatype (-> UInt64/Double/NodeFunction Throw exception for invalid inputs). Override ArithmeticalBinary::inferStamp to tighten bounds.
-     * @comment E.g. if the divisor in the modulo operation is a Int8, we can set the results to be Int8.
-     * @comment More general: We set upperbound = max(abs(lowerbound_of_divisor), abs(upperbound_of_divisor)) and the lowerbound to the negation of the same maxiumum. This follows the mathematical definition and implementation in C.
-     * @param typeInferencePhaseContext
-     * @param schema: the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
 
 protected:

@@ -24,14 +24,6 @@ public:
     ~NodeFunctionPow() noexcept override = default;
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-
-    /**
-     * @brief Determine returned datatype (-> UInt64/Double/NodeFunction Throw exception for invalid inputs). Override ArithmeticalBinary::inferStamp to increase bounds.
-     * @comment E.g. SQL Server has a very unintuitive behaviour of always returning the datatype of the base (Int/Float). C++ always returns a float. We decide to return a float, except when both base and exponent are an Integer; and we set high bounds as POWER is an exponential function.
-     * @param typeInferencePhaseContext
-     * @param schema: the current schema.
-     */
-    void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
