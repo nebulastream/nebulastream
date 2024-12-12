@@ -35,16 +35,6 @@ NodeFunctionPtr NodeFunctionAbs::create(const NodeFunctionPtr& child)
     return absNode;
 }
 
-void NodeFunctionAbs::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    /// increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);
-    NES_TRACE("NodeFunctionAbs: increased the lower bound of stamp to 0: {}", toString());
-}
-
 bool NodeFunctionAbs::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAbs>(rhs))
