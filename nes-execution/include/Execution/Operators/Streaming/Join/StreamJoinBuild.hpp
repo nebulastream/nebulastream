@@ -34,6 +34,8 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider>& memoryProvider);
 
+    void setup(ExecutionContext& executionCtx) const override;
+
     /// Passes emits slices that are ready to the second join phase (NLJProbe) for further processing
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 

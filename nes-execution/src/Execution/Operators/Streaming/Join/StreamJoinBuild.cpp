@@ -70,6 +70,15 @@ StreamJoinBuild::StreamJoinBuild(
 {
 }
 
+void StreamJoinBuild::setup(ExecutionContext& executionCtx) const
+{
+    nautilus::invoke(+[](const PipelineExecutionContext* pipelineExecutionContext)
+    {
+        std::cout << "StreamJoinBuild PipelineId in setup(): " << pipelineExecutionContext->getPipelineId() << std::endl;
+    }, executionCtx.pipelineContext);
+    ExecutableOperator::setup(executionCtx);
+}
+
 void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
