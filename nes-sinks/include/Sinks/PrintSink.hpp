@@ -18,6 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Descriptor.hpp>
@@ -33,10 +34,10 @@
 namespace NES::Sinks
 {
 
-class PrintSink : public Sink
+class PrintSink final : public Sink
 {
 public:
-    static inline std::string NAME = "Print";
+    static constexpr std::string_view NAME = "Print";
 
     explicit PrintSink(const SinkDescriptor& sinkDescriptor);
     ~PrintSink() override = default;

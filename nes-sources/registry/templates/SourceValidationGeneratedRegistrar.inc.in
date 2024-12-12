@@ -39,7 +39,6 @@ template <>
 inline void
 Registrar<Sources::SourceValidationRegistry, Sources::SourceValidationRegistrySignature>::registerAll(Registry<Registrar>& registry)
 {
-
     using namespace NES::Sources::SourceValidationGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
 }

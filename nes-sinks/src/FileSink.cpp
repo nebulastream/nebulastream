@@ -18,6 +18,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/ConfigurationsNames.hpp>
@@ -27,13 +28,13 @@
 #include <Sinks/FileSink.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sinks/SinkRegistry.hpp>
 #include <SinksParsing/CSVFormat.hpp>
-#include <SinksValidation/SinkValidationRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SinkRegistry.hpp>
+#include <SinkValidationRegistry.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sinks
@@ -126,15 +127,15 @@ std::unique_ptr<Configurations::DescriptorConfig::Config> FileSink::validateAndF
     return Configurations::DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }
 
-std::unique_ptr<NES::Configurations::DescriptorConfig::Config>
-SinkValidationGeneratedRegistrar::RegisterSinkValidationFile(std::unordered_map<std::string, std::string>&& sinkConfig)
+std::unique_ptr<SinkValidationRegistryReturnType>
+SinkValidationGeneratedRegistrar::RegisterFileSinkValidation(const SinkValidationRegistryArguments& sinkConfig)
 {
-    return FileSink::validateAndFormat(std::move(sinkConfig));
+    return FileSink::validateAndFormat(std::unordered_map<std::string, std::string>(sinkConfig.config));
 }
 
-std::unique_ptr<Sink> SinkGeneratedRegistrar::RegisterFileSink(const Sinks::SinkDescriptor& sinkDescriptor)
+std::unique_ptr<SinkRegistryReturnType> SinkGeneratedRegistrar::RegisterFileSink(const SinkRegistryArguments& sinkRegistryArguments)
 {
-    return std::make_unique<FileSink>(sinkDescriptor);
+    return std::make_unique<FileSink>(sinkRegistryArguments.sinkDescriptor);
 }
 
 }
