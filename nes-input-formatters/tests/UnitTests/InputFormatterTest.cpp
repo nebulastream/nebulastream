@@ -258,8 +258,8 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasks)
     constexpr std::string_view firstRawBufferData = "123456789,123456";
     constexpr std::string_view secondRawBufferData = "789\n";
 
-    auto firstRawBuffer = TestUtil::createTestTupleBufferFromString(firstRawBufferData, testBufferManager->getBufferBlocking(), schema);
-    auto secondRawBuffer = TestUtil::createTestTupleBufferFromString(secondRawBufferData, testBufferManager->getBufferBlocking(), schema);
+    auto firstRawBuffer = TestUtil::createTestTupleBufferFromString(firstRawBufferData, testBufferManager->getBufferBlocking());
+    auto secondRawBuffer = TestUtil::createTestTupleBufferFromString(secondRawBufferData, testBufferManager->getBufferBlocking());
 
     /// Create expected results
     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors(testConfig.numThreads);
@@ -268,8 +268,52 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasks)
     firstTaskExpectedBuffers.emplace_back(expectedBuffer);
     expectedResultVectors.at(1) = firstTaskExpectedBuffers;
 
-    auto firstTask = createInputFormatterTask(SequenceNumber(0), firstRawBuffer.getBuffer(), schema, testConfig);
-    auto secondTask = createInputFormatterTask(SequenceNumber(1), secondRawBuffer.getBuffer(), schema, testConfig);
+    auto firstTask = createInputFormatterTask(SequenceNumber(0), firstRawBuffer, schema, testConfig);
+    auto secondTask = createInputFormatterTask(SequenceNumber(1), secondRawBuffer, schema, testConfig);
+    firstTask.setOperatorHandlers(operatorHandlers);
+    secondTask.setOperatorHandlers(operatorHandlers);
+
+    /// create task queue and add tasks to it.
+    TestTaskQueue taskQueue(testConfig.numThreads);
+    taskQueue.enqueueTask(WorkerThreadId(0), std::move(firstTask));
+    taskQueue.enqueueTask(WorkerThreadId(1), std::move(secondTask));
+    taskQueue.startProcessing();
+    ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, schema->getSchemaSizeInBytes()));
+}
+
+TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
+{
+    // Todo: numTasks = numThreads?
+    const auto testConfig = TestValues{
+        .numTasks = 2,
+        .numThreads = 2,
+        .numResultBuffers = 1,
+        .bufferSize = 16,
+        .inputFormatterType = "CSV",
+        .tupleDelimiter = "\n",
+        .fieldDelimiter = ","};
+    setupTest(testConfig);
+    using TestTuple = std::tuple<int32_t, int32_t>;
+    const SchemaPtr schema = Schema::create()->addField("INT", BasicType::INT32)->addField("INT", BasicType::INT32);
+
+    /// Create tuple buffers with raw input data.
+    constexpr std::string_view rawBytes = "123456789,123456" // buffer 1
+                                          "789\n"; // buffer 2
+
+    // Todo:
+    // Assumptions:
+    //  - weall
+    auto inputBuffers = TestUtil::createTestTupleBuffersFromString(rawBytes, *testBufferManager);
+
+    /// Create expected results
+    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors(testConfig.numThreads);
+    auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(schema, *testBufferManager, TestTuple(123456789, 123456789));
+    std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
+    firstTaskExpectedBuffers.emplace_back(expectedBuffer);
+    expectedResultVectors.at(1) = firstTaskExpectedBuffers;
+
+    auto firstTask = createInputFormatterTask(SequenceNumber(0), inputBuffers.at(0), schema, testConfig);
+    auto secondTask = createInputFormatterTask(SequenceNumber(1), inputBuffers.at(1), schema, testConfig);
     firstTask.setOperatorHandlers(operatorHandlers);
     secondTask.setOperatorHandlers(operatorHandlers);
 

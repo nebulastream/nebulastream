@@ -84,21 +84,6 @@ std::string dynamicTupleToString(Memory::MemoryLayouts::TestTupleBuffer& buffer,
     return ss.str();
 }
 
-
-Memory::MemoryLayouts::TestTupleBuffer
-createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer, std::shared_ptr<Schema> schema)
-{
-    INVARIANT(
-        tupleBuffer.getBufferSize() >= rawData.size(),
-        "{} < {}, size of TupleBuffer is not sufficient to contain string",
-        tupleBuffer.getBufferSize(),
-        rawData.size());
-    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
-    tupleBuffer.setNumberOfTuples(rawData.size());
-    auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(std::move(tupleBuffer), std::move(schema));
-    return testTupleBuffer;
-}
-
 std::string testTupleBufferToString(Memory::TupleBuffer& buffer, std::shared_ptr<Schema> schema)
 {
     auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
@@ -113,6 +98,47 @@ std::string testTupleBufferToString(Memory::TupleBuffer& buffer, std::shared_ptr
         str << dynamicTupleToString(testTupleBuffer, tupleIterator, schema) << '\n';
     }
     return str.str();
+}
+
+Memory::TupleBuffer
+createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
+{
+    INVARIANT(
+        tupleBuffer.getBufferSize() >= rawData.size(),
+        "{} < {}, size of TupleBuffer is not sufficient to contain string",
+        tupleBuffer.getBufferSize(),
+        rawData.size());
+    std::memcpy(tupleBuffer.getBuffer(), rawData.data(), rawData.size());
+    tupleBuffer.setNumberOfTuples(rawData.size());
+    return tupleBuffer;
+}
+
+std::vector<Memory::TupleBuffer>
+createTestTupleBuffersFromString(const std::string_view rawData, NES::Memory::BufferManager& bufferManager)
+{
+    std::vector<Memory::TupleBuffer> rawTupleBuffers;
+    const auto bufferSize = bufferManager.getBufferSize();
+    size_t offsetInRawData = 0;
+    while (offsetInRawData + bufferSize <= rawData.size())
+    {
+        auto tupleBuffer = bufferManager.getBufferNoBlocking();
+        INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.")
+        std::memcpy(tupleBuffer.value().getBuffer(), rawData.data() + offsetInRawData, bufferSize);
+        tupleBuffer.value().setNumberOfTuples(bufferSize);
+        rawTupleBuffers.emplace_back(std::move(tupleBuffer.value()));
+        offsetInRawData += bufferSize;
+    }
+    /// check if there are leftover bytes (size of rawData is not a multiple of size of raw data)
+    if (offsetInRawData < rawData.size())
+    {
+        auto tupleBuffer = bufferManager.getBufferNoBlocking();
+        INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.")
+        const size_t leftOverBytes = rawData.size() - offsetInRawData;
+        std::memcpy(tupleBuffer.value().getBuffer(), rawData.data() + offsetInRawData, leftOverBytes);
+        tupleBuffer.value().setNumberOfTuples(leftOverBytes);
+        rawTupleBuffers.emplace_back(std::move(tupleBuffer.value()));
+    }
+    return rawTupleBuffers;
 }
 
 /// Called by 'createTestTupleBufferFromTuples' to create a tuple from values.
