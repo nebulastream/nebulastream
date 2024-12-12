@@ -28,3 +28,9 @@ target_include_directories(nes-sinks PUBLIC
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sinks REUSE_FROM nes-common)
 endif ()
+
+# Create library for the registries, and privately link it against nes-sinks so that nes-sinks can access its registries.
+create_plugin_registry_library(nes-sinks-registry nes-sinks)
+target_link_libraries(nes-sinks PRIVATE nes-sinks-registry)
+# Generate a registrar for every registry in nes-sinks
+generate_plugin_registrars(nes-sinks Sink SinkValidation)
