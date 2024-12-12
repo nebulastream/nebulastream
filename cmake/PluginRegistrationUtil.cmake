@@ -60,8 +60,7 @@ function(generate_plugin_registrar plugin_registry plugin_registry_component)
     # second, remove the configuration and write the modified version of the registrar header template to a temporary file
     # we generate the final '.inc' file from that temporary file
     set(temp_registrar_header_template_file "${CMAKE_CURRENT_BINARY_DIR}/temp_registrar_header_template.inc.in")
-    string(REGEX REPLACE "// CONFIGURATION\n.*\n// END CONFIGURATION\n" "" in_file_without_configuration "${registrar_header_file_data}")
-    file(WRITE ${temp_registrar_header_template_file} "${in_file_without_configuration}")
+    file(WRITE ${temp_registrar_header_template_file} "${registrar_header_file_data}")
 
     # generate the list of declarations of the register functions that the plugins implement to register themselves
     # generate the list of concrete register calls that are called in the 'registerAll' function call of the Registrar to populate the registry
