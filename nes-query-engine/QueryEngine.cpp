@@ -193,7 +193,7 @@ public:
             node->id,
             node,
             buffer,
-            [qid, complete = std::move(complete), node = std::weak_ptr(node)]()
+            [complete = std::move(complete), node = std::weak_ptr(node)]()
             {
                 if (auto existingNode = node.lock())
                 {

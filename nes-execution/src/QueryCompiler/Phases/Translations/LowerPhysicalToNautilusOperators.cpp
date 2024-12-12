@@ -154,7 +154,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     {
         auto buildOperator = NES::Util::as<PhysicalOperators::PhysicalStreamJoinBuildOperator>(operatorNode);
 
-        NES_INFO("PhysicalStreamJoinBuildOperator pipelineId: {}", pipelineId);
+        std::cout << "PhysicalStreamJoinBuildOperator pipelineId: " << pipelineId << std::endl;
 
         operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
         auto handlerIndex = operatorHandlers.size() - 1;
