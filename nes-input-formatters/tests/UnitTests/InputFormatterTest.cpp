@@ -44,9 +44,8 @@ public:
     template<typename TupleSchemaTemplate>
     struct TestValues
     {
-        const size_t numTasks;
+        const size_t numRequiredBuffers;
         const size_t numThreads;
-        const size_t numResultBuffers;
         const uint64_t bufferSize;
         const std::string inputFormatterType;
         const std::string tupleDelimiter;
@@ -73,9 +72,9 @@ public:
     }
 
     static std::shared_ptr<NES::Memory::BufferManager>
-    getBufferManager(const size_t numTasks, const size_t numExpectedResultBuffers, const size_t bufferSize)
+    getBufferManager(const size_t numRequiredBuffers, const size_t bufferSize)
     {
-        return Memory::BufferManager::create(bufferSize, numTasks + numExpectedResultBuffers);
+        return Memory::BufferManager::create(bufferSize, numRequiredBuffers);
     }
 
 
@@ -85,7 +84,7 @@ public:
         /// Multiplying result buffers x2, because we want to create one expected buffer, for each result buffer.
         this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testValues.numThreads);
         this->operatorHandlers = {std::make_shared<InputFormatterOperatorHandler>()};
-        this->testBufferManager = getBufferManager(testValues.numTasks, testValues.numResultBuffers * 2, testValues.bufferSize);
+        this->testBufferManager = getBufferManager(testValues.numRequiredBuffers * 2, testValues.bufferSize);
     }
 
     template<typename TupleSchemaTemplate>
@@ -153,9 +152,8 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
     // Todo: make everything config?
     using TestTuple = std::tuple<int32_t, int32_t>;
     const auto testConfig = TestValues<TestTuple>{
-        .numTasks = 2, // <-- can we get rid? Todo: we only use numTasks to calculate the number of required buffers
+        .numRequiredBuffers = 2,
         .numThreads = 2,
-        .numResultBuffers = 1,
         .bufferSize = 16,
         .inputFormatterType = "CSV",
         .tupleDelimiter = "\n",
