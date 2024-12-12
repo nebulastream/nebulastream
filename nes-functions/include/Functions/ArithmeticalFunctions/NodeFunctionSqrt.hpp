@@ -25,12 +25,6 @@ public:
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-    /**
-     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
-    void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
 
 protected:

@@ -38,16 +38,6 @@ NodeFunctionPtr NodeFunctionRound::create(NodeFunctionPtr const& child)
     return roundNode;
 }
 
-void NodeFunctionRound::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-    NES_TRACE("NodeFunctionRound: converted stamp to float: {}", toString());
-}
-
 bool NodeFunctionRound::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionRound>(rhs))
