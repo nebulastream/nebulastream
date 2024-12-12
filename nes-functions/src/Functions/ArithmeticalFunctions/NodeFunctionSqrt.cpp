@@ -38,26 +38,6 @@ NodeFunctionPtr NodeFunctionSqrt::create(NodeFunctionPtr const& child)
     return sqrtNode;
 }
 
-void NodeFunctionSqrt::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalUnary::inferStamp(schema);
-
-    if ((NES::Util::instanceOf<Integer>(stamp) && DataType::as<Integer>(stamp)->upperBound <= 0)
-        || (NES::Util::instanceOf<Float>(stamp) && DataType::as<Float>(stamp)->upperBound <= 0))
-    {
-        NES_ERROR("Log10NodeFunction: Non-positive DataType is passed into Log10 function. Arithmetic errors would occur at "
-                  "run-time.");
-    }
-
-    /// if stamp is integer, convert stamp to float
-    stamp = DataTypeFactory::createFloatFromInteger(stamp);
-
-    /// increase lower bound to 0
-    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
-    NES_TRACE("NodeFunctionSqrt: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
-}
-
 bool NodeFunctionSqrt::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionSqrt>(rhs))

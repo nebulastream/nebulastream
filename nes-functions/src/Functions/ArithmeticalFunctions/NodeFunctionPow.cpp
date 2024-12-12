@@ -36,24 +36,6 @@ NodeFunctionPtr NodeFunctionPow::create(NodeFunctionPtr const& left, NodeFunctio
     return powNode;
 }
 
-void NodeFunctionPow::inferStamp(SchemaPtr schema)
-{
-    /// infer stamp of child, check if its numerical, assume same stamp
-    NodeFunctionArithmeticalBinary::inferStamp(schema);
-
-    /// Extend range for POW operation:
-    if (NES::Util::instanceOf<Integer>(stamp))
-    {
-        stamp = DataTypeFactory::createInt64();
-        NES_TRACE("NodeFunctionPow: Updated stamp from Integer (assigned in NodeFunctionArithmeticalBinary) to Int64.");
-    }
-    else if (NES::Util::instanceOf<Float>(stamp))
-    {
-        stamp = DataTypeFactory::createDouble();
-        NES_TRACE("NodeFunctionPow: Update Float stamp (assigned in NodeFunctionArithmeticalBinary) to Double: {}", toString());
-    }
-}
-
 bool NodeFunctionPow::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionPow>(rhs))

@@ -24,7 +24,6 @@ public:
     ~NodeFunctionCeil() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    void inferStamp(SchemaPtr schema) override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
