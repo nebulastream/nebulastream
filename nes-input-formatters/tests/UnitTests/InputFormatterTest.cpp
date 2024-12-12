@@ -19,6 +19,7 @@
 #include <InputFormatters/InputFormatterProvider.hpp>
 #include <InputFormatters/InputFormatterTask.hpp>
 #include <MemoryLayout/RowLayoutField.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/TestUtil.hpp>
@@ -33,6 +34,23 @@ namespace Memory::MemoryLayouts
 class RowLayout;
 }
 
+enum class DataTypes : uint8_t
+{
+    INT8,
+    UINT8,
+    INT16,
+    UINT16,
+    INT32,
+    UINT32,
+    INT64,
+    FLOAT32,
+    UINT64,
+    FLOAT64,
+    BOOLEAN,
+    CHAR,
+    VARSIZED,
+};
+
 class InputFormatterTest : public Testing::BaseUnitTest
 {
 public:
@@ -41,16 +59,71 @@ public:
     std::shared_ptr<NES::Memory::BufferManager> testBufferManager;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 
+    struct TestSchema {
+
+        // Note: removed 'explicit' keyword (or never had it)
+        TestSchema(std::initializer_list<DataTypes> dataTypes)
+        {
+            schema = Schema::create();
+            for (size_t fieldNumber = 1; auto dataType : dataTypes)
+            {
+                switch (dataType)
+                {
+                    case DataTypes::UINT8:
+                        schema->addField(std::to_string(fieldNumber) + "_UINT8", DataTypeFactory::createUInt8());
+                        break;
+                    case DataTypes::UINT16:
+                        schema->addField(std::to_string(fieldNumber) + "_UINT16", DataTypeFactory::createUInt16());
+                        break;
+                    case DataTypes::UINT32:
+                        schema->addField(std::to_string(fieldNumber) + "_UINT32", DataTypeFactory::createUInt32());
+                        break;
+                    case DataTypes::UINT64:
+                        schema->addField(std::to_string(fieldNumber) + "_UINT64", DataTypeFactory::createUInt64());
+                        break;
+                    case DataTypes::INT8:
+                        schema->addField(std::to_string(fieldNumber) + "_INT8", DataTypeFactory::createInt8());
+                        break;
+                    case DataTypes::INT16:
+                        schema->addField(std::to_string(fieldNumber) + "_INT16", DataTypeFactory::createInt16());
+                        break;
+                    case DataTypes::INT32:
+                        schema->addField(std::to_string(fieldNumber) + "_INT32", DataTypeFactory::createInt32());
+                        break;
+                    case DataTypes::INT64:
+                        schema->addField(std::to_string(fieldNumber) + "_INT64", DataTypeFactory::createInt64());
+                        break;
+                    case DataTypes::FLOAT32:
+                        schema->addField(std::to_string(fieldNumber) + "_FLOAT32", DataTypeFactory::createFloat());
+                        break;
+                    case DataTypes::FLOAT64:
+                        schema->addField(std::to_string(fieldNumber) + "_FLOAT64", DataTypeFactory::createDouble());
+                        break;
+                    case DataTypes::BOOLEAN:
+                        schema->addField(std::to_string(fieldNumber) + "_BOOLEAN", DataTypeFactory::createBoolean());
+                        break;
+                    case DataTypes::CHAR:
+                        schema->addField(std::to_string(fieldNumber) + "_CHAR", DataTypeFactory::createChar());
+                        break;
+                    case DataTypes::VARSIZED:
+                        schema->addField(std::to_string(fieldNumber) + "_VARSIZED", DataTypeFactory::createVariableSizedData());
+                        break;
+                }
+            }
+        }
+
+        std::shared_ptr<Schema> schema;
+    };
+
     template <typename TupleSchemaTemplate>
-    struct TestValues
+    struct TestConfig
     {
         const size_t numRequiredBuffers;
         const size_t numThreads;
         const uint64_t bufferSize;
-        const std::string inputFormatterType;
-        const std::string tupleDelimiter;
-        const std::string fieldDelimiter;
-        const std::shared_ptr<Schema> schema;
+        const Sources::ParserConfig parserConfig;
+        const TestSchema testSchema;
+        // const std::shared_ptr<Schema> schema;
         /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
         const std::vector<std::vector<std::vector<TupleSchemaTemplate>>> expectedResults;
         const std::string rawBytes;
@@ -80,21 +153,24 @@ public:
 
 
     template <typename TupleSchemaTemplate>
-    void setupTest(const TestValues<TupleSchemaTemplate>& testValues)
+    void setupTest(const TestConfig<TupleSchemaTemplate>& TestConfig)
     {
         /// Multiplying result buffers x2, because we want to create one expected buffer, for each result buffer.
-        this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testValues.numThreads);
+        this->resultBuffers = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(TestConfig.numThreads);
         this->operatorHandlers = {std::make_shared<InputFormatterOperatorHandler>()};
-        this->testBufferManager = getBufferManager(testValues.numRequiredBuffers * 2, testValues.bufferSize);
+        this->testBufferManager = getBufferManager(TestConfig.numRequiredBuffers * 2, TestConfig.bufferSize);
     }
 
     template <typename TupleSchemaTemplate>
     TestablePipelineTask createInputFormatterTask(
-        SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const TestValues<TupleSchemaTemplate>& testConfig)
+        SequenceNumber sequenceNumber,
+        Memory::TupleBuffer taskBuffer,
+        const TestConfig<TupleSchemaTemplate>& testConfig)
     {
         taskBuffer.setSequenceNumber(sequenceNumber);
+        // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
         auto inputFormatter = InputFormatters::InputFormatterProvider::provideInputFormatter(
-            testConfig.inputFormatterType, *testConfig.schema, testConfig.tupleDelimiter, testConfig.fieldDelimiter);
+            testConfig.parserConfig.parserType, *testConfig.testSchema.schema, testConfig.parserConfig.tupleDelimiter, testConfig.parserConfig.fieldDelimiter);
         return TestablePipelineTask(sequenceNumber, taskBuffer, std::move(inputFormatter), testBufferManager, resultBuffers);
     }
 
@@ -126,7 +202,8 @@ public:
     }
 
     template <typename TupleSchemaTemplate>
-    std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestValues<TupleSchemaTemplate>& testConfig)
+    std::vector<std::vector<Memory::TupleBuffer>>
+    createExpectedResults(const TestConfig<TupleSchemaTemplate>& testConfig)
     {
         std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(testConfig.numThreads);
         /// expectedWorkerThreadVector: vector<vector<TupleSchemaTemplate>>
@@ -138,14 +215,15 @@ public:
                 expectedTupleBuffers.at(workerThreadId)
                     .emplace_back(
                         TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, true>(
-                            testConfig.schema, *testBufferManager, expectedBuffersVector));
+                            testConfig.testSchema.schema, *testBufferManager, expectedBuffersVector));
             }
             ++workerThreadId;
         }
         return expectedTupleBuffers;
     }
+
     template <typename TupleSchemaTemplate>
-    void runTest(const TestValues<TupleSchemaTemplate>& testConfig)
+    void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     {
         setupTest<TupleSchemaTemplate>(testConfig);
         auto inputBuffers = TestUtil::createTestTupleBuffersFromString(testConfig.rawBytes, *testBufferManager);
@@ -156,7 +234,8 @@ public:
         {
             tasks.emplace_back(createInputFormatterTask<TupleSchemaTemplate>(SequenceNumber(i), inputBuffers.at(i), testConfig));
             tasks.at(i).setOperatorHandlers(operatorHandlers);
-            workerThreadIds.emplace_back(WorkerThreadId(i)); // <---- Todo: demand as input to function (everything is config?)
+            // Todo: make assignment of Tasks to worker ids explicit
+            workerThreadIds.emplace_back(WorkerThreadId(i));
             ++i;
         }
 
@@ -168,22 +247,22 @@ public:
         auto expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testConfig);
 
 
-        ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, testConfig.schema->getSchemaSizeInBytes()));
+        ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, testConfig.testSchema.schema->getSchemaSizeInBytes()));
     }
 };
 
 TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
+    // Todo: make assignment of tasks to worker ids explicit
+    using enum DataTypes;
     using TestTuple = std::tuple<int32_t, int32_t>;
     runTest(
-        TestValues<TestTuple>{
+        TestConfig<TestTuple>{
             .numRequiredBuffers = 2,
             .numThreads = 2,
             .bufferSize = 16,
-            .inputFormatterType = "CSV",
-            .tupleDelimiter = "\n",
-            .fieldDelimiter = ",",
-            .schema = Schema::create()->addField("INT", BasicType::INT32)->addField("INT", BasicType::INT32),
+            .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+            .testSchema = {INT32, INT32},
             .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
             .rawBytes = "123456789,123456" // buffer 1
                         "789\n"} // buffer 2
