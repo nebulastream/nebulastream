@@ -31,12 +31,12 @@ single_node_path = os.path.join(
     args.project_dir, "build", "nes-single-node-worker", "nes-single-node-worker"
 )
 # path to tcp server
-# tcp_server_path = os.path.join(
-#     args.project_dir, "window-patterns", "tcp-server-tuples.py"
-# )
 tcp_server_path = os.path.join(
-    args.project_dir, "window-patterns", "tcp_server.cpp"
+    args.project_dir, "window-patterns", "tcp-server-tuples.py"
 )
+# tcp_server_path = os.path.join(
+#     args.project_dir, "window-patterns", "tcp_server.cpp"
+# )
 # path to yaml config
 yaml_config_path = os.path.join(
     args.project_dir, "window-patterns", "config", "joinTumblingConfig.yaml"
@@ -47,7 +47,8 @@ output_dir = "results/"
 log_path = os.path.join(output_dir, "log.txt")
 # number of runs each
 number_of_runs = 1
-measure_interval_in_seconds = 13
+#measure_interval_in_seconds = 13
+measure_interval_in_seconds = 3
 
 PRELOG = "numactl -N 0 -m 0"
 
@@ -57,7 +58,7 @@ QUERIES = []
 
 BUFFER_SIZE_PARAMS = [100000, 48000, 16000]
 
-WORKER_THREADS_PARAMS = [8, 4, 2, 1]
+WORKER_THREADS_PARAMS = [1]
 
 TCP_SERVER_PARAMS = [
     {"time_step": 1, "unorderedness": 0.25, "min_delay": 100, "max_delay": 500},
@@ -128,7 +129,11 @@ end_pattern = re.compile(
 
 def build():
     # build and compile nes-nebuli
+    os.makedirs(os.path.join(args.project_dir, "build"), exist_ok=True)
     build_dir = os.path.join(args.project_dir, "build")
+
+    subprocess.run("cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -DCMAKE_TOOLCHAIN_FILE=/home/nils/remote_server/vcpkg/scripts/buildsystems/vcpkg.cmake -DUSE_LIBCXX_IF_AVAILABLE:BOOL=OFF -DNES_LOG_LEVEL=LEVEL_DEBUG -S /home/nils/remote_server/nebulastream-public-2 -B /home/nils/remote_server/nebulastream-public-2/build".split(), check=True)
+
     subprocess.run(
         [
             "cmake",
@@ -171,18 +176,18 @@ def build():
     single_node_path = new_single_node_path
 
     # build and compile tcp_server
-    global tcp_server_path
-    subprocess.run(
-        [
-            "clang++", tcp_server_path, "-o", "tcp_server"
-        ],
-        check=True,
-    )
-    print("Build of tcp_server successful!")
-    print("\n")
+    # global tcp_server_path
+    # subprocess.run(
+    #     [
+    #         "clang++-18", tcp_server_path, "-o", "tcp_server"
+    #     ],
+    #     check=True,
+    # )
+    # print("Build of tcp_server successful!")
+    # print("\n")
 
     # update tcp server path
-    tcp_server_path = os.path.join(os.getcwd(), "tcp_server")
+    # tcp_server_path = os.path.join(os.getcwd(), "tcp_server")
 
 
 def run_benchmark(number_of_runs=1):
@@ -272,7 +277,7 @@ def start_single_node(current_params):
         f"--worker.numberOfBuffersInGlobalBufferManager={current_params['buffers_in_global_buffer_manager']}",
         f"--worker.numberOfBuffersPerWorker={current_params['buffers_per_worker']}",
         f"--worker.numberOfBuffersInSourceLocalBufferPool={current_params['buffers_in_source_local_buffer_pool']}",
-        f"--worker.logLevel={current_params['log_level']}",
+        # f"--worker.logLevel={current_params['log_level']}",
         f"--worker.queryCompiler.nautilusBackend={current_params['nautilus_backend']}",
         f"--worker.queryCompiler.sliceCacheType={current_params['slice_cache_type']}",
     ]
@@ -340,14 +345,16 @@ def confirm_execution_and_sleep(process, success_message=None, sleep_time=0):
 
 def launch_query(experiment_id):
     print(f"Launching query")
-    cmd = [
-        # "sh",
-        # "-c",
-        f"cat {yaml_config_path} | sed 's#GENERATE#{output_dir}sink/query_{experiment_id}.csv#' | {nebuli_path} register -x -s localhost:8080",
-    ]
-    print(f"Executing command: {' '.join(cmd)}")
+    # cmd = [
+    #     # "sh",
+    #     # "-c",
+    #     f"cat {yaml_config_path} | sed 's#GENERATE#{output_dir}sink/query_{experiment_id}.csv#' | {nebuli_path} register -x -s localhost:8080",
+    # ]
+    # print(f"Executing command: {' '.join(cmd)}")
+    cmd = f"cat {yaml_config_path} | sed 's#GENERATE#{output_dir}sink/query_{experiment_id}.csv#' | {nebuli_path} register -x -s localhost:8080";
+    print(f"Executing command: {cmd}")
     try:
-        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(cmd.split(), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         sleep(measure_interval_in_seconds)
     except Exception as e:
         print(f"Error {e}: {e.stderr.decode()}")

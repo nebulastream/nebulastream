@@ -96,10 +96,10 @@ public:
                     // log("TCP server could not match given interval.");
                     std::cout << "TCP server could not match given interval." << std::endl;
                 }
-                else
-                {
-                    std::this_thread::sleep_for(std::chrono::duration<double>(interval - executionTime));
-                }
+//                else
+//                {
+//                    std::this_thread::sleep_for(std::chrono::duration<double>(interval - executionTime));
+//                }
             }
         }
         catch (const std::exception& e)
