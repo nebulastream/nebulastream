@@ -171,22 +171,27 @@ public:
     }
 
     // Wait for all threads to complete their current work
-    void wait() {
+    void wait()
+    {
         bool all_done;
-        do {
+        do
+        {
             std::unique_lock<std::mutex> wait_lock(wait_mtx);
             all_done = true;
 
             // Check if any thread is still working
-            for (auto& data : thread_data) {
+            for (auto& data : thread_data)
+            {
                 std::lock_guard<std::mutex> lock(data.mtx);
-                if (data.is_working || !data.tasks.empty()) {
+                if (data.is_working || !data.tasks.empty())
+                {
                     all_done = false;
                     break;
                 }
             }
 
-            if (!all_done) {
+            if (!all_done)
+            {
                 // Wait for notification from any thread completing work
                 wait_cv.wait(wait_lock);
             }
@@ -276,6 +281,18 @@ public:
         pipelineTask.setPipelineId(numPipelines);
         ++numPipelines;
         testTasks.push({.workerThreadId = workerThreadId, .task = std::move(pipelineTask)});
+    }
+    void enqueueTasks(const std::vector<NES::WorkerThreadId> workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
+    {
+        PRECONDITION(workerThreadIds.size() == pipelineTasks.size(), "Each pipeline task must match with exactly one worker thread id.");
+        for (size_t i = 0; auto& pipelineTask : pipelineTasks)
+        {
+            pipelineTask.setWorkerThreadId(numPipelines);
+            pipelineTask.setPipelineId(numPipelines);
+            ++numPipelines;
+            testTasks.push({.workerThreadId = workerThreadIds.at(i), .task = std::move(pipelineTask)});
+            ++i;
+        }
     }
     // Todo: lots of stuff:
     // - fixes in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
