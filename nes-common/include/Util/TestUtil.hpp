@@ -19,9 +19,9 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include "Common.hpp"
@@ -29,33 +29,39 @@
 namespace NES::TestUtil
 {
 
-bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::TupleBuffer& buffer2, const uint64_t schemaSizeInByte) {
+bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::TupleBuffer& buffer2, const uint64_t schemaSizeInByte)
+{
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
-    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples()) {
+    if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples())
+    {
         NES_DEBUG("Buffers do not contain the same tuples, as they do not have the same number of tuples");
         return false;
     }
 
     std::set<uint64_t> sameTupleIndices;
-    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1) {
+    for (auto idxBuffer1 = 0UL; idxBuffer1 < buffer1.getNumberOfTuples(); ++idxBuffer1)
+    {
         bool idxFoundInBuffer2 = false;
-        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2) {
-            if (sameTupleIndices.contains(idxBuffer2)) {
+        for (auto idxBuffer2 = 0UL; idxBuffer2 < buffer2.getNumberOfTuples(); ++idxBuffer2)
+        {
+            if (sameTupleIndices.contains(idxBuffer2))
+            {
                 continue;
             }
 
             const auto startPosBuffer1 = buffer1.getBuffer() + schemaSizeInByte * idxBuffer1;
             const auto startPosBuffer2 = buffer2.getBuffer() + schemaSizeInByte * idxBuffer2;
-            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0) {
+            if (std::memcmp(startPosBuffer1, startPosBuffer2, schemaSizeInByte) == 0)
+            {
                 sameTupleIndices.insert(idxBuffer2);
                 idxFoundInBuffer2 = true;
                 break;
             }
         }
 
-        if (!idxFoundInBuffer2) {
-            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}",
-                      idxBuffer1);
+        if (!idxFoundInBuffer2)
+        {
+            NES_DEBUG("Buffers do not contain the same tuples, as tuple could not be found in both buffers for idx: {}", idxBuffer1);
             return false;
         }
     }
@@ -63,7 +69,8 @@ bool checkIfBuffersAreEqual(const Memory::TupleBuffer& buffer1, const Memory::Tu
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
 
-std::string dynamicTupleToString(Memory::MemoryLayouts::TestTupleBuffer& buffer, const Memory::MemoryLayouts::DynamicTuple& dynamicTuple, const Schema& schema)
+std::string dynamicTupleToString(
+    Memory::MemoryLayouts::TestTupleBuffer& buffer, const Memory::MemoryLayouts::DynamicTuple& dynamicTuple, const Schema& schema)
 {
     std::stringstream ss;
     for (uint32_t i = 0; i < schema.getFieldCount(); ++i)
@@ -100,8 +107,7 @@ std::string testTupleBufferToString(Memory::TupleBuffer& buffer, std::shared_ptr
     return str.str();
 }
 
-Memory::TupleBuffer
-createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
+Memory::TupleBuffer createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::TupleBuffer tupleBuffer)
 {
     INVARIANT(
         tupleBuffer.getBufferSize() >= rawData.size(),
@@ -113,8 +119,7 @@ createTestTupleBufferFromString(const std::string_view rawData, NES::Memory::Tup
     return tupleBuffer;
 }
 
-std::vector<Memory::TupleBuffer>
-createTestTupleBuffersFromString(const std::string_view rawData, NES::Memory::BufferManager& bufferManager)
+std::vector<Memory::TupleBuffer> createTestTupleBuffersFromString(const std::string_view rawData, NES::Memory::BufferManager& bufferManager)
 {
     std::vector<Memory::TupleBuffer> rawTupleBuffers;
     const auto bufferSize = bufferManager.getBufferSize();
@@ -150,7 +155,8 @@ void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory
     if constexpr (containsVarSized)
     {
         testTupleBuffer->pushRecordToBuffer(testTuple, &bufferManager);
-    } else
+    }
+    else
     {
         testTupleBuffer->pushRecordToBuffer(testTuple);
     }
@@ -167,14 +173,40 @@ void createTuple(Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer, Memory
          TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 */
 template <bool containsVarSized = false, bool printBuffer = false, typename... Tuples>
-auto createTestTupleBufferFromTuples(
-    std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const Tuples&... tuples)
+auto createTestTupleBufferFromTuples(std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const Tuples&... tuples)
 {
     auto rowLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
     auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
-    (std::apply([&](const auto&... values) { createTuple<containsVarSized>(testTupleBuffer.get(), bufferManager, values...); }, tuples), ...);
+    (std::apply([&](const auto&... values) { createTuple<containsVarSized>(testTupleBuffer.get(), bufferManager, values...); }, tuples),
+     ...);
 
-    if constexpr(printBuffer)
+    if constexpr (printBuffer)
+    {
+        NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
+    }
+    return testTupleBuffer->getBuffer();
+}
+
+template <typename TupleSchema, bool containsVarSized = false, bool printBuffer = false>
+auto createTestTupleBufferFromTuples(
+    std::shared_ptr<Schema> schema, Memory::BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+{
+    auto rowLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
+    auto testTupleBuffer = std::make_unique<Memory::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferManager.getBufferBlocking());
+
+    for (const auto& testTuple : tuples)
+    {
+        if constexpr (containsVarSized)
+        {
+            testTupleBuffer->pushRecordToBuffer(testTuple, &bufferManager);
+        }
+        else
+        {
+            testTupleBuffer->pushRecordToBuffer(testTuple);
+        }
+    }
+
+    if constexpr (printBuffer)
     {
         NES_DEBUG("test tuple buffer is: {}", testTupleBuffer->toString(schema, true));
     }

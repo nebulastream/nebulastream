@@ -41,7 +41,7 @@ public:
     std::shared_ptr<NES::Memory::BufferManager> testBufferManager;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 
-    template<typename TupleSchemaTemplate>
+    template <typename TupleSchemaTemplate>
     struct TestValues
     {
         const size_t numRequiredBuffers;
@@ -51,6 +51,8 @@ public:
         const std::string tupleDelimiter;
         const std::string fieldDelimiter;
         const std::shared_ptr<Schema> schema;
+        /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
+        const std::vector<std::vector<std::vector<TupleSchemaTemplate>>> expectedResults;
         const std::string rawBytes;
         using TupleSchema = TupleSchemaTemplate;
     };
@@ -71,14 +73,13 @@ public:
         BaseUnitTest::TearDown();
     }
 
-    static std::shared_ptr<NES::Memory::BufferManager>
-    getBufferManager(const size_t numRequiredBuffers, const size_t bufferSize)
+    static std::shared_ptr<NES::Memory::BufferManager> getBufferManager(const size_t numRequiredBuffers, const size_t bufferSize)
     {
         return Memory::BufferManager::create(bufferSize, numRequiredBuffers);
     }
 
 
-    template<typename TupleSchemaTemplate>
+    template <typename TupleSchemaTemplate>
     void setupTest(const TestValues<TupleSchemaTemplate>& testValues)
     {
         /// Multiplying result buffers x2, because we want to create one expected buffer, for each result buffer.
@@ -87,7 +88,7 @@ public:
         this->testBufferManager = getBufferManager(testValues.numRequiredBuffers * 2, testValues.bufferSize);
     }
 
-    template<typename TupleSchemaTemplate>
+    template <typename TupleSchemaTemplate>
     TestablePipelineTask createInputFormatterTask(
         SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer, const TestValues<TupleSchemaTemplate>& testConfig)
     {
@@ -124,7 +125,26 @@ public:
         return isValid;
     }
 
-    template<typename TupleSchemaTemplate>
+    template <typename TupleSchemaTemplate>
+    std::vector<std::vector<Memory::TupleBuffer>> createExpectedResults(const TestValues<TupleSchemaTemplate>& testConfig)
+    {
+        std::vector<std::vector<Memory::TupleBuffer>> expectedTupleBuffers(testConfig.numThreads);
+        /// expectedWorkerThreadVector: vector<vector<TupleSchemaTemplate>>
+        for (size_t workerThreadId = 0; const auto expectedTaskVector : testConfig.expectedResults)
+        {
+            /// expectedBuffersVector: vector<TupleSchemaTemplate>
+            for (const auto& expectedBuffersVector : expectedTaskVector)
+            {
+                expectedTupleBuffers.at(workerThreadId)
+                    .emplace_back(
+                        TestUtil::createTestTupleBufferFromTuples<TupleSchemaTemplate, false, true>(
+                            testConfig.schema, *testBufferManager, expectedBuffersVector));
+            }
+            ++workerThreadId;
+        }
+        return expectedTupleBuffers;
+    }
+    template <typename TupleSchemaTemplate>
     void runTest(const TestValues<TupleSchemaTemplate>& testConfig)
     {
         setupTest<TupleSchemaTemplate>(testConfig);
@@ -144,37 +164,30 @@ public:
         TestTaskQueue taskQueue(testConfig.numThreads);
         taskQueue.enqueueTasks(workerThreadIds, std::move(tasks));
         taskQueue.startProcessing();
+
+        auto expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testConfig);
+
+
+        ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, testConfig.schema->getSchemaSizeInBytes()));
     }
 };
 
 TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
-    // Todo: make everything config?
     using TestTuple = std::tuple<int32_t, int32_t>;
-    const auto testConfig = TestValues<TestTuple>{
-        .numRequiredBuffers = 2,
-        .numThreads = 2,
-        .bufferSize = 16,
-        .inputFormatterType = "CSV",
-        .tupleDelimiter = "\n",
-        .fieldDelimiter = ",",
-        .schema = Schema::create()->addField("INT", BasicType::INT32)->addField("INT", BasicType::INT32),
-        .rawBytes = "123456789,123456" // buffer 1
-                    "789\n"}; // buffer 2
-
-    runTest(testConfig);
-
-    // Todo: how to automize creating expected results?
-    // required ARGUMENTS (besides testConfig):
-    // - TestTuple(s)
-    // - where to
-    std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors(testConfig.numThreads);
-    auto expectedBuffer = TestUtil::createTestTupleBufferFromTuples(testConfig.schema, *testBufferManager, TestTuple(123456789, 123456789));
-    std::vector<Memory::TupleBuffer> firstTaskExpectedBuffers;
-    firstTaskExpectedBuffers.emplace_back(expectedBuffer);
-    expectedResultVectors.at(1) = firstTaskExpectedBuffers;
-
-    ASSERT_TRUE(validateResult(*resultBuffers, expectedResultVectors, testConfig.schema->getSchemaSizeInBytes()));
+    runTest(
+        TestValues<TestTuple>{
+            .numRequiredBuffers = 2,
+            .numThreads = 2,
+            .bufferSize = 16,
+            .inputFormatterType = "CSV",
+            .tupleDelimiter = "\n",
+            .fieldDelimiter = ",",
+            .schema = Schema::create()->addField("INT", BasicType::INT32)->addField("INT", BasicType::INT32),
+            .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
+            .rawBytes = "123456789,123456" // buffer 1
+                        "789\n"} // buffer 2
+    );
 }
 
 // Todo: test with multiple buffers/tasks
