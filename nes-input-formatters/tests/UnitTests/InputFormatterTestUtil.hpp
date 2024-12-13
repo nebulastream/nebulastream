@@ -49,49 +49,61 @@ std::shared_ptr<Schema> createSchema(std::vector<TestDataTypes> TestDataTypes)
         switch (dataType)
         {
             case TestDataTypes::UINT8:
-                schema->addField(std::to_string(fieldNumber) + "_UINT8", DataTypeFactory::createUInt8());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt8());
                 break;
             case TestDataTypes::UINT16:
-                schema->addField(std::to_string(fieldNumber) + "_UINT16", DataTypeFactory::createUInt16());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt16());
                 break;
             case TestDataTypes::UINT32:
-                schema->addField(std::to_string(fieldNumber) + "_UINT32", DataTypeFactory::createUInt32());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt32());
                 break;
             case TestDataTypes::UINT64:
-                schema->addField(std::to_string(fieldNumber) + "_UINT64", DataTypeFactory::createUInt64());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createUInt64());
                 break;
             case TestDataTypes::INT8:
-                schema->addField(std::to_string(fieldNumber) + "_INT8", DataTypeFactory::createInt8());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt8());
                 break;
             case TestDataTypes::INT16:
-                schema->addField(std::to_string(fieldNumber) + "_INT16", DataTypeFactory::createInt16());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt16());
                 break;
             case TestDataTypes::INT32:
-                schema->addField(std::to_string(fieldNumber) + "_INT32", DataTypeFactory::createInt32());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt32());
                 break;
             case TestDataTypes::INT64:
-                schema->addField(std::to_string(fieldNumber) + "_INT64", DataTypeFactory::createInt64());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createInt64());
                 break;
             case TestDataTypes::FLOAT32:
-                schema->addField(std::to_string(fieldNumber) + "_FLOAT32", DataTypeFactory::createFloat());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createFloat());
                 break;
             case TestDataTypes::FLOAT64:
-                schema->addField(std::to_string(fieldNumber) + "_FLOAT64", DataTypeFactory::createDouble());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createDouble());
                 break;
             case TestDataTypes::BOOLEAN:
-                schema->addField(std::to_string(fieldNumber) + "_BOOLEAN", DataTypeFactory::createBoolean());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createBoolean());
                 break;
             case TestDataTypes::CHAR:
-                schema->addField(std::to_string(fieldNumber) + "_CHAR", DataTypeFactory::createChar());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createChar());
                 break;
             case TestDataTypes::VARSIZED:
-                schema->addField(std::to_string(fieldNumber) + "_VARSIZED", DataTypeFactory::createVariableSizedData());
+                schema->addField("Field_" + std::to_string(fieldNumber), DataTypeFactory::createVariableSizedData());
                 break;
         }
         ++fieldNumber;
     }
     return schema;
 }
+
+struct ThreadInputBuffers
+{
+    const WorkerThreadId workerThreadId;
+    const std::string rawBytes;
+};
+
+struct TaskPackage
+{
+    const WorkerThreadId workerThreadId;
+    const Memory::TupleBuffer rawByteBuffer;
+};
 
 template <typename TupleSchemaTemplate>
 struct TestConfig
@@ -103,7 +115,7 @@ struct TestConfig
     const std::vector<TestDataTypes> testSchema;
     /// Each workerThread(vector) can produce multiple buffers(vector) with multiple tuples(vector<TupleSchemaTemplate>)
     const std::vector<std::vector<std::vector<TupleSchemaTemplate>>> expectedResults;
-    const std::string rawBytes;
+    const std::vector<ThreadInputBuffers> rawBytesPerThread; //Todo: rename
     using TupleSchema = TupleSchemaTemplate;
 };
 
@@ -116,7 +128,7 @@ struct TestHandle
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
     std::shared_ptr<Schema> schema;
     TestTaskQueue testTaskQueue;
-    std::vector<Memory::TupleBuffer> inputBuffers;
+    std::vector<TaskPackage> inputBuffers;
     std::vector<std::vector<Memory::TupleBuffer>> expectedResultVectors;
 
     void destroy()
@@ -199,9 +211,18 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         = std::make_shared<std::vector<std::vector<NES::Memory::TupleBuffer>>>(testConfig.numThreads);
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers = {std::make_shared<InputFormatterOperatorHandler>()};
     std::shared_ptr<Schema> schema = createSchema(testConfig.testSchema);
-    return {testConfig, std::move(testBufferManager), std::move(resultBuffers), std::move(operatorHandlers), std::move(schema), TestTaskQueue(testConfig.numThreads), {}, {}};
+    return {
+        testConfig,
+        std::move(testBufferManager),
+        std::move(resultBuffers),
+        std::move(operatorHandlers),
+        std::move(schema),
+        TestTaskQueue(testConfig.numThreads),
+        {},
+        {}};
 }
 
+// Todo: instead of pair, return struct?
 template <typename TupleSchemaTemplate>
 std::tuple<std::vector<TestablePipelineTask>, std::vector<WorkerThreadId>> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
@@ -209,13 +230,27 @@ std::tuple<std::vector<TestablePipelineTask>, std::vector<WorkerThreadId>> creat
     std::vector<WorkerThreadId> workerThreadIds;
     for (size_t i = 0; const auto& inputBuffer : testHandle.inputBuffers)
     {
-        tasks.emplace_back(createInputFormatterTask<TupleSchemaTemplate>(testHandle, SequenceNumber(i), inputBuffer));
+        tasks.emplace_back(createInputFormatterTask<TupleSchemaTemplate>(testHandle, SequenceNumber(i), inputBuffer.rawByteBuffer));
         tasks.at(i).setOperatorHandlers(testHandle.operatorHandlers);
-        // Todo: make assignment of Tasks to worker ids explicit
-        workerThreadIds.emplace_back(WorkerThreadId(i));
+        workerThreadIds.emplace_back(WorkerThreadId(inputBuffer.workerThreadId));
         ++i;
     }
     return std::make_tuple(std::move(tasks), std::move(workerThreadIds));
+}
+
+template <typename TupleSchemaTemplate>
+std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemplate>& testHandle)
+{
+    std::vector<TaskPackage> rawTupleBuffers;
+    for (const auto& rawInputBuffer : testHandle.testConfig.rawBytesPerThread)
+    {
+        auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
+        INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.")
+        rawTupleBuffers.emplace_back(
+            TaskPackage{rawInputBuffer.workerThreadId,
+             TestUtil::createTestTupleBufferFromString(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+    }
+    return rawTupleBuffers;
 }
 
 template <typename TupleSchemaTemplate>
@@ -224,7 +259,7 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// setup buffer manager, container for results, schema, operator handlers, and the task queue
     auto testHandle = setupTest<TupleSchemaTemplate>(testConfig);
     /// fill input tuple buffers with raw data
-    testHandle.inputBuffers = TestUtil::createTestTupleBuffersFromString(testConfig.rawBytes, *testHandle.testBufferManager);
+    testHandle.inputBuffers = createTestTupleBuffers(testHandle);
     /// create tasks for task queue
     auto [tasks, workerThreadIds] = createTasks(testHandle);
     /// process tasks in task queue

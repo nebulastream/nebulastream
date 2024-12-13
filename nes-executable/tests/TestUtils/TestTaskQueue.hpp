@@ -295,9 +295,6 @@ public:
         }
     }
 
-    // Todo: lots of stuff:
-    // - fixes in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
-    // - fix (further up) emitting buffers using workerThreadId
     void startProcessing()
     {
         while (!testTasks.empty())

@@ -45,12 +45,12 @@ public:
 };
 
 
-// 1. finish utils refactoring
-// 2. enable binding tasks (here rawBuffers) to workerThreadIds
-// 3. write a decent basis for tests (fix Informar issues)
-// 4. new design for Informar (chunk/synchronize/parse)
-// 5. multiple stages per task (allow splitting tasks)
-// 6. rigorous testing (improve informar design/fix issues)
+// [x] 1. finish utils refactoring
+// [ ] 2. enable binding tasks (here rawBuffers) to workerThreadIds
+// [ ] 3. write a decent basis for tests (fix Informar issues) (fix in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
+// [ ] 4. new design for Informar (chunk/synchronize/parse)
+// [ ] 5. multiple stages per task (allow splitting tasks)
+// [ ] 6. rigorous testing (improve informar design/fix issues)
 TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
 {
     // Todo: make assignment of tasks to worker ids explicit
@@ -64,10 +64,9 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
         .testSchema = {INT32, INT32},
         .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
-        // Todo: idea: couple strings and workerThreadId (one task, one work package)
-        .rawBytes = "123456789,123456" // buffer 1
-                    "789\n"} // buffer 2
-    );
+        // Todo: allow to set sequence number
+        // Todo: set workerThreadId in TestablePipelineTask? <--- would allow TestTaskQueue to only take tasks
+        .rawBytesPerThread = {/* buffer 1 */ {WorkerThreadId(0), "123456789,123456"}, /* buffer 1 */ {WorkerThreadId(1), "789\n"}}});
 }
 
 // Todo: test with multiple tasks per buffer/thread (split tasks)
