@@ -14,11 +14,9 @@
 
 #pragma once
 #include <memory>
-#include <unordered_map>
-#include <vector>
-#include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <ExecutableQueryPlan.hpp>
@@ -44,7 +42,10 @@ public:
     ~NodeEngine();
 
     NodeEngine(
-        std::shared_ptr<Memory::BufferManager> bufferManager, std::shared_ptr<QueryLog> queryLog, std::unique_ptr<QueryEngine> queryEngine);
+        std::shared_ptr<Memory::BufferManager> bufferManager,
+        std::shared_ptr<SystemEventListener> systemEventListener,
+        std::shared_ptr<QueryLog> queryLog,
+        std::unique_ptr<QueryEngine> queryEngine);
 
     [[nodiscard]] QueryId registerExecutableQueryPlan(std::unique_ptr<Execution::ExecutableQueryPlan> queryExecutionPlan);
     void unregisterQuery(QueryId queryId);
@@ -60,6 +61,7 @@ private:
     std::shared_ptr<Memory::BufferManager> bufferManager;
     std::shared_ptr<QueryLog> queryLog;
 
+    std::shared_ptr<SystemEventListener> systemEventListener;
     std::unique_ptr<QueryEngine> queryEngine;
     std::unique_ptr<QueryTracker> queryTracker;
 };

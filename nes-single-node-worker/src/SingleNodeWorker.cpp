@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <memory>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -22,6 +23,7 @@
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorker.hpp>
+#include <StatisticPrinter.hpp>
 
 namespace NES
 {
@@ -34,7 +36,9 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
     : qc(std::make_unique<QueryCompilation::QueryCompiler>(
           QueryCompilation::queryCompilationOptionsFromConfig(configuration.workerConfiguration.queryCompiler),
           QueryCompilation::Phases::DefaultPhaseFactory::create()))
-    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration).build())
+    , listener(std::make_shared<Runtime::PrintingStatisticListener>(
+          fmt::format("nes-stats-{:%H:%M:%S}-{}.txt", std::chrono::system_clock::now(), ::getpid())))
+    , nodeEngine(Runtime::NodeEngineBuilder(configuration.workerConfiguration, listener, listener).build())
     , bufferSize(configuration.workerConfiguration.bufferSizeInBytes.getValue())
 {
 }
@@ -49,6 +53,8 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
     {
         auto logicalQueryPlan
             = std::make_shared<DecomposedQueryPlan>(QueryId(queryIdCounter++), INITIAL<WorkerId>, plan->getRootOperators());
+
+        listener->onEvent(Runtime::SubmitQuerySystemEvent{logicalQueryPlan->getQueryId(), plan->toString()});
 
         auto request = QueryCompilation::QueryCompilationRequest::create(logicalQueryPlan, bufferSize);
 
