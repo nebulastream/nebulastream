@@ -22,64 +22,95 @@ namespace NES::Runtime
 {
 using TaskId = NESStrongType<size_t, struct TaskId_, 0, 1>;
 
-struct TaskExecutionStart
+struct EventBase
 {
-    WorkerThreadId threadId;
-    TaskId taskId;
+    EventBase(WorkerThreadId threadId, QueryId queryId) : threadId(threadId), queryId(queryId) { }
+    EventBase() = default;
+
+    std::chrono::high_resolution_clock::time_point timestamp = std::chrono::high_resolution_clock::now();
+    WorkerThreadId threadId = INVALID<WorkerThreadId>;
+    QueryId queryId = INVALID<QueryId>;
+};
+
+struct TaskExecutionStart : EventBase
+{
+    TaskExecutionStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId, size_t numberOfTuples)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId), numberOfTuples(numberOfTuples)
+    {
+    }
+    TaskExecutionStart() = default;
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+    TaskId taskId = INVALID<TaskId>;
     size_t numberOfTuples;
-    PipelineId pipelineId;
-    QueryId queryId;
 };
 
-struct TaskEmit
+struct TaskEmit : EventBase
 {
-    WorkerThreadId threadId;
-    TaskId taskId;
-    PipelineId fromPipeline;
-    PipelineId toPipeline;
-    QueryId queryId;
+    TaskEmit(WorkerThreadId threadId, QueryId queryId, PipelineId fromPipeline, PipelineId toPipeline, TaskId taskId)
+        : EventBase(threadId, queryId), fromPipeline(fromPipeline), toPipeline(toPipeline), taskId(taskId)
+    {
+    }
+    TaskEmit() = default;
+
+    PipelineId fromPipeline = INVALID<PipelineId>;
+    PipelineId toPipeline = INVALID<PipelineId>;
+    TaskId taskId = INVALID<TaskId>;
 };
 
-struct TaskExecutionComplete
+struct TaskExecutionComplete : EventBase
 {
-    WorkerThreadId threadId;
-    TaskId id;
-    PipelineId pipelineId;
-    QueryId queryId;
+    TaskExecutionComplete(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
+    {
+    }
+    TaskExecutionComplete() = default;
+
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+    TaskId taskId = INVALID<TaskId>;
 };
 
-struct TaskExpired
+struct TaskExpired : EventBase
 {
-    WorkerThreadId threadId;
-    TaskId id;
-    PipelineId pipelineId;
-    QueryId queryId;
+    TaskExpired(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId, TaskId taskId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId), taskId(taskId)
+    {
+    }
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+    TaskId taskId = INVALID<TaskId>;
 };
 
-struct QueryStart
+struct QueryStart : EventBase
 {
-    WorkerThreadId threadId;
-    QueryId queryId;
+    QueryStart(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+    QueryStart() = default;
 };
 
-struct QueryStop
+struct QueryStop : EventBase
 {
-    WorkerThreadId threadId;
-    QueryId queryId;
+    QueryStop(WorkerThreadId threadId, QueryId queryId) : EventBase(threadId, queryId) { }
+    QueryStop() = default;
 };
 
-struct PipelineStart
+struct PipelineStart : EventBase
 {
-    WorkerThreadId threadId;
-    PipelineId pipelineId;
-    QueryId queryId;
+    PipelineStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId) { }
+    PipelineStart() = default;
+
+    PipelineId pipelineId = INVALID<PipelineId>;
 };
 
-struct PipelineStop
+struct PipelineStop : EventBase
 {
-    WorkerThreadId threadId;
-    PipelineId pipelineId;
-    QueryId queryId;
+    PipelineStop(WorkerThreadId threadId, QueryId queryId, PipelineId pipeline_id) : EventBase(threadId, queryId), pipelineId(pipeline_id)
+    {
+    }
+    PipelineStop() = default;
+
+    PipelineId pipelineId = INVALID<PipelineId>;
 };
 
 using Event

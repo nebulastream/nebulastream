@@ -17,6 +17,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -70,11 +71,14 @@ public:
 };
 
 NodeEngine::~NodeEngine() = default;
-
 NodeEngine::NodeEngine(
-    std::shared_ptr<Memory::BufferManager> bufferManager, std::shared_ptr<QueryLog> queryLog, std::unique_ptr<QueryEngine> queryEngine)
+    std::shared_ptr<Memory::BufferManager> bufferManager,
+    std::shared_ptr<SystemEventListener> systemEventListener,
+    std::shared_ptr<QueryLog> queryLog,
+    std::unique_ptr<QueryEngine> queryEngine)
     : bufferManager(std::move(bufferManager))
     , queryLog(std::move(queryLog))
+    , systemEventListener(std::move(systemEventListener))
     , queryEngine(std::move(queryEngine))
     , queryTracker(std::make_unique<QueryTracker>())
 {
@@ -91,6 +95,7 @@ void NodeEngine::startQuery(QueryId queryId)
 {
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
+        systemEventListener->onEvent(StartQuerySystemEvent(queryId));
         queryEngine->start(InstantiatedQueryPlan::instantiate(std::move(qep), bufferManager));
     }
     else
@@ -108,6 +113,7 @@ void NodeEngine::unregisterQuery(QueryId queryId)
 void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 {
     NES_INFO("Stop {}", queryId);
+    systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);
 }
 
