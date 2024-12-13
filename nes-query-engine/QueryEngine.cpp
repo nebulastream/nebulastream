@@ -329,19 +329,19 @@ bool ThreadPool::WorkerThread::operator()(const WorkTask& task) const
                     "Task emitted tuple buffer {}-{}. Tuples: {}", task.queryId, task.pipelineId, tupleBuffer.getNumberOfTuples());
                 for (const auto& successor : pipeline->successors)
                 {
-                    pool.statistic->onEvent(TaskEmit{threadId, taskId, pipeline->id, successor->id, task.queryId});
+                    pool.statistic->onEvent(TaskEmit{threadId, task.queryId, pipeline->id, successor->id, taskId});
                     pool.emitWork(task.queryId, successor, tupleBuffer, {}, {});
                 }
             });
-        pool.statistic->onEvent(TaskExecutionStart{threadId, taskId, task.buf.getNumberOfTuples(), pipeline->id, task.queryId});
+        pool.statistic->onEvent(TaskExecutionStart{threadId, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
-        pool.statistic->onEvent(TaskExecutionComplete{threadId, taskId, pipeline->id, task.queryId});
+        pool.statistic->onEvent(TaskExecutionComplete{threadId, task.queryId, pipeline->id, taskId});
         return true;
     }
 
     ENGINE_LOG_WARNING(
         "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
-    pool.statistic->onEvent(TaskExpired{threadId, taskId, task.pipelineId, task.queryId});
+    pool.statistic->onEvent(TaskExpired{threadId, task.queryId, task.pipelineId, taskId});
     return false;
 }
 
@@ -370,7 +370,7 @@ bool ThreadPool::WorkerThread::operator()(const StartPipelineTask& startPipeline
                     "concurrently and there is no guarantee that the successor pipeline has been initialized");
             });
         pipeline->stage->start(pec);
-        pool.statistic->onEvent(PipelineStart{threadId, pipeline->id, startPipeline.queryId});
+        pool.statistic->onEvent(PipelineStart{threadId, startPipeline.queryId, pipeline->id});
         return true;
     }
 
@@ -423,7 +423,7 @@ bool ThreadPool::WorkerThread::operator()(const StopPipelineTask& stopPipeline) 
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipeline.queryId, stopPipeline.pipeline->id);
     stopPipeline.pipeline->stage->stop(pec);
-    pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.pipeline->id, stopPipeline.queryId});
+    pool.statistic->onEvent(PipelineStop{threadId, stopPipeline.queryId, stopPipeline.pipeline->id});
     return true;
 }
 

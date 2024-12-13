@@ -24,6 +24,7 @@ namespace NES
 {
 namespace Runtime
 {
+struct PrintingStatisticListener;
 class NodeEngine;
 }
 namespace QueryCompilation
@@ -40,6 +41,7 @@ class QueryCompiler;
 class SingleNodeWorker
 {
     std::unique_ptr<QueryCompilation::QueryCompiler> qc;
+    std::shared_ptr<Runtime::PrintingStatisticListener> listener;
     std::shared_ptr<Runtime::NodeEngine> nodeEngine;
     size_t bufferSize;
 
