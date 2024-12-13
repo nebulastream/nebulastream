@@ -31,8 +31,7 @@ namespace NES
 
 bool Float::operator==(const NES::DataType& other) const
 {
-    const auto otherFloat = dynamic_cast<const Float*>(&other);
-    if (otherFloat)
+    if (const auto otherFloat = dynamic_cast<const Float*>(&other))
     {
         return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;
     }
