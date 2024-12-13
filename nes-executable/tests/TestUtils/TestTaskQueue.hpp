@@ -282,7 +282,7 @@ public:
         ++numPipelines;
         testTasks.push({.workerThreadId = workerThreadId, .task = std::move(pipelineTask)});
     }
-    void enqueueTasks(const std::vector<NES::WorkerThreadId> workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
+    void enqueueTasks(const std::vector<NES::WorkerThreadId>& workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
     {
         PRECONDITION(workerThreadIds.size() == pipelineTasks.size(), "Each pipeline task must match with exactly one worker thread id.");
         for (size_t i = 0; auto& pipelineTask : pipelineTasks)
@@ -294,6 +294,7 @@ public:
             ++i;
         }
     }
+
     // Todo: lots of stuff:
     // - fixes in CSVInputFormatter fix synchronization between Tasks (staging area access, etc.)
     // - fix (further up) emitting buffers using workerThreadId
@@ -308,8 +309,13 @@ public:
         }
     }
 
+    void processTasks(const std::vector<NES::WorkerThreadId>& workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
+    {
+        enqueueTasks(workerThreadIds, std::move(pipelineTasks));
+        startProcessing();
+    }
+
 private:
-    std::atomic<size_t> numThreadsCompleted;
     uint64_t numberOfWorkerThreads;
     uint64_t numPipelines;
     std::queue<TestTask> testTasks;
