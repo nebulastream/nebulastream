@@ -17,7 +17,8 @@ get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 # Add Library
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES}
         tests/InputFormatterTestUtil/InputFormatterTestUtil.hpp
-        tests/InputFormatterTestUtil/InputFormatterTestUtil.hpp)
+        tests/InputFormatterTestUtil/InputFormatterTestUtil.hpp
+        include/InputFormatters/CircularBuffer.hpp)
 
 # Public:
 # - configurations because of Descriptor

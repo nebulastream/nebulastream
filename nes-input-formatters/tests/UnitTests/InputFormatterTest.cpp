@@ -66,7 +66,7 @@ TEST_F(InputFormatterTest, testTaskPipelineWithMultipleTasksOneRawByteBuffer)
         .expectedResults = {{}, {{TestTuple(123456789, 123456789)}}},
         // Todo: allow to set sequence number
         // Todo: set workerThreadId in TestablePipelineTask? <--- would allow TestTaskQueue to only take tasks
-        .rawBytesPerThread = {/* buffer 1 */ {WorkerThreadId(0), "123456789,123456"}, /* buffer 1 */ {WorkerThreadId(1), "789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {SequenceNumber(1), WorkerThreadId(0), "123456789,123456"}, /* buffer 1 */ {SequenceNumber(2), WorkerThreadId(1), "789\n"}}});
 }
 
 // Todo: test with multiple tasks per buffer/thread (split tasks)

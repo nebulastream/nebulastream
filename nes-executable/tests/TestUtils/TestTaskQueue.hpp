@@ -108,16 +108,19 @@ private:
 class TestablePipelineTask
 {
 public:
-    // Todo: handle (optional) chunk number
     TestablePipelineTask(
         NES::SequenceNumber sequenceNumber,
+        NES::WorkerThreadId workerThreadId,
         NES::Memory::TupleBuffer tupleBuffer,
         std::unique_ptr<NES::Runtime::Execution::ExecutablePipelineStage> eps,
         std::shared_ptr<NES::Memory::BufferManager> bufferManager,
-        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers)
-        : sequenceNumber(sequenceNumber), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
+        std::shared_ptr<std::vector<std::vector<NES::Memory::TupleBuffer>>> resultBuffers,
+        std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers
+        )
+        : sequenceNumber(sequenceNumber), workerThreadId(workerThreadId), tupleBuffer(std::move(tupleBuffer)), eps(std::move(eps))
     {
         this->pipelineExecutionContext = std::make_unique<TestPipelineExecutionContext>(std::move(bufferManager), resultBuffers);
+        this->pipelineExecutionContext->setOperatorHandlers(operatorHandlers);
     }
 
     void execute() { eps->execute(tupleBuffer, *this->pipelineExecutionContext); }
@@ -128,13 +131,8 @@ public:
     }
     void setPipelineId(const uint64_t pipelineId) { this->pipelineExecutionContext->pipelineId = NES::PipelineId(pipelineId); }
 
-    // Todo: allow setting operator handlers in constructor?
-    void setOperatorHandlers(std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers) const
-    {
-        this->pipelineExecutionContext->setOperatorHandlers(operatorHandlers);
-    }
-
     NES::SequenceNumber sequenceNumber;
+    NES::WorkerThreadId workerThreadId;
     std::unique_ptr<TestPipelineExecutionContext> pipelineExecutionContext;
 
 private:
@@ -145,7 +143,7 @@ private:
 class TestWorkerThreadPool
 {
 public:
-    TestWorkerThreadPool(size_t num_threads) : thread_data(num_threads)
+    TestWorkerThreadPool(const size_t num_threads) : thread_data(num_threads)
     {
         for (size_t i = 0; i < num_threads; ++i)
         {
@@ -282,15 +280,14 @@ public:
         ++numPipelines;
         testTasks.push({.workerThreadId = workerThreadId, .task = std::move(pipelineTask)});
     }
-    void enqueueTasks(const std::vector<NES::WorkerThreadId>& workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
+    void enqueueTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
-        PRECONDITION(workerThreadIds.size() == pipelineTasks.size(), "Each pipeline task must match with exactly one worker thread id.");
         for (size_t i = 0; auto& pipelineTask : pipelineTasks)
         {
             pipelineTask.setWorkerThreadId(numPipelines);
             pipelineTask.setPipelineId(numPipelines);
             ++numPipelines;
-            testTasks.push({.workerThreadId = workerThreadIds.at(i), .task = std::move(pipelineTask)});
+            testTasks.push({.workerThreadId = pipelineTask.workerThreadId, .task = std::move(pipelineTask)});
             ++i;
         }
     }
@@ -306,9 +303,9 @@ public:
         }
     }
 
-    void processTasks(const std::vector<NES::WorkerThreadId>& workerThreadIds, std::vector<TestablePipelineTask> pipelineTasks)
+    void processTasks(std::vector<TestablePipelineTask> pipelineTasks)
     {
-        enqueueTasks(workerThreadIds, std::move(pipelineTasks));
+        enqueueTasks(std::move(pipelineTasks));
         startProcessing();
     }
 

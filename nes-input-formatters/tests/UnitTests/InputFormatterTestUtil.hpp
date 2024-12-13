@@ -95,12 +95,14 @@ std::shared_ptr<Schema> createSchema(std::vector<TestDataTypes> TestDataTypes)
 
 struct ThreadInputBuffers
 {
+    const SequenceNumber sequenceNumber;
     const WorkerThreadId workerThreadId;
     const std::string rawBytes;
 };
 
 struct TaskPackage
 {
+    const SequenceNumber sequenceNumber;
     const WorkerThreadId workerThreadId;
     const Memory::TupleBuffer rawByteBuffer;
 };
@@ -144,7 +146,10 @@ struct TestHandle
 
 template <typename TupleSchemaTemplate>
 TestablePipelineTask createInputFormatterTask(
-    const TestHandle<TupleSchemaTemplate>& testHandle, const SequenceNumber sequenceNumber, Memory::TupleBuffer taskBuffer)
+    const TestHandle<TupleSchemaTemplate>& testHandle,
+    const SequenceNumber sequenceNumber,
+    const WorkerThreadId workerThreadId,
+    Memory::TupleBuffer taskBuffer)
 {
     taskBuffer.setSequenceNumber(sequenceNumber);
     // Todo: refactor InputFormatterProvider to take parser config instead of individual parameters
@@ -154,7 +159,13 @@ TestablePipelineTask createInputFormatterTask(
         testHandle.testConfig.parserConfig.tupleDelimiter,
         testHandle.testConfig.parserConfig.fieldDelimiter);
     return TestablePipelineTask(
-        sequenceNumber, taskBuffer, std::move(inputFormatter), testHandle.testBufferManager, testHandle.resultBuffers);
+        sequenceNumber,
+        workerThreadId,
+        taskBuffer,
+        std::move(inputFormatter),
+        testHandle.testBufferManager,
+        testHandle.resultBuffers,
+        testHandle.operatorHandlers);
 }
 
 template <typename TupleSchemaTemplate>
@@ -222,20 +233,18 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         {}};
 }
 
-// Todo: instead of pair, return struct?
 template <typename TupleSchemaTemplate>
-std::tuple<std::vector<TestablePipelineTask>, std::vector<WorkerThreadId>> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
+std::vector<TestablePipelineTask> createTasks(const TestHandle<TupleSchemaTemplate>& testHandle)
 {
     std::vector<TestablePipelineTask> tasks;
-    std::vector<WorkerThreadId> workerThreadIds;
-    for (size_t i = 0; const auto& inputBuffer : testHandle.inputBuffers)
+    for (const auto& inputBuffer : testHandle.inputBuffers)
     {
-        tasks.emplace_back(createInputFormatterTask<TupleSchemaTemplate>(testHandle, SequenceNumber(i), inputBuffer.rawByteBuffer));
-        tasks.at(i).setOperatorHandlers(testHandle.operatorHandlers);
-        workerThreadIds.emplace_back(WorkerThreadId(inputBuffer.workerThreadId));
-        ++i;
+        // Todo: allow to configure sequence numbers
+        tasks.emplace_back(
+            createInputFormatterTask<TupleSchemaTemplate>(
+                testHandle, inputBuffer.sequenceNumber, inputBuffer.workerThreadId, inputBuffer.rawByteBuffer));
     }
-    return std::make_tuple(std::move(tasks), std::move(workerThreadIds));
+    return tasks;
 }
 
 template <typename TupleSchemaTemplate>
@@ -247,8 +256,10 @@ std::vector<TaskPackage> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
         auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking();
         INVARIANT(tupleBuffer, "Couldn't get buffer from bufferManager. Configure test to use more buffers.")
         rawTupleBuffers.emplace_back(
-            TaskPackage{rawInputBuffer.workerThreadId,
-             TestUtil::createTestTupleBufferFromString(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
+            TaskPackage{
+                rawInputBuffer.sequenceNumber,
+                rawInputBuffer.workerThreadId,
+                TestUtil::createTestTupleBufferFromString(rawInputBuffer.rawBytes, std::move(tupleBuffer.value()))});
     }
     return rawTupleBuffers;
 }
@@ -261,9 +272,9 @@ void runTest(const TestConfig<TupleSchemaTemplate>& testConfig)
     /// fill input tuple buffers with raw data
     testHandle.inputBuffers = createTestTupleBuffers(testHandle);
     /// create tasks for task queue
-    auto [tasks, workerThreadIds] = createTasks(testHandle);
+    auto tasks = createTasks(testHandle);
     /// process tasks in task queue
-    testHandle.testTaskQueue.processTasks(workerThreadIds, std::move(tasks));
+    testHandle.testTaskQueue.processTasks(std::move(tasks));
     /// create expected results from supplied in test config
     testHandle.expectedResultVectors = createExpectedResults<TupleSchemaTemplate>(testHandle);
     /// validate: actual results vs expected results
