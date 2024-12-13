@@ -13,54 +13,61 @@
 */
 #include <Util/SliceCache/FIFOSliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-FIFOSliceCache::FIFOSliceCache(uint64_t cacheSize) : cacheSize(cacheSize) {
-    cache.wlock()->reserve(cacheSize);
+FIFOSliceCache::FIFOSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner)
+    : cacheSize(cacheSize), sliceAssigner(sliceAssigner)
+{
 }
 
-FIFOSliceCache::~FIFOSliceCache() {}
+FIFOSliceCache::~FIFOSliceCache()
+{
+}
 
-std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(uint64_t sliceId) {
-    // Get read lock for cache
-    auto cacheLocked = cache.rlock();
+std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(Timestamp timestamp)
+{
+    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
 
     // Search for corresponding slice
-    auto it = cacheLocked->find(sliceId);
+    auto it = cache.find(sliceId);
 
-    if (it == cacheLocked->end()) {
+    if (it == cache.end())
+    {
         // If slice is not found, return nullopt
         return {};
     }
 
     // Return pointer to the slice
-    return cacheLocked->find(sliceId)->second;
+    return it->second;
 }
 
-bool FIFOSliceCache::passSliceToCache(uint64_t sliceId, SliceCache::SlicePtr newSlice) {
-    {
-        // Get read lock for cache
-        auto cacheLocked = cache.rlock();
+bool FIFOSliceCache::passSliceToCache(Timestamp timestamp, SliceCache::SlicePtr newSlice)
+{
+    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
 
-        // Check if slice is already in cache
-        if (cacheLocked->contains(sliceId)) {
-            return false;
-        }
+    // Check if slice is already in cache
+    if (cache.contains(sliceId))
+    {
+        return false;
     }
-    
-    // Get write lock for cache and slices
-    auto [cacheWLocked, slicesLocked] = folly::acquireLocked(cache, slices);
 
     // Check if cache is full
-    if (cacheWLocked->size() == cacheSize) {
+    if (cache.size() == cacheSize)
+    {
         // If full, remove last slice in queue
-        cacheWLocked->erase(slicesLocked->back());
-        slicesLocked->pop_back();
+        cache.erase(slices.back());
+        slices.pop_back();
     }
     // Add new slice to cache
-    slicesLocked->push_front(sliceId);
-    cacheWLocked->emplace(sliceId, newSlice);
-        
+    slices.push_front(sliceId);
+    cache.emplace(sliceId, newSlice);
+
     return true;
 }
-}// namespace NES::Runtime::Execution::Operators
+
+void FIFOSliceCache::deleteSliceFromCache(Timestamp)
+{
+}
+
+} // namespace NES::Runtime::Execution::Operators

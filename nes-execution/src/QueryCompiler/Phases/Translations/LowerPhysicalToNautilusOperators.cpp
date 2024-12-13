@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Functions/ExecutableFunctionWriteField.hpp>
+#include <Execution/Operators/DelayBuffer.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/EmitOperatorHandler.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -28,6 +29,7 @@
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
@@ -38,6 +40,7 @@
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -53,7 +56,6 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Identifiers/Identifiers.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -92,8 +94,8 @@ OperatorPipelinePtr LowerPhysicalToNautilusOperators::apply(OperatorPipelinePtr 
             continue;
         }
         NES_INFO("Lowering node: {}", *node);
-        parentOperator = lower(
-            *pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
+        parentOperator
+            = lower(*pipeline, parentOperator, NES::Util::as<PhysicalOperators::PhysicalOperator>(node), bufferSize, operatorHandlers);
     }
     const auto& rootOperators = decomposedQueryPlan->getRootOperators();
     for (const auto& root : rootOperators)
@@ -142,6 +144,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto sortBufferOperator = lowerSortBufferOperator(operatorNode, /*handlerIndex,*/ bufferSize);
         pipeline.setRootOperator(sortBufferOperator);
         return sortBufferOperator;
+    }
+    else if (NES::Util::instanceOf<PhysicalOperators::PhysicalDelayBufferOperator>(operatorNode))
+    {
+        auto delayBufferOperator = lowerDelayBufferOperator(operatorNode, operatorHandlers);
+        parentOperator->setChild(delayBufferOperator);
+        return delayBufferOperator;
     }
     else if (NES::Util::instanceOf<PhysicalOperators::PhysicalMapOperator>(operatorNode))
     {
@@ -286,6 +294,16 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         sortBufferOperator->getSortFieldIdentifier(),
         sortBufferOperator->getSortOrder());
     ;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerDelayBufferOperator(
+    const PhysicalOperators::PhysicalOperatorPtr& operatorNode, std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+{
+    auto delayBufferOperator = NES::Util::as<PhysicalOperators::PhysicalDelayBufferOperator>(operatorNode);
+
+    operatorHandlers.push_back(std::make_unique<Runtime::Execution::Operators::DelayBufferOperatorHandler>(
+        delayBufferOperator->getUnorderedness(), delayBufferOperator->getMinDelay(), delayBufferOperator->getMaxDelay()));
+    return std::make_shared<Runtime::Execution::Operators::DelayBuffer>(operatorHandlers.size() - 1);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>

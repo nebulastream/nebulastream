@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -83,6 +84,12 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const std::sha
     {
         /// serialize sort buffer operator
         serializeSortBufferOperator(*NES::Util::as<LogicalSortBufferOperator>(operatorNode), serializedOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode))
+    {
+        NES_TRACE("OperatorSerializationUtil:: serialize to LogicalDelayBufferOperator");
+        auto delayBufferDetails = SerializableOperator_DelayBufferDetails();
+        serializedOperator.mutable_details()->PackFrom(delayBufferDetails);
     }
     else if (NES::Util::instanceOf<LogicalProjectionOperator>(operatorNode))
     {
@@ -551,6 +558,14 @@ std::shared_ptr<LogicalOperator> OperatorSerializationUtil::deserializeOperator(
         auto serializedSortBufferOperator = SerializableOperator_SortBufferDetails();
         details.UnpackTo(&serializedSortBufferOperator);
         operatorNode = deserializeSortBufferOperator(serializedSortBufferOperator);
+    }
+    else if (details.Is<SerializableOperator_DelayBufferDetails>())
+    {
+        /// de-serialize delay buffer operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to DelayBufferLogicalOperator");
+        auto serializedDelayBufferOperator = SerializableOperator_DelayBufferDetails();
+        details.UnpackTo(&serializedDelayBufferOperator);
+        operatorNode = std::make_shared<LogicalDelayBufferOperator>(getNextOperatorId());
     }
     else if (details.Is<SerializableOperator_ProjectionDetails>())
     {

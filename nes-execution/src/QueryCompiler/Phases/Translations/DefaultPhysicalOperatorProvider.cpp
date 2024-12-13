@@ -17,17 +17,21 @@
 #include <API/Schema.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStoreList.hpp>
+#include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -37,12 +41,14 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalStreamJoinProbeOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDelayBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSelectionOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSortBufferOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnionOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
@@ -161,6 +167,14 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(const LogicalOperatorPt
         auto physicalLimitOperator = PhysicalOperators::PhysicalLimitOperator::create(
             limitOperator->getInputSchema(), limitOperator->getOutputSchema(), limitOperator->getLimit());
         operatorNode->replace(physicalLimitOperator);
+    }
+    else if (NES::Util::instanceOf<LogicalSortBufferOperator>(operatorNode))
+    {
+        lowerSortBufferOperator(operatorNode);
+    }
+    else if (NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode))
+    {
+        lowerDelayBufferOperator(operatorNode);
     }
     else
     {
@@ -353,6 +367,8 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
         leftMemoryProvider->getMemoryLayoutPtr()->getBufferSize(),
         rightMemoryProvider->getMemoryLayoutPtr()->getBufferSize());
 
+    Operators::SliceAssigner sliceAssigner(streamJoinConfig.windowSize, streamJoinConfig.windowSlide);
+
     Runtime::Execution::Operators::SliceCachePtr sliceCache;
     if (options->sliceCacheType == SliceCacheType::DEFAULT)
     {
@@ -361,17 +377,28 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     }
     else if (options->sliceCacheType == SliceCacheType::FIFO)
     {
-        sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize);
+        sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize, sliceAssigner);
         NES_INFO("Slice Cache Type: FIFO");
     }
     else if (options->sliceCacheType == SliceCacheType::LRU)
     {
-        sliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize);
+        sliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize, sliceAssigner);
         NES_INFO("Slice Cache Type: LRU");
     }
 
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(streamJoinConfig.windowSize, streamJoinConfig.windowSlide, 2, sliceCache);
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    if (options->sliceStoreType == SliceStoreType::MAP)
+    {
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(sliceAssigner, 2);
+        NES_INFO("Slice Store Type: Map");
+    }
+    else if (options->sliceStoreType == SliceStoreType::LIST)
+    {
+        sliceAndWindowStore
+            = std::make_unique<DefaultTimeBasedSliceStoreList>(sliceAssigner, 2, sliceCache);
+        NES_INFO("Slice Store Type: List");
+    }
+
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],
@@ -505,6 +532,40 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     {
         lowerTimeBasedWindowOperator(operatorNode);
     }
+}
+
+void DefaultPhysicalOperatorProvider::lowerSortBufferOperator(const LogicalOperatorPtr& operatorNode)
+{
+    auto sortBufferOperator = NES::Util::as<LogicalSortBufferOperator>(operatorNode);
+    PRECONDITION(NES::Util::instanceOf<LogicalSortBufferOperator>(operatorNode), "The operator should be a sort buffer operator.");
+
+    auto sortFieldIdentifier = sortBufferOperator->getSortFieldIdentifier();
+    auto sortOrder = magic_enum::enum_cast<Runtime::Execution::Operators::SortOrder>(sortBufferOperator->getSortOrder())
+                         .value_or(Runtime::Execution::Operators::SortOrder::Ascending);
+
+    NES_INFO("Lower SortBuffer");
+    auto physicalSortBufferOperator
+        = PhysicalOperators::PhysicalSortBufferOperator::create(sortBufferOperator->getInputSchema(), sortFieldIdentifier, sortOrder);
+    physicalSortBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
+    operatorNode->replace(physicalSortBufferOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerDelayBufferOperator(const LogicalOperatorPtr& operatorNode)
+{
+    auto delayBufferOperator = NES::Util::as<LogicalDelayBufferOperator>(operatorNode);
+    PRECONDITION(NES::Util::instanceOf<LogicalDelayBufferOperator>(operatorNode), "The operator should be a delay buffer operator.");
+
+    auto unorderedness = options->unorderedness;
+    auto minDelay = options->minDelay;
+    auto maxDelay = options->maxDelay;
+
+    NES_INFO("Lower DelayBuffer with unorderedness: {}, minDelay: {}, maxDelay: {}", unorderedness, minDelay, maxDelay);
+    auto physicalDelayBufferOperator
+        = PhysicalOperators::PhysicalDelayBufferOperator::create(delayBufferOperator->getInputSchema(), unorderedness, minDelay, maxDelay);
+    physicalDelayBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());
+
+    operatorNode->replace(physicalDelayBufferOperator);
 }
 
 }

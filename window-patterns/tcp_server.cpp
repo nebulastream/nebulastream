@@ -13,36 +13,13 @@
 class ClientHandler
 {
 public:
-    ClientHandler(
-        int clientSocket,
-        sockaddr_in address,
-        double interval,
-        int countLimit,
-        int timeStep,
-        double unorderedness,
-        int minDelay,
-        int maxDelay,
-        std::string& logFileName)
-        : clientSocket(clientSocket)
-        , address(address)
-        , interval(interval)
-        , countLimit(countLimit)
-        , timeStep(timeStep)
-        , unorderedness(unorderedness)
-        , minDelay(minDelay)
-        , maxDelay(maxDelay)
-        , logFileName(logFileName)
+    ClientHandler(int clientSocket, sockaddr_in address, int countLimit, int timeStep)
+        : clientSocket(clientSocket), address(address), countLimit(countLimit), timeStep(timeStep)
     {
     }
 
     void handle()
     {
-        // logFile.open(logFileName, std::ios_base::app);
-        // if (!logFile.is_open())
-        // {
-        //     std::cerr << "Failed to open log file: " << logFileName << std::endl;
-        // }
-        // log("TCP server started");
         std::cout << "New connection from " << inet_ntoa(address.sin_addr) << std::endl;
         try
         {
@@ -50,55 +27,22 @@ public:
             std::random_device rd;
             std::mt19937 gen(rd());
 
-            std::uniform_real_distribution<> unorderednessDistrib(0, 1);
-            std::uniform_int_distribution<> valueDistrib(minDelay, 10000);
-            std::uniform_int_distribution<> delayDistrib(minDelay, maxDelay);
+            std::uniform_int_distribution<> valueDistrib(0, 10000);
 
             while (running && (countLimit == -1 || counter < countLimit))
             {
-                auto startTime = std::chrono::high_resolution_clock::now();
                 value = valueDistrib(gen);
 
-                int currentTs = timestamp;
-                // add random delay for some tuples with the percentage of unorderedness
-                if (unorderednessDistrib(gen) < unorderedness)
-                {
-                    int delay = delayDistrib(gen);
-                    if (currentTs - delay >= 0 && std::rand() % 2)
-                    {
-                        // add negative delay randomly, if possible
-                        currentTs -= delay;
-                    }
-                    else
-                    {
-                        // or add positive delay
-                        currentTs += delay;
-                    }
-                }
-
-                std::string message = std::to_string(counter) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
-                    + std::to_string(currentTs) + "\n";
+                std::string message = std::to_string(counter++) + "," + std::to_string(value) + "," + std::to_string(payload) + ","
+                    + std::to_string(timestamp) + "\n";
                 send(clientSocket, message.c_str(), message.size(), 0);
 
-                counter++;
                 timestamp += timeStep;
 
                 if (countLimit != -1 && counter >= countLimit)
                 {
                     std::cout << "Client " << inet_ntoa(address.sin_addr) << " reached count limit of " << countLimit << std::endl;
                     break;
-                }
-
-                auto endTime = std::chrono::high_resolution_clock::now();
-                auto executionTime = std::chrono::duration_cast<std::chrono::duration<double>>(endTime - startTime).count();
-                if (executionTime > interval)
-                {
-                    // log("TCP server could not match given interval.");
-                    std::cout << "TCP server could not match given interval." << std::endl;
-                }
-                else
-                {
-                    // std::this_thread::sleep_for(std::chrono::duration<double>(interval - executionTime));
                 }
             }
         }
@@ -121,48 +65,25 @@ public:
         std::cout << "Cleaned up connection from " << inet_ntoa(address.sin_addr) << std::endl;
     }
 
-    void log(const std::string& message)
-    {
-        if (logFile.is_open())
-        {
-            logFile << message << std::endl;
-            logFile.flush();
-        }
-    }
-
     [[nodiscard]] bool isRunning() const { return running; }
 
 private:
     int clientSocket;
     sockaddr_in address;
-    double interval;
     int countLimit;
     int timeStep;
-    double unorderedness;
-    int minDelay;
-    int maxDelay;
     int counter = 0;
     int value = 0;
     int payload = 0;
     int timestamp = 0;
     bool running = true;
-    std::ofstream logFile;
-    std::string logFileName;
 };
 
 class CounterServer
 {
 public:
-    CounterServer(
-        const std::string& host, int port, double interval, int countLimit, int timeStep, double unorderedness, int minDelay, int maxDelay)
-        : host(host)
-        , port(port)
-        , interval(interval)
-        , countLimit(countLimit)
-        , timeStep(timeStep)
-        , unorderedness(unorderedness)
-        , minDelay(minDelay)
-        , maxDelay(maxDelay)
+    CounterServer(const std::string& host, int port, int countLimit, int timeStep)
+        : host(host), port(port), countLimit(countLimit), timeStep(timeStep)
     {
         int opt = 1;
         setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -181,10 +102,7 @@ public:
         }
         listen(serverSocket, 5);
         std::cout << "Server listening on " << host << ":" << port << std::endl;
-        std::cout << "Counter interval: " << interval << " seconds" << std::endl;
         std::cout << "Count limit: " << (countLimit == -1 ? "unlimited" : std::to_string(countLimit)) << std::endl;
-        std::cout << "timeStep: " << timeStep << ", unorderedness: " << unorderedness << ", minDelay: " << minDelay
-                  << ", maxDelay: " << maxDelay << std::endl;
 
         try
         {
@@ -193,9 +111,7 @@ public:
                 sockaddr_in clientAddress;
                 socklen_t clientLen = sizeof(clientAddress);
                 int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddress, &clientLen);
-                std::string logFileName = "tcp_server_" + std::to_string(port) + ".log";
-                ClientHandler client(
-                    clientSocket, clientAddress, interval, countLimit, timeStep, unorderedness, minDelay, maxDelay, logFileName);
+                ClientHandler client(clientSocket, clientAddress, countLimit, timeStep);
                 std::thread clientThread(&ClientHandler::handle, &client);
                 clientThread.detach();
                 clients.push_back(std::move(client));
@@ -243,12 +159,8 @@ public:
 private:
     std::string host = "0.0.0.0";
     int port = 5020;
-    double interval = 0.0001;
     int countLimit = -1;
     int timeStep = 1;
-    double unorderedness = 0.0;
-    int minDelay = 0;
-    int maxDelay = 0;
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in serverAddress;
     std::vector<ClientHandler> clients;
@@ -259,12 +171,8 @@ int main(int argc, char* argv[])
 {
     std::string host = "0.0.0.0";
     int port = 5020;
-    double interval = 0.0001;
     int countLimit = -1;
     int timeStep = 1;
-    double unorderedness = 0.0;
-    int minDelay = 0;
-    int maxDelay = 0;
 
     for (int i = 1; i < argc; i++)
     {
@@ -276,10 +184,6 @@ int main(int argc, char* argv[])
         {
             port = std::stoi(argv[++i]);
         }
-        else if (std::strcmp(argv[i], "-i") == 0 || std::strcmp(argv[i], "--interval") == 0)
-        {
-            interval = std::stod(argv[++i]);
-        }
         else if (std::strcmp(argv[i], "-n") == 0 || std::strcmp(argv[i], "--count-limit") == 0)
         {
             countLimit = std::stoi(argv[++i]);
@@ -288,26 +192,19 @@ int main(int argc, char* argv[])
         {
             timeStep = std::stoi(argv[++i]);
         }
-        else if (std::strcmp(argv[i], "-u") == 0 || std::strcmp(argv[i], "--unorderedness") == 0)
-        {
-            unorderedness = std::stod(argv[++i]);
-        }
-        else if (std::strcmp(argv[i], "-d") == 0 || std::strcmp(argv[i], "--min-delay") == 0)
-        {
-            minDelay = std::stoi(argv[++i]);
-        }
-        else if (std::strcmp(argv[i], "-m") == 0 || std::strcmp(argv[i], "--max-delay") == 0)
-        {
-            maxDelay = std::stoi(argv[++i]);
-        }
     }
 
-    try {
-        CounterServer server(host, port, interval, countLimit, timeStep, unorderedness, minDelay, maxDelay);
+    try
+    {
+        CounterServer server(host, port, countLimit, timeStep);
         server.start();
-    } catch (const std::exception& e){
+    }
+    catch (const std::exception& e)
+    {
         std::cerr << "Exception in main: " << e.what() << std::endl;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::cerr << "Unknown exception caught in main" << std::endl;
     }
     std::cout << "finished";

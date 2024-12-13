@@ -25,6 +25,7 @@ add_source_files(nes-execution
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalSortBufferOperator.cpp
+        PhysicalDelayBufferOperator.cpp
 )
 
 add_subdirectory(Joining)

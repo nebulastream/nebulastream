@@ -28,10 +28,12 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalDelayBufferOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -51,7 +53,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <ErrorHandling.hpp>
-#include <Operators/LogicalOperators/LogicalSortBufferOperator.hpp>
 
 namespace NES
 {
@@ -93,9 +94,18 @@ QueryPlanPtr QueryPlanBuilder::addSelection(NodeFunctionPtr const& selectionFunc
     return queryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addSortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder, QueryPlanPtr queryPlan) {
+QueryPlanPtr QueryPlanBuilder::addSortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder, QueryPlanPtr queryPlan)
+{
     NES_DEBUG("QueryPlanBuilder: add sort buffer operator to query plan");
-    const auto op = std::make_shared<NES::LogicalSortBufferOperator>(sortFieldIdentifier, sortOrder, getNextOperatorId());
+    OperatorPtr const op = std::make_shared<NES::LogicalSortBufferOperator>(sortFieldIdentifier, sortOrder, getNextOperatorId());
+    queryPlan->appendOperatorAsNewRoot(op);
+    return queryPlan;
+}
+
+QueryPlanPtr QueryPlanBuilder::addDelayBuffer(QueryPlanPtr queryPlan)
+{
+    NES_DEBUG("QueryPlanBuilder: add delay buffer operator to query plan");
+    OperatorPtr const op = std::make_shared<NES::LogicalDelayBufferOperator>(getNextOperatorId());
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }
@@ -178,6 +188,13 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     const std::shared_ptr<Windowing::WindowType>& windowType,
     Join::LogicalJoinDescriptor::JoinType joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT)
 {
+    leftQueryPlan = addDelayBuffer(leftQueryPlan);
+    rightQueryPlan = addDelayBuffer(rightQueryPlan);
+
+    // Add sort buffer operator
+    // leftQueryPlan = addSortBuffer("timestamp", "Ascending", leftQueryPlan);
+    // rightQueryPlan = addSortBuffer("timestamp", "Ascending", rightQueryPlan);
+
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;
     auto bfsIterator = BreadthFirstNodeIterator(joinFunction);

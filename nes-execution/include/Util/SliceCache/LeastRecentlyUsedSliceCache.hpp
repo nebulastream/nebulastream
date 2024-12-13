@@ -13,27 +13,28 @@
 */
 #pragma once
 
-#include <Util/SliceCache/SliceCache.hpp>
-#include <folly/Synchronized.h>
 #include <list>
 #include <tuple>
-#include <unordered_map>
+#include <map>
+#include <Execution/Operators/SliceStore/SliceAssigner.hpp>
+#include <Util/SliceCache/SliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This slice cache stores the most recently used slices.
  */
-class LeastRecentlyUsedSliceCache : public SliceCache {
+class LeastRecentlyUsedSliceCache : public SliceCache
+{
+    using listPosition = std::list<Timestamp::Underlying>::iterator;
 
-  using listPosition = std::list<uint64_t>::iterator;
-
-  public:
+public:
     /**
      * @brief constructor
      * @param cacheSize
      */
-    explicit LeastRecentlyUsedSliceCache(uint64_t cacheSize);
+    explicit LeastRecentlyUsedSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner);
 
     /**
      * @brief destructor
@@ -45,7 +46,7 @@ class LeastRecentlyUsedSliceCache : public SliceCache {
      * @param sliceId
      * @return SlicePtr
      */
-    std::optional<SlicePtr> getSliceFromCache(uint64_t sliceId) override;
+    std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) override;
 
     /**
      * @brief Adds a new slice to the front of the cache, if it is not in the cache yet.
@@ -53,12 +54,19 @@ class LeastRecentlyUsedSliceCache : public SliceCache {
      * @param newSlice
      * @return bool
      */
-    bool passSliceToCache(uint64_t sliceId, SlicePtr newSlice) override;
+    bool passSliceToCache(Timestamp timestamp, SlicePtr newSlice) override;
 
-  private:
+    /**
+     * @brief Deletes a slice from the cache.
+     * @param sliceId
+     */
+    void deleteSliceFromCache(Timestamp timestamp) override;
+
+private:
     uint64_t cacheSize;
-    folly::Synchronized<std::list<uint64_t>> lruSlices;
-    folly::Synchronized<std::unordered_map<uint64_t, std::tuple<listPosition, SlicePtr>>> cache;
+    SliceAssigner sliceAssigner;
+    std::list<Timestamp::Underlying> lruSlices;
+    std::map<Timestamp::Underlying, std::tuple<listPosition, SlicePtr>> cache;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

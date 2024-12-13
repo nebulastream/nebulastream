@@ -154,12 +154,17 @@ message SerializableOperator {
   }
 
   /**
-  SortBuffer details contain the new name of the source.
+  SortBuffer details contain the properties for the sort buffer operator.
    */
   message SortBufferDetails {
     string sortFieldIdentifier = 1;
     string sortOrder = 2;
   }
+
+   /**
+  DelayBuffer details contain the properties for the delay buffer operator.
+   */
+  message DelayBufferDetails {}
 
   /**
   Rename details contain the new name of the source.

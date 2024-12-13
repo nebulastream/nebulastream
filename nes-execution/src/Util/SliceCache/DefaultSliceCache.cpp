@@ -13,13 +13,28 @@
 */
 #include <Util/SliceCache/DefaultSliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-DefaultSliceCache::DefaultSliceCache() {}
-DefaultSliceCache::~DefaultSliceCache() {}
+DefaultSliceCache::DefaultSliceCache()
+{
+}
+DefaultSliceCache::~DefaultSliceCache()
+{
+}
 
-std::optional<SliceCache::SlicePtr> DefaultSliceCache::getSliceFromCache(uint64_t) { return {}; }
+std::optional<SliceCache::SlicePtr> DefaultSliceCache::getSliceFromCache(Timestamp)
+{
+    return {};
+}
 
-bool DefaultSliceCache::passSliceToCache(uint64_t, SliceCache::SlicePtr) { return false; }
+bool DefaultSliceCache::passSliceToCache(Timestamp, SliceCache::SlicePtr)
+{
+    return false;
+}
 
-}// namespace NES::Runtime::Execution::Operators
+void DefaultSliceCache::deleteSliceFromCache(Timestamp)
+{
+}
+
+} // namespace NES::Runtime::Execution::Operators

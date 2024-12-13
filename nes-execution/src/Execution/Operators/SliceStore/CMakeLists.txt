@@ -13,4 +13,5 @@
 add_source_files(nes-execution
         Slice.cpp
         DefaultTimeBasedSliceStore.cpp
+        DefaultTimeBasedSliceStoreList.cpp
 )

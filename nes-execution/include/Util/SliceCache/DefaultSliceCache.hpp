@@ -15,13 +15,15 @@
 
 #include <Util/SliceCache/SliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief The default slice cache does not store any slices.
  */
-class DefaultSliceCache : public SliceCache {
-  public:
+class DefaultSliceCache : public SliceCache
+{
+public:
     /**
      * @brief constructor
      */
@@ -32,9 +34,9 @@ class DefaultSliceCache : public SliceCache {
      */
     ~DefaultSliceCache() override;
 
-    std::optional<SlicePtr> getSliceFromCache(uint64_t sliceId) override;
-    bool passSliceToCache(uint64_t sliceId, SlicePtr slice) override;
+    std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) override;
+    bool passSliceToCache(Timestamp timestamp, SlicePtr slice) override;
+    void deleteSliceFromCache(Timestamp timestamp) override;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-
+} // namespace NES::Runtime::Execution::Operators

@@ -67,10 +67,14 @@ private:
     static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
-    static std::shared_ptr<Runtime::Execution::Operators::Operator>
-    lowerSortBufferOperator(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                            // uint64_t operatorHandlerIndex,
-                            size_t bufferSize);
+    static std::shared_ptr<Runtime::Execution::Operators::Operator> lowerSortBufferOperator(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        // uint64_t operatorHandlerIndex,
+        size_t bufferSize);
+
+    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerDelayBufferOperator(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);

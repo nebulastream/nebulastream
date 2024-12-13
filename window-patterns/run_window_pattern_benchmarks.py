@@ -20,6 +20,7 @@ parser.add_argument(
     type=str,
     help="Path to the project directory",
 )
+parser.add_argument('--no_execution', action='store_true', help='Wether the command should be executed or not')
 # parse arguments
 args = parser.parse_args()
 
@@ -31,12 +32,10 @@ single_node_path = os.path.join(
     args.project_dir, "build", "nes-single-node-worker", "nes-single-node-worker"
 )
 # path to tcp server
-# tcp_server_path = os.path.join(
-#     args.project_dir, "window-patterns", "tcp-server-tuples.py"
-# )
 tcp_server_path = os.path.join(
-    args.project_dir, "window-patterns", "tcp_server.cpp"
+    args.project_dir, "window-patterns", "tcp-server-tuples.py"
 )
+# tcp_server_path = os.path.join(args.project_dir, "window-patterns", "tcp_server.cpp")
 # path to yaml config
 yaml_config_path = os.path.join(
     args.project_dir, "window-patterns", "config", "joinTumblingConfig.yaml"
@@ -47,7 +46,7 @@ output_dir = "results/"
 log_path = os.path.join(output_dir, "log.txt")
 # number of runs each
 number_of_runs = 1
-measure_interval_in_seconds = 13
+measure_interval_in_seconds = 60
 
 PRELOG = "numactl -N 0 -m 0"
 
@@ -59,13 +58,12 @@ BUFFER_SIZE_PARAMS = [100000, 48000, 16000]
 
 WORKER_THREADS_PARAMS = [1, 2, 4, 8]
 
-TCP_SERVER_PARAMS = [
-    {"time_step": 1, "unorderedness": 0.25, "min_delay": 100, "max_delay": 500},
-    {"time_step": 1, "unorderedness": 0.5, "min_delay": 100, "max_delay": 500},
-    {"time_step": 1, "unorderedness": 0.75, "min_delay": 100, "max_delay": 500},
-    {"time_step": 1, "unorderedness": 1, "min_delay": 100, "max_delay": 500},
-    # {"time_step": 100, "unorderedness": 0, "min_delay": 0, "max_delay": 0},
-    {"time_step": 1, "unorderedness": 0, "min_delay": 0, "max_delay": 0},
+UNORDEREDNESS_PARAMS = [
+    {"unorderedness": 0.25, "min_delay": 100, "max_delay": 500},
+    {"unorderedness": 0.5, "min_delay": 100, "max_delay": 500},
+    {"unorderedness": 0.75, "min_delay": 100, "max_delay": 500},
+    {"unorderedness": 1, "min_delay": 100, "max_delay": 500},
+    {"unorderedness": 0, "min_delay": 0, "max_delay": 0},
 ]
 
 SLICE_CACHE_PARAMS = [
@@ -82,11 +80,11 @@ SORTING_PARAMS = []
 
 static_params = {
     "schema_size": 32,
-    "task_queue_size": 1000,
+    "task_queue_size": 10000,  # 1000
     "buffers_in_global_buffer_manager": 102400,  # 1024 / 5000000
     "buffers_per_worker": 12800,  # 128 / 5000000
     "buffers_in_source_local_buffer_pool": 6400,  # 64 / 312500
-    "log_level": "LOG_NONE", # LOG_DEBUG / LOG_NONE
+    "log_level": "LOG_NONE",  # LOG_DEBUG / LOG_NONE
     "nautilus_backend": "COMPILER",
     "number_of_sources": 1,
     "interval": 0.00001,  # 0.001
@@ -129,6 +127,25 @@ pipelines_file = "pipelines.txt"
 
 
 def build():
+    subprocess.run(
+        [
+            "cmake",
+            "-DCMAKE_BUILD_TYPE:STRING=Release", # Release
+            "-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE",
+            "-DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++",
+            "-DNES_USE_LLD=OFF",
+            "-DUSE_CCACHE_IF_AVAILABLE=OFF",
+            "-DNES_LOG_LEVEL=LEVEL_NONE", #"-DNES_LOG_LEVEL=LEVEL_NONE/DEBUG",
+            "-DCMAKE_TOOLCHAIN_FILE=/ssd/vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "--no-warn-unused-cli",
+            f"-S{args.project_dir}",
+            f"-B{os.path.join(args.project_dir, 'build')}",
+            # "-DCMAKE_MAKE_PROGRAM=/usr/bin/make",
+            "-DCMAKE_MAKE_PROGRAM=/usr/bin/ninja",
+            "-G Ninja",
+        ]
+    )
+
     # build and compile nes-nebuli
     build_dir = os.path.join(args.project_dir, "build")
     subprocess.run(
@@ -173,34 +190,40 @@ def build():
     single_node_path = new_single_node_path
 
     # build and compile tcp_server
-    global tcp_server_path
-    subprocess.run(
-        [
-            "clang++", tcp_server_path, "-o", "tcp_server"
-        ],
-        check=True,
-    )
-    print("Build of tcp_server successful!")
-    print("\n")
+    # global tcp_server_path
+    # subprocess.run(
+    #     ["clang++", tcp_server_path, "-o", "tcp_server"],
+    #     check=True,
+    # )
+    # print("Build of tcp_server successful!")
+    # print("\n")
 
-    # update tcp server path
-    tcp_server_path = os.path.join(os.getcwd(), "tcp_server")
+    # # update tcp server path
+    # tcp_server_path = os.path.join(os.getcwd(), "tcp_server")
 
 
 def run_benchmark(number_of_runs=1):
     experiment_id = 0
     # TODO: use number_of_runs
+
+    # start tcp servers
+    count_limit = static_params["count_limit"]
+    tcp_server_process = start_tcp_server(5010, count_limit)
+    processes = [tcp_server_process]
+    tcp_server_2_process = start_tcp_server(5011, count_limit)
+    processes.append(tcp_server_2_process)
+    
     single_node_params = list(
         itertools.product(BUFFER_SIZE_PARAMS, WORKER_THREADS_PARAMS)
     )
     for single_node_config in single_node_params:
         current_params = dict(static_params)
         current_params["query"] = "Join"
-        args = {
+        arguments = {
             "buffer_size": single_node_config[0],
             "worker_threads": single_node_config[1],
         }
-        current_params.update(args)
+        current_params.update(arguments)
         # start single node for each worker thread and buffer size combination
         for slice_cache_config in SLICE_CACHE_PARAMS:
             current_params.update(**slice_cache_config)
@@ -213,16 +236,16 @@ def run_benchmark(number_of_runs=1):
                     slice_cache_config["slice_cache_size"]
                     * current_params["buffer_size"]
                 )
-            for server_config in TCP_SERVER_PARAMS:
-                current_params.update(**server_config)
+            for unorderedness_config in UNORDEREDNESS_PARAMS:
+                if current_params["worker_threads"] == 1 and unorderedness_config["unorderedness"] != 0:
+                    continue
+                current_params.update(**unorderedness_config)
                 # generate source name and benchmark name
-                source_name = ""
-                if server_config["unorderedness"] != 0:
+                source_name = "TimeStep1"
+                if unorderedness_config["unorderedness"] != 0:
                     source_name = "OutOfOrder" + str(
-                        int(server_config["unorderedness"] * 100)
+                        int(unorderedness_config["unorderedness"] * 100)
                     )
-                else:
-                    source_name = "TimeStep" + str(server_config["time_step"])
                 current_params["experiment_id"] = experiment_id
                 current_params["source_name"] = source_name
                 current_params["benchmark_name"] = (
@@ -236,26 +259,28 @@ def run_benchmark(number_of_runs=1):
                 # start single node
                 single_node_process = start_single_node(current_params)
 
-                # start tcp servers
-                tcp_server_processes = start_tcp_server(5010, current_params)
-                processes = [single_node_process] + tcp_server_processes
-                if current_params["query"] == "Join":
-                    tcp_server_2_processes = start_tcp_server(5011, current_params)
-                    processes.extend(tcp_server_2_processes)
-
                 # run queries
-                launch_query(experiment_id)
-                confirm_execution_and_sleep(single_node_process)
-                stop_query()
+                query_id = launch_query(experiment_id)
+                # confirm_execution_and_sleep(single_node_process)
+                if query_id is not None:
+                    stop_query(query_id)
+
+                # wait for input before processing data
+                if args.no_execution:
+                    print("Now waiting for input.")
+                    input()
+
                 # terminate processes
-                terminate_processes(processes)
+                terminate_processes([single_node_process])
+
                 # create csv from statistics
                 read_statistics(original_statistics_path, current_params)
                 calculate_and_write_to_csv(current_params)
 
-                print(f"Experiment with ID {experiment_id} finished!")
-                print("\n")
+                print(f"Experiment with ID {experiment_id} finished!\n")
                 experiment_id += 1
+
+    terminate_processes(processes)
 
 
 def log_params(current_params):
@@ -267,7 +292,7 @@ def log_params(current_params):
 
 
 def start_single_node(current_params):
-    args = [
+    arguments = [
         f"--worker.queryEngine.numberOfWorkerThreads={current_params['worker_threads']}",
         f"--worker.queryEngine.taskQueueSize={current_params['task_queue_size']}",
         f"--worker.bufferSizeInBytes={current_params['buffer_size']}",
@@ -276,16 +301,23 @@ def start_single_node(current_params):
         f"--worker.numberOfBuffersInSourceLocalBufferPool={current_params['buffers_in_source_local_buffer_pool']}",
         f"--worker.logLevel={current_params['log_level']}",
         f"--worker.queryCompiler.nautilusBackend={current_params['nautilus_backend']}",
+        f"--worker.queryCompiler.unorderedness={current_params['unorderedness']}",
+        f"--worker.queryCompiler.minDelay={current_params['min_delay']}",
+        f"--worker.queryCompiler.maxDelay={current_params['max_delay']}",
         f"--worker.queryCompiler.sliceCacheType={current_params['slice_cache_type']}",
     ]
 
     if "slice_cache_size" in current_params:
-        args.append(
+        arguments.append(
             f"--worker.queryCompiler.sliceCacheSize={current_params['slice_cache_size']}"
         )
 
-    cmd = PRELOG.split() + [single_node_path] + args
+    cmd = PRELOG.split() + [single_node_path] + arguments
     print(f"Executing command: {' '.join(cmd)}")
+
+    if args.no_execution:
+        return []
+    
     process = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
     )
@@ -296,48 +328,42 @@ def start_single_node(current_params):
     return process
 
 
-def start_tcp_server(port, current_params):
-    processes = []
+def start_tcp_server(port, count_limit):
     env = os.environ.copy()
 
-    for i in range(current_params["number_of_sources"]):
-        current_port = port + i
-        args = [
-            f"-p {current_port}",
-            f"-i {current_params['interval']}",
-            f"-n {current_params['count_limit']}",
-            f"-t {current_params['time_step']}",
-        ]
+    arguments = [
+        f"-p {port}",
+        f"-n {count_limit}",
+    ]
 
-        if "unorderedness" in current_params:
-            args.append(f"-u {current_params['unorderedness']}")
-            args.append(f"-d {current_params['min_delay']}")
-            args.append(f"-m {current_params['max_delay']}")
+    cmd = [sys.executable, tcp_server_path] + arguments
+    # cmd = [tcp_server_path] + arguments
+    print(f"Executing command: {' '.join(cmd)}")
 
-        # cmd = [sys.executable, tcp_server_path] + args
-        cmd = [tcp_server_path] + args
-        print(f"Executing command: {' '.join(cmd)}")
-        process = subprocess.Popen(
-            cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        processes.append(process)
-        # confirm starting tcp server was successful
-        success_message = f"TCP server successfully started on port {current_port}."
-        confirm_execution_and_sleep(process, success_message, 3)
+    if args.no_execution:
+        return []
 
-    return processes
+    process = subprocess.Popen(
+        cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    # confirm starting tcp server was successful
+    success_message = f"TCP server successfully started on port {port}."
+    confirm_execution_and_sleep(process, success_message, 3)
+
+    return process
 
 
 def confirm_execution_and_sleep(process, success_message=None, sleep_time=0):
-    retcode = process.poll()
-    if retcode is None:
-        if success_message is not None:
-            print(success_message + f" Process ID: {process.pid}\n")
-        sleep(sleep_time)
-    else:
-        print(f"Process failed with return code {retcode}:")
-        stdout, stderr = process.communicate()
-        print(f"Error in process: {stderr}")
+    if not args.no_execution:
+        retcode = process.poll()
+        if retcode is None:
+            if success_message is not None:
+                print(success_message + f" Process ID: {process.pid}\n")
+            sleep(sleep_time)
+        else:
+            print(f"Process failed with return code {retcode}:")
+            stdout, stderr = process.communicate()
+            print(f"Error in process: {stderr}")
 
 
 def launch_query(experiment_id):
@@ -348,36 +374,63 @@ def launch_query(experiment_id):
         f"cat {yaml_config_path} | sed 's#GENERATE#{output_dir}sink/query_{experiment_id}.csv#' | {nebuli_path} register -x -s localhost:8080",
     ]
     print(f"Executing command: {' '.join(cmd)}")
+
+    if args.no_execution:
+        return None
+
     try:
-        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        query_id = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)#, executable="/bin/bash")
         sleep(measure_interval_in_seconds)
+        return query_id.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        print(f"Standard Error: {e.stderr}")
     except Exception as e:
         print(f"Error {e}: {e.stderr.decode()}")
 
 
-def stop_query():
+def stop_query(query_id):
     print(f"Stopping query")
-    cmd = [f"{nebuli_path} stop 1 -s localhost:8080"] # ["sh", "-c", f"{nebuli_path} stop 1 -s localhost:8080"]
+    cmd = [
+        f"{nebuli_path} stop -s localhost:8080 {query_id}"
+        # "sh", "-c", f"{nebuli_path} stop 1 -s localhost:8080"
+    ]
     print(f"Executing command: {' '.join(cmd)}")
+
+    if args.no_execution:
+        return
+
     try:
-        subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)#, executable="/bin/bash")
+        print(f"Result: {result.stdout}")
+    except subprocess.TimeoutExpired:
+        print("Process timed out.")
+        with open(log_path, "a") as file:
+            file.write("used timeout\n")
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        print(f"Standard Error: {e.stderr}")
     except Exception as e:
         print(f"Error {e}: {e.stderr.decode()}")
     print("\n")
 
 
 def terminate_processes(processes):
-    for process in processes:
-        retcode = process.poll()
-        if retcode is None:
-            # terminate manually
-            process.terminate()
-            print(f"Terminated process {process.pid}")
-        else:
-            print(f"Process {process.pid} failed with return code {retcode}:")
-            stdout, stderr = process.communicate()
-            print(f"Error in process {process.pid} {stderr}")
-    print("Successfully terminated all processes!\n")
+    if not args.no_execution:
+        for process in processes:
+            print(f"Terminating process {process.pid}")
+            retcode = process.poll()
+            if retcode is None:
+                # terminate manually
+                process.terminate()
+                process.wait()
+                print(f"Terminated process {process.pid}")
+            else:
+                print(f"Process {process.pid} failed with return code {retcode}:")
+                process.terminate()
+                stdout, stderr = process.communicate()
+                print(f"Error in process {process.pid} {stderr}")
+        print("Successfully terminated all processes!\n")
 
 
 def read_statistics(statistics_file, current_params):
@@ -397,7 +450,7 @@ def read_statistics(statistics_file, current_params):
         os.path.join(
             output_dir,
             "statistics",
-            os.path.basename(statistics_file).replace(
+            os.path.basename(pipelines_file).replace(
                 ".txt", f"_{current_params['experiment_id']}.txt"
             ),
         ),
@@ -417,7 +470,10 @@ def read_statistics(statistics_file, current_params):
             start_match = start_pattern.match(line)
             end_match = end_pattern.match(line)
 
-            if start_match and start_match.group("pipeline_id") in current_params["pipeline_ids"]:
+            if (
+                start_match
+                and start_match.group("pipeline_id") in current_params["pipeline_ids"]
+            ):
                 start_timestamp = datetime.strptime(
                     start_match.group("timestamp"),
                     "%Y-%m-%d %H:%M:%S.%f",
@@ -433,7 +489,10 @@ def read_statistics(statistics_file, current_params):
                     + start_match.group("query_id")
                 )
                 start_times[id] = start_timestamp
-            elif end_match and end_match.group("pipeline_id") in current_params["pipeline_ids"]:
+            elif (
+                end_match
+                and end_match.group("pipeline_id") in current_params["pipeline_ids"]
+            ):
                 end_timestamp = datetime.strptime(
                     end_match.group("timestamp"), "%Y-%m-%d %H:%M:%S.%f"
                 )
@@ -474,17 +533,23 @@ def calculate_and_write_to_csv(current_params):
         # calculate latency and throughput
         tuples = current_params["processed_tuples"]
         latency = current_params["latency"] * 1000  # latency in ms
-        throughput = tuples / (latency / 1000)  # throughput in tuples/s
+        throughput = 0
+        if tuples != 0 and latency != 0:
+            throughput = tuples / (latency / 1000)  # throughput in tuples/s
 
         # calculate tasks and buffers per second
         tasks = current_params["processed_tasks"]
-        tasks_per_second = tasks / (latency / 1000)
+        tasks_per_second = 0
+        if tasks != 0 and latency != 0:
+            tasks_per_second = tasks / (latency / 1000)
 
         buffer_size_in_tuples = (
             current_params["buffer_size"] / current_params["schema_size"]
         )
         buffers = tuples / buffer_size_in_tuples
-        buffers_per_second = buffers / (latency / 1000)
+        buffers_per_second = 0
+        if buffers != 0 and latency != 0:
+            buffers_per_second = buffers / (latency / 1000)
 
         mebi_per_second = (throughput * 32) / (1024 * 1024)
 

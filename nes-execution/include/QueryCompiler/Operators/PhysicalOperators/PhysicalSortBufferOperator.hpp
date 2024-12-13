@@ -14,45 +14,45 @@
 
 #pragma once
 
+#include <Execution/Operators/SortBuffer.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Execution/Operators/SortBuffer.hpp>
 // #include <Execution/Operators/SortBuffer/SortBufferOperatorHandler.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical sort buffer operator.
  */
-class PhysicalSortBufferOperator : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator {
-  public:
+class PhysicalSortBufferOperator : public PhysicalUnaryOperator, public AbstractScanOperator, public AbstractEmitOperator
+{
+public:
     /**
      * @brief Constructor for the physical sort buffer operator
      * @param id operator id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema input schema for the sort buffer operator
      */
-    PhysicalSortBufferOperator(OperatorId id,
-                                // StatisticId statisticId,
-                                const SchemaPtr& inputSchema,
-                                // const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
-                                const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
-                                const Runtime::Execution::Operators::SortOrder sortOrder);
+    PhysicalSortBufferOperator(
+        OperatorId id,
+        const SchemaPtr& inputSchema,
+        // const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
+        const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
+        const Runtime::Execution::Operators::SortOrder sortOrder);
 
     /**
      * @brief Creates a physical sort buffer operator
      * @param id operator id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */
-    static PhysicalOperatorPtr create(OperatorId id,
-                                    //   StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                    //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
-                                      const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
-                                      const Runtime::Execution::Operators::SortOrder sortOrder);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        const SchemaPtr& inputSchema,
+        //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
+        const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
+        const Runtime::Execution::Operators::SortOrder sortOrder);
 
     /**
      * @brief Creates a physical sort buffer operator
@@ -60,11 +60,11 @@ class PhysicalSortBufferOperator : public PhysicalUnaryOperator, public Abstract
      * @param inputSchema
      * @return PhysicalOperatorPtr
      */
-    static PhysicalOperatorPtr create(//StatisticId statisticId,
-                                      SchemaPtr inputSchema,
-                                    //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
-                                      const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
-                                      const Runtime::Execution::Operators::SortOrder sortOrder);
+    static PhysicalOperatorPtr create(
+        SchemaPtr inputSchema,
+        //   const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& sortBufferOpHandler,
+        const Nautilus::Record::RecordFieldIdentifier& sortFieldIdentifier,
+        const Runtime::Execution::Operators::SortOrder sortOrder);
 
     // const Runtime::Execution::Operators::SortBufferOperatorHandlerPtr& getSortBufferOperatorHandler() const;
 
@@ -76,9 +76,9 @@ class PhysicalSortBufferOperator : public PhysicalUnaryOperator, public Abstract
 
     OperatorPtr copy() override;
 
-  protected:
+protected:
     // Runtime::Execution::Operators::SortBufferOperatorHandlerPtr sortBufferOpHandler;
     Nautilus::Record::RecordFieldIdentifier sortFieldIdentifier;
     Runtime::Execution::Operators::SortOrder sortOrder;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

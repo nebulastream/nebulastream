@@ -35,6 +35,12 @@ enum class StreamJoinStrategy : uint8_t
     NESTED_LOOP_JOIN
 };
 
+enum class SliceStoreType : uint8_t
+{
+    MAP,
+    LIST
+};
+
 enum class SliceCacheType : uint8_t
 {
     DEFAULT,

@@ -93,17 +93,12 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(std::chrono
 TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment;
-    auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
-    if (buffer.has_value())
+    exclusiveBuffers.blockingRead(memSegment);
+    if (memSegment->controlBlock->prepare())
     {
-        return buffer.value();
+        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
     }
-    else
-    {
-        auto exp = CannotAllocateBuffer();
-        exp.what() += "FixedSizeBufferPool could not allocate buffer before timeout";
-        throw exp;
-    }
+    throw InvalidRefCountForBuffer();
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)

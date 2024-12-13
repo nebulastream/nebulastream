@@ -24,6 +24,7 @@ add_source_files(nes-operators
         LogicalLimitOperator.cpp
         LogicalBatchJoinDescriptor.cpp
         LogicalSortBufferOperator.cpp
+        LogicalDelayBufferOperator.cpp
 )
 
 add_subdirectory(Sinks)

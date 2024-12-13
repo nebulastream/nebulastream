@@ -40,8 +40,6 @@ void SortBuffer::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer
 {
     // Create new result buffer and initialize local state
     auto resultBuffer = RecordBuffer(executionCtx.allocateBuffer());
-    auto resultTupleBuffer = resultBuffer.getBuffer();
-
     // Sort recordBuffer by sortFieldIdentifier with modified out-of-place counting sort
     auto numberOfRecords = recordBuffer.getNumRecords();
     // auto bufferAddress = recordBuffer.getBuffer();

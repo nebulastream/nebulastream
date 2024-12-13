@@ -24,6 +24,7 @@
 #include <Configurations/Enums/NautilusBackend.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/Common.hpp>
 
@@ -40,7 +41,7 @@ class QueryCompilerConfiguration : public BaseConfiguration
 {
 public:
     QueryCompilerConfiguration() = default;
-    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
+    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
 
     /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     EnumOption<QueryCompilation::DumpMode> queryCompilerDumpMode
@@ -93,16 +94,25 @@ public:
            "WindowingStrategy"
            "[HASH_JOIN_LOCAL|HASH_JOIN_GLOBAL_LOCKING|HASH_JOIN_GLOBAL_LOCK_FREE|NESTED_LOOP_JOIN]. "};
 
-     EnumOption<QueryCompilation::SliceCacheType> sliceCacheType = {
-        SLICE_CACHE_TYPE,
-        QueryCompilation::SliceCacheType::DEFAULT,
-        "Type of slice cache"
-        "[DEFAULT|FIFO|LRU]. "};
+    EnumOption<QueryCompilation::SliceStoreType> sliceStoreType
+        = {SLICE_STORE_TYPE,
+           QueryCompilation::SliceStoreType::MAP,
+           "Type of slice store"
+           "[MAP|LIST]. "};
 
-    UIntOption sliceCacheSize = {SLICE_CACHE_SIZE,
-                                "1",
-                                "Size of the slice cache",
-                                {std::make_shared<NumberValidation>()}};
+    EnumOption<QueryCompilation::SliceCacheType> sliceCacheType
+        = {SLICE_CACHE_TYPE,
+           QueryCompilation::SliceCacheType::DEFAULT,
+           "Type of slice cache"
+           "[DEFAULT|FIFO|LRU]. "};
+
+    UIntOption sliceCacheSize = {SLICE_CACHE_SIZE, "1", "Size of the slice cache", {std::make_shared<NumberValidation>()}};
+
+    FloatOption unorderedness = {UNORDEREDNESS, "0.0", "Percentage of unorderedness", {std::make_shared<FloatValidation>()}};
+
+    UIntOption minDelay = {MIN_DELAY, "1", "Minimum delay", {std::make_shared<NumberValidation>()}};
+
+    UIntOption maxDelay = {MAX_DELAY, "10", "Maximum delay", {std::make_shared<NumberValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -116,9 +126,12 @@ private:
             &preAllocPageCnt,
             &maxHashTableSize,
             &joinStrategy,
+            &sliceStoreType,
             &sliceCacheType,
-            &sliceCacheSize
-        };
+            &sliceCacheSize,
+            &unorderedness,
+            &minDelay,
+            &maxDelay};
     }
 };
 

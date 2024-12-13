@@ -334,6 +334,12 @@ Query& Query::sortBuffer(std::string const& sortFieldIdentifier, std::string con
     return *this;
 }
 
+Query& Query::delayBuffer() {
+    NES_DEBUG("Query: add delay buffer operator to query");
+    this->queryPlan = QueryPlanBuilder::addDelayBuffer(this->queryPlan);
+    return *this;
+}
+
 Query& Query::limit(const uint64_t limit)
 {
     NES_DEBUG("Query: add limit operator to query");

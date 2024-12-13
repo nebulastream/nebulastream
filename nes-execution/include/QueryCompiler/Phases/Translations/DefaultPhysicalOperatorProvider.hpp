@@ -125,6 +125,10 @@ protected:
 
     void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
+    void lowerSortBufferOperator(const LogicalOperatorPtr& operatorNode);
+
+    void lowerDelayBufferOperator(const LogicalOperatorPtr& operatorNode);
+
     OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
 private:

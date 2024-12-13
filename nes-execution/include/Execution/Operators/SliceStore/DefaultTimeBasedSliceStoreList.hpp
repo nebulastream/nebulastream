@@ -16,10 +16,12 @@
 #include <atomic>
 #include <cstdint>
 #include <functional>
+#include <list>
 #include <map>
 #include <memory>
 #include <optional>
 #include <vector>
+#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
@@ -28,28 +30,23 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Execution.hpp>
+#include <Util/SliceCache/DefaultSliceCache.hpp>
+#include <Util/SliceCache/SliceCache.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-
-/// This struct stores a slice ptr and the state. We require this information, as we have to know the state of a slice for a given window
-struct SlicesAndState
-{
-    std::vector<std::shared_ptr<Slice>> windowSlices;
-    WindowInfoState windowState;
-};
-
-class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
+class DefaultTimeBasedSliceStoreList final : public WindowSlicesStoreInterface
 {
 public:
-    DefaultTimeBasedSliceStore(Operators::SliceAssigner sliceAssigner, uint8_t numberOfInputOrigins);
-    DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept;
-    DefaultTimeBasedSliceStore& operator=(const DefaultTimeBasedSliceStore& other);
-    DefaultTimeBasedSliceStore& operator=(DefaultTimeBasedSliceStore&& other) noexcept;
+    DefaultTimeBasedSliceStoreList(
+        Operators::SliceAssigner sliceAssigner, uint8_t numberOfInputOrigins, Operators::SliceCachePtr sliceCache);
+    DefaultTimeBasedSliceStoreList(const DefaultTimeBasedSliceStoreList& other);
+    DefaultTimeBasedSliceStoreList(DefaultTimeBasedSliceStoreList&& other) noexcept;
+    DefaultTimeBasedSliceStoreList& operator=(const DefaultTimeBasedSliceStoreList& other);
+    DefaultTimeBasedSliceStoreList& operator=(DefaultTimeBasedSliceStoreList&& other) noexcept;
 
-    ~DefaultTimeBasedSliceStore() override;
+    ~DefaultTimeBasedSliceStoreList() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
         Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
@@ -68,7 +65,7 @@ private:
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;
-    folly::Synchronized<std::map<SliceEnd, std::shared_ptr<Slice>>> slices;
+    folly::Synchronized<std::list<std::shared_ptr<Slice>>> slices;
     Operators::SliceAssigner sliceAssigner;
 
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
@@ -78,6 +75,8 @@ private:
     /// Depending, if we have one or two input origins, we have to treat the slices differently
     /// For example, in getAllNonTriggeredSlices(), we have to wait until both origins have called this method to ensure correctness
     uint8_t numberOfInputOrigins;
+
+    Operators::SliceCachePtr sliceCache;
 };
 
 }

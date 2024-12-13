@@ -19,7 +19,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
-#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <Execution/Operators/SliceStore/DefaultTimeBasedSliceStoreList.hpp>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -30,24 +30,28 @@
 
 namespace NES::Runtime::Execution
 {
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(Operators::SliceAssigner sliceAssigner, const uint8_t numberOfInputOrigins)
-    : sliceAssigner(sliceAssigner), sequenceNumber(SequenceNumber::INITIAL), numberOfInputOrigins(numberOfInputOrigins)
+DefaultTimeBasedSliceStoreList::DefaultTimeBasedSliceStoreList(
+    Operators::SliceAssigner sliceAssigner, const uint8_t numberOfInputOrigins, Operators::SliceCachePtr sliceCache)
+    : sliceAssigner(sliceAssigner)
+    , sequenceNumber(SequenceNumber::INITIAL)
+    , numberOfInputOrigins(numberOfInputOrigins)
+    , sliceCache(sliceCache)
 {
 }
 
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const DefaultTimeBasedSliceStore& other)
+DefaultTimeBasedSliceStoreList::DefaultTimeBasedSliceStoreList(const DefaultTimeBasedSliceStoreList& other)
     : sliceAssigner(other.sliceAssigner), sequenceNumber(other.sequenceNumber.load()), numberOfInputOrigins(other.numberOfInputOrigins)
 {
 }
 
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(DefaultTimeBasedSliceStore&& other) noexcept
+DefaultTimeBasedSliceStoreList::DefaultTimeBasedSliceStoreList(DefaultTimeBasedSliceStoreList&& other) noexcept
     : sliceAssigner(std::move(other.sliceAssigner))
     , sequenceNumber(std::move(other.sequenceNumber.load()))
     , numberOfInputOrigins(std::move(other.numberOfInputOrigins))
 {
 }
 
-DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultTimeBasedSliceStore& other)
+DefaultTimeBasedSliceStoreList& DefaultTimeBasedSliceStoreList::operator=(const DefaultTimeBasedSliceStoreList& other)
 {
     sliceAssigner = other.sliceAssigner;
     sequenceNumber = other.sequenceNumber.load();
@@ -55,7 +59,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(const DefaultT
     return *this;
 }
 
-DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBasedSliceStore&& other) noexcept
+DefaultTimeBasedSliceStoreList& DefaultTimeBasedSliceStoreList::operator=(DefaultTimeBasedSliceStoreList&& other) noexcept
 {
     sliceAssigner = std::move(other.sliceAssigner);
     sequenceNumber = std::move(other.sequenceNumber.load());
@@ -63,7 +67,7 @@ DefaultTimeBasedSliceStore& DefaultTimeBasedSliceStore::operator=(DefaultTimeBas
     return *this;
 }
 
-std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(const Slice& slice) const
+std::vector<WindowInfo> DefaultTimeBasedSliceStoreList::getAllWindowInfosForSlice(const Slice& slice) const
 {
     std::vector<WindowInfo> allWindows;
 
@@ -83,28 +87,37 @@ std::vector<WindowInfo> DefaultTimeBasedSliceStore::getAllWindowInfosForSlice(co
     return allWindows;
 }
 
-DefaultTimeBasedSliceStore::~DefaultTimeBasedSliceStore()
+DefaultTimeBasedSliceStoreList::~DefaultTimeBasedSliceStoreList()
 {
     deleteState();
 }
 
-std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreate(
+std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStoreList::getSlicesOrCreate(
     const Timestamp timestamp, const std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>& createNewSlice)
 {
-    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
-
     const auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     const auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
 
-    if (slicesWriteLocked->contains(sliceEnd))
+    // Check for slice in slice cache
+    auto sliceFromCache = sliceCache->getSliceFromCache(sliceEnd);
+    if (sliceFromCache.has_value())
     {
-        auto slice = slicesWriteLocked->find(sliceEnd)->second;
-        return {slice};
+        return {sliceFromCache.value()};
     }
+
+    auto slice = getSliceBySliceEnd(sliceEnd);
+    if (slice.has_value())
+    {
+        sliceCache->passSliceToCache(sliceEnd, slice.value());
+        return {slice.value()};
+    }
+
+    auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
 
     /// We assume that only one slice is created per timestamp
     auto newSlice = createNewSlice(sliceStart, sliceEnd)[0];
-    slicesWriteLocked->emplace(sliceEnd, newSlice);
+    slicesWriteLocked->emplace_front(newSlice); /// TODO: place at correct position?
+    sliceCache->passSliceToCache(sliceEnd, newSlice);
 
     /// Update the state of all windows that contain this slice as we have to expect new tuples
     for (auto windowInfo : getAllWindowInfosForSlice(*newSlice))
@@ -118,7 +131,7 @@ std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSlicesOrCreat
 }
 
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>
-DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark)
+DefaultTimeBasedSliceStoreList::getTriggerableWindowSlices(Timestamp globalWatermark)
 {
     /// We are iterating over all windows and check if they can be triggered
     /// A window can be triggered if both sides have been filled and the window end is smaller than the new global watermark
@@ -148,16 +161,19 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(Timestamp globalWatermark
     return windowsToSlices;
 }
 
-std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySliceEnd(SliceEnd sliceEnd)
+std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStoreList::getSliceBySliceEnd(SliceEnd sliceEnd)
 {
-    if (const auto slicesReadLocked = slices.rlock(); slicesReadLocked->contains(sliceEnd))
+    for (const auto& slice : *slices.rlock())
     {
-        return slicesReadLocked->find(sliceEnd)->second;
+        if (slice->getSliceEnd() == sliceEnd)
+        {
+            return slice;
+        }
     }
     return {};
 }
 
-std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStore::getAllNonTriggeredSlices()
+std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStoreList::getAllNonTriggeredSlices()
 {
     const auto windowsWriteLocked = windows.wlock();
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
@@ -189,7 +205,7 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
     return windowsToSlices;
 }
 
-std::vector<SliceEnd> DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
+std::vector<SliceEnd> DefaultTimeBasedSliceStoreList::garbageCollectSlicesAndWindows(const Timestamp newGlobalWaterMark)
 {
     auto lockedSlicesAndWindows = tryAcquireLocked(slices, windows);
     if (not lockedSlicesAndWindows)
@@ -223,7 +239,8 @@ std::vector<SliceEnd> DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows
     std::vector<SliceEnd> slicesToDelete;
     for (auto slicesLockedIt = slicesWriteLocked->cbegin(); slicesLockedIt != slicesWriteLocked->cend();)
     {
-        const auto& [sliceEnd, slicePtr] = *slicesLockedIt;
+        const auto& slicePtr = *slicesLockedIt;
+        const auto& sliceEnd = (*slicesLockedIt)->getSliceEnd();
         if (sliceEnd + sliceAssigner.getWindowSize() <= newGlobalWaterMark)
         {
             slicesToDelete.push_back(sliceEnd);
@@ -232,20 +249,20 @@ std::vector<SliceEnd> DefaultTimeBasedSliceStore::garbageCollectSlicesAndWindows
         else
         {
             /// As the slices are sorted (due to std::map), we can break here as we will not find any slices with a smaller slice end
-            break;
+            // break;
         }
     }
     return slicesToDelete;
 }
 
-void DefaultTimeBasedSliceStore::deleteState()
+void DefaultTimeBasedSliceStoreList::deleteState()
 {
     auto [slicesWriteLocked, windowsWriteLocked] = acquireLocked(slices, windows);
     slicesWriteLocked->clear();
     windowsWriteLocked->clear();
 }
 
-uint64_t DefaultTimeBasedSliceStore::getWindowSize() const
+uint64_t DefaultTimeBasedSliceStoreList::getWindowSize() const
 {
     return sliceAssigner.getWindowSize();
 }

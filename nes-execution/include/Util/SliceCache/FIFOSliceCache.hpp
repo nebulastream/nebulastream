@@ -13,27 +13,27 @@
 */
 #pragma once
 
-#include <Util/SliceCache/SliceCache.hpp>
-#include <folly/Synchronized.h>
 #include <list>
-#include <tuple>
-#include <unordered_map>
+#include <map>
+#include <Execution/Operators/SliceStore/SliceAssigner.hpp>
+#include <Util/SliceCache/SliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This slice cache stores the slices in a FIFO queue.
  */
-class FIFOSliceCache : public SliceCache {
+class FIFOSliceCache : public SliceCache
+{
+    using listPosition = std::list<uint64_t>::iterator;
 
-  using listPosition = std::list<uint64_t>::iterator;
-
-  public:
+public:
     /**
      * @brief constructor
      * @param cacheSize
      */
-    explicit FIFOSliceCache(uint64_t cacheSize);
+    explicit FIFOSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner);
 
     /**
      * @brief destructor
@@ -45,7 +45,7 @@ class FIFOSliceCache : public SliceCache {
      * @param sliceId
      * @return SlicePtr
      */
-    std::optional<SlicePtr> getSliceFromCache(uint64_t sliceId) override;
+    std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) override;
 
     /**
      * @brief Adds a new slice to the front of the cache, if it is not in the cache yet.
@@ -53,13 +53,19 @@ class FIFOSliceCache : public SliceCache {
      * @param newSlice
      * @return bool
      */
-    bool passSliceToCache(uint64_t sliceId, SlicePtr newSlice) override;
+    bool passSliceToCache(Timestamp timestamp, SlicePtr newSlice) override;
 
-  private:
+    /**
+     * @brief Deletes a slice from the cache.
+     * @param sliceId
+     */
+    void deleteSliceFromCache(Timestamp timestamp) override;
+
+private:
     uint64_t cacheSize;
-    folly::Synchronized<std::list<uint64_t>> slices;
-    folly::Synchronized<std::unordered_map<uint64_t, SlicePtr>> cache;
+    SliceAssigner sliceAssigner;
+    std::list<Timestamp::Underlying> slices;
+    std::map<Timestamp::Underlying, SlicePtr> cache;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-
+} // namespace NES::Runtime::Execution::Operators

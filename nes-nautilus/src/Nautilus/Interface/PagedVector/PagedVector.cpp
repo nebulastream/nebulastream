@@ -13,6 +13,7 @@
 */
 
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -21,6 +22,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include "../TupleBufferImpl.hpp"
 
 namespace NES::Nautilus::Interface
 {
@@ -38,14 +40,21 @@ void PagedVector::appendPageIfFull()
 {
     if (pages.empty() || pages.back().getNumberOfTuples() >= memoryLayout->getCapacity())
     {
-        if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
-        {
-            pages.emplace_back(page.value());
-        }
-        else
-        {
-            throw BufferAllocationFailure("No unpooled TupleBuffer available!");
-        }
+        auto newSpace = static_cast<uint8_t*>(malloc(memoryLayout->getBufferSize()));
+        auto page = Memory::TupleBuffer::wrapMemory(newSpace, memoryLayout->getBufferSize(), [](Memory::detail::MemorySegment* memSegment, Memory::BufferRecycler*){
+            if (memSegment) {
+                free(memSegment);
+            }
+        });
+        pages.emplace_back(page);
+        // if (auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        // {
+        //     pages.emplace_back(page.value());
+        // }
+        // else
+        // {
+        //     throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+        // }
     }
 }
 

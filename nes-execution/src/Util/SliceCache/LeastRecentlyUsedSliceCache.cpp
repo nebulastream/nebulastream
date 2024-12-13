@@ -11,29 +11,37 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Util/SliceCache/LeastRecentlyUsedSliceCache.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-LeastRecentlyUsedSliceCache::LeastRecentlyUsedSliceCache(uint64_t cacheSize) : cacheSize(cacheSize) {
-    cache.wlock()->reserve(cacheSize);
+LeastRecentlyUsedSliceCache::LeastRecentlyUsedSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner)
+    : cacheSize(cacheSize), sliceAssigner(sliceAssigner)
+{
 }
 
-LeastRecentlyUsedSliceCache::~LeastRecentlyUsedSliceCache() {}
+LeastRecentlyUsedSliceCache::~LeastRecentlyUsedSliceCache()
+{
+}
 
-std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(uint64_t sliceId) {
+std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(Timestamp timestamp)
+{
+    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
+
     // Search for corresponding slice
-    auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
-    auto it = cacheLocked->find(sliceId);
-    if (it!=cacheLocked->end()) {
+    auto it = cache.find(sliceId);
+    if (it != cache.end())
+    {
         // If found, bring slice to front of cache and return
         auto& currentTuple = it->second;
         const auto oldListPosition = std::get<listPosition>(currentTuple);
-        
-        lruSlicesLocked->erase(oldListPosition);
 
-        lruSlicesLocked->push_front(sliceId);
-        std::get<listPosition>(currentTuple) = lruSlicesLocked->begin();
+        lruSlices.erase(oldListPosition);
+
+        lruSlices.push_front(sliceId);
+        std::get<listPosition>(currentTuple) = lruSlices.begin();
 
         return std::get<SliceCache::SlicePtr>(currentTuple);
     }
@@ -41,21 +49,30 @@ std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCac
     return {};
 }
 
-bool LeastRecentlyUsedSliceCache::passSliceToCache(uint64_t sliceId, SliceCache::SlicePtr newSlice) {
+bool LeastRecentlyUsedSliceCache::passSliceToCache(Timestamp timestamp, SliceCache::SlicePtr newSlice)
+{
+    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
+
     // Check if slice already in cache
-    auto [cacheLocked, lruSlicesLocked] = folly::acquireLocked(cache, lruSlices);
-    if (cacheLocked->contains(sliceId)) {
+    if (cache.contains(sliceId))
+    {
         return false;
     }
     // Check if cache full
-    if(cacheLocked->size()==cacheSize) {
+    if (cache.size() == cacheSize)
+    {
         // If full, remove least recently used slice
-        cacheLocked->erase(lruSlicesLocked->back());
-        lruSlicesLocked->pop_back();
+        cache.erase(lruSlices.back());
+        lruSlices.pop_back();
     }
     // Add new slice to cache
-    lruSlicesLocked->push_front(sliceId);
-    cacheLocked->emplace(sliceId, std::make_tuple(lruSlicesLocked->begin(), newSlice));
+    lruSlices.push_front(sliceId);
+    cache.emplace(sliceId, std::make_tuple(lruSlices.begin(), newSlice));
     return true;
 }
-}// namespace NES::Runtime::Execution::Operators
+
+void LeastRecentlyUsedSliceCache::deleteSliceFromCache(Timestamp)
+{
+}
+
+} // namespace NES::Runtime::Execution::Operators

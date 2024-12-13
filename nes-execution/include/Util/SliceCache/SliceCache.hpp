@@ -13,13 +13,8 @@
 */
 #pragma once
 
-// #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
-// #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
-// #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
-#include <cstdint>
 #include <memory>
 #include <optional>
-#include <variant>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -33,9 +28,8 @@ using SliceCachePtr = std::shared_ptr<SliceCache>;
  */
 class SliceCache
 {
-
 public:
-  using SlicePtr = std::variant<std::shared_ptr<Slice>>; //std::variant<StreamSlicePtr, NonKeyedSlicePtr, KeyedSlicePtr>;
+    using SlicePtr = std::shared_ptr<Slice>;
 
     /**
      * @brief destructor
@@ -47,7 +41,7 @@ public:
      * @param sliceId
      * @return SlicePtr
      */
-    virtual std::optional<SlicePtr> getSliceFromCache(uint64_t sliceId) = 0;
+    virtual std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) = 0;
 
     /**
      * @brief Pass a slice to the cache. It is up to each implementation whether it gets inserted and how.
@@ -56,7 +50,13 @@ public:
      * @param slice
      * @return bool
      */
-    virtual bool passSliceToCache(uint64_t sliceId, SlicePtr slice) = 0;
+    virtual bool passSliceToCache(Timestamp timestamp, SlicePtr slice) = 0;
+
+    /**
+     * @brief Deletes a slice from the cache.
+     * @param sliceId
+     */
+    virtual void deleteSliceFromCache(Timestamp timestamp) = 0;
 };
 
 } // namespace NES::Runtime::Execution::Operators

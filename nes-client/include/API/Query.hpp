@@ -388,6 +388,12 @@ public:
     Query& sortBuffer(std::string const& sortFieldIdentifier, std::string const& sortOrder);
 
     /**
+     * @brief: Sort each buffer by the given field.
+     * @return the query
+     */
+    Query& delayBuffer();
+
+    /**
      * @brief: Limit the number of records according to the limit count.
      * @param limitCount
      * @return the query
