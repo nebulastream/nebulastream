@@ -19,23 +19,27 @@ We want to add a new parser, which:
 - (G1) supports an SQL-like declarative streaming syntax (see CQL paper [1]),
 - (G2) is reasonably efficient (i.e., below a millisecond for a (TPC-H-style complex) query, and
 - (G3) transforms the query into the NebulaStream-internal format (see the query above).
+- (G4) is hackable/maintainable as we want to extend it with (partly) to-be-developed SQL streaming extensions
 
 # Non-Goals
-- Highest performance is no primary goal.
-- Full SQL support and a discussion of desired SQL features are no goals of this DD.
-- A specific streaming extension syntax will we discussed in another DD.
+- (NG1) Highest performance is no primary goal.
+- (NG2) Full SQL support and a discussion of desired SQL features are non-goals of this DD.
+- (NG3) A specific streaming extension syntax will be discussed in another DD.
 
 # Solution Background
 A parser is part of every database system with a language interface.
 Most systems use parser generators (e.g., ANTLR or Flex/Bison) over handwritten parsers.
 Parser generators generate the parser code based on the grammar.
-One then must only transform the generic data structures of parsed tokens into custom data structured, for example, representing SQL statements with a select, from, and where clause.
+One then must only transform the generic data structures of parsed tokens into custom data structures, for example, representing SQL statements with a select, from, and where clause.
 
-Parsers of existing systems can be taken as a baseline already defining large parts of the targeted grammar and custom data structures.
-But one can also start with a simpler, potentially easier to extend or maintain grammar.
+Parsers of existing systems can be taken as a baseline that already defines large parts of the targeted grammar and custom data structures.
+However, one can also start with a simpler, potentially easier-to-extend or maintain grammar.
 
 After looking into alternative approaches and discussing them, we find (on the one hand) that there is no evident best approach to choose (see advantages, disadvantages, and open questions).
-On the other hand, we could base our parser on different investigated alternatives.
+On the other hand, we could base our parser on different alternatives that were investigated.
+
+The Firebolt paper (see [2], Section 2.2) also discusses the team's considerations (language, simplicity vs. SQL support, usability, specific projects) when they chose the parser.
+
 
 # Our Proposed Solution
 Based on the research group's experience and our discussion, we voted to use an ANTLR-based parser over the alternatives below.
@@ -48,6 +52,7 @@ A former student integrated an ANTLR parser into NES https://github.com/nebulast
 -  \- This parser has limited SQL support, missing many SQL features, e.g., a complete set of set operations.
 -  \- Also for existing features, it has some shortcomings, which are not documented, such as no case mix (e.g., "SeleCT") for keywords.
 -  \+ It contains streaming extensions, also tailored to the old NES system, e.g., MQTT sink.
+- @alepping and @ls-1801 have integrated this parser with PR #424
 
 # Alternatives
 Basically, we could base our parser on other systems.
@@ -68,6 +73,7 @@ https://github.com/hyrise/sql-parser
 - A c++ parser library, originally built for the Hyrise database system
 - \+ A standalone, ready-to-use library.
 - \- No full SQL support and minor bugs (see also https://github.com/hyrise/sql-parser/issues)
+- \+ Showed usefulness in Firebolt (see Firebolt paper [2])
 
 ### Other Alternatives
 - Google's zetasql https://github.com/google/zetasql
@@ -79,15 +85,17 @@ https://github.com/hyrise/sql-parser
 - The ANTLR project provides grammars of different systems, e.g., PostgreSQL, SQLite  https://github.com/antlr/grammars-v4/tree/master/sql
     -  \+ It supports a rich set of SQL features.
     -  \- Not well documented and tested.
-    -  \- Only grammar file, but no custom data structures (see `SQLStatement` above)  
+    -  \- Only grammar file, but no custom data structures (see `SQLStatement` above)
 
 ### Future difficulties
 When extending the grammar for streaming, e.g., Windows specifications in the from clause, we recently encountered parser conflicts, e.g., shift/reduce conflicts (https://www.gnu.org/software/bison/manual/html_node/Shift_002fReduce.html).
 The appearance, naturally, depends on the used feature and syntax, e.g., using only brackets (e.g., `[RANGE 10 HOUR]`) or a `WINDOW` keyword for the definition.
 It is open to us how much effort it is to integrate every streaming extension without conflicts.
 
+
 # Sources and Further Reading
 - [1] Arvind Arasu, Shivnath Babu, Jennifer Widom: The CQL continuous query language: semantic foundations and query execution. VLDB J. 15(2): 121-142 (2006).
   http://infolab.stanford.edu/~arvind/papers/cql-vldbj.pdf
-
+- [2] Mosha Pasumansky, Benjamin Wagner: Assembling a Query Engine From Spare Parts. CDMS@VLDB (2022).
+  https://cdmsworkshop.github.io/2022/Proceedings/ShortPapers/Paper1_MoshaPasumansky.pdf
 
