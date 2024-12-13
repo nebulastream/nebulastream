@@ -13,8 +13,11 @@
 */
 
 #pragma once
+#include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
+#include <Listeners/SystemEventListener.hpp>
 #include <Runtime/NodeEngine.hpp>
+#include <QueryEngineStatisticListener.hpp>
 
 namespace NES::Runtime
 {
@@ -24,11 +27,16 @@ class NodeEngineBuilder
 public:
     NodeEngineBuilder() = delete;
 
-    explicit NodeEngineBuilder(const Configurations::WorkerConfiguration& workerConfiguration);
+    explicit NodeEngineBuilder(
+        const Configurations::WorkerConfiguration& workerConfiguration,
+        std::shared_ptr<SystemEventListener> systemEventListener,
+        std::shared_ptr<QueryEngineStatisticListener> statisticListener);
 
     std::unique_ptr<NodeEngine> build();
 
 private:
     const Configurations::WorkerConfiguration& workerConfiguration;
+    std::shared_ptr<SystemEventListener> systemEventListener;
+    std::shared_ptr<QueryEngineStatisticListener> statisticEventListener;
 };
 }
