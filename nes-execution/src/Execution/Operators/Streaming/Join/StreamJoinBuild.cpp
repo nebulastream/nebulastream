@@ -72,7 +72,7 @@ StreamJoinBuild::StreamJoinBuild(
 
 void StreamJoinBuild::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
-    /// Update the watermark for the nlj operator and trigger slices
+    /// Update the watermark for the stream join operator and trigger slices
     auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
     invoke(
         checkWindowsTriggerProxy,

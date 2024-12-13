@@ -14,6 +14,7 @@
 add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
         IngestionTimeWatermarkAssignment.cpp
+        LatenessProcessor.cpp
         MultiOriginWatermarkProcessor.cpp
         TimeFunction.cpp
 )
