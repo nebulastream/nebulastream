@@ -25,6 +25,7 @@ namespace NES
  * @brief The Buffer Sequence Number class encapsulates a unique id for every tuple buffer in the system.
  * It consists out of a sequence number and an origin id. Their combination allows uniquely define a tuple buffer in the system.
  */
+// Todo: delete?
 class BufferSequenceNumber
 {
 public:

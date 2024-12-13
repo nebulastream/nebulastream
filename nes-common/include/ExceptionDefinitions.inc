@@ -82,6 +82,7 @@ EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
 EXCEPTION(BufferAccessException, 3008, "buffer allocation failure")
+EXCEPTION(CannotUpdateWatermark, 3009, "cannot update watermark")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

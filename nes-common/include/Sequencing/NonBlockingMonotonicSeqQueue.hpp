@@ -30,12 +30,12 @@ namespace NES::Sequencing
 {
 
 /**
- * @brief This class implements a non blocking monotonic sequence queue,
+ * @brief This class implements a non-blocking monotonic sequence queue,
  * which is mainly used as a foundation for an efficient watermark processor.
  * This queue receives values of type T with an associated sequence number and
  * returns the value with the highest sequence number in strictly monotonic increasing order.
  *
- * Internally this queue is implemented as a linked-list of blocks and each block stores a array of <seq,T> pairs.
+ * Internally this queue is implemented as a linked-list of blocks and each block stores an array of <seq,T> pairs.
  * |------- |       |------- |
  * | s1, s2 | ----> | s3, s4 |
  * |------- |       | ------ |
@@ -105,7 +105,7 @@ private:
     class Block
     {
     public:
-        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex) {};
+        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex) { };
         ~Block() = default;
         const uint64_t blockIndex;
         std::array<Container, blockSize> log;
@@ -184,7 +184,7 @@ private:
         auto targetBlockIndex = seq.sequenceNumber / blockSize;
         /// Lookup the current block
         auto currentBlock = std::atomic_load(&head);
-        /// if the blockIndex is smaller the target block index we travers the next block
+        /// if the blockIndex is smaller the target block index we traverse the next block
         while (currentBlock->blockIndex < targetBlockIndex)
         {
             /// append new block if the next block is a nullptr
@@ -194,7 +194,7 @@ private:
                 auto newBlock = std::make_shared<Block>(currentBlock->blockIndex + 1);
                 std::atomic_compare_exchange_weak(&currentBlock->next, &nextBlock, newBlock);
                 /// we don't care if this or another thread succeeds, as we just start over again in the loop
-                /// and use what ever is now stored in currentBlock.next
+                /// and use whatever is now stored in currentBlock.next
             }
             else
             {
@@ -204,24 +204,28 @@ private:
         }
 
         /// check if we really found the correct block
-        if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
-              && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize))
+        const bool sequenceNumberIsLargerThanFoundBlockIndex = seq.sequenceNumber >= currentBlock->blockIndex * blockSize;
+        const bool sequenceNumberIsSmallerThanFoundBlockEnd = seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize;
+        if (not sequenceNumberIsLargerThanFoundBlockIndex and sequenceNumberIsSmallerThanFoundBlockEnd)
         {
-            throw Exceptions::RuntimeException("The found block is wrong");
+            throw CannotUpdateWatermark(
+                "Found block: {}, with start: {} and end: {}, but sequence number is out of range: {}, ",
+                currentBlock,
+                currentBlock->blockIndex * blockSize,
+                currentBlock->blockIndex * blockSize + blockSize,
+                seq.sequenceNumber);
         }
 
-        /// Emplace value in block
+        /// Emplace value in block (sequence numbers are unique (per source), so we can safely place it in the block)
         auto seqIndexInBlock = seq.sequenceNumber % blockSize;
         currentBlock->log[seqIndexInBlock].setSeqNumber(seq.sequenceNumber);
         currentBlock->log[seqIndexInBlock].emplaceChunk(seq.chunkNumber, seq.lastChunk, value);
     }
 
-    /**
-     * @brief This method shifts tries to shift the current value.
-     * To this end, it checks if the next expected sequence number (currentSeq + 1) is already inserted.
-     * If the next sequence number is available it replaces the currentSeq with the next one.
-     * If the next sequence number is in a new block this method also replaces the pointer to the next block.
-     */
+    /// This method tries to shift the current value
+    /// it checks if the next expected sequence number (currentSeq + 1) already exists
+    /// If the next sequence number is available it replaces the currentSeq with the next one
+    /// If the next sequence number is in a new block this method also replaces the pointer to the next block
     void shiftCurrentValue()
     {
         auto checkForUpdate = true;
