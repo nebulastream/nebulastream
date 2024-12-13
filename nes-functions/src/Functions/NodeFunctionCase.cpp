@@ -62,7 +62,7 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
             *elem);
         ///all elements must have same stamp as defaultExp value
         INVARIANT(
-            !(*defaultExp->getStamp() == *elem->getStamp()),
+            *defaultExp->getStamp() == *elem->getStamp(),
             "Error during stamp inference. All elements must have same stamp as defaultExp default value, but element {} has: {}. Right "
             "was: {}",
             *elem,
