@@ -42,32 +42,32 @@ function(install_llvm_lit)
     endif()
 endfunction()
 
-# We discover all tests and write them into test/tests_discovery.json
+# We discover all tests and write them into tests/tests_discovery.json
 function(discover_tests)
     execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/parse_tests.py
-            --test_dirs ${CMAKE_SOURCE_DIR}/test
+            --test_dirs ${CMAKE_SOURCE_DIR}/tests
             --file_endings ".test"
-            --output ${CMAKE_BINARY_DIR}/test/tests_discovery.json
+            --output ${CMAKE_BINARY_DIR}/tests/tests_discovery.json
     )
 
-    if (EXISTS ${CMAKE_BINARY_DIR}/test/tests_discovery.json)
+    if (EXISTS ${CMAKE_BINARY_DIR}/tests/tests_discovery.json)
         set(TESTS_DISCOVERED TRUE PARENT_SCOPE)
     else()
         set(TESTS_DISCOVERED FALSE PARENT_SCOPE)
     endif()
 endfunction()
 
-# We discover all test groups and write them into test/test_groups_discovery.json
+# We discover all test groups and write them into tests/test_groups_discovery.json
 function(discover_test_groups)
     execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/parse_test_groups.py
-            --test_dirs ${CMAKE_SOURCE_DIR}/test
+            --test_dirs ${CMAKE_SOURCE_DIR}/tests
             --file_endings ".test"
-            --output ${CMAKE_BINARY_DIR}/test/test_groups_discovery.json
+            --output ${CMAKE_BINARY_DIR}/tests/test_groups_discovery.json
     )
 
-    if (EXISTS ${CMAKE_BINARY_DIR}/test/test_groups_discovery.json)
+    if (EXISTS ${CMAKE_BINARY_DIR}/tests/test_groups_discovery.json)
         set(TEST_GROUPS_DISCOVERED TRUE PARENT_SCOPE)
     else()
         set(TEST_GROUPS_DISCOVERED FALSE PARENT_SCOPE)
@@ -76,7 +76,7 @@ endfunction()
 
 # Create individual test targets
 function(create_test_targets)
-    file(READ ${CMAKE_BINARY_DIR}/test/tests_discovery.json TESTS_JSON)
+    file(READ ${CMAKE_BINARY_DIR}/tests/tests_discovery.json TESTS_JSON)
     string(JSON TESTS_COUNT LENGTH ${TESTS_JSON})
     math(EXPR TESTS_COUNT_END "${TESTS_COUNT} - 1")
 
@@ -96,7 +96,7 @@ function(create_test_targets)
             add_custom_target(
                     LIT_${TEST_NAME}
                     USES_TERMINAL
-                    COMMAND ${VENV_DIR}/bin/lit --filter ${TEST_NAME} ${VERBOSE} ${CMAKE_SOURCE_DIR}/test
+                    COMMAND ${VENV_DIR}/bin/lit --filter ${TEST_NAME} ${VERBOSE} ${CMAKE_SOURCE_DIR}/tests
                     -DCLIENT_BINARY=$<TARGET_FILE:nebuli>
                     -DWORKER_BINARY=$<TARGET_FILE:single-node>
                     DEPENDS $<TARGET_FILE:nebuli> $<TARGET_FILE:single-node>
@@ -111,7 +111,7 @@ endfunction()
 
 # Create test group targets
 function(create_test_group_targets)
-    file(READ "${CMAKE_BINARY_DIR}/test/test_groups_discovery.json" TEST_GROUPS_JSON)
+    file(READ "${CMAKE_BINARY_DIR}/tests/test_groups_discovery.json" TEST_GROUPS_JSON)
     string(JSON GROUP_COUNT LENGTH ${TEST_GROUPS_JSON})
     math(EXPR GROUP_COUNT_END "${GROUP_COUNT} - 1")
 
@@ -157,7 +157,7 @@ function(create_test_group_targets)
             add_custom_target(
                     "LITGRP_${GROUP_NAME}"
                     USES_TERMINAL
-                    COMMAND ${VENV_DIR}/bin/lit --filter ${COMBINED_TEST_FILENAMES_PIPE} ${VERBOSE} ${CMAKE_SOURCE_DIR}/test
+                    COMMAND ${VENV_DIR}/bin/lit --filter ${COMBINED_TEST_FILENAMES_PIPE} ${VERBOSE} ${CMAKE_SOURCE_DIR}/tests
                     -DCLIENT_BINARY=$<TARGET_FILE:nebuli>
                     -DWORKER_BINARY=$<TARGET_FILE:single-node>
                     DEPENDS $<TARGET_FILE:nebuli> $<TARGET_FILE:single-node>
@@ -172,6 +172,6 @@ endfunction()
 
 # Copy necessary test data and scripts to the build directory
 function(copy_test_files_to_build_directory)
-    file(COPY ${CMAKE_SOURCE_DIR}/test/testdata DESTINATION ${CMAKE_BINARY_DIR}/test)
-    file(COPY ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/result_checker.py DESTINATION ${CMAKE_BINARY_DIR}/test)
+    file(COPY ${CMAKE_SOURCE_DIR}/tests/testdata DESTINATION ${CMAKE_BINARY_DIR}/tests)
+    file(COPY ${CMAKE_SOURCE_DIR}/scripts/llvm-lit/result_checker.py DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endfunction()

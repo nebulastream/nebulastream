@@ -19,16 +19,12 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <TestUtils/UtilityFunctions.hpp>
-#include <detail/PortDispatcher.hpp>
+#include <boost/asio.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
-#include <BorrowedPort.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
-
-#include <boost/asio.hpp>
 
 namespace NES::Testing
 {
@@ -37,9 +33,10 @@ using namespace ::testing;
 struct QueryTestParam
 {
     std::string queryFile;
-    int numSources;
+    int numSourcesTCP;
     int expectedNumTuples;
     int expectedCheckSum;
+    size_t numInputTuplesToProduceByTCPMockServer;
 
     /// Add this method to your QueryTestParam struct
     friend std::ostream& operator<<(std::ostream& os, const QueryTestParam& param)
@@ -48,10 +45,6 @@ struct QueryTestParam
     }
 };
 
-/**
- * @brief Integration tests for the SingleNodeWorker. Tests entire code path from registration to running the query, stopping and
- * unregistration.
- */
 class SingleNodeIntegrationTest : public BaseIntegrationTest, public testing::WithParamInterface<QueryTestParam>
 {
 public:
@@ -69,19 +62,26 @@ class SyncedMockTcpServer
 {
 private:
     using tcp = boost::asio::ip::tcp;
-    constexpr static int NUM_TUPLES_TO_PRODUCE = 200;
 
 public:
-    SyncedMockTcpServer(const short port) : acceptor(io_context, tcp::endpoint(tcp::v4(), port)) { }
+    SyncedMockTcpServer(size_t numInputTuplesToProduce)
+        : acceptor(io_context, tcp::endpoint(tcp::v4(), 0)), numInputTuplesToProduce(numInputTuplesToProduce)
+    {
+    }
 
-    static std::unique_ptr<SyncedMockTcpServer> create(uint16_t port) { return std::make_unique<SyncedMockTcpServer>(port); }
+    static std::unique_ptr<SyncedMockTcpServer> create(size_t numInputTuplesToProduce)
+    {
+        return std::make_unique<SyncedMockTcpServer>(numInputTuplesToProduce);
+    }
+
+    uint16_t getPort() const { return acceptor.local_endpoint().port(); }
 
     void run()
     {
         tcp::socket socket(io_context);
         acceptor.accept(socket);
 
-        for (uint32_t i = 0; i < NUM_TUPLES_TO_PRODUCE; ++i)
+        for (uint32_t i = 0; i < numInputTuplesToProduce; ++i)
         {
             std::string data = std::to_string(i) + "\n";
             boost::asio::write(socket, boost::asio::buffer(data));
@@ -95,39 +95,41 @@ public:
 private:
     boost::asio::io_context io_context;
     tcp::acceptor acceptor;
+    size_t numInputTuplesToProduce;
 };
 
-TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
+
+TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
 {
     using ResultSchema = struct
     {
         uint64_t id;
     };
-
-    const auto& [queryName, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
+    const auto& [queryName, numSourcesTCP, expectedNumTuples, expectedCheckSum, numInputTuplesToProduceByTCPMockServer] = GetParam();
+    const auto testSpecificResultFileName = fmt::format("{}.csv", IntegrationTestUtil::getUniqueTestIdentifier());
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
-    const std::string queryResultFile = fmt::format("{}.csv", queryName);
-    IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
+    IntegrationTestUtil::removeFile(testSpecificResultFileName);
 
     SerializableDecomposedQueryPlan queryPlan;
     if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
-    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
     /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSourcesTCP; ++tcpSourceNumber)
     {
-        auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
-        mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
+        auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
+        auto mockTCPServerPort = mockTCPServer->getPort();
+        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
     /// Register the query and start it.
@@ -141,12 +143,12 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
         serverThread.join(); /// wait for serverThread to finish
     }
 
-    IntegrationTestUtil::waitForQueryStatus(queryId, Running, uut);
+    ASSERT_TRUE(IntegrationTestUtil::waitForQueryToEnd(queryId, uut));
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
-    auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
+    auto buffers = IntegrationTestUtil::createBuffersFromCSVFile(testSpecificResultFileName, sinkSchema, *bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
     size_t checkSum = 0; /// simple summation of all values
@@ -161,14 +163,15 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     EXPECT_EQ(numProcessedTuples, expectedNumTuples) << "Query did not produce the expected number of tuples";
     EXPECT_EQ(checkSum, expectedCheckSum) << "Query did not produce the expected expected checksum";
 
-    IntegrationTestUtil::removeFile(queryResultFile);
+    IntegrationTestUtil::removeFile(testSpecificResultFileName);
 }
 
 INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
-        QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
-} /// namespace NES::Testing
+        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
+        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */, 200},
+        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */, 200},
+        QueryTestParam{"qOneSourceTCP", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
+}

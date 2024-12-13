@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
@@ -53,7 +52,6 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan)
     try
     {
         auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
-        typeInferencePhase->execute(queryPlan);
     }
     catch (std::exception& e)
     {
@@ -105,22 +103,14 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
     const NES::QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Getting the source operators from the query plan
-    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
 
     for (const auto& source : sourceOperators)
     {
-        auto sourceDescriptor = source->getSourceDescriptor();
-
-        /// Filtering for logical sources
-        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
+        /// Making sure that all logical sources are present in the source catalog
+        if (!sourceCatalog->containsLogicalSource(source->getLogicalSourceName()))
         {
-            auto sourceName = sourceDescriptor->getLogicalSourceName();
-
-            /// Making sure that all logical sources are present in the source catalog
-            if (!sourceCatalog->containsLogicalSource(sourceName))
-            {
-                throw QueryInvalid("The logical source '" + sourceName + "' can not be found in the SourceCatalog\n");
-            }
+            throw QueryInvalid("The logical source '" + source->getLogicalSourceName() + "' can not be found in the SourceCatalog\n");
         }
     }
 }
@@ -129,14 +119,13 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     const QueryPlanPtr& queryPlan, const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
 {
     /// Identify the source operators
-    auto sourceOperators = queryPlan->getSourceOperators();
+    auto sourceOperators = queryPlan->getSourceOperators<SourceNameLogicalOperator>();
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        auto logicalSourceName = sourceOperator->getSourceDescriptor()->getLogicalSourceName();
-        if (sourceCatalog->getPhysicalSources(logicalSourceName).empty())
+        if (sourceCatalog->getPhysicalSources(sourceOperator->getLogicalSourceName()).empty())
         {
-            invalidLogicalSourceNames.emplace_back(logicalSourceName);
+            invalidLogicalSourceNames.emplace_back(sourceOperator->getLogicalSourceName());
         }
     }
 
@@ -167,7 +156,7 @@ void SemanticQueryValidation::sinkOperatorValidityCheck(const QueryPlanPtr& quer
     /// Check if all root operators of type sink
     for (auto& root : rootOperators)
     {
-        if (!root->instanceOf<SinkLogicalOperator>())
+        if (!NES::Util::instanceOf<SinkLogicalOperator>(root))
         {
             throw QueryInvalid("Query "s + queryPlan->toString() + " does not contain a valid sink operator as root");
         }
@@ -184,7 +173,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
         {
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
-                auto field = inputField->as<FieldAccessExpressionNode>();
+                auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
                 if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
                 {
                     throw QueryInvalid(

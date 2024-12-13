@@ -15,13 +15,13 @@
 #pragma once
 
 #include <memory>
-#include <Expressions/ExpressionNode.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
 {
-class FieldAccessExpressionNode;
-class ConstantValueExpressionNode;
+class NodeFunctionFieldAccess;
+class NodeFunctionConstantValue;
 } /// namespace NES
 
 namespace NES::Optimizer
@@ -68,43 +68,43 @@ private:
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
      * @param logicalOperator: the operator to be sorted
-     * @return pointer to the updated expression
+     * @return pointer to the updated function
      */
-    ExpressionNodePtr sortAttributesInExpression(ExpressionNodePtr expression);
+    NodeFunctionPtr sortAttributesInFunction(NodeFunctionPtr function);
 
     /**
-     * @brief Alphabetically sort the attributes within the arithmetic expression
-     * @param expression: the input arithmetic expression
-     * @return pointer to the updated expression
+     * @brief Alphabetically sort the attributes within the arithmetic function
+     * @param function: the input arithmetic function
+     * @return pointer to the updated function
      */
-    ExpressionNodePtr sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression);
+    NodeFunctionPtr sortAttributesInArithmeticalFunctions(NodeFunctionPtr function);
 
     /**
-     * @brief Alphabetically sort the attributes within the logical expression
-     * @param expression: the input logical expression
-     * @return pointer to the updated expression
+     * @brief Alphabetically sort the attributes within the logical function
+     * @param function: the input logical function
+     * @return pointer to the updated function
      */
-    ExpressionNodePtr sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression);
+    NodeFunctionPtr sortAttributesInLogicalFunctions(const NodeFunctionPtr& function);
 
     /**
-     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic expression of type
-     * ExpressionType. The fetched fields are then sorted alphabetically.
-     * @param expression: the expression to be used
-     * @return: vector of expression containing commutative field access or constant expression type
+     * @brief fetch all commutative fields of type field access or constant from the relational or arithmetic function of type
+     * FunctionType. The fetched fields are then sorted alphabetically.
+     * @param function: the function to be used
+     * @return: vector of function containing commutative field access or constant function type
      */
-    template <class ExpressionType>
-    std::vector<ExpressionNodePtr> fetchCommutativeFields(const ExpressionNodePtr& expression)
+    template <class FunctionType>
+    std::vector<NodeFunctionPtr> fetchCommutativeFields(const NodeFunctionPtr& function)
     {
-        std::vector<ExpressionNodePtr> commutativeFields;
-        if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>())
+        std::vector<NodeFunctionPtr> commutativeFields;
+        if (Util::instanceOf<NodeFunctionFieldAccess>(function) || Util::instanceOf<NodeFunctionConstantValue>(function))
         {
-            commutativeFields.push_back(expression);
+            commutativeFields.push_back(function);
         }
-        else if (expression->template instanceOf<ExpressionType>())
+        else if (Util::instanceOf<FunctionType>(function))
         {
-            for (const auto& child : expression->getChildren())
+            for (const auto& child : function->getChildren())
             {
-                auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
+                auto childCommutativeFields = fetchCommutativeFields<FunctionType>(Util::as<NodeFunction>(child));
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
         }
@@ -112,20 +112,20 @@ private:
     }
 
     /**
-     * @brief Replace the original expression within parent expression with updated expression
-     * @param parentExpression: the parent expression containing original expression
-     * @param originalExpression: the original expression
-     * @param updatedExpression: the updated expression
+     * @brief Replace the original function within parent function with updated function
+     * @param parentFunction: the parent function containing original function
+     * @param originalFunction: the original function
+     * @param updatedFunction: the updated function
      */
-    bool replaceCommutativeExpressions(
-        const ExpressionNodePtr& parentExpression, const ExpressionNodePtr& originalExpression, const ExpressionNodePtr& updatedExpression);
+    bool replaceCommutativeFunctions(
+        const NodeFunctionPtr& parentFunction, const NodeFunctionPtr& originalFunction, const NodeFunctionPtr& updatedFunction);
 
     /**
-     * @brief Fetch the value of the left most constant expression or the name of the left most field access expression within
-     * the input expression. This information is then used for performing global sorting in case of a binary expression.
-     * @param expression: the input expression
-     * @return the name or value of field or constant expression
+     * @brief Fetch the value of the left most constant function or the name of the left most field access function within
+     * the input function. This information is then used for performing global sorting in case of a binary function.
+     * @param function: the input function
+     * @return the name or value of field or constant function
      */
-    static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
+    static std::string fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function);
 };
 } /// namespace NES::Optimizer

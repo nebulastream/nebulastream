@@ -17,12 +17,13 @@
 #include <memory>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 
 namespace NES
 {
 
 /**
- * @brief Join operator, which contains an expression as a predicate.
+ * @brief Join operator, which contains an function as a predicate.
  */
 class LogicalJoinOperator : public LogicalBinaryOperator, public OriginIdAssignmentOperator
 {
@@ -59,10 +60,10 @@ public:
     const std::string& getWindowEndFieldName() const;
 
     /**
-     * @brief Getter for join expression, i.e. a set of binary expressions
-     * @return joinExpressions
+     * @brief Getter for join function, i.e. a set of binary functions
+     * @return joinFunctions
      */
-    const ExpressionNodePtr getJoinExpression() const;
+    const NodeFunctionPtr getJoinFunction() const;
 
     /**
      * @brief Sets the window start, end, and key field name during the serialization of the operator
@@ -76,4 +77,5 @@ private:
     std::string windowStartFieldName;
     std::string windowEndFieldName;
 };
+using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 } /// namespace NES

@@ -15,23 +15,24 @@
 #include <numeric>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Expressions/ConstantValueExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionAdd.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionDiv.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionMul.hpp>
+#include <Functions/ArithmeticalFunctions/NodeFunctionSub.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreater.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionGreaterEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLess.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionLessEquals.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionNegate.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionOr.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,105 +53,106 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     for (auto const& filterOperator : filterOperators)
     {
         auto predicate = filterOperator->getPredicate();
-        auto updatedPredicate = sortAttributesInExpression(predicate);
+        auto updatedPredicate = sortAttributesInFunction(predicate);
         auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
         updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
-        updatedFilter->as_if<LogicalOperator>()->setOutputSchema(filterOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        Util::as_if<LogicalOperator>(updatedFilter)
+            ->setOutputSchema(Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
         filterOperator->replace(updatedFilter);
     }
 
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     for (auto const& mapOperator : mapOperators)
     {
-        auto mapExpression = mapOperator->getMapExpression();
-        auto updatedMapExpression = sortAttributesInExpression(mapExpression)->as<FieldAssignmentExpressionNode>();
-        auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapExpression);
+        auto mapFunction = mapOperator->getMapFunction();
+        auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
+        auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapFunction);
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
-        updatedMap->as_if<LogicalOperator>()->setOutputSchema(mapOperator->as_if<LogicalOperator>()->getOutputSchema()->copy());
+        Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
     }
     return queryPlan;
 }
 
-NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::ExpressionNodePtr expression)
+NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFunctionPtr function)
 {
-    NES_DEBUG("Sorting attributed for input expression {}", expression->toString());
-    if (expression->instanceOf<NES::LogicalExpressionNode>())
+    NES_DEBUG("Sorting attributed for input function {}", function->toString());
+    if (Util::instanceOf<NES::LogicalNodeFunction>(function))
     {
-        return sortAttributesInLogicalExpressions(expression);
+        return sortAttributesInLogicalFunctions(function);
     }
-    if (expression->instanceOf<NES::ArithmeticalExpressionNode>())
+    if (Util::instanceOf<NES::NodeFunctionArithmetical>(function))
     {
-        return sortAttributesInArithmeticalExpressions(expression);
+        return sortAttributesInArithmeticalFunctions(function);
     }
-    else if (expression->instanceOf<NES::FieldAssignmentExpressionNode>())
+    else if (Util::instanceOf<NES::NodeFunctionFieldAssignment>(function))
     {
-        auto fieldAssignmentExpressionNode = expression->as<NES::FieldAssignmentExpressionNode>();
-        auto assignment = fieldAssignmentExpressionNode->getAssignment();
-        auto updatedAssignment = sortAttributesInExpression(assignment);
-        auto field = fieldAssignmentExpressionNode->getField();
-        return NES::FieldAssignmentExpressionNode::create(field, updatedAssignment);
+        auto fieldAssignmentNodeFunction = Util::as<NES::NodeFunctionFieldAssignment>(function);
+        auto assignment = fieldAssignmentNodeFunction->getAssignment();
+        auto updatedAssignment = sortAttributesInFunction(assignment);
+        auto field = fieldAssignmentNodeFunction->getField();
+        return NES::NodeFunctionFieldAssignment::create(field, updatedAssignment);
     }
-    else if (expression->instanceOf<NES::ConstantValueExpressionNode>() || expression->instanceOf<NES::FieldAccessExpressionNode>())
+    else if (Util::instanceOf<NES::NodeFunctionConstantValue>(function) || Util::instanceOf<NES::NodeFunctionFieldAccess>(function))
     {
-        return expression;
+        return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the function: " + function->toString());
     return nullptr;
 }
 
-ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression)
+NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
 {
-    NES_DEBUG("Create Z3 expression for arithmetical expression {}", expression->toString());
-    if (expression->instanceOf<NES::AddExpressionNode>())
+    NES_DEBUG("Create Z3 function for arithmetical function {}", function->toString());
+    if (Util::instanceOf<NES::NodeFunctionAdd>(function))
     {
-        auto addExpressionNode = expression->as<NES::AddExpressionNode>();
+        auto addNodeFunction = Util::as<NES::NodeFunctionAdd>(function);
 
-        auto sortedLeft = sortAttributesInExpression(addExpressionNode->getLeft());
-        auto sortedRight = sortAttributesInExpression(addExpressionNode->getRight());
+        auto sortedLeft = sortAttributesInFunction(addNodeFunction->getLeft());
+        auto sortedRight = sortAttributesInFunction(addNodeFunction->getRight());
 
-        auto leftCommutativeFields = fetchCommutativeFields<NES::AddExpressionNode>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<NES::AddExpressionNode>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NES::NodeFunctionAdd>(sortedRight);
 
-        std::vector<ExpressionNodePtr> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<ExpressionNodePtr> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const NES::ExpressionNodePtr& lhsField, const NES::ExpressionNodePtr& rhsField)
+            [](const NES::NodeFunctionPtr& lhsField, const NES::NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<NES::ConstantValueExpressionNode>())
+                if (Util::instanceOf<NES::NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<NES::ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = Util::as<NES::NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = Util::as<NES::NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -164,9 +166,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -177,9 +179,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -187,79 +189,79 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             }
         }
 
-        if (!sortedLeft->instanceOf<AddExpressionNode>() || !sortedRight->instanceOf<AddExpressionNode>())
+        if (!Util::instanceOf<NodeFunctionAdd>(sortedLeft) || !Util::instanceOf<NodeFunctionAdd>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return AddExpressionNode::create(sortedRight, sortedLeft);
+                return NodeFunctionAdd::create(sortedRight, sortedLeft);
             }
         }
 
-        return AddExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionAdd::create(sortedLeft, sortedRight);
     }
-    if (expression->instanceOf<SubExpressionNode>())
+    if (Util::instanceOf<NodeFunctionSub>(function))
     {
-        auto subExpressionNode = expression->as<SubExpressionNode>();
-        auto left = subExpressionNode->getLeft();
-        auto right = subExpressionNode->getRight();
-        sortAttributesInExpression(left);
-        sortAttributesInExpression(right);
-        return expression;
+        auto subNodeFunction = Util::as<NodeFunctionSub>(function);
+        auto left = subNodeFunction->getLeft();
+        auto right = subNodeFunction->getRight();
+        sortAttributesInFunction(left);
+        sortAttributesInFunction(right);
+        return function;
     }
-    else if (expression->instanceOf<MulExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionMul>(function))
     {
-        auto mulExpressionNode = expression->as<MulExpressionNode>();
-        auto left = mulExpressionNode->getLeft();
-        auto right = mulExpressionNode->getRight();
+        auto mulNodeFunction = Util::as<NodeFunctionMul>(function);
+        auto left = mulNodeFunction->getLeft();
+        auto right = mulNodeFunction->getRight();
 
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<MulExpressionNode>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<MulExpressionNode>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionMul>(sortedRight);
 
-        std::vector<ExpressionNodePtr> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<ExpressionNodePtr> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -273,9 +275,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -286,9 +288,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -296,85 +298,85 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             }
         }
 
-        if (!sortedLeft->instanceOf<MulExpressionNode>() || !sortedRight->instanceOf<MulExpressionNode>())
+        if (!Util::instanceOf<NodeFunctionMul>(sortedLeft) || !Util::instanceOf<NodeFunctionMul>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return MulExpressionNode::create(sortedRight, sortedLeft);
+                return NodeFunctionMul::create(sortedRight, sortedLeft);
             }
         }
 
-        return MulExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionMul::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<DivExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionDiv>(function))
     {
-        auto divExpressionNode = expression->as<DivExpressionNode>();
-        auto left = divExpressionNode->getLeft();
-        auto right = divExpressionNode->getRight();
-        sortAttributesInExpression(left);
-        sortAttributesInExpression(right);
-        return expression;
+        auto divNodeFunction = Util::as<NodeFunctionDiv>(function);
+        auto left = divNodeFunction->getLeft();
+        auto right = divNodeFunction->getRight();
+        sortAttributesInFunction(left);
+        sortAttributesInFunction(right);
+        return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the arithmetical expression node: " + expression->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: " + function->toString());
     return nullptr;
 }
 
-ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const ExpressionNodePtr& expression)
+NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
 {
-    NES_DEBUG("Create Z3 expression node for logical expression {}", expression->toString());
-    if (expression->instanceOf<AndExpressionNode>())
+    NES_DEBUG("Create Z3 function node for logical function {}", function->toString());
+    if (Util::instanceOf<NodeFunctionAnd>(function))
     {
-        auto andExpressionNode = expression->as<AndExpressionNode>();
-        auto left = andExpressionNode->getLeft();
-        auto right = andExpressionNode->getRight();
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto andNodeFunction = Util::as<NodeFunctionAnd>(function);
+        auto left = andNodeFunction->getLeft();
+        auto right = andNodeFunction->getRight();
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<AndExpressionNode>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<AndExpressionNode>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionAnd>(sortedRight);
 
-        std::vector<ExpressionNodePtr> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<ExpressionNodePtr> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -388,9 +390,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -401,9 +403,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -411,68 +413,68 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             }
         }
 
-        if (!sortedLeft->instanceOf<AndExpressionNode>() || !sortedRight->instanceOf<AndExpressionNode>())
+        if (!Util::instanceOf<NodeFunctionAnd>(sortedLeft) || !Util::instanceOf<NodeFunctionAnd>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return AndExpressionNode::create(sortedRight, sortedLeft);
+                return NodeFunctionAnd::create(sortedRight, sortedLeft);
             }
         }
-        return AndExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionAnd::create(sortedLeft, sortedRight);
     }
-    if (expression->instanceOf<OrExpressionNode>())
+    if (Util::instanceOf<NodeFunctionOr>(function))
     {
-        auto orExpressionNode = expression->as<OrExpressionNode>();
-        auto left = orExpressionNode->getLeft();
-        auto right = orExpressionNode->getRight();
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto orNodeFunction = Util::as<NodeFunctionOr>(function);
+        auto left = orNodeFunction->getLeft();
+        auto right = orNodeFunction->getRight();
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
-        auto leftCommutativeFields = fetchCommutativeFields<OrExpressionNode>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<OrExpressionNode>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NodeFunctionOr>(sortedRight);
 
-        std::vector<ExpressionNodePtr> allCommutativeFields;
+        std::vector<NodeFunctionPtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
         allCommutativeFields.insert(allCommutativeFields.end(), rightCommutativeFields.begin(), rightCommutativeFields.end());
 
-        std::vector<ExpressionNodePtr> sortedCommutativeFields;
+        std::vector<NodeFunctionPtr> sortedCommutativeFields;
         sortedCommutativeFields.reserve(allCommutativeFields.size());
         for (const auto& commutativeField : allCommutativeFields)
         {
-            sortedCommutativeFields.push_back(commutativeField->copy());
+            sortedCommutativeFields.push_back(commutativeField->deepCopy());
         }
 
         std::sort(
             sortedCommutativeFields.begin(),
             sortedCommutativeFields.end(),
-            [](const ExpressionNodePtr& lhsField, const ExpressionNodePtr& rhsField)
+            [](const NodeFunctionPtr& lhsField, const NodeFunctionPtr& rhsField)
             {
                 std::string leftValue;
                 std::string rightValue;
 
-                if (lhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     leftValue = basicValueType->value;
                 }
                 else
                 {
-                    leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    leftValue = Util::as<NodeFunctionFieldAccess>(lhsField)->getFieldName();
                 }
 
-                if (rhsField->instanceOf<ConstantValueExpressionNode>())
+                if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                     auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                     rightValue = basicValueType->value;
                 }
                 else
                 {
-                    rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                    rightValue = Util::as<NodeFunctionFieldAccess>(rhsField)->getFieldName();
                 }
                 return leftValue.compare(rightValue) < 0;
             });
@@ -486,9 +488,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedLeft = updatedField;
             }
-            else if (!(sortedLeft->instanceOf<FieldAccessExpressionNode>() || sortedLeft->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedLeft) || Util::instanceOf<NodeFunctionConstantValue>(sortedLeft)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedLeft, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedLeft, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -499,9 +501,9 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             {
                 sortedRight = updatedField;
             }
-            else if (!(sortedRight->instanceOf<FieldAccessExpressionNode>() || sortedRight->instanceOf<ConstantValueExpressionNode>()))
+            else if (!(Util::instanceOf<NodeFunctionFieldAccess>(sortedRight) || Util::instanceOf<NodeFunctionConstantValue>(sortedRight)))
             {
-                bool replaced = replaceCommutativeExpressions(sortedRight, originalField, updatedField);
+                bool replaced = replaceCommutativeFunctions(sortedRight, originalField, updatedField);
                 if (replaced)
                 {
                     continue;
@@ -509,144 +511,144 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(const Ex
             }
         }
 
-        if (!sortedLeft->instanceOf<OrExpressionNode>() || !sortedRight->instanceOf<OrExpressionNode>())
+        if (!Util::instanceOf<NodeFunctionOr>(sortedLeft) || !Util::instanceOf<NodeFunctionOr>(sortedRight))
         {
             auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
             auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
             int compared = leftSortedFieldName.compare(rightSortedFieldName);
             if (compared > 0)
             {
-                return OrExpressionNode::create(sortedRight, sortedLeft);
+                return NodeFunctionOr::create(sortedRight, sortedLeft);
             }
         }
-        return OrExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionOr::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<LessExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionLess>(function))
     {
-        auto lessExpressionNode = expression->as<LessExpressionNode>();
-        auto left = lessExpressionNode->getLeft();
-        auto right = lessExpressionNode->getRight();
+        auto lessNodeFunction = Util::as<NodeFunctionLess>(function);
+        auto left = lessNodeFunction->getLeft();
+        auto right = lessNodeFunction->getRight();
 
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
         auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
         auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return GreaterExpressionNode::create(sortedRight, sortedLeft);
+            return NodeFunctionGreater::create(sortedRight, sortedLeft);
         }
-        return LessExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionLess::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<LessEqualsExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionLessEquals>(function))
     {
-        auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
-        auto left = lessEqualsExpressionNode->getLeft();
-        auto right = lessEqualsExpressionNode->getRight();
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto lessNodeFunctionEquals = Util::as<NodeFunctionLessEquals>(function);
+        auto left = lessNodeFunctionEquals->getLeft();
+        auto right = lessNodeFunctionEquals->getRight();
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
         auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
         auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return GreaterEqualsExpressionNode::create(sortedRight, sortedLeft);
+            return NodeFunctionGreaterEquals::create(sortedRight, sortedLeft);
         }
-        return LessEqualsExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionLessEquals::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<GreaterExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionGreater>(function))
     {
-        auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
-        auto left = greaterExpressionNode->getLeft();
-        auto right = greaterExpressionNode->getRight();
+        auto greaterNodeFunction = Util::as<NodeFunctionGreater>(function);
+        auto left = greaterNodeFunction->getLeft();
+        auto right = greaterNodeFunction->getRight();
 
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
         auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
         auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return LessExpressionNode::create(sortedRight, sortedLeft);
+            return NodeFunctionLess::create(sortedRight, sortedLeft);
         }
-        return GreaterExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionGreater::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<GreaterEqualsExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionGreaterEquals>(function))
     {
-        auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
-        auto left = greaterEqualsExpressionNode->getLeft();
-        auto right = greaterEqualsExpressionNode->getRight();
+        auto greaterNodeFunctionEquals = Util::as<NodeFunctionGreaterEquals>(function);
+        auto left = greaterNodeFunctionEquals->getLeft();
+        auto right = greaterNodeFunctionEquals->getRight();
 
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
-
-        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
-        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
-        int compared = leftSortedFieldName.compare(rightSortedFieldName);
-        if (compared > 0)
-        {
-            return LessEqualsExpressionNode::create(sortedRight, sortedLeft);
-        }
-        return GreaterEqualsExpressionNode::create(sortedLeft, sortedRight);
-    }
-    else if (expression->instanceOf<EqualsExpressionNode>())
-    {
-        auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
-        auto left = equalsExpressionNode->getLeft();
-        auto right = equalsExpressionNode->getRight();
-        auto sortedLeft = sortAttributesInExpression(left);
-        auto sortedRight = sortAttributesInExpression(right);
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
 
         auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
         auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
         int compared = leftSortedFieldName.compare(rightSortedFieldName);
         if (compared > 0)
         {
-            return EqualsExpressionNode::create(sortedRight, sortedLeft);
+            return NodeFunctionLessEquals::create(sortedRight, sortedLeft);
         }
-        return EqualsExpressionNode::create(sortedLeft, sortedRight);
+        return NodeFunctionGreaterEquals::create(sortedLeft, sortedRight);
     }
-    else if (expression->instanceOf<NegateExpressionNode>())
+    else if (Util::instanceOf<NodeFunctionEquals>(function))
     {
-        auto negateExpressionNode = expression->as<NegateExpressionNode>();
-        auto childExpression = negateExpressionNode->child();
-        auto updatedChildExpression = sortAttributesInExpression(childExpression);
-        return NegateExpressionNode::create(updatedChildExpression);
+        auto equalsNodeFunction = Util::as<NodeFunctionEquals>(function);
+        auto left = equalsNodeFunction->getLeft();
+        auto right = equalsNodeFunction->getRight();
+        auto sortedLeft = sortAttributesInFunction(left);
+        auto sortedRight = sortAttributesInFunction(right);
+
+        auto leftSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedLeft);
+        auto rightSortedFieldName = fetchLeftMostConstantValueOrFieldName(sortedRight);
+        int compared = leftSortedFieldName.compare(rightSortedFieldName);
+        if (compared > 0)
+        {
+            return NodeFunctionEquals::create(sortedRight, sortedLeft);
+        }
+        return NodeFunctionEquals::create(sortedLeft, sortedRight);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression possible for the logical expression node: " + expression->toString());
+    else if (Util::instanceOf<NodeFunctionNegate>(function))
+    {
+        auto negateNodeFunction = Util::as<NodeFunctionNegate>(function);
+        auto childFunction = negateNodeFunction->child();
+        auto updatedChildFunction = sortAttributesInFunction(childFunction);
+        return NodeFunctionNegate::create(updatedChildFunction);
+    }
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: " + function->toString());
     return nullptr;
 }
 
-bool AttributeSortRule::replaceCommutativeExpressions(
-    const ExpressionNodePtr& parentExpression, const ExpressionNodePtr& originalExpression, const ExpressionNodePtr& updatedExpression)
+bool AttributeSortRule::replaceCommutativeFunctions(
+    const NodeFunctionPtr& parentFunction, const NodeFunctionPtr& originalFunction, const NodeFunctionPtr& updatedFunction)
 {
-    auto binaryExpression = parentExpression->as<BinaryExpressionNode>();
+    auto binaryFunction = Util::as<NodeFunctionBinary>(parentFunction);
 
-    const ExpressionNodePtr& leftChild = binaryExpression->getLeft();
-    const ExpressionNodePtr& rightChild = binaryExpression->getRight();
-    if (leftChild.get() == originalExpression.get())
+    const NodeFunctionPtr& leftChild = binaryFunction->getLeft();
+    const NodeFunctionPtr& rightChild = binaryFunction->getRight();
+    if (leftChild.get() == originalFunction.get())
     {
-        binaryExpression->removeChildren();
-        binaryExpression->setChildren(updatedExpression, rightChild);
+        binaryFunction->removeChildren();
+        binaryFunction->setChildren(updatedFunction, rightChild);
         return true;
     }
-    if (rightChild.get() == originalExpression.get())
+    if (rightChild.get() == originalFunction.get())
     {
-        binaryExpression->removeChildren();
-        binaryExpression->setChildren(leftChild, updatedExpression);
+        binaryFunction->removeChildren();
+        binaryFunction->setChildren(leftChild, updatedFunction);
         return true;
     }
     else
     {
-        auto children = parentExpression->getChildren();
+        auto children = parentFunction->getChildren();
         for (const auto& child : children)
         {
-            if (!(child->instanceOf<FieldAccessExpressionNode>() || child->instanceOf<ConstantValueExpressionNode>()))
+            if (!(Util::instanceOf<NodeFunctionFieldAccess>(child) || Util::instanceOf<NodeFunctionConstantValue>(child)))
             {
-                bool replaced = replaceCommutativeExpressions(child->as<ExpressionNode>(), originalExpression, updatedExpression);
+                bool replaced = replaceCommutativeFunctions(Util::as<NodeFunction>(child), originalFunction, updatedFunction);
                 if (replaced)
                 {
                     return true;
@@ -657,19 +659,19 @@ bool AttributeSortRule::replaceCommutativeExpressions(
     return false;
 }
 
-std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression)
+std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function)
 {
-    ExpressionNodePtr startPoint = std::move(expression);
-    while (!(startPoint->instanceOf<FieldAccessExpressionNode>() || startPoint->instanceOf<ConstantValueExpressionNode>()))
+    NodeFunctionPtr startPoint = std::move(function);
+    while (!(Util::instanceOf<NodeFunctionFieldAccess>(startPoint) || Util::instanceOf<NodeFunctionConstantValue>(startPoint)))
     {
-        startPoint = startPoint->getChildren()[0]->as<ExpressionNode>();
+        startPoint = Util::as<NodeFunction>(startPoint->getChildren()[0]);
     }
 
-    if (startPoint->instanceOf<FieldAccessExpressionNode>())
+    if (Util::instanceOf<NodeFunctionFieldAccess>(startPoint))
     {
-        return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
+        return Util::as<NodeFunctionFieldAccess>(startPoint)->getFieldName();
     }
-    const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
+    const ValueTypePtr& constantValue = Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
     if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
     {
         return basicValueType->value;

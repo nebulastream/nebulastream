@@ -16,35 +16,37 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
 
-LogicalProjectionOperator::LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), expressions(std::move(expressions))
+LogicalProjectionOperator::LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), functions(std::move(functions))
 {
 }
 
-std::vector<ExpressionNodePtr> LogicalProjectionOperator::getExpressions() const
+std::vector<NodeFunctionPtr> LogicalProjectionOperator::getFunctions() const
 {
-    return expressions;
+    return functions;
 }
 
 bool LogicalProjectionOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalProjectionOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalProjectionOperator>(rhs)->getId() == id;
 }
 
 bool LogicalProjectionOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalProjectionOperator>())
+    if (NES::Util::instanceOf<LogicalProjectionOperator>(rhs))
     {
-        auto projection = rhs->as<LogicalProjectionOperator>();
+        auto projection = NES::Util::as<LogicalProjectionOperator>(rhs);
         return outputSchema->equals(projection->outputSchema);
     }
     return false;
@@ -65,32 +67,32 @@ bool LogicalProjectionOperator::inferSchema()
     }
     NES_DEBUG("proj input={}  outputSchema={} this proj={}", inputSchema->toString(), outputSchema->toString(), toString());
     outputSchema->clear();
-    for (const auto& expression : expressions)
+    for (const auto& function : functions)
     {
-        ///Infer schema of the field expression
-        expression->inferStamp(inputSchema);
+        ///Infer schema of the field function
+        function->inferStamp(inputSchema);
 
         /// Build the output schema
-        if (expression->instanceOf<FieldRenameExpressionNode>())
+        if (NES::Util::instanceOf<NodeFunctionFieldRename>(function))
         {
-            auto fieldRename = expression->as<FieldRenameExpressionNode>();
+            auto fieldRename = NES::Util::as<NodeFunctionFieldRename>(function);
             outputSchema->addField(fieldRename->getNewFieldName(), fieldRename->getStamp());
         }
-        else if (expression->instanceOf<FieldAccessExpressionNode>())
+        else if (NES::Util::instanceOf<NodeFunctionFieldAccess>(function))
         {
-            auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+            auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(function);
             outputSchema->addField(fieldAccess->getFieldName(), fieldAccess->getStamp());
         }
         else
         {
             NES_ERROR(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
+                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a FieldRenameFunction "
                 "but it was a {}",
-                expression->toString());
+                function->toString());
             throw TypeInferenceException(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a "
-                "FieldRenameExpression but it was a "
-                + expression->toString());
+                "LogicalProjectionOperator: Function has to be an FieldAccessFunction or a "
+                "FieldRenameFunction but it was a "
+                + function->toString());
         }
     }
     return true;
@@ -98,12 +100,12 @@ bool LogicalProjectionOperator::inferSchema()
 
 OperatorPtr LogicalProjectionOperator::copy()
 {
-    std::vector<ExpressionNodePtr> copyOfProjectionExpressions;
-    for (const auto& originalExpression : expressions)
+    std::vector<NodeFunctionPtr> copyOfProjectionFunctions;
+    for (const auto& originalFunction : functions)
     {
-        copyOfProjectionExpressions.emplace_back(originalExpression->copy());
+        copyOfProjectionFunctions.emplace_back(originalFunction->deepCopy());
     }
-    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionExpressions, id);
+    auto copy = LogicalOperatorFactory::createProjectionOperator(copyOfProjectionFunctions, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -119,13 +121,13 @@ OperatorPtr LogicalProjectionOperator::copy()
 
 void LogicalProjectionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
     std::stringstream signatureStream;
@@ -140,7 +142,7 @@ void LogicalProjectionOperator::inferStringSignature()
     {
         signatureStream << " " << field << " ";
     }
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature

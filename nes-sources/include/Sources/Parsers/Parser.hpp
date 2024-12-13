@@ -18,6 +18,8 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/TestTupleBuffer.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 namespace NES
 {
@@ -32,30 +34,23 @@ namespace NES::Sources
 class Parser
 {
 public:
-    explicit Parser(std::vector<NES::PhysicalTypePtr> physicalTypes);
-
+    Parser() = default;
     virtual ~Parser() = default;
 
     /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
     virtual bool writeInputTupleToTupleBuffer(
-        std::string_view inputTuple,
+        std::string_view inputString,
         uint64_t tupleCount,
-        NES::Memory::TupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+        NES::Memory::MemoryLayouts::TestTupleBuffer& testTupleBuffer,
+        const Schema& schema,
+        NES::Memory::AbstractBufferProvider& bufferManager)
         = 0;
 
     /// casts a value in string format to the correct type and writes it to the TupleBuffer
-    void writeFieldValueToTupleBuffer(
-        std::string value,
-        uint64_t schemaFieldIndex,
-        NES::Memory::TupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
-        uint64_t tupleCount,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
-
-private:
-    std::vector<NES::PhysicalTypePtr> physicalTypes;
+    static void writeBasicTypeToTupleBuffer(
+        std::string inputString,
+        NES::Memory::MemoryLayouts::DynamicField& testTupleBufferDynamicField,
+        const BasicPhysicalType& basicPhysicalType);
 };
 
 }

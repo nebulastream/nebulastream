@@ -18,20 +18,18 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Util/Common.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution
 {
-
+/// Forward declaration of OperatorHandler, which directly includes PipelineExecutionContext
+class OperatorHandler;
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 /**
  * @brief Stores a sequenceNumber and an OriginId
  */
@@ -136,5 +134,5 @@ private:
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;
 };
-
-} /// namespace NES::Runtime::Execution
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
+}

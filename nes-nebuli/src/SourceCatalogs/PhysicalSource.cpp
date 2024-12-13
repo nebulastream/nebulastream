@@ -13,7 +13,6 @@
 */
 #include <sstream>
 #include <utility>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
@@ -21,31 +20,22 @@
 namespace NES
 {
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType)
-    : logicalSourceName(std::move(logicalSourceName))
-    , physicalSourceName(std::move(physicalSourceName))
-    , physicalSourceType(std::move(physicalSourceType))
+PhysicalSource::PhysicalSource(std::string logicalSourceName, Sources::SourceDescriptor&& sourceDescriptor)
+    : logicalSourceName(std::move(logicalSourceName)), sourceDescriptor(sourceDescriptor)
 {
 }
 
-PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType)
+std::shared_ptr<PhysicalSource> PhysicalSource::create(Sources::SourceDescriptor&& sourceDescriptor)
 {
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType)));
-}
-
-PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName)
-{
-    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
+    const auto logicalSourceName = sourceDescriptor.logicalSourceName;
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(sourceDescriptor)));
 }
 
 std::string PhysicalSource::toString()
 {
     std::stringstream ss;
-    ss << "PhysicalSource Name: " << physicalSourceName;
     ss << "LogicalSource Name" << logicalSourceName;
-    ss << "Source Type" << physicalSourceType->toString();
+    ss << "Source Type" << sourceDescriptor;
     return ss.str();
 }
 
@@ -54,13 +44,10 @@ const std::string& PhysicalSource::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-const std::string& PhysicalSource::getPhysicalSourceName() const
+std::unique_ptr<Sources::SourceDescriptor> PhysicalSource::createSourceDescriptor(std::shared_ptr<Schema> schema)
 {
-    return physicalSourceName;
-}
-
-const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const
-{
-    return physicalSourceType;
+    auto copyOfConfig = sourceDescriptor.config;
+    return std::make_unique<Sources::SourceDescriptor>(
+        schema, sourceDescriptor.logicalSourceName, sourceDescriptor.sourceType, sourceDescriptor.inputFormat, std::move(copyOfConfig));
 }
 } /// namespace NES

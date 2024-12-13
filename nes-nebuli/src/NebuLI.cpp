@@ -18,15 +18,7 @@
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Optimizer/Phases/MemoryLayoutSelectionPhase.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
@@ -39,6 +31,8 @@
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <SourcesValidation/SourceRegistryValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
@@ -62,7 +56,7 @@ struct LogicalSource
 struct PhysicalSource
 {
     std::string logical;
-    std::map<std::string, std::string> config;
+    std::unordered_map<std::string, std::string> config;
 };
 
 struct QueryConfig
@@ -71,7 +65,7 @@ struct QueryConfig
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
 };
-} /// namespace NES::CLI
+}
 
 namespace YAML
 {
@@ -102,7 +96,7 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::map<std::string, std::string>>();
+        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -122,46 +116,25 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    /// TODO(#74) We removed almost all sources this needs to be updated
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
-        }
-        default: {
-            NES_THROW_RUNTIME_ERROR("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
-        }
-    }
-}
-
-PhysicalSourceTypePtr createPhysicalSourceType(
-    const std::string& logicalName, const std::string& physicalName, const std::map<std::string, std::string>& sourceConfiguration)
+Sources::SourceDescriptor
+createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
         NES_THROW_RUNTIME_ERROR("Missing `type` in source configuration");
     }
+    auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
+    NES_DEBUG("Source type is: {}", sourceType);
 
-    auto modifiedSourceConfiguration = sourceConfiguration;
-    modifiedSourceConfiguration[Configurations::PHYSICAL_SOURCE_NAME_CONFIG] = physicalName;
-    modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = logicalName;
+    /// We currently only support CSV
+    auto inputFormat = Configurations::InputFormat::CSV;
 
-    return Configurations::PhysicalSourceTypeFactory::createFromString("", modifiedSourceConfiguration);
+    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
+    {
+        return Sources::SourceDescriptor(
+            std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
+    }
+    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -169,24 +142,30 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
 
-    for (const auto& [logicalName, schemaFields] : config.logical)
+
+    /// Add logical sources to the SourceCatalog to prepare adding physical sources to each logical source.
+    for (const auto& [logicalSourceName, schemaFields] : config.logical)
     {
-        NES_INFO("Adding logical source: {}", logicalName);
         auto schema = Schema::create();
+        NES_INFO("Adding logical source: {}", logicalSourceName);
         for (const auto& [name, type] : schemaFields)
         {
             schema = schema->addField(name, type);
         }
-        sourceCatalog->addLogicalSource(logicalName, std::move(schema));
+        sourceCatalog->addLogicalSource(logicalSourceName, schema);
     }
 
-    for (size_t i = 0; const auto& [logicalName, config] : config.physical)
+    /// Add physical sources to corresponding logical sources.
+    for (auto [logicalSourceName, config] : config.physical)
     {
-        auto sourceType = createPhysicalSourceType(logicalName, fmt::format("{}_phy{}", logicalName, i++), config);
+        auto sourceDescriptor
+            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
         sourceCatalog->addPhysicalSource(
-            logicalName,
+            logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
-                NES::PhysicalSource::create(std::move(sourceType)), sourceCatalog->getLogicalSource(logicalName), INITIAL<WorkerId>));
+                NES::PhysicalSource::create(std::move(sourceDescriptor)),
+                sourceCatalog->getLogicalSource(logicalSourceName),
+                INITIAL<WorkerId>));
     }
 
     auto cppCompiler = Compiler::CPPCompiler::create();
@@ -197,46 +176,19 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
-    auto memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(coordinatorConfig->optimizer.memoryLayoutPolicy);
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
     auto query = syntacticQueryValidation->validate(config.query);
     semanticQueryValidation->validate(query);
+    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
+    typeInference->performTypeInferenceQuery(query);
 
     logicalSourceExpansionRule->apply(query);
-    typeInference->execute(query);
-    originIdInferencePhase->execute(query);
-    memoryLayoutSelectionPhase->execute(query);
-    queryRewritePhase->execute(query);
-    typeInference->execute(query);
+    typeInference->performTypeInferenceQuery(query);
 
-    for (auto& sourceOperator : query->getSourceOperators())
-    {
-        if (auto sourceDescriptor = sourceOperator->getSourceDescriptor(); sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
-        {
-            /// Fetch logical and physical source name in the descriptor
-            auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-            auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
-            /// Iterate over all available physical sources
-            bool foundPhysicalSource = false;
-            for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
-            {
-                NES_DEBUG("Replacing LogicalSourceDescriptor {} - {}", logicalSourceName, physicalSourceName);
-                if (auto physicalSourceType = entry->getPhysicalSource(); physicalSourceType->getPhysicalSourceName() == physicalSourceName)
-                {
-                    auto physicalDescriptor
-                        = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType->getPhysicalSourceType());
-                    NES_DEBUG("Replacement with: {}", physicalDescriptor->toString());
-                    sourceOperator->setSourceDescriptor(physicalDescriptor);
-                    foundPhysicalSource = true;
-                    break;
-                }
-            }
-            NES_ASSERT(
-                foundPhysicalSource,
-                "Logical source descriptor could not be replaced with the physical source descriptor: " + physicalSourceName);
-        }
-    }
+    originIdInferencePhase->execute(query);
+    queryRewritePhase->execute(query);
+    typeInference->performTypeInferenceQuery(query);
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
@@ -265,7 +217,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
          [&](std::string& substitute)
          {
              static uint64_t queryNr = 0;
-             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/test/result/" + testname + std::to_string(queryNr++) + ".csv";
+             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + testname + std::to_string(queryNr++) + ".csv";
              substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
          }});
 
@@ -295,10 +247,10 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
                 }()});
 
             config.physical.emplace_back(
-                PhysicalSource{.logical = source.name, .config = {{"type", "CSV_SOURCE"}, {"filePath", source.csvFilePath}}});
+                PhysicalSource{.logical = source.name, .config = {{"type", "CSV"}, {"filePath", source.csvFilePath}}});
         });
 
-    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/test/";
+    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/tests/";
     parser.registerOnSLTSourceCallback(
         [&](SLTParser::SLTParser::SLTSource&& source)
         {
@@ -318,7 +270,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 
             config.physical.emplace_back(PhysicalSource{
                 .logical = source.name,
-                .config = {{"type", "CSV_SOURCE"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
+                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
 
 
             /// Write the tuples to a tmp file
@@ -366,7 +318,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 
 bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
 {
-    std::string resultFileName = PATH_TO_BINARY_DIR "/test/result/" + testName + std::to_string(queryNr) + ".csv";
+    std::string resultFileName = PATH_TO_BINARY_DIR "/tests/result/" + testName + std::to_string(queryNr) + ".csv";
     std::ifstream resultFile(resultFileName);
     if (!resultFile)
     {

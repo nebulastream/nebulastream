@@ -13,11 +13,8 @@
 */
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -37,83 +34,11 @@ TypeInferencePhasePtr TypeInferencePhase::create(Catalogs::Source::SourceCatalog
     return std::make_shared<TypeInferencePhase>(TypeInferencePhase(std::move(sourceCatalog)));
 }
 
-QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan)
+QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPlan)
 {
-    if (!sourceCatalog)
-    {
-        NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
-    }
-    /// Fetch the source and sink operators.
-    auto sourceOperators = queryPlan->getSourceOperators();
+    /// Infer schema recursively, starting with sinks for sinks.
     auto sinkOperators = queryPlan->getSinkOperators();
-
-    if (sourceOperators.empty() || sinkOperators.empty())
-    {
-        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
-    }
-
-    performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
-    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
-    return queryPlan;
-}
-
-DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomposedQueryPlan)
-{
-    if (!sourceCatalog)
-    {
-        NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
-    }
-    /// Fetch the source and sink operators.
-    auto sourceOperators = decomposedQueryPlan->getSourceOperators();
-    auto sinkOperators = decomposedQueryPlan->getSinkOperators();
-
-    if (sourceOperators.empty() || sinkOperators.empty())
-    {
-        throw TypeInferenceException("Found no source or sink operators");
-    }
-
-    performTypeInference(decomposedQueryPlan->getQueryId(), sourceOperators, sinkOperators);
-    NES_DEBUG("TypeInferencePhase: we inferred all schemas");
-    return decomposedQueryPlan;
-}
-
-void TypeInferencePhase::performTypeInference(
-    QueryId planId, std::vector<SourceLogicalOperatorPtr> sourceOperators, std::vector<SinkLogicalOperatorPtr> sinkOperators)
-{
-    /// first we have to check if all source operators have a correct source descriptors
-    for (const auto& source : sourceOperators)
-    {
-        auto sourceDescriptor = source->getSourceDescriptor();
-
-        /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
-        /// source descriptor form the catalog.
-        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>() && sourceDescriptor->getSchema()->empty())
-        {
-            auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-            SchemaPtr schema = Schema::create();
-            if (!sourceCatalog->containsLogicalSource(logicalSourceName))
-            {
-                NES_ERROR("Source name: {} not registered.", logicalSourceName);
-                auto ex = LogicalSourceNotFoundInQueryDescription();
-                ex.what() += "Logical source not registered. Source Name: " + logicalSourceName;
-                throw ex;
-            }
-            auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
-            schema = schema->copyFields(originalSchema);
-            schema->setLayoutType(originalSchema->getLayoutType());
-            std::string qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-            /// perform attribute name resolution
-            for (auto& field : schema->fields)
-            {
-                if (!field->getName().starts_with(qualifierName))
-                {
-                    field->setName(qualifierName + field->getName());
-                }
-            }
-            sourceDescriptor->setSchema(schema);
-            NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
-        }
-    }
+    INVARIANT(not sinkOperators.empty(), fmt::format("Found no sink operators for query plan: {}", queryPlan->getQueryId()));
 
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
@@ -121,10 +46,46 @@ void TypeInferencePhase::performTypeInference(
     {
         if (!sink->inferSchema())
         {
-            NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
-            throw TypeInferenceException(planId, "TypeInferencePhase: Failed!");
+            throw TypeInferenceException(fmt::format("TypeInferencePhase failed for query with id: {}", queryPlan->getQueryId()));
         }
+    }
+    return queryPlan;
+}
+
+
+void TypeInferencePhase::performTypeInferenceSources(
+    const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const
+{
+    PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
+    PRECONDITION(not sourceOperators.empty(), fmt::format("Query plan with id {} did not contain sources during type inference.", queryId));
+
+    /// first we have to check if all source operators have a correct source descriptors
+    for (const auto& source : sourceOperators)
+    {
+        /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
+        /// source descriptor form the catalog.
+        auto logicalSourceName = source->getLogicalSourceName();
+        SchemaPtr schema = Schema::create();
+        if (!sourceCatalog->containsLogicalSource(logicalSourceName))
+        {
+            NES_ERROR("Source name: {} not registered.", logicalSourceName);
+            throw LogicalSourceNotFoundInQueryDescription(fmt::format("Logical source not registered. Source Name: {}", logicalSourceName));
+        }
+        auto originalSchema = sourceCatalog->getSchemaForLogicalSource(logicalSourceName);
+        schema = schema->copyFields(originalSchema);
+        schema->setLayoutType(originalSchema->getLayoutType());
+        auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+        /// perform attribute name resolution
+        for (const auto& field : schema->fields)
+        {
+            if (!field->getName().starts_with(qualifierName))
+            {
+                field->setName(qualifierName + field->getName());
+            }
+        }
+        source->setSchema(schema);
+        NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
     }
 }
 
-} /// namespace NES::Optimizer
+}

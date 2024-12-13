@@ -16,6 +16,7 @@
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
+#include <Functions/NodeFunction.hpp>
 
 namespace NES
 {
@@ -59,7 +60,7 @@ public:
      * @param field the field from which we want to extract the time.
      * @return
      */
-    static TimeCharacteristicPtr createEventTime(ExpressionNodePtr field, const TimeUnit& unit = TimeUnit(1));
+    static TimeCharacteristicPtr createEventTime(NodeFunctionPtr field, const TimeUnit& unit = TimeUnit(1));
 
     /**
      * @return The TimeCharacteristic type.

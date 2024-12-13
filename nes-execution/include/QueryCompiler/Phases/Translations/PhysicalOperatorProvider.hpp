@@ -13,8 +13,9 @@
 */
 #pragma once
 #include <utility>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 namespace NES::QueryCompilation
 {
 
@@ -32,4 +33,5 @@ public:
 protected:
     std::shared_ptr<QueryCompilerOptions> options;
 };
-} /// namespace NES::QueryCompilation
+using PhysicalOperatorProviderPtr = std::shared_ptr<PhysicalOperatorProvider>;
+}

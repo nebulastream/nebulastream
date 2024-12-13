@@ -12,7 +12,9 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -29,5 +31,5 @@ protected:
     explicit QueryCompiler(std::shared_ptr<QueryCompilerOptions> options) noexcept : options(std::move(options)) { }
     std::shared_ptr<QueryCompilerOptions> options;
 };
-
+using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 } /// namespace NES::QueryCompilation

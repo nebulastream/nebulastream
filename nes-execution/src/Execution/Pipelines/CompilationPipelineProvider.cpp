@@ -14,16 +14,17 @@
 
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/options.hpp>
 
 namespace NES::Runtime::Execution
 {
 
 std::unique_ptr<ExecutablePipelineStage>
-CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, const Nautilus::CompilationOptions& options)
+CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline, nautilus::engine::Options& options)
 {
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR", options);
+    /// As we are creating here a pipeline that is compiled, we need to set the compilation option to true
+    options.setOption("engine.Compilation", true);
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
 }
 
 std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider()
@@ -31,4 +32,4 @@ std::unique_ptr<ExecutablePipelineProvider> RegisterCompilingPipelineProvider()
     return std::make_unique<CompilationPipelineProvider>();
 }
 
-} /// namespace NES::Runtime::Execution
+}

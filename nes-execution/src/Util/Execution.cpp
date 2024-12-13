@@ -13,12 +13,16 @@
 */
 
 #include <tuple>
+
 #include <API/AttributeField.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Execution/Functions/ExecutableFunctionReadField.hpp>
+#include <Execution/Operators/Watermark/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
+#include <nautilus/std/string.h>
+#include <magic_enum.hpp>
+
 
 namespace NES::QueryCompilation::Util
 {
@@ -37,11 +41,12 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
-            auto timeStampFieldRecord = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
+            auto timeStampFieldRecord = std::make_unique<Runtime::Execution::Functions::ExecutableFunctionReadField>(timeStampFieldName);
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-                timeStampFieldRecord, windowType.getTimeCharacteristic()->getTimeUnit());
+                std::move(timeStampFieldRecord), windowType.getTimeCharacteristic()->getTimeUnit());
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
     }
 }
-} /// namespace NES::QueryCompilation::Util
+
+}

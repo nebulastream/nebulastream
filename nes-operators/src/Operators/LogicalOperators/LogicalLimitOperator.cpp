@@ -14,7 +14,10 @@
 
 #include <utility>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
@@ -30,14 +33,14 @@ uint64_t LogicalLimitOperator::getLimit() const
 
 bool LogicalLimitOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalLimitOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalLimitOperator>(rhs)->getId() == id;
 }
 
 bool LogicalLimitOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalLimitOperator>())
+    if (NES::Util::instanceOf<LogicalLimitOperator>(rhs))
     {
-        auto limitOperator = rhs->as<LogicalLimitOperator>();
+        auto limitOperator = NES::Util::as<LogicalLimitOperator>(rhs);
         return limit == limitOperator->limit;
     }
     return false;
@@ -76,19 +79,19 @@ OperatorPtr LogicalLimitOperator::copy()
 
 void LogicalLimitOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "LIMIT(" << limit << ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature

@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 
 namespace NES
 {
@@ -24,12 +26,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
-
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -60,55 +56,29 @@ namespace Optimizer
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
-/**
- * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
- * If this is not possible it throws an Runtime exception.
- */
+/// The type inference phase receives and query plan and infers all input and output schemata for all operators.
+/// If this is not possible it throws an Runtime exception.
 class TypeInferencePhase
 {
 public:
-    /**
-     * @brief Factory method to create a type inference phase.
-     * @return TypeInferencePhasePtr
-     */
     static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
-    /**
-     * @brief Performs type inference on the given query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param queryPlan the query plan
-     */
-    QueryPlanPtr execute(QueryPlanPtr queryPlan);
+    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
+    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
+    void performTypeInferenceSources(const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const;
 
-    /**
-     * @brief Performs type inference on the given decomposed query plan.
-     * This involves the following steps.
-     * 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
-     * 2. Propagate the input and output schemas from source operators to the sink operators.
-     * 3. If a operator contains expression, we infer the result stamp of this operators.
-     * @param decomposedQueryPlan the decomposed query plan
-     */
-    DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
+    /// Performs type inference on the given query plan.
+    /// This involves the following steps.
+    /// 1. Replacing a logical source descriptor with the correct source descriptor form the source catalog.
+    /// 2. Propagate the input and output schemas from source operators to the sink operators.
+    /// 3. If a operator contains expression, we infer the result stamp of this operators.
+    /// @throws TypeInferenceException if inferring the data types into the query failed
+    QueryPlanPtr performTypeInferenceQuery(QueryPlanPtr queryPlan);
 
 private:
-    /**
-     * @brief Infer schema for all operators between given source and sink operators.
-     * @param planId: the id of the plan
-     * @param sourceOperators : the source operators
-     * @param sinkOperators : the sink operators
-     * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
-     * @return QueryPlanPtr
-     * @throws TypeInferenceException if inferring the data types into the query failed
-     * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
-     */
-    void performTypeInference(
-        QueryId planId, std::vector<SourceLogicalOperatorPtr> sourceOperators, std::vector<SinkLogicalOperatorPtr> sinkOperators);
+    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog);
-    Catalogs::Source::SourceCatalogPtr sourceCatalog;
 };
-} /// namespace Optimizer
-} /// namespace NES
+}
+}

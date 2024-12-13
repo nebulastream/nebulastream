@@ -37,7 +37,7 @@ The codebase is structured in the following components:
 | [nes-coordinator](nes-coordinator)       | This component contains the coordinator and the executable.                                                                                               |
 | [nes-worker](nes-worker)                 | This component contains the worker and the executable.                                                                                                    |
 | [nes-window-types](nes-window-types)     | This component contains functionalities to define windows.                                                                                                |
-| [nes-expressions](nes-expressions)       | This component contains functionalities for our expressions.                                                                                              |
+| [nes-functions](nes-functions)       | This component contains functionalities for our functions.                                                                                              |
 
 ### Dependencies:
 
@@ -46,8 +46,8 @@ graph TD;
 nes-common-->nes-grpc
 nes-configurations-->nes-common
 nes-data-types-->nes-configurations
-nes-expressions-->nes-data-types
-nes-window-types-->nes-expressions
+nes-functions-->nes-data-types
+nes-window-types-->nes-functions
 nes-operators-->nes-window-types
 nes-client-->nes-operators
 nes-catalogs-->nes-operators
@@ -79,3 +79,7 @@ Afterward, there exist multiple new targets:
 - `check-format-clang` runs clang-format and checks if the code is formatted correctly but does not fix it
 - `tidy`  runs clang-tidy 
 - `check-license-and-pragma-once` runs a script that checks that all of our header files start with our license preamble followed by `#pragma once` 
+
+
+# Development
+Follow the [development guide](docs/development.md) to learn how to setup up the development environment.

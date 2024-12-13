@@ -27,70 +27,35 @@ using DataTypePtr = std::shared_ptr<DataType>;
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
-/**
- * @brief The physical data type represents the physical representation of a NES data type.
- */
+
+/// The physical data type represents the physical representation of a NES data type.
 class PhysicalType
 {
 public:
-    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
+    explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
-    /**
-     * @brief Returns the number of bytes occupied by this data type.
-     * @return uint64_t
-     */
     [[nodiscard]] virtual uint64_t size() const = 0;
 
-    /**
-     * @brief Converts the binary representation of this value to a string.
-     * @param rawData a pointer to the raw value
-     * @return string
-     */
     virtual std::string convertRawToString(void const* rawData) const noexcept = 0;
 
-    /**
-     * @brief Converts the binary representation of this value to a string without filling
-     * up the difference between the length of the string and the end of the schema definition
-     * with unrelated characters
-     * @param rawData a pointer to the raw value
-     * @return string
-    */
+    /// Converts the binary representation of this value to a string without filling
+    /// up the difference between the length of the string and the end of the schema definition
+    /// with unrelated characters.
     virtual std::string convertRawToStringWithoutFill(void const* rawData) const noexcept = 0;
 
-    /**
-     * @brief Returns the string representation of this physical data type.
-     * @return string
-     */
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    /**
-     * @brief Indicates if this is a basic data type.
-     * @return true if type is basic type
-     */
     [[nodiscard]] virtual bool isBasicType() const noexcept { return false; }
 
-    /**
-     * @brief Indicates if this is a array data type.
-     * @return true if type is array
-     */
     [[nodiscard]] virtual bool isArrayType() const noexcept { return false; };
 
-    /**
-     * @brief Indicates if this is a text data type.
-     * @return true if type is text
-     */
     [[nodiscard]] virtual bool isTextType() const noexcept { return false; };
 
-    /// @brief true only for arrays which contain chars as their immediate child type.
+    /// true only for arrays which contain chars as their immediate child type.
     [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
 
-    /**
-     * @brief Comparator method
-     * @param rhs
-     * @return True if equal, otherwise false
-     */
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
 
     /// Type that is contained by this PhysicalType container

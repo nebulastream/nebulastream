@@ -44,17 +44,10 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
         for (const auto& source : qep->getSources())
         {
             /// source already exists, add qep to source set if not there
-            OriginId sourceOperatorId = source->getSourceId();
-
-            NES_DEBUG("QueryManager: Source {}  not found. Creating new element with with qep ", sourceOperatorId);
-            ///If source sharing is active and this is the first query for this source, init the map
-            if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end())
-            {
-                sourceToQEPMapping[sourceOperatorId] = std::vector<Execution::ExecutableQueryPlanPtr>();
-            }
+            NES_DEBUG("QueryManager: Source {}  not found. Creating new element with with qep ", source->getSourceId());
 
             ///bookkeep which qep is now reading from this source
-            sourceToQEPMapping[sourceOperatorId].push_back(qep);
+            sourceToQEPMapping[source->getSourceId()].emplace_back(qep);
         }
         notifyQueryStatusChange(qep, Execution::QueryStatus::Registered);
     }
@@ -108,7 +101,6 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        NES_DEBUG("QueryManager: start source: {}", *source);
         if (!source->start())
         {
             NES_WARNING("QueryManager: source {} could not started as it is already running", *source);

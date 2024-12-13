@@ -32,6 +32,7 @@
     "libcuckoo",
     "magic-enum",
     "nlohmann-json",
+    "nautilus",
     "spdlog",
     "yaml-cpp"
   ]

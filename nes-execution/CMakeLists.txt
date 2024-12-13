@@ -21,7 +21,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
-target_link_libraries(nes-execution PUBLIC nes-nautilus)
+target_link_libraries(nes-execution PUBLIC nes-nautilus nes-sources)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -32,10 +32,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-execution PUBLIC "-fPIC")
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
+add_tests_if_enabled(tests)

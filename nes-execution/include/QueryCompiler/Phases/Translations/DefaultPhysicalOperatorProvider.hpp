@@ -13,8 +13,8 @@
 */
 #pragma once
 #include <vector>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -118,25 +118,15 @@ protected:
 
     void lowerWatermarkAssignmentOperator(const LogicalOperatorPtr& operatorNode);
 
-    void lowerJoinOperator(const LogicalOperatorPtr& operatorNode);
 
-    [[nodiscard]] OperatorPtr
-    getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
+    OperatorPtr getJoinBuildInputOperator(const LogicalJoinOperatorPtr& joinOperator, SchemaPtr schema, std::vector<OperatorPtr> children);
 
 private:
     /// replaces the window sink (and inserts a SliceStoreAppendOperator) depending on the time based window type for keyed windows
     [[nodiscard]] std::shared_ptr<Node>
     replaceOperatorTimeBasedWindow(WindowOperatorProperties& windowOperatorProperties, const LogicalOperatorPtr& operatorNode);
 
-    void lowerNautilusJoin(const LogicalOperatorPtr& operatorNode);
-
     [[nodiscard]] std::tuple<TimestampField, TimestampField> getTimestampLeftAndRight(
         const std::shared_ptr<LogicalJoinOperator>& joinOperator, const Windowing::TimeBasedWindowTypePtr& windowType) const;
-
-    [[nodiscard]] Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingHashJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
-
-    [[nodiscard]] Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr
-    lowerStreamingNestedLoopJoin(const StreamJoinOperators& streamJoinOperators, const StreamJoinConfigs& streamJoinConfig);
 };
 }

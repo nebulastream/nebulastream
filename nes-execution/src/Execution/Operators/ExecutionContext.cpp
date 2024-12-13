@@ -14,16 +14,19 @@
 
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/val.hpp>
 
 namespace NES::Runtime::Execution
 {
-
-ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext, const Value<NES::Nautilus::MemRef>& pipelineContext)
+ExecutionContext::ExecutionContext(
+    const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext)
     : workerContext(workerContext)
     , pipelineContext(pipelineContext)
     , origin(0_u64)
@@ -35,65 +38,59 @@ ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerCon
 {
 }
 
-void* allocateBufferProxy(void* workerContextPtr)
+Memory::TupleBuffer* allocateBufferProxy(WorkerContext* workerContext)
 {
-    if (workerContextPtr == nullptr)
+    if (workerContext == nullptr)
     {
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
-    auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
     /// We allocate a new tuple buffer for the runtime.
     /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
     /// This increases the reference counter in the buffer.
     /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-    auto buffer = wkrCtx->allocateTupleBuffer();
+    const auto buffer = workerContext->allocateTupleBuffer();
     auto* tb = new Memory::TupleBuffer(buffer);
     return tb;
 }
 
-Value<MemRef> ExecutionContext::allocateBuffer()
+nautilus::val<Memory::TupleBuffer*> ExecutionContext::allocateBuffer()
 {
-    auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy", allocateBufferProxy, workerContext);
+    auto bufferPtr = nautilus::invoke(allocateBufferProxy, workerContext);
     return bufferPtr;
 }
 
-void emitBufferProxy(void* wc, void* pc, void* tupleBuffer)
+void emitBufferProxy(WorkerContext* workerContext, PipelineExecutionContext* pipelineCtx, Memory::TupleBuffer* tupleBuffer)
 {
-    auto* tb = (Memory::TupleBuffer*)tupleBuffer;
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
-    auto workerCtx = static_cast<WorkerContext*>(wc);
-
-    NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceData().toString());
+    NES_TRACE("Emitting buffer with SequenceData = {}", tupleBuffer->getSequenceData().toString());
 
     /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
      * fusion, this should only happen occasionally.
      */
-    pipelineCtx->emitBuffer(*tb, *workerCtx);
+    pipelineCtx->emitBuffer(*tupleBuffer, *workerContext);
 
     /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
-    delete tb;
+    delete tupleBuffer;
 }
 
-void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer)
+void ExecutionContext::emitBuffer(const RecordBuffer& buffer)
 {
-    FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
+    nautilus::invoke(emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
-WorkerThreadId getWorkerThreadIdProxy(void* workerContext)
+WorkerThreadId getWorkerThreadIdProxy(const WorkerContext* workerContext)
 {
-    auto* wc = static_cast<Runtime::WorkerContext*>(workerContext);
-    return wc->getId();
+    return workerContext->getId();
 }
 
-ValueId<WorkerThreadId> ExecutionContext::getWorkerThreadId()
+nautilus::val<WorkerThreadId> ExecutionContext::getWorkerThreadId()
 {
-    return FunctionCall("getWorkerThreadIdProxy", getWorkerThreadIdProxy, workerContext);
+    return nautilus::invoke(getWorkerThreadIdProxy, workerContext);
 }
 
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
 {
-    auto stateEntry = localStateMap.find(op);
+    const auto stateEntry = localStateMap.find(op);
     if (stateEntry == localStateMap.end())
     {
         NES_THROW_RUNTIME_ERROR("No local state registered for operator: " << op);
@@ -110,9 +107,8 @@ void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std:
     localStateMap.emplace(op, std::move(state));
 }
 
-void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index)
+OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const uint64_t index)
 {
-    auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto handlers = pipelineCtx->getOperatorHandlers();
     auto size = handlers.size();
     if (index >= size)
@@ -122,106 +118,103 @@ void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index)
     return handlers[index].get();
 }
 
-Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
+nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
 {
-    Value<UInt64> handlerIndexValue = Value<UInt64>(handlerIndex);
-    return FunctionCall<>("getGlobalOperatorHandlerProxy", getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
+    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex);
+    return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-const Value<MemRef>& ExecutionContext::getWorkerContext() const
+const nautilus::val<WorkerContext*>& ExecutionContext::getWorkerContext() const
 {
     return workerContext;
 }
-const Value<MemRef>& ExecutionContext::getPipelineContext() const
+const nautilus::val<PipelineExecutionContext*>& ExecutionContext::getPipelineContext() const
 {
     return pipelineContext;
 }
 
-const Value<UInt64>& ExecutionContext::getWatermarkTs() const
+const nautilus::val<uint64_t>& ExecutionContext::getWatermarkTs() const
 {
     return watermarkTs;
 }
 
-void ExecutionContext::setWatermarkTs(Value<UInt64> watermarkTs)
+void ExecutionContext::setWatermarkTs(const nautilus::val<uint64_t>& watermarkTs)
 {
     this->watermarkTs = watermarkTs;
 }
 
-const Value<UInt64>& ExecutionContext::getSequenceNumber() const
+const nautilus::val<uint64_t>& ExecutionContext::getSequenceNumber() const
 {
     return sequenceNumber;
 }
 
-void ExecutionContext::setSequenceNumber(Value<UInt64> sequenceNumber)
+void ExecutionContext::setSequenceNumber(const nautilus::val<uint64_t>& sequenceNumber)
 {
     this->sequenceNumber = sequenceNumber;
 }
 
-const Value<UInt64>& ExecutionContext::getOriginId() const
+const nautilus::val<uint64_t>& ExecutionContext::getOriginId() const
 {
     return origin;
 }
 
-void ExecutionContext::setOrigin(Value<UInt64> origin)
+void ExecutionContext::setOriginId(const nautilus::val<uint64_t>& origin)
 {
     this->origin = origin;
 }
 
-const Value<UInt64>& ExecutionContext::getCurrentTs() const
+const nautilus::val<uint64_t>& ExecutionContext::getCurrentTs() const
 {
     return currentTs;
 }
 
-void ExecutionContext::setCurrentTs(Value<UInt64> currentTs)
+void ExecutionContext::setCurrentTs(const nautilus::val<uint64_t>& currentTs)
 {
     this->currentTs = currentTs;
 }
 
-const Value<UInt64>& ExecutionContext::getChunkNumber() const
+const nautilus::val<uint64_t>& ExecutionContext::getChunkNumber() const
 {
     return chunkNumber;
 }
 
-void ExecutionContext::setChunkNumber(Value<UInt64> chunkNumber)
+void ExecutionContext::setChunkNumber(const nautilus::val<uint64_t>& chunkNumber)
 {
     this->chunkNumber = chunkNumber;
 }
 
-const Value<Boolean>& ExecutionContext::getLastChunk() const
+const nautilus::val<bool>& ExecutionContext::getLastChunk() const
 {
     return lastChunk;
 }
 
-void ExecutionContext::setLastChunk(Value<Boolean> lastChunk)
+void ExecutionContext::setLastChunk(const nautilus::val<bool>& lastChunk)
 {
     this->lastChunk = lastChunk;
 }
 
-uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+uint64_t getNextChunkNumberProxy(PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber)
 {
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
-bool isLastChunkProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk)
+bool isLastChunkProxy(
+    PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk)
 {
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+void removeSequenceStateProxy(PipelineExecutionContext* pipelineCtx, uint64_t originId, uint64_t sequenceNumber)
 {
-    NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
-    auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
+    NES_ASSERT2_FMT(pipelineCtx != nullptr, "operator handler should not be null");
     pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
-Value<Boolean> ExecutionContext::isLastChunk() const
+nautilus::val<bool> ExecutionContext::isLastChunk() const
 {
-    return Nautilus::FunctionCall(
-        "isLastChunkProxy",
+    return nautilus::invoke(
         isLastChunkProxy,
         this->getPipelineContext(),
         this->getOriginId(),
@@ -230,16 +223,14 @@ Value<Boolean> ExecutionContext::isLastChunk() const
         this->getLastChunk());
 }
 
-Value<UInt64> ExecutionContext::getNextChunkNr() const
+nautilus::val<uint64_t> ExecutionContext::getNextChunkNr() const
 {
-    return Nautilus::FunctionCall(
-        "getNextChunkNumberProxy", getNextChunkNumberProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
+    return nautilus::invoke(getNextChunkNumberProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
 void ExecutionContext::removeSequenceState() const
 {
-    Nautilus::FunctionCall(
-        "removeSequenceStateProxy", removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
+    nautilus::invoke(removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
-} /// namespace NES::Runtime::Execution
+}

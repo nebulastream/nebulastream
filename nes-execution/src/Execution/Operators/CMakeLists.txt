@@ -11,12 +11,14 @@
 # limitations under the License.
 
 add_source_files(nes-execution
+        SlidingWindowAssigner.cpp
+        Map.cpp
+        Selection.cpp
         Operator.cpp
         ExecutableOperator.cpp
         Emit.cpp
         Scan.cpp
+        Project.cpp
         ExecutionContext.cpp)
 
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
-add_subdirectory(Streaming)
+add_subdirectory(Watermark)

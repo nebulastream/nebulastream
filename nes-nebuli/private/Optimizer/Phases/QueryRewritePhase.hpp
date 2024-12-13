@@ -73,17 +73,11 @@ class QueryRewritePhase
 public:
     static QueryRewritePhasePtr create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration);
 
-    /**
-     * @brief Perform query plan re-write for the input query plan
-     * @param queryPlan : the input query plan
-     * @return updated query plan
-     */
-    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+    void execute(QueryPlanPtr& queryPlan) const;
 
 private:
-    explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
+    explicit QueryRewritePhase();
 
-    bool applyRulesImprovingSharingIdentification;
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
     FilterMergeRulePtr filterMergeRule;
@@ -94,4 +88,4 @@ private:
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;
 };
-} /// namespace NES::Optimizer
+}

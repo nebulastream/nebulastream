@@ -14,25 +14,24 @@
 
 #pragma once
 
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
-
 namespace NES
 {
 
 /**
- * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
+ * @brief Map operator, which contains an field assignment function that manipulates a field of the record.
  */
 class LogicalMapOperator : public LogicalUnaryOperator
 {
 public:
-    LogicalMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id);
+    LogicalMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id);
 
     /**
-    * @brief Returns the expression of this map operator
-    * @return FieldAssignmentExpressionNodePtr
+    * @brief Returns the function of this map operator
+    * @return NodeFunctionFieldAssignmentPtr
     */
-    FieldAssignmentExpressionNodePtr getMapExpression() const;
+    NodeFunctionFieldAssignmentPtr getMapFunction() const;
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -50,7 +49,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    const FieldAssignmentExpressionNodePtr mapExpression;
+    const NodeFunctionFieldAssignmentPtr mapFunction;
 };
-
+using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
 } /// namespace NES

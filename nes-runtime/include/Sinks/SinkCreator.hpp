@@ -13,7 +13,6 @@
 */
 
 #pragma once
-#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES
 {

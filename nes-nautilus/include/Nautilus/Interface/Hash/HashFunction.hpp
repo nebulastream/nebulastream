@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Nautilus::Interface
 {
@@ -25,29 +25,21 @@ namespace NES::Nautilus::Interface
 class HashFunction
 {
 public:
-    using HashValue = Value<UInt64>;
+    using HashValue = nautilus::val<uint64_t>;
 
     /**
      * @brief Calculates the hash of one value.
      * @param value a nautilus value
      * @return the hash
      */
-    HashValue calculate(Value<> value);
-
-    /**
-     * @brief This is only necessary as long as TODO #3648 is not merged
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    HashValue calculateWithState(Value<> value, Value<MemRef> state);
+    HashValue calculate(VarVal value);
 
     /**
      * @brief Calculates the hash across a set of values.
      * @param values vector of nautilus values.
      * @return the hash
      */
-    HashValue calculate(std::vector<Value<>>& values);
+    HashValue calculate(std::vector<VarVal>& values);
     virtual ~HashFunction() = default;
 
 protected:
@@ -62,14 +54,6 @@ protected:
      * @param value
      * @return HashValue
      */
-    virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;
-
-    /**
-     * @brief This is only necessary as long as TODO #3648 is not merged
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
+    virtual HashValue calculate(HashValue& hash, VarVal& value) = 0;
 };
 } /// namespace NES::Nautilus::Interface

@@ -39,7 +39,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(
     , lowerPhysicalToNautilusOperatorsPhase(std::make_shared<LowerPhysicalToNautilusOperators>(options))
     , compileNautilusPlanPhase(std::make_shared<NautilusCompilationPhase>(options))
     , lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase())
-    , pipeliningPhase(phaseFactory->createPipeliningPhase(options))
+    , pipeliningPhase(phaseFactory->createPipeliningPhase())
     , addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options))
 {
 }

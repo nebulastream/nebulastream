@@ -16,7 +16,6 @@
 
 #include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

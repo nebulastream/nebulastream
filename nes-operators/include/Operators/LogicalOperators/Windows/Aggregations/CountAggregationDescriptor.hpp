@@ -30,13 +30,13 @@ public:
     */
     static WindowAggregationDescriptorPtr on();
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
     DataTypePtr getInputStamp() override;
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
@@ -47,7 +47,7 @@ public:
     virtual ~CountAggregationDescriptor() = default;
 
 private:
-    explicit CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    explicit CountAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
+    CountAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
 } /// namespace NES::Windowing

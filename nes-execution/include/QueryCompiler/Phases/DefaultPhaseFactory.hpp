@@ -23,10 +23,9 @@ public:
     virtual ~DefaultPhaseFactory() = default;
     static PhaseFactoryPtr create();
     LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(std::shared_ptr<QueryCompilerOptions> options) override;
-    PipeliningPhasePtr createPipeliningPhase(std::shared_ptr<QueryCompilerOptions> options) override;
+    PipeliningPhasePtr createPipeliningPhase() override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(std::shared_ptr<QueryCompilerOptions> options) override;
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() override;
-    BufferOptimizationPhasePtr createBufferOptimizationPhase(std::shared_ptr<QueryCompilerOptions> options) override;
+    std::shared_ptr<LowerToExecutableQueryPlanPhase> createLowerToExecutableQueryPlanPhase() override;
 };
 
-} /// namespace NES::QueryCompilation::Phases
+}

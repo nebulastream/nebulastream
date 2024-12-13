@@ -30,12 +30,12 @@ public:
     /**
     * Factory method to creates a sum aggregation on a particular field.
     */
-    static WindowAggregationDescriptorPtr on(const ExpressionNodePtr& onField);
+    static WindowAggregationDescriptorPtr on(const NodeFunctionPtr& onField);
 
-    static WindowAggregationDescriptorPtr create(FieldAccessExpressionNodePtr onField, FieldAccessExpressionNodePtr asField);
+    static WindowAggregationDescriptorPtr create(NodeFunctionFieldAccessPtr onField, NodeFunctionFieldAccessPtr asField);
 
     /**
-     * @brief Infers the stamp of the expression given the current schema and the typeInferencePhaseContext.
+     * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
      * @param typeInferencePhaseContext
      * @param schema
      */
@@ -48,7 +48,7 @@ public:
     DataTypePtr getFinalAggregateStamp() override;
 
 private:
-    explicit SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
-    SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
+    explicit SumAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
+    SumAggregationDescriptor(NodeFunctionPtr onField, NodeFunctionPtr asField);
 };
 } /// namespace NES::Windowing

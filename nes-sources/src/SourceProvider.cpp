@@ -13,65 +13,37 @@
 */
 
 #include <memory>
-#include <stdexcept>
-#include <utility>
-#include <vector>
-#include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Sources/CSVSource.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Sources/SourceRegistry.hpp>
 
 namespace NES::Sources
 {
 
-DataSourceProviderPtr SourceProvider::create()
+std::unique_ptr<Sources::SourceProvider> SourceProvider::create()
 {
-    return std::make_shared<SourceProvider>();
+    return std::make_unique<SourceProvider>();
 }
 
-SourceHandlePtr SourceProvider::lower(
+std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
-    SourceDescriptorPtr&& sourceDescriptor,
+    const SourceDescriptor& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto schema = sourceDescriptor->getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
+    if (auto source = SourceRegistry::instance().create(sourceDescriptor.sourceType, sourceDescriptor.schema, sourceDescriptor))
     {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
-        const auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
-
-        auto csvSource = std::make_unique<CSVSource>(schema, csvSourceType);
-        return std::make_shared<SourceHandle>(
+        return std::make_unique<SourceHandle>(
             std::move(originId),
-            std::move(schema),
+            std::move(sourceDescriptor.schema),
             std::move(bufferPool),
             std::move(emitFunction),
             NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(csvSource));
+            std::move(source.value()));
     }
-    if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
-    {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
-        const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
-        auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
-        return std::make_shared<SourceHandle>(
-            std::move(originId),
-            std::move(schema),
-            std::move(bufferPool),
-            std::move(emitFunction),
-            NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(tcpSource));
-    }
-    NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
-    throw std::invalid_argument("Unknown Source Descriptor Type");
+    throw UnknownSourceType(fmt::format("Unknown Source Descriptor Type: {}", sourceDescriptor.sourceType));
 }
 
 }

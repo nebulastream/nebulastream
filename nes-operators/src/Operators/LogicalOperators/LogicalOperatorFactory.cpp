@@ -22,7 +22,8 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -32,10 +33,15 @@
 namespace NES
 {
 
-LogicalUnaryOperatorPtr
-LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr& sourceDescriptor, OperatorId id, OriginId originId)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(std::string logicalSourceName, OperatorId id)
 {
-    return std::make_shared<SourceLogicalOperator>(sourceDescriptor, id, originId);
+    return std::make_shared<SourceNameLogicalOperator>(std::move(logicalSourceName), id);
+}
+
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createSourceOperator(
+    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+{
+    return std::make_shared<SourceDescriptorLogicalOperator>(std::move(sourceDescriptor), id, originId);
 }
 
 LogicalUnaryOperatorPtr
@@ -49,7 +55,7 @@ LogicalOperatorFactory::createSinkOperator(const SinkDescriptorPtr& sinkDescript
     return sinkOperator;
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createFilterOperator(const ExpressionNodePtr& predicate, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createFilterOperator(const NodeFunctionPtr& predicate, OperatorId id)
 {
     return std::make_shared<LogicalFilterOperator>(predicate, id);
 }
@@ -64,18 +70,18 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createLimitOperator(const uint64
     return std::make_shared<LogicalLimitOperator>(limit, id);
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createProjectionOperator(const std::vector<NodeFunctionPtr>& functions, OperatorId id)
 {
-    return std::make_shared<LogicalProjectionOperator>(expressions, id);
+    return std::make_shared<LogicalProjectionOperator>(functions, id);
 }
 
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
+LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const NodeFunctionFieldAssignmentPtr& mapFunction, OperatorId id)
 {
-    return std::make_shared<LogicalMapOperator>(mapExpression, id);
+    return std::make_shared<LogicalMapOperator>(mapFunction, id);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createInferModelOperator(
-    std::string model, std::vector<ExpressionNodePtr> inputFieldsPtr, std::vector<ExpressionNodePtr> outputFieldsPtr, OperatorId id)
+    std::string model, std::vector<NodeFunctionPtr> inputFieldsPtr, std::vector<NodeFunctionPtr> outputFieldsPtr, OperatorId id)
 {
     return std::make_shared<NES::InferModel::LogicalInferModelOperator>(model, inputFieldsPtr, outputFieldsPtr, id);
 }

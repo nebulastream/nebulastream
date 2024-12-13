@@ -19,7 +19,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -86,8 +85,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
@@ -140,8 +137,6 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
     EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
 }
@@ -163,31 +158,9 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.empty());
 }
 
-TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
-{
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "workerWithPhysicalSources.yaml");
-
-    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(!workerConfigPtr->physicalSourceTypes.empty());
-    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
-}
-
-TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
+TEST_F(ConfigTest, testWorkerConsoleInput)
 {
     /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
@@ -196,14 +169,7 @@ TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
          "--numberOfWorkerThreads=5",
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
-         "--queryCompiler.compilationStrategy=FAST",
-         "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-         "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-         "--physicalSources.type=CSV_SOURCE",
-         "--physicalSources.filePath=fileLoc",
-         "--physicalSources.rowLayout=false",
-         "--physicalSources.physicalSourceName=x",
-         "--physicalSources.logicalSourceName=default"});
+         "--queryCompiler.compilationStrategy=FAST"});
     /// when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     /// then
@@ -222,11 +188,6 @@ TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
     EXPECT_NE(
         workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
         workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.pipeliningStrategy.getValue(), workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
 }
 
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
@@ -369,4 +330,4 @@ TEST_F(ConfigTest, invalidIpYamlInputs)
         }
     }
 }
-} /// namespace NES
+}

@@ -25,10 +25,12 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Parsers/ParserCSV.hpp>
+#include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
 
 namespace NES
 {
@@ -137,7 +139,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
         for (auto const& [key, val] : *propertyIterator)
         {
             /// add the current property to the current operator
-            node->as<LogicalOperator>()->addProperty(key, val);
+            NES::Util::as<LogicalOperator>(node)->addProperty(key, val);
         }
         ++propertyIterator;
     }
@@ -161,7 +163,7 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
 #ifdef WRAP_READ_CALL
 /// If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function
 /// to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
-/// However, this allows to mock calls to read (e.g. TCPSourceTest)
+/// However, this allows to mock calls to read (e.g. SourceTCPTest)
 extern "C" ssize_t __real_read(int fd, void* data, size_t size);
 __attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size)
 {

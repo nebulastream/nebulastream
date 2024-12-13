@@ -17,11 +17,9 @@
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
-#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
-#include <Configurations/Enums/PipeliningStrategy.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Common.hpp>
 
 namespace NES::QueryCompilation
@@ -31,8 +29,8 @@ struct QueryCompilerOptions
 {
     enum class FilterProcessingStrategy : uint8_t
     {
-        BRANCHED, /// Uses a branches to process filter expressions
-        PREDICATION /// Uses predication for filter expressions if possible
+        BRANCHED, /// Uses a branches to process filter functions
+        PREDICATION /// Uses predication for filter functions if possible
     };
 
     struct StreamHashJoinOptions
@@ -44,21 +42,17 @@ struct QueryCompilerOptions
     } __attribute__((aligned(32)));
 
     uint64_t numSourceLocalBuffers = 64;
-    OutputBufferOptimizationLevel outputBufferOptimizationLevel = OutputBufferOptimizationLevel::ALL;
-    PipeliningStrategy pipeliningStrategy = PipeliningStrategy::OPERATOR_FUSION;
     CompilationStrategy compilationStrategy = CompilationStrategy::OPTIMIZE;
     FilterProcessingStrategy filterProcessingStrategy = FilterProcessingStrategy::BRANCHED;
-    WindowingStrategy windowingStrategy = WindowingStrategy::SLICING;
-    QueryCompilerType queryCompiler = QueryCompilerType::NAUTILUS_QUERY_COMPILER;
-    NautilusBackend nautilusBackend = NautilusBackend::MLIR_COMPILER_BACKEND;
+    NautilusBackend nautilusBackend = NautilusBackend::COMPILER;
     DumpMode dumpMode = DumpMode::FILE_AND_CONSOLE;
     std::string dumpPath;
     StreamJoinStrategy joinStrategy = StreamJoinStrategy::NESTED_LOOP_JOIN;
     StreamHashJoinOptions hashJoinOptions;
 } __attribute__((aligned(64)));
+using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 
-
-/// TODO(#122): Refactor QueryCompilerConfiguration
+/// TODO #122: Refactor QueryCompilerConfiguration
 [[maybe_unused]]
 static std::shared_ptr<QueryCompilerOptions>
 queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfiguration& queryCompilerConfiguration)
@@ -66,23 +60,8 @@ queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfigurati
     auto options = std::make_shared<QueryCompilerOptions>();
 
     options->compilationStrategy = queryCompilerConfiguration.compilationStrategy;
-    options->pipeliningStrategy = queryCompilerConfiguration.pipeliningStrategy;
-    options->outputBufferOptimizationLevel = queryCompilerConfiguration.outputBufferOptimizationLevel;
-
-    if (queryCompilerConfiguration.queryCompilerType == QueryCompilerType::NAUTILUS_QUERY_COMPILER
-        && queryCompilerConfiguration.windowingStrategy == WindowingStrategy::LEGACY)
-    {
-        options->windowingStrategy = WindowingStrategy::SLICING;
-    }
-    else
-    {
-        options->windowingStrategy = queryCompilerConfiguration.windowingStrategy;
-    }
-
-    options->queryCompiler = queryCompilerConfiguration.queryCompilerType;
     options->dumpMode = queryCompilerConfiguration.queryCompilerDumpMode;
     options->nautilusBackend = queryCompilerConfiguration.nautilusBackend;
-
     options->hashJoinOptions.numberOfPartitions = queryCompilerConfiguration.numberOfPartitions.getValue();
     options->hashJoinOptions.pageSize = queryCompilerConfiguration.pageSize.getValue();
     options->hashJoinOptions.preAllocPageCnt = queryCompilerConfiguration.preAllocPageCnt.getValue();

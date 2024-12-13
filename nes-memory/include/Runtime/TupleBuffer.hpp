@@ -79,11 +79,6 @@ public:
     ///@brief This is the logical identifier of a child tuple buffer
     using NestedTupleBufferKey = uint32_t;
 
-    ///@brief The initial sequence number of a stream of tuple buffers is 1.
-    constexpr static uint64_t INITIAL_SEQUENCE_NUMBER = 1;
-    ///@brief When the content of a tuple buffer outgrows the buffer size tuple buffers are chunked to preserve the order of
-    ///sequencenumbers (or prevent duplicated). The initial chunk number is 1.
-    constexpr static uint64_t INITIAL_CHUNK_NUMBER = 1;
 
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
@@ -146,10 +141,10 @@ public:
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-    uint8_t* getBuffer() noexcept;
+    int8_t* getBuffer() noexcept;
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = uint8_t>
+    template <typename T = int8_t>
     T* getBuffer() noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
@@ -158,7 +153,7 @@ public:
     }
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
-    template <typename T = uint8_t>
+    template <typename T = int8_t>
     const T* getBuffer() const noexcept
     {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
@@ -182,16 +177,16 @@ public:
     void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
 
     /// @brief get the watermark as a timestamp
-    [[nodiscard]] uint64_t getWatermark() const noexcept;
+    [[nodiscard]] WatermarkTs getWatermark() const noexcept;
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(uint64_t value) noexcept;
+    void setWatermark(WatermarkTs value) noexcept;
 
     /// @brief get the creation timestamp in milliseconds
-    [[nodiscard]] uint64_t getCreationTimestampInMS() const noexcept;
+    [[nodiscard]] WatermarkTs getCreationTimestampInMS() const noexcept;
 
     /// @brief set the sequence number
-    void setSequenceNumber(uint64_t sequenceNumber) noexcept;
+    void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
     /// @brief set the sequence data, i.e., sequenceNumber, chunkNumber, and lastChunk
     void setSequenceData(SequenceData sequenceData) noexcept;
@@ -200,13 +195,13 @@ public:
     [[nodiscard]] SequenceData getSequenceData() const noexcept;
 
     /// @brief get the sequence number
-    [[nodiscard]] uint64_t getSequenceNumber() const noexcept;
+    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
 
     /// @brief set the sequence number
-    void setChunkNumber(uint64_t chunkNumber) noexcept;
+    void setChunkNumber(ChunkNumber chunkNumber) noexcept;
 
     /// @brief get the chunk number
-    [[nodiscard]] uint64_t getChunkNumber() const noexcept;
+    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
 
     /// @brief set if this is the last chunk of a sequence number
     void setLastChunk(bool isLastChunk) noexcept;
@@ -215,7 +210,7 @@ public:
     [[nodiscard]] bool isLastChunk() const noexcept;
 
     /// @brief set the creation timestamp in milliseconds
-    void setCreationTimestampInMS(uint64_t value) noexcept;
+    void setCreationTimestampInMS(WatermarkTs value) noexcept;
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
     [[nodiscard]] OriginId getOriginId() const noexcept;

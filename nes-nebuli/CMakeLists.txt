@@ -19,12 +19,13 @@ set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
 
+get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
 get_source(nes-optimizer OPTIMIZER_SOURCE_FILES)
 get_source(nes-compiler COMPILER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 
-add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES})
+add_library(nebuli-lib STATIC src/NebuLI.cpp ${CATALOG_SOURCE_FILES} ${OPTIMIZER_SOURCE_FILES} ${COMPILER_SOURCE_FILES} ${COORDINATOR_SOURCE_FILES} ${CLIENT_SOURCE_FILES})
 
 target_compile_definitions(nebuli-lib PRIVATE PATH_TO_BINARY_DIR="${PATH_TO_BINARY_DIR}")
 target_compile_definitions(nebuli-lib PRIVATE CLANG_EXECUTABLE="${CLANG_EXECUTABLE}")
@@ -38,7 +39,7 @@ target_include_directories(nebuli-lib
 
 target_link_libraries(nebuli-lib
         PUBLIC nes-operators
-        PRIVATE yaml-cpp::yaml-cpp nes-client
+        PRIVATE yaml-cpp::yaml-cpp "$<LINK_LIBRARY:WHOLE_ARCHIVE,nes-client>"
 )
 
 add_executable(nebuli src/NebuLIStarter.cpp)
@@ -51,15 +52,20 @@ target_include_directories(nebuli
 
 ### Installing Nebuli using cmake install or cpack
 # Collect all headers required for our "query-parsing" and store them in a file_set
-macro(add_nebuli_header TARGET PATH)
-    file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH}/*.hpp)
+macro(add_nebuli_header TARGET PATH_OR_FILES)
+    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
+        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES}/*.hpp)
+    else()
+        set(HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
+    endif()
+
     foreach (ABSOLUTE_PATH_TO_HEADER IN LISTS HEADER)
         file(RELATIVE_PATH RELATIVE_PATH_TO_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/" "${ABSOLUTE_PATH_TO_HEADER}")
         configure_file(${ABSOLUTE_PATH_TO_HEADER} "${CMAKE_BINARY_DIR}/include/nebulastream/${RELATIVE_PATH_TO_HEADER}" COPYONLY)
     endforeach ()
 
     if (NOT HEADER)
-        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH})
+        file(GLOB_RECURSE HEADER ${CMAKE_CURRENT_SOURCE_DIR}/../${TARGET}/include/${PATH_OR_FILES})
     endif ()
 
     target_sources(nebuli PUBLIC
@@ -73,11 +79,16 @@ endmacro()
 add_nebuli_header(nes-client API/ API)
 add_nebuli_header(nes-common Identifiers/ Identifiers)
 add_nebuli_header(nes-common Nodes/ Node/)
+add_nebuli_header(nes-common Util/ Util/)
+add_nebuli_header(nes-common Exceptions/ Exceptions/)
+add_nebuli_header(nes-common Sequencing/ Sequencing/)
+add_nebuli_header(nes-common ErrorHandling.hpp ErrorHandling.hpp)
+add_nebuli_header(nes-common ExceptionDefinitions.hpp ExceptionDefinitions.hpp)
 add_nebuli_header(nes-data-types Common/DataTypes Common/DataTypes)
 add_nebuli_header(nes-data-types Common/ExecutableType Common/ExecutableType)
 add_nebuli_header(nes-data-types Common/PhysicalTypes Common/PhysicalTypes)
 add_nebuli_header(nes-data-types API/ API)
-add_nebuli_header(nes-expressions Expressions/ Expressions)
+add_nebuli_header(nes-functions Functions/ Functions)
 add_nebuli_header(nes-operators Operators/LogicalOperators Operators/LogicalOperators)
 add_nebuli_header(nes-operators Plans/Query/ Plans/Query)
 add_nebuli_header(nes-operators Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
@@ -92,12 +103,10 @@ function(add_nes_test_nebuli)
             PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../private>)
 endfunction()
 
-if (NES_ENABLES_TESTS)
-    add_subdirectory(tests)
-endif ()
+add_tests_if_enabled(tests)
 
 # install Nebuli and all its dependencies + the file_set with the headers
-install(TARGETS nebuli nes-operators nes-expressions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
+install(TARGETS nebuli nes-operators nes-functions nes-client nes-data-types nes-common nes-configurations nes-window-types nes-grpc
         FILE_SET nebuliPublicHeaders DESTINATION "${CMAKE_INSTALL_PREFIX}/include/nebulastream"
         COMPONENT nebuli
 )

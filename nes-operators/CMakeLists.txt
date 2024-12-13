@@ -16,7 +16,7 @@ get_source(nes-operators NES_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-operators ${NES_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-operators PUBLIC nes-window-types)
+target_link_libraries(nes-operators PUBLIC nes-sources nes-window-types)
 target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -28,10 +28,4 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
+add_tests_if_enabled(tests)

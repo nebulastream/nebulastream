@@ -18,18 +18,17 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 
 namespace NES::QueryCompilation
 {
-
 /**
  * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
  */
 class PipelineQueryPlan
 {
 public:
-    static PipelineQueryPlanPtr create(QueryId queryId = INVALID_QUERY_ID);
+    static std::shared_ptr<PipelineQueryPlan> create(QueryId queryId = INVALID_QUERY_ID);
 
     void addPipeline(const OperatorPipelinePtr& pipeline);
     void removePipeline(const OperatorPipelinePtr& pipeline);
@@ -46,4 +45,5 @@ private:
     const QueryId queryId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
+using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 } /// namespace NES::QueryCompilation

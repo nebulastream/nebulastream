@@ -13,12 +13,17 @@
 */
 
 #pragma once
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/WorkerContext.hpp>
+
+
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 
 namespace NES::Runtime::Execution
 {
@@ -40,12 +45,7 @@ class OperatorState;
 class ExecutionContext final
 {
 public:
-    /**
-     * @brief Create new execution context with mem refs to the worker context and the pipeline context.
-     * @param workerContext reference to the worker context.
-     * @param pipelineContext reference to the pipeline context.
-     */
-    ExecutionContext(const Value<MemRef>& workerContext, const Value<MemRef>& pipelineContext);
+    ExecutionContext(const nautilus::val<WorkerContext*>& workerContext, const nautilus::val<PipelineExecutionContext*>& pipelineContext);
 
     /**
      * @brief Set local operator state that keeps state in a single pipeline invocation.
@@ -53,149 +53,61 @@ public:
      * @param state operator state.
      */
     void setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state);
-
-    /**
-     * @brief Get the operator state by the operator reference.
-     * @param op operator reference
-     * @return operator state.
-     */
     Operators::OperatorState* getLocalState(const Operators::Operator* op);
 
-    /**
-     * @brief Get the global operator state.
-     * @param handlerIndex reference to the operator to identify the state.
-     */
-    Value<MemRef> getGlobalOperatorHandler(uint64_t handlerIndex);
+    nautilus::val<OperatorHandler*> getGlobalOperatorHandler(uint64_t handlerIndex);
+    nautilus::val<WorkerThreadId> getWorkerThreadId();
+    nautilus::val<Memory::TupleBuffer*> allocateBuffer();
 
-    /**
-     * @brief Get worker thread id of the current execution.
-     * @return ValueId<WorkerThreadId>
-     */
-    ValueId<WorkerThreadId> getWorkerThreadId();
+    /// Emit a record buffer to the next pipeline or sink
+    void emitBuffer(const RecordBuffer& buffer);
 
-    /**
-     * @brief Allocate a new tuple buffer.
-     * @return Value<MemRef>
-     */
-    Value<MemRef> allocateBuffer();
+    const nautilus::val<PipelineExecutionContext*>& getPipelineContext() const;
+    const nautilus::val<WorkerContext*>& getWorkerContext() const;
 
-    /**
-     * @brief Emit a record buffer to the next pipeline or sink.
-     * @param record buffer.
-     */
-    void emitBuffer(const RecordBuffer& rb);
+    /// Returns the current origin id. This is set in the scan.
+    const nautilus::val<uint64_t>& getOriginId() const;
+    void setOriginId(const nautilus::val<uint64_t>& origin);
 
-    /**
-     * @brief Returns the pipeline context
-     * @return Value<MemRef> to the pipeline context
-     */
-    const Value<MemRef>& getPipelineContext() const;
 
-    /**
-     * @brief Returns the worker context
-     * @return Value<MemRef> to the worker context
-     */
-    const Value<MemRef>& getWorkerContext() const;
+    /// Returns the current origin id. This is set in the scan.
+    const nautilus::val<uint64_t>& getWatermarkTs() const;
+    void setWatermarkTs(const nautilus::val<uint64_t>& uint64_t);
 
-    /**
-     * @brief Returns the current origin id. This is set in the scan.
-     * @return Value<UInt64> origin id
-     */
-    const Value<UInt64>& getOriginId() const;
+    /// Returns the current sequence number id. This is set in the scan.
+    const nautilus::val<uint64_t>& getSequenceNumber() const;
+    void setSequenceNumber(const nautilus::val<uint64_t>& sequenceNumber);
 
-    /**
-     * @brief Sets the current origin id.
-     * @param origin
-     */
-    void setOrigin(Value<UInt64> origin);
+    /// Returns the current chunk number. This is set in the scan.
+    const nautilus::val<uint64_t>& getChunkNumber() const;
+    void setChunkNumber(const nautilus::val<uint64_t>& chunkNumber);
+    const nautilus::val<bool>& getLastChunk() const;
 
-    /**
-     * @brief Returns the current watermark ts. This is set in the scan.
-     * @return Value<UInt64> watermark ts
-     */
-    const Value<UInt64>& getWatermarkTs() const;
-
-    /**
-     * @brief Sets the current valid watermark ts.
-     * @param watermarkTs
-     */
-    void setWatermarkTs(Value<UInt64> watermarkTs);
-
-    /**
-     * @brief Sets the current sequence number
-     * @param sequenceNumber
-     */
-    void setSequenceNumber(Value<UInt64> sequenceNumber);
-
-    /**
-     * @brief Returns current sequence number
-     * @return Value<UInt64> sequence number
-     */
-    const Value<UInt64>& getSequenceNumber() const;
-
-    /**
-     * @brief Returns current chunk number
-     * @return Value<UInt64> chunk number
-     */
-    const Value<UInt64>& getChunkNumber() const;
-
-    /**
-     * @brief Sets the current chunk number
-     * @param chunkNumber
-     */
-    void setChunkNumber(Value<UInt64> chunkNumber);
-
-    /**
-     * @brief Returns last chunk
-     * @return Value<Boolean>&
-     */
-    const Value<Boolean>& getLastChunk() const;
-
-    /**
-     * @brief Removes the sequence state for the current <OrigindId, SequenceNumber>
-     */
+    /// Removes the sequence state for the current <OrigindId, uint64_t>
     void removeSequenceState() const;
 
-    /**
-     * @brief Checks if all chunks have been seen
-     * @return True or false
-     */
-    Value<Boolean> isLastChunk() const;
+    /// Checks if all chunks have been seen
+    nautilus::val<bool> isLastChunk() const;
 
-    /**
-     * @brief Gets the next chunk number for the emitted tuple buffers
-     * @return Value<UInt64>
-     */
-    Value<UInt64> getNextChunkNr() const;
+    /// Returns the next chunk number for the emitted sequence numbers
+    nautilus::val<uint64_t> getNextChunkNr() const;
+    void setLastChunk(const nautilus::val<bool>& isLastChunk);
 
-    /**
-     * @brief Sets last chunk
-     * @param isLastChunk
-     */
-    void setLastChunk(Value<Boolean> isLastChunk);
 
-    /**
-     * @brief Returns the current time stamp ts. This is set by a time function
-     * @return Value<UInt64> timestamp ts
-     */
-    const Value<UInt64>& getCurrentTs() const;
-
-    /**
-     * @brief Sets the current processing timestamp.
-     * @param ts
-     */
-    void setCurrentTs(Value<UInt64> ts);
+    /// Returns the current time stamp ts. This is set by a time function
+    const nautilus::val<uint64_t>& getCurrentTs() const;
+    void setCurrentTs(const nautilus::val<uint64_t>& ts);
 
 private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
-    Value<MemRef> workerContext;
-    Value<MemRef> pipelineContext;
-    Value<UInt64> origin;
-    Value<UInt64> watermarkTs;
-    Value<UInt64> currentTs;
-    Value<UInt64> sequenceNumber;
-    Value<UInt64> chunkNumber;
-    Value<Boolean> lastChunk;
+    nautilus::val<WorkerContext*> workerContext;
+    nautilus::val<PipelineExecutionContext*> pipelineContext;
+    nautilus::val<uint64_t> origin;
+    nautilus::val<uint64_t> watermarkTs;
+    nautilus::val<uint64_t> currentTs;
+    nautilus::val<uint64_t> sequenceNumber;
+    nautilus::val<uint64_t> chunkNumber;
+    nautilus::val<bool> lastChunk;
 };
 
-} /// namespace NES::Runtime::Execution
+}

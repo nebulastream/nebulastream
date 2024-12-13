@@ -15,8 +15,9 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/DataSource.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceThread.hpp>
 
 namespace NES::Sources
 {
@@ -24,11 +25,11 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SchemaPtr schema,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
-    SourceReturnType::EmitFunction&& emitFunction,
+    Sources::SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation)
 {
-    this->dataSource = std::make_unique<DataSource>(
+    this->sourceThread = std::make_unique<SourceThread>(
         std::move(originId),
         std::move(schema),
         std::move(bufferPool),
@@ -39,26 +40,21 @@ SourceHandle::SourceHandle(
 
 bool SourceHandle::start() const
 {
-    return this->dataSource->start();
+    return this->sourceThread->start();
 }
 bool SourceHandle::stop() const
 {
-    return this->dataSource->stop();
-}
-
-const DataSource* SourceHandle::getDataSource() const
-{
-    return this->dataSource.get();
+    return this->sourceThread->stop();
 }
 
 OriginId SourceHandle::getSourceId() const
 {
-    return this->dataSource->getOriginId();
+    return this->sourceThread->getOriginId();
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
 {
-    return out << sourceHandle.getDataSource();
+    return out << *sourceHandle.sourceThread;
 }
 
 }

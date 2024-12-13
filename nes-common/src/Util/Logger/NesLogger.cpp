@@ -156,7 +156,10 @@ struct LoggerHolder
     ~LoggerHolder()
     {
         singleton.reset();
-        spdlog::shutdown();
+        /// Not sure why, but we have to disable the call to spdlog::shutdown() here. Otherwise, the system tests will not shutdown properly.
+        /// The actual error happens in std::__hash_table::__deallocate_node() line 1109.
+        /// TODO #348: Investigate why the call to spdlog::shutdown() causes the system tests to fail.
+        /// spdlog::shutdown();
     }
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
@@ -179,6 +182,6 @@ std::shared_ptr<detail::Logger> getInstance()
     return detail::LoggerHolder::singleton;
 }
 
-} /// namespace Logger
+}
 
-} /// namespace NES
+}

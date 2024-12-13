@@ -17,11 +17,10 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 
 namespace NES::QueryCompilation
 {
-
 /**
 * @brief Returns the next free pipeline id
 * @return node id
@@ -49,57 +48,57 @@ public:
 
     /**
      * @brief Creates a new operator pipeline
-     * @return OperatorPipelinePtr
+     * @return std::shared_ptr<OperatorPipeline>
      */
-    static OperatorPipelinePtr create();
+    static std::shared_ptr<OperatorPipeline> create();
 
     /**
      * @brief Creates a new source pipeline.
-     * @return OperatorPipelinePtr
+     * @return std::shared_ptr<OperatorPipeline>
      */
-    static OperatorPipelinePtr createSourcePipeline();
+    static std::shared_ptr<OperatorPipeline> createSourcePipeline();
 
     /**
      * @brief Creates a new sink pipeline.
-     * @return OperatorPipelinePtr
+     * @return std::shared_ptr<OperatorPipeline>
      */
-    static OperatorPipelinePtr createSinkPipeline();
+    static std::shared_ptr<OperatorPipeline> createSinkPipeline();
 
     /**
      * @brief Adds a successor pipeline to the current one.
      * @param successor
      */
-    void addSuccessor(const OperatorPipelinePtr& pipeline);
+    void addSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline);
 
     /**
      * @brief Adds a predecessor pipeline to the current one.
      * @param predecessor
      */
-    void addPredecessor(const OperatorPipelinePtr& pipeline);
+    void addPredecessor(const std::shared_ptr<OperatorPipeline>& pipeline);
 
     /**
      * @brief Removes a particular predecessor pipeline.
      * @param predecessor
      */
-    void removePredecessor(const OperatorPipelinePtr& pipeline);
+    void removePredecessor(const std::shared_ptr<OperatorPipeline>& pipeline);
 
     /**
      * @brief Removes a particular successor pipeline.
      * @param successor
      */
-    void removeSuccessor(const OperatorPipelinePtr& pipeline);
+    void removeSuccessor(const std::shared_ptr<OperatorPipeline>& pipeline);
 
     /**
      * @brief Gets list of all predecessors
-     * @return std::vector<OperatorPipelinePtr>
+     * @return std::vector<std::shared_ptr<OperatorPipeline>>
      */
-    std::vector<OperatorPipelinePtr> getPredecessors() const;
+    std::vector<std::shared_ptr<OperatorPipeline>> getPredecessors() const;
 
     /**
      * @brief Gets list of all sucessors
-     * @return std::vector<OperatorPipelinePtr>
+     * @return std::vector<std::shared_ptr<OperatorPipeline>>
      */
-    std::vector<OperatorPipelinePtr> const& getSuccessors() const;
+    std::vector<std::shared_ptr<OperatorPipeline>> const& getSuccessors() const;
 
     /**
      * @brief Removes all predecessors
@@ -177,4 +176,5 @@ private:
     std::vector<OperatorId> operatorIds;
     Type pipelineType;
 };
+using OperatorPipelinePtr = std::shared_ptr<OperatorPipeline>;
 } /// namespace NES::QueryCompilation

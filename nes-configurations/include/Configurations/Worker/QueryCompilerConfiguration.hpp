@@ -21,10 +21,6 @@
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
-#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
-#include <Configurations/Enums/PipeliningStrategy.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
-#include <Configurations/Enums/WindowingStrategy.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/BooleanValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
@@ -44,11 +40,7 @@ public:
     QueryCompilerConfiguration() = default;
     QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
-    EnumOption<QueryCompilation::QueryCompilerType> queryCompilerType
-        = {QUERY_COMPILER_TYPE_CONFIG,
-           QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER,
-           "Type for the query compiler [DEFAULT_QUERY_COMPILER|NAUTILUS_QUERY_COMPILER]."};
-
+    /// Sets the dump mode for the query compiler. This setting is only for the nautilus compiler
     EnumOption<QueryCompilation::DumpMode> queryCompilerDumpMode
         = {QUERY_COMPILER_DUMP_MODE,
            QueryCompilation::DumpMode::NONE,
@@ -63,28 +55,9 @@ public:
 
     EnumOption<QueryCompilation::NautilusBackend> nautilusBackend
         = {QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG,
-           QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND,
+           QueryCompilation::NautilusBackend::COMPILER,
            "Nautilus backend for the nautilus query compiler "
-           "[MLIR_COMPILER_BACKEND|INTERPRETER|BC_INTERPRETER_BACKEND|FLOUNDER_COMPILER_BACKEND]."};
-
-    EnumOption<QueryCompilation::PipeliningStrategy> pipeliningStrategy
-        = {QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG,
-           QueryCompilation::PipeliningStrategy::OPERATOR_FUSION,
-           "Pipelining strategy for the query compiler [OPERATOR_FUSION|OPERATOR_AT_A_TIME]."};
-
-    EnumOption<QueryCompilation::OutputBufferOptimizationLevel> outputBufferOptimizationLevel
-        = {QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG,
-           QueryCompilation::OutputBufferOptimizationLevel::ALL,
-           "OutputBufferAllocationStrategy "
-           "[ALL|NO|ONLY_INPLACE_OPERATIONS_NO_FALLBACK,"
-           "|REUSE_INPUT_BUFFER_AND_OMIT_OVERFLOW_CHECK_NO_FALLBACK,|"
-           "REUSE_INPUT_BUFFER_NO_FALLBACK|OMIT_OVERFLOW_CHECK_NO_FALLBACK]. "};
-
-    EnumOption<QueryCompilation::WindowingStrategy> windowingStrategy
-        = {QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG,
-           QueryCompilation::WindowingStrategy::LEGACY,
-           "windowingStrategy "
-           "[LEGACY|SLICING|BUCKETING]. "};
+           "[COMPILER|INTERPRETER]."};
 
     BoolOption useCompilationCache
         = {ENABLE_USE_COMPILATION_CACHE_CONFIG, "false", "Enable use compilation caching", {std::make_shared<BooleanValidation>()}};
@@ -122,12 +95,8 @@ private:
     std::vector<BaseOption*> getOptions() override
     {
         return {
-            &queryCompilerType,
             &compilationStrategy,
-            &pipeliningStrategy,
             &nautilusBackend,
-            &outputBufferOptimizationLevel,
-            &windowingStrategy,
             &useCompilationCache,
             &numberOfPartitions,
             &pageSize,
@@ -138,4 +107,4 @@ private:
     }
 };
 
-} /// namespace NES::Configurations
+}

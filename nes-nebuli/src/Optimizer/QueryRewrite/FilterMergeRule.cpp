@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Optimizer/QueryRewrite/FilterMergeRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -48,7 +49,7 @@ QueryPlanPtr FilterMergeRule::apply(NES::QueryPlanPtr queryPlan)
                 for (unsigned int i = 1; i < consecutiveFilters.size(); i++)
                 {
                     auto predicate = consecutiveFilters.at(i)->getPredicate();
-                    combinedPredicate = AndExpressionNode::create(combinedPredicate, predicate);
+                    combinedPredicate = NodeFunctionAnd::create(combinedPredicate, predicate);
                 }
                 NES_DEBUG("FilterMergeRule: Create new combined filter with the conjunction of all filter predicates");
                 auto combinedFilter = LogicalOperatorFactory::createFilterOperator(combinedPredicate);
@@ -98,10 +99,10 @@ std::vector<LogicalFilterOperatorPtr> FilterMergeRule::getConsecutiveFilters(con
     DepthFirstNodeIterator queryPlanNodeIterator(filter);
     auto nodeIterator = queryPlanNodeIterator.begin();
     auto node = (*nodeIterator);
-    while (node->instanceOf<LogicalFilterOperator>())
+    while (NES::Util::instanceOf<LogicalFilterOperator>(node))
     {
         NES_DEBUG("Found consecutive filter in the chain, adding it the list");
-        consecutiveFilters.push_back(node->as<LogicalFilterOperator>());
+        consecutiveFilters.push_back(NES::Util::as<LogicalFilterOperator>(node));
         ++nodeIterator;
         node = (*nodeIterator);
     }

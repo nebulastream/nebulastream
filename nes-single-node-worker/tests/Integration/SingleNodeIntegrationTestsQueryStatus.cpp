@@ -14,7 +14,6 @@
 
 #include <filesystem>
 #include <fstream>
-#include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
@@ -44,7 +43,7 @@ public:
 TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 {
     const auto* const resultFileName = "TestQueryStatus";
-    const std::string queryInputFile = fmt::format("{}.bin", "qOneCSVSource");
+    const std::string queryInputFile = fmt::format("{}.bin", "qOneSourceCSV");
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
@@ -55,11 +54,11 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, querySpecificDataFileName);
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -87,7 +86,7 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 {
     const auto* const resultFileName = "TestQueryStatusSimple";
-    const std::string queryInputFile = fmt::format("{}.bin", "qOneCSVSource");
+    const std::string queryInputFile = fmt::format("{}.bin", "qOneSourceCSV");
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
@@ -98,10 +97,10 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
+    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 

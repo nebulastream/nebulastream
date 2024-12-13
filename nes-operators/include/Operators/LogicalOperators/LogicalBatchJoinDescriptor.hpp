@@ -15,11 +15,12 @@
 #pragma once
 
 #include <cstdint>
-#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+#include <memory>
+#include <API/Schema.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 
 namespace NES::Join::Experimental
 {
-
 /**
  * @brief Runtime definition of a join operator
  * @experimental
@@ -28,27 +29,27 @@ class LogicalBatchJoinDescriptor
 { /// todo jm its dumb that this is in the windowing dir
 
 public:
-    static LogicalBatchJoinDescriptorPtr create(
-        const FieldAccessExpressionNodePtr& keyTypeBuild,
-        const FieldAccessExpressionNodePtr& keyTypeProbe,
+    static std::shared_ptr<LogicalBatchJoinDescriptor> create(
+        const NodeFunctionFieldAccessPtr& keyTypeBuild,
+        const NodeFunctionFieldAccessPtr& keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     explicit LogicalBatchJoinDescriptor(
-        FieldAccessExpressionNodePtr keyTypeBuild,
-        FieldAccessExpressionNodePtr keyTypeProbe,
+        NodeFunctionFieldAccessPtr keyTypeBuild,
+        NodeFunctionFieldAccessPtr keyTypeProbe,
         uint64_t numberOfInputEdgesLeft,
         uint64_t numberOfInputEdgesRight);
 
     /**
     * @brief getter/setter for on build join key
     */
-    FieldAccessExpressionNodePtr getBuildJoinKey() const;
+    NodeFunctionFieldAccessPtr getBuildJoinKey() const;
 
     /**
    * @brief getter/setter for on probe join key
    */
-    FieldAccessExpressionNodePtr getProbeJoinKey() const;
+    NodeFunctionFieldAccessPtr getProbeJoinKey() const;
 
     /**
    * @brief getter build schema
@@ -96,8 +97,8 @@ public:
     void setNumberOfInputEdgesProbe(uint64_t numberOfInputEdgesRight);
 
 private:
-    FieldAccessExpressionNodePtr keyTypeBuild;
-    FieldAccessExpressionNodePtr keyTypeProbe;
+    NodeFunctionFieldAccessPtr keyTypeBuild;
+    NodeFunctionFieldAccessPtr keyTypeProbe;
     SchemaPtr buildSchema{nullptr};
     SchemaPtr probeSchema{nullptr};
     SchemaPtr outputSchema{nullptr};

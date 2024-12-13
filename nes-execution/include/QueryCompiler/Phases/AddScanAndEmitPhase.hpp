@@ -12,11 +12,13 @@
     limitations under the License.
 */
 #pragma once
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
+#include <memory>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 namespace NES::QueryCompilation
 {
-
+class AddScanAndEmitPhase;
+using AddScanAndEmitPhasePtr = std::shared_ptr<AddScanAndEmitPhase>;
 /**
  * @brief Simple phase to add scan and emit operator to pipelines in necessary.
  * A common case would be that, the pipelining phase placed a filter operator in an own pipeline.

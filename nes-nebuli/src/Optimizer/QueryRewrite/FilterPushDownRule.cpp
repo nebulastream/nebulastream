@@ -14,18 +14,18 @@
 
 #include <queue>
 #include <API/Schema.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
+#include <Functions/NodeFunctionBinary.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
@@ -86,29 +86,29 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan)
 
 void FilterPushDownRule::pushDownFilter(LogicalFilterOperatorPtr filterOperator, NodePtr curOperator, NodePtr parOperator)
 {
-    if (curOperator->instanceOf<LogicalProjectionOperator>())
+    if (NES::Util::instanceOf<LogicalProjectionOperator>(curOperator))
     {
         pushBelowProjection(filterOperator, curOperator);
     }
-    else if (curOperator->instanceOf<LogicalMapOperator>())
+    else if (NES::Util::instanceOf<LogicalMapOperator>(curOperator))
     {
-        auto mapOperator = curOperator->as<LogicalMapOperator>();
+        auto mapOperator = NES::Util::as<LogicalMapOperator>(curOperator);
         pushFilterBelowMap(filterOperator, mapOperator);
     }
-    else if (curOperator->instanceOf<LogicalJoinOperator>())
+    else if (NES::Util::instanceOf<LogicalJoinOperator>(curOperator))
     {
-        auto joinOperator = curOperator->as<LogicalJoinOperator>();
+        auto joinOperator = NES::Util::as<LogicalJoinOperator>(curOperator);
         pushFilterBelowJoin(filterOperator, joinOperator, parOperator);
     }
-    else if (curOperator->instanceOf<LogicalUnionOperator>())
+    else if (NES::Util::instanceOf<LogicalUnionOperator>(curOperator))
     {
         pushFilterBelowUnion(filterOperator, curOperator);
     }
-    else if (curOperator->instanceOf<LogicalWindowOperator>())
+    else if (NES::Util::instanceOf<LogicalWindowOperator>(curOperator))
     {
         pushFilterBelowWindowAggregation(filterOperator, curOperator, parOperator);
     }
-    else if (curOperator->instanceOf<WatermarkAssignerLogicalOperator>())
+    else if (NES::Util::instanceOf<WatermarkAssignerLogicalOperator>(curOperator))
     {
         pushDownFilter(filterOperator, curOperator->getChildren()[0], curOperator);
     }
@@ -128,7 +128,7 @@ void FilterPushDownRule::pushFilterBelowJoin(
     /// field names that are used by the filter
     std::vector<std::string> predicateFields = filterOperator->getFieldNamesUsedByFilterPredicate();
     /// better readability
-    LogicalJoinOperatorPtr curOperatorAsJoin = joinOperator->as<LogicalJoinOperator>();
+    LogicalJoinOperatorPtr curOperatorAsJoin = NES::Util::as<LogicalJoinOperator>(joinOperator);
     /// we might have pushed it already within the special condition before
     if (!pushed)
     {
@@ -180,18 +180,18 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
     NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Extracted field names that are used by the filter");
 
     /// returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
-    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
+    auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinFunction());
 
     if (equiJoinKeyNames.first == predicateFields[0])
     {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the left side of the join");
-        auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto copyOfFilter = NES::Util::as<LogicalFilterOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
-        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
+        NodeFunctionPtr newPredicate = filterOperator->getPredicate()->deepCopy();
 
-        renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.first, equiJoinKeyNames.second);
+        renameNodeFunctionFieldAccesss(newPredicate, equiJoinKeyNames.first, equiJoinKeyNames.second);
 
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the right side field name to the predicate field");
@@ -205,12 +205,12 @@ bool FilterPushDownRule::pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr
     else if (equiJoinKeyNames.second == predicateFields[0])
     {
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Filter field name found in the right side of the join");
-        auto copyOfFilter = filterOperator->copy()->as<LogicalFilterOperator>();
+        auto copyOfFilter = NES::Util::as<LogicalFilterOperator>(filterOperator->copy());
         copyOfFilter->setId(getNextOperatorId());
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Created a copy of the filter");
 
-        ExpressionNodePtr newPredicate = filterOperator->getPredicate()->copy();
-        renameFieldAccessExpressionNodes(newPredicate, equiJoinKeyNames.second, equiJoinKeyNames.first);
+        NodeFunctionPtr newPredicate = filterOperator->getPredicate()->deepCopy();
+        renameNodeFunctionFieldAccesss(newPredicate, equiJoinKeyNames.second, equiJoinKeyNames.first);
         copyOfFilter->setPredicate(newPredicate);
         NES_DEBUG("FilterPushDownRule.pushFilterBelowJoinSpecialCase: Set the left side field name to the predicate field");
 
@@ -234,9 +234,9 @@ void FilterPushDownRule::pushFilterBelowUnion(LogicalFilterOperatorPtr filterOpe
 {
     std::vector<NodePtr> grandChildren = unionOperator->getChildren();
 
-    auto copyOfFilterOperator = filterOperator->copy()->as<LogicalFilterOperator>();
+    auto copyOfFilterOperator = NES::Util::as<LogicalFilterOperator>(filterOperator->copy());
     copyOfFilterOperator->setId(getNextOperatorId());
-    copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->copy());
+    copyOfFilterOperator->setPredicate(filterOperator->getPredicate()->deepCopy());
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Created a copy of the filter operator");
 
     NES_DEBUG("FilterPushDownRule.pushFilterBelowUnion: Pushing filter into both branches below union operator...");
@@ -249,8 +249,9 @@ void FilterPushDownRule::pushFilterBelowUnion(LogicalFilterOperatorPtr filterOpe
 void FilterPushDownRule::pushFilterBelowWindowAggregation(
     LogicalFilterOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator)
 {
-    auto groupByKeyNames = windowOperator->as<LogicalWindowOperator>()->getGroupByKeyNames();
-    std::vector<FieldAccessExpressionNodePtr> groupByKeys = windowOperator->as<LogicalWindowOperator>()->getWindowDefinition()->getKeys();
+    auto groupByKeyNames = NES::Util::as<LogicalWindowOperator>(windowOperator)->getGroupByKeyNames();
+    std::vector<NodeFunctionFieldAccessPtr> groupByKeys
+        = NES::Util::as<LogicalWindowOperator>(windowOperator)->getWindowDefinition()->getKeys();
     std::vector<std::string> fieldNamesUsedByFilter = filterOperator->getFieldNamesUsedByFilterPredicate();
     NES_DEBUG("FilterPushDownRule.pushFilterBelowWindowAggregation: Retrieved the group by keys of the window operator");
 
@@ -282,7 +283,7 @@ void FilterPushDownRule::pushFilterBelowWindowAggregation(
 
 void FilterPushDownRule::pushBelowProjection(LogicalFilterOperatorPtr filterOperator, NodePtr projectionOperator)
 {
-    renameFilterAttributesByExpressionNodes(filterOperator, projectionOperator->as<LogicalProjectionOperator>()->getExpressions());
+    renameFilterAttributesByNodeFunctions(filterOperator, NES::Util::as<LogicalProjectionOperator>(projectionOperator)->getFunctions());
     pushDownFilter(filterOperator, projectionOperator->getChildren()[0], projectionOperator);
 }
 
@@ -290,12 +291,12 @@ void FilterPushDownRule::insertFilterIntoNewPosition(LogicalFilterOperatorPtr fi
 {
     /// If the parent operator of the current operator is not the original filter operator, the filter has been pushed below some operators.
     /// so we have to remove it from its original position and insert at the new position (above the current operator, which it can't be pushed below)
-    if (filterOperator->getId() != parOperator->as<LogicalOperator>()->getId())
+    if (filterOperator->getId() != NES::Util::as<LogicalOperator>(parOperator)->getId())
     {
         /// if we remove the first child (which is the left branch) of a binary operator and insert our filter below this binary operator,
         /// it will be inserted as the second children (which is the right branch). To conserve order we will swap the branches after the insertion
         bool swapBranches = false;
-        if (parOperator->instanceOf<BinaryOperator>() && parOperator->getChildren()[0]->equal(childOperator))
+        if (NES::Util::instanceOf<BinaryOperator>(parOperator) && parOperator->getChildren()[0]->equal(childOperator))
         {
             swapBranches = true;
         }
@@ -320,8 +321,9 @@ void FilterPushDownRule::insertFilterIntoNewPosition(LogicalFilterOperatorPtr fi
         }
 
         /// the input schema of the filter is going to be the same as the output schema of the node below. Its output schema is the same as its input schema.
-        filterOperator->setInputSchema(filterOperator->getChildren()[0]->as<Operator>()->getOutputSchema()->copy());
-        filterOperator->as<Operator>()->setOutputSchema(filterOperator->getChildren()[0]->as<Operator>()->getOutputSchema()->copy());
+        filterOperator->setInputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema()->copy());
+        NES::Util::as<Operator>(filterOperator)
+            ->setOutputSchema(NES::Util::as<Operator>(filterOperator->getChildren()[0])->getOutputSchema()->copy());
 
         /// conserve order
         if (swapBranches)
@@ -331,56 +333,56 @@ void FilterPushDownRule::insertFilterIntoNewPosition(LogicalFilterOperatorPtr fi
     }
 }
 
-std::vector<FieldAccessExpressionNodePtr> FilterPushDownRule::getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate)
+std::vector<NodeFunctionFieldAccessPtr> FilterPushDownRule::getFilterAccessFunctions(const NodeFunctionPtr& filterPredicate)
 {
-    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions;
+    std::vector<NodeFunctionFieldAccessPtr> filterAccessFunctions;
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>())
+        NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessFunction Node");
+        if ((NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr)))
         {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
             NES_TRACE("FilterPushDownRule: Add the field name to the list of filter attribute names");
-            filterAccessExpressions.push_back(accessExpressionNode);
+            filterAccessFunctions.push_back(accessNodeFunction);
         }
     }
-    return filterAccessExpressions;
+    return filterAccessFunctions;
 }
 
-void FilterPushDownRule::renameFieldAccessExpressionNodes(
-    ExpressionNodePtr expressionNode, const std::string toReplace, const std::string replacement)
+void FilterPushDownRule::renameNodeFunctionFieldAccesss(
+    NodeFunctionPtr nodeFunction, const std::string toReplace, const std::string replacement)
 {
-    DepthFirstNodeIterator depthFirstNodeIterator(expressionNode);
+    DepthFirstNodeIterator depthFirstNodeIterator(nodeFunction);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>())
+        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            if (accessExpressionNode->getFieldName() == toReplace)
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            if (accessNodeFunction->getFieldName() == toReplace)
             {
-                accessExpressionNode->updateFieldName(replacement);
+                accessNodeFunction->updateFieldName(replacement);
             }
         }
     }
 }
 
-void FilterPushDownRule::renameFilterAttributesByExpressionNodes(
-    const LogicalFilterOperatorPtr& filterOperator, const std::vector<ExpressionNodePtr>& expressionNodes)
+void FilterPushDownRule::renameFilterAttributesByNodeFunctions(
+    const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& nodeFunctions)
 {
-    ExpressionNodePtr predicateCopy = filterOperator->getPredicate()->copy();
-    NES_TRACE("FilterPushDownRule: Iterate over all expressions in the projection operator");
+    NodeFunctionPtr predicateCopy = filterOperator->getPredicate()->deepCopy();
+    NES_TRACE("FilterPushDownRule: Iterate over all functions in the projection operator");
 
-    for (auto& expressionNode : expressionNodes)
+    for (auto& nodeFunction : nodeFunctions)
     {
-        NES_TRACE("FilterPushDownRule: Check if the expression node is of type FieldRenameExpressionNode")
-        if (expressionNode->instanceOf<FieldRenameExpressionNode>())
+        NES_TRACE("FilterPushDownRule: Check if the function node is of type NodeFunctionFieldRename")
+        if (Util::instanceOf<NodeFunctionFieldRename>(nodeFunction))
         {
-            FieldRenameExpressionNodePtr fieldRenameExpressionNode = expressionNode->as<FieldRenameExpressionNode>();
-            std::string newFieldName = fieldRenameExpressionNode->getNewFieldName();
-            std::string originalFieldName = fieldRenameExpressionNode->getOriginalField()->getFieldName();
-            renameFieldAccessExpressionNodes(predicateCopy, newFieldName, originalFieldName);
+            NodeFunctionFieldRenamePtr fieldRenameNodeFunction = Util::as<NodeFunctionFieldRename>(nodeFunction);
+            std::string newFieldName = fieldRenameNodeFunction->getNewFieldName();
+            std::string originalFieldName = fieldRenameNodeFunction->getOriginalField()->getFieldName();
+            renameNodeFunctionFieldAccesss(predicateCopy, newFieldName, originalFieldName);
         }
     }
 
@@ -390,28 +392,28 @@ void FilterPushDownRule::renameFilterAttributesByExpressionNodes(
 std::string FilterPushDownRule::getAssignmentFieldFromMapOperator(const NodePtr& node)
 {
     NES_TRACE("FilterPushDownRule: Find the field name used in map operator");
-    LogicalMapOperatorPtr mapLogicalOperatorPtr = node->as<LogicalMapOperator>();
-    const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorPtr->getMapExpression();
-    const FieldAccessExpressionNodePtr field = mapExpression->getField();
+    LogicalMapOperatorPtr mapLogicalOperatorPtr = NES::Util::as<LogicalMapOperator>(node);
+    const NodeFunctionFieldAssignmentPtr mapFunction = mapLogicalOperatorPtr->getMapFunction();
+    const NodeFunctionFieldAccessPtr field = mapFunction->getField();
     return field->getFieldName();
 }
 
 void FilterPushDownRule::substituteFilterAttributeWithMapTransformation(
     const LogicalFilterOperatorPtr& filterOperator, const LogicalMapOperatorPtr& mapOperator, const std::string& fieldName)
 {
-    NES_TRACE("Substitute filter predicate's field access expression with map transformation.");
-    NES_TRACE("Current map transformation: {}", mapOperator->getMapExpression()->toString());
-    const FieldAssignmentExpressionNodePtr mapExpression = mapOperator->getMapExpression();
-    const ExpressionNodePtr mapTransformation = mapExpression->getAssignment();
-    std::vector<FieldAccessExpressionNodePtr> filterAccessExpressions = getFilterAccessExpressions(filterOperator->getPredicate());
-    /// iterate over all filter access expressions
-    /// replace the filter predicate's field access expression with map transformation
-    /// if the field name of the field access expression is the same as the field name used in map transformation
-    for (auto& filterAccessExpression : filterAccessExpressions)
+    NES_TRACE("Substitute filter predicate's field access function with map transformation.");
+    NES_TRACE("Current map transformation: {}", mapOperator->getMapFunction()->toString());
+    const NodeFunctionFieldAssignmentPtr mapFunction = mapOperator->getMapFunction();
+    const NodeFunctionPtr mapTransformation = mapFunction->getAssignment();
+    std::vector<NodeFunctionFieldAccessPtr> filterAccessFunctions = getFilterAccessFunctions(filterOperator->getPredicate());
+    /// iterate over all filter access functions
+    /// replace the filter predicate's field access function with map transformation
+    /// if the field name of the field access function is the same as the field name used in map transformation
+    for (auto& filterAccessFunction : filterAccessFunctions)
     {
-        if (filterAccessExpression->getFieldName() == fieldName)
+        if (filterAccessFunction->getFieldName() == fieldName)
         {
-            filterAccessExpression->replace(mapTransformation->copy());
+            filterAccessFunction->replace(mapTransformation->deepCopy());
         }
     }
     NES_TRACE("New filter predicate: {}", filterOperator->getPredicate()->toString());

@@ -14,33 +14,36 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES
 {
 
-LogicalMapOperator::LogicalMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), mapExpression(mapExpression)
+LogicalMapOperator::LogicalMapOperator(const NodeFunctionFieldAssignmentPtr& mapFunction, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), mapFunction(mapFunction)
 {
 }
 
-FieldAssignmentExpressionNodePtr LogicalMapOperator::getMapExpression() const
+NodeFunctionFieldAssignmentPtr LogicalMapOperator::getMapFunction() const
 {
-    return mapExpression;
+    return mapFunction;
 }
 
 bool LogicalMapOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalMapOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalMapOperator>(rhs)->getId() == id;
 }
 
 bool LogicalMapOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalMapOperator>())
+    if (NES::Util::instanceOf<LogicalMapOperator>(rhs))
     {
-        auto mapOperator = rhs->as<LogicalMapOperator>();
-        return mapExpression->equal(mapOperator->mapExpression);
+        auto mapOperator = NES::Util::as<LogicalMapOperator>(rhs);
+        return mapFunction->equal(mapOperator->mapFunction);
     }
     return false;
 };
@@ -54,9 +57,9 @@ bool LogicalMapOperator::inferSchema()
     }
 
     /// use the default input schema to calculate the out schema of this operator.
-    mapExpression->inferStamp(getInputSchema());
+    mapFunction->inferStamp(getInputSchema());
 
-    auto assignedField = mapExpression->getField();
+    auto assignedField = mapFunction->getField();
     std::string fieldName = assignedField->getFieldName();
 
     if (outputSchema->getField(fieldName))
@@ -79,13 +82,13 @@ bool LogicalMapOperator::inferSchema()
 std::string LogicalMapOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ": predicate: " << mapExpression->toString() << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << mapFunction->toString() << ")";
     return ss.str();
 }
 
 OperatorPtr LogicalMapOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createMapOperator(mapExpression->copy()->as<FieldAssignmentExpressionNode>(), id);
+    auto copy = LogicalOperatorFactory::createMapOperator(Util::as<NodeFunctionFieldAssignment>(mapFunction->deepCopy()), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -104,12 +107,12 @@ void LogicalMapOperator::inferStringSignature()
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
     ///Infer query signatures for child operator
-    auto child = children[0]->as<LogicalOperator>();
+    auto child = NES::Util::as<LogicalOperator>(children[0]);
     child->inferStringSignature();
     /// Infer signature for this operator.
     std::stringstream signatureStream;
     auto childSignature = child->getHashBasedSignature();
-    signatureStream << "MAP(" + mapExpression->toString() + ")." << *childSignature.begin()->second.begin();
+    signatureStream << "MAP(" + mapFunction->toString() + ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());

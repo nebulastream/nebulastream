@@ -78,7 +78,6 @@ Memory::TupleBuffer WorkerContext::allocateTupleBuffer()
     return localBufferPool->getBufferBlocking();
 }
 
-
 Memory::AbstractBufferProvider* WorkerContext::getBufferProviderTLS()
 {
     return localBufferPoolTLS.get();
@@ -89,4 +88,4 @@ std::shared_ptr<Memory::AbstractBufferProvider> WorkerContext::getBufferProvider
     return localBufferPool;
 }
 
-} /// namespace NES::Runtime
+}

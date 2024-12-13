@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-nautilus
+    Util.cpp
+)
+
+add_subdirectory(DataTypes)
 add_subdirectory(Interface)
-add_subdirectory(Tracing)
-add_subdirectory(Exceptions)
-add_subdirectory(IR)
-add_subdirectory(Backends)
-add_subdirectory(Util)

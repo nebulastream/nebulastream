@@ -37,7 +37,7 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 {
 }
 
-/// TODO(#305): This is a hotfix to get again unique queryId after our ininital worker refactoring.
+/// TODO #305: This is a hotfix to get again unique queryId after our ininital worker refactoring.
 /// We might want to move this to the engine.
 static std::atomic queryIdCounter = INITIAL<QueryId>.getRawValue();
 

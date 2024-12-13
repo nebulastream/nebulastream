@@ -15,22 +15,21 @@
 #pragma once
 
 #include <memory>
-#include <set>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Operator.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/QueryState.hpp>
+
 
 namespace NES
 {
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
-
-class SourceLogicalOperator;
-using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
@@ -76,7 +75,21 @@ public:
     [[nodiscard]] std::vector<OperatorPtr> getRootOperators() const;
     [[nodiscard]] std::vector<OperatorPtr> getLeafOperators() const;
 
-    [[nodiscard]] std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
+    template <typename LogicalSourceType>
+    [[nodiscard]] std::vector<std::shared_ptr<LogicalSourceType>> getSourceOperators() const
+    {
+        NES_DEBUG("Get all source operators by traversing all the root nodes.");
+        std::unordered_set<std::shared_ptr<LogicalSourceType>> sourceOperatorsSet;
+        for (const auto& rootOperator : rootOperators)
+        {
+            auto sourceOperators = rootOperator->getNodesByType<LogicalSourceType>();
+            NES_DEBUG("Insert all source operators to the collection");
+            sourceOperatorsSet.insert(sourceOperators.begin(), sourceOperators.end());
+        }
+        NES_DEBUG("Found {} source operators.", sourceOperatorsSet.size());
+        std::vector<std::shared_ptr<LogicalSourceType>> sourceOperators{sourceOperatorsSet.begin(), sourceOperatorsSet.end()};
+        return sourceOperators;
+    }
     [[nodiscard]] std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
     [[nodiscard]] std::unordered_set<OperatorPtr> getAllOperators() const;
@@ -98,22 +111,22 @@ public:
         /// Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
         /// Maintain a list of visited nodes as there are multiple root nodes
-        std::set<OperatorId> visitedOpIds;
+        std::unordered_set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
             auto bfsIterator = BreadthFirstNodeIterator(rootOperator);
             for (auto itr = bfsIterator.begin(); itr != NES::BreadthFirstNodeIterator::end(); ++itr)
             {
-                auto visitingOp = (*itr)->as<Operator>();
+                auto visitingOp = NES::Util::as<Operator>(*itr);
                 if (visitedOpIds.contains(visitingOp->getId()))
                 {
                     /// skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
-                if (visitingOp->instanceOf<T>())
+                if (NES::Util::instanceOf<T>(visitingOp))
                 {
-                    operators.push_back(visitingOp->as<T>());
+                    operators.push_back(NES::Util::as<T>(visitingOp));
                 }
             }
         }
@@ -124,6 +137,6 @@ private:
     QueryId queryId;
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
-    std::vector<OperatorPtr> rootOperators;
+    std::vector<OperatorPtr> rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };
 } /// namespace NES

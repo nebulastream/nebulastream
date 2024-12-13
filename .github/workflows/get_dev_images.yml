@@ -34,7 +34,7 @@ jobs:
           echo "Using Hash: $HASH"
 
           # Check if the Docker manifest exists for the computed hash
-          if docker manifest inspect nebulastream/nes-development:"$HASH" > /dev/null 2>&1; then
+          if docker manifest inspect nebulastream/nes-development:$HASH; then
             echo "build-dependency=false" >> "$GITHUB_OUTPUT"
           else
             echo "Require rebuilt of dependency"
@@ -74,6 +74,8 @@ jobs:
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.10.0
       - name: Build Base Image
         uses: docker/build-push-action@v6
         with:
@@ -131,6 +133,8 @@ jobs:
           password: ${{ secrets.DOCKER_SECRET }}
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.10.0
       - name: Combine Manifests
         run: |
           docker buildx imagetools create -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }} \

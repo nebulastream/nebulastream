@@ -12,16 +12,15 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
-
 #include <iostream>
 #include <API/Query.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
+
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 
@@ -38,8 +37,8 @@ public:
 
 TEST_F(QueryPlanTest, testHasOperator)
 {
-    QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
+    const QueryPlanPtr queryPlan = QueryPlan::create();
+    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
 
@@ -50,9 +49,9 @@ TEST_F(QueryPlanTest, testHasOperator)
 
 TEST_F(QueryPlanTest, testLeafOperators)
 {
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
-    QueryPlanPtr queryPlan = QueryPlan::create(op1);
-    LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    const LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator("test_source");
+    const QueryPlanPtr queryPlan = QueryPlan::create(op1);
+    const LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op2);
 
     std::vector<OperatorPtr> leafOptrs = queryPlan->getLeafOperators();

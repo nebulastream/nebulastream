@@ -13,18 +13,21 @@
 */
 
 #include <utility>
+
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
+Scan::Scan(
+    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
@@ -33,7 +36,7 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
-    ctx.setOrigin(recordBuffer.getOriginId());
+    ctx.setOriginId(recordBuffer.getOriginId());
     ctx.setCurrentTs(recordBuffer.getCreatingTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setChunkNumber(recordBuffer.getChunkNr());
@@ -42,12 +45,11 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     child->open(ctx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
-    auto bufferAddress = recordBuffer.getBuffer();
-    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
+    for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = memoryProvider->read(projections, bufferAddress, i);
+        auto record = memoryProvider->readRecord(projections, recordBuffer, i);
         child->execute(ctx, record);
     }
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

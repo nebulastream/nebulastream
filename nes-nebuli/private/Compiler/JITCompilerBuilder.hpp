@@ -14,7 +14,7 @@
 #pragma once
 #include <map>
 #include <memory>
-#include <Compiler/CompilerForwardDeclarations.hpp>
+#include <Compiler/JITCompiler.hpp>
 namespace NES::Compiler
 {
 

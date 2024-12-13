@@ -14,11 +14,17 @@
 
 #pragma once
 
-#include <Expressions/ConstantValueExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Functions/NodeFunctionConstantValue.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
@@ -34,11 +40,11 @@ public:
 
     /**
      * @brief Create a new logical filter operator.
-     * @param predicate: the filter predicate is represented as an expression node, which has to return true.
+     * @param predicate: the filter predicate is represented as an function node, which has to return true.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createFilterOperator(ExpressionNodePtr const& predicate, OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createFilterOperator(NodeFunctionPtr const& predicate, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source rename operator.
@@ -57,12 +63,12 @@ public:
 
     /**
     * @brief Create a new logical projection operator.
-    * @param expression list
+    * @param function list
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorPtr
     */
     static LogicalUnaryOperatorPtr
-    createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id = getNextOperatorId());
+    createProjectionOperator(const std::vector<NodeFunctionPtr>& functions, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -75,13 +81,13 @@ public:
         SinkDescriptorPtr const& sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
 
     /**
-     * @brief Create a new map operator with a field assignment expression as a map expression.
-     * @param mapExpression the FieldAssignmentExpressionNode.
+     * @brief Create a new map operator with a field assignment function as a map function.
+     * @param mapFunction the NodeFunctionFieldAssignment.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr
-    createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id = getNextOperatorId());
+    createMapOperator(NodeFunctionFieldAssignmentPtr const& mapFunction, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -93,18 +99,19 @@ public:
      */
     static LogicalUnaryOperatorPtr createInferModelOperator(
         std::string model,
-        std::vector<ExpressionNodePtr> inputFields,
-        std::vector<ExpressionNodePtr> outputFields,
+        std::vector<NodeFunctionPtr> inputFields,
+        std::vector<NodeFunctionPtr> outputFields,
         OperatorId id = getNextOperatorId());
 
-    /**
-     * @brief Create a new source operator with source descriptor.
-     * @param sourceDescriptor the SourceDescriptorPtr.
-     * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorPtr
-     */
+    static LogicalUnaryOperatorPtr createSourceOperator(std::string logicalSourceName, OperatorId id = getNextOperatorId());
+
+    static LogicalUnaryOperatorPtr
+    createSourceOperator(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id = getNextOperatorId());
+
     static LogicalUnaryOperatorPtr createSourceOperator(
-        SourceDescriptorPtr const& sourceDescriptor, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor,
+        OperatorId id = getNextOperatorId(),
+        OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.

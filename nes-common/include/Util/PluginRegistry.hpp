@@ -18,6 +18,7 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+
 namespace NES
 {
 
@@ -37,9 +38,24 @@ public:
     [[nodiscard]] bool contains(const typename Registrar::Key& key) const { return registryImpl.contains(key); }
 
     template <typename... Args>
-    [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args... args) const
+    [[nodiscard]] std::optional<typename Registrar::Type> create(const typename Registrar::Key& key, Args&&... args) const
     {
-        return registryImpl.at(key)(args...);
+        if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
+        {
+            /// Call the creator function of the plugin.
+            return plugin->second(std::forward<Args>(args)...);
+        }
+        return std::nullopt;
+    }
+
+    template <typename... Args>
+    [[nodiscard]] std::optional<typename Registrar::Type> tryCreate(const typename Registrar::Key& key, Args&&... args) const
+    {
+        if (const auto it = registryImpl.find(key); it != registryImpl.end())
+        {
+            return it->second(std::forward<Args>(args)...);
+        }
+        return std::nullopt;
     }
 
     [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const

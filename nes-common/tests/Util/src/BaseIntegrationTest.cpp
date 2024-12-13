@@ -16,7 +16,6 @@
 #include <mutex>
 #include <random>
 #include <Util/Logger/Logger.hpp>
-#include <detail/PortDispatcher.hpp>
 #include <BaseIntegrationTest.hpp>
 #if defined(__linux__)
 #endif

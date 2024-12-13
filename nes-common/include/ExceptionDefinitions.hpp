@@ -29,13 +29,14 @@ EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
 EXCEPTION(CannotSerialize, 2001, "cannot serialize")
 EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
 EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
+
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
 EXCEPTION(UnknownWindowType, 2101, "unknown window type")
 EXCEPTION(UnknownPhysicalType, 2102, "unknown physical type")
 EXCEPTION(UnknownJoinStrategy, 2103, "unknown join strategy")
 EXCEPTION(UnknownPluginType, 2104, "unknown plugin type")
-EXCEPTION(UnknownExpressionType, 2105, "unknown expression type")
+EXCEPTION(UnknownFunctionType, 2105, "unknown function type")
 EXCEPTION(UnknownSinkType, 2106, "unknown sink type")
 EXCEPTION(UnknownSourceType, 2107, "unknown source type")
 EXCEPTION(UnknownSinkFormat, 2108, "unknown sink format")
@@ -47,6 +48,12 @@ EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
 EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
 EXCEPTION(UnknownWatermarkStrategy, 2116, "unknown watermark strategy")
+EXCEPTION(UnknownInvocationType, 2117, "unknown invocation type")
+EXCEPTION(UnknownExecutablePipelineProviderType, 2118, "unknown executable pipeline provider type")
+EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
+EXCEPTION(InvalidUseOfFunction, 2120, "function is not valid")
+EXCEPTION(UnsupportedOperation, 2121, "tried to execute an unsupported operation")
+
 /// 22XX NebuLI
 EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
 EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")
@@ -54,7 +61,7 @@ EXCEPTION(QueryInvalid, 2202, "query is invalid")
 EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not found in the query description")
 EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
 EXCEPTION(OperatorNotFound, 2205, "operator not found")
-
+EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
@@ -64,11 +71,11 @@ EXCEPTION(CannotStartQueryManager, 3005, "cannot start query manager")
 EXCEPTION(CannotStopQueryManager, 3006, "cannot stop query manager")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
-EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
-EXCEPTION(CannotFormatSourceData, 4001, "cannot format source data")
-EXCEPTION(MalformatedTuple, 4002, "malformed tuple")
-EXCEPTION(RunningRoutineFailure, 4003, "error in running routine of DataSource") ///Todo #237: Improve error handling in sources
+EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
+EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
+EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
 EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
+EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
@@ -77,7 +84,6 @@ EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
 /// 6XXX API error
 EXCEPTION(BadApiRequest, 6000, "bad api request")
 
-
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(PreconditionViolated, 9000, "precondition violated")
 EXCEPTION(InvariantViolated, 9001, "invariant violated")
@@ -85,6 +91,8 @@ EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
 EXCEPTION(DeprecatedFeatureUsed, 9003, "deprecated feature used")
 EXCEPTION(CannotAllocateBuffer, 9004, "cannot allocate buffer")
 EXCEPTION(InvalidRefCountForBuffer, 9005, "invalid reference counter for buffer")
+EXCEPTION(DynamicCast, 9006, "Invalid dynamic cast")
+EXCEPTION(UnknownOperator, 9007, "unknown operator")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")

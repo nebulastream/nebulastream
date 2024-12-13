@@ -13,9 +13,9 @@
 */
 
 #include <utility>
-#include <API/Expressions/Expressions.hpp>
+#include <API/Functions/Functions.hpp>
 #include <API/Windowing.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
@@ -33,29 +33,29 @@ WindowAggregation::WindowAggregation(Windowing::WindowAggregationDescriptorPtr w
 {
 }
 
-API::WindowAggregationPtr WindowAggregation::as(const NES::ExpressionItem& asField)
+API::WindowAggregationPtr WindowAggregation::as(const NES::FunctionItem& asField)
 {
-    return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(aggregation->as(asField.getNodeFunction()));
 }
 
-API::WindowAggregationPtr Sum(const ExpressionItem& onField)
+API::WindowAggregationPtr Sum(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::SumAggregationDescriptor::on(onField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(Windowing::SumAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-API::WindowAggregationPtr Avg(const ExpressionItem& onField)
+API::WindowAggregationPtr Avg(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(Windowing::AvgAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-API::WindowAggregationPtr Min(const ExpressionItem& onField)
+API::WindowAggregationPtr Min(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(Windowing::MinAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-API::WindowAggregationPtr Max(const ExpressionItem& onField)
+API::WindowAggregationPtr Max(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(Windowing::MaxAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
 API::WindowAggregationPtr Count()
@@ -63,9 +63,9 @@ API::WindowAggregationPtr Count()
     return std::make_shared<API::WindowAggregation>(Windowing::CountAggregationDescriptor::on());
 }
 
-API::WindowAggregationPtr Median(const ExpressionItem& onField)
+API::WindowAggregationPtr Median(const FunctionItem& onField)
 {
-    return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getExpressionNode()));
+    return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
 Windowing::TimeMeasure Milliseconds(uint64_t milliseconds)
@@ -118,14 +118,14 @@ Windowing::TimeUnit Days()
     return Windowing::TimeUnit::Days();
 }
 
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField)
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField)
 {
-    return Windowing::TimeCharacteristic::createEventTime(onField.getExpressionNode());
+    return Windowing::TimeCharacteristic::createEventTime(onField.getNodeFunction());
 }
 
-Windowing::TimeCharacteristicPtr EventTime(const ExpressionItem& onField, const Windowing::TimeUnit& unit)
+Windowing::TimeCharacteristicPtr EventTime(const FunctionItem& onField, const Windowing::TimeUnit& unit)
 {
-    return Windowing::TimeCharacteristic::createEventTime(onField.getExpressionNode(), unit);
+    return Windowing::TimeCharacteristic::createEventTime(onField.getNodeFunction(), unit);
 }
 
 Windowing::TimeCharacteristicPtr IngestionTime()
@@ -133,9 +133,9 @@ Windowing::TimeCharacteristicPtr IngestionTime()
     return Windowing::TimeCharacteristic::createIngestionTime();
 }
 
-ExpressionNodePtr RecordCreationTs()
+NodeFunctionPtr RecordCreationTs()
 {
-    return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getExpressionNode();
+    return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getNodeFunction();
 }
 
 } /// namespace NES::API

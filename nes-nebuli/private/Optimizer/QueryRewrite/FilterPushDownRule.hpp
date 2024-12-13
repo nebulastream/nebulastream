@@ -14,13 +14,15 @@
 
 #pragma once
 
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
 namespace NES
 {
-class FieldAccessExpressionNode;
-using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
+class NodeFunctionFieldAccess;
+using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
 } /// namespace NES
 
 namespace NES::Optimizer
@@ -44,11 +46,11 @@ public:
     virtual ~FilterPushDownRule() = default;
 
     /**
-     * @brief Get the @link FieldAccessExpressionNodePtr @endlink used in the filter predicate
+     * @brief Get the @link NodeFunctionFieldAccessPtr @endlink used in the filter predicate
      * @param filterOperator
-     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
+     * @return @link std::vector<NodeFunctionFieldAccessPtr> @endLink
      */
-    static std::vector<FieldAccessExpressionNodePtr> getFilterAccessExpressions(const ExpressionNodePtr& filterPredicate);
+    static std::vector<NodeFunctionFieldAccessPtr> getFilterAccessFunctions(const NodeFunctionPtr& filterPredicate);
 
 private:
     explicit FilterPushDownRule();
@@ -185,7 +187,7 @@ private:
      *
      * @param filterOperator the filter operator to be pushed down
      * @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
-     * @return @link std::vector<FieldAccessExpressionNodePtr> @endLink
+     * @return @link std::vector<NodeFunctionFieldAccessPtr> @endLink
      */
     void pushBelowProjection(LogicalFilterOperatorPtr filterOperator, NodePtr projectionOperator);
 
@@ -194,8 +196,8 @@ private:
      * @param filterOperator filter operator whose predicate need to be checked and updated
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
-    static void renameFilterAttributesByExpressionNodes(
-        const LogicalFilterOperatorPtr& filterOperator, const std::vector<ExpressionNodePtr>& expressionNodes);
+    static void renameFilterAttributesByNodeFunctions(
+        const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& expressionNodes);
 
     /**
      * @brief Rename the attribute in the field access expression node.
@@ -203,7 +205,7 @@ private:
      * @param toReplace attribute name to be replaced
      * @param replacement new attribute name
      */
-    static void renameFieldAccessExpressionNodes(ExpressionNodePtr expressionNode, std::string toReplace, std::string replacement);
+    static void renameNodeFunctionFieldAccesss(NodeFunctionPtr expressionNode, std::string toReplace, std::string replacement);
 
     /**
      * @brief Substitute the filter predicate's field access expression node with the map operator's expression node if needed

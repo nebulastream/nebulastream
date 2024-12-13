@@ -13,11 +13,13 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
+
 
 namespace NES
 {
@@ -28,7 +30,7 @@ LogicalUnionOperator::LogicalUnionOperator(OperatorId id) : Operator(id), Logica
 
 bool LogicalUnionOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalUnionOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalUnionOperator>(rhs)->getId() == id;
 }
 
 std::string LogicalUnionOperator::toString() const
@@ -71,7 +73,7 @@ bool LogicalUnionOperator::inferSchema()
             "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
             leftInputSchema->toString(),
             rightInputSchema->toString());
-        throw TypeInferenceException(
+        throw CannotInferSchema(
             "Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString() + " and Right schema "
             + rightInputSchema->toString());
     }
@@ -79,7 +81,8 @@ bool LogicalUnionOperator::inferSchema()
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
     {
         NES_ERROR("Left and right should have same memory layout");
-        throw TypeInferenceException("Left and right should have same memory layout");
+        throw CannotInferSchema(fmt::format(
+            "Left and right should have same memory layout ({} vs {})", leftInputSchema->toString(), rightInputSchema->toString()));
     }
 
     ///Copy the schema of left input
@@ -109,9 +112,9 @@ OperatorPtr LogicalUnionOperator::copy()
 
 bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalUnionOperator>())
+    if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
-        auto rhsUnion = rhs->as<LogicalUnionOperator>();
+        auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
         return leftInputSchema->equals(rhsUnion->getLeftInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
     }
     return false;
@@ -119,18 +122,18 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 
 void LogicalUnionOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        child->as<LogicalOperator>()->inferStringSignature();
+        NES::Util::as<LogicalOperator>(child)->inferStringSignature();
     }
     std::stringstream signatureStream;
     signatureStream << "UNION(";
-    auto rightChildSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
-    auto leftChildSignature = children[1]->as<LogicalOperator>()->getHashBasedSignature();
+    auto rightChildSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
+    auto leftChildSignature = NES::Util::as<LogicalOperator>(children[1])->getHashBasedSignature();
     signatureStream << *rightChildSignature.begin()->second.begin() + ").";
     signatureStream << *leftChildSignature.begin()->second.begin();
 
@@ -145,7 +148,7 @@ void LogicalUnionOperator::inferInputOrigins()
     std::vector<OriginId> combinedInputOriginIds;
     for (auto child : this->children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
         combinedInputOriginIds.insert(combinedInputOriginIds.end(), childInputOriginIds.begin(), childInputOriginIds.end());

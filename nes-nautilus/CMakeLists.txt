@@ -15,16 +15,12 @@ include_directories(tests/include)
 
 # Set Sources and Headers
 add_subdirectory(src)
-
 get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-runtime)
-target_include_directories(nes-nautilus PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-        
+
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-nautilus REUSE_FROM nes-common)
@@ -32,13 +28,7 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-nautilus PUBLIC "-fPIC")
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
+add_tests_if_enabled(tests)
 
 # Add MLIR and LLVM dependencies
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
@@ -55,9 +45,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
                 MLIRFuncAllExtensions
 
                 # Dialects
-                MLIRSCFDialect
                 MLIRFuncToLLVM
-                MLIRSCFToControlFlow
         )
 
     else ()
@@ -109,66 +97,29 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     endif ()
 endif ()
 
+# Add the nautilus library to the include directories
+target_include_directories(nes-nautilus PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+)
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
-    # add flounder backend
-    target_compile_definitions(nes-runtime PUBLIC USE_FLOUNDER)
-    include(FetchContent)
-    FetchContent_Declare(
-            flounder
-            GIT_REPOSITORY git@github.com:nebulastream/flounder-compiler.git
-            GIT_TAG flounder
-            PREFIX ${BOTAN_LIB_FCSTUFF_DIR}
-            SOURCE_DIR "lib/flounder"
-            BINARY_DIR "lib/flounder"
-    )
-    set(flounder_BUILD_TESTING OFF CACHE INTERNAL "Turn off tests")
-    set(FETCHCONTENT_QUIET OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(flounder)
-    target_compile_options(flounder PRIVATE -Wno-unqualified-std-cast-call)
-    target_link_libraries(nes-runtime PRIVATE flounder)
-    target_include_directories(nes-runtime PRIVATE ${flounder_SOURCE_DIR}/src)
-endif ()
+# Link with the nautilus library
+find_package(spdlog REQUIRED CONFIG)
+find_package(MLIR REQUIRED CONFIG)
+find_package(nautilus REQUIRED CONFIG)
+# We have to set the nes-nautilus to public to use the nautilus library in other modules
+target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
+        MLIRExecutionEngine
+        MLIRFuncAllExtensions
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_BYTECODE_INTERPRETER)
-    message(STATUS "Enable dyncall")
+        # Dialects
+        MLIRSCFDialect
+        MLIRFuncToLLVM
+        MLIRSCFToControlFlow
+)
 
-    # We use the dyncall lib to call arbitrary runtime function.
-    # Set the path to the dyncall directory
-    set(dyncall_dir "${CMAKE_CURRENT_BINARY_DIR}/lib/dyncall")
-
-    # Create the include directory for dyncall
-    file(MAKE_DIRECTORY ${dyncall_dir}/include)
-
-    # Download and build the external project
-    ExternalProject_Add(dyncallProject
-            GIT_REPOSITORY "https://github.com/nebulastream/dyncall"
-            GIT_TAG "origin/main"
-            CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> # Specify installation directory
-            BUILD_IN_SOURCE true # Build the project in the source directory
-            BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libdyncall_s.a # Specify path to the library file that will be built
-            INSTALL_DIR ${dyncall_dir} # Install dyncall to the specified directory
-            UPDATE_DISCONNECTED 1
-    )
-
-    # Create a static imported library for the external project
-    add_library(dyncall STATIC IMPORTED)
-    add_dependencies(dyncall dyncallProject)
-
-    # Get the installation directory of the external project
-    ExternalProject_Get_Property(dyncallProject install_dir)
-
-    # Add the include directory of the external project to the interface of extLib
-    target_include_directories(dyncall INTERFACE ${install_dir}/include)
-
-    # Set the imported location of the external library to the installation directory
-    set_target_properties(dyncall PROPERTIES IMPORTED_LOCATION ${install_dir}/lib/libdyncall_s.a)
-
-    # Link the external library to nes-runtime
-    target_link_libraries(nes-runtime PRIVATE dyncall)
-endif ()
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
-    message(STATUS "Enable cpp compiler backend")
-    target_link_libraries(nes-execution PRIVATE nes-compiler)
-endif ()
+#Add the nes nautilus and headers to cpack
+install(TARGETS nes-nautilus
+        EXPORT NebulaStreamTargets
+        COMPONENT nesLibrary
+        DESTINATION lib)

@@ -13,39 +13,42 @@
 */
 
 #include <utility>
-#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
 
 namespace NES
 {
 
-LogicalFilterOperator::LogicalFilterOperator(ExpressionNodePtr const& predicate, OperatorId id)
+LogicalFilterOperator::LogicalFilterOperator(NodeFunctionPtr const& predicate, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), predicate(predicate)
 {
 }
 
-ExpressionNodePtr LogicalFilterOperator::getPredicate() const
+NodeFunctionPtr LogicalFilterOperator::getPredicate() const
 {
     return predicate;
 }
 
-void LogicalFilterOperator::setPredicate(ExpressionNodePtr newPredicate)
+void LogicalFilterOperator::setPredicate(NodeFunctionPtr newPredicate)
 {
     predicate = std::move(newPredicate);
 }
 
 bool LogicalFilterOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && rhs->as<LogicalFilterOperator>()->getId() == id;
+    return equal(rhs) && NES::Util::as<LogicalFilterOperator>(rhs)->getId() == id;
 }
 
 bool LogicalFilterOperator::equal(NodePtr const& rhs) const
 {
-    if (rhs->instanceOf<LogicalFilterOperator>())
+    if (NES::Util::instanceOf<LogicalFilterOperator>(rhs))
     {
-        auto filterOperator = rhs->as<LogicalFilterOperator>();
+        auto filterOperator = NES::Util::as<LogicalFilterOperator>(rhs);
         return predicate->equal(filterOperator->predicate);
     }
     return false;
@@ -67,14 +70,14 @@ bool LogicalFilterOperator::inferSchema()
     predicate->inferStamp(inputSchema);
     if (!predicate->isPredicate())
     {
-        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
+        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter function is not a valid predicate");
     }
     return true;
 }
 
 OperatorPtr LogicalFilterOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->copy(), id);
+    auto copy = LogicalOperatorFactory::createFilterOperator(predicate->deepCopy(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -90,19 +93,19 @@ OperatorPtr LogicalFilterOperator::copy()
 
 void LogicalFilterOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = shared_from_this()->as<Operator>();
+    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
     NES_TRACE("LogicalFilterOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalFilterOperator: Filter should have children");
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
     {
-        const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
+        const LogicalOperatorPtr childOperator = NES::Util::as<LogicalOperator>(child);
         childOperator->inferStringSignature();
     }
 
     std::stringstream signatureStream;
-    auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
+    auto childSignature = NES::Util::as<LogicalOperator>(children[0])->getHashBasedSignature();
     signatureStream << "FILTER(" + predicate->toString() + ")." << *childSignature.begin()->second.begin();
 
     ///Update the signature
@@ -129,11 +132,11 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
     DepthFirstNodeIterator depthFirstNodeIterator(predicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        ///if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
-        if ((*itr)->instanceOf<FieldAccessExpressionNode>())
+        ///NodeFunctionif it finds a fieldAccess this means that the predicate uses this specific field that comes from any source
+        if (NES::Util::instanceOf<NodeFunctionFieldAccess>(*itr))
         {
-            const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-            fieldsInPredicate.push_back(accessExpressionNode->getFieldName());
+            const NodeFunctionFieldAccessPtr accessNodeFunction = NES::Util::as<NodeFunctionFieldAccess>(*itr);
+            fieldsInPredicate.push_back(accessNodeFunction->getFieldName());
         }
     }
 
