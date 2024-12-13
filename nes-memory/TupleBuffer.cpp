@@ -14,6 +14,7 @@
 
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include "TupleBufferImpl.hpp"
 namespace NES::Memory
@@ -131,15 +132,15 @@ void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept
 {
     controlBlock->setNumberOfTuples(numberOfTuples);
 }
-WatermarkTs TupleBuffer::getWatermark() const noexcept
+Runtime::Timestamp TupleBuffer::getWatermark() const noexcept
 {
     return controlBlock->getWatermark();
 }
-void TupleBuffer::setWatermark(WatermarkTs value) noexcept
+void TupleBuffer::setWatermark(Runtime::Timestamp value) noexcept
 {
     controlBlock->setWatermark(value);
 }
-WatermarkTs TupleBuffer::getCreationTimestampInMS() const noexcept
+Runtime::Timestamp TupleBuffer::getCreationTimestampInMS() const noexcept
 {
     return controlBlock->getCreationTimestamp();
 }
@@ -147,16 +148,12 @@ void TupleBuffer::setSequenceNumber(SequenceNumber sequenceNumber) noexcept
 {
     controlBlock->setSequenceNumber(sequenceNumber);
 }
-void TupleBuffer::setSequenceData(SequenceData sequenceData) noexcept
+
+std::string TupleBuffer::getSequenceDataAsString() const noexcept
 {
-    setSequenceNumber(sequenceData.sequenceNumber);
-    setChunkNumber(sequenceData.chunkNumber);
-    setLastChunk(sequenceData.lastChunk);
+    return fmt::format("SeqNumber: {}, ChunkNumber: {}, LastChunk: {}", getSequenceNumber(), getChunkNumber(), isLastChunk());
 }
-SequenceData TupleBuffer::getSequenceData() const noexcept
-{
-    return {getSequenceNumber(), getChunkNumber(), isLastChunk()};
-}
+
 SequenceNumber TupleBuffer::getSequenceNumber() const noexcept
 {
     return controlBlock->getSequenceNumber();
@@ -173,7 +170,7 @@ bool TupleBuffer::isLastChunk() const noexcept
 {
     return controlBlock->isLastChunk();
 }
-void TupleBuffer::setCreationTimestampInMS(WatermarkTs value) noexcept
+void TupleBuffer::setCreationTimestampInMS(Runtime::Timestamp value) noexcept
 {
     controlBlock->setCreationTimestamp(value);
 }
@@ -253,4 +250,4 @@ ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 }
 
 
-} /// namespace NES::Runtime
+}

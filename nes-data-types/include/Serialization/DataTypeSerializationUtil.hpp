@@ -19,17 +19,12 @@
 namespace NES
 {
 
-class ArrayType;
-class TextType;
+class VariableSizedDataType;
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
-
 class SerializableDataType;
-class SerializableDataValue;
 
 /**
  * @brief The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
@@ -52,23 +47,5 @@ public:
     * @return DataTypePtr
     */
     static DataTypePtr deserializeDataType(const SerializableDataType& serializedDataType);
-
-    /// @brief: Typed deserialization of what is known to be an array.
-    static std::shared_ptr<ArrayType> deserializeArrayType(const SerializableDataType& serializedDataType);
-
-    /**
-     * @brief Serializes a value type and all its children to a SerializableDataValue object.
-     * @param valueType The data value type.
-     * @param serializedDataValue The corresponding protobuff object, which is used to capture the state of the object.
-     * @return the modified serializedDataValue
-     */
-    static SerializableDataValue* serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue);
-
-    /**
-    * @brief De-serializes the SerializableDataValue and all its children to a ValueTypePtr
-    * @param serializedDataValue the serialized data value type.
-    * @return ValueTypePtr
-    */
-    static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
-} /// namespace NES
+}

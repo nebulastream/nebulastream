@@ -36,7 +36,6 @@ public:
      */
     static NodeFunctionPtr create(NodeFunctionFieldAccessPtr originalField, std::string newFieldName);
 
-    [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
@@ -61,6 +60,8 @@ public:
 protected:
     explicit NodeFunctionFieldRename(const NodeFunctionFieldRenamePtr other);
 
+    [[nodiscard]] std::string toString() const override;
+
 private:
     NodeFunctionFieldRename(const NodeFunctionFieldAccessPtr& originalField, std::string newFieldName);
 
@@ -68,4 +69,4 @@ private:
     std::string newFieldName;
 };
 
-} /// namespace NES
+}

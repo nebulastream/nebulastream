@@ -25,6 +25,13 @@
 namespace NES::Sources
 {
 
+struct ParserConfig
+{
+    std::string parserType;
+    std::string tupleDelimiter;
+    std::string fieldDelimiter;
+};
+
 struct SourceDescriptor : public Configurations::Descriptor
 {
     /// Used by Sources to create a valid SourceDescriptor.
@@ -32,14 +39,15 @@ struct SourceDescriptor : public Configurations::Descriptor
         std::shared_ptr<Schema> schema,
         std::string logicalSourceName,
         std::string sourceType,
-        Configurations::InputFormat inputFormat,
+        ParserConfig parserConfig,
         Configurations::DescriptorConfig::Config&& config);
 
     ~SourceDescriptor() = default;
     const std::shared_ptr<Schema> schema;
     const std::string logicalSourceName;
     const std::string sourceType;
-    const Configurations::InputFormat inputFormat{};
+    /// is const data member, because 'SourceDescriptor' should be immutable and 'const' communicates more clearly then private+getter
+    const ParserConfig parserConfig;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceDescriptor);
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);

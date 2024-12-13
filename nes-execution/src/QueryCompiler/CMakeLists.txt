@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        NautilusQueryCompiler.cpp
+        QueryCompiler.cpp
         )
 add_subdirectory(Operators)
 add_subdirectory(Phases)

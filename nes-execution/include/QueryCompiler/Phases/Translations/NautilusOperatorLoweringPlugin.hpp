@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::Operators
 {
 class ExecutableOperator;
 using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
-} /// namespace NES::Runtime::Execution::Operators
+}
 
 namespace NES::QueryCompilation
 {
@@ -47,4 +47,4 @@ public:
 
     virtual ~NautilusOperatorLoweringPlugin() = default;
 };
-} /// namespace NES::QueryCompilation
+}

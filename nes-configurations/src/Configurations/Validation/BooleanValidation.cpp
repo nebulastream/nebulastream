@@ -25,4 +25,4 @@ bool BooleanValidation::isValid(const std::string& parameter) const
 
     return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
 }
-} /// namespace NES::Configurations
+}

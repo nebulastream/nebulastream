@@ -13,13 +13,13 @@
 */
 
 #include <utility>
-#include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
 #include <Util/QuerySignatureContext.hpp>
-
+#include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
 namespace NES
 {
@@ -40,7 +40,7 @@ void LogicalOperator::inferZ3Signature(const Optimizer::QuerySignatureContext& c
         return;
     }
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring Z3 functions for {}", operatorNode->toString());
+    NES_TRACE("Inferring Z3 functions for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -87,45 +87,55 @@ void LogicalOperator::setOperatorState(NES::OperatorState newOperatorState)
     switch (newOperatorState)
     {
         case TO_BE_PLACED:
-            /// an operator in the state TO_BE_PLACED or TO_BE_REPLACED can be changed to TO_BE_PLACED
-            if (this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REPLACED)
-            {
-                this->operatorState = newOperatorState;
-                break;
-            }
-            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_REMOVED, PLACED}, this->operatorState);
+            /// an operator can be marked as TO_BE_PLACED only if it is in the state TO_BE_PLACED or TO_BE_REPLACED.
+            INVARIANT(
+                this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REPLACED,
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_REMOVED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
+            this->operatorState = TO_BE_PLACED;
+            break;
         case TO_BE_REMOVED:
-            if (this->operatorState != REMOVED)
-            {
-                this->operatorState = TO_BE_REMOVED;
-                break;
-            }
             /// an operator can be marked as TO_BE_REMOVED only if it is not in the state REMOVED.
-            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_REMOVED, TO_BE_PLACED, PLACED, TO_BE_REPLACED}, this->operatorState);
+            INVARIANT(
+                this->operatorState != REMOVED,
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_REMOVED, TO_BE_PLACED, PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
+            this->operatorState = TO_BE_REMOVED;
+            break;
         case TO_BE_REPLACED:
-            if (this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED)
-            {
-                this->operatorState = TO_BE_REPLACED;
-                break;
-            }
             /// an operator can be marked as TO_BE_REPLACED only if it is not in the state REMOVED or TO_BE_REMOVED.
-            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_PLACED, PLACED, OperatorState::TO_BE_REPLACED}, this->operatorState);
+            INVARIANT(
+                this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED,
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED, PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
+            this->operatorState = TO_BE_REPLACED;
+            break;
         case PLACED:
-            if (this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED)
-            {
-                this->operatorState = PLACED;
-                break;
-            }
             /// an operator can be marked as PLACED only if it is not in the state REMOVED or TO_BE_REMOVED or already PLACED.
-            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_PLACED, TO_BE_REPLACED}, this->operatorState);
+            INVARIANT(
+                this->operatorState != REMOVED && this->operatorState != TO_BE_REMOVED,
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED or TO_BE_REPLACED",
+                id,
+                magic_enum::enum_name(this->operatorState));
+            this->operatorState = PLACED;
+            break;
         case REMOVED:
-            if (this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REMOVED)
-            {
-                this->operatorState = REMOVED;
-                break;
-            }
             /// an operator can be marked as REMOVED only if it is in the state TO_BE_REMOVED.
-            throw Exceptions::InvalidOperatorStateException(id, {TO_BE_REMOVED}, this->operatorState);
+            INVARIANT(
+                this->operatorState == TO_BE_PLACED || this->operatorState == TO_BE_REMOVED,
+                "Operator with id {} was found in state {} "
+                "but expected TO_BE_PLACED or TO_BE_REMOVED",
+                id,
+                magic_enum::enum_name(this->operatorState));
+            this->operatorState = REMOVED;
+            break;
     }
 }
 
@@ -134,4 +144,4 @@ OperatorState LogicalOperator::getOperatorState() const
     return operatorState;
 }
 
-} /// namespace NES
+}

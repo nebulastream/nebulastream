@@ -10,7 +10,12 @@ Design documents live in our codebase and record significant problems that we fa
 We use Github discussions to draft designs with whoever wants to participate in the discussion. In contrast to a design document, a Github discussion can be used to brainstorm ideas and does not need to be formal.
 
 ## Design Documents
-Design documents organically grow out of Github discussions that conclude. A discussion concludes if it is possible to formalize at least [The Problem](#the-problem), the [Goals](#goals), the [Non-Goals](#non-goals), the [Proposed Solution](#proposed-solution), and the [Alternatives](#alternatives) sections of the design document. When creating the design document, the GitHub discussion should be condensed to contain only the relevant information. Additionally, we formalize the content of potentially colloquial discussions.
+Design documents organically grow out of Github discussions that conclude.\
+A discussion concludes if all participants of the discussion agree on a proposed solution.\
+The participants of the discussion then decide whether the proposed solution is complex enough to warrant a design document.
+
+To create the first version of a design document, we must be able to formalize at least [The Problem](#the-problem), the [Goals](#goals), the [Non-Goals](#non-goals), the [Proposed Solution](#proposed-solution), and the [Alternatives](#alternatives) sections of the design document.\
+When creating the design document, the GitHub discussion should be condensed to contain only the relevant information. Additionally, we formalize the content of potentially colloquial discussions.
 
 Since a design document claims time from multiple people from our team, we propose to consider the following before creating a design document:
 - A design document should be written with a reader-first mindset. Carefully consider if the design document is worth the time of other team members. Carefully consider if it is worth your time.

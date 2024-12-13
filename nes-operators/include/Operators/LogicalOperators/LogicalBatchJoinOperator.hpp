@@ -37,15 +37,17 @@ public:
     Join::Experimental::LogicalBatchJoinDescriptorPtr getBatchJoinDefinition() const;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     void inferStringSignature() override;
 
+protected:
+    [[nodiscard]] std::string toString() const override;
+
 private:
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-} /// namespace NES::Experimental
+}

@@ -14,35 +14,29 @@
 
 #pragma once
 
-#include <source_location>
-#include <sstream>
+#include <optional>
 #include <string>
-#include <Util/StacktraceLoader.hpp>
+#include <cpptrace/cpptrace.hpp>
+#include <fmt/core.h>
 
 namespace NES
 {
 
-/**
- * This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
- * @note do NOT inherit from this class, use the EXCEPTION macro to define exceptions. They should only be defined in
- * <ExceptionDefinitions.hpp>
- */
-class Exception final : public std::exception
+/// This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
+/// We use cpptrace's lazy stacktrace collection because the eager stacktrace collection became too slow with static project linking.
+class Exception final : public cpptrace::lazy_exception
 {
 public:
-    Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace);
+    Exception(std::string message, uint64_t code);
 
     std::string& what() noexcept;
     [[nodiscard]] const char* what() const noexcept override;
     [[nodiscard]] uint64_t code() const noexcept;
-    [[nodiscard]] const std::source_location& where() const noexcept;
-    [[nodiscard]] const std::string& stack() const noexcept;
+    [[nodiscard]] std::optional<const cpptrace::stacktrace_frame> where() const noexcept;
 
 private:
     std::string message;
     uint64_t errorCode;
-    std::source_location location;
-    std::string stacktrace;
 };
 
 /**
@@ -54,14 +48,18 @@ private:
  * @note the enum value of the exception can be used to compare with the code of the exception in the catch block
  */
 #define EXCEPTION(name, code, message) \
-    inline Exception name(const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    inline Exception name() \
     { \
-        return Exception(message, code, loc, trace); \
+        return Exception(message, code); \
     } \
-    inline Exception name( \
-        std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    inline Exception name(std::string msg) \
     { \
-        return Exception(std::string(message) + "; " + msg, code, loc, trace); \
+        return Exception(std::string(message) + "; " + msg, code); \
+    } \
+    template <typename... Args> \
+    inline Exception name(fmt::format_string<Args...> fmt_msg, Args&&... args) \
+    { \
+        return Exception(fmt::format("{}; {}", message, fmt::format(fmt_msg, std::forward<Args>(args)...)), code); \
     } \
     namespace ErrorCode \
     { \
@@ -71,7 +69,7 @@ private:
     }; \
     }
 
-#include <ExceptionDefinitions.hpp>
+#include <ExceptionDefinitions.inc>
 #undef EXCEPTION
 
 /**
@@ -80,14 +78,10 @@ private:
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
-#define PRECONDITION(condition, message) \
+#define PRECONDITION(condition, ...) \
+    if (!(condition)) \
     { \
-        std::stringstream messageStream; \
-        messageStream << message; \
-        if (!(condition)) \
-        { \
-            throw PreconditionViolated(messageStream.str()); \
-        } \
+        throw NES::PreconditionViolated(__VA_ARGS__); \
     }
 
 /**
@@ -96,14 +90,10 @@ private:
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
-#define INVARIANT(condition, message) \
+#define INVARIANT(condition, ...) \
+    if (!(condition)) \
     { \
-        std::stringstream messageStream; \
-        messageStream << message; \
-        if (!(condition)) \
-        { \
-            throw InvariantViolated(messageStream.str()); \
-        } \
+        throw NES::InvariantViolated(__VA_ARGS__); \
     }
 
 /**
@@ -111,6 +101,9 @@ private:
  * @warning This function should be used only in a catch block.
  */
 void tryLogCurrentException();
+
+/// The wrapped exception gets the error code 9999.
+Exception wrapExternalException();
 
 /**
  * @brief This function is used to get the current exception code.

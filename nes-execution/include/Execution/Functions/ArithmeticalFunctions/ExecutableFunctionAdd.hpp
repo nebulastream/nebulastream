@@ -14,21 +14,22 @@
 
 #pragma once
 
+#include <memory>
 #include <Execution/Functions/Function.hpp>
 
 namespace NES::Runtime::Execution::Functions
 {
 
-/// Performs leftExecutableFunctionSub + rightExecutableFunctionSub
+/// Performs leftExecutableFunction + rightExecutableFunction
 class ExecutableFunctionAdd : public Function
 {
 public:
-    ExecutableFunctionAdd(std::unique_ptr<Function> leftExecutableFunctionSub, std::unique_ptr<Function> rightExecutableFunctionSub);
+    ExecutableFunctionAdd(std::unique_ptr<Function> leftExecutableFunction, std::unique_ptr<Function> rightExecutableFunction);
     VarVal execute(Record& record) const override;
 
 private:
-    const std::unique_ptr<Function> leftExecutableFunctionSub;
-    const std::unique_ptr<Function> rightExecutableFunctionSub;
+    const std::unique_ptr<Function> leftExecutableFunction;
+    const std::unique_ptr<Function> rightExecutableFunction;
 };
 
 }

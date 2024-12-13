@@ -97,7 +97,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR)
     endif ()
 endif ()
 
-# Add the nautilus library to the include directories
+# Add nes-nautilus to the include directories
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
@@ -107,6 +107,7 @@ target_include_directories(nes-nautilus PUBLIC
 find_package(spdlog REQUIRED CONFIG)
 find_package(MLIR REQUIRED CONFIG)
 find_package(nautilus REQUIRED CONFIG)
+
 # We have to set the nes-nautilus to public to use the nautilus library in other modules
 target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
         MLIRExecutionEngine

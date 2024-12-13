@@ -39,4 +39,4 @@ public:
     virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
 };
 
-} /// namespace NES::Runtime
+}

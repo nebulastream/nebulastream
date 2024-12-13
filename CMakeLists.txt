@@ -20,15 +20,13 @@ set(LLVM_MAJOR_VERSION 18)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
 
-#toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
-option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
-option(NES_ENABLES_TESTS "Compute test coverage" ON)
-option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
+option(CODE_COVERAGE "Compute test coverage" OFF)
+option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
@@ -43,7 +41,7 @@ set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
 if (NES_LOG_WITH_STACKTRACE)
     add_compile_definitions(NES_LOG_WITH_STACKTRACE)
-endif()
+endif ()
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
 endif ()
@@ -69,7 +67,7 @@ include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
@@ -87,11 +85,6 @@ endif ()
 if (NES_ENABLE_CXA_THROW_HOOK)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
 endif ()
-
-# this is an experimental feature; do not rely on it yet
-#if(NES_COMPUTE_COVERAGE)
-#    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-#endif
 
 # enables tracing of stack traces if operator / function nodes are created
 if (NES_TRACE_NODE_CREATION)
@@ -284,14 +277,6 @@ if (NES_USE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
 
-# Print all used include directories
-message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach (dir ${dirs})
-    message(STATUS "  - ${dir}")
-endforeach ()
-
 message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
@@ -312,8 +297,7 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
-    if (NES_CODE_COVERAGE)
-        set(CODE_COVERAGE ON)
+    if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         enable_extra_test_features()
         message(STATUS "Tests are enabled with code coverage")
@@ -326,36 +310,26 @@ add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
-add_subdirectory(nes-common)
-add_subdirectory(nes-data-types)
-add_subdirectory(nes-runtime)
-add_subdirectory(nes-sources)
-add_subdirectory(nes-configurations)
-add_subdirectory(nes-operators)
-add_subdirectory(nes-client)
-add_subdirectory(nes-execution)
-add_subdirectory(nes-nautilus)
-add_subdirectory(nes-functions)
-add_subdirectory(nes-window-types)
-add_subdirectory(nes-memory)
-add_subdirectory(nes-single-node-worker)
-add_subdirectory(nes-nebuli)
+file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+foreach (NES_DIR ${NES_DIRECTORIES})
+    add_subdirectory(${NES_DIR})
+endforeach ()
 
-add_tests_if_enabled(tests)
-
-# Custom test commands --------------------------------------------------------
-# Define test suffixes for filtering
-# We always want to exclude the local system test targets
-set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
-
-# The test_default target runs tests without any special suffix
-message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
-set(NES_TEST_REPEAT_UNTIL_FAIL 3)
-set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
-
-#Other configurations
+# Other configurations
 project_enable_format()
-instrument_codebase()
-include(cmake/SystemTests.cmake)
-project_enable_system_level_tests()
+
+# Adding targets for code coverage if it is enabled
+if (CODE_COVERAGE)
+    file(GLOB NES_DIRECTORIES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-systests")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-nebuli")
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-single-node-worker")
+    # 'nes-optional-plugins' is not a target on its own, the plugins are part of other targets
+    list(REMOVE_ITEM NES_DIRECTORIES "nes-optional-plugins")
+
+    foreach (NES_DIR ${NES_DIRECTORIES})
+        target_code_coverage(${NES_DIR} PUBLIC AUTO ALL)
+    endforeach ()
+    target_code_coverage(nes-single-node-worker-lib PUBLIC AUTO ALL)
+    target_code_coverage(nes-nebuli-lib PUBLIC AUTO ALL)
+endif ()

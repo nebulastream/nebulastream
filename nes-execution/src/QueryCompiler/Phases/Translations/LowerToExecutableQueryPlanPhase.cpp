@@ -13,20 +13,21 @@
 */
 
 #include <variant>
+
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Sink.hpp>
+#include <Sinks/SinkProvider.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Util/Common.hpp>
@@ -36,21 +37,12 @@
 
 namespace NES::QueryCompilation
 {
-LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(
-    DataSinkProviderPtr sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider)
-    : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)) {};
-
-std::shared_ptr<LowerToExecutableQueryPlanPhase>
-LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, std::unique_ptr<Sources::SourceProvider>&& sourceProvider)
-{
-    return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, std::move(sourceProvider));
-}
 
 Runtime::Execution::ExecutableQueryPlanPtr
 LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine)
 {
     std::vector<std::unique_ptr<Sources::SourceHandle>> sources;
-    std::vector<DataSinkPtr> sinks;
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
     ///Process all pipelines recursively.
@@ -70,7 +62,7 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     const OperatorPipelinePtr& pipeline,
     std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::vector<DataSinkPtr>& sinks,
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
@@ -85,7 +77,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     }
     if (pipeline->isSinkPipeline())
     {
-        auto executableSink = processSink(pipeline, sinks, nodeEngine, pipelineQueryPlan);
+        auto executableSink = processSink(pipeline, sinks, pipelineQueryPlan->getQueryId());
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
         return executableSink;
     }
@@ -99,13 +91,13 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 void LowerToExecutableQueryPlanPhase::processSource(
     const OperatorPipelinePtr& pipeline,
     std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::vector<DataSinkPtr>& sinks,
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline " + pipeline->getDecomposedQueryPlan()->toString());
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", pipeline->getDecomposedQueryPlan()->toString());
 
     /// Convert logical source descriptor to actual source descriptor
     const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
@@ -119,42 +111,35 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
     auto emitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(executableSuccessorPipelines));
-    auto source = sourceProvider->lower(
+    auto source = Sources::SourceProvider::lower(
         sourceOperator->getOriginId(), sourceOperator->getSourceDescriptorRef(), nodeEngine->getBufferManager(), std::move(emitFunction));
     sources.emplace_back(std::move(source));
 }
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
-    const OperatorPipelinePtr& pipeline,
-    std::vector<DataSinkPtr>& sinks,
-    Runtime::NodeEnginePtr nodeEngine,
-    const PipelineQueryPlanPtr& pipelineQueryPlan)
+    const OperatorPipelinePtr& pipeline, std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks, QueryId queryId)
 {
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto sinkOperator = NES::Util::as<PhysicalOperators::PhysicalSinkOperator>(rootOperator);
-    auto numOfProducers = pipeline->getPredecessors().size();
-    auto sink = sinkProvider->lower(
-        sinkOperator->getId(),
-        sinkOperator->getSinkDescriptor(),
-        sinkOperator->getOutputSchema(),
-        std::move(nodeEngine),
-        pipelineQueryPlan,
-        numOfProducers);
-    sinks.emplace_back(sink);
-    return sink;
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
+    /// Todo #34 (ls-1801 & alepping): As soon as the QueryManager stores sinks as pipelines that become tasks, we can return unique_ptrs.
+    /// Right now, we store a shared_ptr to use the sink as a task, and to later call sink->open() in QueryManagerLifecycle::registerQuery
+    sinkOperator->sinkDescriptor->schema = sinkOperator->getOutputSchema();
+    auto sinkSharedPtr = Sinks::SinkProvider::lower(queryId, sinkOperator->getSinkDescriptorRef());
+    sinks.emplace(sinkSharedPtr);
+    return sinkSharedPtr;
 }
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
     const OperatorPipelinePtr& pipeline,
     std::vector<std::unique_ptr<Sources::SourceHandle>>& sources,
-    std::vector<DataSinkPtr>& sinks,
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
-    auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
+    const auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
+    const auto executableOperator = NES::Util::as<ExecutableOperator>(rootOperator);
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
@@ -171,10 +156,10 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     {
         for (const auto& executableSuccessor : executableSuccessorPipelines)
         {
-            if (const auto* sink = std::get_if<DataSinkPtr>(&executableSuccessor))
+            if (const auto sink = std::get_if<std::shared_ptr<NES::Sinks::Sink>>(&executableSuccessor))
             {
-                NES_TRACE("Emit Buffer to data sink {}", (*sink)->toString());
-                (*sink)->writeData(buffer, workerContext);
+                NES_TRACE("Emit Buffer to data sink {}", **sink);
+                (*sink)->emitTupleBuffer(buffer);
             }
             else if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
             {
@@ -193,7 +178,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
-    auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
+    const auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
         pipeline->getPipelineId(),
         pipelineQueryPlan->getQueryId(),
         queryManager->getBufferManager(),

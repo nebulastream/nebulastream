@@ -17,6 +17,7 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
@@ -33,6 +34,7 @@ static constexpr auto DEFAULT_HASH_NUM_PARTITIONS = 1;
 static constexpr auto DEFAULT_HASH_PAGE_SIZE = 131072;
 static constexpr auto DEFAULT_HASH_PREALLOC_PAGE_COUNT = 1;
 static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
+static constexpr auto DEFAULT_PAGED_VECTOR_SIZE = 1024;
 
 class QueryCompilerConfiguration : public BaseConfiguration
 {
@@ -64,23 +66,23 @@ public:
 
     /// Hash Join Options
     UIntOption numberOfPartitions
-        = {STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
+        = {STREAM_JOIN_NUMBER_OF_PARTITIONS_CONFIG,
            std::to_string(NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS),
            "Partitions in the hash table",
            {std::make_shared<NumberValidation>()}};
     UIntOption pageSize
-        = {STREAM_HASH_JOIN_PAGE_SIZE_CONFIG,
+        = {STREAM_JOIN_PAGE_SIZE_CONFIG,
            std::to_string(NES::Configurations::DEFAULT_HASH_PAGE_SIZE),
            "Page size of hash table",
            {std::make_shared<NumberValidation>()}};
     UIntOption preAllocPageCnt
-        = {STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
+        = {STREAM_JOIN_PREALLOC_PAGE_COUNT_CONFIG,
            std::to_string(NES::Configurations::DEFAULT_HASH_PREALLOC_PAGE_COUNT),
            "Page count of pre allocated pages in each bucket hash table",
            {std::make_shared<NumberValidation>()}};
 
     UIntOption maxHashTableSize
-        = {STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
+        = {STREAM_JOIN_MAX_HASH_TABLE_SIZE_CONFIG,
            std::to_string(NES::Configurations::DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE),
            "Maximum size of hash table",
            {std::make_shared<NumberValidation>()}};

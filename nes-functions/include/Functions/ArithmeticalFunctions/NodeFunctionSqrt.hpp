@@ -24,7 +24,6 @@ public:
     ~NodeFunctionSqrt() noexcept override = default;
     [[nodiscard]] static NodeFunctionPtr create(NodeFunctionPtr const& child);
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     /**
      * @brief Infers the stamp of the function given the current schema and the typeInferencePhaseContext.
@@ -36,6 +35,8 @@ public:
 
 protected:
     explicit NodeFunctionSqrt(NodeFunctionSqrt* other);
+
+    [[nodiscard]] std::string toString() const override;
 };
 
 }

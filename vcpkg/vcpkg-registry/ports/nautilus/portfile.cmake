@@ -1,10 +1,17 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF b11f006b39f68564dbd365cdc5ea8e2d805b2068
-        SHA512 cee7e5756aea85b017fa78b2384a1a4c48fe6824dcb109f5a6ab42c6528328b686d3eb340e0a1f1dbb4c869acbc34940871cd8468bf511c9f387439601092445
+		REF a48e9513def6000b49717a5e8dce954511b1e649
+        SHA512 a343ad0e5d3babb1ed071eede64ea2047871f6f139adc094ae43b0fbff5cd950be9c62871ee7cf5068d5e56f05d7647ccdccef29107cfdd4ddc201d9d2c82971
 		PATCHES
 )
+
+set(ADDITIONAL_CMAKE_OPTIONS "")
+if (NOT "mlir" IN_LIST FEATURES)
+    if($ENV{MLIR_DIR})
+	    set(ADDITIONAL_CMAKE_OPTIONS "${ADDITIONAL_CMAKE_OPTIONS}-DMLIR_DIR=$ENV{MLIR_DIR} ")
+    endif ()
+endif ()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
@@ -17,6 +24,7 @@ vcpkg_cmake_configure(
 		-DUSE_EXTERNAL_MLIR=ON
 		-DUSE_EXTERNAL_SPDLOG=ON
 		-DUSE_EXTERNAL_FMT=ON
+		${ADDITIONAL_CMAKE_OPTIONS}
 )
 
 vcpkg_cmake_install()

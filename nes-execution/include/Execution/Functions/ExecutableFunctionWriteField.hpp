@@ -30,7 +30,7 @@ public:
     VarVal execute(Record& record) const override;
 
 private:
-    const Nautilus::Record::RecordFieldIdentifier field;
+    const Record::RecordFieldIdentifier field;
     const std::unique_ptr<Function> childFunction;
 };
-} /// namespace NES::Runtime::Execution::Functions
+}

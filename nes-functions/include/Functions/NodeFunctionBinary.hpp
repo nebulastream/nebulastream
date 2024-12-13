@@ -44,4 +44,4 @@ protected:
     explicit NodeFunctionBinary(NodeFunctionBinary* other);
 };
 
-} /// namespace NES
+}

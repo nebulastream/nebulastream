@@ -22,14 +22,8 @@ namespace NES
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
-class ArrayType;
-using ArrayTypePtr = std::shared_ptr<ArrayType>;
-
-class TextType;
-using TextTypePtr = std::shared_ptr<TextType>;
-
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
+class VariableSizedDataType;
+using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
 /**
  * @brief The data type factory offers multiple methods to construct data types
@@ -144,25 +138,10 @@ public:
     static DataTypePtr createUInt64();
 
     /**
-     * @brief Creates a new ArrayType data type.
-     * @param length length of the array
-     * @param component component type of the array
-     * @return DataTypePtr
-     */
-    static DataTypePtr createArray(uint64_t length, const DataTypePtr& component);
-
-    /**
-    * @brief Creates a new Char data type.
-    * @param length length of the char
+    * @brief Creates a new VariableSizedDataType data type.
     * @return DataTypePtr
     */
-    static DataTypePtr createFixedChar(uint64_t length);
-
-    /**
-    * @brief Creates a new text data type.
-    * @return DataTypePtr
-    */
-    static DataTypePtr createText();
+    static DataTypePtr createVariableSizedData();
 
     /**
     * @brief Creates a new Char data type.
@@ -170,76 +149,6 @@ public:
     * @return DataTypePtr
     */
     static DataTypePtr createChar();
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param type the data type of this value
-     * @param value the value as a string
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(DataTypePtr type, std::string value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param type the data type as a BasicType
-     * @param value the value as a string
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(BasicType type, std::string value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param value the value as a uint64_t
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(uint64_t value);
-
-    /**
-     * @brief Create a basic typed value. For instance a Integer with value "42".
-     * @param value the value as a int64_t
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createBasicValue(int64_t value);
-
-    /**
-     * @brief Create an array value that is supposed to fit into a contained type.
-     *        Has only support for non-nested array types.
-     *
-     *        For instance: DataTypePtr: ArrayType with componentType int, values = {42, 21}.
-     *
-     * @param type the data type as a DataTypePtr
-     * @param values the value as a vector of strings, which represent the individual values.
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createArrayValueWithContainedType(const DataTypePtr& type, std::vector<std::string>&& values) noexcept;
-
-    /**
-     * @brief Create an array value that is supposed to fit into the contained type passed as argument to this function.
-     *        Has only support for non-nested array types.
-     *
-     *        For instance: DataTypePtr: ArrayType with componentType int, values = {42, 21}.
-     *
-     * @param type: ArrayType type (not nested).
-     *
-     * @param values the value as a vector of strings, which represent the individual values.
-     */
-    static ValueTypePtr
-    createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type, std::vector<std::string>&& values) noexcept;
-
-    /**
-     * @brief Create a fixed char typed value. For instance ['a', 'b'].
-     * @param values represents the fixed char as a vecotr of strings which should contain only one char each.
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createFixedCharValue(std::vector<std::string>&& values) noexcept;
-
-    /**
-     * @brief Create a fixed char typed value from a null-terminated c-str.
-     * @param values represents the fixed char as a single string.
-     * @return ValueTypePtr
-     */
-    static ValueTypePtr createFixedCharValue(char const* values) noexcept;
-    static ValueTypePtr createFixedCharValue(const std::string& values) noexcept;
 
     /**
      * @brief Create a data type from a BasicType, this many is used to support the old type system API.
@@ -304,4 +213,4 @@ public:
     static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
-} /// namespace NES
+}

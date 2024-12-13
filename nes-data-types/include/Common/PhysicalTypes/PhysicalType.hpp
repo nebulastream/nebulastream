@@ -36,6 +36,7 @@ public:
 
     virtual ~PhysicalType() = default;
 
+    /// Returns physical size of type in bytes.
     [[nodiscard]] virtual uint64_t size() const = 0;
 
     virtual std::string convertRawToString(void const* rawData) const noexcept = 0;
@@ -47,19 +48,10 @@ public:
 
     [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
-    [[nodiscard]] virtual bool isBasicType() const noexcept { return false; }
-
-    [[nodiscard]] virtual bool isArrayType() const noexcept { return false; };
-
-    [[nodiscard]] virtual bool isTextType() const noexcept { return false; };
-
-    /// true only for arrays which contain chars as their immediate child type.
-    [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
-
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
 
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;
 };
 
-} /// namespace NES
+}

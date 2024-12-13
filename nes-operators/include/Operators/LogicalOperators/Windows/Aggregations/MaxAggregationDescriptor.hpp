@@ -51,4 +51,4 @@ public:
 private:
     explicit MaxAggregationDescriptor(NodeFunctionFieldAccessPtr onField);
 };
-} /// namespace NES::Windowing
+}

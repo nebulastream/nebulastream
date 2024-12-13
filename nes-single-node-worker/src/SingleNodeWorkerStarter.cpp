@@ -12,26 +12,32 @@
     limitations under the License.
 */
 
+#include <Configurations/Util.hpp>
 #include <grpcpp/server_builder.h>
-#include <Configuration.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 int main(const int argc, const char* argv[])
 {
     try
     {
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
-        auto configuration = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
-        NES::GRPCServer workerService{NES::SingleNodeWorker(configuration)};
+        auto configuration = NES::Configurations::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
+        if (!configuration)
+        {
+            return 0;
+        }
+
+        NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
 
         grpc::ServerBuilder builder;
-        builder.AddListeningPort(configuration.grpcAddressUri, grpc::InsecureServerCredentials());
+        builder.AddListeningPort(configuration->grpcAddressUri, grpc::InsecureServerCredentials());
         builder.RegisterService(&workerService);
 
         const auto server = builder.BuildAndStart();
-        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration.grpcAddressUri));
+        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration->grpcAddressUri));
         server->Wait();
         return 0;
     }

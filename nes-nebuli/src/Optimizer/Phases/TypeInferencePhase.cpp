@@ -38,7 +38,7 @@ QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPla
 {
     /// Infer schema recursively, starting with sinks for sinks.
     auto sinkOperators = queryPlan->getSinkOperators();
-    INVARIANT(not sinkOperators.empty(), fmt::format("Found no sink operators for query plan: {}", queryPlan->getQueryId()));
+    INVARIANT(not sinkOperators.empty(), "Found no sink operators for query plan: {}", queryPlan->getQueryId());
 
     /// now we have to infer the input and output schemas for the whole query.
     /// to this end we call at each sink the infer method to propagate the schemata across the whole query.
@@ -46,7 +46,7 @@ QueryPlanPtr TypeInferencePhase::performTypeInferenceQuery(QueryPlanPtr queryPla
     {
         if (!sink->inferSchema())
         {
-            throw TypeInferenceException(fmt::format("TypeInferencePhase failed for query with id: {}", queryPlan->getQueryId()));
+            throw TypeInferenceException("TypeInferencePhase failed for query with id: {}", queryPlan->getQueryId());
         }
     }
     return queryPlan;
@@ -57,7 +57,7 @@ void TypeInferencePhase::performTypeInferenceSources(
     const std::vector<std::shared_ptr<SourceNameLogicalOperator>>& sourceOperators, QueryId queryId) const
 {
     PRECONDITION(sourceCatalog, "Cannot infer types for sources without source catalog.");
-    PRECONDITION(not sourceOperators.empty(), fmt::format("Query plan with id {} did not contain sources during type inference.", queryId));
+    PRECONDITION(not sourceOperators.empty(), "Query plan with id {} did not contain sources during type inference.", queryId);
 
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)
@@ -76,7 +76,7 @@ void TypeInferencePhase::performTypeInferenceSources(
         schema->setLayoutType(originalSchema->getLayoutType());
         auto qualifierName = logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
-        for (const auto& field : schema->fields)
+        for (const auto& field : *schema)
         {
             if (!field->getName().starts_with(qualifierName))
             {

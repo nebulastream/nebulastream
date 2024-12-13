@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 #include <API/Functions/Functions.hpp>
 #include <API/Functions/LogicalFunctions.hpp>
 #include <API/Query.hpp>
@@ -20,12 +22,7 @@
 #include <API/Windowing.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Functions/NodeFunctionFieldRename.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
@@ -36,7 +33,7 @@
 namespace NES
 {
 
-NodeFunctionPtr getNodeFunctionPtr(FunctionItem& functionItem)
+std::shared_ptr<NodeFunction> getNodeFunctionPtr(FunctionItem& functionItem)
 {
     return functionItem.getNodeFunction();
 }
@@ -79,7 +76,7 @@ CEPOperatorBuilder::Times Query::times()
 namespace JoinOperatorBuilder
 {
 
-JoinWhere Join::where(NodeFunctionPtr joinFunction) const
+JoinWhere Join::where(std::shared_ptr<NodeFunction> joinFunction) const
 {
     return JoinWhere(subQueryRhs, originalQuery, joinFunction);
 }
@@ -88,8 +85,8 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, NodeFunctionPtr joinFunction)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(joinFunction)
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, std::shared_ptr<NodeFunction> joinFunction)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinFunctions(std::move(joinFunction))
 {
 }
 
@@ -98,7 +95,7 @@ Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
     return originalQuery.joinWith(subQueryRhs, joinFunctions, windowType); ///call original joinWith() function
 }
 
-} /// namespace JoinOperatorBuilder
+}
 
 namespace Experimental::BatchJoinOperatorBuilder
 {
@@ -107,12 +104,12 @@ Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQuer
 {
 }
 
-Query& Join::where(const NodeFunctionPtr joinFunction) const
+Query& Join::where(const std::shared_ptr<NodeFunction>& joinFunction) const
 {
     return originalQuery.batchJoinWith(subQueryRhs, joinFunction);
 }
 
-} /// namespace Experimental::BatchJoinOperatorBuilder
+}
 
 namespace CEPOperatorBuilder
 {
@@ -186,7 +183,7 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
     NES_DEBUG("FunctionItem for Left Source {}", sourceNameLeft);
     NES_DEBUG("FunctionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, joinFunction, windowType)
-        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
+        .selection(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
@@ -229,25 +226,25 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const
         {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-                .filter(Attribute("Count") >= minOccurrences);
+                .selection(Attribute("Count") >= minOccurrences);
         }
 
         if (minOccurrences == 0)
         {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-                .filter(Attribute("Count") == maxOccurrences);
+                .selection(Attribute("Count") == maxOccurrences);
         }
 
         return originalQuery.window(windowType)
             .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
-            .filter(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
+            .selection(Attribute("Count") >= minOccurrences && Attribute("Count") <= maxOccurrences);
     }
 
     return originalQuery;
 }
 
-} /// namespace CEPOperatorBuilder
+}
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
 {
@@ -262,7 +259,7 @@ Query Query::from(const std::string& logicalSourceName)
     return Query(queryPlan);
 }
 
-Query& Query::project(std::vector<NodeFunctionPtr> functions)
+Query& Query::project(const std::vector<std::shared_ptr<NodeFunction>>& functions)
 {
     NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(functions, this->queryPlan);
@@ -276,14 +273,15 @@ Query& Query::unionWith(const Query& subQuery)
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::joinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction)
+Query& Query::batchJoinWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction)
 {
     NES_DEBUG("Query: add Batch Join Operator to Query");
     if (NES::Util::as<NodeFunctionEquals>(joinFunction))
@@ -300,14 +298,16 @@ Query& Query::batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFuncti
     return *this;
 }
 
-Query& Query::andWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::andWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, const Windowing::WindowTypePtr& windowType)
+Query&
+Query::seqWith(const Query& subQueryRhs, const std::shared_ptr<NodeFunction>& joinFunction, const Windowing::WindowTypePtr& windowType)
 {
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinFunction);
     this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinFunction, windowType, joinType);
@@ -321,10 +321,10 @@ Query& Query::orWith(const Query& subQueryRhs)
     return *this;
 }
 
-Query& Query::filter(const NodeFunctionPtr& filterFunction)
+Query& Query::selection(const std::shared_ptr<NodeFunction>& selectionFunction)
 {
-    NES_DEBUG("Query: add filter operator to query");
-    this->queryPlan = QueryPlanBuilder::addFilter(filterFunction, this->queryPlan);
+    NES_DEBUG("Query: add selection operator to query");
+    this->queryPlan = QueryPlanBuilder::addSelection(selectionFunction, this->queryPlan);
     return *this;
 }
 
@@ -334,40 +334,17 @@ Query& Query::limit(const uint64_t limit)
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
-Query& Query::map(const NodeFunctionFieldAssignmentPtr& mapFunction)
+Query& Query::map(const std::shared_ptr<NodeFunctionFieldAssignment>& mapFunction)
 {
     NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapFunction, this->queryPlan);
     return *this;
 }
 
-Query& Query::inferModel(
-    const std::string model, const std::initializer_list<FunctionItem> inputFields, const std::initializer_list<FunctionItem> outputFields)
-{
-    NES_DEBUG("Query: add map inferModel to query");
-    auto inputFieldVector = std::vector(inputFields);
-    auto outputFieldVector = std::vector(outputFields);
-    std::vector<NodeFunctionPtr> inputFieldsPtr;
-    std::vector<NodeFunctionPtr> outputFieldsPtr;
-    for (const auto& inputField : inputFieldVector)
-    {
-        inputFieldsPtr.push_back(inputField.getNodeFunction());
-    }
-    for (const auto& outputField : outputFieldVector)
-    {
-        outputFieldsPtr.push_back(outputField.getNodeFunction());
-    }
-
-    OperatorPtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldsPtr, outputFieldsPtr);
-    NES_DEBUG("Query::inferModel: Current Operator: {}", op->toString());
-    queryPlan->appendOperatorAsNewRoot(op);
-    return *this;
-}
-
-Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId)
+Query& Query::sink(std::string sinkName, WorkerId workerId)
 {
     NES_DEBUG("Query: add sink operator to query");
-    this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
+    this->queryPlan = QueryPlanBuilder::addSink(std::move(sinkName), this->queryPlan, workerId);
     return *this;
 }
 
@@ -384,7 +361,7 @@ QueryPlanPtr Query::getQueryPlan() const
 }
 
 ///
-Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(NodeFunctionPtr joinFunction)
+Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(const std::shared_ptr<NodeFunction>& joinFunction)
 {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
@@ -416,4 +393,4 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(NodeFunctionPtr jo
     return joinType;
 }
 
-} /// namespace NES
+}

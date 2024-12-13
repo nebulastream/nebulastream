@@ -35,4 +35,4 @@ private:
     Timer<> timer;
 };
 using QueryCompilationResultPtr = std::shared_ptr<QueryCompilationResult>;
-} /// namespace NES::QueryCompilation
+}

@@ -23,4 +23,4 @@ OperatorFusionPolicyPtr OperatorAtATimePolicy::create()
 {
     return std::make_shared<OperatorAtATimePolicy>();
 }
-} /// namespace NES::QueryCompilation
+}

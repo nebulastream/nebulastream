@@ -106,4 +106,4 @@ inline NesThread::ThreadId::~ThreadId()
     NesThread::releaseEntry(id);
 }
 
-} /// namespace NES::Runtime
+}

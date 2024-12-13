@@ -1,0 +1,24 @@
+# name: milestone/LinearRoadBenchmark.test
+# description: LinearRoadBenchmark
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+# Query 0
+Query::from("lrb")
+    .map(Attribute("position") = Attribute("position")/5280)
+    .window(SlidingWindow::of(EventTime(RecordCreationTs()), Seconds(300), Seconds(1)))
+    .byKey(Attribute("highway"), Attribute("direction"), Attribute("position"))
+    .apply(Avg(Attribute("speed"))->as(Attribute("avgSpeed")))
+    .filter(Attribute("avgSpeed") < 40)
+    .SINK;
+----
+
+Query::from("lrb")
+    .map(Attribute("position") = Attribute("position")/5280)
+    .window(SlidingWindow::of(EventTime(RecordCreationTs()), Seconds(30), Seconds(1)))
+    .byKey(Attribute("vehicle"), Attribute("highway"), Attribute("direction"), Attribute("position"))
+    .apply(Count()->as(Attribute("cntSpeed")))
+    .SINK;
+----

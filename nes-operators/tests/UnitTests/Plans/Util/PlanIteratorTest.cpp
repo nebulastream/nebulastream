@@ -12,13 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/QueryAPI.hpp>
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -44,23 +46,23 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
 
-        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
-        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
-        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
-        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
-        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
-        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
+        pred1 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "1");
+        pred2 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "2");
+        pred3 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "3");
+        pred4 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "4");
+        pred5 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "5");
+        pred6 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "6");
+        pred7 = NodeFunctionConstantValue::create(DataTypeFactory::createInt8(), "7");
 
-        sourceOp1 = LogicalOperatorFactory::createSourceOperator("test_source_1");
-        sourceOp2 = LogicalOperatorFactory::createSourceOperator("test_source_2");
-        filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
-        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
-        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
-        sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
-        sinkOp3 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+        sourceOp1 = std::make_shared<SourceNameLogicalOperator>("test_source_1", getNextOperatorId());
+        sourceOp2 = std::make_shared<SourceNameLogicalOperator>("test_source_2", getNextOperatorId());
+        filterOp1 = std::make_shared<LogicalSelectionOperator>(pred1, getNextOperatorId());
+        filterOp2 = std::make_shared<LogicalSelectionOperator>(pred2, getNextOperatorId());
+        filterOp3 = std::make_shared<LogicalSelectionOperator>(pred3, getNextOperatorId());
+        filterOp4 = std::make_shared<LogicalSelectionOperator>(pred4, getNextOperatorId());
+        sinkOp1 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
+        sinkOp2 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
+        sinkOp3 = std::make_shared<SinkLogicalOperator>("print_sink", getNextOperatorId());
 
         children.clear();
         parents.clear();
@@ -91,7 +93,7 @@ TEST_F(PlanIteratorTest, iterateFilterQueryPlan)
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(*queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -120,7 +122,7 @@ TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan)
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(*queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp2, *queryPlanIter);
@@ -152,7 +154,7 @@ TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan)
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(*queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -192,7 +194,7 @@ TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan)
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(*queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -238,7 +240,7 @@ TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan)
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto queryPlanIter = PlanIterator(queryPlan).begin();
+    auto queryPlanIter = PlanIterator(*queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
@@ -254,4 +256,4 @@ TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan)
     ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
-} /// namespace NES
+}

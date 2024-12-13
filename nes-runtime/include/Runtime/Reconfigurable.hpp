@@ -50,4 +50,4 @@ public:
     }
 };
 
-} /// namespace NES::Runtime
+}

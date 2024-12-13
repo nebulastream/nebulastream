@@ -49,7 +49,6 @@ std::string PhysicalExternalOperator::toString() const
     out << std::endl;
     out << "PhysicalExternalOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    out << executablePipelineStage->getCodeAsString();
     out << std::endl;
     return out.str();
 }
@@ -66,4 +65,4 @@ Runtime::Execution::ExecutablePipelineStagePtr PhysicalExternalOperator::getExec
     return executablePipelineStage;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

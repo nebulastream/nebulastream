@@ -35,7 +35,6 @@ public:
      */
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
@@ -47,8 +46,11 @@ public:
     void inferStringSignature() override;
     std::string getNewSourceName() const;
 
+protected:
+    [[nodiscard]] std::string toString() const override;
+
 private:
     const std::string newSourceName;
 };
 
-} /// namespace NES
+}

@@ -14,7 +14,6 @@
 
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Operators/Exceptions/SignatureComputationException.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
@@ -22,10 +21,14 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 using namespace std::string_literals;
 
@@ -51,7 +54,10 @@ void SemanticQueryValidation::validate(const QueryPlanPtr& queryPlan)
 
     try
     {
-        auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+        const auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog);
+        typeInferencePhase->performTypeInferenceSources(
+            queryPlan->getSourceOperators<SourceNameLogicalOperator>(), queryPlan->getQueryId());
+        typeInferencePhase->performTypeInferenceQuery(queryPlan);
     }
     catch (std::exception& e)
     {
@@ -174,7 +180,8 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
                 auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
+                if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
+                    && !NES::Util::instanceOf<VariableSizedDataType>(field->getStamp()))
                 {
                     throw QueryInvalid(
                         "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "
@@ -191,11 +198,11 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             }
         }
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
-        if (commonStamp->isUndefined())
+        if (NES::Util::instanceOf<Undefined>(commonStamp))
         {
             throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
                                "input to infer model.");
         }
     }
 }
-} /// namespace NES::Optimizer
+}

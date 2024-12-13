@@ -25,10 +25,10 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Parsers/ParserCSV.hpp>
 #include <Util/Common.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 
@@ -54,9 +54,9 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
     for (uint64_t i = 0; i < numberOfTuples; i++)
     {
         uint64_t offset = 0;
-        for (uint64_t j = 0; j < schema->getSize(); j++)
+        for (uint64_t j = 0; j < schema->getFieldCount(); j++)
         {
-            auto field = schema->get(j);
+            auto field = schema->getFieldByIndex(j);
             auto dataType = field->getDataType();
             auto physicalType = physicalDataTypeFactory.getPhysicalType(dataType);
             auto fieldSize = physicalType->size();
@@ -64,9 +64,9 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
             auto indexInBuffer = buffer + offset + i * schema->getSchemaSizeInBytes();
 
             /// handle variable-length field
-            if (dataType->isText())
+            if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
             {
-                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length TEXT field: "
+                NES_DEBUG("Util::printTupleBufferAsCSV(): trying to read the variable length VARIABLE_SIZED_DATA field: "
                           "from the tuple buffer");
 
                 /// read the child buffer index from the tuple buffer
@@ -79,7 +79,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
             }
 
             ss << str;
-            if (j < schema->getSize() - 1)
+            if (j < schema->getFieldCount() - 1)
             {
                 ss << ",";
             }
@@ -92,14 +92,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
 
 std::string Util::toCSVString(const SchemaPtr& schema)
 {
-    std::stringstream ss;
-    for (auto& f : schema->fields)
-    {
-        ss << f->toString() << ",";
-    }
-    ss.seekp(-1, std::ios_base::end);
-    ss << std::endl;
-    return ss.str();
+    return schema->toString("", ",", "\n");
 }
 
 std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
@@ -116,7 +109,7 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> Util::createMemoryLayo
 bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties)
 {
     /// count the number of operators in the query
-    auto queryPlanIterator = PlanIterator(queryPlan);
+    auto queryPlanIterator = PlanIterator(*queryPlan);
     size_t numOperators = queryPlanIterator.snapshot().size();
     ;
 
@@ -152,7 +145,7 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
     std::vector<PhysicalTypePtr> retVector;
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    for (const auto& field : schema->fields)
+    for (const auto& field : *schema)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         retVector.push_back(physicalField);
@@ -163,11 +156,11 @@ std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
 #ifdef WRAP_READ_CALL
 /// If NES is build with NES_ENABLES_TESTS the linker is instructed to wrap the read function
 /// to keep the usual functionality __wrap_read just calls __real_read which is the real read function.
-/// However, this allows to mock calls to read (e.g. SourceTCPTest)
+/// However, this allows to mock calls to read (e.g. TCPSourceTest)
 extern "C" ssize_t __real_read(int fd, void* data, size_t size);
 __attribute__((weak)) extern "C" ssize_t __wrap_read(int fd, void* data, size_t size)
 {
     return __real_read(fd, data, size);
 }
 #endif
-} /// namespace NES
+}

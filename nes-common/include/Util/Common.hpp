@@ -13,74 +13,11 @@
 */
 
 #pragma once
-#include <charconv>
-#include <functional>
 #include <memory>
-#include <sstream>
 #include <string>
-#include <string_view>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES
-{
-static constexpr auto H3_SEED = 42;
-static constexpr auto NUMBER_OF_BITS_IN_HASH_VALUE = 64;
-} /// namespace NES
-
-namespace NES::QueryCompilation
-{
-enum class StreamJoinStrategy : uint8_t
-{
-    HASH_JOIN_LOCAL,
-    HASH_JOIN_VAR_SIZED,
-    HASH_JOIN_GLOBAL_LOCKING,
-    HASH_JOIN_GLOBAL_LOCK_FREE,
-    NESTED_LOOP_JOIN
-};
-
-enum class JoinBuildSideType : uint8_t
-{
-    Right,
-    Left
-};
-template <typename E = JoinBuildSideType, typename Out = uint64_t>
-constexpr Out to_underlying(E e) noexcept
-{
-    return static_cast<Out>(e);
-}
-
-} /// namespace NES::QueryCompilation
-
-namespace NES::Runtime::Execution
-{
-/**
- * @brief Stores the meta date for a RecordBuffer
- */
-struct BufferMetaData
-{
-public:
-    BufferMetaData(const uint64_t watermarkTs, const SequenceData seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
-    {
-    }
-
-    std::string toString() const
-    {
-        std::ostringstream oss;
-        oss << "waterMarkTs: " << watermarkTs << ","
-            << "seqNumber: " << seqNumber << ","
-            << "originId: " << originId;
-        return oss.str();
-    }
-
-    const uint64_t watermarkTs;
-    const SequenceData seqNumber;
-    const OriginId originId;
-};
-} /// namespace NES::Runtime::Execution
 
 namespace NES::Util
 {
@@ -91,89 +28,6 @@ namespace NES::Util
 */
 std::string escapeJson(const std::string& str);
 
-/**
-* @brief removes leading and trailing whitespaces
-*/
-std::string_view trimWhiteSpaces(std::string_view in);
-
-/**
-* @brief removes leading and trailing occurences of `trimFor`
-*/
-std::string_view trimChar(std::string_view in, char trimFor);
-
-namespace detail
-{
-
-/**
- * @brief set of helper functions for splitting for different types
- * @return splitting function for a given type
- */
-template <typename T>
-struct SplitFunctionHelper
-{
-    /// Most conversions can be delegated to `std::from_chars`
-    static constexpr auto FUNCTION = [](std::string_view str)
-    {
-        T result_value;
-        auto trimmed = trimWhiteSpaces(str);
-        auto result = std::from_chars(trimmed.data(), trimmed.data() + trimmed.size(), result_value);
-        if (result.ec == std::errc::invalid_argument)
-        {
-            throw FunctionNotImplemented("Could not parse: " + std::string(trimmed));
-        }
-        return result_value;
-    };
-};
-
-/**
- * Specialization for `std::string`, which is just a copy from the string_view
- */
-template <>
-struct SplitFunctionHelper<std::string>
-{
-    static constexpr auto FUNCTION = [](std::string_view x) { return std::string(x); };
-};
-
-} /// namespace detail
-
-/// Checks if a string ends with a given string.
-bool endsWith(const std::string& fullString, const std::string& ending);
-
-/// Checks if a string starts with a given string.
-uint64_t numberOfUniqueValues(std::vector<uint64_t>& values);
-
-/// Get number of unique elements
-bool startsWith(const std::string& fullString, const std::string& ending);
-
-/// transforms the string to an upper case version
-std::string toUpperCase(std::string string);
-
-/// splits a string given a delimiter into multiple substrings stored in a T vector
-/// the delimiter is allowed to be a string rather than a char only.
-template <typename T>
-std::vector<T> splitWithStringDelimiter(
-    std::string_view inputString,
-    std::string_view delim,
-    std::function<T(std::string_view)> fromStringToT = detail::SplitFunctionHelper<T>::FUNCTION)
-{
-    size_t prev_pos = 0;
-    size_t next_pos = 0;
-    std::vector<T> elems;
-
-    while ((next_pos = inputString.find(delim, prev_pos)) != std::string::npos)
-    {
-        elems.push_back(fromStringToT(inputString.substr(prev_pos, next_pos - prev_pos)));
-        prev_pos = next_pos + delim.size();
-    }
-
-    if (auto rest = inputString.substr(prev_pos, inputString.size()); !rest.empty())
-    {
-        elems.push_back(fromStringToT(rest));
-    }
-
-    return elems;
-}
-
 /// this method checks if the object is null
 template <typename T>
 std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& errorMessage)
@@ -181,12 +35,6 @@ std::shared_ptr<T> checkNonNull(std::shared_ptr<T> ptr, const std::string& error
     NES_ASSERT(ptr, errorMessage);
     return ptr;
 }
-
-/// function to replace all string occurrences
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr);
-
-/// This function replaces the first occurrence of search term in a string with the replace term.
-std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace);
 
 /// Update the source names by sorting and then concatenating the source names from the sub- and query plan
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed);
@@ -267,7 +115,7 @@ std::shared_ptr<Out> as(const std::shared_ptr<In>& obj)
     {
         return ptr;
     }
-    throw DynamicCast(std::format("Invalid dynamic cast: from {} to {}", typeid(In).name(), typeid(Out).name()));
+    throw InvalidDynamicCast("Invalid dynamic cast: from {} to {}", std::string(typeid(In).name()), std::string(typeid(Out).name()));
 }
 
 /// cast the given object to the specified type.

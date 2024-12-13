@@ -12,14 +12,11 @@
     limitations under the License.
 */
 
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <memory>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <Execution/RecordBuffer.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Util.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -76,12 +73,12 @@ void Emit::emitRecordBuffer(
     ExecutionContext& ctx, RecordBuffer& recordBuffer, const nautilus::val<uint64_t>& numRecords, const nautilus::val<bool>& lastChunk)
 {
     recordBuffer.setNumRecords(numRecords);
-    recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
-    recordBuffer.setOriginId(ctx.getOriginId());
-    recordBuffer.setSequenceNr(ctx.getSequenceNumber());
-    recordBuffer.setChunkNr(ctx.getNextChunkNr());
+    recordBuffer.setWatermarkTs(ctx.watermarkTs);
+    recordBuffer.setOriginId(ctx.originId);
+    recordBuffer.setSequenceNumber(ctx.sequenceNumber);
+    recordBuffer.setChunkNumber(ctx.getNextChunkNumber());
     recordBuffer.setLastChunk(lastChunk);
-    recordBuffer.setCreationTs(ctx.getCurrentTs());
+    recordBuffer.setCreationTs(ctx.currentTs);
     ctx.emitBuffer(recordBuffer);
 
     if (lastChunk == true)
@@ -90,7 +87,7 @@ void Emit::emitRecordBuffer(
     }
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
+Emit::Emit(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider))
 {
 }

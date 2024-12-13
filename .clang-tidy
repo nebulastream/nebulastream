@@ -43,10 +43,22 @@ Checks: [
   "-abseil-*", # we currently don't use abseil
   "-altera-*", # we don't do OpenCL
 
+  # it is not possible to disable this for structs
+  "-misc-non-private-member-variables-in-classes",
+  # does not work with our error of unused variable
+  "-readability-named-parameter",
+  # we can not overload the operator() anywhere
+  "-fuchsia-overloaded-operator",
+  # header guards are not needed as we use pragma once
+  "-llvm-header-guard",
+
   # annyoing and useless
+  "-llvm-include-order", # conflicts with the order of includes forced by our formatter
   "-bugprone-easily-swappable-parameters", # annoying-ish
   "-modernize-use-trailing-return-type", # purely cosmetic
   "-fuchsia-default-arguments-calls", # we do not forbid default args
+  "-llvm-namespace-comment", # we do not require namespace comments
+  "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
 
   # The following are aliases to other checks, thus we disable them
   "-bugprone-narrowing-conversions",
@@ -89,6 +101,7 @@ Checks: [
   "-hicpp-vararg",
   "-llvm-else-after-return",
   "-llvm-qualified-auto",
+  "-llvm-header-guard",
 ]
 
 # We try to be as strict as possible.
@@ -224,7 +237,6 @@ WarningsAsErrors: '
   -google-upgrade-googletest-case,
   -fuchsia-multiple-inheritance,
   -cppcoreguidelines-pro-type-member-init,
-  -fuchsia-statically-constructed-objects,
   -cppcoreguidelines-pro-type-static-cast-downcast,
   -misc-unused-parameters,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
@@ -236,7 +248,6 @@ WarningsAsErrors: '
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-avoid-non-const-global-variables,
   -readability-else-after-return,
-  -fuchsia-overloaded-operator,
   -modernize-use-nodiscard,
   -cert-err58-cpp,
   -google-readability-casting,
@@ -245,11 +256,7 @@ WarningsAsErrors: '
   -readability-implicit-bool-conversion,
   -readability-qualified-auto,
   -performance-unnecessary-value-param,
-  -llvm-header-guard,
-  -readability-named-parameter,
-  -llvm-include-order,
   -cppcoreguidelines-pro-type-reinterpret-cast,
-  -misc-non-private-member-variables-in-classes,
   -readability-redundant-inline-specifier,
   -misc-const-correctness,
   -llvm-namespace-comment,
@@ -261,7 +268,6 @@ WarningsAsErrors: '
   -readability-identifier-naming,
   -misc-include-cleaner,
   -modernize-use-trailing-return-type,
-  -clang-diagnostic-*,
 '
 
 HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
@@ -294,3 +300,6 @@ CheckOptions:
   readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
   cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
   readability-function-cognitive-complexity.IgnoreMacros: 'true'
+  # All allowed abbreviations are covered in the `frequently_used_abbreviations.md` document
+  readability-identifier-length.IgnoredParameterNames: "bm|tb|id|os|lhs|rhs|ts"
+  readability-identifier-length.IgnoredVariableNames: 'bm|tb|id|os|lhs|rhs|ts'

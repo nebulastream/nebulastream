@@ -34,11 +34,13 @@ public:
      * @return  std::vector<NodeFunctionPtr>
      */
     std::vector<NodeFunctionPtr> getFunctions();
-    std::string toString() const override;
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 
 private:
     std::vector<NodeFunctionPtr> functions;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

@@ -18,7 +18,7 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Configuration.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
 {
@@ -89,4 +89,4 @@ public:
     /// Summary sturcture for query.
     [[nodiscard]] std::optional<Runtime::QuerySummary> getQuerySummary(QueryId queryId) const;
 };
-} /// namespace NES
+}

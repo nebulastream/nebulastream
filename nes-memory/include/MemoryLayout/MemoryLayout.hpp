@@ -60,6 +60,8 @@ public:
      * @param schema A memory layout is always created for a specific schema.
      */
     MemoryLayout(uint64_t bufferSize, std::shared_ptr<Schema> schema);
+    MemoryLayout(const MemoryLayout&) = default;
+
     virtual ~MemoryLayout() = default;
 
     /**
@@ -80,6 +82,7 @@ public:
      * @return BufferSize in bytes.
      */
     [[nodiscard]] uint64_t getBufferSize() const;
+    void setBufferSize(uint64_t bufferSize);
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
@@ -128,6 +131,20 @@ public:
     [[nodiscard]] const std::vector<uint64_t>& getFieldSizes() const;
 
     /**
+     * @brief Get the names of the key fields as a vector of strings.
+     * @return std::vector<std::string> fieldNames
+     */
+    [[nodiscard]] std::vector<std::string> getKeyFieldNames() const;
+
+    /**
+     * @brief Set the names of the key fields.
+     * @param keyFields
+     */
+    void setKeyFieldNames(const std::vector<std::string>& keyFields);
+
+    [[nodiscard]] virtual std::shared_ptr<MemoryLayout> deepCopy() const = 0;
+
+    /**
      * @brief Comparator methods
      * @param rhs
      * @return
@@ -136,13 +153,14 @@ public:
     bool operator!=(const MemoryLayout& rhs) const;
 
 protected:
-    const uint64_t bufferSize;
+    uint64_t bufferSize;
     std::shared_ptr<Schema> schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
     std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
+    std::vector<std::string> keyFieldNames;
 };
 
 using MemoryLayoutPtr = std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>;

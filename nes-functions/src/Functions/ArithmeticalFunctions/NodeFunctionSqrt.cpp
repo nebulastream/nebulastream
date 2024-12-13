@@ -43,8 +43,8 @@ void NodeFunctionSqrt::inferStamp(SchemaPtr schema)
     /// infer stamp of child, check if its numerical, assume same stamp
     NodeFunctionArithmeticalUnary::inferStamp(schema);
 
-    if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
-        || (stamp->isFloat() && DataType::as<Float>(stamp)->upperBound <= 0))
+    if ((NES::Util::instanceOf<Integer>(stamp) && DataType::as<Integer>(stamp)->upperBound <= 0)
+        || (NES::Util::instanceOf<Float>(stamp) && DataType::as<Float>(stamp)->upperBound <= 0))
     {
         NES_ERROR("Log10NodeFunction: Non-positive DataType is passed into Log10 function. Arithmetic errors would occur at "
                   "run-time.");
@@ -71,7 +71,7 @@ bool NodeFunctionSqrt::equal(NodePtr const& rhs) const
 std::string NodeFunctionSqrt::toString() const
 {
     std::stringstream ss;
-    ss << "SQRT(" << children[0]->toString() << ")";
+    ss << "SQRT(" << *children[0] << ")";
     return ss.str();
 }
 

@@ -37,7 +37,6 @@ public:
      */
     static NodeFunctionPtr create(std::string fieldName);
 
-    std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
 
     /**
@@ -71,10 +70,12 @@ protected:
     explicit NodeFunctionFieldAccess(NodeFunctionFieldAccess* other);
 
     NodeFunctionFieldAccess(DataTypePtr stamp, std::string fieldName);
+
+    std::string toString() const override;
     /**
      * @brief Name of the field want to access.
      */
     std::string fieldName;
 };
 
-} /// namespace NES
+}

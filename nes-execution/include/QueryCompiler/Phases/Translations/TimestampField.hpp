@@ -66,4 +66,4 @@ private:
     TimeFunctionType timeFunctionType;
     TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
 };
-} /// namespace NES::QueryCompilation
+}

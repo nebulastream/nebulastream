@@ -24,6 +24,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/Task.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -32,6 +33,7 @@
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
+
 
 #include <folly/MPMCQueue.h>
 
@@ -78,7 +80,6 @@ public:
         std::vector<Memory::BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
-        uint64_t numberOfBuffersPerEpoch,
         std::vector<uint64_t> workerToCoreMapping = {});
 
     ~QueryManager() NES_NOEXCEPT(false) override;
@@ -192,11 +193,9 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
+    /// No notifySinkCompletion, since it was only used by the postReconfigurationCallback, which we don't support anymore.
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
-
     void notifyPipelineCompletion(QueryId queryId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
-
-    void notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType);
 
 private:
     friend class ThreadPool;
@@ -260,11 +259,9 @@ protected:
     /// Todo #241: In #241, we introduce a way to uniquely identify sources globally, which we should use here to map from identifiers to sources
     std::unordered_map<OriginId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
-    uint64_t numberOfBuffersPerEpoch;
-
 #ifdef ENABLE_PAPI_PROFILER
     std::vector<Profiler::PapiCpuProfilerPtr> cpuProfilers;
 #endif
 };
 using QueryManagerPtr = std::shared_ptr<QueryManager>;
-} /// namespace NES::Runtime
+}

@@ -16,7 +16,6 @@
 
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Validation/IpValidation.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -44,9 +43,6 @@ public:
         = {REQUEST_EXECUTOR_THREAD_CONFIG, "1", "Number of request executor thread", {std::make_shared<NumberValidation>()}};
 
     OptimizerConfiguration optimizer = {OPTIMIZER_CONFIG, "Defines the configuration for the optimizer."};
-
-    /// @deprecated This is currently only used for testing and will be removed.
-    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES, "Logical Sources"};
 
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
@@ -80,7 +76,6 @@ private:
             &worker,
             &workerConfigPath,
             &optimizer,
-            &logicalSourceTypes,
             &coordinatorHealthCheckWaitTime,
             &restServerCorsAllowedOrigin,
         };

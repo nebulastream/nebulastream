@@ -36,8 +36,10 @@ public:
     create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(const SchemaPtr& schema);
-    std::string toString() const override;
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

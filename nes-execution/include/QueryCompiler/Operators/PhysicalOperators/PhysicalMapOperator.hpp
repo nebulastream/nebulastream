@@ -29,7 +29,7 @@ public:
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const NodeFunctionFieldAssignmentPtr& mapFunction);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, NodeFunctionFieldAssignmentPtr mapFunction);
-    std::string toString() const override;
+
     OperatorPtr copy() override;
 
     /**
@@ -39,6 +39,8 @@ public:
     NodeFunctionFieldAssignmentPtr getMapFunction();
 
 protected:
+    std::string toString() const override;
+
     const NodeFunctionFieldAssignmentPtr mapFunction;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

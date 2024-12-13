@@ -29,4 +29,4 @@ enum class SourceMode : uint8_t
     COPY_BUFFER_SIMD_RTE = 4,
     COPY_BUFFER_SIMD_APEX = 5
 };
-} /// namespace NES
+}

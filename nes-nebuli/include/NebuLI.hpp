@@ -14,12 +14,50 @@
 
 #pragma once
 
+#include <string>
+#include <unordered_map>
+#include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::CLI
 {
+
+struct SchemaField
+{
+    std::string name;
+    BasicType type;
+};
+
+struct Sink
+{
+    std::string name;
+    std::string type;
+    std::unordered_map<std::string, std::string> config;
+};
+
+struct LogicalSource
+{
+    std::string name;
+    std::vector<SchemaField> schema;
+};
+
+struct PhysicalSource
+{
+    std::string logical;
+    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<std::string, std::string> sourceConfig;
+};
+
+struct QueryConfig
+{
+    std::string query;
+    std::unordered_map<std::string, Sink> sinks;
+    std::vector<LogicalSource> logical;
+    std::vector<PhysicalSource> physical;
+};
+
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testName);
-bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr);
+DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config);
 }

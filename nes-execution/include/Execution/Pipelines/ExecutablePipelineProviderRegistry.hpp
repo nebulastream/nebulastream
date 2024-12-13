@@ -19,11 +19,13 @@
 namespace NES::Runtime::Execution
 {
 /// TODO #323: !!!IMPORTANT!!! This is not how we should use registries. We have an open issue to address this problem
-class ExecutablePipelineProviderRegistry : public BaseRegistry<ExecutablePipelineProviderRegistry, std::string, ExecutablePipelineProvider>
+using ExecutablePipelineProviderRegistrySignature = RegistrySignature<std::string, ExecutablePipelineProvider>;
+class ExecutablePipelineProviderRegistry
+    : public BaseRegistry<ExecutablePipelineProviderRegistry, ExecutablePipelineProviderRegistrySignature>
 {
 };
 }
 
 #define INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY
-#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.hpp>
+#include <Execution/Pipelines/GeneratedExecutablePipelineProviderRegistrar.inc>
 #undef INCLUDED_FROM_EXECUTABLE_PIPELINE_PROVIDER_REGISTRY

@@ -69,4 +69,4 @@ private:
 
 using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
-} /// namespace NES::Runtime
+}

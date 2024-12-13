@@ -38,35 +38,17 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE NAMES clang++ clang++-$ENV{LLVM_VERSION})
-    find_program(CLANG_EXECUTABLE NAMES clang clang-$ENV{LLVM_VERSION})
-    set(LIBCXX_COMPILER_FLAG "")
-    set(LIBCXX_LINKER_FLAG "")
-    if (CLANG_EXECUTABLE AND CLANGXX_EXECUTABLE)
-        set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
-        set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
-
-        # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
-        execute_process(
-                COMMAND ${CMAKE_COMMAND} -E echo "#include<ciso646> \n int main(){return 0;}"
-                COMMAND ${CMAKE_CXX_COMPILER} -E -stdlib=libc++ -x c++ -dM -
-                COMMAND grep "#define _LIBCPP_VERSION"
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                OUTPUT_VARIABLE LIBCXX_CHECK_OUTPUT
-                ERROR_VARIABLE LIBCXX_CHECK_ERROR
-                RESULT_VARIABLE LIBCXX_CHECK_RESULT
-        )
-
-        if (LIBCXX_CHECK_RESULT EQUAL 0)
-            set(LIBCXX_COMPILER_FLAG "-stdlib=libc++")
-            set(LIBCXX_LINKER_FLAG "-lc++")
-        endif ()
-    endif ()
+    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_VERSION})
+    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_VERSION})
+    set(LIBCXX_COMPILER_FLAG "-stdlib=libc++")
+    set(LIBCXX_LINKER_FLAG "-lc++")
+    set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
+    set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
 
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if (NOT _CMAKE_IN_TRY_COMPILE)
         string(APPEND CMAKE_C_FLAGS_INIT "-fPIC ${VCPKG_C_FLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_INIT "-std=c++20 ${LIBCXX_COMPILER_FLAG} -fPIC ${VCPKG_CXX_FLAGS} ")
+        string(APPEND CMAKE_CXX_FLAGS_INIT "-std=c++23 ${LIBCXX_COMPILER_FLAG} -fPIC ${VCPKG_CXX_FLAGS} ")
         string(APPEND CMAKE_C_FLAGS_DEBUG_INIT "${VCPKG_C_FLAGS_DEBUG} ")
         string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT "${VCPKG_CXX_FLAGS_DEBUG} ")
         string(APPEND CMAKE_C_FLAGS_RELEASE_INIT "${VCPKG_C_FLAGS_RELEASE} ")

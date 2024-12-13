@@ -50,4 +50,4 @@ bool IpValidation::isValid(const std::string& ip) const
     int lastOctet = std::stoi(ip.substr(start, end));
     return lastOctet >= 0 && lastOctet <= 255;
 }
-} /// namespace NES::Configurations
+}

@@ -34,4 +34,4 @@ std::string BaseOption::getDescription()
     return description;
 }
 
-} /// namespace NES::Configurations
+}

@@ -28,9 +28,9 @@ namespace Configurations
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-} /// namespace Configurations
+}
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -62,8 +62,6 @@ using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOper
 class RenameSourceToProjectOperatorRule;
 using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
 
-class RedundancyEliminationRule;
-using RedundancyEliminationRulePtr = std::shared_ptr<RedundancyEliminationRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan
@@ -83,7 +81,6 @@ private:
     FilterMergeRulePtr filterMergeRule;
     FilterPushDownRulePtr filterPushDownRule;
     FilterSplitUpRulePtr filterSplitUpRule;
-    RedundancyEliminationRulePtr redundancyEliminationRule;
     PredicateReorderingRulePtr predicateReorderingRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
     RenameSourceToProjectOperatorRulePtr renameSourceToProjectOperatorRule;

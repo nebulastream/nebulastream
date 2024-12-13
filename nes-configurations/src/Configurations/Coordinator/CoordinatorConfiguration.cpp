@@ -29,7 +29,7 @@ namespace NES::Configurations
 CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, const char** argv)
 {
     /// Convert the POSIX command line arguments to a map of strings.
-    std::map<std::string, std::string> commandLineParams;
+    std::unordered_map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i)
     {
         const int pos = std::string(argv[i]).find('=');
@@ -66,4 +66,4 @@ CoordinatorConfigurationPtr CoordinatorConfiguration::create(const int argc, con
     return config;
 }
 
-} /// namespace NES::Configurations
+}

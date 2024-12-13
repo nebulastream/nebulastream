@@ -20,6 +20,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime
 {
@@ -44,9 +45,16 @@ QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQuery
 
 void NodeEngine::startQuery(QueryId queryId)
 {
-    if (!queryManager->startQuery(registeredQueries[queryId]))
+    if (const auto query = registeredQueries.find(queryId); query != registeredQueries.end() and query->second)
     {
-        NES_THROW_RUNTIME_ERROR("Could not start the query");
+        if (!queryManager->startQuery(query->second))
+        {
+            throw CannotStartQuery("Cannot start query with id '{}'.", queryId);
+        }
+    }
+    else
+    {
+        throw QueryNotRegistered("Cannot find query with id '{}' in registered queries.", queryId);
     }
 }
 
@@ -63,4 +71,4 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType type)
     }
 }
 
-} /// namespace NES::Runtime
+}

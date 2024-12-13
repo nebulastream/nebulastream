@@ -12,5 +12,4 @@
 
 add_source_files(nes-coordinator
         SemanticQueryValidation.cpp
-        SyntacticQueryValidation.cpp
 )

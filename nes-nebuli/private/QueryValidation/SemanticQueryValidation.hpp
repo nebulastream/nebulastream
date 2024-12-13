@@ -28,9 +28,9 @@ namespace Catalogs::UDF
 {
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-} /// namespace Catalogs::UDF
+}
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -119,4 +119,4 @@ private:
 
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
-} /// namespace NES::Optimizer
+}

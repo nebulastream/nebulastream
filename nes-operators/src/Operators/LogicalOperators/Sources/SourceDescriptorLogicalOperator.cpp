@@ -16,6 +16,7 @@
 #include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -34,7 +35,7 @@ SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(
 
 bool SourceDescriptorLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
-    return equal(rhs) && Util::as<SourceDescriptorLogicalOperator>(rhs)->getId() == id;
+    return equal(rhs) && NES::Util::as<const SourceDescriptorLogicalOperator>(rhs)->getId() == id;
 }
 
 bool SourceDescriptorLogicalOperator::equal(NodePtr const& rhs) const

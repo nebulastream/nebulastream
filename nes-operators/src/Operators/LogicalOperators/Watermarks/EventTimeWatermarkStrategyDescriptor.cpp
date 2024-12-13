@@ -12,33 +12,32 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-
+#include <memory>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
+#include <Functions/NodeFunction.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(
-    const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
-    : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness))
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(NodeFunctionPtr onField, TimeUnit unit)
+    : onField(std::move(onField)), unit(std::move(unit))
 {
 }
 
-WatermarkStrategyDescriptorPtr
-EventTimeWatermarkStrategyDescriptor::create(const NodeFunctionPtr& onField, TimeMeasure allowedLateness, TimeUnit unit)
+WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(const std::shared_ptr<NodeFunction>& onField, TimeUnit unit)
 {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
-        Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(allowedLateness), std::move(unit)));
+        Windowing::EventTimeWatermarkStrategyDescriptor(onField, std::move(unit)));
 }
 
 NodeFunctionPtr EventTimeWatermarkStrategyDescriptor::getOnField() const
@@ -51,16 +50,10 @@ void EventTimeWatermarkStrategyDescriptor::setOnField(const NodeFunctionPtr& new
     this->onField = newField;
 }
 
-TimeMeasure EventTimeWatermarkStrategyDescriptor::getAllowedLateness() const
-{
-    return allowedLateness;
-}
-
 bool EventTimeWatermarkStrategyDescriptor::equal(WatermarkStrategyDescriptorPtr other)
 {
     auto eventTimeWatermarkStrategyDescriptor = NES::Util::as<EventTimeWatermarkStrategyDescriptor>(other);
-    return eventTimeWatermarkStrategyDescriptor->onField->equal(onField)
-        && eventTimeWatermarkStrategyDescriptor->allowedLateness.getTime() == allowedLateness.getTime();
+    return eventTimeWatermarkStrategyDescriptor->onField->equal(onField);
 }
 
 TimeUnit EventTimeWatermarkStrategyDescriptor::getTimeUnit() const
@@ -77,28 +70,26 @@ std::string EventTimeWatermarkStrategyDescriptor::toString()
 {
     std::stringstream ss;
     ss << "TYPE = EVENT-TIME,";
-    ss << "FIELD =" << onField->toString() << ",";
-    ss << "ALLOWED-LATENESS =" << allowedLateness.toString();
+    ss << "FIELD =" << *onField << ",";
     return ss.str();
 }
 
 bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
 {
-    auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
+    const auto fieldAccessFunction = NES::Util::as<NodeFunctionFieldAccess>(onField);
     auto fieldName = fieldAccessFunction->getFieldName();
     ///Check if the field exists in the schema
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
-        fieldAccessFunction->updateFieldName(existingField->getName());
+        fieldAccessFunction->updateFieldName(existingField.value()->getName());
         return true;
     }
     else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
     {
         return true;
     }
-    NES_ERROR("EventTimeWaterMark is using a non existing field  {}", fieldName);
-    throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
+    throw FieldNotFound("EventTimeWaterMark is using a non existing field {}", fieldName);
 }
 
-} /// namespace NES::Windowing
+}

@@ -36,10 +36,10 @@ class BufferStorage : public AbstractBufferStorage
 public:
     BufferStorage() = default;
 
-    void insertBuffer(Memory::TupleBuffer bufferPtr) override;
+    void insertBuffer(Memory::TupleBuffer buffer) override;
 
     /// Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
-    void trimBuffer(uint64_t timestamp) override;
+    void trimBuffer(Timestamp timestamp) override;
 
     [[nodiscard]] size_t getStorageSize() const override;
 
@@ -53,4 +53,4 @@ private:
 
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
-} /// namespace NES::Runtime
+}

@@ -53,4 +53,4 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
  */
 void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
 
-} /// namespace NES::Exceptions
+}

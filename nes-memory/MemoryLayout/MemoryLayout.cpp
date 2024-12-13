@@ -64,9 +64,9 @@ const std::vector<uint64_t>& MemoryLayout::getFieldSizes() const
 MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(bufferSize), schema(schema), recordSize(0)
 {
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); fieldIndex++)
+    for (size_t fieldIndex = 0; fieldIndex < schema->getFieldCount(); fieldIndex++)
     {
-        auto field = schema->fields[fieldIndex];
+        auto field = schema->getFieldByIndex(fieldIndex);
         auto physicalFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalFieldSizes.emplace_back(physicalFieldSize->size());
         physicalTypes.emplace_back(physicalFieldSize);
@@ -114,14 +114,32 @@ uint64_t MemoryLayout::getBufferSize() const
     return bufferSize;
 }
 
+void MemoryLayout::setBufferSize(uint64_t bufferSize)
+{
+    MemoryLayout::bufferSize = bufferSize;
+}
+
 const std::vector<PhysicalTypePtr>& MemoryLayout::getPhysicalTypes() const
 {
     return physicalTypes;
 }
 
+std::vector<std::string> MemoryLayout::getKeyFieldNames() const
+{
+    return keyFieldNames;
+}
+
+void MemoryLayout::setKeyFieldNames(const std::vector<std::string>& keyFields)
+{
+    for (const auto& field : keyFields)
+    {
+        keyFieldNames.emplace_back(field);
+    }
+}
+
 bool MemoryLayout::operator==(const MemoryLayout& rhs) const
 {
-    return bufferSize == rhs.bufferSize && schema->equals(rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
+    return bufferSize == rhs.bufferSize && (*schema == *rhs.schema) && recordSize == rhs.recordSize && capacity == rhs.capacity
         && physicalFieldSizes == rhs.physicalFieldSizes && physicalTypes == rhs.physicalTypes && nameFieldIndexMap == rhs.nameFieldIndexMap;
 }
 

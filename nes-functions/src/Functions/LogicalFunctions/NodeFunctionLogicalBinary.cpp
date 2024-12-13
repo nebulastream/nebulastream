@@ -15,8 +15,10 @@
 #include <Functions/LogicalFunctions/NodeFunctionLogicalBinary.hpp>
 #include <Util/Common.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 
 namespace NES
@@ -51,14 +53,8 @@ bool NodeFunctionLogicalBinary::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, we do not support comparison for text or arrays at the moment
-    if (childLeft->getStamp()->isText() || childRight->getStamp()->isText() || childLeft->getStamp()->isArray()
-        || childRight->getStamp()->isArray())
-    {
-        return false;
-    }
-
-    /// If one of the children has a stamp of type charArray, the other child must also have a stamp of type charArray
-    if (childLeft->getStamp()->isCharArray() != childRight->getStamp()->isCharArray())
+    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
+        || NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
     {
         return false;
     }

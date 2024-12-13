@@ -46,18 +46,8 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class DecomposedQueryPlan
 {
 public:
-    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-    static DecomposedQueryPlanPtr create(QueryId queryId, WorkerId workerId);
-
-    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-    static DecomposedQueryPlanPtr create(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators);
-
-    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
     explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId);
-
-    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
     explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators);
-
 
     /// Remove the operator with given id as the root
     bool removeAsRootOperator(OperatorId rootOperatorId);
@@ -139,4 +129,4 @@ private:
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };
-} /// namespace NES
+}

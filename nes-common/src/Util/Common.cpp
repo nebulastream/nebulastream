@@ -11,82 +11,35 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iomanip>
 #include <numeric>
 #include <sstream>
 #include <string>
 #include <Util/Common.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Util
 {
 
-uint64_t numberOfUniqueValues(std::vector<uint64_t>& values)
-{
-    std::sort(values.begin(), values.end());
-    return std::unique(values.begin(), values.end()) - values.begin();
-}
-
 std::string escapeJson(const std::string& str)
 {
-    std::ostringstream o;
-    for (char c : str)
+    std::ostringstream os;
+    for (char character : str)
     {
-        if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f'))
+        if (character == '"' || character == '\\' || ('\x00' <= character && character <= '\x1f'))
         {
-            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int)c;
+            os << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(character);
         }
         else
         {
-            o << c;
+            os << character;
         }
     }
-    return o.str();
-}
-
-void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
-{
-    /// Get the first occurrence
-    uint64_t pos = data.find(toSearch);
-    /// Repeat till end is reached
-    while (pos != std::string::npos)
-    {
-        /// Replace this occurrence of Sub String
-        data.replace(pos, toSearch.size(), replaceStr);
-        /// Get the next occurrence from the current position
-        pos = data.find(toSearch, pos + replaceStr.size());
-    }
-}
-
-std::string replaceFirst(std::string origin, const std::string& search, const std::string& replace)
-{
-    if (origin.find(search) != std::string::npos)
-    {
-        return origin.replace(origin.find(search), search.size(), replace);
-    }
-    return origin;
-}
-
-bool endsWith(const std::string& fullString, const std::string& ending)
-{
-    if (fullString.length() >= ending.length())
-    {
-        /// get the start of the ending index of the full string and compare with the ending string
-        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    } /// if full string is smaller than the ending automatically return false
-    return false;
-}
-
-bool startsWith(const std::string& fullString, const std::string& ending)
-{
-    return (fullString.rfind(ending, 0) == 0);
-}
-
-std::string toUpperCase(std::string string)
-{
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-    return string;
+    return os.str();
 }
 
 void writeHeaderToCsvFile(const std::string& csvFileName, const std::string& header)
@@ -147,42 +100,4 @@ uint64_t countLines(std::istream& stream)
     return cnt;
 }
 
-std::string_view trimWhiteSpaces(std::string_view in)
-{
-    /// Skip all `isspace` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left)
-    {
-        if (left == in.end())
-        {
-            return {};
-        }
-        if (!isspace(*left))
-        {
-            break;
-        }
-    }
-    auto right = in.end() - 1;
-    for (; right > left && isspace(*right); --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
-
-std::string_view trimChar(std::string_view in, char trimFor)
-{
-    /// Skip all `trimFor` elements from the left (begin) and from the right (end-1)
-    auto left = in.begin();
-    for (;; ++left)
-    {
-        if (left == in.end())
-            return {};
-        if (*left != trimFor)
-            break;
-    }
-    auto right = in.end() - 1;
-    for (; right > left && *right == trimFor; --right)
-        ;
-    return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
-}
-
-} /// namespace NES::Util

@@ -14,15 +14,16 @@
 
 #pragma once
 
-#include <memory>
+#include <string>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <grpcpp/support/status.h>
+#include <gtest/gtest-assertion-result.h>
 #include <GrpcService.hpp>
 
-namespace NES
-{
-namespace IntegrationTestUtil
+
+namespace NES::IntegrationTestUtil
 {
 static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
 static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
@@ -71,6 +72,9 @@ void unregisterQuery(QueryId queryId, GRPCServer& uut);
 /// Summary structure of the query containing current status, number of retries and the exceptions.
 QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
 
+/// Expect query summary to fail for queryId with the following sc.
+void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode);
+
 /// Current status of the query.
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
 
@@ -95,17 +99,16 @@ bool loadFile(
 /// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
 bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
 
-void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
+void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
 
 /// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
-void replacePortInSourceTCPs(
+void replacePortInTCPSources(
     SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
 
 std::string getUniqueTestIdentifier();
 
 
-}
 }

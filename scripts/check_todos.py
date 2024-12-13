@@ -10,11 +10,14 @@ import re
 import subprocess
 import sys
 import urllib.request
+from collections import defaultdict
+from typing import Tuple
 
 def run_cmd(cmd: list) -> str:
+    """runs cmd, returns stdout or crashes"""
     try:
-        #ignoring errors to pass format check. Proper fix in: Todo #343
-        p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='ignore')
+        # Handle decode errors by replacing illegal chars with � (see #343)
+        p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='replace')
     except subprocess.CalledProcessError as e:
         print(e)
         print("\nstderr output:")
@@ -23,9 +26,60 @@ def run_cmd(cmd: list) -> str:
     return p.stdout
 
 
+def get_added_lines_from_diff(diff: str) -> Tuple[str, int, str]:
+    """returns all added lines from diff as (file_no, line_no, line)"""
+    file_header = re.compile("diff --git a/.* b/(.*)")
+    line_context = re.compile(r"@@ -\d+,\d+ \+(\d+),\d+ @@")
+    line_no = 0
+
+    diff_file = ""
+    added_lines = []
+
+    for line in diff.split("\n"):
+        if m := file_header.match(line):
+            diff_file = m[1]
+        if m := line_context.match(line):
+            line_no = int(m[1]) - 1
+
+        if line.startswith("+"):
+            added_lines.append((diff_file, line_no, line[1:]))
+        if not line.startswith("-"):
+            line_no += 1
+
+    return added_lines
+
+
+def line_contains_todo(filename: str, line: str) -> bool:
+    """
+    Heuristic to find TODOs.
+
+    To be sensitive (i.e. catch many TODOs), we ignore case while searching,
+    since TODO might not always be written in all caps, causing false negatives.
+
+    To be specific (i.e. have little false positives), we shall not match e.g.
+    `toDouble`. For this, we search for TODOs in single line comments,
+    when checking code files.
+
+    Additionally, `NO_TODO_CHECK` at the end of the line can be used to suppress the check.
+    """
+    if line.endswith("NO_TODO_CHECK"):
+        return False
+
+    if filename.endswith(".md"):
+        return re.match(".*todo[^a-zA-Z].*", line, re.IGNORECASE)
+    else:
+        return re.match(".*(///|#).*todo.*", line, re.IGNORECASE)  # NO_TODO_CHECK
+
+
 def main():
-    todo_regex      = re.compile(r".*(///|#).* TODO.*")
-    todo_with_issue = re.compile(r".*(///|#).* TODO #(\d+).*")  # Note: corresponding regex also in closing issue gh action
+    """
+    Searches for new TODOs (added since forking of $BASE_REF or main).
+    Checks that new TODOs are well-formed (format, have issue number).
+    Checks that listed issues exist and are open.
+    """
+    # This regex describes conforming how a well-formed TODO should look like.  NO_TODO_CHECK
+    # Note: corresponding regex also in closing issue gh action
+    todo_with_issue = re.compile(".*(///|#).*\\sTODO #(\\d+).*")  # NO_TODO_CHECK
 
     OWNER = "nebulastream"
     REPO = "nebulastream-public"
@@ -33,7 +87,11 @@ def main():
     if "CI" in os.environ and "BASE_REF" not in os.environ:
         print("Error: running in CI, but BASE_REF not set")
         sys.exit(1)
-    elif "BASE_REF" in os.environ:
+    if "CI" in os.environ and "GH_TOKEN" not in os.environ:
+        print("Error: running in CI, but GH_TOKEN not set")
+        sys.exit(1)
+
+    if "BASE_REF" in os.environ:
         base = os.environ["BASE_REF"]
     else:
         base = "main"
@@ -44,46 +102,37 @@ def main():
         print("Set env var BASE_REF to override base, e.g. call:")
         print(f"\n  BASE_REF=origin/main python3 {sys.argv[0]}")
 
-    diff = run_cmd(["git", "diff", "--merge-base", base])
+    diff = run_cmd(["git", "diff", "--merge-base", base, "--",
+                    # Ignore patch files in our vcpkg ports
+                    ":!vcpkg/vcpkg-registry/**/*.patch"
+                    ])
 
-    file_header = re.compile(r"diff --git a/.* b/(.*)")
-    line_context = re.compile(r"@@ -\d*,\d \+(\d+),\d+ @@")
+    added_lines = get_added_lines_from_diff(diff)
 
-    todos_without_issue_no = []
-    todo_issues = {}
-    line_no = 0
+    illegal_todos = []
+    todo_issues = defaultdict(list)
     fail = 0
 
-    for line in diff.split("\n"):
-        if m := file_header.match(line):
-            diff_file = m[1]
-        if m := line_context.match(line):
-            line_no = int(m[1]) - 1
+    # Checks if line contains TODO. If so, checks if TODO adheres to format.  NO_TODO_CHECK
+    for diff_file, line_no, line in added_lines:
+        if not line_contains_todo(diff_file, line):
+            continue
 
-        if line.startswith("+") and todo_regex.match(line):
-            if tm := todo_with_issue.match(line):
-                todo_no = int(tm[2])
-                if todo_no not in todo_issues:
-                    todo_issues[todo_no] = [f"{diff_file}:{line_no}"]
-                else:
-                    todo_issues[todo_no].append(f"{diff_file}:{line_no}")
-            else:
-                todos_without_issue_no.append((diff_file, line_no, line[1:]))
-        if not line.startswith("-"):
-            line_no += 1
+        if tm := todo_with_issue.match(line):
+            todo_no = int(tm[2])
+            todo_issues[todo_no].append(f"{diff_file}:{line_no}")
+        else:
+            illegal_todos.append((diff_file, line_no, line[1:]))
 
-    if todos_without_issue_no:
+    if illegal_todos:
         fail = 1
-        print("\nError: The following TODOs do not have an issue number, like e.g. 'TODO #123'\n")
+        print("\nError: The following TODOs lack whitespace, miss issue number or TODO is not in ALL CAPS:\n")
         # sort by file, line_no
-        todos_without_issue_no.sort(key=lambda x: (x[0], x[1]))
-        for file, line_no, line in todos_without_issue_no:
+        illegal_todos.sort(key=lambda x: (x[0], x[1]))
+        for file, line_no, line in illegal_todos:
             print(f"{file}:{line_no}:{line}")
         print()
 
-    if "CI" in os.environ and "GH_TOKEN" not in os.environ:
-        print("Error: running in CI, but GH_TOKEN not set")
-        sys.exit(1)
     if not todo_issues:
         # No added issue references, thus nothing to check
         sys.exit(fail)

@@ -29,7 +29,10 @@ jobs:
                     "alepping": "@**Aljoscha Lepping**",
                     "ls-1801": "@**ls-1801**",
                     "keyseven123": "@**Nils**",
-                    "zeuchste": "@**Steffen Zeuch**"
+                    "zeuchste": "@**Steffen Zeuch**",
+                    "yschroeder97": "@**Yannik Schröder**",
+                    "pfeiffer-tim": "@**Tim Pfeiffer**",
+                    "Artraxon": "@**Leonhard Rose**"
                   }
                 bot-api-key: ${{ secrets.PRBOT_API_KEY }}
                 bot-email: "pr-reminder-bot@nebulastream.zulipchat.com"

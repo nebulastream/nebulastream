@@ -30,13 +30,9 @@ public:
         OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
     const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
+protected:
     std::string toString() const override;
 
-protected:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

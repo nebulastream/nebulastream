@@ -27,7 +27,6 @@ public:
     PhysicalLimitOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
-    std::string toString() const override;
     OperatorPtr copy() override;
 
     /**
@@ -36,8 +35,11 @@ public:
    */
     uint64_t getLimit();
 
+protected:
+    std::string toString() const override;
+
 private:
     uint64_t limit;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

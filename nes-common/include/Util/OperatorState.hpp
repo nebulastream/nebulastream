@@ -38,4 +38,4 @@ enum class OperatorState : uint8_t
     REMOVED
 };
 
-} /// namespace NES
+}

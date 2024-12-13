@@ -37,12 +37,6 @@ using NodeFunctionFieldAssignmentPtr = std::shared_ptr<NodeFunctionFieldAssignme
 class SourceNameLogicalOperator;
 using SourceNameLogicalOperatorPtr = std::shared_ptr<SourceNameLogicalOperator>;
 
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
-class SinkDescriptor;
-using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
-
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
@@ -50,7 +44,7 @@ namespace API
 {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-} /// namespace API
+}
 
 namespace WindowOperatorBuilder
 {
@@ -58,7 +52,7 @@ namespace WindowOperatorBuilder
 class WindowedQuery;
 class KeyedWindowedQuery;
 
-} /// namespace WindowOperatorBuilder
+}
 namespace Windowing
 {
 class WindowType;
@@ -69,7 +63,7 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-} /// namespace Windowing
+}
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
@@ -125,7 +119,7 @@ private:
     NodeFunctionPtr joinFunctions;
 };
 
-} ///namespace JoinOperatorBuilder
+}
 
 /**
 * @brief BatchJoinOperatorBuilder.
@@ -153,14 +147,14 @@ public:
      * @param joinFunction : a set of binary functions to compare left and right tuples
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    [[nodiscard]] Query& where(const NodeFunctionPtr joinFunction) const;
+    [[nodiscard]] Query& where(const NodeFunctionPtr& joinFunction) const;
 
 private:
     const Query& subQueryRhs;
     Query& originalQuery;
 };
 
-} ///namespace Experimental::BatchJoinOperatorBuilder
+}
 
 namespace CEPOperatorBuilder
 {
@@ -268,7 +262,7 @@ private:
      */
 std::string keyAssignment(std::string keyName);
 
-} ///namespace CEPOperatorBuilder
+}
 
 /**
  * User interface to create stream processing queryIdAndCatalogEntryMapping.
@@ -375,7 +369,7 @@ public:
       * @param attribute list
       * @return the query
       */
-    Query& project(std::vector<NodeFunctionPtr> functions);
+    Query& project(const std::vector<NodeFunctionPtr>& functions);
 
     /**
      * @brief: Filter records according to the predicate. An
@@ -383,7 +377,7 @@ public:
      * @param predicate as function node
      * @return the query
      */
-    Query& filter(NodeFunctionPtr const& filterFunction);
+    Query& selection(NodeFunctionPtr const& filterFunction);
 
     /**
      * @brief: Limit the number of records according to the limit count.
@@ -407,26 +401,10 @@ public:
      */
     Query& map(NodeFunctionFieldAssignmentPtr const& mapFunction);
 
-    /**
-     * @brief: inferModel
-     * @example example
-     * @param param
-     * @return query
-     */
-    Query& inferModel(std::string model, std::initializer_list<FunctionItem> inputFields, std::initializer_list<FunctionItem> outputFields);
+    /// Add a sink operator to the query plan that contains a SinkName. In a later step, we look up all sinks that registered using that SinkName
+    /// and replace the operator containing only the sink name with operators containing the concrete descriptor of the sink.
+    virtual Query& sink(std::string sinkName, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
-    /**
-     * @brief Add sink operator for the query.
-     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor
-     * @param workerId: location where sink is to be placed
-     */
-    virtual Query& sink(SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
-
-    /**
-     * @brief Gets the query plan from the current query.
-     * @return QueryPlan
-     */
     QueryPlanPtr getQueryPlan() const;
 
     /// creates a new query object
@@ -447,7 +425,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction, Windowing::WindowTypePtr const& windowType);
+    Query& joinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -458,7 +436,7 @@ private:
      * @param onLeftKey key attribute of the right stream
      * @return the query
      */
-    Query& batchJoinWith(const Query& subQueryRhs, NodeFunctionPtr joinFunction);
+    Query& batchJoinWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunction);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -470,7 +448,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& andWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& andWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
@@ -482,7 +460,7 @@ private:
      * @param windowType Window definition.
      * @return the query
      */
-    Query& seqWith(const Query& subQueryRhs, NodeFunctionPtr joinFunctions, Windowing::WindowTypePtr const& windowType);
+    Query& seqWith(const Query& subQueryRhs, const NodeFunctionPtr& joinFunctions, Windowing::WindowTypePtr const& windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -493,17 +471,9 @@ private:
      */
     Query& window(Windowing::WindowTypePtr const& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
-    /**
-      * @brief: Creates a keyed window aggregation.
-      * @param joinFunctions keys.
-      * @param windowType Window definition.
-      * @param aggregations Window aggregation functions.
-      * @return query.
-      */
+
     Query& windowByKey(
-        std::vector<NodeFunctionPtr> joinFunctions,
-        Windowing::WindowTypePtr const& windowType,
-        std::vector<API::WindowAggregationPtr> aggregations);
+        std::vector<NodeFunctionPtr> keys, const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
       * @brief: Given a Function is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
@@ -511,9 +481,9 @@ private:
       * @param joinFunctions key functions
       * @return joinType
       */
-    Join::LogicalJoinDescriptor::JoinType identifyJoinType(NodeFunctionPtr joinFunctions);
+    static Join::LogicalJoinDescriptor::JoinType identifyJoinType(const NodeFunctionPtr& joinFunctions);
 };
 
 using QueryPtr = std::shared_ptr<Query>;
 
-} /// namespace NES
+}

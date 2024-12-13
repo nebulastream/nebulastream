@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <format>
 #include <utility>
 
 #include <API/AttributeField.hpp>
@@ -42,7 +43,9 @@ bool NodeFunctionFieldAccess::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionFieldAccess>(rhs))
     {
         auto otherFieldRead = NES::Util::as<NodeFunctionFieldAccess>(rhs);
-        return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp->equals(stamp);
+        bool fieldNamesMatch = otherFieldRead->fieldName == fieldName;
+        bool stampsMatch = otherFieldRead->stamp->equals(stamp);
+        return fieldNamesMatch and stampsMatch;
     }
     return false;
 }
@@ -59,19 +62,19 @@ void NodeFunctionFieldAccess::updateFieldName(std::string fieldName)
 
 std::string NodeFunctionFieldAccess::toString() const
 {
-    return "FieldAccessNode(" + fieldName + "[" + stamp->toString() + "])";
+    return std::format("NodeFunctionFieldAccess( {} [ {} ])", fieldName, stamp->toString());
 }
 
 void NodeFunctionFieldAccess::inferStamp(SchemaPtr schema)
 {
     /// check if the access field is defined in the schema.
-    if (const auto existingField = schema->get(fieldName))
+    if (const auto existingField = schema->getFieldByName(fieldName))
     {
-        fieldName = existingField->getName();
-        stamp = existingField->getDataType();
+        fieldName = existingField.value()->getName();
+        stamp = existingField.value()->getDataType();
         return;
     }
-    throw QueryInvalid(fmt::format("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema->toString()));
+    throw QueryInvalid("FieldAccessFunction: the field {} is not defined in the schema {}", fieldName, schema->toString());
 }
 
 NodeFunctionPtr NodeFunctionFieldAccess::deepCopy()

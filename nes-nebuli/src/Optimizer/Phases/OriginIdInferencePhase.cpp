@@ -13,7 +13,6 @@
 */
 
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
-#include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -63,9 +62,8 @@ void OriginIdInferencePhase::performInference(
         }
         else
         {
-            throw Exceptions::InvalidLogicalOperatorException(
-                "During OriginIdInferencePhase all root operators have to be LogicalOperators");
+            INVARIANT(false, "during OriginIdInferencePhase all root operators have to be LogicalOperators");
         }
     }
 }
-} /// namespace NES::Optimizer
+}

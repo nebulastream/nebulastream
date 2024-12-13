@@ -18,6 +18,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -46,7 +48,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
     right->inferStamp(schema);
 
     /// both sub functions have to be numerical
-    if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric())
+    if (!NES::Util::instanceOf<Numeric>(left->getStamp()) || !NES::Util::instanceOf<Numeric>(right->getStamp()))
     {
         throw CannotInferSchema(fmt::format(
             "Error during stamp inference. Types need to be Numerical but Left was: {} Right was: {}",
@@ -63,7 +65,7 @@ void NodeFunctionArithmeticalBinary::inferStamp(SchemaPtr schema)
         right->getStamp()->toString());
 
     /// check if the common stamp is defined
-    if (commonStamp->isUndefined())
+    if (NES::Util::instanceOf<Undefined>(commonStamp))
     {
         /// the common stamp was not valid -> in this case the common stamp is undefined.
         throw CannotInferSchema(fmt::format("{} is not supported by arithmetical functions", commonStamp->toString()));
@@ -94,8 +96,8 @@ bool NodeFunctionArithmeticalBinary::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isNumeric()
-        && Util::as<NodeFunction>(this->getChildren()[1])->getStamp()->isNumeric();
+    return NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
+        && NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
 }
 
 

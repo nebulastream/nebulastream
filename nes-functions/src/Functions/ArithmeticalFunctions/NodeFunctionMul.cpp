@@ -36,8 +36,10 @@ bool NodeFunctionMul::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionMul>(rhs))
     {
-        auto otherMulNode = NES::Util::as<NodeFunctionMul>(rhs);
-        return getLeft()->equal(otherMulNode->getLeft()) && getRight()->equal(otherMulNode->getRight());
+        const auto otherMulNode = NES::Util::as<NodeFunctionMul>(rhs);
+        const bool simpleMatch = getLeft()->equal(otherMulNode->getLeft()) and getRight()->equal(otherMulNode->getRight());
+        const bool commutativeMatch = getLeft()->equal(otherMulNode->getRight()) and getRight()->equal(otherMulNode->getLeft());
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }
@@ -45,7 +47,7 @@ bool NodeFunctionMul::equal(NodePtr const& rhs) const
 std::string NodeFunctionMul::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "*" << children[1]->toString();
+    ss << *children[0] << "*" << *children[1];
     return ss.str();
 }
 

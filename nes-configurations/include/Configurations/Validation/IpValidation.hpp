@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-#include "Configurations/Validation/ConfigurationValidation.hpp"
+#include <Configurations/Validation/ConfigurationValidation.hpp>
 
 namespace NES::Configurations
 {
@@ -33,4 +33,4 @@ public:
      */
     bool isValid(const std::string& ip) const override;
 };
-} /// namespace NES::Configurations
+}

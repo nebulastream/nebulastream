@@ -30,51 +30,7 @@ class DataType
 {
 public:
     virtual ~DataType() = default;
-    /**
-     * @brief Checks if this data type is Undefined.
-     */
-    /// Todo 4909: we should use dynamic_cast instead. (https://github.com/nebulastream/nebulastream/issues/4909)
-    [[nodiscard]] virtual bool isUndefined() const;
 
-    /**
-   * @brief Checks if this data type is Boolean.
-   */
-    [[nodiscard]] virtual bool isBoolean() const;
-
-    /**
-    * @brief Checks if this data type is Numeric.
-    */
-    [[nodiscard]] virtual bool isNumeric() const;
-
-    /**
-    * @brief Checks if this data type is Integer.
-    */
-    [[nodiscard]] virtual bool isInteger() const;
-
-    /**
-    * @brief Checks if this data type is Float.
-    */
-    [[nodiscard]] virtual bool isFloat() const;
-
-    /**
-    * @brief Checks if this data type is ArrayType.
-    */
-    [[nodiscard]] virtual bool isArray() const;
-
-    /**
-    * @brief Checks if this data type is ArrayType.
-    */
-    [[nodiscard]] virtual bool isCharArray() const;
-
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    [[nodiscard]] virtual bool isChar() const;
-
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    [[nodiscard]] virtual bool isText() const;
 
     template <class DataType>
     static std::shared_ptr<DataType> as(DataTypePtr ptr)
@@ -104,4 +60,4 @@ public:
     virtual std::string toString() = 0;
 };
 
-} /// namespace NES
+}

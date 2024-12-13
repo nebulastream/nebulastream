@@ -33,7 +33,9 @@ public:
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
         const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
-    std::string toString() const override;
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

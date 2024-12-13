@@ -58,9 +58,10 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
     {
         PRECONDITION(
             NES::Util::instanceOf<PhysicalOperators::PhysicalUnaryOperator>(rootOperator),
-            "Pipeline root should be a unary operator but was:" + rootOperator->toString());
-        auto binaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
-        auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
+            "Pipeline root should be a unary operator but was: {}",
+            *rootOperator);
+        auto unaryRoot = NES::Util::as<PhysicalOperators::PhysicalUnaryOperator>(rootOperator);
+        auto newScan = PhysicalOperators::PhysicalScanOperator::create(unaryRoot->getInputSchema());
         pipeline->prependOperator(newScan);
     }
 
@@ -78,4 +79,4 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
     return pipeline;
 }
 
-} /// namespace NES::QueryCompilation
+}

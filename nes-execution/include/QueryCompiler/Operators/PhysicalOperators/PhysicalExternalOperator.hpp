@@ -48,7 +48,6 @@ public:
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
         const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
-    std::string toString() const override;
     OperatorPtr copy() override;
 
     /**
@@ -57,7 +56,10 @@ public:
     */
     Runtime::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
 
+protected:
+    std::string toString() const override;
+
 private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

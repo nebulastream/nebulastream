@@ -43,12 +43,13 @@ public:
 
     Windowing::LogicalWindowDescriptorPtr getWindowDefinition();
 
-    std::string toString() const override;
-
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 
 private:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

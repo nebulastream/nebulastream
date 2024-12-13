@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
-
 
 namespace NES
 {
@@ -67,22 +67,17 @@ bool LogicalUnionOperator::inferSchema()
         rightInputSchema->copyFields(distinctSchemas[1]);
     }
 
-    if (!leftInputSchema->hasEqualTypes(rightInputSchema))
+    if (!(*leftInputSchema == *rightInputSchema))
     {
-        NES_ERROR(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
+        throw CannotInferSchema(
+            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
             leftInputSchema->toString(),
             rightInputSchema->toString());
-        throw CannotInferSchema(
-            "Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString() + " and Right schema "
-            + rightInputSchema->toString());
     }
 
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
     {
-        NES_ERROR("Left and right should have same memory layout");
-        throw CannotInferSchema(fmt::format(
-            "Left and right should have same memory layout ({} vs {})", leftInputSchema->toString(), rightInputSchema->toString()));
+        throw CannotInferSchema("Left and right should have same memory layout");
     }
 
     ///Copy the schema of left input
@@ -94,7 +89,7 @@ bool LogicalUnionOperator::inferSchema()
 
 OperatorPtr LogicalUnionOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createUnionOperator(id);
+    auto copy = std::make_shared<LogicalUnionOperator>(id);
     copy->setLeftInputOriginIds(leftInputOriginIds);
     copy->setRightInputOriginIds(rightInputOriginIds);
     copy->setLeftInputSchema(leftInputSchema);
@@ -115,7 +110,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<LogicalUnionOperator>(rhs))
     {
         auto rhsUnion = NES::Util::as<LogicalUnionOperator>(rhs);
-        return leftInputSchema->equals(rhsUnion->getLeftInputSchema()) && outputSchema->equals(rhsUnion->getOutputSchema());
+        return (*leftInputSchema == *rhsUnion->getLeftInputSchema()) && (*outputSchema == *rhsUnion->getOutputSchema());
     }
     return false;
 }
@@ -123,7 +118,7 @@ bool LogicalUnionOperator::equal(NodePtr const& rhs) const
 void LogicalUnionOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -156,4 +151,4 @@ void LogicalUnionOperator::inferInputOrigins()
     this->leftInputOriginIds = combinedInputOriginIds;
 }
 
-} /// namespace NES
+}

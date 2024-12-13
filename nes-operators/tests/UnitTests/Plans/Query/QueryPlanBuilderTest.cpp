@@ -15,12 +15,11 @@
 #include <iostream>
 #include <API/Query.hpp>
 #include <Functions/LogicalFunctions/NodeFunctionEquals.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -55,12 +54,12 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     queryPlan = QueryPlanBuilder::addRename("testStream", queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
-    ///test addFilter
+    ///test addSelection
     auto filterFunction
         = NodeFunctionPtr(NodeFunctionEquals::create(NES::Attribute("a").getNodeFunction(), NES::Attribute("b").getNodeFunction()));
-    queryPlan = QueryPlanBuilder::addFilter(filterFunction, queryPlan);
-    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
-    EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterFunction);
+    queryPlan = QueryPlanBuilder::addSelection(filterFunction, queryPlan);
+    EXPECT_TRUE(queryPlan->getOperatorByType<LogicalSelectionOperator>().size() == 1);
+    EXPECT_EQ(queryPlan->getOperatorByType<LogicalSelectionOperator>()[0]->getPredicate(), filterFunction);
     ///test addProjection
     std::vector<NodeFunctionPtr> functions;
     functions.push_back(Attribute("id").getNodeFunction());
@@ -74,9 +73,6 @@ TEST_F(QueryPlanBuilderTest, testHasOperator)
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalUnionOperator>().size() == 1);
-    /// test addSink
-    auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
-    queryPlan = QueryPlanBuilder::addSink(queryPlan, sinkDescriptorPtr);
+    queryPlan = QueryPlanBuilder::addSink("print_source", queryPlan, WorkerId(0));
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>().size() == 1);
-    EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>()[0]->getSinkDescriptor()->equal(sinkDescriptorPtr));
 }

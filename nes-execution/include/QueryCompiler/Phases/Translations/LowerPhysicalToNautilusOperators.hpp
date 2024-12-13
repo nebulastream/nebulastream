@@ -27,6 +27,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::QueryCompilation
@@ -50,25 +51,21 @@ private:
     std::shared_ptr<Runtime::Execution::Operators::Operator> lower(
         Runtime::Execution::PhysicalOperatorPipeline& pipeline,
         std::shared_ptr<Runtime::Execution::Operators::Operator> parentOperator,
-        const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+        const PhysicalOperators::PhysicalOperatorPtr& operatorNode,
         size_t bufferSize,
         std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::Operator> lowerScan(
-        Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-        size_t bufferSize);
-
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> lowerEmit(
-        Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-        size_t bufferSize);
-
-    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+    std::shared_ptr<Runtime::Execution::Operators::Operator>
+    lowerScan(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline, const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+    lowerEmit(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator, size_t bufferSize);
+
+    static std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerFilter(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
+
+    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+    lowerMap(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
     std::shared_ptr<QueryCompilerOptions> options;
     std::unique_ptr<FunctionProvider> functionProvider;

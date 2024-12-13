@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <filesystem>
-#include <fstream>
 #include <fmt/core.h>
+#include <grpcpp/support/status.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -54,11 +53,11 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -86,7 +85,8 @@ TEST_F(SingleNodeIntegrationTest, DISABLED_TestQueryStatus)
 TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 {
     const auto* const resultFileName = "TestQueryStatusSimple";
-    const std::string queryInputFile = fmt::format("{}.bin", "qOneSourceCSV");
+    /// Todo 396: as soon as system level tests support multiple sources, we get rid of the CSV integration tests and cannot depend on this .bin anymore.
+    const std::string queryInputFile = fmt::format("{}.bin", "qTwoCSVSourcesWithFilter");
     const std::string queryResultFile = fmt::format("{}.csv", resultFileName);
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
@@ -97,10 +97,10 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", resultFileName));
-    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, querySpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -117,12 +117,9 @@ TEST_F(SingleNodeIntegrationTest, TestQueryStatusSimple)
 
     /// Test for invalid queryId
     auto invalidQueryId = QueryId{42};
-    summary = IntegrationTestUtil::querySummary(invalidQueryId, uut);
-    EXPECT_EQ(summary.status(), Invalid);
-    EXPECT_EQ(summary.numberofrestarts(), 0);
-    EXPECT_EQ(summary.error_size(), 0);
+    IntegrationTestUtil::querySummaryFailure(invalidQueryId, uut, grpc::NOT_FOUND);
 
     IntegrationTestUtil::removeFile(queryResultFile);
     IntegrationTestUtil::removeFile(querySpecificDataFileName);
 }
-} /// namespace NES::Testing
+}

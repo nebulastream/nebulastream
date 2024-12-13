@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/TextType.hpp>
-#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/TextPhysicalType.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 namespace NES
 {
 
@@ -31,29 +31,25 @@ DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() = default;
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) const
 {
-    if (dataType->isBoolean())
+    if (NES::Util::instanceOf<Boolean>(dataType))
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::BOOLEAN);
     }
-    else if (dataType->isInteger())
+    else if (NES::Util::instanceOf<Integer>(dataType))
     {
         return getPhysicalType(DataType::as<Integer>(dataType));
     }
-    else if (dataType->isFloat())
+    else if (NES::Util::instanceOf<Float>(dataType))
     {
         return getPhysicalType(DataType::as<Float>(dataType));
     }
-    else if (dataType->isArray())
-    {
-        return getPhysicalType(DataType::as<ArrayType>(dataType));
-    }
-    else if (dataType->isChar())
+    else if (NES::Util::instanceOf<Char>(dataType))
     {
         return BasicPhysicalType::create(DataType::as<Char>(dataType), BasicPhysicalType::NativeType::CHAR);
     }
-    else if (dataType->isText())
+    else if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
     {
-        return TextPhysicalType::create(DataType::as<TextType>(dataType));
+        return VariableSizedDataPhysicalType::create(DataType::as<VariableSizedDataType>(dataType));
     }
     else
     {
@@ -128,10 +124,4 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const FloatPtr& floa
     }
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayTypePtr& arrayType) const
-{
-    auto const componentType = getPhysicalType(arrayType->component);
-    return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
-
-} /// namespace NES

@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -58,7 +58,7 @@ bool RenameSourceOperator::inferSchema()
     }
     ///Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    for (const auto& field : outputSchema->fields)
+    for (const auto& field : *outputSchema)
     {
         ///Extract field name without qualifier
         auto fieldName = field->getName();
@@ -75,7 +75,7 @@ std::string RenameSourceOperator::getNewSourceName() const
 
 OperatorPtr RenameSourceOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createRenameSourceOperator(newSourceName, id);
+    auto copy = std::make_shared<RenameSourceOperator>(newSourceName, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -92,7 +92,7 @@ OperatorPtr RenameSourceOperator::copy()
 void RenameSourceOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("RenameSourceOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("RenameSourceOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -108,4 +108,4 @@ void RenameSourceOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} /// namespace NES
+}

@@ -12,43 +12,45 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 Scan::Scan(
-    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+    std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
 {
 }
 
-void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+void Scan::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// initialize global state variables to keep track of the watermark ts and the origin id
-    ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
-    ctx.setOriginId(recordBuffer.getOriginId());
-    ctx.setCurrentTs(recordBuffer.getCreatingTs());
-    ctx.setSequenceNumber(recordBuffer.getSequenceNr());
-    ctx.setChunkNumber(recordBuffer.getChunkNr());
-    ctx.setLastChunk(recordBuffer.isLastChunk());
+    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
+    executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.currentTs = recordBuffer.getCreatingTs();
+    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
+    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
+    executionCtx.lastChunk = recordBuffer.isLastChunk();
     /// call open on all child operators
-    child->open(ctx, recordBuffer);
+    child->open(executionCtx, recordBuffer);
     /// iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->readRecord(projections, recordBuffer, i);
-        child->execute(ctx, record);
+        child->execute(executionCtx, record);
     }
 }
 

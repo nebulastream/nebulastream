@@ -68,29 +68,29 @@ API::WindowAggregationPtr Median(const FunctionItem& onField)
     return std::make_shared<API::WindowAggregation>(Windowing::MedianAggregationDescriptor::on(onField.getNodeFunction()));
 }
 
-Windowing::TimeMeasure Milliseconds(uint64_t milliseconds)
+Windowing::TimeMeasure Milliseconds(const uint64_t milliseconds)
 {
     return Windowing::TimeMeasure(milliseconds);
 }
 
-Windowing::TimeMeasure Seconds(uint64_t seconds)
+Windowing::TimeMeasure Seconds(const uint64_t seconds)
 {
     return Milliseconds(seconds * 1000);
 }
 
-Windowing::TimeMeasure Minutes(uint64_t minutes)
+Windowing::TimeMeasure Minutes(const uint64_t minutes)
 {
     return Seconds(minutes * 60);
 }
 
-Windowing::TimeMeasure Hours(uint64_t hours)
+Windowing::TimeMeasure Hours(const uint64_t hours)
 {
     return Minutes(hours * 60);
 }
 
-Windowing::TimeMeasure Days(uint64_t days)
+Windowing::TimeMeasure Days(const uint64_t days)
 {
-    return Hours(days);
+    return Hours(days * 24);
 }
 
 Windowing::TimeUnit Milliseconds()
@@ -138,4 +138,4 @@ NodeFunctionPtr RecordCreationTs()
     return Attribute(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME, BasicType::UINT64).getNodeFunction();
 }
 
-} /// namespace NES::API
+}

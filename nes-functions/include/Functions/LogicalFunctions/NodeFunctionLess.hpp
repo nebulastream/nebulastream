@@ -31,10 +31,11 @@ public:
     static NodeFunctionPtr create(NodeFunctionPtr const& left, NodeFunctionPtr const& right);
 
     bool equal(NodePtr const& rhs) const override;
-    std::string toString() const override;
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionLess(NodeFunctionLess* other);
+
+    std::string toString() const override;
 };
-} /// namespace NES
+}

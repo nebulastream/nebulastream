@@ -21,7 +21,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
+#include <ErrorHandling.hpp>
 
 #include <vector>
 
@@ -316,7 +316,7 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     {
         std::tuple<uint8_t, uint16_t, uint32_t> writeRecord(rand(), rand(), rand());
         allTuples.emplace_back(writeRecord);
-        ASSERT_THROW(testBuffer->pushRecordToBuffer(writeRecord), NES::Exceptions::RuntimeException);
+        ASSERT_EXCEPTION_ERRORCODE(testBuffer->pushRecordToBuffer(writeRecord), ErrorCode::BufferAccessException);
     }
 
     for (size_t i = 0; i < NUM_TUPLES; i++)

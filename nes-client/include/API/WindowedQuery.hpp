@@ -34,7 +34,7 @@ namespace API
 {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-} /// namespace API
+}
 
 namespace WindowOperatorBuilder
 {
@@ -119,5 +119,5 @@ private:
     Windowing::WindowTypePtr windowType;
 };
 
-} /// namespace WindowOperatorBuilder
-} /// namespace NES
+}
+}

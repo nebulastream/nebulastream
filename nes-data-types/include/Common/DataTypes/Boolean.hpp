@@ -27,11 +27,6 @@ public:
     ~Boolean() override = default;
 
     /**
-    * @brief Checks if this data type is Boolean.
-    */
-    [[nodiscard]] bool isBoolean() const override { return true; }
-
-    /**
      * @brief Checks if two data types are equal.
      * @param otherDataType
      * @return
@@ -53,4 +48,4 @@ public:
     std::string toString() override;
 };
 
-} /// namespace NES
+}

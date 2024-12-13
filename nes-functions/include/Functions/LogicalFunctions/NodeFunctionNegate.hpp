@@ -32,7 +32,6 @@ public:
     static NodeFunctionPtr create(NodeFunctionPtr const& child);
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
     bool validateBeforeLowering() const override;
 
     /**
@@ -51,5 +50,7 @@ public:
 
 protected:
     explicit NodeFunctionNegate(NodeFunctionNegate* other);
+
+    [[nodiscard]] std::string toString() const override;
 };
-} /// namespace NES
+}

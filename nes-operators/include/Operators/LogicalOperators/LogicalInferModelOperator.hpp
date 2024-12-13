@@ -30,12 +30,6 @@ public:
         std::string model, std::vector<NodeFunctionPtr> inputFields, std::vector<NodeFunctionPtr> outputFields, OperatorId id);
 
     /**
-     * @brief creates a string representation of this node
-     * @return the string representation
-     */
-    std::string toString() const override;
-
-    /**
      * @brief copies the current operator node
      * @return a copy of this node
      */
@@ -91,6 +85,9 @@ public:
      */
     const std::vector<NodeFunctionPtr>& getOutputFields() const;
 
+protected:
+    std::string toString() const override;
+
 private:
     /**
      * @brief updates the field to a fully qualified one.
@@ -103,4 +100,4 @@ private:
     std::vector<NodeFunctionPtr> outputFields;
 };
 
-} /// namespace NES::InferModel
+}

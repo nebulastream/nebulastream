@@ -22,7 +22,7 @@ namespace NES
 {
 class NodeFunctionFieldAccess;
 class NodeFunctionConstantValue;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -128,4 +128,4 @@ private:
      */
     static std::string fetchLeftMostConstantValueOrFieldName(NodeFunctionPtr function);
 };
-} /// namespace NES::Optimizer
+}

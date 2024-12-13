@@ -14,58 +14,32 @@
 
 #include <algorithm>
 #include <fstream>
+#include <ranges>
 #include <regex>
-#include <Compiler/CPPCompiler/CPPCompiler.hpp>
-#include <Compiler/JITCompilerBuilder.hpp>
+#include <utility>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Optimizer/Phases/OriginIdInferencePhase.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Parser/SLTParser.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
-#include <QueryValidation/SyntacticQueryValidation.hpp>
-#include <Services/QueryParsingService.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SourceCatalogs/PhysicalSource.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
 #include <SourceCatalogs/SourceCatalogEntry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceProvider.hpp>
-#include <SourcesValidation/SourceRegistryValidation.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <NebuLI.hpp>
-
-namespace NES::CLI
-{
-struct SchemaField
-{
-    std::string name;
-    BasicType type;
-};
-
-struct LogicalSource
-{
-    std::string name;
-    std::vector<SchemaField> schema;
-};
-
-struct PhysicalSource
-{
-    std::string logical;
-    std::unordered_map<std::string, std::string> config;
-};
-
-struct QueryConfig
-{
-    std::string query;
-    std::vector<LogicalSource> logical;
-    std::vector<PhysicalSource> physical;
-};
-}
 
 namespace YAML
 {
@@ -77,6 +51,17 @@ struct convert<SchemaField>
     {
         rhs.name = node["name"].as<std::string>();
         rhs.type = *magic_enum::enum_cast<NES::BasicType>(node["type"].as<std::string>());
+        return true;
+    }
+};
+template <>
+struct convert<NES::CLI::Sink>
+{
+    static bool decode(const Node& node, NES::CLI::Sink& rhs)
+    {
+        rhs.name = node["name"].as<std::string>();
+        rhs.type = node["type"].as<std::string>();
+        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -96,7 +81,8 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         rhs.logical = node["logical"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parserConfig"].as<std::unordered_map<std::string, std::string>>();
+        rhs.sourceConfig = node["sourceConfig"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -105,19 +91,56 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
+        const auto sink = node["sink"].as<NES::CLI::Sink>();
+        rhs.sinks.emplace(sink.name, sink);
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
         rhs.query = node["query"].as<std::string>();
         return true;
     }
 };
-} /// namespace YAML
+}
 
 namespace NES::CLI
 {
 
-Sources::SourceDescriptor
-createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::unordered_map<std::string, std::string>&& sourceConfiguration)
+Sources::ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+{
+    auto validParserConfig = Sources::ParserConfig{};
+    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    {
+        validParserConfig.parserType = parserType->second;
+    }
+    else
+    {
+        throw InvalidConfigParameter("Parser configuration must contain: type");
+    }
+    if (const auto tupleDelimiter = parserConfig.find("tupleDelimiter"); tupleDelimiter != parserConfig.end())
+    {
+        validParserConfig.tupleDelimiter = tupleDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
+        validParserConfig.tupleDelimiter = "\n";
+    }
+    if (const auto fieldDelimiter = parserConfig.find("fieldDelimiter"); fieldDelimiter != parserConfig.end())
+    {
+        validParserConfig.fieldDelimiter = fieldDelimiter->second;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
+        validParserConfig.fieldDelimiter = ",";
+    }
+    return validParserConfig;
+}
+
+Sources::SourceDescriptor createSourceDescriptor(
+    std::string logicalSourceName,
+    SchemaPtr schema,
+    const std::unordered_map<std::string, std::string>& parserConfig,
+    std::unordered_map<std::string, std::string> sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -126,15 +149,32 @@ createSourceDescriptor(std::string logicalSourceName, SchemaPtr schema, std::uno
     auto sourceType = sourceConfiguration.at(Configurations::SOURCE_TYPE_CONFIG);
     NES_DEBUG("Source type is: {}", sourceType);
 
-    /// We currently only support CSV
-    auto inputFormat = Configurations::InputFormat::CSV;
+    auto validParserConfig = validateAndFormatParserConfig(parserConfig);
+    auto validSourceConfig = Sources::SourceValidationProvider::provide(sourceType, std::move(sourceConfiguration));
+    return Sources::SourceDescriptor(
+        std::move(schema), std::move(logicalSourceName), sourceType, std::move(validParserConfig), std::move(validSourceConfig));
+}
 
-    if (auto validConfig = Sources::SourceRegistryValidation::instance().create(sourceType, std::move(sourceConfiguration)))
+void validateAndSetSinkDescriptors(const QueryPlan& query, const QueryConfig& config)
+{
+    PRECONDITION(
+        query.getSinkOperators().size() == 1,
+        fmt::format(
+            "NebulaStream currently only supports a single sink per query, but the query contains: {}", query.getSinkOperators().size()));
+    PRECONDITION(not config.sinks.empty(), fmt::format("Expects at least one sink in the query config!"));
+    if (const auto sink = config.sinks.find(query.getSinkOperators().at(0)->sinkName); sink != config.sinks.end())
     {
-        return Sources::SourceDescriptor(
-            std::move(schema), std::move(logicalSourceName), sourceType, inputFormat, std::move(*validConfig.value()));
+        auto validatedSinkConfig = *Sinks::SinkDescriptor::validateAndFormatConfig(sink->second.type, sink->second.config);
+        query.getSinkOperators().at(0)->sinkDescriptor
+            = std::make_shared<Sinks::SinkDescriptor>(sink->second.type, std::move(validatedSinkConfig), false);
     }
-    throw UnknownSourceType(fmt::format("We don't support the source type: {}", sourceType));
+    else
+    {
+        throw UnknownSinkType(
+            "Sinkname {} not specified in the configuration {}",
+            query.getSinkOperators().front()->sinkName,
+            fmt::join(std::views::keys(config.sinks), ","));
+    }
 }
 
 DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
@@ -156,10 +196,10 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
     }
 
     /// Add physical sources to corresponding logical sources.
-    for (auto [logicalSourceName, config] : config.physical)
+    for (auto [logicalSourceName, parserConfig, sourceConfig] : config.physical)
     {
-        auto sourceDescriptor
-            = createSourceDescriptor(logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), std::move(config));
+        auto sourceDescriptor = createSourceDescriptor(
+            logicalSourceName, sourceCatalog->getSchemaForLogicalSource(logicalSourceName), parserConfig, std::move(sourceConfig));
         sourceCatalog->addPhysicalSource(
             logicalSourceName,
             Catalogs::Source::SourceCatalogEntry::create(
@@ -168,20 +208,16 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
                 INITIAL<WorkerId>));
     }
 
-    auto cppCompiler = Compiler::CPPCompiler::create();
-    auto jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
-    auto parsingService = QueryParsingService::create(jitCompiler);
-    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(parsingService);
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog);
     auto logicalSourceExpansionRule = NES::Optimizer::LogicalSourceExpansionRule::create(sourceCatalog, false);
     auto typeInference = Optimizer::TypeInferencePhase::create(sourceCatalog);
     auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
     auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfig);
 
-    auto query = syntacticQueryValidation->validate(config.query);
-    semanticQueryValidation->validate(query);
-    typeInference->performTypeInferenceSources(query->getSourceOperators<SourceNameLogicalOperator>(), query->getQueryId());
-    typeInference->performTypeInferenceQuery(query);
+    auto query = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(config.query);
+
+    validateAndSetSinkDescriptors(*query, config);
+    semanticQueryValidation->validate(query); /// performs the first type inference
 
     logicalSourceExpansionRule->apply(query);
     typeInference->performTypeInferenceQuery(query);
@@ -192,7 +228,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return DecomposedQueryPlan::create(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return std::make_shared<DecomposedQueryPlan>(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
 DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
@@ -206,294 +242,6 @@ DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
     return loadFrom(file);
 }
 
-std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testname)
-{
-    std::vector<DecomposedQueryPlanPtr> plans{};
-    QueryConfig config{};
-    SLTParser::SLTParser parser{};
-
-    parser.registerSubstitutionRule(
-        {"SINK",
-         [&](std::string& substitute)
-         {
-             static uint64_t queryNr = 0;
-             auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/tests/result/" + testname + std::to_string(queryNr++) + ".csv";
-             substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
-         }});
-
-    parser.registerSubstitutionRule(
-        {"TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/test/testdata"; }});
-
-    if (!parser.loadFile(filePath))
-    {
-        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
-        return {};
-    }
-
-    /// We add new found sources to our config
-    parser.registerOnCSVSourceCallback(
-        [&](SLTParser::SLTParser::CSVSource&& source)
-        {
-            config.logical.emplace_back(LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<SchemaField> schema;
-                    for (const auto& field : source.fields)
-                    {
-                        schema.push_back({.name = field.name, .type = field.type});
-                    }
-                    return schema;
-                }()});
-
-            config.physical.emplace_back(
-                PhysicalSource{.logical = source.name, .config = {{"type", "CSV"}, {"filePath", source.csvFilePath}}});
-        });
-
-    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/tests/";
-    parser.registerOnSLTSourceCallback(
-        [&](SLTParser::SLTParser::SLTSource&& source)
-        {
-            static uint64_t sourceIndex = 0;
-
-            config.logical.emplace_back(LogicalSource{
-                .name = source.name,
-                .schema = [&source]()
-                {
-                    std::vector<SchemaField> schema;
-                    for (const auto& field : source.fields)
-                    {
-                        schema.push_back({.name = field.name, .type = field.type});
-                    }
-                    return schema;
-                }()});
-
-            config.physical.emplace_back(PhysicalSource{
-                .logical = source.name,
-                .config = {{"type", "CSV"}, {"filePath", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv"}}});
-
-
-            /// Write the tuples to a tmp file
-            std::ofstream sourceFile(tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
-            if (!sourceFile)
-            {
-                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
-                return;
-            }
-
-            /// Write tuples to csv file
-            for (const auto& tuple : source.tuples)
-            {
-                sourceFile << tuple << std::endl;
-            }
-        });
-
-    /// We create a new query plan from our config when finding a query
-    parser.registerOnQueryCallback(
-        [&](SLTParser::SLTParser::Query&& query)
-        {
-            config.query = query;
-            try
-            {
-                auto plan = createFullySpecifiedQueryPlan(config);
-                plans.emplace_back(plan);
-            }
-            catch (const std::exception& e)
-            {
-                NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
-                exit(-1);
-            }
-        });
-    try
-    {
-        parser.parse();
-    }
-    catch (const Exception&)
-    {
-        tryLogCurrentException();
-        return {};
-    }
-    return plans;
-}
-
-bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
-{
-    std::string resultFileName = PATH_TO_BINARY_DIR "/tests/result/" + testName + std::to_string(queryNr) + ".csv";
-    std::ifstream resultFile(resultFileName);
-    if (!resultFile)
-    {
-        NES_FATAL_ERROR("Failed to open result file: {}", resultFileName);
-        return false;
-    }
-
-    std::string line;
-    std::regex headerRegex(R"(.*\$.*:.*)");
-    while (std::getline(resultFile, line))
-    {
-        /// Skip the header
-        if (std::regex_match(line, headerRegex))
-        {
-            continue;
-        }
-        resultData.push_back(line);
-    }
-    return true;
-}
-
-bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr)
-{
-    SLTParser::SLTParser parser{};
-    if (!parser.loadFile(testFilePath))
-    {
-        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
-        return false;
-    }
-
-    bool same = true;
-    std::string printMessages;
-    std::string errorMessages;
-    uint64_t seenResultTupleSections = 0;
-    uint64_t seenQuerySections = 0;
-
-    constexpr bool printOnlyDifferences = true;
-    parser.registerOnResultTuplesCallback(
-        [&seenResultTupleSections, &errorMessages, queryNr, testName, &same](SLTParser::SLTParser::ResultTuples&& resultLines)
-        {
-            /// Result section matches with query --> we found the expected result to check for
-            if (seenResultTupleSections == queryNr)
-            {
-                /// 1. Get query result
-                std::vector<std::string> queryResult;
-                if (!getResultOfQuery(testName, seenResultTupleSections, queryResult))
-                {
-                    same = false;
-                    return;
-                }
-
-                /// 2. We allow commas in the result and the expected result. To ensure they are equal we remove them from both
-                std::for_each(queryResult.begin(), queryResult.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
-                std::for_each(resultLines.begin(), resultLines.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
-
-                /// 3. Store lines with line ids
-                std::vector<std::pair<int, std::string>> originalResultLines;
-                std::vector<std::pair<int, std::string>> originalQueryResult;
-
-                originalResultLines.reserve(resultLines.size());
-                for (size_t i = 0; i < resultLines.size(); ++i)
-                {
-                    originalResultLines.emplace_back(i + 1, resultLines[i]); /// store with 1-based index
-                }
-
-                originalQueryResult.reserve(queryResult.size());
-                for (size_t i = 0; i < queryResult.size(); ++i)
-                {
-                    originalQueryResult.emplace_back(i + 1, queryResult[i]); /// store with 1-based index
-                }
-
-                /// 4. Check if line sizes match
-                if (queryResult.size() != resultLines.size())
-                {
-                    errorMessages += "Result does not match for query: " + std::to_string(seenResultTupleSections) + "\n";
-                    errorMessages += "Result size does not match: expected " + std::to_string(resultLines.size()) + ", got "
-                        + std::to_string(queryResult.size()) + "\n";
-                    same = false;
-                }
-
-                /// 5. Check if content match
-                std::sort(queryResult.begin(), queryResult.end());
-                std::sort(resultLines.begin(), resultLines.end());
-
-                if (!std::equal(queryResult.begin(), queryResult.end(), resultLines.begin()))
-                {
-                    /// 6. Build error message
-                    errorMessages += "Result does not match for query " + std::to_string(seenResultTupleSections) + ":\n";
-                    errorMessages += "[#Line: Expected Result | #Line: Query Result]\n";
-
-                    /// Maximum width of "Expected (Line #)"
-                    size_t maxExpectedWidth = 0;
-                    for (const auto& line : originalResultLines)
-                    {
-                        size_t currentWidth = std::to_string(line.first).length() + 2 + line.second.length();
-                        maxExpectedWidth = std::max(currentWidth, maxExpectedWidth);
-                    }
-
-                    auto maxSize = std::max(originalResultLines.size(), originalQueryResult.size());
-                    for (size_t i = 0; i < maxSize; ++i)
-                    {
-                        std::string expectedStr;
-                        if (i < originalResultLines.size())
-                        {
-                            expectedStr = std::to_string(originalResultLines[i].first) + ": " + originalResultLines[i].second;
-                        }
-                        else
-                        {
-                            expectedStr = "(missing)";
-                        }
-
-                        std::string gotStr;
-                        if (i < originalQueryResult.size())
-                        {
-                            gotStr = std::to_string(originalQueryResult[i].first) + ": " + originalQueryResult[i].second;
-                        }
-                        else
-                        {
-                            gotStr = "(missing)";
-                        }
-
-                        /// Check if they are different or if we are not filtering by differences
-                        bool const areDifferent
-                            = (i >= originalResultLines.size() || i >= originalQueryResult.size()
-                               || originalResultLines[i].second != originalQueryResult[i].second);
-
-                        if (areDifferent || !printOnlyDifferences)
-                        {
-                            /// Align the expected string by padding it to the maximum width
-                            errorMessages += expectedStr;
-                            errorMessages += std::string(maxExpectedWidth - expectedStr.length(), ' ');
-                            errorMessages += " | ";
-                            errorMessages += gotStr;
-                            errorMessages += "\n";
-                        }
-                    }
-
-                    same = false;
-                }
-            }
-            seenResultTupleSections++;
-        });
-
-    parser.registerOnQueryCallback(
-        [&seenQuerySections, queryNr, &printMessages](const std::string& query)
-        {
-            if (seenQuerySections == queryNr)
-            {
-                printMessages = query;
-            }
-            seenQuerySections++;
-        });
-
-    try
-    {
-        parser.parse();
-    }
-    catch (const Exception&)
-    {
-        tryLogCurrentException();
-        return false;
-    }
-
-    /// spd logger cannot handle multiline prints with proper color and pattern. And as this is only for test runs we use stdout here.
-    std::cout << "==============================================================" << '\n';
-    std::cout << printMessages << '\n';
-    std::cout << "==============================================================" << std::endl;
-    if (!same)
-    {
-        std::cerr << errorMessages << std::endl;
-    }
-
-    return same;
-}
-
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
 {
     try
@@ -503,7 +251,7 @@ DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
     }
     catch (const YAML::ParserException& pex)
     {
-        throw QueryDescriptionNotParsable(fmt::format(": {}.", pex.what()));
+        throw QueryDescriptionNotParsable("{}", pex.what());
     }
 }
 }

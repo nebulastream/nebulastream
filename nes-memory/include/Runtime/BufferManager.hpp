@@ -202,8 +202,8 @@ private:
 
     mutable std::recursive_mutex unpooledBuffersMutex;
 
-    uint32_t bufferSize;
-    uint32_t numOfBuffers;
+    size_t bufferSize;
+    size_t numOfBuffers;
 
     uint8_t* basePointer{nullptr};
     size_t allocatedAreaSize;
@@ -216,4 +216,4 @@ private:
 
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
-} /// namespace NES::Runtime
+}

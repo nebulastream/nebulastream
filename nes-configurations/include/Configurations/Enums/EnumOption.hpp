@@ -14,6 +14,8 @@
 #pragma once
 #include <string>
 #include <type_traits>
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/OptionVisitor.hpp>
 #include <Configurations/TypedBaseOption.hpp>
 #include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
@@ -23,10 +25,7 @@ namespace NES::Configurations
 
 template <class T>
 concept IsEnum = std::is_enum<T>::value;
-/**
- * @brief This class defines an option, which has only the member of an enum as possible values.
- * @tparam T
- */
+/// This class defines an option, which has only the member of an enum as possible values.
 template <IsEnum T>
 class EnumOption : public TypedBaseOption<T>
 {
@@ -52,6 +51,17 @@ public:
         return os.str();
     };
 
+    void accept(OptionVisitor& visitor) override
+    {
+        auto* config = dynamic_cast<Configurations::BaseConfiguration*>(this);
+        visitor.visitConcrete(this->name, this->description, magic_enum::enum_name(this->getDefaultValue()));
+        if (config)
+        {
+            config->accept(visitor);
+        }
+    }
+
+
 protected:
     void parseFromYAMLNode(YAML::Node node) override
     {
@@ -66,7 +76,7 @@ protected:
         }
         this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
     };
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override
     {
         auto value = inputParams[identifier];
         /// Check if the value is a member of this enum type.
@@ -83,4 +93,4 @@ protected:
     };
 };
 
-} /// namespace NES::Configurations
+}

@@ -31,28 +31,14 @@
 namespace NES
 {
 
-QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<OperatorPtr> rootOperators)
-{
-    return std::make_shared<QueryPlan>(QueryPlan(queryId, std::move(rootOperators)));
-}
-
-QueryPlanPtr QueryPlan::create(QueryId queryId)
-{
-    return std::make_shared<QueryPlan>(QueryPlan(queryId));
-}
-
 QueryPlanPtr QueryPlan::create(OperatorPtr rootOperator)
 {
-    return std::make_shared<QueryPlan>(QueryPlan(std::move(rootOperator)));
+    return std::make_shared<QueryPlan>(std::move(rootOperator));
 }
 
-QueryPlanPtr QueryPlan::create()
+QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 {
-    return std::make_shared<QueryPlan>(QueryPlan());
-}
-
-QueryPlan::QueryPlan()
-{
+    return std::make_shared<QueryPlan>(std::move(queryId), std::move(rootOperators));
 }
 
 QueryPlan::QueryPlan(OperatorPtr rootOperator) : queryId(INVALID_QUERY_ID)
@@ -64,14 +50,10 @@ QueryPlan::QueryPlan(QueryId queryId, std::vector<OperatorPtr> rootOperators) : 
 {
 }
 
-QueryPlan::QueryPlan(QueryId queryId) : queryId(queryId)
-{
-}
-
-std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() const
+std::vector<std::shared_ptr<SinkLogicalOperator>> QueryPlan::getSinkOperators() const
 {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
-    std::vector<SinkLogicalOperatorPtr> sinkOperators;
+    std::vector<std::shared_ptr<SinkLogicalOperator>> sinkOperators;
     for (const auto& rootOperator : rootOperators)
     {
         auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rootOperator);
@@ -83,14 +65,11 @@ std::vector<SinkLogicalOperatorPtr> QueryPlan::getSinkOperators() const
 
 void QueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
 {
-    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
-        if (!rootOperator->addParent(operatorNode))
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
-        }
+        const auto result = rootOperator->addParent(operatorNode);
+        PRECONDITION(result, "QueryPlan: Unable to add operator {0} as parent to {0}", *operatorNode);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
     clearRootOperators();
@@ -173,7 +152,7 @@ std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() const
     return visitedOperators;
 }
 
-bool QueryPlan::hasOperatorWithId(OperatorId operatorId)
+bool QueryPlan::hasOperatorWithId(OperatorId operatorId) const
 {
     NES_DEBUG("QueryPlan: Checking if the operator exists in the query plan or not");
     if (getOperatorWithOperatorId(operatorId))
@@ -235,7 +214,7 @@ void QueryPlan::addRootOperator(const OperatorPtr& newRootOperator)
 
 void QueryPlan::removeAsRootOperator(OperatorPtr root)
 {
-    NES_DEBUG("QueryPlan: removing operator {} as root operator.", root->toString());
+    NES_DEBUG("QueryPlan: removing operator {} as root operator.", *root);
     auto found = std::find_if(
         rootOperators.begin(),
         rootOperators.end(),
@@ -243,8 +222,7 @@ void QueryPlan::removeAsRootOperator(OperatorPtr root)
     if (found != rootOperators.end())
     {
         NES_DEBUG(
-            "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan.",
-            root->toString());
+            "QueryPlan: Found root operator in the root operator list. Removing the operator as the root of the query plan. {}", *root);
         rootOperators.erase(found);
     }
 }
@@ -369,13 +347,15 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
     return operatorsBetween;
 }
 
-bool QueryPlan::compare(QueryPlanPtr& otherPlan)
+bool QueryPlan::compare(const QueryPlanPtr& otherPlan) const
 {
     auto leftRootOperators = this->getRootOperators();
     auto rightRootOperators = otherPlan->getRootOperators();
 
     if (leftRootOperators.size() != rightRootOperators.size())
+    {
         return false;
+    }
 
     /// add all root-operators to stack
     std::stack<std::pair<OperatorPtr, OperatorPtr>> stack;
@@ -409,7 +389,9 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan)
 
         /// comparison of both operators
         if (!leftOperator->equal(rightOperator))
+        {
             return false;
+        }
     }
     return true;
 }
@@ -463,5 +445,4 @@ void QueryPlan::setQueryState(QueryState newState)
 {
     currentState = newState;
 }
-
-} /// namespace NES
+}

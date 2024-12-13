@@ -18,16 +18,16 @@
 namespace NES::Execution::Functions
 {
 
-class RegistryFunctionExecutable : public BaseRegistry<
-                                       RegistryFunctionExecutable,
-                                       std::string,
-                                       Runtime::Execution::Functions::Function,
-                                       std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>
+using RegistryFunctionExecutableSignature = RegistrySignature<
+    std::string,
+    Runtime::Execution::Functions::Function,
+    std::vector<std::unique_ptr<Runtime::Execution::Functions::Function>>>;
+class RegistryFunctionExecutable : public BaseRegistry<RegistryFunctionExecutable, RegistryFunctionExecutableSignature>
 {
 };
 }
 
 
 #define INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE
-#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.hpp>
+#include <Execution/Functions/Registry/GeneratedExecutableFunctionRegistrar.inc>
 #undef INCLUDED_FROM_REGISTRY_FUNCTION_EXECUTABLE

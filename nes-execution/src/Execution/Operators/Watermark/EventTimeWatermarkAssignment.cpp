@@ -16,19 +16,19 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Watermark/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
-#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
-class WatermarkState : public OperatorState
+struct WatermarkState final : OperatorState
 {
-public:
-    explicit WatermarkState() { }
-    nautilus::val<uint64_t> currentWatermark = 0;
+    explicit WatermarkState() = default;
+    nautilus::val<Timestamp> currentWatermark = Timestamp(Runtime::Timestamp::INITIAL_VALUE);
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction) : timeFunction(std::move(timeFunction)) {};
@@ -58,7 +58,7 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
         NES::Util::instanceOf<const WatermarkState>(*executionCtx.getLocalState(this)),
         "Expects the local state to be of type WatermarkState");
     const auto state = static_cast<WatermarkState*>(executionCtx.getLocalState(this));
-    executionCtx.setWatermarkTs(state->currentWatermark);
+    executionCtx.watermarkTs = state->currentWatermark;
     Operator::close(executionCtx, recordBuffer);
 }
 

@@ -1,0 +1,14 @@
+# name: milestone/YahooStreamingBenchmark.test
+# description: YahooStreamingBenchmark queries
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+Query::from("ysb")
+    .filter(Attribute("event_type") < 1)
+    .window(TumblingWindow::of(EventTime(Attribute("current_ms")), Seconds(30)))
+    .byKey(Attribute("campaign_id"))
+    .apply(Sum(Attribute("user_id")))
+    .SINK;
+----

@@ -25,4 +25,4 @@ class OperatorState
 public:
     virtual ~OperatorState() = default;
 };
-} /// namespace NES::Runtime::Execution::Operators
+}

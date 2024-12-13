@@ -14,14 +14,16 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <include/Runtime/BufferManager.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Memory::MemoryLayouts
@@ -45,7 +47,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     auto fieldIndex = memoryLayout->getFieldIndexFromName(fieldName);
     if (!fieldIndex.has_value())
     {
-        throw BufferAccessException("field name " + fieldName + " does not exist in layout");
+        throw BufferAccessException("field name {} does not exist in layout", fieldName);
     }
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
@@ -111,11 +113,11 @@ std::string DynamicTuple::readVarSized(std::variant<const uint64_t, const std::s
 std::string DynamicTuple::toString(const SchemaPtr& schema)
 {
     std::stringstream ss;
-    for (uint32_t i = 0; i < schema->getSize(); ++i)
+    for (uint32_t i = 0; i < schema->getFieldCount(); ++i)
     {
-        const auto dataType = schema->get(i)->getDataType();
+        const auto dataType = schema->getFieldByIndex(i)->getDataType();
         DynamicField currentField = this->operator[](i);
-        if (dataType->isText())
+        if (NES::Util::instanceOf<VariableSizedDataType>(dataType))
         {
             const auto index = currentField.read<Memory::TupleBuffer::NestedTupleBufferKey>();
             const auto string = readVarSizedData(buffer, index);
@@ -135,15 +137,14 @@ bool DynamicTuple::operator!=(const DynamicTuple& other) const
 }
 bool DynamicTuple::operator==(const DynamicTuple& other) const
 {
-    if (!this->memoryLayout->getSchema()->equals(other.memoryLayout->getSchema()))
+    if (!(*this->memoryLayout->getSchema() == *other.memoryLayout->getSchema()))
     {
         NES_DEBUG("Schema is not the same! Therefore the tuple can not be the same!");
         return false;
     }
-
-    for (const auto& field : this->memoryLayout->getSchema()->fields)
+    for (const auto& field : *this->memoryLayout->getSchema())
     {
-        if (!other.memoryLayout->getSchema()->getField(field->getName()))
+        if (!other.memoryLayout->getSchema()->getFieldByName(field->getName()))
         {
             NES_ERROR("Field with name {} is not contained in both tuples!", field->getName());
             return false;
@@ -152,7 +153,7 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
         auto thisDynamicField = (*this)[field->getName()];
         auto otherDynamicField = other[field->getName()];
 
-        if (field->getDataType()->isText())
+        if (NES::Util::instanceOf<VariableSizedDataType>(field->getDataType()))
         {
             const auto thisString = readVarSizedData(buffer, thisDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
             const auto otherString = readVarSizedData(other.buffer, otherDynamicField.read<Memory::TupleBuffer::NestedTupleBufferKey>());
@@ -173,31 +174,23 @@ bool DynamicTuple::operator==(const DynamicTuple& other) const
     return true;
 }
 
-std::string DynamicField::toString()
+std::string DynamicField::toString() const
 {
-    std::stringstream ss;
-    std::string currentFieldContentAsString = this->physicalType->convertRawToString(this->address);
-    ss << currentFieldContentAsString;
-    return ss.str();
+    return this->physicalType->convertRawToString(this->address);
 }
 
-bool DynamicField::equal(const DynamicField& rhs) const
+bool DynamicField::operator==(const DynamicField& rhs) const
 {
     NES_ASSERT(
         *physicalType == *rhs.physicalType,
         "Physical types have to be the same but are " + physicalType->toString() + " and " + rhs.physicalType->toString());
 
     return std::memcmp(address, rhs.address, physicalType->size()) == 0;
-}
-
-bool DynamicField::operator==(const DynamicField& rhs) const
-{
-    return equal(rhs);
 };
 
 bool DynamicField::operator!=(const DynamicField& rhs) const
 {
-    return !equal(rhs);
+    return not(*this == rhs);
 }
 
 const PhysicalTypePtr& DynamicField::getPhysicalType() const
@@ -229,8 +222,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
 {
     if (tupleIndex >= getCapacity())
     {
-        throw BufferAccessException(
-            "index " + std::to_string(tupleIndex) + " is out of bound for capacity" + std::to_string(getCapacity()));
+        throw BufferAccessException("index {} is out of bound for capacity {}", std::to_string(tupleIndex), std::to_string(getCapacity()));
     }
     return {tupleIndex, memoryLayout, buffer};
 }
@@ -268,15 +260,15 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     std::vector<uint32_t> physicalSizes;
     std::vector<PhysicalTypePtr> types;
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (uint32_t i = 0; i < schema->getSize(); ++i)
+    for (const auto& field : *schema)
     {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         physicalSizes.push_back(physicalType->size());
         types.push_back(physicalType);
         NES_TRACE(
             "TestTupleBuffer: {} {} {} {}",
             std::string("Field Size "),
-            schema->get(i)->toString(),
+            field->toString(),
             std::string(": "),
             std::to_string(physicalType->size()));
     }
@@ -285,10 +277,9 @@ std::string TestTupleBuffer::toString(const SchemaPtr& schema, bool showHeader)
     {
         str << "+----------------------------------------------------+" << std::endl;
         str << "|";
-        for (uint32_t i = 0; i < schema->getSize(); ++i)
+        for (const auto& field : *schema)
         {
-            str << schema->get(i)->getName() << ":" << physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType())->toString()
-                << "|";
+            str << field->getName() << ":" << physicalDataTypeFactory.getPhysicalType(field->getDataType())->toString() << "|";
         }
         str << std::endl;
         str << "+----------------------------------------------------+" << std::endl;
@@ -368,7 +359,7 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw FunctionNotImplemented("Schema MemoryLayoutType not supported");
     }
 }
 

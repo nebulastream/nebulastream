@@ -1,0 +1,62 @@
+# name: milestone/Nexmark.test
+# description: Nexmark benchmark
+# groups: [milestone, benchmark]
+
+# Source definitions
+# MiSSING
+
+# Query 0
+Query::from("bid")
+    .SINK;
+----
+
+# Query 1
+Query::from("bit")
+    .map(Attribute("price") = Attribute("price") * 89 / 100)
+    .SINK;
+----
+
+# Query 2
+Query::from("bid")
+	.filter(Attribute("auctionId") % static_cast<uint64_t>(123) == 0)
+    .SINK;
+----
+
+# Query 5
+Query::from("bid")
+    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(2)))
+    .byKey(Attribute("auctionId"))
+    .apply(Count()->as(Attribute("num")))
+    .joinWith(Query::from("bid")
+    .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), Seconds(2)))
+  	.byKey(Attribute("auctionId"))
+  	.apply(Count()->as(Attribute("num")))
+  	.window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(10))))
+  	.apply(Max(Attribute("num"))->as(Attribute("max"))))
+  	.where(Attribute("start")).equalsTo(Attribute("start"))
+  	.window(SlidingWindow::of(EventTime(Attribute("bid$start")), Seconds(10), Seconds(2)))
+  	.filter(Attribute("num") >= Attribute("max"))
+  	.project(Attribute("bid$auctionId"), Attribute("bid$num"))
+    .SINK;
+ ----
+
+ # Query 7
+ Query::from("bid")
+    .joinWith(Query::from("bid")
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)))
+        .apply(Max(Attribute("price"))->as(Attribute("maxprice")))
+        .project(Attribute("start"), Attribute("end"), Attribute("maxprice")))
+    .where(Attribute("price"))
+    .equalsTo(Attribute("maxprice"))
+   	.window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10), EventTime(Attribute("bid$start"))))
+    .SINK;
+----
+
+# Query 8
+Query::from("bid")
+    .joinWith(Query::from("auction"))
+  	.where(Attribute("auctionId"))
+  	.equalsTo(Attribute("id"))
+  	.window(TumblingWindow::of(IngestionTime(),Hours(12)))
+    .SINK;
+----

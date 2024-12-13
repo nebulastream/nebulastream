@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
@@ -23,7 +24,7 @@ namespace NES
 {
 class NodeFunctionFieldAccess;
 using NodeFunctionFieldAccessPtr = std::shared_ptr<NodeFunctionFieldAccess>;
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -61,7 +62,7 @@ private:
      * @param curOperator the operator through which we want to push the filter.
      * @param parOperator the operator that is the parent of curOperator in this queryPlan
      */
-    void pushDownFilter(LogicalFilterOperatorPtr filterOperator, NodePtr curOperator, NodePtr parOperator);
+    void pushDownFilter(LogicalSelectionOperatorPtr filterOperator, NodePtr curOperator, NodePtr parOperator);
 
     /**
      * In case the filter cant be pushed any further this method is called to remove the filter from its original position in the query plan
@@ -70,7 +71,7 @@ private:
      * @param childOperator insert the filter operator above this operator in the query plan
      * @param parOperator  insert the filter operator below this operator in the query plan
      */
-    static void insertFilterIntoNewPosition(LogicalFilterOperatorPtr filterOperator, NodePtr childOperator, NodePtr parOperator);
+    static void insertFilterIntoNewPosition(LogicalSelectionOperatorPtr filterOperator, NodePtr childOperator, NodePtr parOperator);
 
     /**
      * @brief pushes a filter that is above a join, below that join if that is possible. We differentiate four cases:
@@ -106,7 +107,7 @@ private:
      * @param parentOperator the parent operator of the joinOperator. In case we can not push down the filter, we insert it between
      * joinOperator and parOperator.
      */
-    void pushFilterBelowJoin(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator);
+    void pushFilterBelowJoin(LogicalSelectionOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator, NodePtr parentOperator);
 
     /**
      * @brief pushes a filter that is above a join two both branches of the join if that is possible. This only considers Equi-Joins
@@ -126,7 +127,7 @@ private:
      * @param joinOperator the join operator to which the filter should be tried to be pushed down below. (it is currently the child of the filter)
      * @return true if we pushed the filter to both branches of this joinOperator
      */
-    bool pushFilterBelowJoinSpecialCase(LogicalFilterOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator);
+    bool pushFilterBelowJoinSpecialCase(LogicalSelectionOperatorPtr filterOperator, LogicalJoinOperatorPtr joinOperator);
 
     /**
      * @brief pushes the filter below a map operator. If the the map operator changes any attribute that the filter uses, we
@@ -140,7 +141,7 @@ private:
      * @param mapOperator the map operator below which we want to push the filter operator. (it is currently the child of the filter)
      * mapOperator and parOperator
      */
-    void pushFilterBelowMap(LogicalFilterOperatorPtr filterOperator, LogicalMapOperatorPtr mapOperator);
+    void pushFilterBelowMap(LogicalSelectionOperatorPtr filterOperator, LogicalMapOperatorPtr mapOperator);
 
     /**
      * @brief pushes the filter below a union operator to both branches of the union. Both branches of the union have the same Attributes,
@@ -148,7 +149,7 @@ private:
      * @param filterOperator the filter operator to be pushed down
      * @param unionOperator the union operator to which the filter should be pushed down below. (it is currently the child of the filter)
      */
-    void pushFilterBelowUnion(LogicalFilterOperatorPtr filterOperator, NodePtr unionOperator);
+    void pushFilterBelowUnion(LogicalSelectionOperatorPtr filterOperator, NodePtr unionOperator);
 
     /**
      * @brief pushes the filter below a keyed window operator. This is only possible if all the attributes accessed by the filter are
@@ -164,7 +165,7 @@ private:
      * @param parOperator the parent operator of the windowOperator. In case the filter cant be pushed down, it is inserted between
      * windowOperator and parOperator
      */
-    void pushFilterBelowWindowAggregation(LogicalFilterOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
+    void pushFilterBelowWindowAggregation(LogicalSelectionOperatorPtr filterOperator, NodePtr windowOperator, NodePtr parOperator);
 
     /**
      * @brief Get the name of the field manipulated by the Map operator
@@ -189,7 +190,7 @@ private:
      * @param projectionOperator the projection operator to which the filter should be pushed down below. (it is currently the child of the filter)
      * @return @link std::vector<NodeFunctionFieldAccessPtr> @endLink
      */
-    void pushBelowProjection(LogicalFilterOperatorPtr filterOperator, NodePtr projectionOperator);
+    void pushBelowProjection(LogicalSelectionOperatorPtr filterOperator, NodePtr projectionOperator);
 
     /**
      * @brief Rename the attributes in the filter predicate if the attribute is changed by the expression node
@@ -197,7 +198,7 @@ private:
      * @param expressionNodes expression nodes containing the attribute name and the new attribute name
      */
     static void renameFilterAttributesByNodeFunctions(
-        const LogicalFilterOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& expressionNodes);
+        const LogicalSelectionOperatorPtr& filterOperator, const std::vector<NodeFunctionPtr>& expressionNodes);
 
     /**
      * @brief Rename the attribute in the field access expression node.
@@ -214,7 +215,7 @@ private:
      * @param fieldName field name of the attribute that is assigned a field by the map transformation
      */
     void substituteFilterAttributeWithMapTransformation(
-        const LogicalFilterOperatorPtr& filterOperator, const LogicalMapOperatorPtr& mapOperator, const std::string& fieldName);
+        const LogicalSelectionOperatorPtr& filterOperator, const LogicalMapOperatorPtr& mapOperator, const std::string& fieldName);
 };
 
-} /// namespace NES::Optimizer
+}

@@ -22,17 +22,14 @@ namespace NES
 class Integer;
 using IntegerPtr = std::shared_ptr<Integer>;
 
-class ArrayType;
-using ArrayPtr = std::shared_ptr<ArrayType>;
-
 class Float;
 using FloatPtr = std::shared_ptr<Float>;
 
 class Char;
 using CharPtr = std::shared_ptr<Char>;
 
-class TextType;
-using TextPtr = std::shared_ptr<TextType>;
+class VariableSizedDataType;
+using VariableSizedDataTypePtr = std::shared_ptr<VariableSizedDataType>;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.
@@ -64,13 +61,6 @@ private:
     * @return PhysicalTypePtr
     */
     static PhysicalTypePtr getPhysicalType(const FloatPtr& floatType);
-
-    /**
-    * @brief Translates a array data type into a corresponding physical type.
-    * @param arrayType
-    * @return PhysicalTypePtr
-    */
-    PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
 };
 
-} /// namespace NES
+}

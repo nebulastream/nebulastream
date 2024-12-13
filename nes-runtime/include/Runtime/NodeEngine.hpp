@@ -68,4 +68,4 @@ private:
     std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
 };
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
-} /// namespace NES::Runtime
+}

@@ -15,6 +15,7 @@
 #include <Functions/LogicalFunctions/NodeFunctionAnd.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -39,8 +40,10 @@ bool NodeFunctionAnd::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAnd>(rhs))
     {
-        auto otherAndNode = NES::Util::as<NodeFunctionAnd>(rhs);
-        return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
+        auto other = NES::Util::as<NodeFunctionAnd>(rhs);
+        const bool simpleMatch = getLeft()->equal(other->getLeft()) and getRight()->equal(other->getRight());
+        const bool commutativeMatch = getLeft()->equal(other->getRight()) and getRight()->equal(other->getLeft());
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }
@@ -48,7 +51,7 @@ bool NodeFunctionAnd::equal(NodePtr const& rhs) const
 std::string NodeFunctionAnd::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "&&" << children[1]->toString();
+    ss << *children[0] << "&&" << *children[1];
     return ss.str();
 }
 
@@ -80,8 +83,8 @@ bool NodeFunctionAnd::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isBoolean()
-        && Util::as<NodeFunction>(this->getChildren()[1])->getStamp()->isBoolean();
+    return NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp())
+        && NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(this->getChildren()[1])->getStamp());
 }
 
 

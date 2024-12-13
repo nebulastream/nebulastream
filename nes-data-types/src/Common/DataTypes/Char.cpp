@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
+#include <magic_enum.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -20,12 +23,12 @@ namespace NES
 
 bool Char::equals(DataTypePtr otherDataType)
 {
-    return otherDataType->isChar();
+    return NES::Util::instanceOf<Char>(otherDataType);
 }
 
 DataTypePtr Char::join(DataTypePtr otherDataType)
 {
-    if (otherDataType->isChar())
+    if (NES::Util::instanceOf<Char>(otherDataType))
     {
         return DataTypeFactory::createChar();
     }
@@ -34,7 +37,7 @@ DataTypePtr Char::join(DataTypePtr otherDataType)
 
 std::string Char::toString()
 {
-    return "Char";
+    return std::string(magic_enum::enum_name(BasicType::CHAR));
 }
 
-} /// namespace NES
+}

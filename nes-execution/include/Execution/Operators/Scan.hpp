@@ -14,8 +14,11 @@
 
 #pragma once
 
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <memory>
+#include <vector>
 #include <Execution/Operators/Operator.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -29,18 +32,18 @@ class Scan : public Operator
 public:
     /**
      * @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-     * @param memoryLayout memory layout that describes the tuple buffer.
+     * @param memoryProvider memory layout that describes the tuple buffer.
      * @param projections projection vector
      */
     Scan(
-        std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
-        std::vector<Nautilus::Record::RecordFieldIdentifier> projections);
+        std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
+        std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    const std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
-    const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::vector<Record::RecordFieldIdentifier> projections;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}

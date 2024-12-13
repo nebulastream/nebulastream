@@ -29,12 +29,14 @@ public:
     ~LogicalUnionOperator() override = default;
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
     ///infer schema of two child operators
     bool inferSchema() override;
     void inferInputOrigins() override;
     void inferStringSignature() override;
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
+
+protected:
+    std::string toString() const override;
 };
-} /// namespace NES
+}

@@ -39,13 +39,15 @@ public:
     void inferStamp(SchemaPtr schema) override;
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
 
     bool validateBeforeLowering() const override;
     NodeFunctionPtr deepCopy() override;
+
+protected:
+    [[nodiscard]] std::string toString() const override;
 
 private:
     explicit NodeFunctionWhen(NodeFunctionWhen* other);
 };
 
-} /// namespace NES
+}

@@ -92,4 +92,4 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
     }
     return *this;
 }
-} /// namespace NES::QueryCompilation
+}

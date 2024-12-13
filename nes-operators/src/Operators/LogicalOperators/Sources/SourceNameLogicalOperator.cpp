@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
@@ -51,10 +51,7 @@ bool SourceNameLogicalOperator::equal(NodePtr const& rhs) const
 
 std::string SourceNameLogicalOperator::toString() const
 {
-    std::stringstream ss;
-    ss << "LogicalSource(opId: " << id << ")";
-
-    return ss.str();
+    return fmt::format("SOURCE(opId: {}, name: {})", id, logicalSourceName);
 }
 
 bool SourceNameLogicalOperator::inferSchema()
@@ -66,7 +63,7 @@ bool SourceNameLogicalOperator::inferSchema()
 
 OperatorPtr SourceNameLogicalOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createSourceOperator(logicalSourceName, id);
+    auto copy = std::make_shared<SourceNameLogicalOperator>(logicalSourceName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
@@ -104,4 +101,4 @@ void SourceNameLogicalOperator::setSchema(std::shared_ptr<Schema> schema)
     this->schema = std::move(schema);
 }
 
-} /// namespace NES
+}

@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MaxAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -44,7 +45,7 @@ WindowAggregationDescriptorPtr MaxAggregationDescriptor::on(const NodeFunctionPt
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(keyFunction))
     {
-        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", keyFunction->toString());
+        NES_ERROR("Query: window key has to be an FieldAccessFunction but it was a  {}", *keyFunction);
     }
     auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(keyFunction);
     return std::make_shared<MaxAggregationDescriptor>(MaxAggregationDescriptor(fieldAccess));
@@ -54,7 +55,7 @@ void MaxAggregationDescriptor::inferStamp(SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!onField->getStamp()->isNumeric())
+    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
         NES_FATAL_ERROR("MaxAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
@@ -96,4 +97,4 @@ DataTypePtr MaxAggregationDescriptor::getFinalAggregateStamp()
 {
     return onField->getStamp();
 }
-} /// namespace NES::Windowing
+}

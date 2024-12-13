@@ -14,9 +14,15 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <Functions/NodeFunctionFieldAccess.hpp>
+#include <Functions/NodeFunctionFieldAssignment.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {
@@ -48,13 +54,13 @@ public:
     static QueryPlanPtr addRename(std::string const& newSourceName, QueryPlanPtr queryPlan);
 
     /**
-     * @brief: this call add the filter operator to the queryPlan, the operator filters records according to the predicate. An
-     * exemplary usage would be: filter(Attribute("f1" < 10))
-     * @param filterFunction as function node containing the predicate
-     * @param queryPlanPtr the queryPlan the filter node is added to
+     * @brief: this call add the selection operator to the queryPlan, the operator selections records according to the predicate. An
+     * exemplary usage would be: selection(Attribute("f1" < 10))
+     * @param selectionFunction as function node containing the predicate
+     * @param queryPlanPtr the queryPlan the selection node is added to
      * @return the updated queryPlan
      */
-    static QueryPlanPtr addFilter(NodeFunctionPtr const& filterFunction, QueryPlanPtr queryPlan);
+    static QueryPlanPtr addSelection(NodeFunctionPtr const& selectionFunction, QueryPlanPtr queryPlan);
 
     /**
      * @brief: this call adds the limit operator to the queryPlan, the operator limits the number of produced records.
@@ -72,6 +78,12 @@ public:
      * @return the updated queryPlanPtr
      */
     static QueryPlanPtr addMap(NodeFunctionFieldAssignmentPtr const& mapFunction, QueryPlanPtr queryPlan);
+
+    static QueryPlanPtr addWindowAggregation(
+        QueryPlanPtr queryPlan,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
+        const std::vector<std::shared_ptr<Windowing::WindowAggregationDescriptor>>& windowAggs,
+        const std::vector<std::shared_ptr<NodeFunctionFieldAccess>>& onKeys);
 
     /**
     * @brief UnionOperator to combine two query plans
@@ -93,45 +105,23 @@ public:
         QueryPlanPtr leftQueryPlan,
         QueryPlanPtr rightQueryPlan,
         NodeFunctionPtr joinFunction,
-        const Windowing::WindowTypePtr& windowType,
+        const std::shared_ptr<Windowing::WindowType>& windowType,
         Join::LogicalJoinDescriptor::JoinType joinType);
 
-    /**
-     * @brief This methods add the batch join operator to a query
-     * @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
-     * @param leftQueryPlan the left query plan to combine by the join
-     * @param rightQueryPlan the right query plan to combine by the join
-     * @param onProbeKey key attribute of the left source
-     * @param onBuildKey key attribute of the right source
-     * @return the updated queryPlan
-     */
+    /// @note In contrast to joinWith(), batchJoinWith() does not require a window to be specified.
     static QueryPlanPtr
     addBatchJoin(QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan, NodeFunctionPtr onProbeKey, NodeFunctionPtr onBuildKey);
-    /**
-     * @brief Adds the sink operator to the queryPlan.
-     * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
-     * @param sinkDescriptor to add to the queryPlan
-     * @param workerId id of the worker node where sink need to be placed
-     * @return the updated queryPlan
-     */
-    static QueryPlanPtr addSink(QueryPlanPtr queryPlan, SinkDescriptorPtr sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID);
 
-    /**
-     * @brief Create watermark assigner operator and adds it to the queryPlan
-     * @param watermarkStrategyDescriptor which represents the semantic of this watermarkStrategy.
-     * @return queryPlan
-     */
+    /// Adds a
+    static QueryPlanPtr addSink(std::string sinkName, QueryPlanPtr queryPlan, WorkerId workerId = INVALID_WORKER_NODE_ID);
+
+    /// Create watermark assigner operator and adds it to the queryPlan
     static QueryPlanPtr
-    assignWatermark(QueryPlanPtr queryPlan, Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor);
+    assignWatermark(QueryPlanPtr queryPlan, const std::shared_ptr<Windowing::WatermarkStrategyDescriptor>& watermarkStrategyDescriptor);
 
-    /**
-    * @brief: Method that checks in case a window is contained in the query
-    * if a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan
-    * @param: windowTypePtr the window description assigned to the query plan
-    * @param queryPlan the queryPlan to check and add the watermark strategy to
-    * @return the updated queryPlan
-    */
-    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, const Windowing::WindowTypePtr windowType);
+    /// Checks in case a window is contained in the query.
+    /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
+    static QueryPlanPtr checkAndAddWatermarkAssignment(QueryPlanPtr queryPlan, Windowing::WindowTypePtr windowType);
 
 private:
     /**
@@ -140,7 +130,7 @@ private:
      * @param side points out from which side, i.e., left or right query plan, the NodeFunction is
      * @return nodeFunction as NodeFunctionFieldAccess
      */
-    static std::shared_ptr<NodeFunctionFieldAccess> checkFunction(NodeFunctionPtr function, std::string side);
+    static std::shared_ptr<NodeFunctionFieldAccess> asNodeFunctionFieldAccess(const NodeFunctionPtr& function, std::string side);
 
     /**
     * @brief: This method adds a binary operator to the query plan and updates the consumed sources
@@ -151,4 +141,4 @@ private:
     */
     static QueryPlanPtr addBinaryOperatorAndUpdateSource(OperatorPtr operatorNode, QueryPlanPtr leftQueryPlan, QueryPlanPtr rightQueryPlan);
 };
-} /// end namespace NES
+}

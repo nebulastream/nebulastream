@@ -14,17 +14,24 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <string>
+#include <Util/Common.hpp>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/Undefined.hpp>
+
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 bool Integer::equals(DataTypePtr otherDataType)
 {
-    if (otherDataType->isInteger())
+    if (NES::Util::instanceOf<Integer>(otherDataType))
     {
         auto otherInteger = as<Integer>(otherDataType);
         return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
@@ -34,31 +41,26 @@ bool Integer::equals(DataTypePtr otherDataType)
 
 DataTypePtr Integer::join(const DataTypePtr otherDataType)
 {
-    /// An integer can be joined with integer types and float types.
-    if (otherDataType->isFloat())
+    if (NES::Util::instanceOf<Undefined>(otherDataType))
     {
-        /// The other type is a float, thus we return a large enough float as a jointed type.
-        auto otherFloat = as<Float>(otherDataType);
-        auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = fmax(static_cast<double>(upperBound), otherFloat->upperBound);
-        auto newLowerBound = fmin(static_cast<double>(lowerBound), otherFloat->lowerBound);
-        return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
+        return std::make_shared<Integer>(bits, lowerBound, upperBound);
     }
-    if (otherDataType->isInteger())
+
+    if (not NES::Util::instanceOf<Numeric>(otherDataType))
     {
-        /// The other type is an Integer, thus we return a large enough integer.
-        auto otherInteger = as<Integer>(otherDataType);
-        auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = std::max(upperBound, otherInteger->upperBound);
-        auto newLowerBound = std::min(lowerBound, otherInteger->lowerBound);
-        return DataTypeFactory::createInteger(newBits, newLowerBound, newUpperBound);
+        throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
     }
-    return DataTypeFactory::createUndefined();
+
+    if (const auto newDataType = Numeric::inferDataType(*this, *NES::Util::as<Numeric>(otherDataType)); newDataType.has_value())
+    {
+        return newDataType.value();
+    }
+    throw DifferentFieldTypeExpected("Cannot join {} and {}", toString(), otherDataType->toString());
 }
 
 std::string Integer::toString()
 {
-    return fmt::format("INTEGER({} bits {})", bits, lowerBound == 0 ? "unsigned" : "signed");
+    return fmt::format("{}{}", lowerBound == 0 ? "UINT" : "INT", std::to_string(bits));
 }
 
 }

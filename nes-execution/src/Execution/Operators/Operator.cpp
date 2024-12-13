@@ -69,4 +69,4 @@ Operator::~Operator()
 {
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

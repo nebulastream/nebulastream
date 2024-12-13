@@ -15,26 +15,27 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Sources/SourceCSV.hpp>
-#include <Sources/SourceTCP.hpp>
+#include <Sinks/FileSink.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Common.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/core.h>
+#include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-
-#include <Util/Common.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/VariableSizedDataPhysicalType.hpp>
 
 namespace NES::IntegrationTestUtil
 {
@@ -63,7 +64,7 @@ namespace NES::IntegrationTestUtil
     {
         std::vector<PhysicalTypePtr> retVector;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (const auto& field : schema->fields)
+        for (const auto& field : *schema)
         {
             auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
             retVector.push_back(physicalField);
@@ -75,7 +76,7 @@ namespace NES::IntegrationTestUtil
     const auto maxTuplesPerBuffer = bufferProvider.getBufferSize() / schema->getSchemaSizeInBytes();
     auto tupleCount = 0UL;
     auto tupleBuffer = bufferProvider.getBufferBlocking();
-    const auto numberOfSchemaFields = schema->fields.size();
+    const auto numberOfSchemaFields = schema->getFieldCount();
     const auto physicalTypes = getPhysicalTypes(schema);
 
     uint64_t sequenceNumber = 0;
@@ -83,7 +84,7 @@ namespace NES::IntegrationTestUtil
     for (std::string line; std::getline(file, line);)
     {
         auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
-        auto values = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
+        auto values = Util::splitWithStringDelimiter<std::string>(line, ",");
 
         /// iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++)
@@ -100,8 +101,8 @@ namespace NES::IntegrationTestUtil
         {
             tupleBuffer.setNumberOfTuples(tupleCount);
             tupleBuffer.setOriginId(OriginId(originId));
-            tupleBuffer.setSequenceNumber(++sequenceNumber);
-            tupleBuffer.setWatermark(watermarkTS);
+            tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
+            tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
             NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
@@ -115,8 +116,8 @@ namespace NES::IntegrationTestUtil
     {
         tupleBuffer.setNumberOfTuples(tupleCount);
         tupleBuffer.setOriginId(OriginId(originId));
-        tupleBuffer.setSequenceNumber(++sequenceNumber);
-        tupleBuffer.setWatermark(watermarkTS);
+        tupleBuffer.setSequenceNumber(SequenceNumber(++sequenceNumber));
+        tupleBuffer.setWatermark(Runtime::Timestamp(watermarkTS));
         recordBuffers.emplace_back(tupleBuffer);
         NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
     }
@@ -132,8 +133,7 @@ void writeFieldValueToTupleBuffer(
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto fields = schema->fields;
-    auto dataType = fields[schemaFieldIndex]->getDataType();
+    auto dataType = schema->getFieldByIndex(schemaFieldIndex)->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 
     if (inputString.empty())
@@ -143,61 +143,51 @@ void writeFieldValueToTupleBuffer(
     /// TODO #371 replace with csv parsing library
     try
     {
-        if (physicalType->isBasicType())
+        if (auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
         {
-            auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
             switch (basicPhysicalType->nativeType)
             {
                 case NES::BasicPhysicalType::NativeType::INT_8: {
-                    auto value = static_cast<int8_t>(std::stoi(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int8_t>(*Util::from_chars<int8_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_16: {
-                    auto value = static_cast<int16_t>(std::stol(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(value);
-
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int16_t>(*Util::from_chars<int16_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_32: {
-                    auto value = static_cast<int32_t>(std::stol(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int32_t>(*Util::from_chars<int32_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::INT_64: {
-                    auto value = static_cast<int64_t>(std::stoll(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<int64_t>(*Util::from_chars<int64_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_8: {
-                    auto value = static_cast<uint8_t>(std::stoi(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint8_t>(*Util::from_chars<uint8_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_16: {
                     auto value = static_cast<uint16_t>(std::stoul(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint16_t>(*Util::from_chars<uint16_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_32: {
-                    auto value = static_cast<uint32_t>(std::stoul(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint32_t>(*Util::from_chars<uint32_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UINT_64: {
-                    auto value = static_cast<uint64_t>(std::stoull(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<uint64_t>(*Util::from_chars<uint64_t>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::FLOAT: {
-                    Util::findAndReplaceAll(inputString, ",", ".");
-                    auto value = static_cast<float>(std::stof(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<float>(value);
+                    auto optValue = Util::from_chars<float>(Util::replaceAll(inputString, ",", "."));
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<float>(*optValue);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::DOUBLE: {
-                    auto value = static_cast<double>(std::stod(inputString));
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<double>(value);
+                    auto optValue = Util::from_chars<double>(Util::replaceAll(inputString, ",", "."));
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<double>(*optValue);
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
@@ -213,26 +203,14 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    ///verify that a valid bool was transmitted (valid{true,false,0,1})
-                    bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
-                    if (!value)
-                    {
-                        if (strcasecmp(inputString.c_str(), "false") && strcasecmp(inputString.c_str(), "0"))
-                        {
-                            NES_FATAL_ERROR(
-                                "Parser::writeFieldValueToTupleBuffer: Received non boolean value for BOOLEAN field: {}",
-                                inputString.c_str());
-                            throw std::invalid_argument("Value " + inputString + " is not a boolean");
-                        }
-                    }
-                    tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(value);
+                    tupleBuffer[tupleCount][schemaFieldIndex].write<bool>(*Util::from_chars<bool>(inputString));
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                     NES_FATAL_ERROR("Parser::writeFieldValueToTupleBuffer: Field Type UNDEFINED");
             }
         }
-        else if (physicalType->isTextType())
+        else if (NES::Util::instanceOf<VariableSizedDataPhysicalType>(physicalType))
         {
             NES_TRACE(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
@@ -241,12 +219,8 @@ void writeFieldValueToTupleBuffer(
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferProvider);
         }
         else
-        { /// char array(string) case
-            /// obtain pointer from buffer to fill with content via strcpy
-            char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
-            /// remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
-            /// improve behavior with json library
-            strcpy(value, inputString.c_str());
+        {
+            throw NotImplemented();
         }
     }
     catch (const std::exception& e)
@@ -260,7 +234,7 @@ SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = queryPlan.mutable_operatormap()->at(rootOperatorId);
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkDetails>())
+    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkLogicalOperator>())
         << "Redirection expects the single root operator to be a sink operator";
     return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
 }
@@ -321,6 +295,17 @@ QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut)
     request.set_queryid(queryId.getRawValue());
     EXPECT_TRUE(uut.RequestQuerySummary(&context, &request, &reply).ok());
     return reply;
+}
+
+void querySummaryFailure(QueryId queryId, GRPCServer& uut, grpc::StatusCode statusCode)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    auto response = uut.RequestQuerySummary(&context, &request, &reply);
+    EXPECT_FALSE(response.ok()) << "Expected QuerySummary request to fail";
+    EXPECT_EQ(response.error_code(), statusCode);
 }
 
 QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
@@ -434,21 +419,29 @@ bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view
     return true;
 }
 
-void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName)
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& filePathNew)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
     auto& rootOperator = decomposedQueryPlan.mutable_operatormap()->at(rootOperatorId);
 
-    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkDetails>())
+    EXPECT_TRUE(rootOperator.details().Is<SerializableOperator_SinkLogicalOperator>())
         << "Redirection expects the single root operator to be a sink operator";
-    const auto deserializedSinkperator = OperatorSerializationUtil::deserializeOperator(rootOperator);
-    auto descriptor
-        = NES::Util::as_if<FileSinkDescriptor>(NES::Util::as<SinkLogicalOperator>(deserializedSinkperator)->getSinkDescriptor());
-    if (descriptor)
+    const auto deserializedSinkOperator = NES::Util::as<SinkLogicalOperator>(OperatorSerializationUtil::deserializeOperator(rootOperator));
+    auto descriptor = NES::Util::as<SinkLogicalOperator>(deserializedSinkOperator)->getSinkDescriptorRef();
+    if (descriptor.sinkType == Sinks::FileSink::NAME)
     {
-        descriptor->setFileName(fileName);
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSinkperator);
+        const auto deserializedOutputSchema = SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
+        auto configCopy = descriptor.config;
+        configCopy.at(Sinks::ConfigParametersFile::FILEPATH) = filePathNew;
+        auto sinkDescriptorUpdated
+            = std::make_unique<Sinks::SinkDescriptor>(descriptor.sinkType, std::move(configCopy), descriptor.addTimestamp);
+        sinkDescriptorUpdated->schema = deserializedOutputSchema;
+        auto sinkLogicalOperatorUpdated
+            = std::make_shared<SinkLogicalOperator>(deserializedSinkOperator->sinkName, deserializedSinkOperator->getId());
+        sinkLogicalOperatorUpdated->sinkDescriptor = std::move(sinkDescriptorUpdated);
+        sinkLogicalOperatorUpdated->setOutputSchema(deserializedOutputSchema);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(sinkLogicalOperatorUpdated);
 
         /// Reconfigure the original operator id, and childrenIds because deserialization/serialization changes them.
         serializedOperator.set_operatorid(rootOperator.operatorid());
@@ -458,27 +451,26 @@ void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, c
     }
 }
 
-void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+void replaceInputFileInFileSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
 {
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
-        google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::SourceCSV::NAME)
+            if (sourceDescriptor.sourceType == "File")
             {
                 /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct file path.
                 Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
-                configUpdated.at(Sources::ConfigParametersCSV::FILEPATH) = newInputFileName;
+                configUpdated.at("filePath") = newInputFileName;
                 auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                     sourceDescriptor.schema,
                     sourceDescriptor.logicalSourceName,
                     sourceDescriptor.sourceType,
-                    sourceDescriptor.inputFormat,
+                    sourceDescriptor.parserConfig,
                     std::move(configUpdated));
 
                 const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
@@ -495,30 +487,29 @@ void replaceInputFileInSourceCSVs(SerializableDecomposedQueryPlan& decomposedQue
     }
 }
 
-void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInTCPSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
 {
-    int queryPlanSourceTcpCounter = 0;
+    int queryPlanTCPSourceCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
     {
-        google::protobuf::uint64 key = pair.first;
         auto& value = pair.second; /// Note: non-const reference
         if (value.details().Is<SerializableOperator_SourceDescriptorLogicalOperator>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             const auto sourceDescriptor
                 = NES::Util::as<SourceDescriptorLogicalOperator>(deserializedSourceOperator)->getSourceDescriptorRef();
-            if (sourceDescriptor.sourceType == Sources::SourceTCP::NAME)
+            if (sourceDescriptor.sourceType == "TCP")
             {
-                if (sourceNumber == queryPlanSourceTcpCounter)
+                if (sourceNumber == queryPlanTCPSourceCounter)
                 {
                     /// We violate the immutability constrain of the SourceDescriptor here to patch in the correct port.
                     Configurations::DescriptorConfig::Config configUpdated = sourceDescriptor.config;
-                    configUpdated.at(Sources::ConfigParametersTCP::PORT) = static_cast<uint32_t>(mockTcpServerPort);
+                    configUpdated.at("socketPort") = static_cast<uint32_t>(mockTcpServerPort);
                     auto sourceDescriptorUpdated = std::make_unique<Sources::SourceDescriptor>(
                         sourceDescriptor.schema,
                         sourceDescriptor.logicalSourceName,
                         sourceDescriptor.sourceType,
-                        sourceDescriptor.inputFormat,
+                        sourceDescriptor.parserConfig,
                         std::move(configUpdated));
 
                     const auto sourceDescriptorLogicalOperatorUpdated = std::make_shared<SourceDescriptorLogicalOperator>(
@@ -532,7 +523,7 @@ void replacePortInSourceTCPs(SerializableDecomposedQueryPlan& decomposedQueryPla
                     swap(value, serializedOperator);
                     break;
                 }
-                ++queryPlanSourceTcpCounter;
+                ++queryPlanTCPSourceCounter;
             }
         }
     }
@@ -545,7 +536,7 @@ std::string getUniqueTestIdentifier()
     const testing::TestInfo* const test_info = testing::UnitTest::GetInstance()->current_test_info();
 
     auto uniqueTestIdentifier
-        = std::format("{}_{}_{}", std::string(test_info->test_suite_name()), std::string(test_info->name()), timestamp);
+        = fmt::format("{}_{}_{}", std::string(test_info->test_suite_name()), std::string(test_info->name()), timestamp);
     std::ranges::replace(uniqueTestIdentifier, '/', '_');
     return uniqueTestIdentifier;
 }

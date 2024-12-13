@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/OptionVisitor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/node/parse.h>
@@ -68,7 +69,7 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
     }
 }
 
-void BaseConfiguration::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+void BaseConfiguration::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     auto optionMap = getOptionMap();
 
@@ -112,9 +113,9 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
     }
 }
 
-void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams)
+void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::unordered_map<std::string, std::string>& inputParams)
 {
-    std::map<std::string, std::map<std::string, std::string>> groupedIdentifiers;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> groupedIdentifiers;
     for (auto parm = inputParams.begin(); parm != inputParams.end(); ++parm)
     {
         auto identifier = parm->first;
@@ -170,9 +171,23 @@ void BaseConfiguration::clear()
     }
 };
 
-std::map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
+void BaseConfiguration::accept(OptionVisitor& visitor)
 {
-    std::map<std::string, Configurations::BaseOption*> optionMap;
+    if (!name.empty())
+    {
+        visitor.visitConcrete(getName(), getDescription(), "");
+    }
+    for (auto& option : getOptions())
+    {
+        visitor.push();
+        option->accept(visitor);
+        visitor.pop();
+    }
+};
+
+std::unordered_map<std::string, Configurations::BaseOption*> BaseConfiguration::getOptionMap()
+{
+    std::unordered_map<std::string, Configurations::BaseOption*> optionMap;
     for (auto* option : getOptions())
     {
         auto identifier = option->getName();
@@ -243,4 +258,4 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
     return true;
 }
 
-} /// namespace NES::Configurations
+}

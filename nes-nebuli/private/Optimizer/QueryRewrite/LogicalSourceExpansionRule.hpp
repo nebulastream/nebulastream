@@ -36,9 +36,9 @@ namespace Catalogs::Source
 {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-} /// namespace Catalogs::Source
+}
 
-} /// namespace NES
+}
 
 namespace NES::Optimizer
 {
@@ -142,4 +142,4 @@ private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 };
-} /// namespace NES::Optimizer
+}

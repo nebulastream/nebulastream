@@ -12,11 +12,7 @@
 
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
 
-# We don't use libc++ if it is either explicitly forbidden via the `USE_LIBCXX_IF_AVAILABLE=OFF` or we are using
-# a local installation of mlir which is most-likely not compiled with libc++
-cmake_dependent_option(USE_LIBCXX "Uses Libc++" ON "USE_LIBCXX_IF_AVAILABLE; NOT USE_LOCAL_MLIR" OFF)
-
-if (USE_LIBCXX)
+if (USE_LIBCXX_IF_AVAILABLE)
     # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
     execute_process(
             COMMAND ${CMAKE_COMMAND} -E echo "#include<ciso646> \n int main(){return 0;}"
@@ -36,6 +32,8 @@ if (LIBCXX_CHECK_RESULT EQUAL 0 AND ${USE_LIBCXX_IF_AVAILABLE})
     add_compile_options(-stdlib=libc++)
     # Currently C++20 threading features are hidden behind the feature flag
     add_compile_options(-fexperimental-library)
+    # Enable Libc++ hardening mode when compiling with debug
+    add_compile_definitions($<$<CONFIG:DEBUG>:_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG>)
     add_link_options(-lc++)
 else ()
     message(STATUS "Not Using Libc++")

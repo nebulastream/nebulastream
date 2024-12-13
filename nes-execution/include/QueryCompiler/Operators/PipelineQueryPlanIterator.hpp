@@ -85,4 +85,4 @@ public:
 private:
     PipelineQueryPlanPtr queryPlan;
 };
-} /// namespace NES::QueryCompilation
+}

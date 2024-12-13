@@ -58,7 +58,7 @@ bool NodeFunctionFloor::equal(NodePtr const& rhs) const
 std::string NodeFunctionFloor::toString() const
 {
     std::stringstream ss;
-    ss << "FLOOR(" << children[0]->toString() << ")";
+    ss << "FLOOR(" << *children[0] << ")";
     return ss.str();
 }
 

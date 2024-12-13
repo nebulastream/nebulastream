@@ -16,8 +16,8 @@
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Watermark/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Watermark/TimeFunction.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -31,10 +31,10 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     const auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    const auto currentWatermark = executionCtx.getWatermarkTs();
+    const auto currentWatermark = executionCtx.watermarkTs;
     if (tsField > currentWatermark)
     {
-        executionCtx.setWatermarkTs(tsField);
+        executionCtx.watermarkTs = tsField;
     }
 }
 
@@ -43,4 +43,4 @@ void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, R
     child->execute(executionCtx, record);
 }
 
-} /// namespace NES::Runtime::Execution::Operators
+}

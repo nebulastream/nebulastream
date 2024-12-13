@@ -15,8 +15,7 @@ add_source_files(nes-execution
         PhysicalOperator.cpp
         PhysicalUnaryOperator.cpp
         PhysicalBinaryOperator.cpp
-        PhysicalSinkOperator.cpp
-        PhysicalFilterOperator.cpp
+        PhysicalSelectionOperator.cpp
         PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
@@ -27,6 +26,8 @@ add_source_files(nes-execution
         PhysicalEmitOperator.cpp
         PhysicalExternalOperator.cpp
 )
+
+add_subdirectory(Joining)
 
 add_subdirectory(Windowing)
 

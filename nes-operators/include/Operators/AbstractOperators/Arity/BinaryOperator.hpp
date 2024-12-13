@@ -100,13 +100,9 @@ public:
      */
     std::vector<OriginId> getOutputOriginIds() const override;
 
-    /**
-     * @brief returns the string representation of the class
-     * @return the string representation of the class
-     */
+protected:
     std::string toString() const override;
 
-protected:
     SchemaPtr leftInputSchema = Schema::create();
     SchemaPtr rightInputSchema = Schema::create();
     SchemaPtr outputSchema = Schema::create();
@@ -115,4 +111,4 @@ protected:
     std::vector<OriginId> rightInputOriginIds;
 };
 
-} /// namespace NES
+}

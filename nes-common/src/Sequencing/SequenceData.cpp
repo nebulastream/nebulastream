@@ -12,16 +12,18 @@
     limitations under the License.
 */
 
+#include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 
 namespace NES
 {
 SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk)
-    : sequenceNumber(sequenceNumber), chunkNumber(chunkNumber), lastChunk(lastChunk)
+    : sequenceNumber(sequenceNumber.getRawValue()), chunkNumber(chunkNumber.getRawValue()), lastChunk(lastChunk)
 {
 }
 
-SequenceData::SequenceData() : sequenceNumber(INVALID_SEQ_NUMBER), chunkNumber(INVALID_CHUNK_NUMBER), lastChunk(false) {};
+SequenceData::SequenceData()
+    : sequenceNumber(INVALID_SEQ_NUMBER.getRawValue()), chunkNumber(INVALID_CHUNK_NUMBER.getRawValue()), lastChunk(false) {};
 
 [[nodiscard]] std::string SequenceData::toString() const
 {
@@ -58,4 +60,4 @@ bool SequenceData::operator!=(const SequenceData& other) const
     return !(*this == other);
 }
 
-} /// namespace NES
+}

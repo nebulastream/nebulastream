@@ -20,6 +20,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -39,9 +40,11 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionFieldAssignment>(rhs))
     {
-        auto otherFieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(rhs);
+        const auto otherFieldAssignment = NES::Util::as<NodeFunctionFieldAssignment>(rhs);
         /// a field assignment function has always two children.
-        return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
+        const bool fieldsMatch = getField()->equal(otherFieldAssignment->getField());
+        const bool assignmentsMatch = getAssignment()->equal(otherFieldAssignment->getAssignment());
+        return fieldsMatch and assignmentsMatch;
     }
     return false;
 }
@@ -49,7 +52,7 @@ bool NodeFunctionFieldAssignment::equal(NodePtr const& rhs) const
 std::string NodeFunctionFieldAssignment::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "=" << children[1]->toString();
+    ss << "NodeFunctionFieldAssignment(" << *children[0] << "=" << *children[1] << ")";
     return ss.str();
 }
 
@@ -73,11 +76,11 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
 
     ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
         const auto stamp = getAssignment()->getStamp()->join(field->getStamp());
-        field->updateFieldName(existingField->getName());
+        field->updateFieldName(existingField.value()->getName());
         field->setStamp(stamp);
     }
     else
@@ -94,15 +97,10 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
         }
     }
 
-    if (field->getStamp()->isUndefined())
+    if (NES::Util::instanceOf<Undefined>(field->getStamp()))
     {
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
-    }
-    else
-    {
-        /// the field already has a type, check if it is compatible with the assignment
-        field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
 NodeFunctionPtr NodeFunctionFieldAssignment::deepCopy()

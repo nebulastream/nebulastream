@@ -19,6 +19,9 @@ docker container, which prevents permission issues. Building a local image will 
 image which matches the current set of dependencies (based on a hash). If you are using docker in rootless mode the
 user inside the container will be root.
 
+If no development image matches the current dependency hash, you can build the development environment locally (using the
+`-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
+
 ```shell
 ./scripts/install-local-docker-environment.sh
 ```
@@ -60,6 +63,18 @@ docker run \
     -v $(pwd):$(pwd) \
      nebulastream/nes-development:local \
      ctest --test-dir build-docker -j
+```
+
+### Modifying dependencies
+
+When using the docker images, it is not straightforward to edit the dependencies, as a new docker image would need to be
+created. Currently, the simplest solution is to create a pull request which would run the docker build on the
+nebulastream
+CI and provide a branch specific version of the development image. The development image with changed dependencies is
+available via:
+
+```shell
+docker pull nebulastream/nes-development:branch-name
 ```
 
 ### Dependencies via VCPKG
@@ -139,16 +154,47 @@ remove the vcpkg feature responsible for building `MLIR`. Unless the `MLIR` back
 CMake expects to be able to locate `MLIR` somewhere on the system.
 
 The current recommendation is to use the
-legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/v18_11)
+legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/vmlir-sanitized)
 and pass the `-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang`
 
 ```bash
 cmake -B build \
-  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
-  -DUSE_LOCAL_MLIR=ON \
-  -DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang
+-DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+-DUSE_LOCAL_MLIR=ON \
+-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-libc++-x64-None/clang 
 ```
 
-It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
-sanitizers
-also require llvm to be built with sanitization enabled which is not the case for the pre-built version.
+Ensure your locally installed version of MLIR uses the correct standard library and sanitizers. The default build uses
+libc++ and no sanitizers. Mismatches between the standard library will appear as linker errors during the build, while
+mismatched sanitizers might cause them not to work or produce false positives.
+
+## Standard Libraries
+
+In its current state, NebulaStream supports both libstdc++ and libc++. Both libraries offer compelling reasons to use
+one over the other. For local debugging, CLion offers custom type renderers for stl types (e.g., vector and maps).
+Libc++
+frees us from being tied to a hard-to-change libstdc++ distributed with GCC. Additionally, libc++ enables the use
+of a hardened library version.
+
+Effectively using both libraries makes NebulaStream more robust by enabling tooling for both libraries. This flexibility
+means we are not locked into a specific standard library, allowing us to take advantage of tools and debugging features
+for both libstdc++ and libc++. It also reduces the likelihood of encountering undefined behavior or
+implementation-specific details, which can complicate development and hinder portability. By leveraging both libraries,
+we improve the potential for porting NebulaStream to smaller embedded IoT devices.
+
+However, using both libraries comes with trade-offs. It limits us to the intersection of the features and behavior
+supported by both libraries. Additionally, the CI ensures that
+code compiles and runs successfully with libstdc++ and libc++ to maintain this dual compatibility.
+
+### Compiling with Libstdc++
+
+By default, NebulaStream attempts to build with libc++ if it is available on the host system (which is the case for all
+docker images).
+Using the cmake flag `-DUSE_LIBCXX_IF_AVAILABLE=OFF` disables the check and fallback to the default standard library on
+the system.
+
+If you intend to use the docker image with libstdc++ you can get the development image by pulling
+
+```shell
+docker pull nebulastream/nes-development:latest-libstdcxx
+```

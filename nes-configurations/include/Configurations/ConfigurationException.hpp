@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-#include "Exceptions/RuntimeException.hpp"
+#include <Exceptions/RuntimeException.hpp>
 namespace NES::Configurations
 {
 
@@ -35,4 +35,4 @@ public:
         std::source_location location = std::source_location::current());
 };
 
-} /// namespace NES::Configurations
+}

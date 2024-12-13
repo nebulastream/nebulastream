@@ -26,7 +26,7 @@ AttributeField::AttributeField(std::string name, DataTypePtr dataType) : name(st
 
 AttributeFieldPtr AttributeField::create(const std::string& name, const DataTypePtr& dataType)
 {
-    return std::make_shared<AttributeField>(name, dataType);
+    return std::make_shared<AttributeField>(AttributeField(name, dataType));
 }
 
 const std::string& AttributeField::getName() const
@@ -71,9 +71,9 @@ uint64_t AttributeField::hash() const
     return hashValue;
 }
 
-AttributeFieldPtr AttributeField::copy() const
+AttributeFieldPtr AttributeField::deepCopy() const
 {
     return create(name, dataType);
 }
 
-} /// namespace NES
+}

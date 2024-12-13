@@ -30,14 +30,13 @@
 #include <Functions/NodeFunctionConstantValue.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalSelectionOperator.hpp>
+#include <Operators/Operator.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/ValueTypes/ArrayValue.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Optimizer
 {
@@ -49,16 +48,16 @@ AttributeSortRulePtr AttributeSortRule::create()
 
 QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 {
-    auto filterOperators = queryPlan->getOperatorByType<LogicalFilterOperator>();
-    for (auto const& filterOperator : filterOperators)
+    auto selectionOperators = queryPlan->getOperatorByType<LogicalSelectionOperator>();
+    for (auto const& selectionOperator : selectionOperators)
     {
-        auto predicate = filterOperator->getPredicate();
+        auto predicate = selectionOperator->getPredicate();
         auto updatedPredicate = sortAttributesInFunction(predicate);
-        auto updatedFilter = LogicalOperatorFactory::createFilterOperator(updatedPredicate);
-        updatedFilter->setInputSchema(filterOperator->getInputSchema()->copy());
+        auto updatedFilter = std::make_shared<LogicalSelectionOperator>(updatedPredicate, getNextOperatorId());
+        updatedFilter->setInputSchema(selectionOperator->getInputSchema()->copy());
         Util::as_if<LogicalOperator>(updatedFilter)
-            ->setOutputSchema(Util::as_if<LogicalOperator>(filterOperator)->getOutputSchema()->copy());
-        filterOperator->replace(updatedFilter);
+            ->setOutputSchema(Util::as_if<LogicalOperator>(selectionOperator)->getOutputSchema()->copy());
+        selectionOperator->replace(updatedFilter);
     }
 
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
@@ -66,7 +65,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
     {
         auto mapFunction = mapOperator->getMapFunction();
         auto updatedMapFunction = Util::as<NodeFunctionFieldAssignment>(sortAttributesInFunction(mapFunction));
-        auto updatedMap = LogicalOperatorFactory::createMapOperator(updatedMapFunction);
+        auto updatedMap = std::make_shared<LogicalMapOperator>(updatedMapFunction, getNextOperatorId());
         updatedMap->setInputSchema(mapOperator->getInputSchema()->copy());
         Util::as_if<LogicalOperator>(updatedMap)->setOutputSchema(Util::as_if<LogicalOperator>(mapOperator)->getOutputSchema()->copy());
         mapOperator->replace(updatedMap);
@@ -76,7 +75,7 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan)
 
 NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFunctionPtr function)
 {
-    NES_DEBUG("Sorting attributed for input function {}", function->toString());
+    NES_DEBUG("Sorting attributed for input function {}", *function);
     if (Util::instanceOf<NES::LogicalNodeFunction>(function))
     {
         return sortAttributesInLogicalFunctions(function);
@@ -97,13 +96,12 @@ NES::NodeFunctionPtr AttributeSortRule::sortAttributesInFunction(NES::NodeFuncti
     {
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the function: " + function->toString());
-    return nullptr;
+    throw NotImplemented("No conversion to Z3 function implemented for the function: ", *function);
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFunctionPtr function)
 {
-    NES_DEBUG("Create Z3 function for arithmetical function {}", function->toString());
+    NES_DEBUG("Create Z3 function for arithmetical function {}", *function);
     if (Util::instanceOf<NES::NodeFunctionAdd>(function))
     {
         auto addNodeFunction = Util::as<NES::NodeFunctionAdd>(function);
@@ -135,9 +133,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NES::NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NES::NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -146,9 +142,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -244,9 +238,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -255,9 +247,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -320,13 +310,13 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInArithmeticalFunctions(NodeFun
         sortAttributesInFunction(right);
         return function;
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: " + function->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function implemented for the arithmetical function node: ", *function);
     return nullptr;
 }
 
 NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFunctionPtr& function)
 {
-    NES_DEBUG("Create Z3 function node for logical function {}", function->toString());
+    NES_DEBUG("Create Z3 function node for logical function {}", *function);
     if (Util::instanceOf<NodeFunctionAnd>(function))
     {
         auto andNodeFunction = Util::as<NodeFunctionAnd>(function);
@@ -359,9 +349,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -370,9 +358,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -457,9 +443,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(lhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    leftValue = basicValueType->value;
+                    leftValue = Util::as<NodeFunctionConstantValue>(lhsField)->getConstantValue();
                 }
                 else
                 {
@@ -468,9 +452,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
 
                 if (Util::instanceOf<NodeFunctionConstantValue>(rhsField))
                 {
-                    auto constantValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
-                    auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                    rightValue = basicValueType->value;
+                    rightValue = Util::as<NodeFunctionConstantValue>(rhsField)->getConstantValue();
                 }
                 else
                 {
@@ -618,7 +600,7 @@ NodeFunctionPtr AttributeSortRule::sortAttributesInLogicalFunctions(const NodeFu
         auto updatedChildFunction = sortAttributesInFunction(childFunction);
         return NodeFunctionNegate::create(updatedChildFunction);
     }
-    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: " + function->toString());
+    NES_THROW_RUNTIME_ERROR("No conversion to Z3 function possible for the logical function node: ", *function);
     return nullptr;
 }
 
@@ -671,18 +653,7 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(NodeFunctio
     {
         return Util::as<NodeFunctionFieldAccess>(startPoint)->getFieldName();
     }
-    const ValueTypePtr& constantValue = Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
-    if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType)
-    {
-        return basicValueType->value;
-    }
-
-    if (auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(constantValue); arrayValueType)
-    {
-        return std::accumulate(arrayValueType->values.begin(), arrayValueType->values.end(), std::string());
-    }
-
-    NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
+    return Util::as<NodeFunctionConstantValue>(startPoint)->getConstantValue();
 }
 
-} /// namespace NES::Optimizer
+}

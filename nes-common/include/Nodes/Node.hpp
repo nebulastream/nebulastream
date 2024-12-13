@@ -15,9 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 #include <Util/Common.hpp>
+#include <fmt/base.h>
+#include <fmt/ostream.h>
 
 namespace NES
 {
@@ -271,18 +274,6 @@ public:
     bool insertBetweenThisAndChildNodes(NodePtr const& newNode);
 
     /**
-     * @brief To string method for the current node.
-     * @return string
-     */
-    [[nodiscard]] virtual std::string toString() const = 0;
-
-    /**
-     * @brief To multiline string method for the current node.
-     * @return string
-     */
-    virtual std::vector<std::string> toMultilineString();
-
-    /**
      * @brief check if a node is the child or grandchild of the given root node
      * @param root the root node
      * @param nodeToFind the node to find
@@ -296,7 +287,7 @@ public:
      */
     std::vector<NodePtr> getAndFlattenAllAncestors();
 
-    friend std::ostream& operator<<(std::ostream& os, const NodePtr& node);
+    friend std::ostream& operator<<(std::ostream& os, const Node& node);
 
 protected:
     /**
@@ -309,6 +300,12 @@ protected:
      *        in this vector
      */
     std::vector<NodePtr> children{};
+
+    /**
+     * @brief To string method for the current node.
+     * @return string
+     */
+    [[nodiscard]] virtual std::string toString() const = 0;
 
 private:
     /**
@@ -382,4 +379,16 @@ private:
      */
     std::string stackTrace;
 };
-} /// namespace NES
+inline std::ostream& operator<<(std::ostream& os, const Node& node)
+{
+    return os << node.toString();
+}
+}
+/**
+ * @brief Implements formatting via fmt::format("{}") for all classes inheriting from Node by using operator<<.
+ */
+template <typename T>
+requires(std::is_base_of_v<NES::Node, T>)
+struct fmt::formatter<T> : fmt::ostream_formatter
+{
+};

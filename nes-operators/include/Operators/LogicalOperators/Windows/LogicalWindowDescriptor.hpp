@@ -28,51 +28,18 @@ namespace NES::Windowing
 class LogicalWindowDescriptor
 {
 public:
-    /**
-     * @brief This constructor constructs a logical window definition
-     * @param keys keys on which the window is constructed
-     * @param windowAggregations aggregationFunctions
-     * @param windowType type of the window
-     * @param distChar
-     * @param numberOfInputEdges
-     * @param window trigger policy
-     * @param window action
-     * @param allowedLateness
-     */
     explicit LogicalWindowDescriptor(
         const std::vector<NodeFunctionFieldAccessPtr>& keys,
         std::vector<WindowAggregationDescriptorPtr> windowAggregation,
-        WindowTypePtr windowType,
-        uint64_t allowedLateness);
+        WindowTypePtr windowType);
 
-    /**
-     * @brief Create a new window definition for a global window
-     * @param windowAggregations
-     * @param windowType
-     * @param window trigger policy
-     * @param numberOfInputEdges
-     * @param window action
-     * @param allowedLateness
-     * @return Window Definition
-     */
-    static std::shared_ptr<LogicalWindowDescriptor> create(
-        const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType, uint64_t allowedLateness);
+    static std::shared_ptr<LogicalWindowDescriptor>
+    create(const std::vector<WindowAggregationDescriptorPtr>& windowAggregations, const WindowTypePtr& windowType);
 
-    /**
-     * @brief Create a new window definition for a keyed window
-     * @param keys
-     * @param windowAggregation
-     * @param windowType
-     * @param window trigger policy
-     * @param window action
-     * @param allowedLateness
-     * @return Window Definition
-     */
     static std::shared_ptr<LogicalWindowDescriptor> create(
-        std::vector<NodeFunctionFieldAccessPtr> keys,
+        const std::vector<NodeFunctionFieldAccessPtr>& keys,
         std::vector<WindowAggregationDescriptorPtr> windowAggregation,
-        const WindowTypePtr& windowType,
-        uint64_t allowedLateness);
+        const WindowTypePtr& windowType);
 
     /**
      * @brief Returns true if this window is keyed.
@@ -174,7 +141,6 @@ private:
     uint64_t numberOfInputEdges = 0;
     std::vector<OriginId> inputOriginIds;
     OriginId originId = INVALID_ORIGIN_ID;
-    uint64_t allowedLateness;
 };
 using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
 }

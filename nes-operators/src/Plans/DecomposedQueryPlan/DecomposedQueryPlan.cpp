@@ -13,7 +13,9 @@
 */
 
 #include <algorithm>
+#include <memory>
 #include <queue>
+#include <unordered_set>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -22,20 +24,11 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
 {
-
-DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId)
-{
-    return std::make_shared<DecomposedQueryPlan>(queryId, workerId);
-}
-
-DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
-{
-    return std::make_shared<DecomposedQueryPlan>(queryId, workerId, rootOperators);
-}
 
 DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : queryId(queryId), workerId(workerId)
 {
@@ -185,14 +178,11 @@ bool DecomposedQueryPlan::replaceRootOperator(const OperatorPtr& oldRoot, const 
 
 void DecomposedQueryPlan::appendOperatorAsNewRoot(const OperatorPtr& operatorNode)
 {
-    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", operatorNode->toString());
+    NES_DEBUG("QueryPlan: Appending operator {} as new root of the plan.", *operatorNode);
     for (const auto& rootOperator : rootOperators)
     {
-        if (!rootOperator->addParent(operatorNode))
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "QueryPlan: Unable to add operator " + operatorNode->toString() + " as parent to " + rootOperator->toString());
-        }
+        const auto result = rootOperator->addParent(operatorNode);
+        INVARIANT(result, "QueryPlan: Unable to add operator {} as parent to {}", *operatorNode, *rootOperator);
     }
     NES_DEBUG("QueryPlan: Clearing current root operators.");
     rootOperators.clear();
@@ -298,7 +288,7 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
     operatorIdToOperatorMap.clear();
 
     /// Create the duplicated decomposed query plan
-    auto copiedDecomposedQueryPlan = DecomposedQueryPlan::create(queryId, workerId, duplicateRootOperators);
+    auto copiedDecomposedQueryPlan = std::make_shared<DecomposedQueryPlan>(queryId, workerId, duplicateRootOperators);
     copiedDecomposedQueryPlan->setState(currentState);
     return copiedDecomposedQueryPlan;
 }
@@ -319,4 +309,4 @@ WorkerId DecomposedQueryPlan::getWorkerId() const
     return workerId;
 }
 
-} /// namespace NES
+}

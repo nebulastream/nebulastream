@@ -37,62 +37,58 @@ message NodeLocation {
   uint32 port = 3;
 }
 
-enum InputFormat{
-  CSV = 0;
+message ParserConfig {
+  string type = 1;
+  string tupleDelimiter = 2;
+  string fieldDelimiter = 3;
 };
+
+message SerializableEnumWrapper {
+    string value = 1;
+}
+
+message SerializableVariantDescriptor {
+  oneof value {
+    int32 int_value = 1;
+    uint32 uint_value = 2;
+    bool bool_value = 3;
+    fixed32 char_value = 4;  // Represents a single byte (0-255). We need a fixed32 as protobuf does only support fixed32/fixed64.
+    float float_value = 5;
+    double double_value = 6;
+    string string_value = 7;
+    SerializableEnumWrapper enum_value = 8;
+  }
+}
 
 /*
 The serializable wrapper definition for operator nodes
  */
-message SerializableOperator{
+message SerializableOperator {
 
   message SourceDescriptorLogicalOperator {
-    /* Source Descriptor Helper Messages */
-    message EnumWrapper {
-        string value = 1;
-    }
-    message VariantSourceDescriptor {
-      oneof value {
-        int32 int_value = 1;
-        uint32 uint_value = 2;
-        bool bool_value = 3;
-        fixed32 char_value = 4;  // Represents a single byte (0-255)
-        float float_value = 5;
-        double double_value = 6;
-        string string_value = 7;
-        EnumWrapper enum_value = 8;
-      }
-    }
 
     /* Source Descriptor Definition */
     message SourceDescriptor {
         SerializableSchema sourceSchema = 1;
         string logicalSourceName = 2;
         string sourceType = 3;
-        InputFormat inputFormat = 4;
-        map<string, VariantSourceDescriptor> config = 5;
+        ParserConfig parserConfig = 4;
+        map<string, SerializableVariantDescriptor> config = 5;
     }
 
     uint64 sourceOriginId = 1;
     SourceDescriptor sourceDescriptor = 2;
   }
 
-  /**
-  Sink Details contains properties for the sink operator, such as the sink descriptor
-  */
-  message SinkDetails {
-    message SerializableFileSinkDescriptor {
-      string filePath = 1;
-      bool append = 2;
-      string sinkFormat = 3;
-      bool addTimestamp = 4;
+  message SinkLogicalOperator {
+    message SerializableSinkDescriptor {
+        SerializableSchema sinkSchema = 1;
+        string sinkType = 2;
+        bool addTimestamp = 3;
+        map<string, SerializableVariantDescriptor> config = 4;
     }
 
-    message SerializablePrintSinkDescriptor {
-    }
-
-    google.protobuf.Any sinkDescriptor = 1;
-    uint64 numberOfOriginIds = 3;
+    SerializableSinkDescriptor sinkDescriptor = 1;
   }
 
   /**
@@ -102,8 +98,7 @@ message SerializableOperator{
   message WatermarkStrategyDetails {
     message SerializableEventTimeWatermarkStrategyDescriptor {
       SerializableFunction onField = 1;
-      uint64 allowedLateness = 2;
-      uint64 multiplier = 3;
+      uint64 multiplier = 2;
     }
 
     message SerializableIngestionTimeWatermarkStrategyDescriptor {
@@ -151,9 +146,9 @@ message SerializableOperator{
   message BroadcastDetails{}
 
   /**
-   Filter Details contains properties for the filter operator, such as the filter predicate function
+   Selection Details contains properties for the selection operator, such as the selection predicate function
    */
-  message FilterDetails {
+  message SelectionDetails {
     SerializableFunction predicate = 1;
     float selectivity = 2;
   }
@@ -254,8 +249,7 @@ message SerializableOperator{
     repeated Aggregation windowAggregations = 2;
     DistributionCharacteristic distrChar = 3;
     repeated SerializableFunction keys = 4;
-    uint64 allowedLateness = 5;
-    uint64 origin = 6;
+    uint64 originId = 5;
   }
 
   /**

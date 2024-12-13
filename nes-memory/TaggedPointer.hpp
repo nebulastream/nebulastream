@@ -112,4 +112,4 @@ private:
     uintptr_t data = 0;
 };
 
-} /// namespace NES
+}

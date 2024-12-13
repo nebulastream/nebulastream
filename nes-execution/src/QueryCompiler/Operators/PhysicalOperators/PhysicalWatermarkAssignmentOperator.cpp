@@ -68,4 +68,4 @@ OperatorPtr PhysicalWatermarkAssignmentOperator::copy()
     return result;
 }
 
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

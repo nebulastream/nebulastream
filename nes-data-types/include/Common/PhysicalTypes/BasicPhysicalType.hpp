@@ -18,9 +18,7 @@
 namespace NES
 {
 
-/**
- * @brief The BasicPhysicalType represents nes data types, which can be directly mapped to a native c++ type.
- */
+/// The BasicPhysicalType represents nes data types, which can be directly mapped to a native c++ type.
 class BasicPhysicalType final : public PhysicalType
 {
 public:
@@ -41,53 +39,33 @@ public:
         UNDEFINED
     };
 
-    /**
-     * @brief Constructor for a basic physical type.
-     * @param type the data type represented by this physical type
-     * @param nativeType the native type of the nes type.
-     */
+
+    /// Constructor for a basic physical type.
+    /// @param type the data type represented by this physical type
+    /// @param nativeType the native type of the nes type.
     BasicPhysicalType(DataTypePtr type, NativeType nativeType);
 
     ~BasicPhysicalType() override = default;
 
-    /**
-     * @brief Factory function to create a new physical type.
-     * @param type
-     * @param nativeType
-     * @return PhysicalTypePtr
-     */
+    /// Factory function to create a new physical type.
+    /// @param type
+    /// @param nativeType
+    /// @return PhysicalTypePtr
     static PhysicalTypePtr create(const DataTypePtr& type, NativeType nativeType);
 
-    /**
-     * @brief Indicates if this is a basic data type.
-     * @return true
-     */
-    [[nodiscard]] bool isBasicType() const noexcept override { return true; }
-
-    /**
-     * @brief Returns the number of bytes occupied by this data type.
-     * @return uint64_t
-     */
+    /// Returns the number of bytes occupied by this data type.
     [[nodiscard]] uint64_t size() const override;
 
-    /**
-     * @brief Converts the binary representation of this value to a string.
-     * @param rawData a pointer to the raw value
-     * @return string
-     */
+    /// Converts the binary representation of this value to a string.
+    /// @param rawData a pointer to the raw value
     std::string convertRawToString(void const* rawData) const noexcept override;
 
-    /**
-     * @brief Converts the binary representation of this value to a string.
-     * @param rawData a pointer to the raw value
-     * @return string
-    */
+
+    /// Converts the binary representation of this value to a string.
+    /// @param rawData a pointer to the raw value
     std::string convertRawToStringWithoutFill(void const* rawData) const noexcept override;
 
-    /**
-     * @brief Returns the string representation of this physical data type.
-     * @return string
-     */
+    /// Returns the string representation of this physical data type.
     [[nodiscard]] std::string toString() const noexcept override;
 
     NativeType const nativeType;
@@ -95,4 +73,4 @@ public:
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
-} /// namespace NES
+}

@@ -33,7 +33,6 @@ public:
      */
     static NodeFunctionFieldAssignmentPtr create(const NodeFunctionFieldAccessPtr& fieldAccess, const NodeFunctionPtr& NodeFunctionPtr);
 
-    [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
 
@@ -64,5 +63,7 @@ public:
 
 protected:
     explicit NodeFunctionFieldAssignment(NodeFunctionFieldAssignment* other);
+
+    [[nodiscard]] std::string toString() const override;
 };
-} /// namespace NES
+}

@@ -119,11 +119,11 @@ void BufferManager::initialize(uint32_t withAlignment)
 {
     std::unique_lock lock(availableBuffersMutex);
 
-    long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
-    auto memorySizeInBytes = static_cast<uint64_t>(pages * page_size);
+    size_t pages = sysconf(_SC_PHYS_PAGES);
+    size_t page_size = sysconf(_SC_PAGE_SIZE);
+    auto memorySizeInBytes = pages * page_size;
 
-    uint64_t requiredMemorySpace = (uint64_t)this->bufferSize * (uint64_t)this->numOfBuffers;
+    uint64_t requiredMemorySpace = this->bufferSize * this->numOfBuffers;
     double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
     NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
 
@@ -441,4 +441,4 @@ TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> 
     return *optBuffer;
 }
 
-} /// namespace NES::Runtime
+}

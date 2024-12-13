@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -64,7 +64,7 @@ bool LogicalLimitOperator::inferSchema()
 
 OperatorPtr LogicalLimitOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createLimitOperator(limit, id);
+    auto copy = std::make_shared<LogicalLimitOperator>(limit, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -80,7 +80,7 @@ OperatorPtr LogicalLimitOperator::copy()
 void LogicalLimitOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
     ///Infer query signatures for child operators
@@ -98,4 +98,4 @@ void LogicalLimitOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} /// namespace NES
+}

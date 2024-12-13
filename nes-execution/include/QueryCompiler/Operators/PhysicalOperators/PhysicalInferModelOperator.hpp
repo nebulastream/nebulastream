@@ -48,15 +48,16 @@ public:
         std::vector<NodeFunctionPtr> inputFields,
         std::vector<NodeFunctionPtr> outputFields);
 
-    std::string toString() const override;
     OperatorPtr copy() override;
     const std::string& getModel() const;
     const std::vector<NodeFunctionPtr>& getInputFields() const;
     const std::vector<NodeFunctionPtr>& getOutputFields() const;
 
 protected:
+    std::string toString() const override;
+
     const std::string model;
     const std::vector<NodeFunctionPtr> inputFields;
     const std::vector<NodeFunctionPtr> outputFields;
 };
-} /// namespace NES::QueryCompilation::PhysicalOperators
+}

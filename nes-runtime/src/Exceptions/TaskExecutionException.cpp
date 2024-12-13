@@ -15,7 +15,6 @@
 #include <Exceptions/TaskExecutionException.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 namespace NES
 {
 
@@ -29,4 +28,4 @@ Runtime::Execution::SuccessorExecutablePipeline TaskExecutionException::getExecu
     return pipeline;
 }
 
-} /// namespace NES
+}

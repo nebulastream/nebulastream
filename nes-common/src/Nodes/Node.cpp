@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <queue>
 #include <utility>
 #include <Nodes/Node.hpp>
@@ -653,7 +654,7 @@ bool Node::equalWithAllChildren(const NodePtr& otherNode)
     }
 
     return equalWithAllChildrenHelper(shared_from_this(), otherNode);
-} /// namespace NES
+}
 
 bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
 {
@@ -820,16 +821,4 @@ bool Node::isCyclicHelper(Node& node)
     node.recStack = false;
     return false;
 }
-std::vector<std::string> Node::toMultilineString()
-{
-    std::vector<std::string> lines;
-    lines.push_back(toString());
-    return lines;
 }
-
-std::ostream& operator<<(std::ostream& os, const NodePtr& node)
-{
-    return os << node->toString();
-}
-
-} /// namespace NES

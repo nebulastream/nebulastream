@@ -43,4 +43,4 @@ enum class RequestType : uint8_t
     RemoveTopologyLink
 };
 
-} /// namespace NES
+}

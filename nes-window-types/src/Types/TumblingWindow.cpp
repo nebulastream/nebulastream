@@ -68,4 +68,4 @@ uint64_t TumblingWindow::hash() const
     hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
     return hashValue;
 }
-} /// namespace NES::Windowing
+}

@@ -19,6 +19,7 @@
 #include <Measures/TimeCharacteristic.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 
@@ -37,7 +38,7 @@ TimeCharacteristicPtr TimeCharacteristic::createEventTime(NodeFunctionPtr fieldV
 {
     if (!NES::Util::instanceOf<NodeFunctionFieldAccess>(fieldValue))
     {
-        throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", fieldValue->toString()));
+        throw QueryInvalid(fmt::format("Query: window key has to be an FieldAccessFunction but it was a  {}", *fieldValue));
     }
     auto fieldAccess = NES::Util::as<NodeFunctionFieldAccess>(fieldValue);
     AttributeFieldPtr keyField = AttributeField::create(fieldAccess->getFieldName(), fieldAccess->getStamp());
@@ -121,4 +122,4 @@ uint64_t TimeCharacteristic::hash() const
     return hashValue;
 }
 
-} /// namespace NES::Windowing
+}

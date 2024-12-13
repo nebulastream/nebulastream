@@ -211,4 +211,4 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other)
     tsToLatencyMap = other.tsToLatencyMap;
 }
 
-} /// namespace NES::Runtime
+}

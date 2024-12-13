@@ -19,8 +19,10 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <boost/asio.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -118,7 +120,7 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
@@ -128,12 +130,13 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesTCP)
     {
         auto mockTCPServer = SyncedMockTcpServer::create(numInputTuplesToProduceByTCPMockServer);
         auto mockTCPServerPort = mockTCPServer->getPort();
-        IntegrationTestUtil::replacePortInSourceTCPs(queryPlan, mockTCPServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInTCPSources(queryPlan, mockTCPServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(std::move(mockTCPServer));
     }
 
     /// Register the query and start it.
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
+    ASSERT_NE(queryId.getRawValue(), QueryId::INVALID);
     IntegrationTestUtil::startQuery(queryId, uut);
 
     /// Start all SyncedMockTcpServers and wait until every sever sent all tuples.
@@ -170,8 +173,8 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneSourceTCP", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
-        QueryTestParam{"qOneSourceTCPWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */, 200},
-        QueryTestParam{"qTwoSourcesTCPWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */, 200},
-        QueryTestParam{"qOneSourceTCP", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
+        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */, 200},
+        QueryTestParam{"qOneTCPSourceWithFilter", 1, 31, 480 /* SUM(0, 1, ..., 32) - 16 */, 32},
+        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 62, 960 /* 2 * (SUM(0, 1, ..., 32) - 16) */, 32},
+        QueryTestParam{"qOneTCPSource", 1, 10000, 49995000 /* UM(0, 1, ..., 10K) */, 10000}));
 }

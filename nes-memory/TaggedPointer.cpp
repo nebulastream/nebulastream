@@ -50,4 +50,4 @@ void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
 /// explicit instantiation of tagged ptr
 template class TaggedPointer<Memory::detail::BufferControlBlock>;
 
-} /// namespace NES
+}

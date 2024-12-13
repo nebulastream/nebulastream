@@ -26,4 +26,4 @@ enum class PlacementStrategy : uint8_t
     ILP = 3,
     MlHeuristic = 4,
 };
-} /// namespace NES::Optimizer
+}

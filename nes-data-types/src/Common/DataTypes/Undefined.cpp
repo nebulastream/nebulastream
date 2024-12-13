@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 
@@ -20,7 +21,7 @@ namespace NES
 
 bool Undefined::equals(DataTypePtr otherDataType)
 {
-    return otherDataType->isUndefined();
+    return NES::Util::instanceOf<Undefined>(otherDataType);
 }
 
 DataTypePtr Undefined::join(DataTypePtr)
@@ -32,4 +33,4 @@ std::string Undefined::toString()
     return "Undefined";
 }
 
-} /// namespace NES
+}

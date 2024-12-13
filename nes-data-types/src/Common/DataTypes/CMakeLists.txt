@@ -12,14 +12,11 @@
 
 add_source_files(nes-data-types
         Char.cpp
-        ArrayType.cpp
         Boolean.cpp
         Undefined.cpp
-        DataType.cpp
         Numeric.cpp
         Integer.cpp
         Float.cpp
         DataTypeFactory.cpp
-        FixedChar.cpp
-        TextType.cpp
+        VariableSizedDataType.cpp
         )

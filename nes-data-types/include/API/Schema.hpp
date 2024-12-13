@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Common/DataTypes/BasicTypes.hpp>
@@ -26,7 +27,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} /// namespace Configurations
+}
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -55,20 +56,13 @@ public:
     /**
      * @brief Schema qualifier separator
      */
-    constexpr static const char* const ATTRIBUTE_NAME_SEPARATOR = "$";
+    constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
     /**
      * @brief Factory method to create a new SchemaPtr.
      * @return SchemaPtr
      */
     static SchemaPtr create(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
-
-    /**
-     * @brief Factory method to create a new SchemaPtr from schema type.
-     * @return SchemaPtr
-     */
-    static SchemaPtr
-    createFromSchemaType(const Configurations::SchemaTypePtr& schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR
@@ -130,41 +124,28 @@ public:
      * @brief Returns the attribute field based on a qualified or unqualified field name.
      *
      * @details
-     * If an unqualified field name is given (e.g., `getField("fieldName")`), the function will match attribute fields with any source name.
-     * If a qualified field name is given (e.g., `getField("source$fieldName")`), the entire qualified field must match.
+     * If an unqualified field name is given (e.g., `getFieldByName("fieldName")`), the function will match attribute fields with any source name.
+     * If a qualified field name is given (e.g., `getFieldByName("source$fieldName")`), the entire qualified field must match.
+     * Note that this function does not return a field with an ambiguous field name.
      *
      * @param fieldName: Name of the attribute field that should be returned.
-     * @return Pointer to attribute field if present, otherwise `nullptr`.
+     * @return std::optional<AttributeFieldPtr> The attribute field if found, otherwise an empty optional.
      */
-    AttributeFieldPtr getField(const std::string& fieldName) const;
-
-    /**
-     * @brief Checks if attribute field name is defined in the schema and returns its index.
-     * If item not in the list, then the return value is equal to fields.size().
-     * @param fieldName
-     * @return the index
-     */
-    uint64_t getIndex(const std::string& fieldName) const;
-
-    /**
-     * @brief Finds a attribute field by name in the schema
-     * @param fieldName
-     * @return AttributeField
-     */
-    AttributeFieldPtr get(const std::string& fieldName) const;
+    std::optional<AttributeFieldPtr> getFieldByName(const std::string& fieldName) const;
 
     /**
      * @brief Finds a attribute field by index in the schema
      * @param index
      * @return AttributeField
+     * @throws FieldNotFound if the field does not exist
      */
-    AttributeFieldPtr get(uint32_t index);
+    AttributeFieldPtr getFieldByIndex(size_t index) const;
 
     /**
      * @brief Returns the number of fields in the schema.
      * @return uint64_t
      */
-    [[nodiscard]] uint64_t getSize() const;
+    [[nodiscard]] size_t getFieldCount() const;
 
     /**
      * @brief Returns the number of bytes all fields in this schema occupy.
@@ -175,17 +156,9 @@ public:
     /**
      * @brief Checks if two Schemas are equal to each other.
      * @param schema
-     * @param considerOrder takes into account if the order of fields in a schema matter.
      * @return boolean
      */
-    bool equals(const SchemaPtr& schema, bool considerOrder = true);
-
-    /**
-     * @brief Checks if two schemas have same datatypes at same index location
-     * @param otherSchema: the other schema to compare agains
-     * @return ture if they are equal else false
-     */
-    bool hasEqualTypes(const SchemaPtr& otherSchema);
+    bool operator==(const Schema& other) const;
 
     /**
      * @brief Checks if the field exists in the schema
@@ -202,13 +175,6 @@ public:
      * @return schema as string
      */
     [[nodiscard]] std::string toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
-
-    /**
-     * @brief returns the string representation of layout
-     * @param layout
-     * @return
-     */
-    [[nodiscard]] std::string getLayoutTypeAsString() const;
 
     /**
      * @brief Method to return the source name qualifier, thus everything that is before $
@@ -257,24 +223,12 @@ public:
      */
     std::vector<std::string> getFieldNames() const;
 
-    std::vector<AttributeFieldPtr> fields;
+    auto begin() const { return std::begin(fields); }
+    auto end() const { return std::end(fields); }
 
 private:
-    /**
-     * Return the appropriate NES type from yaml string configuration. Ignores
-     * fieldLength if it doesn't make sense, errors length is missing and type
-     * is string.
-     * @param fieldType the type of the schema field from yaml
-     * @param fieldLength the length of the field from yaml
-     * @return the appropriate DataTypePtr
-     */
-    static DataTypePtr stringToFieldType(const std::string& fieldType, const std::string& fieldLength);
-
+    std::vector<AttributeFieldPtr> fields;
     MemoryLayoutType layoutType;
 };
 
-AttributeFieldPtr createField(const std::string& name, BasicType type);
-
-AttributeFieldPtr createField(const std::string& name, DataTypePtr type);
-
-} /// namespace NES
+}

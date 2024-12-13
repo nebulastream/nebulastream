@@ -41,7 +41,7 @@ void NodeFunctionMod::inferStamp(SchemaPtr schema)
 {
     NodeFunctionArithmeticalBinary::inferStamp(schema);
 
-    if (stamp->isInteger())
+    if (NES::Util::instanceOf<Integer>(stamp))
     {
         /// we know that both children must have been Integer, too
         auto leftAsInt = DataType::as<Integer>(getLeft()->getStamp());
@@ -57,7 +57,7 @@ void NodeFunctionMod::inferStamp(SchemaPtr schema)
 
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, newLowerBound, newUpperBound);
     }
-    else if (stamp->isFloat())
+    else if (NES::Util::instanceOf<Float>(stamp))
     {
         /// children can be integer or float
         auto leftStamp = getLeft()->getStamp();
@@ -66,13 +66,13 @@ void NodeFunctionMod::inferStamp(SchemaPtr schema)
         /// target values
         double leftL, leftU, rightL, rightU;
 
-        if (leftStamp->isFloat())
+        if (NES::Util::instanceOf<Float>(leftStamp))
         {
             auto leftAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(leftStamp));
             leftL = leftAsFloat->lowerBound;
             leftU = leftAsFloat->upperBound;
         }
-        else if (leftStamp->isInteger())
+        else if (NES::Util::instanceOf<Integer>(leftStamp))
         {
             auto leftAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(leftStamp));
             leftL = (double)leftAsInteger->lowerBound;
@@ -83,13 +83,13 @@ void NodeFunctionMod::inferStamp(SchemaPtr schema)
             return;
         }
 
-        if (rightStamp->isFloat())
+        if (NES::Util::instanceOf<Float>(rightStamp))
         {
             auto rightAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(rightStamp));
             rightL = rightAsFloat->lowerBound;
             rightU = rightAsFloat->upperBound;
         }
-        else if (rightStamp->isInteger())
+        else if (NES::Util::instanceOf<Integer>(rightStamp))
         {
             auto rightAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(rightStamp));
             rightL = (double)rightAsInteger->lowerBound;
@@ -122,7 +122,7 @@ bool NodeFunctionMod::equal(NodePtr const& rhs) const
 std::string NodeFunctionMod::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "%" << children[1]->toString();
+    ss << *children[0] << "%" << *children[1];
     return ss.str();
 }
 

@@ -18,7 +18,7 @@
 #include <memory>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Sink.hpp>
 
 namespace NES::Runtime
 {
@@ -26,7 +26,7 @@ namespace Execution
 {
 /// Forward declaration of ExecutablePipeline, which includes QueryManager, which includes Task
 class ExecutablePipeline;
-using SuccessorExecutablePipeline = std::variant<DataSinkPtr, std::shared_ptr<ExecutablePipeline>>;
+using SuccessorExecutablePipeline = std::variant<std::shared_ptr<Sinks::Sink>, std::shared_ptr<ExecutablePipeline>>;
 }
 /**
  * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers)
@@ -94,10 +94,10 @@ public:
     Memory::TupleBuffer const& getBufferRef() const;
 
 private:
-    Execution::SuccessorExecutablePipeline pipeline{};
+    Execution::SuccessorExecutablePipeline pipeline;
     Memory::TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
     uint64_t inputTupleCount = 0;
 };
 static_assert(sizeof(Task) == 64);
-} /// namespace NES::Runtime
+}

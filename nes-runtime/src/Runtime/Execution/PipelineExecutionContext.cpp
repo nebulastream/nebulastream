@@ -13,6 +13,7 @@
 */
 
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -69,7 +70,7 @@ std::shared_ptr<Memory::AbstractBufferProvider> PipelineExecutionContext::getBuf
     return bufferProvider;
 }
 
-uint64_t PipelineExecutionContext::getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId)
+ChunkNumber::Underlying PipelineExecutionContext::getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId)
 {
     auto lockedMap = seqNumberOriginIdToOutputChunkNumber.wlock();
     (*lockedMap)[seqNumberOriginId] += 1;
@@ -82,23 +83,23 @@ void PipelineExecutionContext::removeSequenceState(const SeqNumberOriginId seqNu
     seqNumberOriginIdToChunkStateInput.wlock()->erase(seqNumberOriginId);
 }
 
-bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOriginId, const uint64_t chunkNumber, const bool isLastChunk)
+bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOriginId, const ChunkNumber chunkNumber, const bool isLastChunk)
 {
-    auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
-    auto& chunkState = (*lockedMap)[seqNumberOriginId];
+    const auto lockedMap = seqNumberOriginIdToChunkStateInput.wlock();
+    auto& [lastChunkNumber, seenChunks] = (*lockedMap)[seqNumberOriginId];
     if (isLastChunk)
     {
-        chunkState.lastChunkNumber = chunkNumber;
+        lastChunkNumber = chunkNumber.getRawValue();
     }
-    chunkState.seenChunks++;
+    seenChunks++;
     NES_TRACE(
         "seqNumberOriginId = {} chunkNumber = {} isLastChunk = {} seenChunks = {} lastChunkNumber = {}",
         seqNumberOriginId.toString(),
         chunkNumber,
         isLastChunk,
-        chunkState.seenChunks,
-        chunkState.lastChunkNumber)
-    return chunkState.seenChunks == chunkState.lastChunkNumber;
+        seenChunks,
+        lastChunkNumber)
+    return seenChunks == lastChunkNumber;
 }
 
 }

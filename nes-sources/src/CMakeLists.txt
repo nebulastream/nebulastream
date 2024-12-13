@@ -11,13 +11,14 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        SourceCSV.cpp
         SourceThread.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
-        SourceTCP.cpp
+        SourceValidationProvider.cpp
 )
-add_subdirectory(Parsers)
-add_subdirectory(SourcesUtils)
+
+# Register plugins
+add_plugin(File Source nes-sources FileSource.cpp)
+add_plugin(File SourceValidation nes-sources FileSource.cpp)

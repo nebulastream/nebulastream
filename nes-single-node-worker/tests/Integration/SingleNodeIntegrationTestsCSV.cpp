@@ -17,8 +17,11 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <fmt/core.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
@@ -56,7 +59,7 @@ public:
     const std::string dataInputFile = "oneToThirtyOneDoubleColumn.csv";
 };
 
-
+/// Takes a serialized fully-specified query plan, executes it and checks if the correct results are produced.
 TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
 {
     using ResultSchema = struct
@@ -80,14 +83,15 @@ TEST_P(SingleNodeIntegrationTest, IntegrationTestWithSourcesCSV)
         GTEST_SKIP();
     }
     IntegrationTestUtil::replaceFileSinkPath(queryPlan, testSpecificResultFileName);
-    IntegrationTestUtil::replaceInputFileInSourceCSVs(queryPlan, testSpecificDataFileName);
+    IntegrationTestUtil::replaceInputFileInFileSources(queryPlan, testSpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
-    configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
+    configuration.workerConfiguration.queryCompiler.nautilusBackend = QueryCompilation::NautilusBackend::COMPILER;
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
+    ASSERT_NE(queryId.getRawValue(), QueryId::INVALID);
     IntegrationTestUtil::startQuery(queryId, uut);
     IntegrationTestUtil::waitForQueryToEnd(queryId, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
@@ -117,7 +121,6 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneSourceCSV", 32, 496 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qOneSourceCSVWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
-        QueryTestParam{"qTwoSourcesCSVWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
+        /// Todo 396: as soon as system level tests support multiple sources, we can get rid of the CSV integration tests
+        QueryTestParam{"qTwoCSVSourcesWithFilter", 62, 960 /*  2 * (SUM(0, 1, ..., 32) - 16) */}));
 }

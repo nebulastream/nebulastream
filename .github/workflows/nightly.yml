@@ -7,24 +7,62 @@ name: NES Nightly
 # We will add long-running test for stability and performance checks in the future.
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '30 2 * * *' # gets executed every night at 2:30 AM UTC
+    - cron: '30 2 * * *' # gets executed every night at 4:30 AM CEST
 
 jobs:
-  # We call the pr.yml workflow to run the same tests as for a PR.
-  pr-tests:
-    uses: ./.github/workflows/pr.yml
+  fetch-current-main-commit:
+    runs-on: [ self-hosted ]
+    outputs:
+      sha: ${{ steps.fetch-sha.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "sha=$(git rev-parse --verify HEAD)" >> "$GITHUB_OUTPUT"
+        name: fetch-sha
+
+  get-dev-images:
+    needs: fetch-current-main-commit
+    uses: ./.github/workflows/get_dev_images.yml
     secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+
+  full-clang-tidy:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/clang_tidy_full.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+
+  compile-time-regression:
+    needs: [ fetch-current-main-commit, get-dev-images, full-clang-tidy ]
+    uses: ./.github/workflows/compile_time_regression.yml
+    secrets: inherit
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
+
+  build-and-test:
+    name: "Run build and test"
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      ref: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image_tag }}
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long-running-tests:
-    needs: [ pr-tests ]
+    needs: [ build-and-test ]
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - name: Print Placeholder Message
         run: echo "Long running tests will be added in the future."
 
   create-nightly-image:
+    needs: [ build-and-test ]
     if: ${{ !github.event.act }}
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit

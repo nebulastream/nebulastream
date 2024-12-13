@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <vector>
 #include <Execution/Functions/ExecutableFunctionConstantValue.hpp>
 #include <Execution/Functions/ExecutableFunctionReadField.hpp>
@@ -24,10 +25,10 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/FunctionProvider.hpp>
 #include <Util/Common.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -38,7 +39,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
     /// 1. Check if the function is valid.
     if (not nodeFunction->validateBeforeLowering())
     {
-        throw InvalidUseOfFunction(nodeFunction->toString());
+        throw InvalidUseOfFunction(fmt::format("{}", *nodeFunction));
     }
 
     /// 2. Recursively lower the children of the function node.
@@ -64,8 +65,7 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
     }
 
     /// 4. Calling the registry to create an executable function.
-    auto function
-        = Execution::Functions::RegistryFunctionExecutable::instance().tryCreate(nodeFunction->getType(), std::move(childFunction));
+    auto function = Execution::Functions::RegistryFunctionExecutable::instance().create(nodeFunction->getType(), std::move(childFunction));
     if (not function.has_value())
     {
         throw UnknownFunctionType(fmt::format("Can not lower function: {}", nodeFunction->getType()));
@@ -76,12 +76,10 @@ std::unique_ptr<Function> FunctionProvider::lowerFunction(const NodeFunctionPtr&
 
 std::unique_ptr<Function> FunctionProvider::lowerConstantFunction(const std::shared_ptr<NodeFunctionConstantValue>& constantFunction)
 {
-    auto value = constantFunction->getConstantValue();
+    auto stringValue = constantFunction->getConstantValue();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(constantFunction->getStamp());
-    if (physicalType->isBasicType())
+    if (auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType))
     {
-        auto stringValue = std::dynamic_pointer_cast<BasicValue>(value)->value;
-        auto basicType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType)
         {
             case BasicPhysicalType::NativeType::UINT_8: {

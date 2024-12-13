@@ -20,12 +20,12 @@
 namespace NES::Runtime
 {
 
-void BufferStorage::insertBuffer(Memory::TupleBuffer buffer)
+void BufferStorage::insertBuffer(const Memory::TupleBuffer buffer)
 {
     this->storage.push(buffer);
 }
 
-void BufferStorage::trimBuffer(uint64_t timestamp)
+void BufferStorage::trimBuffer(const Timestamp timestamp)
 {
     while (!this->storage.empty() && this->storage.top().getWatermark() < timestamp)
     {

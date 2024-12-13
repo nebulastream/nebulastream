@@ -18,6 +18,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/VariableSizedDataType.hpp>
 
 namespace NES
 {
@@ -42,7 +43,9 @@ bool NodeFunctionEquals::equal(NodePtr const& rhs) const
     if (NES::Util::instanceOf<NodeFunctionEquals>(rhs))
     {
         auto other = NES::Util::as<NodeFunctionEquals>(rhs);
-        return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
+        const bool simpleMatch = getLeft()->equal(other->getLeft()) and getRight()->equal(other->getRight());
+        const bool commutativeMatch = getLeft()->equal(other->getRight()) and getRight()->equal(other->getLeft());
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }
@@ -50,7 +53,7 @@ bool NodeFunctionEquals::equal(NodePtr const& rhs) const
 std::string NodeFunctionEquals::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "==" << children[1]->toString();
+    ss << *children[0] << "==" << *children[1];
     return ss.str();
 }
 
@@ -70,17 +73,9 @@ bool NodeFunctionEquals::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
-    if (childLeft->getStamp()->isText() != childRight->getStamp()->isText())
+    if (NES::Util::instanceOf<VariableSizedDataType>(childLeft->getStamp())
+        != NES::Util::instanceOf<VariableSizedDataType>(childRight->getStamp()))
     {
-        return false;
-    }
-
-
-    /// If one of the children has a stamp of type array, the other child must also have a stamp of type array
-    if (childLeft->getStamp()->isArray() || childRight->getStamp()->isArray() || childLeft->getStamp()->isCharArray()
-        || childRight->getStamp()->isCharArray())
-    {
-        NES_ERROR("We do not support array and char arrays as data types for now!");
         return false;
     }
 

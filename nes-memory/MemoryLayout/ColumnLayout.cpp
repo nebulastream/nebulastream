@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
@@ -30,6 +30,10 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
     }
 }
 
+ColumnLayout::ColumnLayout(const ColumnLayout& other) : ColumnLayout(other.schema, other.bufferSize)
+{
+}
+
 std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
@@ -40,22 +44,29 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
     if (fieldIndex >= physicalFieldSizes.size())
     {
         throw BufferAccessException(
-            "field index: " + std::to_string(fieldIndex) + " is larger the number of field in the memory layout "
-            + std::to_string(physicalFieldSizes.size()));
+            "field index: {} is larger the number of field in the memory layout {}",
+            std::to_string(fieldIndex),
+            std::to_string(physicalFieldSizes.size()));
     }
     if (tupleIndex >= getCapacity())
     {
         throw BufferAccessException(
-            "tuple index: " + std::to_string(tupleIndex) + " is larger the maximal capacity in the memory layout "
-            + std::to_string(getCapacity()));
+            "tuple index: {}  is larger the maximal capacity in the memory layout {}",
+            std::to_string(tupleIndex),
+            std::to_string(getCapacity()));
     }
 
     auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
     return fieldOffset;
 }
+
 const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
 {
     return columnOffsets;
 }
 
+std::shared_ptr<MemoryLayout> ColumnLayout::deepCopy() const
+{
+    return std::make_shared<ColumnLayout>(*this);
+}
 }

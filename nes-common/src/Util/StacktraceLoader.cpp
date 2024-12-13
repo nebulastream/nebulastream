@@ -41,4 +41,4 @@ std::string collectStacktrace()
     return cpptrace::generate_trace(1, callstackMaxSize).to_string();
 }
 
-} /// namespace NES
+}

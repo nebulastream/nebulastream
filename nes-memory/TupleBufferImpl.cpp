@@ -13,7 +13,7 @@
 */
 
 #include "TupleBufferImpl.hpp"
-#include <bitset>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
@@ -284,32 +284,32 @@ void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples)
     this->numberOfTuples = numberOfTuples;
 }
 
-uint64_t BufferControlBlock::getWatermark() const noexcept
+Runtime::Timestamp BufferControlBlock::getWatermark() const noexcept
 {
     return watermark;
 }
 
-void BufferControlBlock::setWatermark(uint64_t watermark)
+void BufferControlBlock::setWatermark(Runtime::Timestamp watermark)
 {
     this->watermark = watermark;
 }
 
-uint64_t BufferControlBlock::getSequenceNumber() const noexcept
+SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
 {
     return sequenceNumber;
 }
 
-void BufferControlBlock::setSequenceNumber(uint64_t sequenceNumber)
+void BufferControlBlock::setSequenceNumber(SequenceNumber sequenceNumber)
 {
     this->sequenceNumber = sequenceNumber;
 }
 
-uint64_t BufferControlBlock::getChunkNumber() const noexcept
+ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
 {
     return chunkNumber;
 }
 
-void BufferControlBlock::setChunkNumber(uint64_t chunkNumber)
+void BufferControlBlock::setChunkNumber(ChunkNumber chunkNumber)
 {
     this->chunkNumber = chunkNumber;
 }
@@ -324,12 +324,12 @@ void BufferControlBlock::setLastChunk(bool lastChunk)
     this->lastChunk = lastChunk;
 }
 
-void BufferControlBlock::setCreationTimestamp(uint64_t ts)
+void BufferControlBlock::setCreationTimestamp(Runtime::Timestamp timestamp)
 {
-    this->creationTimestamp = ts;
+    this->creationTimestamp = timestamp;
 }
 
-uint64_t BufferControlBlock::getCreationTimestamp() const noexcept
+Runtime::Timestamp BufferControlBlock::getCreationTimestamp() const noexcept
 {
     return creationTimestamp;
 }
@@ -366,5 +366,5 @@ bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& co
 
     return true;
 }
-} /// namespace detail
-} /// namespace NES::Runtime
+}
+}

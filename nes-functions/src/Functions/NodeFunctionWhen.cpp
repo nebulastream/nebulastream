@@ -16,6 +16,7 @@
 #include <Functions/NodeFunctionWhen.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 
@@ -42,7 +43,7 @@ void NodeFunctionWhen::inferStamp(SchemaPtr schema)
     right->inferStamp(schema);
 
     ///left function has to be boolean
-    if (!left->getStamp()->isBoolean())
+    if (!NES::Util::instanceOf<Boolean>(left->getStamp()))
     {
         NES_THROW_RUNTIME_ERROR(
             "Error during stamp inference. Left type needs to be Boolean, but Left was: {} Right was: {}",
@@ -68,7 +69,7 @@ bool NodeFunctionWhen::equal(NodePtr const& rhs) const
 std::string NodeFunctionWhen::toString() const
 {
     std::stringstream ss;
-    ss << "WHEN(" << children[0]->toString() << "," << children[1]->toString() << ")";
+    ss << "WHEN(" << *children[0] << "," << *children[1] << ")";
     return ss.str();
 }
 
@@ -81,7 +82,7 @@ bool NodeFunctionWhen::validateBeforeLowering() const
 {
     /// left function has to be boolean
     const auto functionLeft = this->getLeft();
-    return functionLeft->getStamp()->isBoolean();
+    return NES::Util::instanceOf<Boolean>(functionLeft->getStamp());
 }
 
 }

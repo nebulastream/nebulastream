@@ -12,6 +12,15 @@
 # limitations under the License.
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+
+# Takes a target and a list of source files and calls 'add_source' on the target (e.g., nes-memory) and the source files
+macro(add_source_files)
+    set(SOURCE_FILES "${ARGN}")
+    list(POP_FRONT SOURCE_FILES TARGET_NAME)
+    add_source(${TARGET_NAME} "${SOURCE_FILES}")
+endmacro()
+
+# Adds a list of source files to a global property that is tied to a global PROP_NAME (target, e.g., nes-memory_SOURCE_PROP)
 macro(add_source PROP_NAME SOURCE_FILES)
     set(SOURCE_FILES_ABSOLUTE)
     foreach (it ${SOURCE_FILES})
@@ -23,20 +32,15 @@ macro(add_source PROP_NAME SOURCE_FILES)
     set_property(GLOBAL PROPERTY "${PROP_NAME}_SOURCE_PROP" ${SOURCE_FILES_ABSOLUTE} ${OLD_PROP_VAL})
 endmacro()
 
+# (builds on top of add_source_files)
+# looks up the source files using a global source property (e.g., nes-memory_SOURCE_PROP) and adds the source files to SOURCE_FILES
 macro(get_source PROP_NAME SOURCE_FILES)
     get_property(SOURCE_FILES_LOCAL GLOBAL PROPERTY "${PROP_NAME}_SOURCE_PROP")
     set(${SOURCE_FILES} ${SOURCE_FILES_LOCAL})
 endmacro()
 
-macro(add_source_files)
-    set(SOURCE_FILES "${ARGN}")
-    list(POP_FRONT SOURCE_FILES TARGET_NAME)
-    add_source(${TARGET_NAME} "${SOURCE_FILES}")
-endmacro()
-
 # Looks for the configured clang format version and enabled the format target if available.
 function(project_enable_format)
-    find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${LLVM_MAJOR_VERSION} clang-format)
     if (NOT CLANG_FORMAT_EXECUTABLE)
         message(WARNING "Clang-Format not found, but can be installed with 'sudo apt install clang-format'. Disabling format target.")
@@ -56,8 +60,8 @@ function(project_enable_format)
     endif ()
 
     message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
-    add_custom_target(format       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
-    add_custom_target(check-format COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(format COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(check-format COMMAND scripts/format.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
 endfunction(project_enable_format)
 
 macro(get_nes_log_level_value NES_LOGGING_VALUE)
@@ -88,95 +92,6 @@ macro(get_nes_log_level_value NES_LOGGING_VALUE)
         set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_LOGLEVEL_DEBUG=1")
     endif ()
 endmacro(get_nes_log_level_value NES_LOGGING_VALUE)
-
-function(cached_fetch_and_extract url dest)
-    # WARNING: the `dest` directory must not exist before the initial configure run,
-    #          e.g. this function breaks with e.g. dest set to CMAKE_BINARY_DIR
-    #
-    # This is so that copying only happens when `dest` does not exist, to speed up reconfiguration,
-    # since copying the NES deps and clang has takes roughly 2.5s while reconfiguration takes ~15s.
-    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or form url ${url}")
-    string(REGEX REPLACE "/" "_"  filename ${url})  # url to filename
-    string(REPLACE ":" "_"  filename ${filename})  # filename to filename
-    string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
-    string(REGEX REPLACE "^(.*)(.tar)?\\.[A-Za-z0-9]+$" "\\1" extracted ${filename})  # remove last suffix and maybe .tar, i.e. foo.7z -> foo, bar.tar.gz -> bar
-
-    # prevent concurrent downloads to fix concurrent configures
-    file(LOCK "${CMAKE_DEPS_CACHE_DIR}/${filename}.lock" GUARD FUNCTION)
-
-    message(STATUS "Cache filename zipped: ${filename}")
-    message(STATUS "Cache filename extracted: ${extracted}")
-    set(FRESH_DOWNLOAD FALSE)
-    if (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${filename})
-        message(STATUS "File ${filename} not cached, downloading!")
-        set(FRESH_DOWNLOAD TRUE)
-        set(CURRENT_ITERATION "0")
-        set(MAX_RETRIES "3")
-        while (CURRENT_ITERATION LESS MAX_RETRIES)
-            # Throws an error if download is inactive for 10s
-            file(DOWNLOAD ${url} ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp SHOW_PROGRESS TIMEOUT 0 INACTIVITY_TIMEOUT 10 STATUS DOWNLOAD_STATUS)
-            # Retrieve download status info
-            list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-            list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
-            math(EXPR CURRENT_ITERATION "${CURRENT_ITERATION} + 1") # CURRENT_ITERATION++
-            if (${STATUS_CODE} EQUAL 0)
-                message(STATUS "Download completed successfully")
-                break()
-            else ()
-                message(STATUS "Error occurred during download: ${ERROR_MESSAGE}")
-                message(STATUS "Retry attempt ${CURRENT_ITERATION}/${MAX_RETRIES}")
-                # Remove created (incomplete) file which failed to get downloaded
-                file(REMOVE ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp)
-            endif ()
-        endwhile ()
-        if (CURRENT_ITERATION EQUAL MAX_RETRIES)
-            message(FATAL_ERROR "Aborting: retry attempts exceeded while failing to download ${url}")
-        endif ()
-        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${filename}_tmp ${CMAKE_DEPS_CACHE_DIR}/${filename})
-    endif ()
-    set(FRESH_EXTRACT FALSE)
-    if (FRESH_DOWNLOAD OR (NOT EXISTS ${CMAKE_DEPS_CACHE_DIR}/${extracted}))
-        set(FRESH_EXTRACT TRUE)
-        message(STATUS "File/Dir ${extracted} not cached, extracting!")
-        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted})
-        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_DEPS_CACHE_DIR}/${filename} DESTINATION ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
-        file(RENAME ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp ${CMAKE_DEPS_CACHE_DIR}/${extracted})
-        file(REMOVE_RECURSE ${CMAKE_DEPS_CACHE_DIR}/${extracted}_tmp)
-    endif ()
-    if (FRESH_EXTRACT OR (NOT EXISTS ${dest}))
-        message(STATUS "Copying from cache to ${dest}!")
-        file(REMOVE_RECURSE ${dest})
-        file(REMOVE_RECURSE ${dest}_tmp)
-        file(COPY ${CMAKE_DEPS_CACHE_DIR}/${extracted}/ DESTINATION ${dest}_tmp)
-        get_filename_component(dest_name ${dest} NAME)
-        if (EXISTS ${dest}_tmp/${dest_name})
-            # remove duplicate dest folder name
-            file(RENAME ${dest}_tmp/${dest_name} ${dest})
-        else()
-            file(RENAME ${dest}_tmp/ ${dest})
-        endif()
-        file(REMOVE_RECURSE ${dest}_tmp)
-    endif ()
-endfunction()
-
-function(get_linux_lsb_release_information)
-    find_program(LSB_RELEASE_EXEC lsb_release)
-    if (NOT LSB_RELEASE_EXEC)
-        message(WARNING "Could not detect lsb_release executable, can not gather required information")
-        set(LSB_RELEASE_ID_SHORT "NULL" PARENT_SCOPE)
-        set(LSB_RELEASE_VERSION_SHORT "NULL" PARENT_SCOPE)
-        set(LSB_RELEASE_CODENAME_SHORT "NULL" PARENT_SCOPE)
-    else ()
-        execute_process(COMMAND "${LSB_RELEASE_EXEC}" --short --id OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE)
-        execute_process(COMMAND "${LSB_RELEASE_EXEC}" --short --release OUTPUT_VARIABLE LSB_RELEASE_VERSION_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE)
-        execute_process(COMMAND "${LSB_RELEASE_EXEC}" --short --codename OUTPUT_VARIABLE LSB_RELEASE_CODENAME_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-        set(LSB_RELEASE_ID_SHORT "${LSB_RELEASE_ID_SHORT}" PARENT_SCOPE)
-        set(LSB_RELEASE_VERSION_SHORT "${LSB_RELEASE_VERSION_SHORT}" PARENT_SCOPE)
-        set(LSB_RELEASE_CODENAME_SHORT "${LSB_RELEASE_CODENAME_SHORT}" PARENT_SCOPE)
-    endif ()
-endfunction()
 
 macro(add_tests_if_enabled TEST_FOLDER_NAME)
     if (NES_ENABLES_TESTS)

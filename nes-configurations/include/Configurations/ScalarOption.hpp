@@ -14,66 +14,34 @@
 #pragma once
 
 #include <ostream>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <yaml-cpp/yaml.h>
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/TypedBaseOption.hpp"
-#include "Configurations/Validation/ConfigurationValidation.hpp"
-#include "Util/Logger/Logger.hpp"
 
 namespace NES::Configurations
 {
 
-/**
- * @brief This class provides a general implementation for all ScalarOption<T> this is used e.g., for IntOption, StringOption, BoolOption.
- * @tparam T of the value.
- */
+/// @brief This class provides a general implementation for all ScalarOption<T> this is used e.g., for IntOption, StringOption, BoolOption.
 template <class T>
 class ScalarOption : public TypedBaseOption<T>
 {
 public:
-    /**
-     * @brief Constructor to create a new option that sets a name, and description.
-     * @param name of the option.
-     * @param description of the option.
-     */
     ScalarOption(const std::string& name, const std::string& description);
-    /**
-     * @brief Constructor to create a new option that declares a specific default value.
-     * @param name of the option.
-     * @param defaultValue of the option. Has to be of type T.
-     * @param description of the option.
-     */
     ScalarOption(const std::string& name, const std::string& defaultValue, const std::string& description);
-    /**
-     * @brief Constructor to create a new option that declares a specific default value.
-     * @param name of the option.
-     * @param defaultValue of the option. Has to be of type T.
-     * @param description of the option.
-     * @param validators to validate the configuration value
-     */
     ScalarOption(
         const std::string& name,
         const std::string& defaultValue,
         const std::string& description,
         std::vector<std::shared_ptr<ConfigurationValidation>> validators);
-    /**
-     * @brief Operator to assign a new value as a value of this option.
-     * @param value that will be assigned
-     * @return Reference to this option.
-     */
+
     ScalarOption<T>& operator=(const T& value);
-    /**
-     * @brief Checks if the option is equal to another option.
-     * @param other option.
-     * @return true if the option is equal.
-     */
+
     bool operator==(const BaseOption& other) override;
     bool operator==(const T& other);
 
-    /**
-     * @brief Operator to directly access the value of this option.
-     * @return Returns an object of the option type T.
-     */
+    /// Operator to directly access the value of this option.
     operator T() { return this->value; }
 
     template <class X>
@@ -82,15 +50,14 @@ public:
 
 protected:
     virtual void parseFromYAMLNode(YAML::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
     template <DerivedBaseOption X>
     friend class SequenceOption;
-    /**
-     * @brief Private constructor to create an scalar option without a name and description.
-     * This can only be used in SequenceOptions.
-     */
+
+    /// @brief Private constructor to create a scalar option without a name and description.
+    /// This can only be used in SequenceOptions
     ScalarOption() : TypedBaseOption<T>() { }
 
     template <typename Type>
@@ -195,7 +162,7 @@ void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 }
 
 template <class T>
-void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     if (!inputParams.contains(this->getName()))
     {
@@ -222,4 +189,4 @@ using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
 
-} /// namespace NES::Configurations
+}

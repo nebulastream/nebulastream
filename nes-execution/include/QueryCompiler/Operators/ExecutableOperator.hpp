@@ -47,8 +47,10 @@ public:
      * @return std::vector<Runtime::Execution::OperatorHandlerPtr>
      */
     std::vector<Runtime::Execution::OperatorHandlerPtr> getOperatorHandlers();
-    std::string toString() const override;
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 
 private:
     ExecutableOperator(
@@ -59,4 +61,4 @@ private:
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
-} /// namespace NES::QueryCompilation
+}

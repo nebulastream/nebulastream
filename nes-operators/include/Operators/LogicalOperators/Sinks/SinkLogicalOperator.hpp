@@ -16,30 +16,33 @@
 
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {
 
-class SinkLogicalOperator;
-using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
-
-/**
- * @brief Node representing logical sink operator
- */
 class SinkLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    SinkLogicalOperator(SinkDescriptorPtr const& sinkDescriptor, OperatorId id);
+    /// During deserialization, we don't need to know/use the name of the sink anymore.
+    SinkLogicalOperator(OperatorId id) : Operator(id), LogicalUnaryOperator(id) {};
+
+    /// During query parsing, we require the name of the sink and need to assign it an id.
+    SinkLogicalOperator(std::string sinkName, const OperatorId id)
+        : Operator(id), LogicalUnaryOperator(id), sinkName(std::move(sinkName)) {};
+
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    std::string toString() const override;
-    SinkDescriptorPtr getSinkDescriptor() const;
-    void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
+
+    const Sinks::SinkDescriptor& getSinkDescriptorRef() const;
+
     OperatorPtr copy() override;
     void inferStringSignature() override;
 
-private:
-    SinkDescriptorPtr sinkDescriptor;
+    std::string sinkName;
+    std::shared_ptr<Sinks::SinkDescriptor> sinkDescriptor;
+
+protected:
+    std::string toString() const override;
 };
-} /// namespace NES
+}

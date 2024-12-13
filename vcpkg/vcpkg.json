@@ -9,18 +9,16 @@
       "description": "nautilus mlir backend",
       "dependencies": [
         {
-          "name": "llvm",
-          "default-features": false,
+          "name": "nautilus",
           "features": [
-            "mlir",
-            "target-x86",
-            "target-aarch64"
+            "mlir"
           ]
         }
       ]
     }
   },
   "dependencies": [
+    "antlr4",
     "argparse",
     "benchmark",
     "boost-asio",

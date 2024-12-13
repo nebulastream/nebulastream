@@ -16,7 +16,6 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
-#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
@@ -50,12 +49,6 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(std::share
 {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
-}
-
-std::shared_ptr<LowerToExecutableQueryPlanPhase> DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
-{
-    NES_DEBUG("Create lower to executable query plan phase");
-    return LowerToExecutableQueryPlanPhase::create(DataSinkProvider::create(), Sources::SourceProvider::create());
 }
 
 }

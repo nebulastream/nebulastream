@@ -16,5 +16,4 @@ add_source_files(nes-runtime
         DiscardingExecutablePipelineStage.cpp
         ExecutablePipeline.cpp
         ExecutableQueryPlan.cpp
-        OperatorHandler.cpp
 )

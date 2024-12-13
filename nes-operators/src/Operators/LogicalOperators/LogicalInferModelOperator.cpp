@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-
 #include <filesystem>
+#include <memory>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Functions/NodeFunctionFieldAssignment.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -47,7 +46,7 @@ std::string LogicalInferModelOperator::toString() const
 
 OperatorPtr LogicalInferModelOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
+    auto copy = std::make_shared<LogicalInferModelOperator>(model, inputFields, outputFields, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
@@ -78,10 +77,10 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(NodeFunctionFiel
 {
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
-    auto existingField = schema->getField(fieldName);
+    auto existingField = schema->getFieldByName(fieldName);
     if (existingField)
     {
-        field->updateFieldName(existingField->getName());
+        field->updateFieldName(existingField.value()->getName());
     }
     else
     {
@@ -121,7 +120,7 @@ bool LogicalInferModelOperator::inferSchema()
         auto outputFunction = NES::Util::as<NodeFunctionFieldAccess>(outputField);
         updateToFullyQualifiedFieldName(outputFunction);
         auto fieldName = outputFunction->getFieldName();
-        if (outputSchema->getField(fieldName))
+        if (outputSchema->getFieldByName(fieldName))
         {
             /// The assigned field is part of the current schema.
             /// Thus we check if it has the correct type.
@@ -143,7 +142,7 @@ bool LogicalInferModelOperator::inferSchema()
 void LogicalInferModelOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("InferModelOperator: Inferring String signature for {}", *operatorNode);
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -190,4 +189,4 @@ const std::vector<NodeFunctionPtr>& LogicalInferModelOperator::getOutputFields()
     return outputFields;
 }
 
-} /// namespace NES::InferModel
+}

@@ -15,15 +15,19 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
+#include <InputFormatters/InputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Sources/SourceThread.hpp>
+#include <Sources/Source.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <ErrorHandling.hpp>
+#include <SourceThread.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::Sources
@@ -31,19 +35,18 @@ namespace NES::Sources
 
 SourceThread::SourceThread(
     OriginId originId,
-    SchemaPtr schema,
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<Source> sourceImplementation,
+    std::unique_ptr<InputFormatters::InputFormatter> inputFormatter)
     : originId(originId)
-    , schema(schema)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
+    , inputFormatter(std::move(inputFormatter))
 {
-    NES_DEBUG("SourceThread  {} : Init Data Source with schema  {}", originId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
 }
 
@@ -54,7 +57,7 @@ void SourceThread::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
         /// set the origin id for this source
         buffer.setOriginId(originId);
         /// set the creation timestamp
-        buffer.setCreationTimestampInMS(WatermarkTs(
+        buffer.setCreationTimestampInMS(Runtime::Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
         /// Set the sequence number of this buffer.
         /// A data source generates a monotonic increasing sequence number
@@ -112,7 +115,7 @@ bool waitForFuture(std::future<bool>&& future, const std::chrono::seconds deadli
     auto terminationStatus = future.wait_for(deadline);
     return (terminationStatus == std::future_status::ready) ? future.get() : false;
 }
-} /// namespace detail
+}
 
 
 bool SourceThread::stop()
@@ -207,39 +210,27 @@ void SourceThread::runningRoutine()
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
         sourceImplementation->open();
 
-        uint64_t numberOfBuffersProduced = 0;
         while (running)
         {
             auto tupleBuffer = bufferProvider->getBufferBlocking();
             /// filling the TupleBuffer might block.
-            /// passing schema by value to create a new TestTupleBuffer in the Parser, will be improved in Todo: #72.
-            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, *bufferProvider, schema);
-            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuples: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
-
-            ///this checks we received a valid output buffer
-            if (isReceivedData)
+            auto numReadBytes = sourceImplementation->fillTupleBuffer(tupleBuffer);
+            if (numReadBytes != 0)
             {
-                NES_TRACE(
-                    "SourceThread produced buffer {}, Num filled tuples: {}, SourceThread: {}",
-                    numberOfBuffersProduced,
-                    tupleBuffer.getNumberOfTuples(),
-                    fmt::streamed(*this));
-
-                emitWork(tupleBuffer);
-                ++numberOfBuffersProduced;
+                auto emitBufferLambda
+                    = [this](Memory::TupleBuffer& buffer, bool addBufferMetaData) { emitWork(buffer, addBufferMetaData); };
+                inputFormatter->parseTupleBufferRaw(tupleBuffer, *bufferProvider, numReadBytes, emitBufferLambda);
             }
             else
             {
-                NES_DEBUG("SourceThread {}: stopping cause of invalid buffer", originId);
                 running = false;
-                NES_DEBUG("SourceThread {}: Thread going to terminating with graceful exit.", originId);
+                break;
             }
             if (!running)
             { /// necessary if source stops while receiveData is called due to stricter shutdown logic
                 NES_DEBUG("Source is not running anymore.")
                 break;
             }
-            NES_TRACE("SourceThread {} : Data Source finished processing iteration {}", originId, numberOfBuffersProduced);
         }
         NES_DEBUG("SourceThread {} call close", originId);
         close();
@@ -249,8 +240,7 @@ void SourceThread::runningRoutine()
     catch (std::exception const& e)
     {
         /// Todo #237: Improve error handling in sources
-        auto ingestionException = RunningRoutineFailure();
-        ingestionException.what() += e.what();
+        auto ingestionException = RunningRoutineFailure(e.what());
         emitFunction(originId, SourceReturnType::Error{ingestionException});
         completedPromise.set_exception(std::make_exception_ptr(ingestionException));
     }

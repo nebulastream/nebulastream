@@ -18,8 +18,6 @@
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
 
-#define UNSURE_CONVERSION_TODO_4761(from, to) (to(from.getRawValue()))
-
 namespace NES
 {
 
@@ -31,10 +29,9 @@ using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
+using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
+using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, UINT64_MAX, 0>;
 
-using WatermarkTs = uint64_t;
-using SequenceNumber = uint64_t;
-using ChunkNumber = uint64_t;
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
@@ -51,14 +48,17 @@ static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
 static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
 
 static constexpr RequestId INVALID_REQUEST_ID = INVALID<RequestId>;
-static constexpr ChunkNumber INVALID_CHUNK_NUMBER = 0;
-static constexpr SequenceNumber INVALID_SEQ_NUMBER = 0;
 
-/// Special overloads for commonly occuring patterns
+static constexpr ChunkNumber INVALID_CHUNK_NUMBER = INVALID<ChunkNumber>;
+static constexpr ChunkNumber INITIAL_CHUNK_NUMBER = INITIAL<ChunkNumber>;
+
+static constexpr SequenceNumber INVALID_SEQ_NUMBER = INVALID<SequenceNumber>;
+static constexpr SequenceNumber INITIAL_SEQ_NUMBER = INITIAL<SequenceNumber>;
+
+/// Special overloads for commonly occurring patterns
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets
 inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 {
     return id.getRawValue() % containerSize;
 }
-
-} /// namespace NES
+}

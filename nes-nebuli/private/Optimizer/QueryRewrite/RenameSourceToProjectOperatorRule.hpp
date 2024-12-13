@@ -44,4 +44,4 @@ private:
     static OperatorPtr convert(const OperatorPtr& operatorNode);
 };
 
-} /// namespace NES::Optimizer
+}

@@ -119,4 +119,4 @@ public:
  */
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
-} /// namespace NES::Runtime
+}

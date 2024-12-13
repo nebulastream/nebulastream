@@ -12,12 +12,11 @@
 
 add_source_files(nes-operators
         LogicalOperator.cpp
-        LogicalFilterOperator.cpp
+        LogicalSelectionOperator.cpp
         LogicalProjectionOperator.cpp
         LogicalMapOperator.cpp
         LogicalInferModelOperator.cpp
         LogicalUnionOperator.cpp
-        LogicalOperatorFactory.cpp
         LogicalBatchJoinOperator.cpp
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp

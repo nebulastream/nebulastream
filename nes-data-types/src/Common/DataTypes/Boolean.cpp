@@ -12,20 +12,24 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <magic_enum.hpp>
 
 namespace NES
 {
 
 bool Boolean::equals(DataTypePtr otherDataType)
 {
-    return otherDataType->isBoolean();
+    return NES::Util::instanceOf<Boolean>(otherDataType);
 }
 
 DataTypePtr Boolean::join(DataTypePtr otherDataType)
 {
-    if (otherDataType->isBoolean())
+    if (NES::Util::instanceOf<Boolean>(otherDataType))
     {
         return DataTypeFactory::createBoolean();
     }
@@ -34,7 +38,7 @@ DataTypePtr Boolean::join(DataTypePtr otherDataType)
 
 std::string Boolean::toString()
 {
-    return "Boolean";
+    return std::string(magic_enum::enum_name(BasicType::BOOLEAN));
 }
 
-} /// namespace NES
+}

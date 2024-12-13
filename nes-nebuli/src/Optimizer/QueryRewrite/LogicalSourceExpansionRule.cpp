@@ -16,6 +16,7 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
@@ -247,4 +248,4 @@ bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
         || NES::Util::instanceOf<Experimental::LogicalBatchJoinOperator>(operatorNode));
 }
 
-} /// namespace NES::Optimizer
+}

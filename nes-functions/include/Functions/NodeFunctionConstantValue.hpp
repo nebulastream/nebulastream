@@ -14,52 +14,41 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Functions/NodeFunction.hpp>
+#include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
 
-class ValueType;
-using ValueTypePtr = std::shared_ptr<ValueType>;
-
-/**
- * @brief This function node represents a constant value and a fixed data type.
- * Thus the samp of this function is always fixed.
- */
+/// This function node represents a constant value and a fixed data type.
+/// Thus the samp of this function is always fixed.
 class NodeFunctionConstantValue : public NodeFunction
 {
 public:
-    /**
-     * @brief Factory method to create a NodeFunctionConstantValue.
-     */
-    static NodeFunctionPtr create(ValueTypePtr const& constantValue);
+    ///Factory method to create a NodeFunctionConstantValue.
+    static NodeFunctionPtr create(const std::shared_ptr<DataType>& type, std::string value);
     ~NodeFunctionConstantValue() noexcept override = default;
 
-    ValueTypePtr getConstantValue() const;
+    std::string getConstantValue() const;
 
-    /**
-     * @brief On a constant value function infer stamp has not to perform any action as its result type is always constant.
-     * @param typeInferencePhaseContext
-     * @param schema
-     */
+    /// On a constant value function infer stamp has not to perform any action as its result type is always constant.
+    /// @param schema
     void inferStamp(SchemaPtr schema) override;
 
-    std::string toString() const override;
     bool equal(NodePtr const& rhs) const override;
     bool validateBeforeLowering() const override;
-
-    /**
-    * @brief Create a deep copy of this function node.
-    * @return NodeFunctionPtr
-    */
     NodeFunctionPtr deepCopy() override;
 
 protected:
     explicit NodeFunctionConstantValue(const NodeFunctionConstantValue* other);
 
+    std::string toString() const override;
+
 private:
-    explicit NodeFunctionConstantValue(ValueTypePtr const& constantValue);
+    explicit NodeFunctionConstantValue(const std::shared_ptr<DataType>& type, std::string&& value);
     /// Value of this function
-    ValueTypePtr constantValue;
+    std::string constantValue;
 };
 using NodeFunctionConstantValuePtr = std::shared_ptr<NodeFunctionConstantValue>;
 }

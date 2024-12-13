@@ -13,6 +13,8 @@
 */
 #pragma once
 #include <functional>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES::QueryCompilation

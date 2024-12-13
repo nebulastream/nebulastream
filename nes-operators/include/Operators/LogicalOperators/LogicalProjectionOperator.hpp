@@ -14,46 +14,36 @@
 
 #pragma once
 
+#include <memory>
+#include <Functions/NodeFunction.hpp>
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+
 
 namespace NES
 {
 
-/**
- * @brief projection operator, which contains an resets the output schema
- */
+/// The projection operator only narrows down the fields of an input schema to a smaller subset. The map operator handles renaming and adding new fields.
 class LogicalProjectionOperator : public LogicalUnaryOperator
 {
 public:
     explicit LogicalProjectionOperator(std::vector<NodeFunctionPtr> functions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
-    /**
-     * @brief returns the list of fields that remain in the output schema.
-     * @return  std::vector<NodeFunctionPtr>
-     */
-    std::vector<NodeFunctionPtr> getFunctions() const;
+    const std::vector<std::shared_ptr<NodeFunction>>& getFunctions() const;
 
-    /**
-     * @brief check if two operators have the same output schema
-     * @param rhs the operator to compare
-     * @return bool true if they are the same otherwise false
-     */
-    [[nodiscard]] bool equal(NodePtr const& rhs) const override;
-    [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] bool equal(std::shared_ptr<Node> const& rhs) const override;
+    [[nodiscard]] bool isIdentical(std::shared_ptr<Node> const& rhs) const override;
     void inferStringSignature() override;
 
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @param typeInferencePhaseContext needed for stamp inferring
-    * @return true if schema was correctly inferred
-    */
     bool inferSchema() override;
     OperatorPtr copy() override;
 
+protected:
+    [[nodiscard]] std::string toString() const override;
+
 private:
-    std::vector<NodeFunctionPtr> functions;
+    std::vector<std::shared_ptr<NodeFunction>> functions;
 };
 
-} /// namespace NES
+}

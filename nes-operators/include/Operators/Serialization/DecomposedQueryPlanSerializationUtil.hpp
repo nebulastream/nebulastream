@@ -36,7 +36,7 @@ public:
      * @return the pointer to serialized SerializableQueryPlan
      */
     static void serializeDecomposedQueryPlan(
-        const DecomposedQueryPlanPtr& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
+        const DecomposedQueryPlan& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan);
 
     /**
      * @brief De-serializes the SerializableQueryPlan and all its root operators back to a QueryPlanPtr
@@ -49,4 +49,4 @@ public:
 
     static SerializableQueryState serializeQueryState(QueryState queryState);
 };
-} /// namespace NES
+}

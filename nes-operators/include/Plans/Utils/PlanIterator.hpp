@@ -15,16 +15,16 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include <stack>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {
 
+class Node;
 class QueryPlan;
-using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-
 class DecomposedQueryPlan;
-using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**
  * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
@@ -50,59 +50,33 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class PlanIterator
 {
 public:
-    explicit PlanIterator(QueryPlanPtr queryPlan);
+    explicit PlanIterator(const QueryPlan& queryPlan);
+    explicit PlanIterator(const DecomposedQueryPlan& decomposedQueryPlan);
 
-    explicit PlanIterator(DecomposedQueryPlanPtr decomposedQueryPlan);
-
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&>
+    class Iterator : public std::iterator<std::forward_iterator_tag, std::shared_ptr<Node>, std::shared_ptr<Node>>
     {
         friend class PlanIterator;
 
     public:
-        /**
-         * @brief Moves the iterator to the next node.
-         * If we reach the end of the iterator we will ignore this operation.
-         * @return iterator
-         */
-        iterator& operator++();
-
-        /**
-         * @brief Checks if the iterators are not at the same position
-         */
-        bool operator!=(const iterator& other) const;
-
-        /**
-         * @brief Gets the node at the current iterator position.
-         * @return
-         */
-        NodePtr operator*();
+        Iterator& operator++();
+        bool operator!=(const Iterator& other) const;
+        std::shared_ptr<Node> operator*();
 
     private:
-        explicit iterator(const std::vector<OperatorPtr>& rootOperators);
-        explicit iterator();
+        explicit Iterator(const std::vector<std::shared_ptr<Operator>>& rootOperators);
+        explicit Iterator();
         std::stack<NodePtr> workStack;
     };
 
-    /**
-     * @brief Starts a new iterator at the start node, which is always a sink.
-     * @return iterator
-     */
-    iterator begin();
+    /// @note always a sink
+    Iterator begin();
+    static Iterator end();
 
-    /**
-    * @brief The end of this iterator has an empty work stack.
-    * @return iterator
-    */
-    static iterator end();
-
-    /**
-     * @brief Return a snapshot of the iterator.
-     * @return vector<NodePtr> nodes
-     */
-    std::vector<NodePtr> snapshot();
+    /// Returns a snapshot of the iterator.
+    std::vector<std::shared_ptr<Node>> snapshot();
 
 private:
-    std::vector<OperatorPtr> rootOperators;
+    std::vector<std::shared_ptr<Operator>> rootOperators;
 };
 
-} /// namespace NES
+}

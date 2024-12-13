@@ -40,8 +40,10 @@ bool NodeFunctionAdd::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<NodeFunctionAdd>(rhs))
     {
-        auto otherAddNode = NES::Util::as<NodeFunctionAdd>(rhs);
-        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
+        auto other = NES::Util::as<NodeFunctionAdd>(rhs);
+        const bool simpleMatch = getLeft()->equal(other->getLeft()) and getRight()->equal(other->getRight());
+        const bool commutativeMatch = getLeft()->equal(other->getRight()) and getRight()->equal(other->getLeft());
+        return simpleMatch or commutativeMatch;
     }
     return false;
 }
@@ -49,7 +51,7 @@ bool NodeFunctionAdd::equal(NodePtr const& rhs) const
 std::string NodeFunctionAdd::toString() const
 {
     std::stringstream ss;
-    ss << children[0]->toString() << "+" << children[1]->toString();
+    ss << *children[0] << "+" << *children[1];
     return ss.str();
 }
 

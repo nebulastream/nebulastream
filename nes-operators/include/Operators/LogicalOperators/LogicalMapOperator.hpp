@@ -45,11 +45,13 @@ public:
     void inferStringSignature() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
-    std::string toString() const override;
     OperatorPtr copy() override;
+
+protected:
+    std::string toString() const override;
 
 private:
     const NodeFunctionFieldAssignmentPtr mapFunction;
 };
 using LogicalMapOperatorPtr = std::shared_ptr<LogicalMapOperator>;
-} /// namespace NES
+}

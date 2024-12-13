@@ -1,0 +1,47 @@
+# We measure the compile time of a clean uncached rebuild of NebulaStream and apply Clang Build Analyzer to collect
+# statistics on the heavy hitter.
+# The workflow can be manually dispatched on demand for any branch, while the nightly version always builds the main
+# branch
+name: Compile Time Regression
+on:
+  workflow_dispatch:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      ref:
+        required: true
+        description: "target commit"
+        type: string
+
+jobs:
+  compile-time-regression:
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
+    container:
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - name: analyze-build
+        run: |
+          echo "# Compile Time Summary for branch ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo '## CMake Configuration Time' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          bash -c "time cmake -GNinja -DENABLE_FTIME_TRACE=ON -DUSE_CCACHE_IF_AVAILABLE=OFF -B build" 2>> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          ClangBuildAnalyzer --start build
+          
+          echo '## Total Build Time' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          bash -c "time cmake --build build -j -- --quiet " 2>> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          ClangBuildAnalyzer --stop build build-summary
+          
+          echo '## ClangBuildAnalyzer' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ClangBuildAnalyzer --analyze build-summary >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

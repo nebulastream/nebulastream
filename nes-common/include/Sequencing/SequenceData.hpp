@@ -61,9 +61,9 @@ public:
      */
     bool operator!=(const SequenceData& other) const;
 
-    SequenceNumber sequenceNumber;
-    ChunkNumber chunkNumber;
+    SequenceNumber::Underlying sequenceNumber;
+    ChunkNumber::Underlying chunkNumber;
     bool lastChunk;
 };
 
-} /// namespace NES
+}

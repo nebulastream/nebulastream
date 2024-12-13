@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <optional>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
@@ -27,19 +28,16 @@ public:
     ~Numeric() override = default;
 
     /**
-    * @brief Checks if this data type is Numeric.
-    * @return bool
-    */
-    [[nodiscard]] bool isNumeric() const final { return true; }
-
-    /**
      * @brief Gets the bit size of this type.
      * @return int8_t
      */
     [[nodiscard]] int8_t getBits() const;
 
+    /// Returns the common type of two numeric types. If no conversion exists between the two types, we return an empty optional.
+    static std::optional<DataTypePtr> inferDataType(const Numeric& left, const Numeric& right);
+
 protected:
     const int8_t bits;
 };
 
-} /// namespace NES
+}

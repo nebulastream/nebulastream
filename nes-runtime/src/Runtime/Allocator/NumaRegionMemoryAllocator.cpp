@@ -54,5 +54,5 @@ void NumaRegionMemoryAllocator::do_deallocate(void* pointer, size_t sizeInBytes,
     munmap(pointer, sizeInBytes);
 }
 
-} /// namespace NES::Runtime
+}
 #endif

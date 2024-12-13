@@ -14,10 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Windowing
@@ -32,26 +33,22 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
     if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
-        auto existingField = schema->getField(fieldName);
-        if (!existingField->getDataType()->isInteger())
+        auto existingField = schema->getFieldByName(fieldName);
+        if (existingField)
         {
-            NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);
-        }
-        else if (existingField)
-        {
-            timeCharacteristic->getField()->setName(existingField->getName());
+            if (!NES::Util::instanceOf<Integer>(existingField.value()->getDataType()))
+            {
+                throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field {}", fieldName);
+            }
+            timeCharacteristic->getField()->setName(existingField.value()->getName());
             return true;
         }
-        else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+        if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
         {
             return true;
         }
-        else
-        {
-            NES_ERROR("TimeBasedWindow using a non existing time field  {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
-        }
+
+        throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field {}", fieldName);
     }
     return true;
 }
@@ -61,4 +58,4 @@ TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const
     return timeCharacteristic;
 }
 
-} /// namespace NES::Windowing
+}

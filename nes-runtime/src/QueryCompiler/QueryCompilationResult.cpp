@@ -37,4 +37,4 @@ uint64_t QueryCompilationResult::getCompilationTimeMilli() const
     return timer.getRuntime();
 }
 
-} /// namespace NES::QueryCompilation
+}

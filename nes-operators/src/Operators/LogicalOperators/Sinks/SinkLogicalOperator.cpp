@@ -13,28 +13,14 @@
 */
 
 #include <utility>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 
 namespace NES
 {
-SinkLogicalOperator::SinkLogicalOperator(const SinkDescriptorPtr& sinkDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), sinkDescriptor(sinkDescriptor)
-{
-}
-
-SinkDescriptorPtr SinkLogicalOperator::getSinkDescriptor() const
-{
-    return sinkDescriptor;
-}
-
-void SinkLogicalOperator::setSinkDescriptor(SinkDescriptorPtr sd)
-{
-    this->sinkDescriptor = std::move(sd);
-}
 
 bool SinkLogicalOperator::isIdentical(NodePtr const& rhs) const
 {
@@ -45,8 +31,9 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 {
     if (NES::Util::instanceOf<SinkLogicalOperator>(rhs))
     {
-        auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
-        return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor);
+        const auto sinkOperator = NES::Util::as<SinkLogicalOperator>(rhs);
+        return this->sinkName == sinkOperator->sinkName
+            and ((this->sinkDescriptor) ? this->sinkDescriptor == sinkOperator->sinkDescriptor : true);
     }
     return false;
 };
@@ -54,31 +41,43 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SINK(opId: " << id << ": {" << sinkDescriptor->toString() << "})";
+    ss << fmt::format("SINK(opId: {}, sinkName: {}, sinkDescriptor: ", id, sinkName);
+    ((sinkDescriptor) ? (ss << sinkDescriptor) : ss << "(null))");
+    ss << ")";
     return ss.str();
+}
+const Sinks::SinkDescriptor& SinkLogicalOperator::getSinkDescriptorRef() const
+{
+    if (this->sinkDescriptor)
+    {
+        return *sinkDescriptor;
+    }
+    throw UnknownSinkType("Tried to access the SinkDescriptor of a SinkLogicalOperator that does not have a SinkDescriptor yet.");
 }
 
 OperatorPtr SinkLogicalOperator::copy()
 {
     ///We pass invalid worker id here because the properties will be copied later automatically.
-    auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, INVALID_WORKER_NODE_ID, id);
+    auto sinkDescriptorPtrCopy = sinkDescriptor;
+    auto copy = std::make_shared<SinkLogicalOperator>(sinkName, id);
+    copy->sinkDescriptor = std::move(sinkDescriptorPtrCopy);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
-    for (const auto& pair : properties)
+    for (const auto& [propertyName, propertyValue] : properties)
     {
-        copy->addProperty(pair.first, pair.second);
+        copy->addProperty(propertyName, propertyValue);
     }
     return copy;
 }
 
 void SinkLogicalOperator::inferStringSignature()
 {
-    OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
+    const OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
+    NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -94,4 +93,4 @@ void SinkLogicalOperator::inferStringSignature()
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} /// namespace NES
+}

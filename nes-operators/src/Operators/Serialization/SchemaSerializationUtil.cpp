@@ -18,7 +18,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
 #include <Common/DataTypes/DataType.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
 
 namespace NES
 {
@@ -27,7 +26,7 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
 {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
     /// serialize all field in schema
-    for (const auto& field : schema->fields)
+    for (const auto& field : *schema)
     {
         auto* serializedField = serializedSchema->add_fields();
         serializedField->set_name(field->getName());
@@ -82,4 +81,4 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
     }
     return deserializedSchema;
 }
-} /// namespace NES
+}

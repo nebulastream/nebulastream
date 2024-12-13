@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <memory>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -56,7 +56,7 @@ bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const
 
 OperatorPtr WatermarkAssignerLogicalOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
+    auto copy = std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -83,7 +83,7 @@ bool WatermarkAssignerLogicalOperator::inferSchema()
 void WatermarkAssignerLogicalOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = NES::Util::as<Operator>(shared_from_this());
-    NES_TRACE("Inferring String signature for {}", operatorNode->toString());
+    NES_TRACE("Inferring String signature for {}", *operatorNode);
 
     ///Infer query signatures for child operators
     for (const auto& child : children)
@@ -102,4 +102,4 @@ void WatermarkAssignerLogicalOperator::inferStringSignature()
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-} /// namespace NES
+}

@@ -48,8 +48,8 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         auto numThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
         std::vector<uint64_t> workerToCoreMapping;
         std::vector<Memory::BufferManagerPtr> bufferManagers = {bufferManager};
-        /// TODO #34: For now, the worker id is always 0 and the numberOfBuffersPerEpoch always 100. We need to change this during the refactoring.
-        queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, 100, workerToCoreMapping);
+        /// TODO #34: For now, the worker id is always 0. We need to change this during the refactoring.
+        queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, workerToCoreMapping);
         if (!queryManager)
         {
             throw CannotStartQueryManager("during creation of NodeEngine");
@@ -59,4 +59,4 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryManager), std::move(queryLog));
 }
 
-} ///namespace NES::Runtime
+}

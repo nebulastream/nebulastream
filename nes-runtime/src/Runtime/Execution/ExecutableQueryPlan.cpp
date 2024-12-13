@@ -19,7 +19,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -29,7 +29,7 @@ namespace NES::Runtime::Execution
 ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId,
     std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
-    std::vector<DataSinkPtr>&& sinks,
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>&& sinks,
     std::vector<ExecutablePipelinePtr>&& pipelines,
     QueryManagerPtr&& queryManager,
     Memory::BufferManagerPtr&& bufferManager)
@@ -43,13 +43,15 @@ ExecutableQueryPlan::ExecutableQueryPlan(
     , qepTerminationStatusFuture(qepTerminationStatusPromise.get_future())
 {
     /// the +1 is the termination token for the query plan itself
-    numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size() + this->sinks.size());
+    /// not tracking sinks. Sinks don't have a successor and therefore don't need to notify their successors. We rely on the sink destructor.
+    /// Todo #34: improved by @ls-1801 in the QueryManager refactoring.
+    numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size());
 }
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(
     QueryId queryId,
     std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
-    std::vector<DataSinkPtr> sinks,
+    std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>&& sinks,
     std::vector<ExecutablePipelinePtr> pipelines,
     QueryManagerPtr queryManager,
     Memory::BufferManagerPtr bufferManager)
@@ -176,7 +178,7 @@ const std::vector<std::unique_ptr<Sources::SourceHandle>>& ExecutableQueryPlan::
     return sources;
 }
 
-const std::vector<DataSinkPtr>& ExecutableQueryPlan::getSinks() const
+const std::unordered_set<std::shared_ptr<NES::Sinks::Sink>>& ExecutableQueryPlan::getSinks() const
 {
     return sinks;
 }
@@ -348,26 +350,4 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     }
 }
 
-void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminationType terminationType)
-{
-    NES_ASSERT2_FMT(queryStatus.load() == QueryStatus::Running, "Cannot complete sink on non running query plan id=" << queryId);
-    auto it = std::find(sinks.begin(), sinks.end(), sink);
-    NES_ASSERT2_FMT(it != sinks.end(), "Cannot find sink " << sink->toString() << " in sub query plan " << queryId);
-    uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
-    NES_ASSERT2_FMT(tokensLeft >= 1, "Sink was last termination token for " << queryId);
-    NES_DEBUG("QEP {} Sink {} is terminated; tokens left = {}", queryId, sink->toString(), (tokensLeft - 1));
-    /// sinks also require to spawn a reconfig task for the qep
-    if (tokensLeft == 2)
-    { /// this is the second last token to be removed (last one is the qep itself)
-        auto reconfMessageQEP = ReconfigurationMessage(
-            getQueryId(),
-            terminationType == QueryTerminationType::Graceful
-                ? ReconfigurationType::SoftEndOfStream
-                : (terminationType == QueryTerminationType::HardStop ? ReconfigurationType::HardEndOfStream
-                                                                     : ReconfigurationType::FailEndOfStream),
-            Reconfigurable::shared_from_this<ExecutableQueryPlan>());
-        queryManager->addReconfigurationMessage(getQueryId(), reconfMessageQEP, false);
-    }
 }
-
-} /// namespace NES::Runtime::Execution

@@ -53,22 +53,6 @@ public:
     */
     virtual uint32_t setup(PipelineExecutionContext& pipelineExecutionContext);
 
-    /**
-    * @brief Must be called only once per executable pipeline and starts the executable pipeline.
-    * e.g. starts the threads for the window handler.
-    * @param pipelineExecutionContext
-    * @return 0 if no error occurred.
-    */
-    virtual uint32_t start(PipelineExecutionContext& pipelineExecutionContext);
-
-    /**
-    * @brief Must be called exactly once per worker thread and initializes worker local state.
-    * For instance a worker local aggregation state.
-    * @param pipelineExecutionContext
-    * @param workerContext
-    * @return 0 if no error occurred.
-    */
-    virtual uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
 
     /**
     * @brief Is called once per input buffer and performs the computation of each operator.
@@ -84,31 +68,17 @@ public:
         = 0;
 
     /**
-     * @brief Must be called exactly once per worker thread to remove worker local state.
-     * @param pipelineExecutionContext
-     * @param workerContext
-     * @return 0 if no error occurred.
-     */
-    virtual uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext);
-
-    /**
      * @brief Must be called exactly once per executable pipeline to remove operator state.
      * @param pipelineExecutionContext
      * @return 0 if no error occurred.
      */
     virtual uint32_t stop(PipelineExecutionContext& pipelineExecutionContext);
 
-    /**
-     * @brief return the code of the pipeline
-     * @return string
-     */
-    virtual std::string getCodeAsString();
-
 private:
     PipelineStageArity arity;
 };
 using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
-} /// namespace NES::Runtime::Execution
+}
 
 namespace fmt
 {
@@ -120,4 +90,4 @@ struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<s
         return fmt::format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
-} ///namespace fmt
+}

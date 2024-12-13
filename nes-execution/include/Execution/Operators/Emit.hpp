@@ -11,10 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
-#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+
+#include <memory>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <Nautilus/Interface/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -26,7 +28,7 @@ namespace NES::Runtime::Execution::Operators
 class Emit : public ExecutableOperator
 {
 public:
-    Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
+    explicit Emit(std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
@@ -35,7 +37,7 @@ public:
 
 private:
     uint64_t maxRecordsPerBuffer;
-    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
+    std::unique_ptr<Interface::MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
-} /// namespace NES::Runtime::Execution::Operators
+}
