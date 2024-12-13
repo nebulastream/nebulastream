@@ -39,11 +39,6 @@ public:
 
     ~Float() override = default;
 
-    /**
-     * @brief Checks if two data types are equal.
-     * @param otherDataType
-     * @return true if equal types false if unequal
-     */
     bool operator==(const DataType& other) const override;
 
     /**

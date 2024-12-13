@@ -31,8 +31,7 @@ namespace NES
 
 bool Integer::operator==(const NES::DataType& other) const
 {
-    const auto otherInteger = dynamic_cast<const Integer*>(&other);
-    if (otherInteger != nullptr)
+    if (const auto otherInteger = dynamic_cast<const Integer*>(&other))
     {
         return bits == otherInteger->bits && lowerBound == otherInteger->lowerBound && upperBound == otherInteger->upperBound;
     }
