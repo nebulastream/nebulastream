@@ -28,8 +28,8 @@
 namespace NES::InputFormatters::InputFormatterGeneratedRegistrar
 {
 
-std::unique_ptr<InputFormatter> RegisterCSVInputFormatter(const Schema& schema, std::string, std::string);
-
+/// declarations of register functions for 'InputFormatters'
+@REGISTER_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
@@ -39,6 +39,6 @@ inline void Registrar<InputFormatters::InputFormatterRegistry, InputFormatters::
     [[maybe_unused]] Registry<Registrar>& registry)
 {
     using namespace NES::InputFormatters::InputFormatterGeneratedRegistrar;
-    registry.registerPlugin("CSV", RegisterCSVInputFormatter);
+    @REGISTER_ALL_FUNCTION_CALLS@
 }
 }

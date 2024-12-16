@@ -22,8 +22,17 @@
 namespace NES::InputFormatters
 {
 
+using InputFormatterRegistryReturnType = InputFormatter;
 /// A InputFormatter requires a schema, a tuple separator and a field delimiter.
-using InputFormatterRegistrySignature = RegistrySignature<std::string, InputFormatter, const Schema&, std::string, std::string>;
+struct InputFormatterRegistryArguments
+{
+    Schema schema;
+    std::string tupleDelimiter;
+    std::string fieldDelimiter;
+};
+
+using InputFormatterRegistrySignature
+    = RegistrySignature<std::string, InputFormatterRegistryReturnType, const InputFormatterRegistryArguments>;
 class InputFormatterRegistry : public BaseRegistry<InputFormatterRegistry, InputFormatterRegistrySignature>
 {
 };
