@@ -38,10 +38,16 @@
 struct InputValue {
     uint64_t timestamp;
     uint64_t id;
-    double speed;
-    double latitude;
-    double longitude;
+    double PCFA_mbar;
+    double PCFF_mbar;
+    double PCF1_mbar;
+    double PCF2_mbar;
+    double T1_mbar;
+    double T2_mbar;
+    uint64_t Code1;
+    uint64_t Code2;
 };
+
 
 
 namespace NES {
@@ -75,41 +81,44 @@ TEST_F(ReadSNCB, testReadCSV) {
         MEOS::Meos* meos = new MEOS::Meos("UTC");
 
 
-        auto gpsSchema = Schema::create()
+        auto pressSchema = Schema::create()
                         ->addField("timestamp", BasicType::UINT64)
                         ->addField("id", BasicType::UINT64)
-                        ->addField("speed", BasicType::FLOAT64)
-                        ->addField("latitude", BasicType::FLOAT64)
-                        ->addField("longitude", BasicType::FLOAT64);
-                              
+                        ->addField("PCFA_mbar", BasicType::FLOAT64)
+                        ->addField("PCFF_mbar", BasicType::FLOAT64)
+                        ->addField("PCF1_mbar", BasicType::FLOAT64)
+                        ->addField("PCF2_mbar", BasicType::FLOAT64)
+                        ->addField("T1_mbar", BasicType::FLOAT64)
+                        ->addField("T2_mbar", BasicType::FLOAT64)
+                        ->addField("Code1", BasicType::UINT64)
+                        ->addField("Code2", BasicType::UINT64);
+                            
 
-        ASSERT_EQ(sizeof(InputValue), gpsSchema->getSchemaSizeInBytes());
+        ASSERT_EQ(sizeof(InputValue), pressSchema->getSchemaSizeInBytes());
 
-        auto csvSourceType = CSVSourceType::create("sncb", "dfgps_time");
-        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfgps_time.csv");
-        csvSourceType->setNumberOfTuplesToProducePerBuffer(100);// Read 2 tuples per buffer
-        csvSourceType->setNumberOfBuffersToProduce(100);       // Produce 10 buffers
+        auto csvSourceType = CSVSourceType::create("sncb", "dfpress_time");
+        csvSourceType->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "dfpress_time.csv");
+        csvSourceType->setNumberOfTuplesToProducePerBuffer(10);// Read 2 tuples per buffer
+        csvSourceType->setNumberOfBuffersToProduce(20);       // Produce 10 buffers
         csvSourceType->setSkipHeader(true);                   // Skip the header
 
         // Define query
         auto query =
             Query::from("sncb")
-                .filter(READ(Attribute("speed",BasicType::UINT64)) > -1)
+                .filter(READ(Attribute("PCFA_mbar",BasicType::FLOAT64)) > -1)
                 .window(SlidingWindow::of(EventTime(Attribute("timestamp", BasicType::UINT64)), Seconds(10), Seconds(10)))
-                .apply(Max(Attribute("speed",BasicType::UINT64)));
+                .apply(Max(Attribute("PCF1_mbar",BasicType::FLOAT64)));
 
 
         // Create the test harness and attach the CSV source
         auto testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
-                               .addLogicalSource("sncb", gpsSchema)
+                               .addLogicalSource("sncb", pressSchema)
                                .attachWorkerWithLambdaSourceToCoordinator(csvSourceType, workerConfiguration);
 
         testHarness.validate().setupTopology();
 
         // Define expected output
-        const auto expectedOutput =  "1719780000, 1719790000, 30.8284\n"
-                                                        "1719790000, 1719800000, 9.0132\n"
-                                                        "1719800000, 1719810000, 157.7236\n";
+        const auto expectedOutput =  "1719270000, 1719280000, 2.606\n";
                             
         // Run the query and get the actual dynamic buffers
         auto actualBuffers = testHarness.runQuery(Util::countLines(expectedOutput), "TopDown").getOutput();
@@ -122,7 +131,7 @@ TEST_F(ReadSNCB, testReadCSV) {
                 NES_INFO("The result is : {}, {}, {}",
                     tuple[0].read<uint64_t>(), // window_start
                     tuple[1].read<uint64_t>(), // window_end
-                    tuple[2].read<double>()); // speed            
+                    tuple[2].read<double>()); // PCF1_mbar            
             }
         }
 
