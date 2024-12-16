@@ -1,5 +1,25 @@
 # Changelog
 
+## [v0.6.201](https://github.com/nebulastream/nebulastream/tree/v0.6.201) (2024-12-16)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.200...v0.6.201)
+
+**Implemented enhancements:**
+
+- \[TASK\] Add precedence to parser [\#5030](https://github.com/nebulastream/nebulastream/issues/5030)
+- \[TASK\] Consistently use LF as newline character [\#4982](https://github.com/nebulastream/nebulastream/issues/4982)
+
+#### Complex Event Processing
+
+- \[Feature\] Test Nested CEP Pattern  [\#2812](https://github.com/nebulastream/nebulastream/issues/2812)
+
+### Miscellaneous Issues ✌️
+
+- fix name of nexmark `Bid`/`Bit` source/generator [\#4991](https://github.com/nebulastream/nebulastream/issues/4991)
+- Add executable to docker image, so that users can easily benchmark NES [\#4990](https://github.com/nebulastream/nebulastream/issues/4990)
+- have the config.yaml as sole positional arg [\#4989](https://github.com/nebulastream/nebulastream/issues/4989)
+- rename binary to e.g. `nesBench` [\#4988](https://github.com/nebulastream/nebulastream/issues/4988)
+
 ## [v0.6.200](https://github.com/nebulastream/nebulastream/tree/v0.6.200) (2024-11-29)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.199...v0.6.200)
