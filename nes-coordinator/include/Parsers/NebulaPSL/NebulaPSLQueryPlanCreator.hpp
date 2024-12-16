@@ -66,6 +66,14 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
 
     void enterEventElem(NesCEPParser::EventElemContext* context) override;
 
+    /** @brief recieves a ListEventsContext if enterEventElem finds a left parenthesis.
+     * Creates and adds a subquery containing the parenthesized part from the given query string
+     * as a source to the main pattern
+     * @param context
+     * TODO can we use a smart instead of a raw NesCEPParser::ListEventsContext* #5165 ?
+     */
+    void handleParenthesizedExpression(NesCEPParser::ListEventsContext* context);
+
     // Event
     /**
       * @brief marks the position of the event inside of the currentElementPointer subPattern
@@ -205,6 +213,10 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     bool leftFilter = true;
     std::string currentLeftExp;
     std::string currentRightExp;
+    std::map<std::string, QueryPlanPtr> subQueries;
+    /** a map holding context for nested patterns
+    std::string: virtual subquery name following the naming scheme "SubQuery_" + std::to_string(nodeId)
+    QueryPlanPtr: the queryPlanPointer for the created subquery */
 };
 
 }// namespace NES::Parsers
