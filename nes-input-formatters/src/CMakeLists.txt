@@ -11,6 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
-        CSVInputFormatter.cpp
         InputFormatterProvider.cpp
 )
+
+# Register plugins
+add_plugin(CSV InputFormatter nes-input-formatters CSVInputFormatter.cpp)

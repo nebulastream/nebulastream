@@ -423,10 +423,13 @@ std::ostream& CSVInputFormatter::toString(std::ostream& str) const
     return str;
 }
 
-std::unique_ptr<InputFormatter>
-InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const Schema& schema, std::string tupleDelimiter, std::string fieldDelimiter)
+std::unique_ptr<InputFormatterRegistryReturnType>
+InputFormatterGeneratedRegistrar::RegisterCSVInputFormatter(const InputFormatterRegistryArguments& inputFormatterRegistryArguments)
 {
-    return std::make_unique<CSVInputFormatter>(schema, std::move(tupleDelimiter), std::move(fieldDelimiter));
+    return std::make_unique<CSVInputFormatter>(
+        inputFormatterRegistryArguments.schema,
+        inputFormatterRegistryArguments.tupleDelimiter,
+        inputFormatterRegistryArguments.fieldDelimiter);
 }
 
 }

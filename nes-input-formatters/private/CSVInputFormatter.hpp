@@ -33,7 +33,7 @@ namespace NES::InputFormatters
 /// Implementation detail of CSVInputFormatter
 class ProgressTracker;
 
-class CSVInputFormatter : public InputFormatter
+class CSVInputFormatter final : public InputFormatter
 {
 public:
     using CastFunctionSignature
