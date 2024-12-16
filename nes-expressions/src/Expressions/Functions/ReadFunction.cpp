@@ -25,6 +25,7 @@ class ReadFunction : public UnaryLogicalFunction {
   public:
     [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
         if (!input->isNumeric()) {
+            NES_INFO("input is of type: {}", input->toString());
             NES_THROW_RUNTIME_ERROR("ReadExpressions can only be evaluated on numeric values.");
         }
         // Output values can become highly negative for inputs close to +0. Set Double as output stamp.

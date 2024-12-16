@@ -13,9 +13,12 @@
 add_nes_integration_test(meos-speedAgregation "MeosSpeedAgregation.cpp")
 add_nes_integration_test(meos-intersection "MeosIntersectionThresold.cpp")
 add_nes_integration_test(meos-trajectoryInputation "MeosTrajectoryInputation.cpp")
+add_nes_integration_test(meos-SNCBBattery "MeosSNCBBattery.cpp")
+add_nes_integration_test(meos-SNCBGPS "MeosSNCBGPS.cpp")
 
 
 target_link_libraries(meos-speedAgregation nes-meos)
 target_link_libraries(meos-intersection nes-meos)
 target_link_libraries(meos-trajectoryInputation nes-meos)
-
+target_link_libraries(meos-SNCBBattery nes-meos)
+target_link_libraries(meos-SNCBGPS nes-meos)
