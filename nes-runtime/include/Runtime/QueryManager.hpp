@@ -229,6 +229,24 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
+    /**
+     * @brief propagate a reconfiguration marker to a list of executable successors shutting down a source.
+     * This function should only be called on the successors of sources that are reused by a follow up plan.
+     * @param marker the reconfiguration marker to be propagated
+     * @param pipelineSuccessors the pipelines of the old plan to the the marker should be propagated
+    */
+    void propagateReconfigurationMarkerToSuccessorList(const ReconfigurationMarkerPtr& marker,
+                                                      std::vector<Execution::SuccessorExecutablePipeline> pipelineSuccessors);
+
+    /**
+     * @brief updated the mapping that relates a source to an executable query plan. The reverse mapping from decomposed query
+     * plan id to source id will be updated as well.
+     * @param sourceid the source id to be mapped to a new decomposed plan
+     * @param newPlanIds a vactor of decomposed executable plan ids. Currently only vectors of size 1 are supported because source
+     * reuse is not yet compatible with source sharing
+     */
+    void updateSourceToQepMapping(OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlanIds);
+
   private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -434,6 +452,15 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @return next task id
      */
     uint64_t getNextTaskId();
+
+    /**
+     * @brief mark a source as drained and schedule a reconfiguration marker to be propagated to the sources to be reused, once
+     * all expected drains have been received
+     * @param marker This reconfiguration marker is stored in the QEP to which the source belongs. Once all expected drain events
+     * have been received, it is propgated to the old successor of all sources to be reused
+     * @param sourceid the id of the source to be marked as drained
+     */
+    void markSourceAsDrained(const ReconfigurationMarkerPtr& marker, OperatorId sourceid);
 
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;

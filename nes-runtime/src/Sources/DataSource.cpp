@@ -101,7 +101,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
     }
 
     uint64_t queueId = 0;
-    for (const auto& successor : executableSuccessors) {
+    for (const auto& successor : *executableSuccessors.wlock()) {
         //find the queue to which this sources pushes
         if (!sourceSharing) {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
@@ -113,15 +113,13 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData) 
 }
 
 std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
-    return executableSuccessors;
+    return executableSuccessors.copy();
 }
 
 void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines) {
-    successorModifyMutex.lock();
     for (auto& pipe : newPipelines) {
-        executableSuccessors.push_back(pipe);
+        executableSuccessors->push_back(pipe);
     }
-    successorModifyMutex.unlock();
 }
 
 OperatorId DataSource::getOperatorId() const { return operatorId; }
@@ -133,7 +131,7 @@ SchemaPtr DataSource::getSchema() const { return schema; }
 DataSource::~DataSource() NES_NOEXCEPT(false) {
     NES_ASSERT(running == false, "Data source destroyed but thread still running... stop() was not called");
     NES_DEBUG("DataSource {}: Destroy Data Source.", operatorId);
-    executableSuccessors.clear();
+    executableSuccessors->clear();
 }
 
 bool DataSource::start() {
@@ -623,4 +621,38 @@ void DataSource::storePersistedProperties() { NES_WARNING("No implementation fou
 
 void DataSource::clearPersistedProperties() { NES_WARNING("No implementation found to clear persistent source properties."); }
 
+bool DataSource::updateSuccessors(const ReconfigurationMarkerPtr& marker, OperatorId sourceId, std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans) {
+    /* maintain successors locked throughout the function, this also ensures that the source to qep mapping cannot be
+    modified by the lockSuccessorsAndNotifySourceCompletion() function while this function executes */
+    auto lockedSuccessors = executableSuccessors.wlock();
+    NES_ASSERT(lockedSuccessors->size() == 1, "Source reuse is not supported if source sharing is active");
+
+    //shutdown old plan
+    queryManager->propagateReconfigurationMarkerToSuccessorList(marker, *lockedSuccessors);
+    queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Reconfiguration);
+
+    // update the successors
+    auto lockedNewSuccessors = newSuccessors.wlock();
+    NES_ASSERT(!lockedNewSuccessors->empty(), "Trying to how swap source, but no successor was set");
+    auto nextSuccessors = lockedNewSuccessors->front();
+    *lockedSuccessors = nextSuccessors;
+    lockedNewSuccessors->pop();
+    queryManager->updateSourceToQepMapping(sourceId, newPlans);
+    return true;
+}
+
+bool DataSource::compareId(const DataSourcePtr& first, const DataSourcePtr& second) {
+    return first->getOperatorId() == second->getOperatorId();
+}
+
+void DataSource::scheduleSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newSuccessorList) {
+    newSuccessors->push(newSuccessorList);
+}
+
+void DataSource::lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminationType terminationType) {
+    // lock the successors to make sure that they do not change while source completion is notified
+    auto lock = executableSuccessors.rlock();
+
+    queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
+}
 }// namespace NES

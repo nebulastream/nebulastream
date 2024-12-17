@@ -190,6 +190,17 @@ class NetworkSource : public DataSource {
 
     bool bind();
 
+    /**
+     * @brief Get the node location where the corresponding sink for this source is located
+     * @return a NodeLocation object that identifies the worker on which the sink runs
+     */
+    NodeLocation getSenderLocation();
+
+    /**
+     * @brief get the network partition for this network source
+     */
+    NesPartition getPartition();
+
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
   private:

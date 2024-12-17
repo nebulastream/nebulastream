@@ -334,6 +334,7 @@ uint64_t AbstractQueryManager::getNextTaskId() { return ++taskIdCounter; }
 uint64_t AbstractQueryManager::getNumberOfWorkerThreads() { return numThreads; }
 
 std::unordered_set<DecomposedQueryIdWithVersion> AbstractQueryManager::getExecutablePlanIdsForSource(DataSourcePtr source) const {
+    std::unique_lock lock(queryMutex);
     auto executablePlans = sourceToQEPMapping.at(source->getOperatorId());
     std::unordered_set<DecomposedQueryIdWithVersion> ids;
     for (auto& plan : executablePlans) {

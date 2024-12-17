@@ -13,6 +13,7 @@
 */
 
 #include <Monitoring/Util/MetricUtils.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Network/NetworkManager.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
@@ -20,7 +21,6 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
@@ -194,6 +194,15 @@ ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
         NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
         const Network::NetworkSourceDescriptorPtr networkSourceDescriptor =
             sourceDescriptor->as<Network::NetworkSourceDescriptor>();
+
+        //todo #5174: move this check out of the if condition to the top of the function
+        //in case the source is to be reused, do not create a new one
+        auto sourceToReuse = networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition());
+        if (sourceToReuse) {
+            sourceToReuse->scheduleSuccessors(successors);
+            return std::static_pointer_cast<NES::DataSource>(sourceToReuse);
+        }
+
         return createNetworkSource(networkSourceDescriptor->getSchema(),
                                    bufferManager,
                                    queryManager,

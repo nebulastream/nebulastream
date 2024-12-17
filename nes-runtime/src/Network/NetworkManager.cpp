@@ -18,6 +18,7 @@
 #include <Network/ZmqServer.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Network/NetworkSource.hpp>
 #include <utility>
 
 namespace NES::Network {
@@ -258,4 +259,9 @@ bool NetworkManager::registerSubpartitionEventConsumer(const NodeLocation& nodeL
 bool NetworkManager::getConnectSinksAsync() { return connectSinksAsync; }
 
 bool NetworkManager::getConnectSourceEventChannelsAsync() { return connectSourceEventChannelsAsync; }
+
+NetworkSourcePtr NetworkManager::getNetworkSourceWithPartition(NesPartition partition) {
+    auto dataEmitter = partitionManager->getDataEmitter(partition);
+    return std::dynamic_pointer_cast<Network::NetworkSource>(dataEmitter);
+}
 }// namespace NES::Network

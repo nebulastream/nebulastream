@@ -23,6 +23,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
+#include <folly/Synchronized.h>
 #include <atomic>
 #include <future>
 #include <map>
@@ -33,6 +34,11 @@ class ReconfigurationMessage;
 }
 namespace NES::Network {
 class NetworkSink;
+}
+
+namespace NES {
+class ReconfigurationMarker;
+using ReconfigurationMarkerPtr = std::shared_ptr<ReconfigurationMarker>;
 }
 
 namespace NES::Runtime::Execution {
@@ -202,6 +208,33 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     void destroy();
 
+    /**
+     * @brief increase the counter of drained sources for this plan
+     */
+    void increaseSourceDrainCounter(const ReconfigurationMarkerPtr& marker);
+
+    /**
+     * @brief Get the operator ids of the network sources to be reused
+     * @return vector of operator ids
+     */
+    [[nodiscard]] std::vector<OperatorId> getSourcesToReuse() const;
+
+    /**
+     * @brief Get the amount of network sources to be reused
+     * @return the amount of sources to be reused
+     */
+    uint64_t getSourcesToReuseCount() const;
+
+    /**
+     * @brief set the list of sources to be reused by this plan instead of starting new sources
+     */
+    void setSourcesToReuse(std::vector<OperatorId> sourcesToReuse);
+
+    /**
+     * @brief adds a successor plan that will reuse sources of the current plan
+     */
+    bool addSuccessorPlan(ExecutableQueryPlanPtr successor);
+
   protected:
     /**
      * @brief API method called upon receiving an event.
@@ -221,6 +254,26 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
         return std::static_pointer_cast<Derived>(Reconfigurable::shared_from_this());
     }
 
+    /**
+     * @brief private helper function to increase the source drain count, check if all expected drains were received
+     * @return true if all expected drains were received and the remaining sources can be transferred to the successor plan
+     */
+    bool handleSourceDrainHelper();
+
+    /**
+     * @brief check if all expected drain events were received to that the remaining sources can be transferred to the successor
+     * plan
+     */
+    bool allSourcesDrained();
+
+    /*
+     * @brief propagate the reconfiguration marker to the current executable successor of all sources that are still running and
+     * redirect their data flow to their new executable successors. This is used to shut down the old plan and attach the
+     * sources that are marked for reuse to the new plan. This method must only be called when all non-reuse sources are drained
+     * @param marker the reconfiguration marker to be propagated through the old plan
+     */
+    void transferSourcesToSuccessor(const ReconfigurationMarkerPtr& marker);
+
   private:
     const SharedQueryId sharedQueryId;
     const DecomposedQueryId decomposedQueryId;
@@ -237,6 +290,11 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
     /// future that indicates how a qep terminates
     std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
+    std::atomic<uint64_t> drainedSourceCount;
+
+    folly::Synchronized<ExecutableQueryPlanPtr> successor;
+    folly::Synchronized<ReconfigurationMarkerPtr> drainMarker;
+    std::vector<OperatorId> sourcesToReuse;
 };
 
 }// namespace NES::Runtime::Execution

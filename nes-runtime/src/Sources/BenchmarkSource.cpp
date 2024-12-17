@@ -170,7 +170,7 @@ void BenchmarkSource::runningRoutine() {
             generatedBuffers++;
             currentPositionInBytes += bufferSize;
 
-            for (const auto& successor : executableSuccessors) {
+            for (const auto& successor : *executableSuccessors.rlock()) {
                 queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
             }
         }

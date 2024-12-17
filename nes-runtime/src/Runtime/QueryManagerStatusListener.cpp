@@ -23,11 +23,11 @@
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <variant>
 
 namespace NES::Runtime {
@@ -190,5 +190,23 @@ void AbstractQueryManager::notifySinkCompletion(DecomposedQueryId decomposedQuer
                     "invalid decomposed query plan id and version" << decomposedQueryId << "." << decomposedQueryVersion
                                                                    << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
+}
+
+void AbstractQueryManager::updateSourceToQepMapping(NES::OperatorId sourceid, std::vector<Execution::ExecutableQueryPlanPtr> newPlanIds) {
+    if (newPlanIds.size() > 1) {
+        NES_ERROR("Source reuse is currently not supported in combination with source sharing");
+        NES_NOT_IMPLEMENTED();
+    }
+    std::unique_lock lock(queryMutex);
+
+    auto oldPlanids = sourceToQEPMapping[sourceid];
+    for (const auto &id : oldPlanids ) {
+        decomposeQueryToSourceIdMapping.erase(id->getDecomposedQueryId());
+    }
+
+    for (const auto &plan : newPlanIds ) {
+        decomposeQueryToSourceIdMapping[plan->getDecomposedQueryId()].push_back(sourceid);
+    }
+    sourceToQEPMapping[sourceid] = std::move(newPlanIds);
 }
 }// namespace NES::Runtime
