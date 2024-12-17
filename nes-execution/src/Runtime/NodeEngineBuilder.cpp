@@ -77,7 +77,6 @@ private:
                             taskStartEvent.pipelineId,
                             taskStartEvent.queryId,
                             taskStartEvent.numberOfTuples);
-                        file.flush();
                     },
                     [&](TaskExecutionComplete taskStopEvent)
                     {
@@ -87,7 +86,6 @@ private:
                             taskStopEvent.id,
                             taskStopEvent.pipelineId,
                             taskStopEvent.queryId);
-                        file.flush();
                     },
                     [](auto) {}},
                 event);

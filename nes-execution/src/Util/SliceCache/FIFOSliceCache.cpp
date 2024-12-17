@@ -16,8 +16,11 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-FIFOSliceCache::FIFOSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner)
-    : cacheSize(cacheSize), sliceAssigner(sliceAssigner)
+FIFOSliceCache::FIFOSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner) : cacheSize(cacheSize), sliceAssigner(sliceAssigner)
+{
+}
+
+FIFOSliceCache::FIFOSliceCache(FIFOSliceCache const& other) : cacheSize(other.cacheSize), sliceAssigner(other.sliceAssigner)
 {
 }
 
@@ -25,8 +28,14 @@ FIFOSliceCache::~FIFOSliceCache()
 {
 }
 
+SliceCachePtr FIFOSliceCache::clone() const
+{
+    return std::make_shared<FIFOSliceCache>(*this);
+}
+
 std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(Timestamp timestamp)
 {
+    // Get slice end as a unique sliceId
     auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
 
     // Search for corresponding slice
@@ -42,12 +51,13 @@ std::optional<SliceCache::SlicePtr> FIFOSliceCache::getSliceFromCache(Timestamp 
     return it->second;
 }
 
-bool FIFOSliceCache::passSliceToCache(Timestamp timestamp, SliceCache::SlicePtr newSlice)
+bool FIFOSliceCache::passSliceToCache(Timestamp sliceId, SliceCache::SlicePtr newSlice)
 {
-    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
+    // Get the value of sliceId
+    auto sliceIdValue = sliceId.getRawValue();
 
     // Check if slice is already in cache
-    if (cache.contains(sliceId))
+    if (cache.contains(sliceIdValue))
     {
         return false;
     }
@@ -60,13 +70,13 @@ bool FIFOSliceCache::passSliceToCache(Timestamp timestamp, SliceCache::SlicePtr 
         slices.pop_back();
     }
     // Add new slice to cache
-    slices.push_front(sliceId);
-    cache.emplace(sliceId, newSlice);
+    slices.push_front(sliceIdValue);
+    cache.emplace(sliceIdValue, newSlice);
 
     return true;
 }
 
-void FIFOSliceCache::deleteSliceFromCache(Timestamp)
+void FIFOSliceCache::deleteSlicesFromCache(std::vector<Timestamp>)
 {
 }
 

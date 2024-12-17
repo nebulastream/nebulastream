@@ -22,12 +22,23 @@ LeastRecentlyUsedSliceCache::LeastRecentlyUsedSliceCache(uint64_t cacheSize, Sli
 {
 }
 
+LeastRecentlyUsedSliceCache::LeastRecentlyUsedSliceCache(LeastRecentlyUsedSliceCache const& other)
+    : cacheSize(other.cacheSize), sliceAssigner(other.sliceAssigner)
+{
+}
+
 LeastRecentlyUsedSliceCache::~LeastRecentlyUsedSliceCache()
 {
 }
 
+SliceCachePtr LeastRecentlyUsedSliceCache::clone() const
+{
+    return std::make_shared<LeastRecentlyUsedSliceCache>(*this);
+}
+
 std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCache(Timestamp timestamp)
 {
+    // Get slice end as a unique sliceId
     auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
 
     // Search for corresponding slice
@@ -49,12 +60,13 @@ std::optional<SliceCache::SlicePtr> LeastRecentlyUsedSliceCache::getSliceFromCac
     return {};
 }
 
-bool LeastRecentlyUsedSliceCache::passSliceToCache(Timestamp timestamp, SliceCache::SlicePtr newSlice)
+bool LeastRecentlyUsedSliceCache::passSliceToCache(Timestamp sliceId, SliceCache::SlicePtr newSlice)
 {
-    auto sliceId = sliceAssigner.getSliceEndTs(timestamp).getRawValue();
+    // Get the value of sliceId
+    auto sliceIdValue = sliceId.getRawValue();
 
     // Check if slice already in cache
-    if (cache.contains(sliceId))
+    if (cache.contains(sliceIdValue))
     {
         return false;
     }
@@ -66,12 +78,12 @@ bool LeastRecentlyUsedSliceCache::passSliceToCache(Timestamp timestamp, SliceCac
         lruSlices.pop_back();
     }
     // Add new slice to cache
-    lruSlices.push_front(sliceId);
-    cache.emplace(sliceId, std::make_tuple(lruSlices.begin(), newSlice));
+    lruSlices.push_front(sliceIdValue);
+    cache.emplace(sliceIdValue, std::make_tuple(lruSlices.begin(), newSlice));
     return true;
 }
 
-void LeastRecentlyUsedSliceCache::deleteSliceFromCache(Timestamp)
+void LeastRecentlyUsedSliceCache::deleteSlicesFromCache(std::vector<Timestamp>)
 {
 }
 

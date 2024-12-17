@@ -33,7 +33,7 @@ SortBuffer::SortBuffer( //const uint64_t operatorHandlerIndex,
     , sortFieldIdentifier(sortFieldIdentifier)
     , sortOrder(sortOrder)
 {
-    // NES_ASSERT(this->memoryProvider->getMemoryLayoutPtr()->getFieldIndexFromName(sortFieldIdentifier).has_value(), "Sort field identifier not found.");
+    NES_ASSERT(this->memoryProvider->getMemoryLayoutPtr()->getFieldIndexFromName(sortFieldIdentifier).has_value(), "Sort field identifier not found.");
 }
 
 void SortBuffer::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

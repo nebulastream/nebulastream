@@ -68,7 +68,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/SliceCache/DefaultSliceCache.hpp>
 #include <Util/SliceCache/FIFOSliceCache.hpp>
+#include <Util/SliceCache/FIFOSliceCacheWithLock.hpp>
 #include <Util/SliceCache/LeastRecentlyUsedSliceCache.hpp>
+#include <Util/SliceCache/LeastRecentlyUsedSliceCacheWithLock.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
@@ -369,21 +371,46 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
 
     Operators::SliceAssigner sliceAssigner(streamJoinConfig.windowSize, streamJoinConfig.windowSlide);
 
-    Runtime::Execution::Operators::SliceCachePtr sliceCache;
+    Runtime::Execution::Operators::SliceCachePtr localSliceCache;
+    Runtime::Execution::Operators::SliceCachePtr globalSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+
     if (options->sliceCacheType == SliceCacheType::DEFAULT)
     {
-        sliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+        localSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
         NES_INFO("Slice Cache Type: DEFAULT");
     }
     else if (options->sliceCacheType == SliceCacheType::FIFO)
     {
-        sliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize, sliceAssigner);
-        NES_INFO("Slice Cache Type: FIFO");
+        if (options->lockSliceCache)
+        {
+            localSliceCache
+                = std::make_shared<Runtime::Execution::Operators::FIFOSliceCacheWithLock>(options->sliceCacheSize, sliceAssigner);
+            globalSliceCache
+                = std::make_shared<Runtime::Execution::Operators::FIFOSliceCacheWithLock>(options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: FIFO with lock");
+        }
+        else
+        {
+            localSliceCache = std::make_shared<Runtime::Execution::Operators::FIFOSliceCache>(options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: FIFO");
+        }
     }
     else if (options->sliceCacheType == SliceCacheType::LRU)
     {
-        sliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize, sliceAssigner);
-        NES_INFO("Slice Cache Type: LRU");
+        if (options->lockSliceCache)
+        {
+            localSliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCacheWithLock>(
+                options->sliceCacheSize, sliceAssigner);
+            globalSliceCache = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCacheWithLock>(
+                options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: LRU with lock");
+        }
+        else
+        {
+            localSliceCache
+                = std::make_shared<Runtime::Execution::Operators::LeastRecentlyUsedSliceCache>(options->sliceCacheSize, sliceAssigner);
+            NES_INFO("Slice Cache Type: LRU");
+        }
     }
 
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
@@ -394,15 +421,22 @@ std::shared_ptr<Runtime::Execution::Operators::StreamJoinOperatorHandler> Defaul
     }
     else if (options->sliceStoreType == SliceStoreType::LIST)
     {
-        sliceAndWindowStore
-            = std::make_unique<DefaultTimeBasedSliceStoreList>(sliceAssigner, 2, sliceCache);
+        sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStoreList>(sliceAssigner, 2, globalSliceCache);
         NES_INFO("Slice Store Type: List");
+        // Disable local slice caches if global slice cache is activated
+        std::shared_ptr<Runtime::Execution::Operators::DefaultSliceCache> globalSliceCachePtr
+            = std::dynamic_pointer_cast<Runtime::Execution::Operators::DefaultSliceCache>(globalSliceCache);
+        if (globalSliceCachePtr == nullptr)
+        {
+            localSliceCache = std::make_shared<Runtime::Execution::Operators::DefaultSliceCache>();
+        }
     }
 
     return std::make_shared<Operators::NLJOperatorHandler>(
         joinOperator->getAllInputOriginIds(),
         joinOperator->getOutputOriginIds()[0],
         std::move(sliceAndWindowStore),
+        localSliceCache,
         leftMemoryProvider,
         rightMemoryProvider);
 }
@@ -539,11 +573,12 @@ void DefaultPhysicalOperatorProvider::lowerSortBufferOperator(const LogicalOpera
     auto sortBufferOperator = NES::Util::as<LogicalSortBufferOperator>(operatorNode);
     PRECONDITION(NES::Util::instanceOf<LogicalSortBufferOperator>(operatorNode), "The operator should be a sort buffer operator.");
 
-    auto sortFieldIdentifier = sortBufferOperator->getSortFieldIdentifier();
-    auto sortOrder = magic_enum::enum_cast<Runtime::Execution::Operators::SortOrder>(sortBufferOperator->getSortOrder())
+    auto sortFieldIdentifier
+        = options->sortBufferByField.empty() ? sortBufferOperator->getSortFieldIdentifier() : options->sortBufferByField;
+    auto sortOrder = magic_enum::enum_cast<Runtime::Execution::Operators::SortOrder>(options->sortBufferOrder)
                          .value_or(Runtime::Execution::Operators::SortOrder::Ascending);
 
-    NES_INFO("Lower SortBuffer");
+    NES_INFO("Lower SortBuffer with sortFieldIdentifier: {}", sortFieldIdentifier);
     auto physicalSortBufferOperator
         = PhysicalOperators::PhysicalSortBufferOperator::create(sortBufferOperator->getInputSchema(), sortFieldIdentifier, sortOrder);
     physicalSortBufferOperator->addProperty("LogicalOperatorId", operatorNode->getId());

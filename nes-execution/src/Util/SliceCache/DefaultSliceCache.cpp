@@ -19,8 +19,18 @@ namespace NES::Runtime::Execution::Operators
 DefaultSliceCache::DefaultSliceCache()
 {
 }
+
+DefaultSliceCache::DefaultSliceCache(DefaultSliceCache const&)
+{
+}
+
 DefaultSliceCache::~DefaultSliceCache()
 {
+}
+
+SliceCachePtr DefaultSliceCache::clone() const
+{
+    return std::make_shared<DefaultSliceCache>(*this);
 }
 
 std::optional<SliceCache::SlicePtr> DefaultSliceCache::getSliceFromCache(Timestamp)
@@ -33,7 +43,7 @@ bool DefaultSliceCache::passSliceToCache(Timestamp, SliceCache::SlicePtr)
     return false;
 }
 
-void DefaultSliceCache::deleteSliceFromCache(Timestamp)
+void DefaultSliceCache::deleteSlicesFromCache(std::vector<Timestamp>)
 {
 }
 

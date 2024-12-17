@@ -192,8 +192,8 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     rightQueryPlan = addDelayBuffer(rightQueryPlan);
 
     // Add sort buffer operator
-    // leftQueryPlan = addSortBuffer("timestamp", "Ascending", leftQueryPlan);
-    // rightQueryPlan = addSortBuffer("timestamp", "Ascending", rightQueryPlan);
+    leftQueryPlan = addSortBuffer("", "Ascending", leftQueryPlan);
+    rightQueryPlan = addSortBuffer("", "Ascending", rightQueryPlan);
 
     NES_TRACE("QueryPlanBuilder: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<std::shared_ptr<NodeFunctionBinary>> visitedFunctions;

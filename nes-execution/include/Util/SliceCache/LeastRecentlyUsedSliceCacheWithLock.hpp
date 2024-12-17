@@ -18,6 +18,7 @@
 #include <tuple>
 #include <Execution/Operators/SliceStore/SliceAssigner.hpp>
 #include <Util/SliceCache/SliceCache.hpp>
+#include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -25,7 +26,7 @@ namespace NES::Runtime::Execution::Operators
 /**
  * @brief This slice cache stores the most recently used slices.
  */
-class LeastRecentlyUsedSliceCache : public SliceCache
+class LeastRecentlyUsedSliceCacheWithLock : public SliceCache
 {
     using listPosition = std::list<Timestamp::Underlying>::iterator;
 
@@ -34,18 +35,18 @@ public:
      * @brief constructor
      * @param cacheSize
      */
-    explicit LeastRecentlyUsedSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner);
+    explicit LeastRecentlyUsedSliceCacheWithLock(uint64_t cacheSize, SliceAssigner sliceAssigner);
 
     /**
      * @brief copy constructor
      * @param other
      */
-    LeastRecentlyUsedSliceCache(LeastRecentlyUsedSliceCache const& other);
+    LeastRecentlyUsedSliceCacheWithLock(LeastRecentlyUsedSliceCacheWithLock const& other);
 
     /**
      * @brief destructor
      */
-    ~LeastRecentlyUsedSliceCache() override;
+    ~LeastRecentlyUsedSliceCacheWithLock() override;
 
     /**
      * @brief Clones an existing slice cache.
@@ -78,8 +79,8 @@ public:
 private:
     uint64_t cacheSize;
     SliceAssigner sliceAssigner;
-    std::list<Timestamp::Underlying> lruSlices;
-    std::map<Timestamp::Underlying, std::tuple<listPosition, SlicePtr>> cache;
+    folly::Synchronized<std::list<Timestamp::Underlying>> lruSlices;
+    folly::Synchronized<std::map<Timestamp::Underlying, std::tuple<listPosition, SlicePtr>>> cache;
 };
 
 } // namespace NES::Runtime::Execution::Operators

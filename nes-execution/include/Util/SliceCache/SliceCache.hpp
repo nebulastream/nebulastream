@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 #include <Execution/Operators/SliceStore/Slice.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -37,8 +38,14 @@ public:
     virtual ~SliceCache() = default;
 
     /**
-     * @brief Retrieves the slice that corresponds to the sliceId from the cache.
-     * @param sliceId
+     * @brief Clones an existing slice cache.
+     * @return SliceCachePtr
+     */
+    virtual SliceCachePtr clone() const = 0;
+
+    /**
+     * @brief Retrieves the slice that corresponds to the given timestamp from the cache.
+     * @param timestamp
      * @return SlicePtr
      */
     virtual std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) = 0;
@@ -50,13 +57,13 @@ public:
      * @param slice
      * @return bool
      */
-    virtual bool passSliceToCache(Timestamp timestamp, SlicePtr slice) = 0;
+    virtual bool passSliceToCache(Timestamp sliceId, SlicePtr slice) = 0;
 
     /**
-     * @brief Deletes a slice from the cache.
-     * @param sliceId
+     * @brief Deletes the given slices from the cache.
+     * @param slicesToDelete
      */
-    virtual void deleteSliceFromCache(Timestamp timestamp) = 0;
+    virtual void deleteSlicesFromCache(std::vector<Timestamp> slicesToDelete) = 0;
 };
 
 } // namespace NES::Runtime::Execution::Operators

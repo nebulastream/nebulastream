@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <Execution/Operators/SliceStore/Slice.hpp>
 #include <Execution/Operators/SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Execution/Operators/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Execution/Operators/WindowBasedOperatorHandler.hpp>
@@ -23,6 +24,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
+#include <Util/SliceCache/SliceCache.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -31,18 +33,25 @@ namespace NES::Runtime::Execution::Operators
 WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    SliceCachePtr sliceCache)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
     , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
     , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector(1, outputOriginId)))
     , numberOfWorkerThreads(1)
     , outputOriginId(outputOriginId)
 {
+    sliceCaches.push_back(sliceCache);
 }
 
 void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
 {
     WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
+    // Create slice cache for each worker thread
+    for (uint64_t i = 0; i < numberOfWorkerThreads - 1; ++i)
+    {
+        sliceCaches.push_back(sliceCaches[0]->clone());
+    }
 }
 
 void WindowBasedOperatorHandler::setBufferProvider(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
@@ -66,11 +75,19 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
     return *sliceAndWindowStore;
 }
 
+SliceCachePtr WindowBasedOperatorHandler::getSliceCacheForWorker(WorkerThreadId workerThreadId) const
+{
+    return sliceCaches[workerThreadId % numberOfWorkerThreads];
+}
 
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {
     const auto newGlobalWaterMarkProbe
         = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
-    sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
+    std::vector<SliceEnd> slicesToDelete = sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
+    for (const auto& sliceCache : sliceCaches)
+    {
+        sliceCache->deleteSlicesFromCache(slicesToDelete);
+    }
 }
 }

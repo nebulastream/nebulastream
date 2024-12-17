@@ -66,6 +66,11 @@ const std::string SLICE_STORE_TYPE = "sliceStoreType";
 //Configuration for the slice cache
 const std::string SLICE_CACHE_TYPE = "sliceCacheType";
 const std::string SLICE_CACHE_SIZE = "sliceCacheSize";
+const std::string LOCK_SLICE_CACHE = "lockSliceCache";
+
+// Configuration for the sort buffer operator
+const std::string SORT_BUFFER_BY_FIELD = "sortBufferByField";
+const std::string SORT_BUFFER_ORDER = "sortBufferOrder";
 
 //Configuration for delay
 const std::string UNORDEREDNESS = "unorderedness";

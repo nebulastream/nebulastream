@@ -14,4 +14,6 @@ add_source_files(nes-execution
         DefaultSliceCache.cpp
         FIFOSliceCache.cpp
         LeastRecentlyUsedSliceCache.cpp
+        FIFOSliceCacheWithLock.cpp
+        LeastRecentlyUsedSliceCacheWithLock.cpp
 )

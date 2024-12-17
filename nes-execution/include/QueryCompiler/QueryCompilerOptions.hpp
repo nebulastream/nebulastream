@@ -52,6 +52,9 @@ struct QueryCompilerOptions
     SliceStoreType sliceStoreType = SliceStoreType::MAP;
     SliceCacheType sliceCacheType = SliceCacheType::DEFAULT;
     uint64_t sliceCacheSize = 1;
+    bool lockSliceCache = false;
+    std::string sortBufferByField;
+    std::string sortBufferOrder = "Ascending";
     float unorderedness = 0.0;
     uint64_t minDelay = 1;
     uint64_t maxDelay = 10;
@@ -81,6 +84,10 @@ queryCompilationOptionsFromConfig(const Configurations::QueryCompilerConfigurati
     options->sliceStoreType = queryCompilerConfiguration.sliceStoreType;
     options->sliceCacheType = queryCompilerConfiguration.sliceCacheType;
     options->sliceCacheSize = queryCompilerConfiguration.sliceCacheSize.getValue();
+    options->lockSliceCache = queryCompilerConfiguration.lockSliceCache.getValue();
+
+    options->sortBufferByField = queryCompilerConfiguration.sortBufferByField.getValue();
+    options->sortBufferOrder = queryCompilerConfiguration.sortBufferOrder.getValue();
 
     options->unorderedness = queryCompilerConfiguration.unorderedness.getValue();
     options->minDelay = queryCompilerConfiguration.minDelay.getValue();

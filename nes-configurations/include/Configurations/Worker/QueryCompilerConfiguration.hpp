@@ -108,6 +108,12 @@ public:
 
     UIntOption sliceCacheSize = {SLICE_CACHE_SIZE, "1", "Size of the slice cache", {std::make_shared<NumberValidation>()}};
 
+    BoolOption lockSliceCache = {LOCK_SLICE_CACHE, "false", "Enable lock in slice cache", {std::make_shared<BooleanValidation>()}};
+
+    StringOption sortBufferByField = {SORT_BUFFER_BY_FIELD, "", "Sort field identifier for the sort buffer operator."};
+
+    StringOption sortBufferOrder = {SORT_BUFFER_ORDER, "Ascending", "Sort order for the sort buffer operator."};
+
     FloatOption unorderedness = {UNORDEREDNESS, "0.0", "Percentage of unorderedness", {std::make_shared<FloatValidation>()}};
 
     UIntOption minDelay = {MIN_DELAY, "1", "Minimum delay", {std::make_shared<NumberValidation>()}};
@@ -129,6 +135,9 @@ private:
             &sliceStoreType,
             &sliceCacheType,
             &sliceCacheSize,
+            &lockSliceCache,
+            &sortBufferByField,
+            &sortBufferOrder,
             &unorderedness,
             &minDelay,
             &maxDelay};

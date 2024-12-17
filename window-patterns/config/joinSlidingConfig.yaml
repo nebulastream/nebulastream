@@ -1,7 +1,7 @@
 query: |
   SELECT * FROM (SELECT * FROM tcp_source) INNER JOIN (SELECT * FROM tcp_source2)
   ON value = value2
-  WINDOW SLIDING (timestamp, size 1 sec, advance by 250 ms)
+  WINDOW SLIDING (timestamp, size 100 ms, advance by 5 ms)
   INTO csv_sink;
 sink:
   name: csv_sink
@@ -39,7 +39,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: 5000
+      socketPort: 5010
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100
@@ -50,7 +50,7 @@ physical:
       type: TCP
       socketDomain: AF_INET
       socketType: SOCK_STREAM
-      socketPort: 5001
+      socketPort: 5011
       socketHost: localhost
       socketBufferSize: 2
       flushIntervalMS: 100

@@ -30,13 +30,25 @@ public:
     explicit DefaultSliceCache();
 
     /**
+     * @brief copy constructor
+     * @param other
+     */
+    DefaultSliceCache(DefaultSliceCache const& other);
+
+    /**
      * @brief destructor
      */
     ~DefaultSliceCache() override;
 
+    /**
+     * @brief Clones an existing slice cache.
+     * @return SliceCachePtr
+     */
+    SliceCachePtr clone() const override;
+
     std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) override;
-    bool passSliceToCache(Timestamp timestamp, SlicePtr slice) override;
-    void deleteSliceFromCache(Timestamp timestamp) override;
+    bool passSliceToCache(Timestamp sliceId, SlicePtr slice) override;
+    void deleteSlicesFromCache(std::vector<Timestamp> slicesToDelete) override;
 };
 
 } // namespace NES::Runtime::Execution::Operators

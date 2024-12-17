@@ -36,30 +36,43 @@ public:
     explicit FIFOSliceCache(uint64_t cacheSize, SliceAssigner sliceAssigner);
 
     /**
+     * @brief copy constructor
+     * @param other
+     */
+    FIFOSliceCache(FIFOSliceCache const& other);
+
+    /**
      * @brief destructor
      */
     ~FIFOSliceCache() override;
 
     /**
-     * @brief Retrieves the slice that corresponds to the sliceId from the cache.
-     * @param sliceId
+     * @brief Clones an existing slice cache.
+     * @return SliceCachePtr
+     */
+    SliceCachePtr clone() const override;
+
+    /**
+     * @brief Retrieves the slice that corresponds to the given timestamp from the cache.
+     * @param timestamp
      * @return SlicePtr
      */
     std::optional<SlicePtr> getSliceFromCache(Timestamp timestamp) override;
 
     /**
      * @brief Adds a new slice to the front of the cache, if it is not in the cache yet.
-     * Returns true if the slice was successfully inserted. 
+     * Returns true if the slice was successfully inserted.
+     * @param sliceId
      * @param newSlice
      * @return bool
      */
-    bool passSliceToCache(Timestamp timestamp, SlicePtr newSlice) override;
+    bool passSliceToCache(Timestamp sliceId, SlicePtr newSlice) override;
 
     /**
-     * @brief Deletes a slice from the cache.
-     * @param sliceId
+     * @brief Deletes the given slices from the cache.
+     * @param slicesToDelete
      */
-    void deleteSliceFromCache(Timestamp timestamp) override;
+    void deleteSlicesFromCache(std::vector<Timestamp> slicesToDelete) override;
 
 private:
     uint64_t cacheSize;

@@ -28,6 +28,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Execution.hpp>
+#include <Util/SliceCache/SliceCache.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -41,7 +42,8 @@ public:
     WindowBasedOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        SliceCachePtr sliceCache);
 
     ~WindowBasedOperatorHandler() override = default;
 
@@ -52,6 +54,7 @@ public:
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
     WindowSlicesStoreInterface& getSliceAndWindowStore() const;
+    SliceCachePtr getSliceCacheForWorker(WorkerThreadId workerThreadId) const;
 
     /// Updates the corresponding watermark processor and then garbage collect all slices and windows that are not valid anymore
     void garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const;
@@ -65,6 +68,7 @@ public:
 
 protected:
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
+    std::vector<SliceCachePtr> sliceCaches;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
     uint64_t numberOfWorkerThreads;
