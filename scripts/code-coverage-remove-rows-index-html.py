@@ -1,11 +1,16 @@
 import sys
 from bs4 import BeautifulSoup
 
+
+def split_wrapper(index, line):
+    return line.split("nebulastream-public/nebulastream-public", 1)[index]
+
+
 def main():
     # We expect that this script is called with the following arguments
-    # Arg[0]: Absolute path to the index.html file
-    # Arg[1]: Absolute path where the script should write the output index.html file
-    # Arg[2]: Absolute path to the file that contains the changed files.
+    # Arg[1]: Absolute path to the index.html file
+    # Arg[2]: Absolute path where the script should write the output index.html file
+    # Arg[3]: Absolute path to the file that contains the changed files.
     #          We expect that each line contains the absolute path to the changed file
 
     if len(sys.argv) != 4:
@@ -19,12 +24,19 @@ def main():
 
     # Read base path to nebulastream-public/nebulastream-public
     with open(tested_files, "r", encoding="utf-8") as file:
-        base_path = file.readline().strip().split("nebulastream-public/nebulastream-public", 1)[0]
+        line = file.readline.strip()
+
+        expected_path = "nebulastream-public/nebulastream-public"
+        assert expected_path in line, f"Expected '{expected_path}' in the line, but it was not found. Line content: '{line}'"
+
+        base_path = split_wrapper(0, line)
+
+        assert base_path.endswith("__w"), f"Expected '__w' at the end of the base_path, but it was not found. Line content: '{base_path}'"
         base_path = base_path.rstrip("__w")  # Removes "__w" from the end
 
-    # Read the list of tested files and append path prefixes
+    # Read the list of tested files
     with open(tested_files, "r", encoding="utf-8") as file:
-        tested_files_list = [line.strip().split("nebulastream-public/nebulastream-public", 1)[-1].rstrip(".html") for line in file.readlines()]
+        tested_files_list = [split_wrapper(-1, line.strip()).rstrip(".html") for line in file.readlines()]
 
     print(f"Tested files: {tested_files_list}")
 
@@ -35,10 +47,9 @@ def main():
     # Locate the table containing the data
     table = soup.find('table')
     if not table:
-        raise ValueError("No table found in the HTML file.")
+        assert table, "No table found in the HTML file."
 
-    # Extract rows with class 'light-row'
-    # rows = table.find_all('tr', class_='light-row')
+    # Extract rows
     rows = table.find_all('tr')[1:]
 
     # We have to change the path of the style.css file in the index.html
@@ -46,13 +57,12 @@ def main():
     table_style = soup.find('link')
     table_style['href'] = "build/ccov/all-merged/style.css"
 
-
     # Iterate over table rows and filter based on filenames
-    for row in rows:  # Skip the header row
+    for row in rows:
         filename_cell = row.find('td')  # Assuming the filename is in the first column
         filename = filename_cell.text.strip()
         # We have to remove everything before the "nebulastream-public/nebulastream-public" part
-        filename = filename.split("nebulastream-public/nebulastream-public", 1)[-1]
+        filename = split_wrapper(-1, filename)
         print(f"Filename: {filename}")
         if filename not in tested_files_list:
             row.decompose()  # Remove the row
@@ -70,7 +80,6 @@ def main():
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(str(soup))
 
+
 if __name__ == "__main__":
     main()
-
-

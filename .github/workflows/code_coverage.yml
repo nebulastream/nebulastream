@@ -157,12 +157,7 @@ jobs:
               done
             fi
           done
-
-          # Installing the bs4 library to remove the rows from the index.html file
-          # This should be done in the Development.dockerfile, if everything works
-          # Dear reviewer, if you can read this, please let me know!
-          apt update && apt install -y python3-pip && python3.12 -m venv my-venv &&  my-venv/bin/pip install beautifulsoup4 bs4
-
+          
           # Calling the script that will change the paths in the index.html file
           index_html_file=$(find build -name "index.html" -print)
           output_file="/tmp/cache/code-coverage-${{ matrix.platform }}/index.html"
