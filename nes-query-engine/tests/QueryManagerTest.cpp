@@ -68,7 +68,6 @@ TEST_F(QueryManagerTest, singleQueryWithShutdown)
     auto ctrl = test.sourceControls[source];
 
     /// Statistics. Note: No Pipeline Terminate and no QueryStop because engine shutdown does not gracefully terminate any query.
-
     test.stats.expect(
         ExpectStats::QueryStart(1),
         ExpectStats::PipelineStart(1),
@@ -340,6 +339,96 @@ TEST_F(QueryManagerTest, singleQueryWithTwoSourcesShutdown)
 
     EXPECT_TRUE(ctrl1->waitUntilDestroyed());
     EXPECT_TRUE(ctrl2->waitUntilDestroyed());
+}
+
+TEST_F(QueryManagerTest, failureDuringPipelineStop)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto failingPipeline = builder.addPipeline({source});
+    auto pipeline = builder.addPipeline({failingPipeline});
+    builder.addSink({pipeline});
+    auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
+    test.pipelineControls[failingPipeline]->failOnStop = true;
+
+    test.expectQueryStatusEvents(id, {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
+    test.expectSourceTermination(id, source, Runtime::QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        EXPECT_TRUE(test.waitForQepRunning(id, DEFAULT_AWAIT_TIMEOUT));
+        test.sourceControls[source]->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+
+        EXPECT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
+        EXPECT_FALSE(test.pipelineControls[pipeline]->waitForStop()) << "Successors of failing pipelines should not be stopped";
+    }
+    test.stop();
+}
+
+TEST_F(QueryManagerTest, failureDuringPipelineStopMultipleSources)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source1 = builder.addSource();
+    auto failingPipeline = builder.addPipeline({source1});
+    auto failingPipelineSuccessor = builder.addPipeline({failingPipeline});
+    auto source2 = builder.addSource();
+    auto pipeline = builder.addPipeline({source2});
+    auto sink = builder.addSink({failingPipelineSuccessor, pipeline});
+
+    auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
+    test.pipelineControls[failingPipeline]->failOnStop = true;
+
+    test.expectQueryStatusEvents(id, {Runtime::Execution::QueryStatus::Running, Runtime::Execution::QueryStatus::Failed});
+    test.expectSourceTermination(id, source1, Runtime::QueryTerminationType::Graceful);
+    test.expectSourceTermination(id, source2, Runtime::QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        EXPECT_TRUE(test.waitForQepRunning(id, DEFAULT_AWAIT_TIMEOUT));
+        test.sourceControls[source1]->injectEoS();
+        test.sourceControls[source2]->injectEoS();
+        EXPECT_TRUE(test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT));
+
+        EXPECT_TRUE(test.pipelineControls[failingPipeline]->waitForStop()) << "Pipeline should be stopped";
+        EXPECT_TRUE(test.pipelineControls[pipeline]->waitForStop()) << "Pipeline should be stopped";
+        EXPECT_FALSE(test.pipelineControls[failingPipelineSuccessor]->waitForStop())
+            << "Successors of failing pipelines should not be stopped";
+        EXPECT_FALSE(test.sinkControls[sink]->waitForShutdown(DEFAULT_AWAIT_TIMEOUT))
+            << "Successors of failing pipelines should not be stopped";
+    }
+    test.stop();
+}
+
+TEST_F(QueryManagerTest, failureDuringPipelineStartWithMultipleSources)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source1 = builder.addSource();
+    auto failingPipeline = builder.addPipeline({source1});
+    auto failingPipelineSuccessor = builder.addPipeline({failingPipeline});
+    auto source2 = builder.addSource();
+    auto pipeline = builder.addPipeline({source2});
+    builder.addSink({failingPipelineSuccessor, pipeline});
+
+    auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
+    test.pipelineControls[failingPipeline]->failOnStart = true;
+
+    test.expectQueryStatusEvents(id, {Runtime::Execution::QueryStatus::Failed});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+        test.waitForQepTermination(id, DEFAULT_AWAIT_TIMEOUT);
+    }
+    test.stop();
 }
 
 TEST_F(QueryManagerTest, singleQueryWithTwoSourcesWaitingForTwoStops)
