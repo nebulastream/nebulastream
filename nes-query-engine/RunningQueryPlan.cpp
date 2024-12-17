@@ -140,18 +140,22 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
             std::move(node),
             [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
             {
-                ENGINE_LOG_TRACE("Pipeline {}-{} was terminated", queryId, ptr->id);
+                ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
                 ptr->requiresTermination = false;
                 for (auto& successor : ptr->successors)
                 {
                     emitter.emitPendingPipelineStop(queryId, std::move(successor), {}, {});
                 }
             },
-            {});
+            [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
+            {
+                ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
+                ptr->requiresTermination = false;
+            });
     }
     else
     {
-        ENGINE_LOG_TRACE("Skipping {}-{} Termination", queryId, ptr->id);
+        ENGINE_LOG_TRACE("Skipping {}-{} stop", queryId, ptr->id);
     }
 }
 
@@ -273,7 +277,11 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     auto [sources, pipelines] = createRunningNodes(
         queryId,
         *internal.qep,
-        [listener](Exception exception) { listener->onFailure(exception); },
+        [ENGINE_IF_LOG_DEBUG(queryId, ) listener](Exception exception)
+        {
+            ENGINE_LOG_DEBUG("Fail PipelineNode called for QueryId: {}", queryId)
+            listener->onFailure(exception);
+        },
         terminationCallbackRef,
         pipelineSetupCallbackRef,
         emitter);
@@ -283,7 +291,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     /// We can call the unsafe version of addCallback (which does not take a lock), because we hold a reference to one pipelineSetupCallbackRef,
     /// thus it is impossible for a different thread to trigger the registered callbacks. We are the only owner of the CallbackOwner, so
     /// it is impossible for any other thread to add addtional callbacks concurrently.
-    internal.pipelineSetupDone.addCallbackUnsafe(
+    internal.allPipelinesStarted.addCallbackUnsafe(
         pipelineSetupCallbackRef,
         [runningPlan = runningPlan.get(),
          queryId,
@@ -346,7 +354,7 @@ std::pair<std::unique_ptr<StoppingQueryPlan>, CallbackRef> RunningQueryPlan::sto
     /// sources map.
     /// This allows us to clear all sources and not have to worry about a in flight pipeline setup to trigger the initialization of
     /// sources.
-    internal.pipelineSetupDone = {};
+    internal.allPipelinesStarted = {};
 
     INVARIANT(
         callback.has_value(),
