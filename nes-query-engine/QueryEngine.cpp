@@ -168,6 +168,58 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread();
 
+
+    /// This function is unsafe because it requires the lifetime of the RunningQueryPlanNode exceed the lifetime of the callback
+    std::function<void(Exception)> injectQueryFailureUnsafe(RunningQueryPlanNode* node, std::function<void(Exception)> failure)
+    {
+        return [failure, node = std::move(node)](Exception exception)
+        {
+            if (failure)
+            {
+                failure(exception);
+            }
+            node->fail(exception);
+        };
+    }
+
+    std::function<void(Exception)> injectQueryFailure(std::weak_ptr<RunningQueryPlanNode> node, std::function<void(Exception)> failure)
+    {
+        return [failure, node = std::move(node)](Exception exception)
+        {
+            if (failure)
+            {
+                failure(exception);
+            }
+            if (auto strongReference = node.lock())
+            {
+                strongReference->fail(exception);
+            }
+        };
+    }
+
+    template <typename... Args>
+    auto injectReferenceCountReducer(
+        ENGINE_IF_LOG_DEBUG(QueryId qid, ) std::weak_ptr<RunningQueryPlanNode> node, std::function<void(Args...)> innerFunction)
+    {
+        return [ENGINE_IF_LOG_DEBUG(qid, ) innerFunction = std::move(innerFunction), node = std::weak_ptr(node)](Args... args)
+        {
+            if (innerFunction)
+            {
+                innerFunction(args...);
+            }
+            if (auto existingNode = node.lock())
+            {
+                auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
+                ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
+                INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
+            }
+            else
+            {
+                ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
+            }
+        };
+    }
+
     void emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
@@ -182,53 +234,21 @@ public:
             node->id,
             node,
             buffer,
-            [ENGINE_IF_LOG_DEBUG(qid, ) complete = std::move(complete), node = std::weak_ptr(node)]()
-            {
-                if (auto existingNode = node.lock())
-                {
-                    auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
-                    ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
-                    INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
-                }
-                else
-                {
-                    ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
-                }
-                if (complete)
-                {
-                    complete();
-                }
-            },
-            [ENGINE_IF_LOG_DEBUG(qid, ) failure = std::move(failure), node = std::weak_ptr(node)](auto exception)
-            {
-                if (auto existingNode = node.lock())
-                {
-                    auto updatedCount = existingNode->pendingTasks.fetch_sub(1) - 1;
-                    ENGINE_LOG_DEBUG("Decreasing number of pending tasks on pipeline {}-{} to {}", qid, existingNode->id, updatedCount);
-                    INVARIANT(updatedCount >= 0, "ThreadPool returned a negative number of pending tasks.");
-                    exception.what() += fmt::format(" In Pipeline: {}.", existingNode->id);
-                    existingNode->fail(exception);
-                }
-                else
-                {
-                    ENGINE_LOG_WARNING("Node Expired and pendingTasks could not be reduced");
-                }
-
-                if (failure)
-                {
-                    failure(exception);
-                }
-            }));
+            injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(complete)),
+            injectQueryFailure(node, injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) node, std::move(failure)))));
     }
 
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, onComplete complete, onFailure failure) override
     {
-        taskQueue.blockingWrite(StartPipelineTask(qid, node->id, complete, failure, node));
+        taskQueue.blockingWrite(StartPipelineTask(qid, node->id, complete, injectQueryFailure(node, failure), node));
     }
 
     void emitPipelineStop(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, onComplete complete, onFailure failure) override
     {
-        taskQueue.blockingWrite(StopPipelineTask(qid, std::move(node), complete, failure));
+        auto nodePtr = node.get();
+        /// Calling the Unsafe version of injectQueryFailure is required here because the RunningQueryPlan is a unique ptr.
+        /// However the StopPipelineTask takes ownership of the Node and thus guarantees that it is alive when the callback is invoked.
+        taskQueue.blockingWrite(StopPipelineTask(qid, std::move(node), complete, injectQueryFailureUnsafe(nodePtr, failure)));
     }
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
