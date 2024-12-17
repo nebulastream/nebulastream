@@ -356,6 +356,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                               DecomposedQueryId decomposedQueryid,
                               ReconfigurationMarkerPtr reconfigurationMarker);
 
+    /**
+     * @brief Get the ids of all decomposed query plans with the specified status
+     */
+    std::vector<DecomposedQueryId> getDecomposedQueryIdsWithStatus(SharedQueryId sharedQueryId,
+                                                                   Execution::ExecutableQueryPlanStatus status);
+
   public:
     /**
      * @brief Create a node engine and gather node information

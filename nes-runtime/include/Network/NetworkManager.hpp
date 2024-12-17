@@ -245,6 +245,13 @@ class NetworkManager {
      */
     bool getConnectSourceEventChannelsAsync();
 
+    /**
+     * @brief return a pointer to the network source with the supplied partition
+     * @partition the partition of the network source in question
+     * @return a pointer to the running source or nullptr if no running source exists with this partition
+     */
+    NetworkSourcePtr getNetworkSourceWithPartition(NesPartition partition);
+
   private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;

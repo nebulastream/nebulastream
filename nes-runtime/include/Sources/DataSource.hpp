@@ -26,9 +26,11 @@
 #include <Util/GatheringMode.hpp>
 #include <atomic>
 #include <chrono>
+#include <folly/Synchronized.h>
 #include <future>
 #include <mutex>
 #include <optional>
+#include <queue>
 #include <thread>
 
 namespace NES::Runtime::MemoryLayouts {
@@ -294,6 +296,28 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
      */
     virtual bool handleReconfigurationMarker(ReconfigurationMarkerPtr marker);
 
+    /**
+     * @brief Schedule a list of new executable successor to which the data strem is redirected when the old plan is drained and
+     * a new plan is started and reuses this source.
+     */
+    void scheduleSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newSuccessorList);
+
+    /**
+     * @brief Compare the operator ids of two data sources
+     * @return true if the ids match
+     */
+    static bool compareId(const DataSourcePtr& first, const DataSourcePtr& second);
+
+    /**
+     * @brief How swaps the successors of a source. This shuts down the plan to which a source currently belongs and connects
+     * the source to the scheduled executable successors belonging to the new plan.
+     * @param marker the marker to propagate to the old successor pipelines
+     * @param sourceId the id of the source to reuse
+     * @param newPlans the new plans to which the source belongs after the data stream is redirected
+     */
+    bool
+    updateSuccessors(const ReconfigurationMarkerPtr& marker, OperatorId sourceId, std::vector<Runtime::Execution::ExecutableQueryPlanPtr> newPlans);
+
     // bool indicating if the data source has to persist runtime properties
     // that can be loaded during the restart of the query.
     const bool persistentSource;
@@ -306,10 +330,18 @@ class DataSource : public Runtime::Reconfigurable, public DataEmitter {
 
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 
+    /*
+     * @brief lock this sources executable successors and notify source completion.
+     * By locking the successors it is ensured that the source to qep mapping is not modified while this function executes
+     * @param terminationType the termination type with which the source completed
+     */
+    void lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminationType terminationType);
+
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
+    folly::Synchronized<std::vector<Runtime::Execution::SuccessorExecutablePipeline>> executableSuccessors;
+    folly::Synchronized<std::queue<std::vector<Runtime::Execution::SuccessorExecutablePipeline>>> newSuccessors;
     OperatorId operatorId;
     OriginId originId;
     StatisticId statisticId;

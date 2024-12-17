@@ -37,7 +37,8 @@ ExecutableQueryPlan::ExecutableQueryPlan(SharedQueryId sharedQueryId,
       sources(std::move(sources)), sinks(std::move(sinks)), pipelines(std::move(pipelines)),
       queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Execution::ExecutableQueryPlanStatus::Created),
-      qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
+      qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()), drainedSourceCount(sources.size()),
+      successor(nullptr), drainMarker(nullptr) {
     // the +1 is the termination token for the query plan itself
     numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size() + this->sinks.size());
 }
@@ -364,4 +365,76 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     }
 }
 
+void ExecutableQueryPlan::increaseSourceDrainCounter(const ReconfigurationMarkerPtr& marker) {
+    drainMarker = marker;
+    if (handleSourceDrainHelper()) {
+        transferSourcesToSuccessor(marker);
+    }
+}
+
+std::vector<OperatorId> ExecutableQueryPlan::getSourcesToReuse() const { return sourcesToReuse; }
+
+uint64_t ExecutableQueryPlan::getSourcesToReuseCount() const { return sourcesToReuse.size(); }
+
+void ExecutableQueryPlan::setSourcesToReuse(std::vector<OperatorId> sourcesToReuse) {
+    this->sourcesToReuse = std::move(sourcesToReuse);
+}
+
+bool ExecutableQueryPlan::addSuccessorPlan(ExecutableQueryPlanPtr successor) {
+    this->successor = successor;
+    if (allSourcesDrained()) {
+        if (*drainMarker.rlock() == nullptr) {
+            NES_ERROR("Reusing all sources of a plan is currently not supported")
+            NES_NOT_IMPLEMENTED();
+        }
+        transferSourcesToSuccessor(drainMarker.copy());
+        return true;
+    }
+    return false;
+}
+
+void ExecutableQueryPlan::transferSourcesToSuccessor(const ReconfigurationMarkerPtr& marker) {
+    // get the list of sources to be reused from the successor
+    auto lockedSuccessor = successor.wlock();
+    if (!lockedSuccessor) {
+        NES_DEBUG("Cannot transfer sources to successor because no successor was registered");
+        return;
+    }
+    auto sourcesToReuseBySuccessorPlan = (*lockedSuccessor)->getSourcesToReuse();
+
+    for (auto successorSource : (*lockedSuccessor)->getSources()) {
+        auto sourceId = successorSource->getOperatorId();
+
+        if (std::find(sourcesToReuseBySuccessorPlan.cbegin(), sourcesToReuseBySuccessorPlan.cend(), sourceId) != sourcesToReuseBySuccessorPlan.cend()) {
+            auto sources = getSources();
+            auto predicate = [successorSource](auto src) {
+                return DataSource::compareId(successorSource, src);
+            };
+
+            auto currentSrc = std::find_if(sources.begin(), sources.end(), predicate);
+            NES_ASSERT(currentSrc != sources.end(), "Source to reuse does not exist in old plan");
+
+            //update successor of existing source
+            (*currentSrc)->updateSuccessors(marker, sourceId, {*lockedSuccessor});
+        }
+    }
+
+    //delete successor to prevent executing the sources transfer more than once
+    *lockedSuccessor = nullptr;
+}
+
+bool ExecutableQueryPlan::handleSourceDrainHelper() {
+    drainedSourceCount++;
+    return allSourcesDrained();
+}
+
+bool ExecutableQueryPlan::allSourcesDrained() {
+    auto lockedSuccessor = successor.rlock();
+    if (*lockedSuccessor == nullptr) {
+        return false;
+    }
+    auto expectedDrainCount = sources.size() - (*lockedSuccessor)->getSourcesToReuseCount();
+    NES_ASSERT(expectedDrainCount <= sources.size(), "Expected source drain count must not be higher than the amount of sources");
+    return drainedSourceCount == expectedDrainCount;
+}
 }// namespace NES::Runtime::Execution

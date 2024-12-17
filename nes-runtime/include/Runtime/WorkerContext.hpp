@@ -73,6 +73,7 @@ class WorkerContext {
     uint32_t queueId = 0;
     std::unordered_map<Network::NesPartition, BufferStoragePtr> storage;
     std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+//    std::unordered_map<OperatorId , std::queue<Runtime::Execution::SuccessorExecutablePipeline>> pendingSuccessors;
 
   public:
     explicit WorkerContext(WorkerThreadId workerId,

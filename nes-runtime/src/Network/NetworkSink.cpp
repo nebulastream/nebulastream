@@ -485,7 +485,7 @@ void NetworkSink::unbuffer(Runtime::WorkerContext& workerContext) {
 
     NES_INFO("sending buffered data");
     auto numBuffers = 0;
-    while (topBuffer && !topBuffer.value().getBuffer()) {
+    while (topBuffer && topBuffer.value().getBuffer()) {
         if (!writeBufferedData(topBuffer.value(), workerContext)) {
             NES_DEBUG("could not send all data from buffer");
             break;

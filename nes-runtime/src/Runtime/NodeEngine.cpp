@@ -119,6 +119,14 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
              decomposedQueryPlan->getDecomposedQueryId(),
              decomposedQueryPlan->getVersion());
 
+    std::vector<OperatorId> sourcesToReuse;
+    for (auto src : decomposedQueryPlan->getSourceOperators()) {
+        auto networkSourceDescriptor = src->getSourceDescriptor()->as_if<Network::NetworkSourceDescriptor>();
+        if (networkSourceDescriptor
+            && networkManager->getNetworkSourceWithPartition(networkSourceDescriptor->getNesPartition())) {
+            sourcesToReuse.push_back(networkSourceDescriptor->getUniqueId());
+        }
+    }
     auto request = QueryCompilation::QueryCompilationRequest::create(decomposedQueryPlan, inherited1::shared_from_this());
     request->enableDump();
     auto result = queryCompiler->compileQuery(request);
@@ -138,6 +146,8 @@ bool NodeEngine::registerDecomposableQueryPlan(const DecomposedQueryPlanPtr& dec
                                                                         executablePlan->getDecomposedQueryVersion())] =
                 executablePlan;
             return true;
+        } else {
+            executablePlan->setSourcesToReuse(sourcesToReuse);
         }
         return registerExecutableQueryPlan(executablePlan);
     } catch (std::exception const& error) {
@@ -624,6 +634,19 @@ std::vector<DecomposedQueryIdWithVersion> NodeEngine::getDecomposedQueryIds(Shar
     } else {
         return {};
     }
+}
+
+std::vector<DecomposedQueryId> NodeEngine::getDecomposedQueryIdsWithStatus(SharedQueryId sharedQueryId,
+                                                                           Execution::ExecutableQueryPlanStatus status) {
+    auto idVector = getDecomposedQueryIds(sharedQueryId);
+    std::vector<DecomposedQueryId> resultVector;
+    for (auto& id : idVector) {
+        auto plan = getExecutableQueryPlan(id);
+        if (plan->getStatus() == status) {
+            resultVector.push_back(id);
+        }
+    }
+    return resultVector;
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

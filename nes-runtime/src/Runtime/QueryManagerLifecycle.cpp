@@ -56,20 +56,26 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
                   executableQueryPlan->getSources().size());
 
         std::vector<OperatorId> sourceIds;
-        for (const auto& source : executableQueryPlan->getSources()) {
-            // source already exists, add qep to source set if not there
-            OperatorId sourceOperatorId = source->getOperatorId();
-            sourceIds.emplace_back(sourceOperatorId);
-            NES_DEBUG("AbstractQueryManager: Source  {}  not found. Creating new element with qep ", sourceOperatorId);
-            //If source sharing is active and this is the first query for this source, init the map
-            if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end()) {
-                sourceToQEPMapping[sourceOperatorId] = std::vector<Execution::ExecutableQueryPlanPtr>();
-            }
+        auto sourcesToReuse = executableQueryPlan->getSourcesToReuse();
+            for (const auto& source : executableQueryPlan->getSources()) {
+                OperatorId sourceOperatorId = source->getOperatorId();
 
-            //bookkeep which qep is now reading from this source
-            sourceToQEPMapping[sourceOperatorId].push_back(executableQueryPlan);
-        }
-        decomposeQueryToSourceIdMapping[decomposedQueryIdWithVersion] = sourceIds;
+                //check if a running source of an existing plan is to be reused. If not, start a new one
+                if (std::find(sourcesToReuse.cbegin(), sourcesToReuse.cend(), sourceOperatorId) == sourcesToReuse.cend()) {
+                    // source already exists, add qep to source set if not there
+                    sourceIds.emplace_back(sourceOperatorId);
+                    NES_DEBUG("AbstractQueryManager: Source  {}  not found. Creating new element with qep ", sourceOperatorId);
+
+                    //If source sharing is active and this is the first query for this source, init the map
+                    if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end()) {
+                        sourceToQEPMapping[sourceOperatorId] = std::vector<Execution::ExecutableQueryPlanPtr>();
+                    }
+
+                    //bookkeep which qep is now reading from this source
+                    sourceToQEPMapping[sourceOperatorId].push_back(executableQueryPlan);
+                }
+            }
+            decomposeQueryToSourceIdMapping[decomposedQueryIdWithVersion] = sourceIds;
     }
 
     NES_DEBUG("queryToStatisticsMap add for= {}  pair queryId= {}  subplanId= {}",
@@ -131,8 +137,33 @@ bool AbstractQueryManager::registerExecutableQueryPlan(const Execution::Executab
         }));
     }
 
+    auto sourcesToReuse = executableQueryPlan->getSourcesToReuse();
+    bool registeredAsSuccessor = false;
+
     // 3a. pre-start net sources
     for (const auto& source : netSources) {
+
+        //check if source is an existing source to be reused
+        if (std::find(sourcesToReuse.begin(), sourcesToReuse.end(), source->getUniqueId()) != sourcesToReuse.end()) {
+            if (!registeredAsSuccessor) {
+                auto predecessorPlans = sourceToQEPMapping[source->getOperatorId()];
+
+                if (predecessorPlans.size() > 1) {
+                    NES_FATAL_ERROR(
+                        "AbstractQueryManager: source {} is used by multiple plans, reusing this source is not supported",
+                        source->getOperatorId());
+                }
+
+                auto predecessorPlan = predecessorPlans.front();
+
+                predecessorPlan->addSuccessorPlan(executableQueryPlan);
+                registeredAsSuccessor = true;
+            }
+
+            //do not bind
+            continue;
+        }
+
         std::stringstream s;
         s << source;
         std::string sourceString = s.str();
@@ -662,6 +693,7 @@ bool AbstractQueryManager::startNewExecutableQueryPlanAndPropagateMarker(
 
 bool AbstractQueryManager::propagateReconfigurationMarker(const ReconfigurationMarkerPtr& marker, DataSourcePtr source) {
     auto sourceId = source->getOperatorId();
+    markSourceAsDrained(marker, sourceId);
     auto pipelineSuccessors = source->getExecutableSuccessors();
 
     if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr) {
@@ -728,4 +760,53 @@ bool AbstractQueryManager::propagateReconfigurationMarker(const ReconfigurationM
     return true;
 }
 
+void AbstractQueryManager::propagateReconfigurationMarkerToSuccessorList(
+    const ReconfigurationMarkerPtr& marker,
+    std::vector<Execution::SuccessorExecutablePipeline> pipelineSuccessors) {
+    for (auto successor : pipelineSuccessors) {
+        // create reconfiguration message. If the successor is an executable pipeline we send the marker to the pipeline.
+        if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
+            auto reconfMessage = ReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                                        executablePipeline->get()->getDecomposedQueryId(),
+                                                        ReconfigurationType::ReconfigurationMarker,
+                                                        (*executablePipeline),
+                                                        marker);
+            addReconfigurationMessage(executablePipeline->get()->getSharedQueryId(),
+                                      executablePipeline->get()->getDecomposedQueryId(),
+                                      reconfMessage,
+                                      false);
+            NES_DEBUG(
+                "Inserted reconfiguration to propagate reconfiguration marker to pipeline from list of successors reconfType={} "
+                "queryExecutionPlanId={} "
+                "threadPool->getNumberOfThreads()={} qep {}",
+                magic_enum::enum_name(ReconfigurationType::ReconfigurationMarker),
+                executablePipeline->get()->getDecomposedQueryId(),
+                threadPool->getNumberOfThreads(),
+                executablePipeline->get()->getSharedQueryId());
+        } else if (auto* sink = std::get_if<DataSinkPtr>(&successor)) {
+            // In case of a network sink we apply the reconfiguration to the sink.
+            // Depending on the kind of reconfiguration event the sink will propagate the to the next worker if necessary.
+            auto reconfMessageSink = ReconfigurationMessage(sink->get()->getSharedQueryId(),
+                                                            sink->get()->getParentPlanId(),
+                                                            ReconfigurationType::ReconfigurationMarker,
+                                                            (*sink),
+                                                            marker);
+            addReconfigurationMessage(sink->get()->getSharedQueryId(), sink->get()->getParentPlanId(), reconfMessageSink, false);
+            NES_DEBUG(
+                "Inserted reconfiguration to propagate reconfiguration marker to Sink from list of successors reconfType={} "
+                "queryExecutionPlanId={} threadPool->getNumberOfThreads()={} qep{}",
+                magic_enum::enum_name(ReconfigurationType::SoftEndOfStream),
+                sink->get()->getParentPlanId(),
+                threadPool->getNumberOfThreads(),
+                sink->get()->getSharedQueryId());
+        }
+    }
+}
+
+void AbstractQueryManager::markSourceAsDrained(const ReconfigurationMarkerPtr& marker, OperatorId sourceId) {
+    auto successorQEPs = sourceToQEPMapping[sourceId];
+    for (auto qep : successorQEPs) {
+        qep->increaseSourceDrainCounter(marker);
+    }
+}
 }// namespace NES::Runtime

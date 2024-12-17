@@ -92,7 +92,7 @@ bool NetworkSource::start() {
     auto emitter = shared_from_base<DataEmitter>();
     auto expected = false;
     if (running.compare_exchange_strong(expected, true)) {
-        for (const auto& successor : executableSuccessors) {
+        for (const auto& successor : *executableSuccessors.rlock()) {
             auto decomposedQueryId = std::visit(detail::overloaded{[](DataSinkPtr sink) {
                                                                        return sink->getParentPlanId();
                                                                    },
@@ -137,7 +137,7 @@ bool NetworkSource::fail() {
                                                 INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                 newReconf,
                                                 false);
-        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::Failure);
+        lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminationType::Failure);
         return queryManager->addEndOfStream(shared_from_base<NetworkSource>(), Runtime::QueryTerminationType::Failure);
     }
     return false;
@@ -160,7 +160,7 @@ bool NetworkSource::stop(Runtime::QueryTerminationType type) {
                                                 INVALID_DECOMPOSED_QUERY_PLAN_VERSION,
                                                 newReconf,
                                                 false);
-        queryManager->notifySourceCompletion(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
+        lockSuccessorsAndNotifySourceCompletion(Runtime::QueryTerminationType::HardStop);
         queryManager->addEndOfStream(shared_from_base<DataSource>(), Runtime::QueryTerminationType::HardStop);
         NES_DEBUG("NetworkSource: stop called on {} sent hard eos", nesPartition);
     } else {
@@ -332,7 +332,7 @@ void NetworkSource::postReconfigurationCallback(Runtime::ReconfigurationMessage&
         bool expected = true;
         if (running.compare_exchange_strong(expected, false)) {
             NES_DEBUG("NetworkSource is stopped on reconf task with id {}", nesPartition.toString());
-            queryManager->notifySourceCompletion(shared_from_base<DataSource>(), terminationType);
+            lockSuccessorsAndNotifySourceCompletion(terminationType);
         }
     }
 }
@@ -453,4 +453,9 @@ bool NetworkSource::handleReconfigurationMarker(ReconfigurationMarkerPtr marker)
 bool NetworkSource::insertReconfigurationMarker(ReconfigurationMarkerPtr marker) {
     return handleReconfigurationMarker(std::move(marker));
 }
+
+NodeLocation NetworkSource::getSenderLocation() { return sinkLocation; }
+
+NesPartition NetworkSource::getPartition() { return nesPartition; }
+
 }// namespace NES::Network

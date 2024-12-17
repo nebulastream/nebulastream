@@ -935,17 +935,6 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                 continue;
                                             }
 
-                                            //todo #5157: reactivate source merging
-                                            //                                            bool mergedSource = false;
-                                            //                                            if (upstreamOperator->instanceOf<SourceLogicalOperator>()) {
-                                            //                                                mergedSource =
-                                            //                                                    tryMergingNetworkSource(decomposedQueryPlanVersion,
-                                            //                                                                            matchingPinnedRootOperator,
-                                            //                                                                            upstreamOperator->as<SourceLogicalOperator>());
-                                            //                                            }
-                                            //                                            if (!mergedSource) {
-                                            //                                               matchingPinnedRootOperator->addChild(upstreamOperator);
-                                            //                                            }
 
                                             matchingPinnedRootOperator->addChild(upstreamOperator);
                                         }

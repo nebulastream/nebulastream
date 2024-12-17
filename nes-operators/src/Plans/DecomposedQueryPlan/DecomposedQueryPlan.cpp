@@ -292,5 +292,4 @@ std::string DecomposedQueryPlan::toString() const {
 }
 
 WorkerId DecomposedQueryPlan::getWorkerId() const { return workerId; }
-
 }// namespace NES
