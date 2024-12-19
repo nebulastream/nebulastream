@@ -16,6 +16,7 @@ add_nes_integration_test(meos-trajectoryInputation "MeosTrajectoryInputation.cpp
 add_nes_integration_test(meos-SNCBBattery "MeosSNCBBattery.cpp")
 add_nes_integration_test(meos-SNCBGPS "MeosSNCBGPS.cpp")
 add_nes_integration_test(meos-SNCBPress "MeosSNCBPress.cpp")
+add_nes_integration_test(meos-SNCBSCEP "MeosSNCBSCEP.cpp")
 
 
 target_link_libraries(meos-speedAgregation nes-meos)
@@ -24,3 +25,4 @@ target_link_libraries(meos-trajectoryInputation nes-meos)
 target_link_libraries(meos-SNCBBattery nes-meos)
 target_link_libraries(meos-SNCBGPS nes-meos)
 target_link_libraries(meos-SNCBPress nes-meos)
+target_link_libraries(meos-SNCBSCEP nes-meos)
