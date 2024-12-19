@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.202](https://github.com/nebulastream/nebulastream/tree/v0.6.202) (2024-12-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.201...v0.6.202)
+
+### Bug Fixes 🐛
+
+- \[BUG\] WHERE clause are not correctly part and assigned  [\#5154](https://github.com/nebulastream/nebulastream/issues/5154)
+- \[BUG\] PSL: enclosing parenthesis for the initial expression [\#5153](https://github.com/nebulastream/nebulastream/issues/5153)
+- \[BUG\] PSL Grammar Enhancement : Allow '/' in the source names  [\#5152](https://github.com/nebulastream/nebulastream/issues/5152)
+
 ## [v0.6.201](https://github.com/nebulastream/nebulastream/tree/v0.6.201) (2024-12-16)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.200...v0.6.201)
