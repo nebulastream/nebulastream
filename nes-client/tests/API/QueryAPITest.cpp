@@ -580,21 +580,21 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
 TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+    auto subQueryB = Query::from("defaultLogicalB").filter(lessExpression);// B in query
 
     // Query: SEQ(A,B) WITHIN 2 minutes
-    auto querySeq = Query::from("default_logical")// A in query
+    auto querySeq = Query::from("defaultLogicalA")// A in query
                         .seqWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // create query with joinWith-operator instead of seqWith for comparison
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("defaultLogicalB").filter(lessExpression);// reset B
+    auto queryJoin = Query::from("defaultLogicalA")                   // A in query
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
                          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .filter(Attribute("defaultLogicalA$timestamp") < Attribute("defaultLogicalB$timestamp"))
                          .sink(PrintSinkDescriptor::create());
     auto seqPlan = querySeq.getQueryPlan();
     auto joinPlan = queryJoin.getQueryPlan();
@@ -610,33 +610,32 @@ TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
 TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
-    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+    auto subQueryB = Query::from("defaultLogicalB").filter(lessExpression);// B in query
+    auto subQueryC = Query::from("defaultLogicalC").filter(lessExpression);// C in query
 
     // Query: SEQ(A,B,C) WITHIN 2 minutes
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto querySeq = Query::from("default_logical")                    // A in query
+    auto querySeq = Query::from("defaultLogicalA")// A in query
                         .seqWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .seqWith(subQueryC)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // reset input streams
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("defaultLogicalB").filter(lessExpression);// reset B
+    subQueryC = Query::from("defaultLogicalC").filter(lessExpression);// reset C
+    auto queryJoin = Query::from("defaultLogicalA")                   // A in query
                          // create seqWith B
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
                          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .filter(Attribute("defaultLogicalA$timestamp") < Attribute("defaultLogicalB$timestamp"))
                          // create seqWith C
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
                          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
-                         .filter(Attribute("logical$timestamp") < Attribute("logical$timestamp"))
+                         .filter(Attribute("defaultLogicalA$timestamp") < Attribute("defaultLogicalC$timestamp"))
                          .sink(PrintSinkDescriptor::create());
     auto seqPlan = querySeq.getQueryPlan();
     auto joinPlan = queryJoin.getQueryPlan();

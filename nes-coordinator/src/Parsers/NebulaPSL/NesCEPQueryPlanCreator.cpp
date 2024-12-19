@@ -27,6 +27,7 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Parsers/NebulaPSL/NebulaPSLQueryPlanCreator.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
+#include <regex>
 
 namespace NES::Parsers {
 
@@ -122,6 +123,7 @@ void NesCEPQueryPlanCreator::exitInputStream(NesCEPParser::InputStreamContext* c
             break;
         }
     }
+    pattern.updateAliasList(aliasName, sourceName);
     NesCEPBaseListener::exitInputStream(context);
 }
 
@@ -142,6 +144,7 @@ void NesCEPQueryPlanCreator::exitInterval(NesCEPParser::IntervalContext* cxt) {
               cxt->intervalType()->getText());
     // get window definitions
     std::string timeUnit = cxt->intervalType()->getText();
+    NES_DEBUG("NesCEPQueryPlanCreator : timeUnit:  {}", cxt->intervalType()->getText());
     int32_t time = std::stoi(cxt->getStart()->getText());
     NES_DEBUG("NesCEPQueryPlanCreator : exitInterval: Time unit: '{}', Time value: {}", timeUnit, time);
     pattern.setWindow(std::make_pair(timeUnit, time));
@@ -155,11 +158,8 @@ void NesCEPQueryPlanCreator::enterOutAttribute(NesCEPParser::OutAttributeContext
 }
 
 void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParametersContext* context) {
-    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", context->getText())
-    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", context->parameters()->parameter().at(0)->getText())
-    // collect specified sinks
     std::string sinkType = context->sinkType()->getText();
-    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink: {}", sinkType)
+    NES_DEBUG("NesCEPQueryPlanCreator : specify Sink with Type: {}", sinkType)
     SinkDescriptorPtr sinkDescriptor;
 
     if (sinkType == "FILE") {
@@ -182,8 +182,9 @@ void NesCEPQueryPlanCreator::enterSinkWithParameters(NesCEPParser::SinkWithParam
                 sinkDescriptor = NES::MQTTSinkDescriptor::create(context->parameters()->value(1)->getText(),
                                                                  context->parameters()->value(0)->getText());
             }
-            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for File Sink with name : {}",
-                      context->parameters()->value(0)->getText());
+            NES_DEBUG("NesCEPQueryPlanCreator : create sinkDescriptor for MQTT Sink with address : {} and topic {}",
+                      context->parameters()->value(0)->getText(),
+                      context->parameters()->value(1)->getText());
         } else {
             NES_THROW_RUNTIME_ERROR("Unknown parameter(s) for MQTTSink {}", context->parameters()->getText());
         }
@@ -246,17 +247,18 @@ void NesCEPQueryPlanCreator::enterQuantifiers(NesCEPParser::QuantifiersContext* 
 }
 
 void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* context) {
+    NES_DEBUG("enter exit Binary Comparison : {} ", context->comparisonOperator()->getText());
     //retrieve the ExpressionNode for the filter and save it in the pattern expressionList
     std::string comparisonOperator = context->comparisonOperator()->getText();
     // get left and right expression node
-    auto leftExpressionNode = getExpressionItem(context->left->getText(), this->currentLeftExp);
-    auto rightExpressionNode = getExpressionItem(context->right->getText(), this->currentRightExp);
+    auto leftExpressionNode = getExpressionItem(context->left->getText());
+    auto rightExpressionNode = getExpressionItem(context->right->getText());
 
     NES::ExpressionNodePtr expression;
     NES_DEBUG("NesCEPQueryPlanCreator: exitBinaryComparisonPredicate: add filters {} {} {}",
-              this->currentLeftExp,
+              leftExpressionNode.get()->toString(),
               comparisonOperator,
-              this->currentRightExp)
+              rightExpressionNode.get()->toString())
 
     if (comparisonOperator == "<") {
         expression = NES::LessExpressionNode::create(leftExpressionNode, rightExpressionNode);
@@ -280,19 +282,6 @@ void NesCEPQueryPlanCreator::exitBinaryComparisonPredicate(NesCEPParser::BinaryC
         expression = NES::OrExpressionNode::create(leftExpressionNode, rightExpressionNode);
     }
     this->pattern.addExpression(expression);
-}
-
-void NesCEPQueryPlanCreator::enterAttribute(NesCEPParser::AttributeContext* cxt) {
-    NES_DEBUG("NesCEPQueryPlanCreator: enterAttribute: {}", cxt->getText())
-    if (inWhere) {
-        if (leftFilter) {
-            currentLeftExp = cxt->getText();
-            leftFilter = false;
-        } else {
-            currentRightExp = cxt->getText();
-            leftFilter = true;
-        }
-    }
 }
 
 QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
@@ -409,6 +398,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::createQueryFromPatternList() const {
 
 QueryPlanPtr NesCEPQueryPlanCreator::addFilters(QueryPlanPtr queryPlan) const {
     for (auto it = pattern.getExpressions().begin(); it != pattern.getExpressions().end(); ++it) {
+        NES_DEBUG("Add expression : {} ", it->get()->toString());
         queryPlan = QueryPlanBuilder::addFilter(*it, queryPlan);
     }
     return queryPlan;
@@ -558,6 +548,8 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                 // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
                 // in case of composed streams on the right branch
                 auto sourceNameRight = rightQueryPlan->getSourceConsumed();
+                std::regex r1("-_+");
+                sourceNameRight = std::regex_replace(sourceNameRight, r1, "");
                 if (sourceNameRight.find("_") != std::string::npos) {
                     // we find the most left source and use its timestamp for the filter constraint
                     uint64_t posStart = sourceNameRight.find("_");
@@ -568,11 +560,12 @@ QueryPlanPtr NesCEPQueryPlanCreator::addBinaryOperatorToQueryPlan(std::string op
                     sourceNameRight = sourceNameRight + "$" + timestamp;
                 }
                 auto sourceNameLeft = leftQueryPlan->getSourceConsumed();
+                sourceNameLeft = std::regex_replace(sourceNameLeft, r1, "");
                 // in case of composed sources on the left branch
                 if (sourceNameLeft.find("_") != std::string::npos) {
                     // we find the most right source and use its timestamp for the filter constraint
-                    uint64_t posStart = sourceNameLeft.find_last_of("_");
-                    sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
+                    uint64_t posStart = sourceNameLeft.find_first_of("_");
+                    sourceNameLeft = sourceNameLeft.substr(0, posStart) + "$" + timestamp;
                 }// in case the left branch only contains 1 source we can just use it
                 else {
                     sourceNameLeft = sourceNameLeft + "$" + timestamp;
@@ -612,7 +605,7 @@ QueryPlanPtr NesCEPQueryPlanCreator::checkIfSourceIsAlreadyConsumedSource(std::b
     return rightQueryPlan;
 }
 
-ExpressionNodePtr NesCEPQueryPlanCreator::getExpressionItem(std::string contextValueAsString, std::string currentExpression) {
+ExpressionNodePtr NesCEPQueryPlanCreator::getExpressionItem(std::string contextValueAsString) {
     ExpressionNodePtr expressionNode;
     // check if context value is a number (guaranteed by grammar if first symbol is - or a digit)
     // and if so, create ConstantExpressionNode
@@ -627,8 +620,30 @@ ExpressionNodePtr NesCEPQueryPlanCreator::getExpressionItem(std::string contextV
             expressionNode = NES::ExpressionItem(constant).getExpressionNode();
         }
     } else {// else FieldExpressionNode
-        expressionNode = NES::Attribute(currentExpression).getExpressionNode();
+        std::string streamName = contextValueAsString.substr(0, contextValueAsString.find("."));
+        std::string attributeName;
+        if (contextValueAsString.find(".") == std::string::npos) {
+            attributeName = contextValueAsString;
+        } else {
+            attributeName = contextValueAsString.substr(contextValueAsString.find(".") + 1,
+                                                        contextValueAsString.at(contextValueAsString.size() - 1));
+        }
+        NES_DEBUG("the attribute name is {}", attributeName);
+        std::string attributeWithFullQualifiedName;
+        auto it = pattern.getAliasList().find(streamName);
+        if (it != pattern.getAliasList().end()) {
+            attributeWithFullQualifiedName = it->second + "$" + attributeName;
+        } else {
+            attributeWithFullQualifiedName = attributeName;
+        }
+
+        if (inWhere) {
+            expressionNode = NES::Attribute(attributeWithFullQualifiedName).getExpressionNode();
+            NES_DEBUG("NesCEPQueryPlanCreator: add left expression with full qualified name for attributes: {}",
+                      attributeWithFullQualifiedName);
+        }
     }
+
     return expressionNode;
 }
 

@@ -139,12 +139,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     void exitBinaryComparisonPredicate(NesCEPParser::BinaryComparisonPredicateContext* context) override;
 
     /**
-         * @brief extracts Attributes in the WHERE
-         * @param context
-         */
-    void enterAttribute(NesCEPParser::AttributeContext* context) override;
-
-    /**
      * @brief this method creates the query from the NesPattern
      */
     QueryPlanPtr createQueryFromPatternList() const;
@@ -197,10 +191,9 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     /**
      * @brief: Parse the expression node of one side (either left or right) from the ANTLR provided context
      * @param contextValueAsString as string
-     * @param currentExpression as string
      * @return the ExpressionNodePtr of the created expression node (ExpressionItem for constant values, Attribute node else)
      */
-    ExpressionNodePtr getExpressionItem(std::string contextValueAsString, std::string currentExpression);
+    ExpressionNodePtr getExpressionItem(std::string contextValueAsString);
 
   private:
     // pointers to track relationship of AST elements while retrieving pattern specification
@@ -210,9 +203,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     NebulaPSLPattern pattern;
     int32_t nodeId = 0;
     bool inWhere = false;
-    bool leftFilter = true;
-    std::string currentLeftExp;
-    std::string currentRightExp;
     std::map<std::string, QueryPlanPtr> subQueries;
     /** a map holding context for nested patterns
     std::string: virtual subquery name following the naming scheme "SubQuery_" + std::to_string(nodeId)

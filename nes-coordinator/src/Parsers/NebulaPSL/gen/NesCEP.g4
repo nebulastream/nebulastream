@@ -25,7 +25,7 @@ inputStream
   ;
 
 compositeEventExpressions
-	: LPARENTHESIS listEvents RPARENTHESIS
+	: LPARENTHESIS? listEvents RPARENTHESIS?
 	;
 
 whereExp
@@ -97,6 +97,10 @@ iterMin:
 ;
 
 consecutiveOption: (ANY)? NEXT;
+
+parameterName:
+    NAME
+    ;
 
 operatorRule
    : AND
@@ -340,7 +344,7 @@ URL
     ;
 
 NAME
-    : (ALPHA | DEC_DIGIT)+ ( ('_' |'-')+ (ID | INT | NAME)*)?
+    : (ALPHA | DEC_DIGIT)+ ( ('_' |'-'|'/')+ (ID | INT | NAME)*)?
 	;
 
 ID

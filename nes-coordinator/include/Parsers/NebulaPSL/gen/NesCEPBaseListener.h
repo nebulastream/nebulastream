@@ -77,6 +77,9 @@ class NesCEPBaseListener : public NesCEPListener {
     virtual void enterConsecutiveOption(NesCEPParser::ConsecutiveOptionContext* /*ctx*/) override {}
     virtual void exitConsecutiveOption(NesCEPParser::ConsecutiveOptionContext* /*ctx*/) override {}
 
+    virtual void enterParameterName(NesCEPParser::ParameterNameContext* /*ctx*/) override {}
+    virtual void exitParameterName(NesCEPParser::ParameterNameContext* /*ctx*/) override {}
+
     virtual void enterOperatorRule(NesCEPParser::OperatorRuleContext* /*ctx*/) override {}
     virtual void exitOperatorRule(NesCEPParser::OperatorRuleContext* /*ctx*/) override {}
 

@@ -124,36 +124,37 @@ class NesCEPParser : public antlr4::Parser {
         RuleIterMax = 17,
         RuleIterMin = 18,
         RuleConsecutiveOption = 19,
-        RuleOperatorRule = 20,
-        RuleSequence = 21,
-        RuleContiguity = 22,
-        RuleSinkType = 23,
-        RuleNullNotnull = 24,
-        RuleConstant = 25,
-        RuleExpressions = 26,
-        RuleExpression = 27,
-        RulePredicate = 28,
-        RuleExpressionAtom = 29,
-        RuleEventAttribute = 30,
-        RuleEventIteration = 31,
-        RuleMathExpression = 32,
-        RuleAggregation = 33,
-        RuleValue = 34,
-        RuleAttribute = 35,
-        RuleAttVal = 36,
-        RuleBoolRule = 37,
-        RuleCondition = 38,
-        RuleUnaryOperator = 39,
-        RuleComparisonOperator = 40,
-        RuleLogicalOperator = 41,
-        RuleBitOperator = 42,
-        RuleMathOperator = 43,
-        RuleSink = 44,
-        RuleParameters = 45,
-        RuleParameter = 46,
-        RuleFileName = 47,
-        RuleTopic = 48,
-        RuleAddress = 49
+        RuleParameterName = 20,
+        RuleOperatorRule = 21,
+        RuleSequence = 22,
+        RuleContiguity = 23,
+        RuleSinkType = 24,
+        RuleNullNotnull = 25,
+        RuleConstant = 26,
+        RuleExpressions = 27,
+        RuleExpression = 28,
+        RulePredicate = 29,
+        RuleExpressionAtom = 30,
+        RuleEventAttribute = 31,
+        RuleEventIteration = 32,
+        RuleMathExpression = 33,
+        RuleAggregation = 34,
+        RuleValue = 35,
+        RuleAttribute = 36,
+        RuleAttVal = 37,
+        RuleBoolRule = 38,
+        RuleCondition = 39,
+        RuleUnaryOperator = 40,
+        RuleComparisonOperator = 41,
+        RuleLogicalOperator = 42,
+        RuleBitOperator = 43,
+        RuleMathOperator = 44,
+        RuleSink = 45,
+        RuleParameters = 46,
+        RuleParameter = 47,
+        RuleFileName = 48,
+        RuleTopic = 49,
+        RuleAddress = 50
     };
 
     explicit NesCEPParser(antlr4::TokenStream* input);
@@ -187,6 +188,7 @@ class NesCEPParser : public antlr4::Parser {
     class IterMaxContext;
     class IterMinContext;
     class ConsecutiveOptionContext;
+    class ParameterNameContext;
     class OperatorRuleContext;
     class SequenceContext;
     class ContiguityContext;
@@ -292,8 +294,8 @@ class NesCEPParser : public antlr4::Parser {
       public:
         CompositeEventExpressionsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
-        antlr4::tree::TerminalNode* LPARENTHESIS();
         ListEventsContext* listEvents();
+        antlr4::tree::TerminalNode* LPARENTHESIS();
         antlr4::tree::TerminalNode* RPARENTHESIS();
 
         virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
@@ -522,6 +524,18 @@ class NesCEPParser : public antlr4::Parser {
     };
 
     ConsecutiveOptionContext* consecutiveOption();
+
+    class ParameterNameContext : public antlr4::ParserRuleContext {
+      public:
+        ParameterNameContext(antlr4::ParserRuleContext* parent, size_t invokingState);
+        virtual size_t getRuleIndex() const override;
+        antlr4::tree::TerminalNode* NAME();
+
+        virtual void enterRule(antlr4::tree::ParseTreeListener* listener) override;
+        virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
+    };
+
+    ParameterNameContext* parameterName();
 
     class OperatorRuleContext : public antlr4::ParserRuleContext {
       public:

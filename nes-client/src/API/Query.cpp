@@ -30,6 +30,7 @@
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <regex>
 #include <utility>
 
 namespace NES {
@@ -202,6 +203,9 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
                          ->getName();// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
+    std::regex r1("-_+");
+    sourceNameRight = std::regex_replace(sourceNameRight, r1, "");
+    sourceNameLeft = std::regex_replace(sourceNameLeft, r1, "");
     // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
     // in case of composed streams on the right branch
     if (sourceNameRight.find("_") != std::string::npos) {
@@ -216,8 +220,8 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
     // in case of composed sources on the left branch
     if (sourceNameLeft.find("_") != std::string::npos) {
         // we find the most right source and use its timestamp for the filter constraint
-        uint64_t posStart = sourceNameLeft.find_last_of("_");
-        sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
+        uint64_t posStart = sourceNameLeft.find_first_of("_");
+        sourceNameLeft = sourceNameLeft.substr(0, posStart) + "$" + timestamp;
     }// in case the left branch only contains 1 source we can just use it
     else {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;

@@ -75,6 +75,9 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void enterConsecutiveOption(NesCEPParser::ConsecutiveOptionContext* ctx) = 0;
     virtual void exitConsecutiveOption(NesCEPParser::ConsecutiveOptionContext* ctx) = 0;
 
+    virtual void enterParameterName(NesCEPParser::ParameterNameContext* ctx) = 0;
+    virtual void exitParameterName(NesCEPParser::ParameterNameContext* ctx) = 0;
+
     virtual void enterOperatorRule(NesCEPParser::OperatorRuleContext* ctx) = 0;
     virtual void exitOperatorRule(NesCEPParser::OperatorRuleContext* ctx) = 0;
 

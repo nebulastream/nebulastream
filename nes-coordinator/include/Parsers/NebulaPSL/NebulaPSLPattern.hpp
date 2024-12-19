@@ -33,6 +33,7 @@ class NebulaPSLPattern {
     NebulaPSLPattern() = default;
     // Getter and Setter
     const std::map<int32_t, std::string>& getSources() const;
+    const std::map<std::string, std::string>& getAliasList() const;
     void setSources(const std::map<int32_t, std::string>& sources);
     const std::map<int32_t, NebulaPSLOperator>& getOperatorList() const;
     void setOperatorList(const std::map<int32_t, NebulaPSLOperator>& operatorList);
@@ -57,6 +58,7 @@ class NebulaPSLPattern {
      */
     void updateSource(const int32_t key, std::string sourceName);
 
+    void updateAliasList(std::string aliasName, std::string sourceName);
     /**
      * @brief inserts a new ExpressionNode (filter) to the list of parsed expressions (WHERE-clause)
      * @param expNode
@@ -82,7 +84,8 @@ class NebulaPSLPattern {
     void addOperator(NebulaPSLOperator operatorNode);
 
   private:
-    std::map<int32_t, std::string> sourceList;
+    std::map<int32_t, std::string> sourceList;        // the list of source in input order
+    std::map<std::string, std::string> aliasList;     // the list of sources aliases used in the pattern
     std::map<int32_t, NebulaPSLOperator> operatorList;// contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
